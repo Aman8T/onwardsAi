@@ -31,7 +31,7 @@ from .terms import TERM_COUNT, TermHit, count_terms, find_terms
 from .web import ingest_web
 
 if TYPE_CHECKING:
-    from ..types import AnalyzeInput
+    from ..legacy.types import AnalyzeInput
 
 __all__ = [
     "MAX_LINKS",

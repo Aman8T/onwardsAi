@@ -28,10 +28,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.requests import ClientDisconnect
 from starlette.types import Receive, Scope, Send
 
-from . import __version__
+from .. import __version__
 from .chat import run_chat
 from .config import API_KEY, MODELS, STATIC_DIR
-from .ingest.classify import usable_links
+from ..ingest.classify import usable_links
 from .pipeline import humanize_error, run_analysis
 from .store import SAMPLE_PROFILE_PATH, get_profile, has_sample_profile
 from .types import AnalyzeInput

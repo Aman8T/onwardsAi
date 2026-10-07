@@ -33,7 +33,7 @@ API_KEY: str | None = _env("ANTHROPIC_API_KEY")
 GITHUB_TOKEN: str | None = _env("GITHUB_TOKEN")
 """Optional token that raises the GitHub API rate limit for the GitHub ingest."""
 
-PKG_DIR: Path = Path(__file__).resolve().parent
+PKG_DIR: Path = Path(__file__).resolve().parent.parent
 SAMPLE_DIR: Path = PKG_DIR / "sample"
 """The bundled sample persona: fixture sources plus the pre-computed profile and chat context."""
 STATIC_DIR: Path = PKG_DIR.parent / "static"

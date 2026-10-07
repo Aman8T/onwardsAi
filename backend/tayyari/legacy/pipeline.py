@@ -25,7 +25,7 @@ from typing import Any, Callable, NoReturn, TypeGuard, cast
 from . import store
 from .claude import AUTH_MESSAGE, ClaudeError, run_structured
 from .config import MODELS, READER_THINKING
-from .ingest import PlannedSource, SourceDoc, ingest_planned, plan_sources
+from ..ingest import PlannedSource, SourceDoc, ingest_planned, plan_sources
 from .prompts import (
     READER_SYSTEM,
     SYNTH_SYSTEM,
@@ -33,7 +33,7 @@ from .prompts import (
     build_synth_prompt,
     clip,
 )
-from .sample import SAMPLE_GOAL, SAMPLE_INGEST_LOGS
+from ..sample import SAMPLE_GOAL, SAMPLE_INGEST_LOGS
 from .schemas import READER_SCHEMA, SYNTH_SCHEMA
 from .types import (
     AnalyzeInput,

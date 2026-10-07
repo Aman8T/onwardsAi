@@ -1,0 +1,8 @@
+# FastAPI Cloud honours .gitignore; these overrides apply to uploads only.
+# The frontend build is ignored by git but must ship.
+!static/
+# Dev-only folders never ship.
+tests/
+evals/
+tools/
+.vscode/

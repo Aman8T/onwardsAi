@@ -7,11 +7,11 @@ port the Vite dev proxy targets).
 
 import os
 
-from tayyari.server import app
+from tayyari.legacy.server import app
 
 __all__ = ["app"]
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("tayyari.server:app", host="127.0.0.1", port=int(os.environ.get("PORT", "8787")))
+    uvicorn.run("tayyari.legacy.server:app", host="127.0.0.1", port=int(os.environ.get("PORT", "8787")))

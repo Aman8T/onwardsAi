@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, TypeGuard
 
 from .config import DATA_DIR, SAMPLE_DIR
-from .sample import load_sample_sources
+from ..sample import load_sample_sources
 
 PROFILE_DIR = DATA_DIR / "profiles"
 SAMPLE_PROFILE_PATH = SAMPLE_DIR / "sample-profile.json"
