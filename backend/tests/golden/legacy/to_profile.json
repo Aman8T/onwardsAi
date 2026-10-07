@@ -1,0 +1,890 @@
+{
+  "cases": [
+    {
+      "name": "normal",
+      "input": {
+        "synth_domains": 2,
+        "synth_skills": 2,
+        "synth_roles": 1
+      },
+      "output": {
+        "id": "m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.976Z",
+        "goal": "Test goal",
+        "person": {
+          "name": "Test User",
+          "headline": "Frontend Engineer · 3 yrs · NYC",
+          "currentRole": "Frontend Engineer",
+          "yearsExperience": 3.0,
+          "summary": ""
+        },
+        "mastery": {
+          "score": 75,
+          "insight": "Strong UI skills"
+        },
+        "sources": [
+          {
+            "id": "resume",
+            "kind": "resume",
+            "label": "Resume resume",
+            "sub": "2 roles · 15 skills",
+            "summary": "Found evidence",
+            "notes": [
+              "Good writing"
+            ],
+            "ok": true
+          }
+        ],
+        "domains": [
+          {
+            "id": "frontend",
+            "name": "Frontend",
+            "short": "Frontend",
+            "score": 80,
+            "summary": "UI/UX"
+          },
+          {
+            "id": "backend",
+            "name": "Backend",
+            "short": "Backend",
+            "score": 40,
+            "summary": "APIs"
+          }
+        ],
+        "skills": [
+          {
+            "id": "react",
+            "name": "React",
+            "domainId": "frontend",
+            "score": 85,
+            "evidence": [
+              {
+                "sourceId": "resume",
+                "text": "Built React apps"
+              }
+            ],
+            "unlocks": [
+              "Senior Frontend Engineer"
+            ]
+          },
+          {
+            "id": "node",
+            "name": "Node.js",
+            "domainId": "backend",
+            "score": 45,
+            "evidence": [],
+            "unlocks": []
+          }
+        ],
+        "roles": [
+          {
+            "id": "senior-fe",
+            "title": "Senior Frontend Engineer",
+            "alignment": 75,
+            "eta": "~6 months",
+            "why": "Strong React skills",
+            "requirements": [
+              {
+                "name": "React",
+                "skillId": "react",
+                "have": true,
+                "current": 85,
+                "target": 90
+              },
+              {
+                "name": "Testing",
+                "have": false,
+                "current": 40,
+                "target": 70
+              }
+            ]
+          }
+        ],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    },
+    {
+      "name": "duplicate_names",
+      "input": {
+        "synth_domains": 2,
+        "synth_skills": 2,
+        "synth_roles": 2
+      },
+      "output": {
+        "id": "m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.976Z",
+        "person": {
+          "name": "User",
+          "headline": "Engineer",
+          "currentRole": "Engineer",
+          "summary": ""
+        },
+        "mastery": {
+          "score": 50,
+          "insight": ""
+        },
+        "sources": [],
+        "domains": [
+          {
+            "id": "d1",
+            "name": "Frontend",
+            "short": "FE",
+            "score": 75,
+            "summary": ""
+          }
+        ],
+        "skills": [
+          {
+            "id": "s1",
+            "name": "React",
+            "domainId": "d1",
+            "score": 80,
+            "evidence": [],
+            "unlocks": []
+          }
+        ],
+        "roles": [
+          {
+            "id": "r1",
+            "title": "Senior FE",
+            "alignment": 70,
+            "eta": "~1 year",
+            "why": "Good",
+            "requirements": []
+          }
+        ],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    },
+    {
+      "name": "unknown_domainIds",
+      "input": {},
+      "output": {
+        "id": "m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.977Z",
+        "person": {
+          "name": "User",
+          "headline": "Engineer",
+          "currentRole": "Engineer",
+          "summary": ""
+        },
+        "mastery": {
+          "score": 50,
+          "insight": ""
+        },
+        "sources": [],
+        "domains": [
+          {
+            "id": "frontend",
+            "name": "Frontend",
+            "short": "FE",
+            "score": 80,
+            "summary": ""
+          }
+        ],
+        "skills": [
+          {
+            "id": "react",
+            "name": "React",
+            "domainId": "frontend",
+            "score": 75,
+            "evidence": [],
+            "unlocks": []
+          }
+        ],
+        "roles": [],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    },
+    {
+      "name": "evidence_resolution",
+      "input": {},
+      "output": {
+        "id": "m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.977Z",
+        "person": {
+          "name": "User",
+          "headline": "Engineer",
+          "currentRole": "Engineer",
+          "summary": ""
+        },
+        "mastery": {
+          "score": 50,
+          "insight": ""
+        },
+        "sources": [
+          {
+            "id": "resume",
+            "kind": "resume",
+            "label": "Resume resume",
+            "sub": "sub",
+            "summary": "summary",
+            "notes": [],
+            "ok": true
+          }
+        ],
+        "domains": [
+          {
+            "id": "frontend",
+            "name": "Frontend",
+            "short": "FE",
+            "score": 80,
+            "summary": ""
+          }
+        ],
+        "skills": [
+          {
+            "id": "react",
+            "name": "React",
+            "domainId": "frontend",
+            "score": 75,
+            "evidence": [
+              {
+                "sourceId": "resume",
+                "text": "React work"
+              }
+            ],
+            "unlocks": []
+          }
+        ],
+        "roles": [],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    },
+    {
+      "name": "excess_items",
+      "input": {
+        "synth_domains": 10,
+        "synth_skills": 40,
+        "synth_roles": 10
+      },
+      "output": {
+        "id": "m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.978Z",
+        "person": {
+          "name": "User",
+          "headline": "Engineer",
+          "currentRole": "Engineer",
+          "summary": ""
+        },
+        "mastery": {
+          "score": 50,
+          "insight": ""
+        },
+        "sources": [],
+        "domains": [
+          {
+            "id": "d0",
+            "name": "Domain0",
+            "short": "D0",
+            "score": 50,
+            "summary": ""
+          },
+          {
+            "id": "d1",
+            "name": "Domain1",
+            "short": "D1",
+            "score": 51,
+            "summary": ""
+          },
+          {
+            "id": "d2",
+            "name": "Domain2",
+            "short": "D2",
+            "score": 52,
+            "summary": ""
+          },
+          {
+            "id": "d3",
+            "name": "Domain3",
+            "short": "D3",
+            "score": 53,
+            "summary": ""
+          },
+          {
+            "id": "d4",
+            "name": "Domain4",
+            "short": "D4",
+            "score": 54,
+            "summary": ""
+          },
+          {
+            "id": "d5",
+            "name": "Domain5",
+            "short": "D5",
+            "score": 55,
+            "summary": ""
+          },
+          {
+            "id": "d6",
+            "name": "Domain6",
+            "short": "D6",
+            "score": 56,
+            "summary": ""
+          }
+        ],
+        "skills": [
+          {
+            "id": "s0",
+            "name": "Skill0",
+            "domainId": "d0",
+            "score": 50,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s1",
+            "name": "Skill1",
+            "domainId": "d0",
+            "score": 51,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s2",
+            "name": "Skill2",
+            "domainId": "d0",
+            "score": 52,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s3",
+            "name": "Skill3",
+            "domainId": "d0",
+            "score": 53,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s4",
+            "name": "Skill4",
+            "domainId": "d0",
+            "score": 54,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s5",
+            "name": "Skill5",
+            "domainId": "d0",
+            "score": 55,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s6",
+            "name": "Skill6",
+            "domainId": "d0",
+            "score": 56,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s7",
+            "name": "Skill7",
+            "domainId": "d0",
+            "score": 57,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s8",
+            "name": "Skill8",
+            "domainId": "d0",
+            "score": 58,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s9",
+            "name": "Skill9",
+            "domainId": "d0",
+            "score": 59,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s10",
+            "name": "Skill10",
+            "domainId": "d0",
+            "score": 60,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s11",
+            "name": "Skill11",
+            "domainId": "d0",
+            "score": 61,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s12",
+            "name": "Skill12",
+            "domainId": "d0",
+            "score": 62,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s13",
+            "name": "Skill13",
+            "domainId": "d0",
+            "score": 63,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s14",
+            "name": "Skill14",
+            "domainId": "d0",
+            "score": 64,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s15",
+            "name": "Skill15",
+            "domainId": "d0",
+            "score": 65,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s16",
+            "name": "Skill16",
+            "domainId": "d0",
+            "score": 66,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s17",
+            "name": "Skill17",
+            "domainId": "d0",
+            "score": 67,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s18",
+            "name": "Skill18",
+            "domainId": "d0",
+            "score": 68,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s19",
+            "name": "Skill19",
+            "domainId": "d0",
+            "score": 69,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s20",
+            "name": "Skill20",
+            "domainId": "d0",
+            "score": 70,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s21",
+            "name": "Skill21",
+            "domainId": "d0",
+            "score": 71,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s22",
+            "name": "Skill22",
+            "domainId": "d0",
+            "score": 72,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s23",
+            "name": "Skill23",
+            "domainId": "d0",
+            "score": 73,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s24",
+            "name": "Skill24",
+            "domainId": "d0",
+            "score": 74,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s25",
+            "name": "Skill25",
+            "domainId": "d0",
+            "score": 75,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s26",
+            "name": "Skill26",
+            "domainId": "d0",
+            "score": 76,
+            "evidence": [],
+            "unlocks": []
+          },
+          {
+            "id": "s27",
+            "name": "Skill27",
+            "domainId": "d0",
+            "score": 77,
+            "evidence": [],
+            "unlocks": []
+          }
+        ],
+        "roles": [
+          {
+            "id": "r9",
+            "title": "Role9",
+            "alignment": 59,
+            "eta": "~1 year",
+            "why": "",
+            "requirements": []
+          },
+          {
+            "id": "r8",
+            "title": "Role8",
+            "alignment": 58,
+            "eta": "~1 year",
+            "why": "",
+            "requirements": []
+          },
+          {
+            "id": "r7",
+            "title": "Role7",
+            "alignment": 57,
+            "eta": "~1 year",
+            "why": "",
+            "requirements": []
+          },
+          {
+            "id": "r6",
+            "title": "Role6",
+            "alignment": 56,
+            "eta": "~1 year",
+            "why": "",
+            "requirements": []
+          },
+          {
+            "id": "r5",
+            "title": "Role5",
+            "alignment": 55,
+            "eta": "~1 year",
+            "why": "",
+            "requirements": []
+          },
+          {
+            "id": "r4",
+            "title": "Role4",
+            "alignment": 54,
+            "eta": "~1 year",
+            "why": "",
+            "requirements": []
+          }
+        ],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    },
+    {
+      "name": "missing_person",
+      "input": {},
+      "output": {
+        "id": "m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.979Z",
+        "person": {
+          "name": "Reader Person",
+          "headline": "Engineer · 5.0 yrs · NYC",
+          "currentRole": "Engineer",
+          "location": "NYC",
+          "yearsExperience": 5.0,
+          "summary": ""
+        },
+        "mastery": {
+          "score": 50,
+          "insight": ""
+        },
+        "sources": [
+          {
+            "id": "resume",
+            "kind": "resume",
+            "label": "Resume resume",
+            "sub": "2 roles",
+            "summary": "summary",
+            "notes": [],
+            "ok": true
+          }
+        ],
+        "domains": [
+          {
+            "id": "frontend",
+            "name": "Frontend",
+            "short": "FE",
+            "score": 80,
+            "summary": ""
+          }
+        ],
+        "skills": [],
+        "roles": [],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    },
+    {
+      "name": "requirements_with_and_without_skillId",
+      "input": {},
+      "output": {
+        "id": "m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.979Z",
+        "person": {
+          "name": "User",
+          "headline": "Engineer",
+          "currentRole": "Engineer",
+          "summary": ""
+        },
+        "mastery": {
+          "score": 50,
+          "insight": ""
+        },
+        "sources": [],
+        "domains": [
+          {
+            "id": "frontend",
+            "name": "Frontend",
+            "short": "FE",
+            "score": 80,
+            "summary": ""
+          }
+        ],
+        "skills": [
+          {
+            "id": "react",
+            "name": "React",
+            "domainId": "frontend",
+            "score": 80,
+            "evidence": [],
+            "unlocks": []
+          }
+        ],
+        "roles": [
+          {
+            "id": "senior-fe",
+            "title": "Senior FE",
+            "alignment": 70,
+            "eta": "~1 year",
+            "why": "",
+            "requirements": [
+              {
+                "name": "React",
+                "skillId": "react",
+                "have": true,
+                "current": 80,
+                "target": 90
+              },
+              {
+                "name": "System Design",
+                "have": false,
+                "current": 30,
+                "target": 70
+              }
+            ]
+          }
+        ],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    },
+    {
+      "name": "failed_sources",
+      "input": {},
+      "output": {
+        "id": "m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.979Z",
+        "person": {
+          "name": "User",
+          "headline": "Engineer",
+          "currentRole": "Engineer",
+          "summary": ""
+        },
+        "mastery": {
+          "score": 50,
+          "insight": ""
+        },
+        "sources": [
+          {
+            "id": "resume",
+            "kind": "resume",
+            "label": "Resume resume",
+            "sub": "2 roles",
+            "summary": "Read OK",
+            "notes": [],
+            "ok": true
+          },
+          {
+            "id": "github",
+            "kind": "github",
+            "label": "Github github",
+            "sub": "Could not be read",
+            "summary": "Could not be read: Could not read GitHub",
+            "notes": [],
+            "ok": false,
+            "error": "Could not read GitHub"
+          }
+        ],
+        "domains": [
+          {
+            "id": "frontend",
+            "name": "Frontend",
+            "short": "FE",
+            "score": 80,
+            "summary": ""
+          }
+        ],
+        "skills": [],
+        "roles": [],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    },
+    {
+      "name": "goal_set",
+      "input": {},
+      "output": {
+        "id": "m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.979Z",
+        "goal": "Move to backend",
+        "person": {
+          "name": "User",
+          "headline": "Engineer",
+          "currentRole": "Engineer",
+          "summary": ""
+        },
+        "mastery": {
+          "score": 50,
+          "insight": ""
+        },
+        "sources": [],
+        "domains": [
+          {
+            "id": "frontend",
+            "name": "Frontend",
+            "short": "FE",
+            "score": 80,
+            "summary": ""
+          }
+        ],
+        "skills": [],
+        "roles": [],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    },
+    {
+      "name": "goal_none",
+      "input": {},
+      "output": {
+        "id": "m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.980Z",
+        "person": {
+          "name": "User",
+          "headline": "Engineer",
+          "currentRole": "Engineer",
+          "summary": ""
+        },
+        "mastery": {
+          "score": 50,
+          "insight": ""
+        },
+        "sources": [],
+        "domains": [
+          {
+            "id": "frontend",
+            "name": "Frontend",
+            "short": "FE",
+            "score": 80,
+            "summary": ""
+          }
+        ],
+        "skills": [],
+        "roles": [],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    },
+    {
+      "name": "sample_mode",
+      "input": {},
+      "output": {
+        "id": "sample-m1yzq2df-abc",
+        "createdAt": "2026-10-07T17:09:12.980Z",
+        "person": {
+          "name": "User",
+          "headline": "Engineer",
+          "currentRole": "Engineer",
+          "summary": ""
+        },
+        "mastery": {
+          "score": 50,
+          "insight": ""
+        },
+        "sources": [],
+        "domains": [
+          {
+            "id": "frontend",
+            "name": "Frontend",
+            "short": "FE",
+            "score": 80,
+            "summary": ""
+          }
+        ],
+        "skills": [],
+        "roles": [],
+        "models": {
+          "reader": "claude-haiku-4-5",
+          "synth": "claude-sonnet-5-5"
+        }
+      }
+    }
+  ]
+}

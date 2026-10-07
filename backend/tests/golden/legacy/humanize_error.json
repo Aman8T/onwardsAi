@@ -1,0 +1,98 @@
+{
+  "cases": [
+    {
+      "name": "auth_key",
+      "input": {
+        "error_type": "ValueError",
+        "error_message": "401 Unauthorized"
+      },
+      "output": "Claude isn't configured on the server. Set ANTHROPIC_API_KEY (a valid Anthropic API key) and try again."
+    },
+    {
+      "name": "auth_invalid_key",
+      "input": {
+        "error_type": "ValueError",
+        "error_message": "invalid api key"
+      },
+      "output": "Claude isn't configured on the server. Set ANTHROPIC_API_KEY (a valid Anthropic API key) and try again."
+    },
+    {
+      "name": "auth_token_expired",
+      "input": {
+        "error_type": "ValueError",
+        "error_message": "token has expired"
+      },
+      "output": "Claude isn't configured on the server. Set ANTHROPIC_API_KEY (a valid Anthropic API key) and try again."
+    },
+    {
+      "name": "rate_limited",
+      "input": {
+        "error_type": "ValueError",
+        "error_message": "rate_limited: 429"
+      },
+      "output": "Claude is busy right now (rate limited or overloaded). Try again in a minute."
+    },
+    {
+      "name": "overloaded",
+      "input": {
+        "error_type": "ValueError",
+        "error_message": "Service overloaded (529)"
+      },
+      "output": "Claude is busy right now (rate limited or overloaded). Try again in a minute."
+    },
+    {
+      "name": "timeout",
+      "input": {
+        "error_type": "ValueError",
+        "error_message": "Request timed out after 30s"
+      },
+      "output": "Could not reach Claude (network error or timeout). Try again."
+    },
+    {
+      "name": "connection_error",
+      "input": {
+        "error_type": "ValueError",
+        "error_message": "Could not connect to the server"
+      },
+      "output": "Could not reach Claude (network error or timeout). Try again."
+    },
+    {
+      "name": "incomplete",
+      "input": {
+        "error_type": "ValueError",
+        "error_message": "failed validation: no JSON object"
+      },
+      "output": "The model returned an incomplete answer. Try again."
+    },
+    {
+      "name": "unknown_long_text",
+      "input": {
+        "error_type": "ValueError",
+        "error_message": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      },
+      "output": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX…"
+    },
+    {
+      "name": "unknown_short_text",
+      "input": {
+        "error_type": "ValueError",
+        "error_message": "Something went wrong"
+      },
+      "output": "Something went wrong"
+    },
+    {
+      "name": "string_error",
+      "input": {
+        "error_message": "401 Unauthorized"
+      },
+      "output": "Claude isn't configured on the server. Set ANTHROPIC_API_KEY (a valid Anthropic API key) and try again."
+    },
+    {
+      "name": "cancelled",
+      "input": {
+        "error_type": "CancelledError"
+      },
+      "output": "Cancelled."
+    }
+  ]
+}

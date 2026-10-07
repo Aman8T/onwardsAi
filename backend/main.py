@@ -7,7 +7,10 @@ port the Vite dev proxy targets).
 
 import os
 
+from tayyari import canary
 from tayyari.legacy.server import app
+
+canary.mount(app)  # temporary Wave 0c diagnostics; removed when main.py flips to the new app
 
 __all__ = ["app"]
 

@@ -1,0 +1,66 @@
+{
+  "cases": [
+    {
+      "name": "activity_lines(resume)",
+      "input": {
+        "source_id": "resume",
+        "source_kind": "resume"
+      },
+      "output": [
+        "Reading summary · Riya_Kapoor_Resume.pdf",
+        "Reading experience · Riya_Kapoor_Resume.pdf",
+        "Reading projects · Riya_Kapoor_Resume.pdf",
+        "Reading skills · Riya_Kapoor_Resume.pdf",
+        "Reading education · Riya_Kapoor_Resume.pdf",
+        "Weighing impact in each bullet",
+        "Separating listed skills from used ones"
+      ]
+    },
+    {
+      "name": "activity_lines(github)",
+      "input": {
+        "source_id": "github",
+        "source_kind": "github"
+      },
+      "output": [
+        "Reading README · motion-kit",
+        "Scanning commits · design-tokens",
+        "Mapping 9 languages across repos",
+        "Checking tests and CI · notes-ai",
+        "Reading package.json · checkout-lab",
+        "Reading README · recipe-genie-web",
+        "Scanning commits · a11y-checklist"
+      ]
+    },
+    {
+      "name": "activity_lines(lovable)",
+      "input": {
+        "source_id": "lovable-1",
+        "source_kind": "lovable"
+      },
+      "output": [
+        "Walking through · Pantry in seconds",
+        "Walking through · Three good options",
+        "Walking through · Swap anything",
+        "Walking through · Save your favourites",
+        "Checking auth and data wiring",
+        "Reviewing the AI features"
+      ]
+    },
+    {
+      "name": "activity_lines(portfolio)",
+      "input": {
+        "source_id": "portfolio-1",
+        "source_kind": "portfolio"
+      },
+      "output": [
+        "Parsing case study: “Checkout, rebuilt”",
+        "Parsing case study: “An accessibility audit that…”",
+        "Parsing case study: “Kite UI”",
+        "Parsing case study: “motion-kit: designing with…”",
+        "Parsing case study: “Saffron Ledger dashboard”",
+        "Looking for outcomes and numbers"
+      ]
+    }
+  ]
+}

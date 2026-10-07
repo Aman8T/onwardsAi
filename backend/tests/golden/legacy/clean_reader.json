@@ -1,0 +1,746 @@
+{
+  "cases": [
+    {
+      "name": "normal",
+      "input": {
+        "sub": "4 roles · 23 skills",
+        "summary": "Found evidence across multiple projects",
+        "person": {
+          "name": "Alice Smith",
+          "currentRole": "Senior Frontend Engineer",
+          "yearsExperience": 5.5,
+          "location": "San Francisco, CA"
+        },
+        "signals": [
+          {
+            "label": "React",
+            "detail": "5 repos"
+          },
+          {
+            "label": "TypeScript",
+            "detail": "primary language"
+          }
+        ],
+        "skills": [
+          {
+            "name": "React",
+            "evidence": "Shipped at Acme Corp",
+            "strength": 4
+          },
+          {
+            "name": "Node.js",
+            "evidence": "Personal projects",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "Strong testing practices",
+          "Good mentoring skills"
+        ]
+      },
+      "output": {
+        "sub": "4 roles · 23 skills",
+        "summary": "Found evidence across multiple projects",
+        "person": {
+          "name": "Alice Smith",
+          "currentRole": "Senior Frontend Engineer",
+          "yearsExperience": 5.5,
+          "location": "San Francisco, CA"
+        },
+        "signals": [
+          {
+            "label": "React",
+            "detail": "5 repos"
+          },
+          {
+            "label": "TypeScript",
+            "detail": "primary language"
+          }
+        ],
+        "skills": [
+          {
+            "name": "React",
+            "evidence": "Shipped at Acme Corp",
+            "strength": 4
+          },
+          {
+            "name": "Node.js",
+            "evidence": "Personal projects",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "Strong testing practices",
+          "Good mentoring skills"
+        ]
+      }
+    },
+    {
+      "name": "overlong_strings",
+      "input": {
+        "sub": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA roles and more skills than should fit",
+        "summary": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "skills": [
+          {
+            "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "evidence": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+          "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+        ]
+      },
+      "output": {
+        "sub": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…",
+        "summary": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "signals": [],
+        "skills": [
+          {
+            "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…",
+            "evidence": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB…",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC…",
+          "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD…"
+        ]
+      }
+    },
+    {
+      "name": "too_many_items",
+      "input": {
+        "sub": "sub text",
+        "summary": "summary",
+        "signals": [
+          {
+            "label": "Signal0",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal1",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal2",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal3",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal4",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal5",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal6",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal7",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal8",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal9",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal10",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal11",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal12",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal13",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal14",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal15",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal16",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal17",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal18",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal19",
+            "detail": "detail"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Skill0",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill1",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill2",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill3",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill4",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill5",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill6",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill7",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill8",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill9",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill10",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill11",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill12",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill13",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill14",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill15",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill16",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill17",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill18",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill19",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill20",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill21",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill22",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill23",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill24",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill25",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill26",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill27",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill28",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill29",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill30",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill31",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill32",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill33",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill34",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill35",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill36",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill37",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill38",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill39",
+            "evidence": "evidence",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "Note0",
+          "Note1",
+          "Note2",
+          "Note3",
+          "Note4",
+          "Note5",
+          "Note6",
+          "Note7",
+          "Note8",
+          "Note9"
+        ]
+      },
+      "output": {
+        "sub": "sub text",
+        "summary": "summary",
+        "signals": [
+          {
+            "label": "Signal0",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal1",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal2",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal3",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal4",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal5",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal6",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal7",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal8",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal9",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal10",
+            "detail": "detail"
+          },
+          {
+            "label": "Signal11",
+            "detail": "detail"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Skill0",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill1",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill2",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill3",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill4",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill5",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill6",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill7",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill8",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill9",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill10",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill11",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill12",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill13",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill14",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill15",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill16",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill17",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill18",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill19",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill20",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill21",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill22",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill23",
+            "evidence": "evidence",
+            "strength": 3
+          },
+          {
+            "name": "Skill24",
+            "evidence": "evidence",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "Note0",
+          "Note1",
+          "Note2",
+          "Note3"
+        ]
+      }
+    },
+    {
+      "name": "missing_fields",
+      "input": {
+        "summary": "summary only"
+      },
+      "output": {
+        "sub": "",
+        "summary": "summary only",
+        "signals": [],
+        "skills": [],
+        "notes": []
+      }
+    },
+    {
+      "name": "bad_strength",
+      "input": {
+        "sub": "sub",
+        "summary": "summary",
+        "skills": [
+          {
+            "name": "Skill1",
+            "evidence": "evidence",
+            "strength": 0
+          },
+          {
+            "name": "Skill2",
+            "evidence": "evidence",
+            "strength": 10
+          },
+          {
+            "name": "Skill3",
+            "evidence": "evidence",
+            "strength": "invalid"
+          },
+          {
+            "name": "Skill4",
+            "evidence": "evidence"
+          }
+        ]
+      },
+      "output": {
+        "sub": "sub",
+        "summary": "summary",
+        "signals": [],
+        "skills": [
+          {
+            "name": "Skill1",
+            "evidence": "evidence",
+            "strength": 1
+          },
+          {
+            "name": "Skill2",
+            "evidence": "evidence",
+            "strength": 5
+          },
+          {
+            "name": "Skill3",
+            "evidence": "evidence",
+            "strength": 2
+          },
+          {
+            "name": "Skill4",
+            "evidence": "evidence",
+            "strength": 2
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "wrong_types",
+      "input": {
+        "sub": 123,
+        "summary": null,
+        "signals": null,
+        "skills": null,
+        "notes": null
+      },
+      "output": {
+        "sub": "",
+        "summary": "",
+        "signals": [],
+        "skills": [],
+        "notes": []
+      }
+    },
+    {
+      "name": "unicode",
+      "input": {
+        "sub": "Python · Go · TypeScript",
+        "summary": "Émojis: 🚀 💻 🎯 and accents: naïve résumé café",
+        "person": {
+          "name": "François Müller",
+          "currentRole": "Senior SWE",
+          "yearsExperience": 3.2,
+          "location": "São Paulo, Brasil"
+        },
+        "skills": [
+          {
+            "name": "C++",
+            "evidence": "Built high-perf systems",
+            "strength": 4
+          }
+        ]
+      },
+      "output": {
+        "sub": "Python · Go · TypeScript",
+        "summary": "Émojis: 🚀 💻 🎯 and accents: naïve résumé café",
+        "person": {
+          "name": "François Müller",
+          "currentRole": "Senior SWE",
+          "yearsExperience": 3.2,
+          "location": "São Paulo, Brasil"
+        },
+        "signals": [],
+        "skills": [
+          {
+            "name": "C++",
+            "evidence": "Built high-perf systems",
+            "strength": 4
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "empty_person",
+      "input": {
+        "sub": "sub",
+        "summary": "summary",
+        "person": {
+          "name": "",
+          "currentRole": null
+        }
+      },
+      "output": {
+        "sub": "sub",
+        "summary": "summary",
+        "signals": [],
+        "skills": [],
+        "notes": []
+      }
+    }
+  ]
+}
