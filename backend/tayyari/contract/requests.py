@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import Field, StringConstraints
+from pydantic import Field, StringConstraints, field_validator
 
 from tayyari.contract.models import ChatOrigin, _Model
 from tayyari.core.limits import (
@@ -38,6 +38,11 @@ class AnalyzeRequest:
     sample: bool = False
 
 
+def _strip_nul(value: object) -> object:
+    """Postgres rejects NUL in TEXT and JSONB, so a stray NUL would make the turn unsavable after it streamed."""
+    return value.replace("\x00", "") if isinstance(value, str) else value
+
+
 class ChatOriginBody(ChatOrigin):
     """`ChatOrigin` as received over HTTP: same fields, but ``title`` and ``caption`` may be left out and every
     string is length-capped. It is a `ChatOrigin`, so it can be stored or rendered as one directly."""
@@ -45,6 +50,11 @@ class ChatOriginBody(ChatOrigin):
     refId: str | None = Field(default=None, max_length=CHAT_ORIGIN_REF_ID_MAX_CHARS)
     title: str = Field(default="", max_length=CHAT_ORIGIN_TITLE_MAX_CHARS)
     caption: str = Field(default="", max_length=CHAT_ORIGIN_CAPTION_MAX_CHARS)
+
+    @field_validator("refId", "title", "caption", mode="before")
+    @classmethod
+    def _drop_nul(cls, v: object) -> object:
+        return _strip_nul(v)
 
 
 class ChatRequestBody(_Model):
@@ -58,6 +68,11 @@ class ChatRequestBody(_Model):
     ]
     origin: ChatOriginBody | None = None
     sessionId: str | None = Field(default=None, max_length=CHAT_SESSION_ID_MAX_CHARS)
+
+    @field_validator("profileId", "message", "sessionId", mode="before")
+    @classmethod
+    def _drop_nul(cls, v: object) -> object:
+        return _strip_nul(v)
 
 
 @dataclass(frozen=True, slots=True)

@@ -321,7 +321,8 @@ def test_structural_fields_are_never_touched() -> None:
         "exc_info": (ValueError, ValueError("x"), None),
     }
     out = run(dict(event))
-    assert out == event
+    # Access ids keep only a correlatable prefix; every other structural field is untouched.
+    assert out == {**event, "profile_id": "sample-12345678" + chr(0x2026)}
 
 
 def test_processor_mutates_and_returns_the_same_mapping() -> None:

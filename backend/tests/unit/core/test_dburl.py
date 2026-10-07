@@ -30,7 +30,7 @@ def test_no_url_falls_back_to_a_sqlite_file_under_data_dir(tmp_path: Path, empty
     assert make_url(cfg.url).database == (tmp_path / "tayyari.sqlite3").as_posix()
     assert cfg.ephemeral is False
     assert cfg.connect_args == {"timeout": 15}
-    assert cfg.engine_kwargs == {}
+    assert cfg.engine_kwargs == {"hide_parameters": True}
     assert not cfg.in_memory
 
 
@@ -103,6 +103,7 @@ def test_connect_args_and_pool_settings(tmp_path: Path) -> None:
     assert cfg.connect_args["command_timeout"] == 30
     assert cfg.connect_args["server_settings"] == {"application_name": "tayyari"}
     assert cfg.engine_kwargs == {
+        "hide_parameters": True,
         "pool_size": 5,
         "max_overflow": 5,
         "pool_pre_ping": True,

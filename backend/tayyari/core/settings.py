@@ -95,6 +95,18 @@ class GuardSettings(BaseModel):
     est_chat_usd: float = Field(default=0.10, ge=0)
     ceiling_grace: float = Field(default=1.25, ge=1.0)
     """A run already past the readers may finish while spend is under ceiling x grace."""
+    chat_global_per_hour: int = Field(default=600, ge=0)
+    """Backstop on chat turns per hour across all clients (shared counter)."""
+    chat_streams_per_ip: int = Field(default=2, ge=0)
+    """Concurrent chat streams one client may hold open (per replica)."""
+    chat_streams_per_process: int = Field(default=24, ge=0)
+    """Concurrent chat streams one replica serves."""
+    upload_inflight_bytes: int = Field(default=64 * 1024 * 1024, ge=0)
+    """Upload bytes one replica buffers at once across all requests; beyond it new uploads get 503."""
+    upload_read_timeout_s: float = Field(default=30.0, gt=0)
+    """Deadline for reading a whole request body (slow or stalled uploads are cut off)."""
+    deep_health_min_interval_s: float = Field(default=5.0, ge=0)
+    """/api/health/deep touches the database at most this often; in between it answers from the last result."""
     trusted_proxy_hops: int = Field(default=3, ge=0)
     """Proxies in front of the app; the client IP is that many entries from the right of X-Forwarded-For.
 
@@ -166,7 +178,9 @@ class Settings(BaseSettings):
     )
     github_token: SecretStr | None = Field(default=None, validation_alias=AliasChoices("GITHUB_TOKEN"))
     logfire_token: SecretStr | None = Field(default=None, validation_alias=AliasChoices("LOGFIRE_TOKEN"))
-    database_url: str | None = Field(default=None, validation_alias=AliasChoices("DATABASE_URL"), repr=False)
+    database_url: str | None = Field(
+        default=None, validation_alias=AliasChoices("DATABASE_URL"), repr=False, exclude=True
+    )
     """Carries the password, so it is kept out of ``repr(settings)``; log `db.safe_url` instead."""
 
     # models (the legacy TAYYARI_READER_MODEL / _SYNTH_MODEL / _CHAT_MODEL names keep working)

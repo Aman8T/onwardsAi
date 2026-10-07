@@ -42,6 +42,8 @@ _SAFE_KEYS: frozenset[str] = frozenset(
 """Structured fields that never carry user content; ids are skipped so hex runs are never mistaken for phones."""
 
 _MAX_DEPTH = 4
+_ACCESS_ID_KEYS = ("profile_id", "session_id")
+_ACCESS_ID_PREFIX = 15  # "sample-" + 8 hex, or 15 hex characters
 _MAX_ADDRESS_LINE = 400
 
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63}){1,8}")
@@ -181,6 +183,11 @@ def redact_event_dict(
     """
     for key in list(event_dict):
         event_dict[key] = _redact_item(key, event_dict[key], 0)
+    for key in _ACCESS_ID_KEYS:
+        value = event_dict.get(key)
+        if isinstance(value, str) and len(value) > _ACCESS_ID_PREFIX + 1:
+            # Profile and session ids are the only access control, so logs keep a correlatable prefix only.
+            event_dict[key] = value[:_ACCESS_ID_PREFIX] + "…"
     return event_dict
 
 

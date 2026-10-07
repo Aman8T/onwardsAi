@@ -147,7 +147,8 @@ def _sqlite_config(parsed: URL, env: str, *, force_file: bool = False) -> DbConf
         kind="sqlite",
         ephemeral=env == "prod" or in_memory,
         connect_args={"timeout": 15},
-        engine_kwargs={},
+        # Never echo bound parameters (resume text, profile JSON, chat messages) in SQL error messages.
+        engine_kwargs={"hide_parameters": True},
     )
 
 
@@ -235,6 +236,7 @@ def _postgres_config(parsed: URL) -> DbConfig:
         ephemeral=False,
         connect_args=connect_args,
         engine_kwargs={
+            "hide_parameters": True,
             "pool_size": 5,
             "max_overflow": 5,
             "pool_pre_ping": True,
