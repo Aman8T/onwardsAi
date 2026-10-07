@@ -1,0 +1,160 @@
+# Default behaviour of every decision in this build. Version-controlled: a better Jev takes on more work by
+# editing this file (mode, threshold, fallback), normally from `cli eval promote --dry-run`, never by code.
+#
+# One table per spec id. Fields (all optional; a missing one keeps the spec's own default):
+#   mode        off | shadow | primary
+#                 off      the question is never asked
+#                 shadow   Jev is asked and logged next to the incumbent value; the answer is never used
+#                 primary  Jev's answer is used when confidence >= threshold, otherwise the fallback decides
+#   threshold   0..1, the confidence a Jev answer needs to be used. A noul's confidence is |2p-1| (0.6 means
+#               p <= 0.2 or p >= 0.8); a choice's is normalised by the number of options.
+#   fallback    claude | skip
+#                 claude   a Haiku structured call answers the same rubric (escalated=true in the log)
+#                 skip     the decision stays neutral (the live first read cannot wait for a Haiku call)
+#   audit_rate  0..1, the share of used Jev answers that also get a background Claude answer, to track agreement
+#   timeout_s   seconds for one Jev attempt
+#
+# Overrides, without a deploy of this file: TAYYARI_DECISION_OVERRIDES='{"evidence.support": {"mode": "shadow"}}'
+# (also "first_read.*" for a whole family and "*" for everything). TAYYARI_JEV__ENABLED=false is the kill switch:
+# Jev is never called, primary decisions go to their fallback with escalation reason "jev_disabled".
+
+version = 1
+
+# ───────────────────────── first read (display only, no Claude fallback on the live path) ─────────────────────────
+
+["first_read.career_family"]
+mode = "primary"
+threshold = 0.45        # normalised for about 18 options
+fallback = "skip"
+timeout_s = 2.5
+
+["first_read.career_stage"]
+mode = "primary"
+threshold = 0.45
+fallback = "skip"
+timeout_s = 2.5
+
+["first_read.depth"]
+mode = "primary"
+threshold = 0.5
+fallback = "skip"
+timeout_s = 2.5
+
+["first_read.leads_or_mentors"]
+mode = "primary"
+threshold = 0.6         # a line or chip is shown only when |2p-1| >= 0.6
+fallback = "skip"
+timeout_s = 2.5
+
+["first_read.public_proof"]
+mode = "primary"
+threshold = 0.6
+fallback = "skip"
+timeout_s = 2.5
+
+["first_read.measured_outcomes"]
+mode = "primary"
+threshold = 0.6
+fallback = "skip"
+timeout_s = 2.5
+
+["first_read.ai_experience"]
+mode = "primary"
+threshold = 0.6
+fallback = "skip"
+timeout_s = 2.5
+
+["first_read.progression_promoted"]
+mode = "primary"
+threshold = 0.6
+fallback = "skip"
+timeout_s = 2.5
+
+["first_read.progression_scope"]
+mode = "primary"
+threshold = 0.6
+fallback = "skip"
+timeout_s = 2.5
+
+["first_read.progression_switch"]
+mode = "primary"
+threshold = 0.6
+fallback = "skip"
+timeout_s = 2.5
+
+["first_read.resume_like"]
+mode = "primary"
+threshold = 0.6         # sanity gate: when it says "not a resume" with this confidence the other lines are suppressed
+fallback = "skip"
+timeout_s = 2.5
+
+# ───────────────────────── source triage (label, or skip a wall or empty page when the code agrees) ─────────────────────────
+
+["triage.text_quality"]
+mode = "primary"
+threshold = 0.6         # to label; the pack skips a source only at >= 0.9 (or when the code also agrees)
+fallback = "claude"
+timeout_s = 2.5
+
+["triage.about_person_work"]
+mode = "primary"
+threshold = 0.7
+fallback = "claude"
+timeout_s = 2.5
+
+["triage.page_type"]
+mode = "primary"
+threshold = 0.5
+fallback = "claude"
+timeout_s = 2.5
+
+["triage.mainly_english"]
+mode = "primary"
+threshold = 0.8
+fallback = "skip"
+timeout_s = 2.5
+
+# ───────────────────────── evidence support (after synthesis; fails open) ─────────────────────────
+
+["evidence.support"]
+mode = "primary"
+threshold = 0.8         # an evidence item is dropped only when the anchors are missing AND this answer says "not supported"
+fallback = "claude"
+audit_rate = 0.05
+timeout_s = 4.0
+
+# ───────────────────────── chat web-search gate ─────────────────────────
+
+["chat.web_gate"]
+mode = "primary"
+threshold = 0.7         # |2p-1| >= 0.7 means p <= 0.15: tools are withheld only then (the pack also checks the direction)
+fallback = "claude"
+audit_rate = 0.05
+timeout_s = 2.0
+
+# ───────────────────────── shadow: logged next to Sonnet's numbers, never used ─────────────────────────
+# threshold 1.0 until a spec is promoted: flipping one to "primary" by mistake sends every answer to its fallback.
+
+["skill.level"]
+mode = "shadow"
+threshold = 1.0
+fallback = "skip"
+timeout_s = 8.0
+
+["requirement.have"]
+mode = "shadow"
+threshold = 1.0
+fallback = "skip"
+timeout_s = 8.0
+
+["role.closest"]
+mode = "shadow"
+threshold = 1.0
+fallback = "skip"
+timeout_s = 8.0
+
+["role.fit"]
+mode = "shadow"
+threshold = 1.0
+fallback = "skip"
+timeout_s = 8.0

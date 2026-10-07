@@ -15,15 +15,27 @@ from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import quote, urlsplit
 
-MAX_LINKS = 8
+from ..core.limits import MAX_LINKS
+from ..core.text import plural
+
+__all__ = [
+    "MAX_LINKS",
+    "ClassifiedUrl",
+    "IngestLog",
+    "ParsedUrl",
+    "SourceDoc",
+    "classify_link",
+    "classify_url",
+    "host_is",
+    "is_known_platform",
+    "normalize_url",
+    "plural",
+    "strip_www",
+    "usable_links",
+]
 
 IngestLog = Callable[[str], None]
 """Progress callback for one source: one short, human line per step ("Fetched profile, 34 public repos")."""
-
-
-def plural(n: int, word: str, plural_word: str | None = None) -> str:
-    """"1 repo", "2 repos"."""
-    return f"{n} {word if n == 1 else (plural_word or word + 's')}"
 
 
 def _fallback_sub(meta: dict[str, Any], kind_label: str, error: str | None) -> str:
@@ -84,10 +96,20 @@ class SourceDoc:
 
     @classmethod
     def failure(
-        cls, id: str, kind: str, label: str, kind_label: str, url: str | None, src: str, error: str, **extra: Any
+        cls,
+        id: str,
+        kind: str,
+        label: str,
+        kind_label: str,
+        url: str | None,
+        src: str,
+        error: str,
+        **extra: Any,
     ) -> SourceDoc:
         """A source that could not be read; the pipeline still shows it, marked as failed."""
-        return cls(id=id, kind=kind, label=label, url=url, src=src, kind_label=kind_label, error=error, **extra)
+        return cls(
+            id=id, kind=kind, label=label, url=url, src=src, kind_label=kind_label, error=error, **extra
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-ready form for the stored chat context.
@@ -237,6 +259,7 @@ def normalize_url(raw: str) -> ParsedUrl | None:
 
 # --------------------------------------------------------------------------- classification
 
+
 def strip_www(host: str) -> str:
     return host.removeprefix("www.")
 
@@ -263,17 +286,21 @@ _FRIENDLY_LABELS = (
     ("blogspot.com", "Blog"), ("ghost.io", "Blog"),
 )  # fmt: skip
 
-_MULTI_PART_TLDS = frozenset((
-    "co.uk org.uk ac.uk gov.uk co.in org.in ac.in net.in gov.in com.au net.au org.au edu.au co.nz co.jp com.br "
-    "com.mx com.sg com.hk com.tr co.za com.cn co.kr com.ar com.ng co.il com.pk com.bd"
-).split())
+_MULTI_PART_TLDS = frozenset(
+    (
+        "co.uk org.uk ac.uk gov.uk co.in org.in ac.in net.in gov.in com.au net.au org.au edu.au co.nz co.jp com.br "
+        "com.mx com.sg com.hk com.tr co.za com.cn co.kr com.ar com.ng co.il com.pk com.bd"
+    ).split()
+)
 
-_GITHUB_RESERVED = frozenset(("orgs", "topics", "sponsors", "marketplace", "features", "about", "pricing", "settings", "login"))
+_GITHUB_RESERVED = frozenset(
+    ("orgs", "topics", "sponsors", "marketplace", "features", "about", "pricing", "settings", "login")
+)
 _IPV4_RE = re.compile(r"\d{1,3}(?:\.\d{1,3}){3}")
 
 
 def _second_level_label(host: str) -> str:
-    """"docs.kaggle.com" -> "Kaggle", "my-site.co.uk" -> "My-site"."""
+    """ "docs.kaggle.com" -> "Kaggle", "my-site.co.uk" -> "My-site"."""
     parts = strip_www(host).split(".")
     if len(parts) >= 3 and ".".join(parts[-2:]) in _MULTI_PART_TLDS:
         sld = parts[-3]

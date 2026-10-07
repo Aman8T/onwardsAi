@@ -13,12 +13,13 @@ from __future__ import annotations
 
 import asyncio
 import codecs
+import functools
 import ipaddress
 import json
-import os
 import re
 import socket
 import ssl
+import zlib
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from html import unescape
@@ -27,31 +28,41 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 
-from .classify import IngestLog, SourceDoc, is_known_platform, normalize_url, plural
+from ..core import limits
+from ..core.logging import get_logger
+from ..core.text import plural, squash
+from .classify import IngestLog, SourceDoc, is_known_platform, normalize_url
 from .terms import find_terms
 
+logger = get_logger(__name__)
+
 # --------------------------------------------------------------------------- constants
+# The values live in core.limits (one source for the whole backend); these names stay because other
+# modules (github, the legacy pipeline, the tests) import them from here.
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/124.0.0.0 Safari/537.36"
 )
-REQUEST_TIMEOUT = 10.0
-"""Seconds for one request (including every redirect hop) before it is abandoned."""
-MAX_BODY_BYTES = 2 * 1024 * 1024
-MAX_REDIRECTS = 6
-MAX_BUNDLES = 2
-MAX_UI_STRINGS = 250
-PAGE_TEXT_CHARS = 25_000
-CONTENT_CHARS = 40_000
-THIN_TEXT_CHARS = 400
+REQUEST_TIMEOUT = limits.WEB_REQUEST_TIMEOUT_S
+"""Seconds for one request (including every redirect hop and the one retry) before it is abandoned."""
+MAX_BODY_BYTES = limits.WEB_MAX_BODY_BYTES
+MAX_REDIRECTS = limits.WEB_MAX_REDIRECTS
+MAX_BUNDLES = limits.WEB_MAX_BUNDLES
+MAX_UI_STRINGS = limits.WEB_MAX_UI_STRINGS
+PAGE_TEXT_CHARS = limits.WEB_PAGE_TEXT_CHARS
+CONTENT_CHARS = limits.WEB_CONTENT_CHARS
+THIN_TEXT_CHARS = limits.WEB_THIN_TEXT_CHARS
 """A page with less visible text than this, plus module scripts, is treated as a client-rendered SPA."""
-MAX_LINKS = 3000
-MAX_SCRIPT_URLS = 200
-MAX_HEADINGS = 40
-MAX_STRUCTURED = 6
-MAX_LITERALS_SCANNED = 150_000
+MAX_LINKS = limits.WEB_MAX_PAGE_LINKS
+"""Anchors collected from one page (not the user's pasted links: that is `classify.MAX_LINKS`)."""
+MAX_SCRIPT_URLS = limits.WEB_MAX_SCRIPT_URLS
+MAX_HEADINGS = limits.WEB_MAX_HEADINGS
+MAX_STRUCTURED = limits.WEB_MAX_STRUCTURED
+MAX_LITERALS_SCANNED = limits.WEB_MAX_LITERALS_SCANNED
 """Bundle string literals examined (not kept) before extraction stops."""
+ACCEPT_ENCODING = "gzip, deflate"
+"""The only encodings asked for: `read_capped` inflates them through a bounded decompressor."""
 
 LOGIN_WALL_LOVABLE = "That is a private Lovable editor link — share the published .lovable.app URL instead"
 LINKEDIN_BLOCKED = "LinkedIn blocks automated reading — paste your About section into Extra context instead"
@@ -99,22 +110,84 @@ def _bare_host(hostname: str) -> str:
     return hostname.lower().removeprefix("[").removesuffix("]").removesuffix(".")
 
 
+_NUMERIC_HOST = re.compile(r"[0-9a-fx.]+")
+
+
+def log_host(host: str) -> str:
+    """A host for a log line. A dotted number ("169.254.169.254") is written "169[.]254[.]169[.]254": the log
+    redactor masks anything shaped like a phone number, which would hide the very addresses worth seeing."""
+    return host.replace(".", "[.]") if _NUMERIC_HOST.fullmatch(host.lower()) else host
+
+
+_DEC_PART = re.compile(r"[0-9]+")
+_HEX_PART = re.compile(r"0[xX][0-9a-fA-F]*")
+_OCT_PART = re.compile(r"0[0-7]+")
+
+
+def _number_part(part: str) -> int | None:
+    """One dotted part of an IPv4 spelling as a number (decimal, 0x hex or leading-zero octal), else None."""
+    if _HEX_PART.fullmatch(part):
+        return int(part[2:] or "0", 16)
+    if _OCT_PART.fullmatch(part):
+        return int(part, 8)
+    if _DEC_PART.fullmatch(part) and (part == "0" or part[0] != "0"):
+        return int(part, 10)
+    return None  # empty, signs, underscores, "08", letters: not a number
+
+
+def _numeric_ipv4(host: str) -> ipaddress.IPv4Address | None:
+    """The address a host that ENDS IN A NUMBER stands for, the way every browser and `inet_aton` reads it.
+
+    "2130706433", "0x7f.1", "0177.0.0.1" and "127.1" are all 127.0.0.1. Returns None for a host that does not
+    end in a number (a normal DNS name) and raises ValueError for one that does but is not a valid address
+    (such a name can never be a real site, so the caller refuses it).
+    """
+    parts = host.split(".")
+    if len(parts) > 1 and parts[-1] == "":
+        parts.pop()
+    last = parts[-1]
+    if not (_DEC_PART.fullmatch(last) or _HEX_PART.fullmatch(last)):
+        return None  # a normal DNS name
+    numbers = [_number_part(p) for p in parts]
+    if len(parts) > 4 or any(n is None for n in numbers):
+        raise ValueError(host)
+    values = [n for n in numbers if n is not None]
+    *head, tail = values
+    if any(n > 255 for n in head) or tail >= 256 ** (5 - len(parts)):
+        raise ValueError(host)
+    value = tail
+    for i, n in enumerate(head):
+        value += n << (8 * (3 - i))
+    return ipaddress.IPv4Address(value)
+
+
 def is_private_host(hostname: str) -> bool:
-    """Private by name (localhost, .local...) or an IP literal in a private range. Does not touch DNS."""
+    """Private by name (localhost, .local...) or an IP literal in a private range. Does not touch DNS.
+
+    Alternative IPv4 spellings (decimal, octal, hex, shortened) are judged by the address they stand for, so
+    the answer never depends on what the system resolver happens to make of them.
+    """
     h = _bare_host(hostname)
     if h == "localhost" or h.endswith(_PRIVATE_SUFFIXES):
         return True
     try:
         ipaddress.ip_address(h)
     except ValueError:
-        return False
-    return is_private_address(h)
+        pass
+    else:
+        return is_private_address(h)
+    try:
+        numeric = _numeric_ipv4(h)
+    except ValueError:
+        return True  # looks like an address but is not one: never a real host name
+    return numeric is not None and is_private_address(str(numeric))
 
 
 async def resolve_public(hostname: str) -> list[str]:
     """Addresses of `hostname`, all verified public (IPv4 first). Raises FetchProblem for anything else."""
     h = _bare_host(hostname)
     if is_private_host(h):
+        logger.warning("web_fetch_blocked", host=log_host(h), reason="private_host")
         raise FetchProblem(PRIVATE_MSG)
     try:
         ipaddress.ip_address(h)
@@ -130,6 +203,9 @@ async def resolve_public(hostname: str) -> list[str]:
         raise FetchProblem(NOT_FOUND_MSG)
     # Every answer must be public (localtest.me, 127.0.0.1.nip.io, a name pointing at 169.254.169.254...).
     if any(is_private_address(a) for a in addresses):
+        logger.warning(
+            "web_fetch_blocked", host=log_host(h), reason="private_dns_answer", answers=len(addresses)
+        )
         raise FetchProblem(PRIVATE_MSG)
     return sorted(addresses, key=lambda a: ":" in a)
 
@@ -146,13 +222,69 @@ class Fetched:
     truncated: bool
 
 
+class _BoundedInflater:
+    """Incremental gzip / deflate decoder that never produces more than the caller asks for.
+
+    httpx inflates each network chunk completely before handing it over, so a 64 KB chunk of a
+    decompression bomb becomes tens of megabytes of memory before any size cap can look at it. This decoder
+    passes `max_length` to zlib, so the work and the memory stay proportional to the cap.
+    """
+
+    def __init__(self, encoding: str) -> None:
+        self._encoding = encoding
+        self._first = True
+        wbits = zlib.MAX_WBITS | 16 if encoding in ("gzip", "x-gzip") else zlib.MAX_WBITS
+        self._inflater = zlib.decompressobj(wbits)
+
+    def feed(self, data: bytes, limit: int) -> bytes:
+        """At most `limit` (at least 1) decoded bytes of `data`; a longer expansion is simply not produced."""
+        try:
+            out = self._inflater.decompress(data, limit)
+        except zlib.error as exc:
+            # Some servers send raw deflate without the zlib header; only the first chunk can tell.
+            raw_deflate_possible = self._first and self._encoding == "deflate"
+            if not raw_deflate_possible:
+                raise httpx.DecodingError("The response body could not be decoded.") from exc
+            self._inflater = zlib.decompressobj(-zlib.MAX_WBITS)
+            try:
+                out = self._inflater.decompress(data, limit)
+            except zlib.error as exc2:
+                raise httpx.DecodingError("The response body could not be decoded.") from exc2
+        self._first = False
+        return out
+
+
+def _inflater_for(res: httpx.Response) -> _BoundedInflater | None:
+    """The bounded decoder for a response, None for an unencoded body; DecodingError for anything else."""
+    header = res.headers.get("content-encoding", "")
+    encodings = [e for e in (part.strip().lower() for part in header.split(",")) if e and e != "identity"]
+    if not encodings:
+        return None
+    if len(encodings) == 1 and encodings[0] in ("gzip", "x-gzip", "deflate"):
+        return _BoundedInflater(encodings[0])
+    # Stacked encodings (gzip, gzip) multiply the expansion; br and zstd were never asked for.
+    raise httpx.DecodingError(f"Unsupported content encoding: {header[:60]}")
+
+
 async def read_capped(res: httpx.Response, cap: int) -> tuple[bytes, bool]:
-    """The (decoded) body of a streaming response, at most `cap` bytes; the flag says it was cut."""
+    """The (decoded) body of a streaming response, at most `cap` bytes; the flag says it was cut.
+
+    The cap applies to the DECODED bytes and is enforced while inflating (see `_BoundedInflater`), so neither a
+    huge body nor a small, highly compressed one can use more than about `cap` bytes of memory.
+    """
+    if res.is_stream_consumed:  # the body was already loaded and decoded (a cached response, a test double)
+        source, inflater = res.aiter_bytes(), None
+    else:
+        inflater = _inflater_for(res)
+        source = res.aiter_raw()
     chunks: list[bytes] = []
     total = 0
-    async for chunk in res.aiter_bytes():
-        if total + len(chunk) > cap:
-            chunks.append(chunk[: cap - total])
+    async for chunk in source:
+        room = cap - total
+        if inflater is not None:
+            chunk = inflater.feed(chunk, room + 1)
+        if len(chunk) > room:
+            chunks.append(chunk[:room])
             return b"".join(chunks), True
         chunks.append(chunk)
         total += len(chunk)
@@ -173,14 +305,14 @@ def _decode_body(data: bytes, content_type: str) -> str:
 
 
 def _friendly_network_error(exc: BaseException) -> str:
-    if os.environ.get("INGEST_DEBUG"):
-        print(f"[ingest/web] fetch failed: {exc!r}", flush=True)
     if isinstance(exc, FetchProblem):
         return str(exc)
     if isinstance(exc, httpx.ConnectTimeout):
         return "Could not connect to that site (the connection timed out). Check the link."
     if isinstance(exc, (TimeoutError, httpx.TimeoutException)):
         return f"The page took too long to respond (over {int(REQUEST_TIMEOUT)} seconds)."
+    if isinstance(exc, httpx.DecodingError):
+        return "That site sent a response that could not be decoded."
     chain: list[BaseException] = []
     e: BaseException | None = exc
     while e is not None and len(chain) < 8:
@@ -208,6 +340,7 @@ async def _get_pinned(
         "User-Agent": USER_AGENT,
         "Accept": accept,
         "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": ACCEPT_ENCODING,
         "Host": host + (f":{port}" if port else ""),
     }
     extensions = {} if scheme == "http" or is_literal else {"sni_hostname": bare}
@@ -224,15 +357,39 @@ async def _get_pinned(
                 return res.headers, res.status_code, body, truncated
         except (httpx.ConnectError, httpx.ConnectTimeout) as exc:  # try the next address
             last = exc
+        except httpx.InvalidURL as exc:
+            # httpx prepares the next request itself (redirects are followed by this module, not by httpx) and
+            # cannot build one from a Location such as "javascript:alert(1)".
+            raise FetchProblem("That link redirects somewhere that cannot be read.") from exc
+        except httpx.RemoteProtocolError as exc:
+            # ...or refuses a Location it cannot parse (http://0177.0.0.1/). That is a bad redirect, not a dropped
+            # connection, so it must not be retried.
+            if "location header" in str(exc).lower():
+                raise FetchProblem("That link redirects somewhere that cannot be read.") from exc
+            raise
     assert last is not None
     raise last
+
+
+@functools.cache
+def ssl_context(trust_env: bool) -> ssl.SSLContext:
+    """The process-wide TLS context for outgoing requests (`trust_env` as for `httpx.AsyncClient`).
+
+    httpx builds a fresh one for every client, which loads the CA bundle again: up to half a second of
+    blocking work per fetch (a page and its two bundles cost a second and a half). Built once, off the event
+    loop, by the first caller.
+    """
+    return httpx.create_ssl_context(trust_env=trust_env)
 
 
 async def _fetch_text(start_url: str, cap: int, accept: str) -> Fetched:
     """GET with manual redirects (every hop is resolved and checked), a hard timeout and a body cap."""
     url = start_url
     async with asyncio.timeout(REQUEST_TIMEOUT):
-        async with httpx.AsyncClient(follow_redirects=False, trust_env=False, timeout=REQUEST_TIMEOUT) as client:
+        verify = await asyncio.to_thread(ssl_context, False)
+        async with httpx.AsyncClient(
+            follow_redirects=False, trust_env=False, timeout=REQUEST_TIMEOUT, verify=verify
+        ) as client:
             for _ in range(MAX_REDIRECTS + 1):
                 u = normalize_url(url)
                 if u is None:
@@ -251,12 +408,17 @@ async def _fetch_text(start_url: str, cap: int, accept: str) -> Fetched:
 
 
 async def fetch_text(start_url: str, cap: int, accept: str) -> Fetched:
-    """`_fetch_text` with one retry for dropped connections (never for timeouts, DNS or HTTP errors)."""
-    try:
-        return await _fetch_text(start_url, cap, accept)
-    except (httpx.RemoteProtocolError, httpx.ReadError):
-        await asyncio.sleep(0.4)
-        return await _fetch_text(start_url, cap, accept)
+    """`_fetch_text` with one retry for dropped connections (never for timeouts, DNS or HTTP errors).
+
+    One REQUEST_TIMEOUT covers the first attempt, the pause and the retry together: the retry used to start
+    a fresh budget, so a flaky site could hold an analysis for about twice the documented limit.
+    """
+    async with asyncio.timeout(REQUEST_TIMEOUT):
+        try:
+            return await _fetch_text(start_url, cap, accept)
+        except (httpx.RemoteProtocolError, httpx.ReadError):
+            await asyncio.sleep(0.4)
+            return await _fetch_text(start_url, cap, accept)
 
 
 # --------------------------------------------------------------------------- HTML parsing
@@ -266,7 +428,7 @@ async def fetch_text(start_url: str, cap: int, accept: str) -> Fetched:
 # Its patterns are possessive or bounded and never run past the next "<" outside a quoted attribute
 # value, so one pass is linear; MAX_TOKENS caps the work on a page that is nothing but tags.
 
-MAX_TOKENS = 400_000
+MAX_TOKENS = limits.WEB_MAX_TOKENS
 
 _NAMED_BLOCK_END = frozenset(
     "p div section article aside li ul ol tr table blockquote pre h1 h2 h3 h4 h5 h6 figure figcaption dd dt dl form "
@@ -298,11 +460,10 @@ _RAW_END = {
 }
 
 
-def _squash(s: str) -> str:
-    return " ".join(s.split())
+_squash = squash  # the name the tests and older callers know
 
 
-def _strip_comments(s: str) -> str:
+def strip_html_comments(s: str) -> str:
     """Remove closed HTML comments in linear time; an unterminated one is left in place."""
     out: list[str] = []
     i = 0
@@ -317,7 +478,7 @@ def _strip_comments(s: str) -> str:
 
 
 def _to_text(pieces: list[str]) -> str:
-    lines = [_squash(line) for line in "".join(pieces).split("\n")]
+    lines = [squash(line) for line in "".join(pieces).split("\n")]
     out: list[str] = []
     for line in lines:
         if line and not _LINE_NOISE.fullmatch(line) and (not out or out[-1] != line):
@@ -450,8 +611,13 @@ class _PageParser:
     def _end_heading(self) -> None:
         if not self._heading_level:
             return
-        text = _squash("".join(self._heading_buf))
-        if text and len(text) <= 200 and text not in self._seen_headings and len(self.info.headings) < MAX_HEADINGS:
+        text = squash("".join(self._heading_buf))
+        if (
+            text
+            and len(text) <= 200
+            and text not in self._seen_headings
+            and len(self.info.headings) < MAX_HEADINGS
+        ):
             self._seen_headings.add(text)
             self.info.headings.append((self._heading_level, text))
         self._heading_level, self._heading_buf = 0, []
@@ -461,7 +627,7 @@ class _PageParser:
         text = "".join(self._title_buf or [])
         self._title_buf, self._title_done = None, True
         if closed:
-            self.info.title = _squash(text)
+            self.info.title = squash(text)
         else:
             self._emit(text)
 
@@ -471,7 +637,11 @@ class _PageParser:
             return
         try:
             data = json.loads(raw)
-            nodes = data if isinstance(data, list) else [data, *((data.get("@graph") or []) if isinstance(data, dict) else [])]
+            nodes = (
+                data
+                if isinstance(data, list)
+                else [data, *((data.get("@graph") or []) if isinstance(data, dict) else [])]
+            )
             for node in nodes:
                 if not isinstance(node, dict):
                     continue
@@ -480,7 +650,7 @@ class _PageParser:
                 if not _LD_TYPE_RE.search(kind):
                     continue
                 bits = [
-                    f"{k}: {_squash(node[k])[:240]}"
+                    f"{k}: {squash(node[k])[:240]}"
                     for k in ("name", "jobTitle", "description", "url")
                     if isinstance(node.get(k), str)
                 ]
@@ -508,9 +678,13 @@ class _PageParser:
         if tag == "meta":
             key = (a.get("name") or a.get("property") or "").lower()
             if key and a.get("content") and key not in self.meta:
-                self.meta[key] = _squash(a["content"])
+                self.meta[key] = squash(a["content"])
         elif tag == "link":
-            if "modulepreload" in a.get("rel", "").lower().split() and a.get("href") and scripts < MAX_SCRIPT_URLS:
+            if (
+                "modulepreload" in a.get("rel", "").lower().split()
+                and a.get("href")
+                and scripts < MAX_SCRIPT_URLS
+            ):
                 self._preloads.append(a["href"])
         elif tag == "script":
             src, kind = a.get("src"), a.get("type", "")
@@ -614,7 +788,7 @@ class _PageParser:
 
 def parse_page(raw_html: str, page_url: str) -> PageInfo:
     """Title, meta tags, structured data, scripts, headings, outbound links and readable text of an HTML page."""
-    html = _strip_comments(raw_html)
+    html = strip_html_comments(raw_html)
     parser = _PageParser(page_url)
     parser.feed(html)
     info = parser.finish()
@@ -628,7 +802,9 @@ def parse_page(raw_html: str, page_url: str) -> PageInfo:
 class _Signature:
     """A named fingerprint: plain substrings (fast) and regexes, any of which is a hit."""
 
-    def __init__(self, name: str, literals: Sequence[str] = (), patterns: Sequence[str] = (), ignore_case: bool = False):
+    def __init__(
+        self, name: str, literals: Sequence[str] = (), patterns: Sequence[str] = (), ignore_case: bool = False
+    ):
         self.name = name
         self.ignore_case = ignore_case
         self.literals = tuple(s.lower() if ignore_case else s for s in literals)
@@ -701,7 +877,9 @@ HTML_SIGNATURES: tuple[_Signature, ...] = (
 )  # fmt: skip
 
 # Analytics and trackers say little about a person's skills, so they stay out of the quick signals.
-NON_SKILL_SIGNALS = frozenset(("Google Analytics", "Vercel Analytics", "PostHog", "Sentry", "Stripe", "Sonner"))
+NON_SKILL_SIGNALS = frozenset(
+    ("Google Analytics", "Vercel Analytics", "PostHog", "Sentry", "Stripe", "Sonner")
+)
 
 # Hosts that appear in every bundle because of library internals, not because the app calls them.
 NOISE_HOSTS = (
@@ -736,7 +914,9 @@ _ROUTE_RE = re.compile(r'\bpath:\s{0,8}"(/[A-Za-z0-9_\-/:*]{0,60}|\*)"')
 _TABLE_RE = re.compile(r'\.from\(\s{0,8}"([a-z_][a-z0-9_-]{1,40})"\s{0,8}\)')
 _RPC_RE = re.compile(r'\.(?:rpc|invoke)\(\s{0,8}"([A-Za-z_][\w-]{1,40})"')
 _HOST_RE = re.compile(r"""https?://([a-z0-9][a-z0-9.\-]{0,252}\.[a-z]{2,})(?=[/"'`?])""", re.IGNORECASE)
-_UTILITY_RE = re.compile(r"\b(?:bg|px|py|text|rounded|border|gap|items|justify|space-[xy])-[a-z0-9\[\]/.\-]{1,60}")
+_UTILITY_RE = re.compile(
+    r"\b(?:bg|px|py|text|rounded|border|gap|items|justify|space-[xy])-[a-z0-9\[\]/.\-]{1,60}"
+)
 _HTML_UTILITY_RE = re.compile(r"\b(?:px|py|mt|mb|bg|text|rounded|gap)-(?:\d|\[|[a-z]{1,20}-\d)")
 _FLEX_RE = re.compile(r"\bflex\b")
 _CLASSY_RE = re.compile(r"[a-z0-9]+(?:[-:/][a-z0-9\[\].%#]+)+")
@@ -824,7 +1004,7 @@ def analyze_bundle(js: str, extra_html: str) -> BundleFindings:
         quote, body = m.group(1), m.group(2)
         if quote == "`" and "${" in body:
             continue
-        s = _squash(_unescape_js(body, quote))
+        s = squash(_unescape_js(body, quote))
         if s in prop_seen or not _looks_like_prop_copy(s):
             continue
         prop_seen.add(s)
@@ -841,7 +1021,7 @@ def analyze_bundle(js: str, extra_html: str) -> BundleFindings:
             quote, raw = "'", m.group(2)
         else:
             quote, raw = "`", m.group(3) or ""
-        s = _squash(_unescape_js(raw, quote))
+        s = squash(_unescape_js(raw, quote))
         if s in sentence_seen or s in prop_seen or not _looks_like_sentence(s):
             continue
         sentence_seen.add(s)
@@ -938,14 +1118,18 @@ def _looks_like_bot_wall(page: PageInfo) -> bool:
     )
 
 
-_LOGIN_PATH_RE = re.compile(r"authwall|/login|/signin|/sign-in|/signup|/uas/|auth-bridge|/auth\b", re.IGNORECASE)
+_LOGIN_PATH_RE = re.compile(
+    r"authwall|/login|/signin|/sign-in|/signup|/uas/|auth-bridge|/auth\b", re.IGNORECASE
+)
 _NOTABLE_LINK_RE = re.compile(
     r"github\.com|linkedin\.com|twitter\.com|x\.com|medium\.com|dev\.to|kaggle\.com|youtube\.com|substack\.com|"
     r"behance\.net|dribbble\.com|lovable\.app|vercel\.app|netlify\.app|huggingface\.co",
     re.IGNORECASE,
 )
 _LOVABLE_HTML = ("lovable.dev/opengraph-image", "lovable-tagger", "gptengineer")
-_PLATFORM_BASICS = frozenset(("React", "Vite", "Tailwind CSS", "Radix UI", "shadcn/ui", "Lucide", "Sonner", "Zod"))
+_PLATFORM_BASICS = frozenset(
+    ("React", "Vite", "Tailwind CSS", "Radix UI", "shadcn/ui", "Lucide", "Sonner", "Zod")
+)
 
 
 # --------------------------------------------------------------------------- the ingester
@@ -958,6 +1142,13 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
     src = _display_src(full_url)
 
     def fail(error: str, **extra: Any) -> SourceDoc:
+        # Our own message and the host only: never the page, and never the path or query (they can carry tokens).
+        logger.info(
+            "web_ingest_failed",
+            kind=kind,
+            host=log_host(parsed.hostname) if parsed else None,
+            reason=error[:120],
+        )
         return SourceDoc.failure(kind, kind, label, kind_label, full_url, src, error, **extra)
 
     if parsed is None:
@@ -967,7 +1158,9 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
     is_lovable_app = host.endswith((".lovable.app", ".lovableproject.com"))
 
     # Lovable editor links (lovable.dev/projects/...) are the Lovable app itself, not the user's published app.
-    if (host == "lovable.dev" or host.endswith(".lovable.dev")) and re.match(r"/projects?\b", parsed.path, re.IGNORECASE):
+    if (host == "lovable.dev" or host.endswith(".lovable.dev")) and re.match(
+        r"/projects?\b", parsed.path, re.IGNORECASE
+    ):
         log(f"Opened {src}")
         return fail(LOGIN_WALL_LOVABLE)
 
@@ -976,6 +1169,7 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
             full_url, MAX_BODY_BYTES, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         )
     except Exception as exc:  # noqa: BLE001 - every network failure becomes a readable message
+        logger.debug("web_fetch_failed", host=log_host(parsed.hostname), error_type=type(exc).__name__)
         return fail(LINKEDIN_BLOCKED if is_linkedin else _friendly_network_error(exc))
 
     final_host = _hostname(page.url)
@@ -983,13 +1177,18 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
     login_redirect = bool(_LOGIN_PATH_RE.search(final.path + ("?" + final.query if final.query else "")))
 
     if is_linkedin and (
-        _is_blocked_status(page.status) or page.status >= 400 or login_redirect or not final_host.endswith("linkedin.com")
+        _is_blocked_status(page.status)
+        or page.status >= 400
+        or login_redirect
+        or not final_host.endswith("linkedin.com")
     ):
         return fail(LINKEDIN_BLOCKED)
     if is_lovable_app and (final_host == "lovable.dev" or final_host.endswith(".lovable.dev")):
         return fail(LOGIN_WALL_LOVABLE)
     if page.status in (404, 410) and is_lovable_app:
-        return fail("That Lovable app was not found. It may be unpublished or private. Publish it and share the .lovable.app URL.")
+        return fail(
+            "That Lovable app was not found. It may be unpublished or private. Publish it and share the .lovable.app URL."
+        )
     if page.status in (404, 410):
         return fail(f"That page was not found (HTTP {page.status}). Check the link.")
     if _is_blocked_status(page.status):
@@ -1004,12 +1203,16 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
     log(f"Opened {src}")
 
     ct = page.content_type.lower()
-    is_html = not ct or bool(re.search(r"html|xhtml|xml", ct)) or bool(
-        re.match(r"\s*<(?:!doctype|html)", page.text[:200], re.IGNORECASE)
+    is_html = (
+        not ct
+        or bool(re.search(r"html|xhtml|xml", ct))
+        or bool(re.match(r"\s*<(?:!doctype|html)", page.text[:200], re.IGNORECASE))
     )
     if not is_html:
         if "application/pdf" in ct:
-            return fail("That link points to a PDF, which cannot be read here. Paste its text into Extra context instead.")
+            return fail(
+                "That link points to a PDF, which cannot be read here. Paste its text into Extra context instead."
+            )
         if re.match(r"text/", ct) or "json" in ct:
             text = page.text.strip()[:PAGE_TEXT_CHARS]
             return SourceDoc(
@@ -1041,7 +1244,11 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
                 absolute = urljoin(page.url, s)
             except ValueError:
                 continue
-            if _same_origin(absolute, page.url) and re.search(r"\.m?js(?:$|\?)", absolute, re.IGNORECASE) and absolute not in candidates:
+            if (
+                _same_origin(absolute, page.url)
+                and re.search(r"\.m?js(?:$|\?)", absolute, re.IGNORECASE)
+                and absolute not in candidates
+            ):
                 candidates.append(absolute)
         # The main entry bundle holds the app; keep the order of appearance but prefer "index" files first.
         candidates.sort(key=lambda c: not re.search(r"/index[-.]", c, re.IGNORECASE))
@@ -1052,7 +1259,10 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
             for bundle_url in candidates[:MAX_BUNDLES]:
                 try:
                     js = await fetch_text(bundle_url, MAX_BODY_BYTES, "*/*")
-                except Exception:  # noqa: BLE001, S112 - a bundle that fails to load is not fatal
+                except Exception as exc:  # noqa: BLE001, S112 - a bundle that fails to load is not fatal
+                    logger.debug(
+                        "web_bundle_failed", host=log_host(final_host), error_type=type(exc).__name__
+                    )
                     continue
                 if js.status >= 400 or not js.text:
                     continue
@@ -1072,7 +1282,9 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
             if read > 0:
                 findings = merged
             else:
-                bundle_notes.append("The app bundle could not be downloaded, so only the page shell was read.")
+                bundle_notes.append(
+                    "The app bundle could not be downloaded, so only the page shell was read."
+                )
 
     # Libraries visible in the HTML itself (works for non-SPA pages too).
     html_libraries = _detect(LIBRARY_SIGNATURES, info.html, skip=("Vite", "React"))
@@ -1088,7 +1300,9 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
         libraries.clear()
     html_lower = info.html.lower()
     built_with_lovable = (
-        any(s in html_lower for s in _LOVABLE_HTML) or "lovable" in info.generator.lower() or host.endswith(".lovable.app")
+        any(s in html_lower for s in _LOVABLE_HTML)
+        or "lovable" in info.generator.lower()
+        or host.endswith(".lovable.app")
     )
 
     # Rank sentence-like strings: prop copy first, then the most sentence-like leftovers.
@@ -1134,7 +1348,9 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
     if info.headings and headings_in_text < len(info.headings) * 0.8:
         out += ["", "## Headings", *(f"- h{level}: {h}" for level, h in info.headings)]
 
-    page_text = info.text[:PAGE_TEXT_CHARS] + "\n[…truncated]" if len(info.text) > PAGE_TEXT_CHARS else info.text
+    page_text = (
+        info.text[:PAGE_TEXT_CHARS] + "\n[…truncated]" if len(info.text) > PAGE_TEXT_CHARS else info.text
+    )
     if page_text:
         out += ["", "## Page text", page_text]
     elif spa:
@@ -1175,7 +1391,9 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
 
     notes: list[str] = []
     if is_linkedin:
-        notes.append("This is the public, signed-out view of the LinkedIn profile, so it can be partial. Ignore the sign-in form text.")
+        notes.append(
+            "This is the public, signed-out view of the LinkedIn profile, so it can be partial. Ignore the sign-in form text."
+        )
     if page.truncated:
         notes.append(f"The page was larger than {MAX_BODY_BYTES // 1024 // 1024} MB and was read partially.")
     notes.extend(bundle_notes)
@@ -1213,6 +1431,17 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
     else:
         log(f"Read {words:,} words" + (f", {plural(len(info.headings), 'heading')}" if info.headings else ""))
 
+    logger.info(
+        "web_ingested",
+        kind=kind,
+        host=log_host(final_host),
+        status=page.status,
+        spa=spa,
+        chars=len(content),
+        words=words,
+        libraries=len(libraries),
+        truncated=page.truncated,
+    )
     return SourceDoc(
         id=kind,
         kind=kind,

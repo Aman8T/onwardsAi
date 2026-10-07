@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from ..core import limits
 from .classify import SourceDoc
 from .terms import find_terms
 
-MAX_NOTES_CHARS = 20_000
+MAX_NOTES_CHARS = limits.NOTES_MAX_CHARS
+"""Pasted notes are cut to this many characters (the form field cap is the same number)."""
 
 
 def _normalise(text: str) -> str:

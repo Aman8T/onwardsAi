@@ -19,24 +19,47 @@ from urllib.parse import quote
 
 import httpx
 
-from .classify import IngestLog, SourceDoc, normalize_url, plural
+from ..core import limits
+from ..core.logging import get_logger
+from ..core.text import js_round, one_line, plural
+from .classify import IngestLog, SourceDoc, normalize_url
 from .terms import count_terms, find_terms
-from .web import MAX_BODY_BYTES, REQUEST_TIMEOUT, read_capped
+from .web import (
+    ACCEPT_ENCODING,
+    MAX_BODY_BYTES,
+    REQUEST_TIMEOUT,
+    read_capped,
+    ssl_context,
+    strip_html_comments,
+)
+
+logger = get_logger(__name__)
 
 API = "https://api.github.com"
-MAX_CALLS = 14
+MAX_CALLS = limits.GITHUB_MAX_CALLS
 """Hard budget of API calls per profile."""
-README_CHARS = 2500
-README_RAW_CHARS = 100_000
+README_CHARS = limits.GITHUB_README_CHARS
+README_RAW_CHARS = limits.GITHUB_README_RAW_CHARS
 """Only this much of a raw README is cleaned (the result is cut to README_CHARS anyway)."""
-DETAILED_REPOS = 8
-README_REPOS = 5
-TREE_REPOS = 4
+DETAILED_REPOS = limits.GITHUB_DETAILED_REPOS
+README_REPOS = limits.GITHUB_README_REPOS
+TREE_REPOS = limits.GITHUB_TREE_REPOS
 RATE_LIMIT_MSG = "GitHub rate limit reached — set GITHUB_TOKEN to raise it"
 
 _OWNER_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]{0,38}")
 _RESERVED_OWNERS = frozenset(
-    ("orgs", "topics", "sponsors", "marketplace", "features", "about", "pricing", "settings", "login", "explore")
+    (
+        "orgs",
+        "topics",
+        "sponsors",
+        "marketplace",
+        "features",
+        "about",
+        "pricing",
+        "settings",
+        "login",
+        "explore",
+    )
 )
 _RATE_LIMIT_BODY = re.compile(r"rate limit|abuse", re.IGNORECASE)
 
@@ -54,18 +77,29 @@ class _GhResult:
     """The request never produced a response (offline, DNS, timeout), was over budget or returned bad JSON."""
 
 
+def resolve_token(github_token: str | None) -> str | None:
+    """The token to use: the explicit one when given (an empty string means "none"), else $GITHUB_TOKEN."""
+    raw = github_token if github_token is not None else os.environ.get("GITHUB_TOKEN", "")
+    return raw.strip() or None
+
+
 class _GitHubClient:
-    def __init__(self, http: httpx.AsyncClient) -> None:
+    def __init__(self, http: httpx.AsyncClient, token: str | None = None) -> None:
         self.http = http
         self.calls = 0
         self.rate_limited = False
-        self.token = os.environ.get("GITHUB_TOKEN", "").strip() or None
+        self.token = token
 
     async def get(self, path: str, accept: str = "application/vnd.github+json") -> _GhResult:
         if self.calls >= MAX_CALLS:
             return _GhResult(0, False, failed=True)
         self.calls += 1
-        headers = {"User-Agent": "tayyari-poc", "Accept": accept, "X-GitHub-Api-Version": "2022-11-28"}
+        headers = {
+            "User-Agent": "tayyari-poc",
+            "Accept": accept,
+            "Accept-Encoding": ACCEPT_ENCODING,
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         try:
@@ -77,7 +111,9 @@ class _GitHubClient:
             return _GhResult(0, False, failed=True)
 
         body = raw.decode("utf-8", errors="replace")
-        limited = status == 429 or (status == 403 and (remaining == "0" or bool(_RATE_LIMIT_BODY.search(body))))
+        limited = status == 429 or (
+            status == 403 and (remaining == "0" or bool(_RATE_LIMIT_BODY.search(body)))
+        )
         if limited:
             self.rate_limited = True
         result = _GhResult(status, 200 <= status < 300, rate_limited=limited)
@@ -99,9 +135,7 @@ def _fmt_int(n: Any) -> str:
     return f"{int(n or 0):,}"
 
 
-def _js_round(x: float) -> int:
-    """JavaScript's Math.round (halves round up), unlike Python's banker's rounding."""
-    return math.floor(x + 0.5)
+_js_round = js_round  # JavaScript's Math.round: the name the tests and older callers know
 
 
 def _parse_ts(iso: str | None) -> float | None:
@@ -145,8 +179,7 @@ def _top_counts(values: Any, limit: int) -> list[tuple[str, int]]:
     return sorted(counts.items(), key=lambda kv: -kv[1])[:limit]
 
 
-def _one_line(s: str) -> str:
-    return " ".join(s.split())
+_one_line = one_line
 
 
 # bounded quantifiers everywhere: a README is untrusted input and Python's `re` can backtrack
@@ -165,21 +198,8 @@ _LINK = re.compile(r"\[([^\]]{1,300})\](?:\([^)]{0,1000}\)|\[[^\]]{0,300}\])")
 _CODE_FENCE = re.compile(r"(```[\s\S]*?```)")
 
 
-def _strip_html_comments(s: str) -> str:
-    out: list[str] = []
-    i = 0
-    while True:
-        start = s.find("<!--", i)
-        end = s.find("-->", start + 4) if start >= 0 else -1
-        if end < 0:  # none left, or an unterminated one (which has no closer after it either)
-            out.append(s[i:])
-            return "".join(out)
-        out.append(s[i:start])
-        i = end + 3
-
-
 def _clean_prose(p: str) -> str:
-    p = _strip_html_comments(p)
+    p = strip_html_comments(p)
     p = _REF_DEFINITION.sub("", p)
     p = _LINKED_BADGE.sub("", p)
     p = _IMAGE.sub("", p)
@@ -257,7 +277,8 @@ def _analyze_tree(tree: dict[str, Any]) -> _RepoInsights:
         ci=[name for name, rx in _CI_PATTERNS if any(rx.search(p) for p in blobs)],
         docker=any(_DOCKER_RE.search(p) for p in blobs),
         manifests=manifests,
-        docs=any(_DOCS_DIR_RE.search(p) for p in blobs) or sum(1 for p in blobs if _MARKDOWN_RE.search(p)) > 3,
+        docs=any(_DOCS_DIR_RE.search(p) for p in blobs)
+        or sum(1 for p in blobs if _MARKDOWN_RE.search(p)) > 3,
         truncated=bool(tree.get("truncated")),
     )
 
@@ -280,8 +301,12 @@ def _parse_target(value: str) -> tuple[str, str | None] | None:
 def _repo_score(r: dict[str, Any], now: float) -> float:
     recency = max(0.0, 24 - _months_since(r.get("pushed_at"), now))  # 0-24, fresh repos win
     size = min(10.0, math.log2((r.get("size") or 0) + 1))  # 0-10, tiny repos lose
-    return (r.get("stargazers_count") or 0) * 3 + recency + (4 if r.get("description") else 0) + size - (
-        6 if r.get("archived") else 0
+    return (
+        (r.get("stargazers_count") or 0) * 3
+        + recency
+        + (4 if r.get("description") else 0)
+        + size
+        - (6 if r.get("archived") else 0)
     )
 
 
@@ -307,7 +332,9 @@ class _Activity:
     latest: str | None
 
 
-def _summarize_events(events: list[dict[str, Any]], login: str, language_by_repo: dict[str, str]) -> _Activity:
+def _summarize_events(
+    events: list[dict[str, Any]], login: str, language_by_repo: dict[str, str]
+) -> _Activity:
     owner = login.lower()
     times = [t for t in (_parse_ts(e.get("created_at")) for e in events) if t is not None]
     pushes = [e for e in events if e.get("type") == "PushEvent"]
@@ -340,14 +367,19 @@ def _summarize_events(events: list[dict[str, Any]], login: str, language_by_repo
         prs_merged=sum(
             1
             for e in pr_events
-            if payload_of(e).get("action") == "closed" and (payload_of(e).get("pull_request") or {}).get("merged")
+            if payload_of(e).get("action") == "closed"
+            and (payload_of(e).get("pull_request") or {}).get("merged")
         ),
         external_prs=sum(1 for e in opened if repo_name(e).split("/")[0].lower() != owner),
-        issues_opened=sum(1 for e in events if e.get("type") == "IssuesEvent" and payload_of(e).get("action") == "opened"),
+        issues_opened=sum(
+            1 for e in events if e.get("type") == "IssuesEvent" and payload_of(e).get("action") == "opened"
+        ),
         comments=sum(1 for e in events if e.get("type") in ("IssueCommentEvent", "CommitCommentEvent")),
         reviews=sum(1 for e in events if e.get("type") == "PullRequestReviewEvent"),
         repos_created=sum(
-            1 for e in events if e.get("type") == "CreateEvent" and payload_of(e).get("ref_type") == "repository"
+            1
+            for e in events
+            if e.get("type") == "CreateEvent" and payload_of(e).get("ref_type") == "repository"
         ),
         stars=sum(1 for e in events if e.get("type") == "WatchEvent"),
         active_repos=_top_counts((repo_name(e) for e in events), 5),
@@ -377,8 +409,12 @@ class _State:
     detailed: list[dict[str, Any]] = field(default_factory=list)
 
 
-async def ingest_github(url: str, log: IngestLog) -> SourceDoc:
-    """Read a GitHub profile or repository link. Expected problems come back as a failed `SourceDoc`."""
+async def ingest_github(url: str, log: IngestLog, github_token: str | None = None) -> SourceDoc:
+    """Read a GitHub profile or repository link. Expected problems come back as a failed `SourceDoc`.
+
+    `github_token` raises the API rate limit (no scopes needed). Left as None it is read from the GITHUB_TOKEN
+    environment variable, as before; pass an empty string to force unauthenticated calls.
+    """
     target = _parse_target(url)
     kind_label = "GitHub repo" if target and target[1] else "GitHub profile"
     page_url = f"https://github.com/{target[0]}{'/' + target[1] if target[1] else ''}" if target else url
@@ -391,13 +427,26 @@ async def ingest_github(url: str, log: IngestLog) -> SourceDoc:
     owner, repo_name = target
     src = f"github.com/{owner}"
     state = _State(login=owner)
-    async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT, follow_redirects=False) as http:
-        client = _GitHubClient(http)
+    verify = await asyncio.to_thread(ssl_context, True)
+    async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT, follow_redirects=False, verify=verify) as http:
+        client = _GitHubClient(http, resolve_token(github_token))
         error = await _fetch(client, state, owner, repo_name, log)
-    return _build_source(page_url, kind_label, src, state, client, error)
+    doc = _build_source(page_url, kind_label, src, state, client, error)
+    logger.info(
+        "github_ingested",
+        owner=owner,
+        ok=doc.ok,
+        calls=client.calls,
+        rate_limited=client.rate_limited,
+        authenticated=client.token is not None,
+        partial=bool(doc.meta.get("partial")),
+    )
+    return doc
 
 
-async def _fetch(client: _GitHubClient, state: _State, owner: str, repo_name: str | None, log: IngestLog) -> str | None:
+async def _fetch(
+    client: _GitHubClient, state: _State, owner: str, repo_name: str | None, log: IngestLog
+) -> str | None:
     """Fill `state` from the API; returns an error message when the profile could not be read."""
     now = time.time()
     login_q = quote(owner, safe="")
@@ -439,7 +488,9 @@ async def _fetch(client: _GitHubClient, state: _State, owner: str, repo_name: st
             if one.ok and isinstance(one.json, dict):
                 state.focus = one.json
             elif one.status == 404:
-                state.notes.append(f"The repository {state.login}/{repo_name} was not found; showing the profile instead.")
+                state.notes.append(
+                    f"The repository {state.login}/{repo_name} was not found; showing the profile instead."
+                )
 
     # 3. rank
     profile_repo = state.login.lower()
@@ -475,7 +526,9 @@ async def _fetch(client: _GitHubClient, state: _State, owner: str, repo_name: st
     async def inspect_trees() -> None:
         async def one(repo: dict[str, Any]) -> bool:
             branch = quote(repo.get("default_branch") or "main", safe="")
-            res = await client.get(f"/repos/{login}/{quote(repo['name'], safe='')}/git/trees/{branch}?recursive=1")
+            res = await client.get(
+                f"/repos/{login}/{quote(repo['name'], safe='')}/git/trees/{branch}?recursive=1"
+            )
             if res.ok and isinstance(res.json, dict):
                 state.insights[repo["name"]] = _analyze_tree(res.json)
                 return True
@@ -488,24 +541,34 @@ async def _fetch(client: _GitHubClient, state: _State, owner: str, repo_name: st
     async def read_events() -> None:
         res = await client.get(f"/users/{login}/events/public?per_page=100")
         if res.ok and isinstance(res.json, list):
-            by_repo = {r["full_name"].lower(): r["language"] for r in repos if r.get("language") and r.get("full_name")}
+            by_repo = {
+                r["full_name"].lower(): r["language"]
+                for r in repos
+                if r.get("language") and r.get("full_name")
+            }
             state.activity = _summarize_events(res.json, state.login, by_repo)
             log(f"Read {plural(state.activity.total, 'recent public event')}")
 
     async def read_profile_readme(repo: dict[str, Any]) -> None:
-        res = await client.get(f"/repos/{login}/{quote(repo['name'], safe='')}/readme", "application/vnd.github.raw")
+        res = await client.get(
+            f"/repos/{login}/{quote(repo['name'], safe='')}/readme", "application/vnd.github.raw"
+        )
         if res.ok and res.text and res.text.strip():
             state.profile_readme = _clean_readme(res.text)
             log("Profile README read")
 
-    profile_readme_repo = next((r for r in repos if r.get("name", "").lower() == profile_repo and not r.get("fork")), None)
+    profile_readme_repo = next(
+        (r for r in repos if r.get("name", "").lower() == profile_repo and not r.get("fork")), None
+    )
     tasks = [read_readme(r) for r in detailed[:README_REPOS]] + [inspect_trees(), read_events()]
     if profile_readme_repo:
         tasks.append(read_profile_readme(profile_readme_repo))
     await asyncio.gather(*tasks)
 
     if client.rate_limited:
-        state.notes.append("GitHub rate limit was reached part-way, so some READMEs, file checks or activity are missing.")
+        state.notes.append(
+            "GitHub rate limit was reached part-way, so some READMEs, file checks or activity are missing."
+        )
         log("Rate limit reached, continuing with what was fetched")
     return None
 
@@ -549,7 +612,9 @@ def _build_source(
             out.append(f"- Website: {user['blog']}")
         if user.get("twitter_username"):
             out.append(f"- X/Twitter: @{user['twitter_username']}")
-        out.append(f"- Followers: {_fmt_int(user.get('followers'))}, following: {_fmt_int(user.get('following'))}")
+        out.append(
+            f"- Followers: {_fmt_int(user.get('followers'))}, following: {_fmt_int(user.get('following'))}"
+        )
         created = _parse_ts(user.get("created_at"))
         if created is not None:
             years = max(0.0, (now - created) / (86_400 * 365.25))
@@ -557,7 +622,10 @@ def _build_source(
             out.append(f"- On GitHub since {_date_only(user.get('created_at'))} ({span})")
 
     if state.focus:
-        out += ["", f"The user linked one repository specifically: {state.focus.get('full_name')}. It is listed first below."]
+        out += [
+            "",
+            f"The user linked one repository specifically: {state.focus.get('full_name')}. It is listed first below.",
+        ]
 
     if repos is not None:
         out += ["", "## Totals"]
@@ -571,7 +639,9 @@ def _build_source(
         out.append(f"- Original repos: {len(originals)}, forks: {len(forks)}")
         out.append(f"- Stars across original repos: {_fmt_int(stars)}")
         if lang_counts:
-            out.append(f"- Languages by number of original repos: {', '.join(f'{lang} ({n})' for lang, n in lang_counts)}")
+            out.append(
+                f"- Languages by number of original repos: {', '.join(f'{lang} ({n})' for lang, n in lang_counts)}"
+            )
         with_desc = sum(1 for r in originals if r.get("description"))
         with_topics = sum(1 for r in originals if r.get("topics"))
         with_home = sum(1 for r in originals if (r.get("homepage") or "").strip())
@@ -595,12 +665,16 @@ def _build_source(
         out += ["", f"## Top repositories ({len(detailed)}, ranked by stars, recency and substance)"]
         for i, r in enumerate(detailed):
             name = r.get("name", "")
-            out += ["", f"### {i + 1}. {name}{' (fork)' if r.get('fork') else ''}{' (archived)' if r.get('archived') else ''}"]
+            out += [
+                "",
+                f"### {i + 1}. {name}{' (fork)' if r.get('fork') else ''}{' (archived)' if r.get('archived') else ''}",
+            ]
             out.append(f"- Description: {_one_line(r['description']) if r.get('description') else '(none)'}")
             spdx = (r.get("license") or {}).get("spdx_id")
             out.append(
                 f"- Language: {r.get('language') or 'n/a'}, stars: {_fmt_int(r.get('stargazers_count'))}, "
-                f"forks: {_fmt_int(r.get('forks_count'))}" + (f", license: {spdx}" if spdx and spdx != "NOASSERTION" else "")
+                f"forks: {_fmt_int(r.get('forks_count'))}"
+                + (f", license: {spdx}" if spdx and spdx != "NOASSERTION" else "")
             )
             if r.get("topics"):
                 out.append(f"- Topics: {', '.join(r['topics'])}")
@@ -625,7 +699,9 @@ def _build_source(
             elif name in state.no_readme:
                 out.append("- README: none found")
             elif i < README_REPOS:
-                out.append("- README: not fetched (GitHub rate limit or network error); do not treat it as missing")
+                out.append(
+                    "- README: not fetched (GitHub rate limit or network error); do not treat it as missing"
+                )
 
     shown = {r.get("name") for r in detailed}
     others = [r for r in ranked if r.get("name") not in shown][:14]
@@ -641,7 +717,11 @@ def _build_source(
             out.append(f"- …and {remaining} more")
 
     if forks:
-        out += ["", f"## Forks ({len(forks)})", ", ".join(f.get("name", "") for f in forks[:10]) + (", …" if len(forks) > 10 else "")]
+        out += [
+            "",
+            f"## Forks ({len(forks)})",
+            ", ".join(f.get("name", "") for f in forks[:10]) + (", …" if len(forks) > 10 else ""),
+        ]
 
     a = state.activity
     if a and a.total > 0:
@@ -666,7 +746,9 @@ def _build_source(
         if a.active_repos:
             out.append(f"- Most active repos: {', '.join(f'{n} ({c})' for n, c in a.active_repos)}")
         if a.push_languages:
-            out.append(f"- Languages of recent pushes: {', '.join(f'{lang} ({c})' for lang, c in a.push_languages)}")
+            out.append(
+                f"- Languages of recent pushes: {', '.join(f'{lang} ({c})' for lang, c in a.push_languages)}"
+            )
     elif repos is not None and a is None:
         out += ["", "## Recent public activity", "- Not available."]
 

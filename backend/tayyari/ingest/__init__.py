@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import asyncio
 import os
+import traceback
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING
 
+from ..core.logging import get_logger
 from .classify import (
     MAX_LINKS,
     ClassifiedUrl,
@@ -59,6 +61,8 @@ __all__ = [
     "usable_links",
 ]
 
+logger = get_logger(__name__)
+
 _RESUME_FORMAT = {".pdf": "PDF", ".docx": "DOCX", ".txt": "TXT", ".md": "Markdown"}
 
 
@@ -77,6 +81,15 @@ class PlannedSource:
     """Deterministic fetch/extract step; reports progress through the callback and never raises for expected failures."""
 
 
+def _crash_site(exc: BaseException) -> str:
+    """The innermost frame of an exception ("web.py:123 in parse_page"): where it happened, with no content."""
+    frames = traceback.extract_tb(exc.__traceback__)
+    if not frames:
+        return ""
+    last = frames[-1]
+    return f"{os.path.basename(last.filename)}:{last.lineno} in {last.name}"
+
+
 def _id_for(kind: str, n: int) -> str:
     if kind in ("github", "linkedin"):
         return kind if n == 1 else f"{kind}-{n}"
@@ -87,8 +100,11 @@ def _url_to_src(url: str) -> str:
     return url.removeprefix("https://").removeprefix("http://").removeprefix("www.").removesuffix("/")
 
 
-def plan_sources(inp: AnalyzeInput) -> list[PlannedSource]:
-    """The sources of an analysis in reading order: the resume, each usable link, then the notes."""
+def plan_sources(inp: AnalyzeInput, *, github_token: str | None = None) -> list[PlannedSource]:
+    """The sources of an analysis in reading order: the resume, each usable link, then the notes.
+
+    `github_token` is handed to the GitHub ingester (None: it reads $GITHUB_TOKEN, as before).
+    """
     if inp.sample:
         # lazy: the sample package imports this one
         from ..sample.sample import load_sample_sources
@@ -99,7 +115,10 @@ def plan_sources(inp: AnalyzeInput) -> list[PlannedSource]:
 
             return ingest
 
-        return [PlannedSource(d.id, d.kind, d.label, d.kind_label, d.src, d.url, replay(d)) for d in load_sample_sources()]
+        return [
+            PlannedSource(d.id, d.kind, d.label, d.kind_label, d.src, d.url, replay(d))
+            for d in load_sample_sources()
+        ]
 
     planned: list[PlannedSource] = []
     if inp.resume_bytes is not None:
@@ -118,10 +137,20 @@ def plan_sources(inp: AnalyzeInput) -> list[PlannedSource]:
 
         def read(log: IngestLog, link: ClassifiedUrl = link) -> Awaitable[SourceDoc]:
             if link.kind == "github":
-                return ingest_github(link.url, log)
+                return ingest_github(link.url, log, github_token)
             return ingest_web(link.url, link.kind, link.label, link.kind_label, log)
 
-        planned.append(PlannedSource(_id_for(link.kind, n), link.kind, link.label, link.kind_label, _url_to_src(link.url), link.url, read))
+        planned.append(
+            PlannedSource(
+                _id_for(link.kind, n),
+                link.kind,
+                link.label,
+                link.kind_label,
+                _url_to_src(link.url),
+                link.url,
+                read,
+            )
+        )
 
     notes = (inp.notes or "").strip()
     if notes:
@@ -129,7 +158,9 @@ def plan_sources(inp: AnalyzeInput) -> list[PlannedSource]:
         async def read_notes(_log: IngestLog) -> SourceDoc:
             return await asyncio.to_thread(ingest_notes, notes)
 
-        planned.append(PlannedSource("notes", "notes", "Notes", "Extra context", "Pasted context", None, read_notes))
+        planned.append(
+            PlannedSource("notes", "notes", "Notes", "Extra context", "Pasted context", None, read_notes)
+        )
     return planned
 
 
@@ -138,8 +169,17 @@ async def ingest_planned(p: PlannedSource, log: IngestLog) -> SourceDoc:
     try:
         doc = await p.ingest(log)
     except Exception as exc:  # noqa: BLE001 - the pipeline still shows the source, marked as failed
-        print(f"[ingest {p.id}] {exc!r}", flush=True)
-        doc = SourceDoc.failure(p.id, p.kind, p.label, p.kind_label, p.url, p.src, "Could not read this source.")
+        # Where it crashed and what kind of error, never its message: a parser error can quote the document.
+        logger.warning(
+            "ingest_source_crashed",
+            source_id=p.id,
+            kind=p.kind,
+            error_type=type(exc).__name__,
+            crash_site=_crash_site(exc),
+        )
+        doc = SourceDoc.failure(
+            p.id, p.kind, p.label, p.kind_label, p.url, p.src, "Could not read this source."
+        )
     doc.id = p.id
     doc.url = doc.url or p.url
     doc.src = doc.src or p.src
@@ -147,10 +187,12 @@ async def ingest_planned(p: PlannedSource, log: IngestLog) -> SourceDoc:
     return doc
 
 
-async def ingest_sources(inp: AnalyzeInput, log: Callable[[str, str], None]) -> list[SourceDoc]:
+async def ingest_sources(
+    inp: AnalyzeInput, log: Callable[[str, str], None], *, github_token: str | None = None
+) -> list[SourceDoc]:
     """Read every source of an analysis concurrently, in reading order; never raises for a bad source.
 
     `log(source_id, text)` receives one short, human progress line per step.
     """
-    planned = plan_sources(inp)
+    planned = plan_sources(inp, github_token=github_token)
     return list(await asyncio.gather(*(ingest_planned(p, partial(log, p.id)) for p in planned)))

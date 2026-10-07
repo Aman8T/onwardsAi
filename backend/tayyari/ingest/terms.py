@@ -286,8 +286,11 @@ TERM_COUNT = len(TERM_DEFS)
 _LOOKBEHIND = r"(?<![A-Za-z0-9_])"
 _LAST_ALNUM = r"(?![A-Za-z0-9_]|\+\+?(?![A-Za-z0-9])|#)"
 _LAST_OTHER = r"(?![A-Za-z0-9_])"
-# "Go" is also an English word, so it only counts when it sits in a list of skills.
-_GO_LIST = re.compile(r"(?:^|[,|•·:;(/\n])\s*Go\s*(?=$|[,|•·;)/\n])", re.MULTILINE)
+# "Go" is also an English word, so it only counts when it sits in a list of skills (after a list separator
+# or at the start of a line, before the next separator or the end of the line). Only HORIZONTAL space may
+# sit around it: "\n" is itself a separator, so allowing `\s` here found the same matches but rescanned a
+# long run of blank lines from every position in it (quadratic: 40k newlines took about 8 seconds).
+_GO_LIST = re.compile(r"(?:^|[,|•·:;(/\n])[^\S\n]*Go[^\S\n]*(?=$|[,|•·;)/\n])", re.MULTILINE)
 
 
 def _word_regex(source: str, case_sensitive: bool) -> re.Pattern[str]:

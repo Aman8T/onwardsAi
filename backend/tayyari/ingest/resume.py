@@ -10,30 +10,43 @@ import asyncio
 import io
 import os
 import re
+import time
 import unicodedata
 import zipfile
 from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
 
-from .classify import IngestLog, SourceDoc, plural
+from ..core import limits
+from ..core.logging import get_logger
+from ..core.text import plural
+from .classify import IngestLog, SourceDoc
 from .terms import find_terms
 
+logger = get_logger(__name__)
+
 FORMAT_LABEL = {"pdf": "PDF", "docx": "DOCX", "text": "Text"}
-MAX_RESUME_CHARS = 30_000
+MAX_RESUME_CHARS = limits.RESUME_MAX_CHARS
 """Only the first MAX_RESUME_CHARS are analysed and returned."""
-MAX_EXTRACT_CHARS = 250_000
+MAX_EXTRACT_CHARS = limits.RESUME_MAX_EXTRACT_CHARS
 """PDF extraction stops after this many characters (a resume is a few thousand)."""
-MAX_PDF_PAGES = 60
+MAX_PDF_PAGES = limits.RESUME_MAX_PDF_PAGES
 """Pages read from a PDF (the text kept is capped far below what this many pages hold)."""
-MAX_DOCX_UNZIPPED = 30 * 1024 * 1024
+MAX_DOCX_UNZIPPED = limits.RESUME_MAX_DOCX_UNZIPPED_BYTES
 """A DOCX whose parts declare more than this many bytes is refused (zip bomb)."""
-MIN_TEXT_CHARS = 200
+MIN_TEXT_CHARS = limits.RESUME_MIN_TEXT_CHARS
 """Below this a PDF is assumed to be scanned/image-based and is handed to the reader as a file."""
+MAX_PDF_STREAM_BYTES = 8 * 1024 * 1024
+"""One PDF stream may inflate to at most this much while its text is read (a resume's streams are far smaller)."""
+PDF_EXTRACT_BUDGET_S = 10.0
+"""No new PDF page is started after this long (pages are read one by one in a thread that cannot be cancelled)."""
 
 _TEXT_EXTENSIONS = {".txt", ".md", ".markdown", ".text"}
 _PASSWORD_MSG = "That PDF is password-protected. Export an unlocked copy and upload it again."
-_ENCRYPTED_MSG = "That PDF is encrypted and cannot be opened here. Export an unprotected copy and upload it again."
+_ENCRYPTED_MSG = (
+    "That PDF is encrypted and cannot be opened here. Export an unprotected copy and upload it again."
+)
 _DOCX_TOO_BIG = "That DOCX file is too large to read here. Export it as a PDF and upload it again."
 _UNREADABLE_MSG = {
     "pdf": "Could not read that PDF. It may be corrupted. Try exporting it again or upload a DOCX.",
@@ -51,14 +64,16 @@ class ResumeError(ValueError):
 
 
 def _detect_format(filename: str, head: bytes) -> str:
-    """"pdf", "docx" or "text" by extension, then by magic bytes; ResumeError for anything else."""
+    """ "pdf", "docx" or "text" by extension, then by magic bytes; ResumeError for anything else."""
     ext = os.path.splitext(filename or "")[1].lower()
     if ext == ".pdf":
         return "pdf"
     if ext == ".docx":
         return "docx"
     if ext == ".doc":
-        raise ResumeError("Legacy .doc files are not supported. Save the resume as DOCX or PDF and upload it again.")
+        raise ResumeError(
+            "Legacy .doc files are not supported. Save the resume as DOCX or PDF and upload it again."
+        )
     if ext in _TEXT_EXTENSIONS:
         return "text"
     if head.startswith(b"%PDF"):
@@ -105,7 +120,10 @@ _SECTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = tuple(
                 r"|^(?:tech(?:nical)? stack|technologies|tools(?: (?:& |and )technologies)?|competencies|expertise)$"
             ),
         ),
-        ("Education", r"^education(?: (?:& |and )?(?:training|certifications?))?$|^academics?$|^academic background$"),
+        (
+            "Education",
+            r"^education(?: (?:& |and )?(?:training|certifications?))?$|^academics?$|^academic background$",
+        ),
         (
             "Certifications",
             (
@@ -157,34 +175,64 @@ def detect_sections(text: str) -> list[str]:
 # --------------------------------------------------------------------------- extractors
 
 
+@contextmanager
+def _pdf_limits() -> Iterator[None]:
+    """Cap how much pypdf may inflate from ONE stream (its default is 75 MB).
+
+    A 64 KB PDF can hold a content stream that inflates to 70 MB of blanks: pypdf's pure-Python parser then
+    needs about ten seconds and 140 MB for that one page, in a thread that cannot be cancelled, and a
+    document can point every page at the same stream. A resume's streams are a few hundred KB.
+    """
+    import pypdf
+
+    apply = getattr(pypdf, "apply_configuration", None)
+    if apply is None:  # pypdf 5 has no per-call configuration
+        yield
+        return
+    cap = MAX_PDF_STREAM_BYTES
+    with apply(
+        maximum_declared_stream_length=cap,
+        array_based_stream_maximum_output_length=cap,
+        lzw_maximum_output_length=cap,
+        run_length_maximum_output_length=cap,
+        zlib_maximum_output_length=cap,
+        image_maximum_buffer_size=cap,
+    ):
+        yield
+
+
 def _extract_pdf(data: bytes) -> tuple[str, int]:
     from pypdf import PdfReader
     from pypdf.errors import DependencyError
 
     try:
-        reader = PdfReader(io.BytesIO(data))
-        if reader.is_encrypted:
-            try:
-                unlocked = bool(reader.decrypt(""))
-            except DependencyError as exc:  # AES needs the optional `cryptography` package
-                raise ResumeError(_ENCRYPTED_MSG, "pdf") from exc
-            except Exception:  # noqa: BLE001 - wrong password or an unsupported scheme
-                unlocked = False
-            if not unlocked:
-                raise ResumeError(_PASSWORD_MSG, "pdf")
-        pages = len(reader.pages)
-        parts: list[str] = []
-        total = 0
-        for page in reader.pages[:MAX_PDF_PAGES]:
-            try:
-                text = page.extract_text() or ""
-            except Exception:  # noqa: BLE001 - one bad page must not lose the others
-                text = ""
-            parts.append(text)
-            total += len(text)
-            if total >= MAX_EXTRACT_CHARS:
-                break
-        return "\n\n".join(parts), pages
+        with _pdf_limits():
+            reader = PdfReader(io.BytesIO(data))
+            if reader.is_encrypted:
+                try:
+                    unlocked = bool(reader.decrypt(""))
+                except DependencyError as exc:  # AES needs the optional `cryptography` package
+                    raise ResumeError(_ENCRYPTED_MSG, "pdf") from exc
+                except Exception:  # noqa: BLE001 - wrong password or an unsupported scheme
+                    unlocked = False
+                if not unlocked:
+                    raise ResumeError(_PASSWORD_MSG, "pdf")
+            pages = len(reader.pages)
+            parts: list[str] = []
+            total = 0
+            deadline = time.monotonic() + PDF_EXTRACT_BUDGET_S
+            for page in reader.pages[:MAX_PDF_PAGES]:
+                if parts and time.monotonic() > deadline:
+                    break  # what was read is used; the reader looks at the file itself if that is too little
+                try:
+                    text = page.extract_text() or ""
+                except Exception:  # noqa: BLE001 - one bad page must not lose the others
+                    text = ""
+                parts.append(text)
+                total += len(text)
+                if total >= MAX_EXTRACT_CHARS:
+                    break
+            return "\n\n".join(parts), pages
     except ResumeError:
         raise
     except Exception as exc:  # pypdf raises many types for damaged files
@@ -279,6 +327,7 @@ async def ingest_resume(data: bytes, filename: str | None, log: IngestLog) -> So
     name = filename or "resume"
 
     def failed(message: str, fmt: str | None = None, **extra: Any) -> SourceDoc:
+        logger.info("resume_rejected", format=fmt, reason=message)  # our own wording, never the document
         kind_label = f"Resume · {FORMAT_LABEL[fmt]}" if fmt else "Resume"
         return SourceDoc.failure("resume", "resume", "Resume", kind_label, None, name, message, **extra)
 
@@ -322,17 +371,28 @@ async def ingest_resume(data: bytes, filename: str | None, log: IngestLog) -> So
 
     if chars < MIN_TEXT_CHARS:
         if fmt == "pdf":
-            # Scanned or image-only PDF: the reader looks at the file itself.
+            # Scanned or image-only PDF: the reader looks at the file itself. The text stays EMPTY on purpose:
+            # the pipeline attaches `pdf_bytes` to the reader call only when the source has no text (a
+            # placeholder here made that branch unreachable). The source is still readable (`ok` stays True,
+            # no error), and the few characters that were extracted are not worth keeping.
             log("Little selectable text found, the reader will view the file directly")
             doc.meta["scanned"] = True
             doc.pdf_bytes = data
-            doc.text = (
-                "The text of this resume could not be extracted (it looks like a scanned or image-based PDF). "
-                "If the PDF is attached to this message, read the resume from it."
-                + (f"\n\nPartial text that could be extracted:\n{a.text}" if a.text else "")
-            )
+            doc.text = ""
         elif chars == 0:
             return failed(
-                "No readable text was found in that file. Try a different export of your resume.", fmt, meta=meta
+                "No readable text was found in that file. Try a different export of your resume.",
+                fmt,
+                meta=meta,
             )
+    logger.info(
+        "resume_ingested",
+        format=fmt,
+        pages=pages,
+        chars=chars,
+        words=words,
+        sections=len(a.sections),
+        scanned=bool(doc.meta.get("scanned")),
+        truncated=bool(doc.meta.get("truncated")),
+    )
     return doc

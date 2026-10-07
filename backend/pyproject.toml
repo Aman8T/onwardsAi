@@ -17,6 +17,7 @@ dependencies = [
     "platformdirs>=4.3",
     "pypdf>=5",
     "python-docx>=1.1",
+    "httpx2>=2.13.1",
 ]
 
 # Deliberately no [build-system]: FastAPI Cloud installs the locked dependencies from uv.lock and
@@ -80,7 +81,7 @@ known-first-party = ["tayyari"]
 quote-style = "double"
 # Moved-as-is code keeps its hand-wrapped layout until its cleanup unit runs `ruff format` over it
 # (Wave 1, ingest cleanup); then delete this line so the whole tree is held to the formatter.
-exclude = ["tayyari/ingest/**", "tayyari/sample/**"]
+exclude = ["tayyari/sample/**"]
 
 # ───────────────────────────── mypy ─────────────────────────────
 
