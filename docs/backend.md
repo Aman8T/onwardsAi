@@ -200,7 +200,7 @@ Run these before shipping Wave 4:
 1. `npm run test:py` — contract, decision matrix, SSRF, chunk upload 413s, limiter concurrency, migrations, golden NDJSON, cancellation.
 2. `npm run lint:py` — Ruff style.
 3. `npm run typecheck:py` — mypy strict on new modules.
-4. `npm run smoke:py` — Haiku call, Sonnet chat, cache read, PDF parse, no 400 retry on effort.
+4. `npm run smoke` — Haiku call, Sonnet chat, cache read, PDF parse, no 400 retry on effort.
 5. Manual: upload sample, check Jev first-read lines appear in ~2 s, graph renders, evidence log appears.
 6. Manual: chat, check tool chips read "Searched the web". Restart API, continue thread; history survives.
 7. Manual: check `llm_calls`, `jev_calls`, `decision_log` have rows. `spend_daily` reconciles.

@@ -20,7 +20,14 @@ from tayyari.contract import (
     SourceSummary,
     is_source_kind,
 )
-from tayyari.legacy import types as legacy_types
+
+try:  # the legacy app was deleted in Wave 4; parity with it was proven at the wave3b tag
+    from tayyari.legacy import types as legacy_types
+except ImportError:
+    legacy_types = None
+needs_legacy = pytest.mark.skipif(
+    legacy_types is None, reason="legacy app deleted; parity proven at tag wave3b"
+)
 
 
 def test_sample_profile_parses(sample_dict: dict[str, Any]) -> None:
@@ -45,6 +52,7 @@ def test_sample_profile_round_trips_through_json_text(sample_dict: dict[str, Any
     assert Profile.from_dict(json.loads(text)) == profile
 
 
+@needs_legacy
 def test_to_dict_matches_the_legacy_models(sample_dict: dict[str, Any]) -> None:
     assert (
         Profile.from_dict(sample_dict).to_dict() == legacy_types.Profile.model_validate(sample_dict).to_dict()
@@ -141,6 +149,7 @@ def test_literal_values_are_enforced() -> None:
         )
 
 
+@needs_legacy
 def test_source_kinds_match_the_legacy_tuple_and_guard() -> None:
     assert SOURCE_KINDS == legacy_types.SOURCE_KINDS
     assert is_source_kind("github")

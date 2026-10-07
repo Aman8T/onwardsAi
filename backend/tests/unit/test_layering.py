@@ -9,7 +9,7 @@ the two top-level services (analysis, chat) never import each other. The rest:
 - ``decisions`` may import ``storage.ports`` (the decision log Protocol), nothing else of storage.
 - ``guard`` may import ``storage.ports`` and ``llm.errors`` (it raises the spend-ceiling error), nothing else.
 - ``container`` and ``cli`` are composition roots and may import everything; so may ``api``, which builds on them.
-- ``legacy`` and ``canary`` are the app being replaced (Wave 4 deletes them): they are not scanned.
+- ``legacy`` and ``canary`` (the replaced app, deleted in Wave 4) stay excluded in case an old checkout has them.
 
 The scan reads the syntax tree, so imports inside functions and under ``if TYPE_CHECKING`` count too: a
 lazy import is still a dependency.
@@ -50,9 +50,8 @@ RULES: dict[str, tuple[str, ...]] = {
     "llm": ("core", "contract"),
     "prompts": ("core", "contract"),
     "sample": ("core", "contract", "ingest"),
-    # TEMPORARY (until Wave 4 deletes legacy/): ingest still reads the legacy `AnalyzeInput` type and the sample
-    # fixtures. Nothing else may import legacy.
-    "ingest": ("core", "sample", "legacy"),
+    # ingest reads the sample fixtures for the bundled persona.
+    "ingest": ("core", "sample"),
     "guard": ("core", "llm.errors", "storage.ports"),
     "decisions": ("core", "contract", "llm", "storage.ports"),
     "analysis": _SERVICES,
@@ -409,19 +408,6 @@ def test_the_legacy_app_and_the_canary_are_not_scanned(tmp_path: Path) -> None:
         },
     )
     assert found == []
-
-
-def test_only_ingest_and_sample_may_look_at_legacy_for_now(tmp_path: Path) -> None:
-    found = violations_of(
-        tmp_path,
-        {
-            "legacy/__init__.py": "",
-            "legacy/types.py": "",
-            "ingest/__init__.py": "from ..legacy.types import AnalyzeInput\n",
-            "analysis/__init__.py": "from tayyari.legacy import types\n",
-        },
-    )
-    assert found == ["tayyari.analysis -> tayyari.legacy.types"]
 
 
 def test_a_new_top_level_package_without_a_rule_is_reported(tmp_path: Path) -> None:

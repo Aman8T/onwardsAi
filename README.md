@@ -44,7 +44,7 @@ Design canvas (all screens, both explored directions): https://claude.ai/artifac
 3. **Optional: generate the sample profile**
 
    ```bash
-   npm run make-sample:py
+   npm run make-sample
    ```
 
 ## Run it
@@ -52,7 +52,7 @@ Design canvas (all screens, both explored directions): https://claude.ai/artifac
 **Development (hot reload, recommended):**
 
 ```bash
-npm run dev:py
+npm run dev
 ```
 
 This runs the Python API backend at `http://localhost:8787` (with auto-reload on file changes) and the Vite frontend at `http://localhost:5173` (with HMR). Open `http://localhost:5173` in your browser.
@@ -63,7 +63,7 @@ Alternatively, run each part separately in two terminals:
 
 ```bash
 # Terminal 1: Python backend
-npm run dev:api:py
+npm run dev:api
 
 # Terminal 2: React frontend
 npm run dev:web
@@ -73,8 +73,8 @@ npm run dev:web
 
 ```bash
 npm run build:static   # builds and copies frontend to backend/static/
-npm run smoke:py       # tests the API (~10 s, < $0.02)
-npm run serve:py       # serves both backend and built frontend on :8787
+npm run smoke       # tests the API (~10 s, < $0.02)
+npm run start          # serves the backend and the built frontend on :8787
 ```
 
 **Click "Try a sample profile"** for a live run on the bundled fictional persona (Riya Kapoor), or upload your own resume and links. A full analysis takes ~60–90 s. If Claude is unavailable, **Open the pre-computed sample** loads the sample profile with no AI call.

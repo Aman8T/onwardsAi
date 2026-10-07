@@ -9,10 +9,10 @@ from __future__ import annotations
 import asyncio
 import os
 import traceback
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import Protocol
 
 from ..core.logging import get_logger
 from .classify import (
@@ -33,8 +33,21 @@ from .resume import ResumeError, ingest_resume, parse_resume
 from .terms import TERM_COUNT, TermHit, count_terms, find_terms
 from .web import ingest_web
 
-if TYPE_CHECKING:
-    from ..legacy.types import AnalyzeInput
+
+class AnalyzeInput(Protocol):
+    """What source planning reads from a request (tayyari.contract.AnalyzeRequest satisfies it)."""
+
+    @property
+    def resume_bytes(self) -> bytes | None: ...
+    @property
+    def resume_name(self) -> str | None: ...
+    @property
+    def links(self) -> Sequence[str]: ...
+    @property
+    def notes(self) -> str | None: ...
+    @property
+    def sample(self) -> bool: ...
+
 
 __all__ = [
     "MAX_LINKS",
@@ -134,7 +147,7 @@ def plan_sources(inp: AnalyzeInput, *, github_token: str | None = None) -> list[
         )  # fmt: skip
 
     counters: dict[str, int] = {}
-    for link in usable_links(inp.links):
+    for link in usable_links(list(inp.links)):
         n = counters[link.kind] = counters.get(link.kind, 0) + 1
 
         def read(log: IngestLog, link: ClassifiedUrl = link) -> Awaitable[SourceDoc]:

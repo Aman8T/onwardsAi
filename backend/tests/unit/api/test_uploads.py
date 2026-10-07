@@ -38,8 +38,6 @@ from tayyari.core.limits import (
     MAX_RESUME_BYTES,
     MIB,
 )
-from tayyari.legacy.server import _field as legacy_field
-from tayyari.legacy.server import _parse_links as legacy_parse_links
 from tests.unit.api.helpers import (
     KIB,
     Pulled,
@@ -47,6 +45,15 @@ from tests.unit.api.helpers import (
     multipart_body,
     repeated,
     split,
+)
+
+try:  # the legacy app was deleted in Wave 4; parity with it was proven at the wave3b tag
+    from tayyari.legacy.server import _field as legacy_field
+    from tayyari.legacy.server import _parse_links as legacy_parse_links
+except ImportError:
+    legacy_field = legacy_parse_links = None
+needs_legacy = pytest.mark.skipif(
+    legacy_parse_links is None, reason="legacy app deleted; parity proven at tag wave3b"
 )
 
 PDF = ("resume", "cv.pdf", b"%PDF-1.4 fake pdf bytes", "application/pdf")
@@ -209,6 +216,7 @@ LINK_INPUTS: list[list[str]] = [
 ]
 
 
+@needs_legacy
 @pytest.mark.parametrize("values", LINK_INPUTS, ids=[repr(v)[:40] for v in LINK_INPUTS])
 def test_parse_links_matches_the_legacy_parser(values: list[str]) -> None:
     assert parse_links(values) == legacy_parse_links(values)
@@ -228,6 +236,7 @@ def test_parse_links_survives_absurdly_nested_json() -> None:
     assert links[0] == "[" * LINK_MAX_CHARS
 
 
+@needs_legacy
 @pytest.mark.parametrize("value", [None, 5, "", "   ", "\n", " hi ", "x" * 50, ["a"]])
 def test_clean_field_matches_the_legacy_field(value: object) -> None:
     assert clean_field(value, 10) == legacy_field(value, 10)

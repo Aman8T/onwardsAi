@@ -42,7 +42,14 @@ from tayyari.contract import (
     ev_tool,
 )
 from tayyari.core.limits import CHAT_TOOL_DETAIL_MAX_CHARS
-from tayyari.legacy import types as legacy_types
+
+try:  # the legacy app was deleted in Wave 4; parity with it was proven at the wave3b tag
+    from tayyari.legacy import types as legacy_types
+except ImportError:
+    legacy_types = None
+needs_legacy = pytest.mark.skipif(
+    legacy_types is None, reason="legacy app deleted; parity proven at tag wave3b"
+)
 
 READER_DICTS: list[dict[str, Any]] = [
     {
@@ -297,6 +304,7 @@ LEGACY_TABLE: list[tuple[str, Callable[[], Any], Callable[[], dict[str, Any]]]] 
 ]
 
 
+@needs_legacy
 @pytest.mark.parametrize(("name", "build", "legacy"), LEGACY_TABLE, ids=[row[0] for row in LEGACY_TABLE])
 def test_builders_match_the_legacy_helpers(
     name: str, build: Callable[[], Any], legacy: Callable[[], dict[str, Any]]
@@ -304,6 +312,7 @@ def test_builders_match_the_legacy_helpers(
     assert build().to_dict() == legacy()
 
 
+@needs_legacy
 def test_ev_done_matches_the_legacy_helper(sample_dict: dict[str, Any]) -> None:
     expected = legacy_types.ev_done(sample_dict)
     assert ev_done(sample_dict).to_dict() == expected

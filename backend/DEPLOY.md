@@ -47,15 +47,15 @@ Do not commit `.env`. The frontend `.env` is separate and lives in the repo root
 ### 3. Run the development server
 
 ```bash
-npm run dev:py
+npm run dev
 ```
 
-This runs `npm:dev:api:py` (the Python backend at `http://localhost:8787`) and `npm:dev:web` (the Vite frontend at `http://localhost:5173`) in parallel. Open `http://localhost:5173` in a browser.
+This runs `npm:dev:api` (the Python backend at `http://localhost:8787`) and `npm:dev:web` (the Vite frontend at `http://localhost:5173`) in parallel. Open `http://localhost:5173` in a browser.
 
 Alternatively, run just the API:
 
 ```bash
-npm run dev:api:py
+npm run dev:api
 ```
 
 or from `backend/`:
@@ -405,7 +405,7 @@ If migrations fail or the app cannot connect to Neon:
 If analyses or chat are cut off with a 5xx error:
 1. Check `uvx --from "fastapi[standard]" fastapi cloud logs` for the actual error.
 2. Verify that response headers include `Cache-Control: no-cache` and `X-Accel-Buffering: no` (set in `tayyari.api.ndjson`).
-3. Test locally with `npm run dev:py` and `curl -N http://localhost:8787/api/analyze`.
+3. Test locally with `npm run dev` and `curl -N http://localhost:8787/api/analyze`.
 
 ### "Set ANTHROPIC_API_KEY" error
 
