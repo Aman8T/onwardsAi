@@ -64,6 +64,9 @@ def roomy_guard(**overrides: Any) -> GuardSettings:
         "chat_per_minute": 1000,
         "chat_per_hour": 1000,
         "chat_per_day": 1000,
+        "chat_global_per_hour": 0,
+        "chat_streams_per_ip": 0,
+        "chat_streams_per_process": 0,
         "daily_ceiling_usd": 1000.0,
     }
     values.update(overrides)
@@ -159,17 +162,38 @@ class FakeAnalysis:
 
 
 class FakeChat:
-    """A `ChatService`: a few deltas, one tool use, then ``done`` with a session id."""
+    """A `ChatService`: a few deltas, one tool use, then ``done`` with a session id.
 
-    def __init__(self) -> None:
+    ``block`` holds the stream after the first delta until the test sets it; ``fail`` raises at that point
+    (after the block). ``started`` is set when a turn begins; ``running`` counts the turns in progress.
+    """
+
+    def __init__(self, *, block: asyncio.Event | None = None, fail: BaseException | None = None) -> None:
         self.requests: list[tuple[ChatRequestBody, RequestContext]] = []
+        self.block = block
+        self.fail = fail
+        self.started = asyncio.Event()
+        self.running = 0
+        self.cancelled = 0
 
     async def stream_turn(self, req: ChatRequestBody, rc: RequestContext) -> AsyncIterator[ChatEvent]:
         self.requests.append((req, rc))
-        yield ev_delta("Hello, ")
-        yield ev_tool("WebSearch", "data analyst jobs")
-        yield ev_delta("here is a plan.")
-        yield ev_chat_done(req.sessionId or new_session_id())
+        self.started.set()
+        self.running += 1
+        try:
+            yield ev_delta("Hello, ")
+            if self.block is not None:
+                await self.block.wait()
+            if self.fail is not None:
+                raise self.fail
+            yield ev_tool("WebSearch", "data analyst jobs")
+            yield ev_delta("here is a plan.")
+            yield ev_chat_done(req.sessionId or new_session_id())
+        except asyncio.CancelledError:
+            self.cancelled += 1
+            raise
+        finally:
+            self.running -= 1
 
 
 @dataclass

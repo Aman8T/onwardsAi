@@ -162,7 +162,7 @@ async def test_a_docx_that_unpacks_past_the_limit_is_refused_without_unpacking_i
     doc, _ = await read(bomb, "bomb.docx")
     assert time.perf_counter() - started < 10
     assert doc.ok is False
-    assert doc.error == "That DOCX file is too large to read here. Export it as a PDF and upload it again."
+    assert doc.error == "That file is too large or complex to read as a resume."
     assert doc.kind_label == "Resume · DOCX"
 
 
@@ -170,7 +170,7 @@ async def test_a_large_but_legitimate_docx_below_the_limit_is_still_read() -> No
     big = add_zip_member(
         make_docx(["Experience", "Built things with React and TypeScript. " * 10]),
         "word/media/photo.bin",
-        b"\0" * (12 << 20),
+        b"\0" * (2 << 20),  # a 2 MiB photo: under the 4 MiB the parts may unpack to in total
     )
     doc, _ = await read(big, "with-photo.docx")
     assert doc.ok is True
@@ -178,7 +178,7 @@ async def test_a_large_but_legitimate_docx_below_the_limit_is_still_read() -> No
 
 
 async def test_the_zip_bomb_limit_matches_core() -> None:
-    assert MAX_DOCX_UNZIPPED == limits.RESUME_MAX_DOCX_UNZIPPED_BYTES == 30 * 1024 * 1024
+    assert MAX_DOCX_UNZIPPED == limits.RESUME_MAX_DOCX_UNZIPPED_BYTES == 4 * 1024 * 1024
 
 
 def _document_xml(body: str, doctype: str = "") -> bytes:
@@ -448,7 +448,8 @@ async def test_every_page_pointing_at_the_same_heavy_stream_stops_at_the_time_bu
     from tests.unit.ingest.helpers import _assemble_pdf
 
     monkeypatch.setattr(resume_module, "PDF_EXTRACT_BUDGET_S", 1.0)
-    stream = _flate(5 << 20)  # under the stream limit, so each page really costs about a second
+    monkeypatch.setattr(resume_module, "MAX_PDF_STREAM_BYTES", 8 << 20)  # lifted, so the stream is readable
+    stream = _flate(5 << 20)  # under the lifted limit, so each page really costs about a second
     pages = 60
     objects: dict[int, bytes] = {
         1: b"<< /Type /Catalog /Pages 2 0 R >>",

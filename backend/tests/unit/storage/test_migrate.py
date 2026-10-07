@@ -101,6 +101,169 @@ async def test_a_replica_that_loses_the_race_finds_nothing_to_do(
         await db.dispose()
 
 
+# ───────────────────────────── a database newer than the code (rollback) ─────────────────────────────
+
+
+class RecordingLog:
+    """Stands in for the module's structlog logger."""
+
+    def __init__(self) -> None:
+        self.events: list[tuple[str, str, dict[str, Any]]] = []
+
+    def _add(self, level: str, event: str, **fields: Any) -> None:
+        self.events.append((level, event, fields))
+
+    def info(self, event: str, **fields: Any) -> None:
+        self._add("info", event, **fields)
+
+    def warning(self, event: str, **fields: Any) -> None:
+        self._add("warning", event, **fields)
+
+    def named(self, event: str) -> list[tuple[str, dict[str, Any]]]:
+        return [(level, fields) for level, name, fields in self.events if name == event]
+
+
+@pytest.fixture
+def recorded_log(monkeypatch: pytest.MonkeyPatch) -> RecordingLog:
+    stub = RecordingLog()
+    monkeypatch.setattr(migrate, "log", stub)
+    return stub
+
+
+async def stamp(db: Database, version: str) -> None:
+    async with db.engine.begin() as conn:
+        await conn.execute(text("UPDATE alembic_version SET version_num = :v"), {"v": version})
+
+
+async def test_a_database_at_a_newer_revision_is_left_alone(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, recorded_log: RecordingLog
+) -> None:
+    """#16: old code after a rollback must start on the newer schema, not crash-loop on it."""
+    db = Database(sqlite_config(tmp_path / "newer.sqlite3"))
+    try:
+        await migrate_to_head(db)
+        await stamp(db, "0002_future")
+        tables_before = await table_names(db)
+        recorded_log.events.clear()  # only what the restarts of the older code log
+
+        def explode(*_args: Any) -> None:
+            raise AssertionError("nothing may be upgraded or downgraded")
+
+        monkeypatch.setattr(migrate, "_upgrade", explode)
+
+        assert await migrate_to_head(db) == "0002_future"  # the database's own revision
+        assert await migrate_to_head(db) == "0002_future"  # and again on the next start
+        assert await revision(db) == "0002_future"  # untouched
+        assert await table_names(db) == tables_before
+
+        [(level, warning), _second] = recorded_log.named("migrations_schema_newer_than_code")
+        assert level == "warning"
+        assert warning["db_revision"] == "0002_future" and warning["code_head"] == head_revision()
+        assert recorded_log.named("migrations_start") == [] and recorded_log.named("migrations_done") == []
+    finally:
+        await db.dispose()
+
+
+async def test_the_repositories_still_work_on_a_newer_schema(tmp_path: Path) -> None:
+    from tayyari.storage.repos import build_repositories
+
+    db = Database(sqlite_config(tmp_path / "newer-use.sqlite3"))
+    try:
+        await migrate_to_head(db)
+        await stamp(db, "0002_future")
+        await migrate_to_head(db)
+        repos = build_repositories(db)
+        await repos.kv.set("probe", "ok")
+        assert await repos.kv.get("probe") == "ok"
+    finally:
+        await db.dispose()
+
+
+async def test_a_newer_revision_that_appears_while_waiting_for_the_lock_is_left_alone(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, recorded_log: RecordingLog
+) -> None:
+    """A peer running the newer release may finish between the fast-path check and the lock."""
+    db = Database(sqlite_config(tmp_path / "race-newer.sqlite3"))
+    try:
+        answers = iter([None, "0002_future"])
+        monkeypatch.setattr(migrate, "_current_revision", lambda _conn: next(answers))
+
+        def explode(*_args: Any) -> None:
+            raise AssertionError("the newer release already migrated")
+
+        monkeypatch.setattr(migrate, "_upgrade", explode)
+        assert await migrate_to_head(db) == "0002_future"
+        assert await table_names(db) == set()  # nothing was created by this replica
+        assert len(recorded_log.named("migrations_schema_newer_than_code")) == 1
+    finally:
+        await db.dispose()
+
+
+def test_only_a_revision_the_code_has_never_heard_of_counts_as_newer() -> None:
+    assert migrate._is_newer_than_code("0002_future") is True
+    assert migrate._is_newer_than_code("deadbeef") is True
+    assert migrate._is_newer_than_code(head_revision()) is False
+    assert migrate._is_newer_than_code(None) is False  # never migrated: it needs the upgrade
+    assert migrate._is_newer_than_code("") is False  # a broken stamp is not "newer"
+    assert head_revision() in migrate._known_revisions()
+
+
+async def test_an_unmigrated_database_is_still_upgraded(tmp_path: Path, recorded_log: RecordingLog) -> None:
+    db = Database(sqlite_config(tmp_path / "fresh.sqlite3"))
+    try:
+        assert await migrate_to_head(db) == head_revision()
+        assert recorded_log.named("migrations_schema_newer_than_code") == []
+        assert len(recorded_log.named("migrations_done")) == 1
+    finally:
+        await db.dispose()
+
+
+async def test_a_broken_alembic_state_still_raises(tmp_path: Path) -> None:
+    """Only "newer than this code" is forgiven: a half-migrated or unreadable database must stop the start."""
+    # The tables exist but the version row is gone: the upgrade tries to create them again.
+    emptied = Database(sqlite_config(tmp_path / "emptied.sqlite3"))
+    try:
+        await migrate_to_head(emptied)
+        async with emptied.engine.begin() as conn:
+            await conn.execute(text("DELETE FROM alembic_version"))
+        with pytest.raises(OperationalError, match="already exists"):
+            await migrate_to_head(emptied)
+    finally:
+        await emptied.dispose()
+
+    # A version table that is not Alembic's.
+    wrong = Database(sqlite_config(tmp_path / "wrong.sqlite3"))
+    try:
+        async with wrong.engine.begin() as conn:
+            await conn.execute(text("CREATE TABLE alembic_version (other TEXT)"))
+        with pytest.raises(OperationalError, match="version_num"):
+            await migrate_to_head(wrong)
+    finally:
+        await wrong.dispose()
+
+    # An empty stamp is a broken state, not a newer schema.
+    blank = Database(sqlite_config(tmp_path / "blank.sqlite3"))
+    try:
+        await migrate_to_head(blank)
+        await stamp(blank, "")
+        with pytest.raises(Exception):  # noqa: B017 - alembic's own error for an unknown revision
+            await migrate_to_head(blank)
+    finally:
+        await blank.dispose()
+
+
+async def test_missing_migrations_still_raise(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    empty = tmp_path / "no-migrations"
+    (empty / "versions").mkdir(parents=True)
+    monkeypatch.setattr(migrate, "MIGRATIONS_DIR", empty)
+    db = Database(sqlite_config(tmp_path / "nomig.sqlite3"))
+    try:
+        with pytest.raises(RuntimeError, match="no migrations found"):
+            await migrate_to_head(db)
+    finally:
+        await db.dispose()
+
+
 async def test_an_in_memory_database_can_be_migrated(tmp_path: Path) -> None:
     db = Database(normalise_database_url("sqlite+aiosqlite://", data_dir=tmp_path, env="test"))
     try:

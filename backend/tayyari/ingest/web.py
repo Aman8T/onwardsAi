@@ -1,26 +1,31 @@
 """Generic web-page ingestion (portfolios, Lovable apps, blogs, LinkedIn) with an SSRF guard.
 
-Security model: only public http(s) hosts are fetched. Every hop (the first request and each
+Security model: only public http(s) hosts on port 80 or 443 are fetched. Every hop (the first request and each
 redirect) resolves the host with the system resolver, refuses loopback, private, link-local,
 unique-local, IPv4-mapped/embedded and other non-global addresses, and then connects to the
 address it just validated (the Host header and TLS server name stay the original host), so a DNS
-answer cannot change between the check and the request. Requests have a hard timeout and a 2 MB
-body cap. HTML is read by a small linear tokenizer (the stdlib `html.parser` is quadratic on
-hostile pages) and every regular expression that touches untrusted text is bounded or possessive.
+answer cannot change between the check and the request. Lookups run in their own small thread pool
+with a hard timeout and a short memory of failures, so a resolver that never answers cannot starve the
+event loop's shared pool. Requests have a hard timeout and a 2 MB body cap, and a page is decoded only
+with a short list of known character sets (a server-supplied label never reaches the codec registry).
+HTML is read by a small linear tokenizer (the stdlib `html.parser` is quadratic on hostile pages) and
+every regular expression that touches untrusted text is bounded or possessive.
 """
 
 from __future__ import annotations
 
 import asyncio
-import codecs
 import functools
 import ipaddress
 import json
 import re
 import socket
 import ssl
+import threading
+import time
 import zlib
 from collections.abc import Callable, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from html import unescape
 from typing import Any
@@ -61,6 +66,14 @@ MAX_HEADINGS = limits.WEB_MAX_HEADINGS
 MAX_STRUCTURED = limits.WEB_MAX_STRUCTURED
 MAX_LITERALS_SCANNED = limits.WEB_MAX_LITERALS_SCANNED
 """Bundle string literals examined (not kept) before extraction stops."""
+DNS_TIMEOUT = limits.WEB_DNS_TIMEOUT_S
+"""Seconds one host-name lookup may take before the wait is abandoned."""
+DNS_WORKERS = limits.WEB_DNS_WORKERS
+DNS_FAILURE_TTL = limits.WEB_DNS_FAILURE_TTL_S
+DNS_FAILURE_CACHE_MAX = limits.WEB_DNS_FAILURE_CACHE_MAX
+ALLOWED_PORTS = frozenset((80, 443))
+"""The only ports a link may name (a link without a port uses the scheme's own). Anything else would make
+the error message a port scanner."""
 ACCEPT_ENCODING = "gzip, deflate"
 """The only encodings asked for: `read_capped` inflates them through a bounded decompressor."""
 
@@ -68,6 +81,9 @@ LOGIN_WALL_LOVABLE = "That is a private Lovable editor link — share the publis
 LINKEDIN_BLOCKED = "LinkedIn blocks automated reading — paste your About section into Extra context instead"
 PRIVATE_MSG = "That address is private. Only public links can be read."
 NOT_FOUND_MSG = "Could not find that site. Check the link for typos."
+UNREACHABLE_MSG = "Could not reach that site. Check the link and try again."
+"""The one answer for every way a connection can fail (refused, unreachable, timed out, a port that is not
+allowed): which of them it was would tell whoever pasted the link what is listening where."""
 
 
 class FetchProblem(Exception):
@@ -183,21 +199,100 @@ def is_private_host(hostname: str) -> bool:
     return numeric is not None and is_private_address(str(numeric))
 
 
-async def resolve_public(hostname: str) -> list[str]:
-    """Addresses of `hostname`, all verified public (IPv4 first). Raises FetchProblem for anything else."""
+# --------------------------------------------------------------------------- DNS
+#
+# `loop.getaddrinfo` runs in the event loop's default thread pool, which also serves every parse and analysis
+# step, and a resolver thread cannot be cancelled: asyncio abandons the wait but the thread keeps blocking.
+# A domain whose name server never answers could therefore fill the shared pool and freeze the whole process.
+# Lookups get a pool of their own instead, each wait has a hard timeout, and a host that failed is refused
+# straight away for a short while, so retrying it costs no thread.
+
+_dns_pool: ThreadPoolExecutor | None = None
+_dns_pool_lock = threading.Lock()
+_dns_failures: dict[str, tuple[float, str]] = {}
+"""host -> (when the entry expires on the `_monotonic` clock, the message to answer with)."""
+_monotonic = time.monotonic
+"""The clock for the failure memory (a name the tests can replace)."""
+
+
+def _resolver_pool() -> ThreadPoolExecutor:
+    """The pool that only resolves host names, created on first use."""
+    global _dns_pool  # noqa: PLW0603
+    with _dns_pool_lock:
+        if _dns_pool is None:
+            _dns_pool = ThreadPoolExecutor(max_workers=DNS_WORKERS, thread_name_prefix="tayyari-dns")
+        return _dns_pool
+
+
+def clear_dns_failures() -> None:
+    """Forget every remembered lookup failure (tests, or an operator who fixed a record)."""
+    _dns_failures.clear()
+
+
+def _lookup(host: str) -> list[Any]:
+    """The blocking lookup, run in the resolver pool. `socket.getaddrinfo` is read at call time on purpose."""
+    return socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
+
+
+def _remembered_failure(host: str) -> str | None:
+    entry = _dns_failures.get(host)
+    if entry is None:
+        return None
+    if entry[0] <= _monotonic():
+        del _dns_failures[host]
+        return None
+    return entry[1]
+
+
+def _remember_failure(host: str, message: str) -> None:
+    now = _monotonic()
+    if len(_dns_failures) >= DNS_FAILURE_CACHE_MAX:
+        for stale in [h for h, (expires, _) in _dns_failures.items() if expires <= now]:
+            del _dns_failures[stale]
+        while len(_dns_failures) >= DNS_FAILURE_CACHE_MAX:
+            del _dns_failures[next(iter(_dns_failures))]  # oldest first: dicts keep insertion order
+    _dns_failures.pop(host, None)
+    _dns_failures[host] = (now + DNS_FAILURE_TTL, message)
+
+
+async def _resolve_name(host: str) -> list[Any]:
+    """`getaddrinfo` for a DNS name in the resolver pool, with a hard timeout and a short memory of failures."""
+    remembered = _remembered_failure(host)
+    if remembered is not None:
+        raise FetchProblem(remembered)
+    lookup = asyncio.get_running_loop().run_in_executor(_resolver_pool(), _lookup, host)
+    try:
+        # On timeout the wait ends at once; a lookup still queued is cancelled and one already running finishes
+        # (or fails) on its own thread, which belongs to this pool only.
+        return await asyncio.wait_for(lookup, DNS_TIMEOUT)
+    except TimeoutError:
+        logger.warning("web_dns_timeout", host=log_host(host))
+        _remember_failure(host, UNREACHABLE_MSG)
+        raise FetchProblem(UNREACHABLE_MSG) from None
+    except (socket.gaierror, UnicodeError) as exc:
+        _remember_failure(host, NOT_FOUND_MSG)
+        raise FetchProblem(NOT_FOUND_MSG) from exc
+
+
+async def resolve_public(hostname: str, *, port: int | None = None) -> list[str]:
+    """Addresses of `hostname`, all verified public (IPv4 first). Raises FetchProblem for anything else.
+
+    `port` is the explicit port of the link (None: the scheme's own). Only ALLOWED_PORTS may be fetched, and
+    anything else is refused here, before any lookup, with the same answer as an unreachable site.
+    """
     h = _bare_host(hostname)
     if is_private_host(h):
         logger.warning("web_fetch_blocked", host=log_host(h), reason="private_host")
         raise FetchProblem(PRIVATE_MSG)
+    if port is not None and port not in ALLOWED_PORTS:
+        logger.info("web_fetch_blocked", host=log_host(h), reason="port_not_allowed")
+        raise FetchProblem(UNREACHABLE_MSG)
     try:
         ipaddress.ip_address(h)
         return [h]
     except ValueError:
         pass
-    try:
-        infos = await asyncio.get_running_loop().getaddrinfo(h, None, type=socket.SOCK_STREAM)
-    except (socket.gaierror, UnicodeError) as exc:
-        raise FetchProblem(NOT_FOUND_MSG) from exc
+    infos = await _resolve_name(h)
     addresses = list(dict.fromkeys(str(info[4][0]) for info in infos))
     if not addresses:
         raise FetchProblem(NOT_FOUND_MSG)
@@ -291,26 +386,52 @@ async def read_capped(res: httpx.Response, cap: int) -> tuple[bytes, bool]:
     return b"".join(chunks), False
 
 
+_CHARSETS: dict[str, str] = {
+    "utf-8": "utf-8",
+    "utf8": "utf-8",
+    "us-ascii": "utf-8",  # ASCII is valid UTF-8, and UTF-8 text mislabelled as ASCII is far commoner than the reverse
+    "ascii": "utf-8",
+    "iso-8859-1": "latin-1",
+    "iso8859-1": "latin-1",
+    "latin1": "latin-1",
+    "latin-1": "latin-1",
+    "l1": "latin-1",
+    "windows-1252": "cp1252",
+    "cp1252": "cp1252",
+    "x-cp1252": "cp1252",
+}
+"""The only character sets a page is decoded with: label (lower case, "_" written "-") -> Python codec."""
+_UTF16_LABELS = frozenset(("utf-16", "utf16", "utf-16le", "utf-16be"))
+_UTF16_BOMS = (b"\xff\xfe", b"\xfe\xff")
+_CHARSET_RE = re.compile(r"charset\s{0,4}=\s{0,4}[\"']?([\w-]{1,40})", re.IGNORECASE)
+_META_CHARSET_RE = re.compile(r"<meta[^<>]{1,512}?charset\s{0,4}=\s{0,4}[\"']?([\w-]{1,40})", re.IGNORECASE)
+
+
 def _decode_body(data: bytes, content_type: str) -> str:
-    m = re.search(r"charset=[\"']?([\w-]{1,40})", content_type, re.IGNORECASE)
+    """The page as text, NUL characters removed.
+
+    The character set comes from the response (header, then a <meta> tag), so it is attacker-chosen: only the
+    short list in `_CHARSETS` is honoured, and UTF-16 only when the data starts with a byte order mark.
+    Anything else, including a registered but pathological codec such as `punycode` (quadratic: a 2 MB body
+    froze the process for minutes), reads as UTF-8 with replacement characters. The label is looked up in a
+    dictionary and never handed to `codecs`.
+    """
+    m = _CHARSET_RE.search(content_type)
     label = m.group(1) if m else None
-    if not label and re.search(r"html|xml", content_type, re.IGNORECASE):
-        head = data[:4096].decode("latin-1")
-        m = re.search(r"<meta[^<>]{1,512}charset=[\"']?([\w-]{1,40})", head, re.IGNORECASE)
-        label = m.group(1) if m else None
-    try:
-        return data.decode(codecs.lookup(label or "utf-8").name, errors="replace")
-    except LookupError:
-        return data.decode("utf-8", errors="replace")
+    if label is None and re.search(r"html|xml", content_type, re.IGNORECASE):
+        mm = _META_CHARSET_RE.search(data[:4096].decode("latin-1"))
+        label = mm.group(1) if mm else None
+    key = (label or "").lower().replace("_", "-")
+    if data.startswith(_UTF16_BOMS) and (not key or key in _UTF16_LABELS):
+        text = data.decode("utf-16", errors="replace")
+    else:
+        text = data.decode(_CHARSETS.get(key, "utf-8"), errors="replace")
+    return text.replace("\x00", "")
 
 
 def _friendly_network_error(exc: BaseException) -> str:
     if isinstance(exc, FetchProblem):
         return str(exc)
-    if isinstance(exc, httpx.ConnectTimeout):
-        return "Could not connect to that site (the connection timed out). Check the link."
-    if isinstance(exc, (TimeoutError, httpx.TimeoutException)):
-        return f"The page took too long to respond (over {int(REQUEST_TIMEOUT)} seconds)."
     if isinstance(exc, httpx.DecodingError):
         return "That site sent a response that could not be decoded."
     chain: list[BaseException] = []
@@ -320,9 +441,8 @@ def _friendly_network_error(exc: BaseException) -> str:
         e = e.__cause__ or e.__context__
     if any(isinstance(c, ssl.SSLError) for c in chain):
         return "That site's security certificate is not valid."
-    if any(isinstance(c, ConnectionRefusedError) for c in chain):
-        return "That site refused the connection."
-    return "Could not reach that site."
+    # Refused, unreachable, timed out: one answer, so a link cannot be used to probe what is listening where.
+    return UNREACHABLE_MSG
 
 
 def _format_host(host: str) -> str:
@@ -335,7 +455,7 @@ async def _get_pinned(
     """GET `target` from one validated address of `host`; returns (headers, status, body, truncated)."""
     bare = _bare_host(host)
     is_literal = ":" in bare or bare.replace(".", "").isdigit()
-    addresses = await resolve_public(host)
+    addresses = await resolve_public(host, port=port)
     headers = {
         "User-Agent": USER_AGENT,
         "Accept": accept,
@@ -403,7 +523,9 @@ async def _fetch_text(start_url: str, cap: int, accept: str) -> Fetched:
                     url = urljoin(u.url, location)
                     continue
                 content_type = headers.get("content-type", "")
-                return Fetched(status, u.url, content_type, _decode_body(body, content_type), truncated)
+                # Decoded off the event loop: a few MB of invalid UTF-8 is not instant, and nothing else stalls for it.
+                text = await asyncio.to_thread(_decode_body, body, content_type)
+                return Fetched(status, u.url, content_type, text, truncated)
     raise FetchProblem("That link redirects too many times.")
 
 
@@ -1060,6 +1182,16 @@ def analyze_bundle(js: str, extra_html: str) -> BundleFindings:
     return f
 
 
+def _scan_html(html: str) -> tuple[list[str], list[str], str]:
+    """(libraries, frameworks, lower-case copy) of a page's own HTML. It is about 0.2 s of regex work on a
+    large page, so `ingest_web` runs it in a worker thread, not on the event loop."""
+    libraries = _detect(LIBRARY_SIGNATURES, html, skip=("Vite", "React"))
+    frameworks = _detect(HTML_SIGNATURES, html)
+    if _count_up_to(_HTML_UTILITY_RE, html, 15) >= 15:
+        frameworks.append("Tailwind CSS")
+    return libraries, frameworks, html.lower()
+
+
 def _unique_matches(pattern: re.Pattern[str], text: str, limit: int) -> list[str]:
     found: dict[str, None] = {}
     for m in pattern.finditer(text):
@@ -1287,10 +1419,7 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
                 )
 
     # Libraries visible in the HTML itself (works for non-SPA pages too).
-    html_libraries = _detect(LIBRARY_SIGNATURES, info.html, skip=("Vite", "React"))
-    html_frameworks = _detect(HTML_SIGNATURES, info.html)
-    if _count_up_to(_HTML_UTILITY_RE, info.html, 15) >= 15:
-        html_frameworks.append("Tailwind CSS")
+    html_libraries, html_frameworks, html_lower = await asyncio.to_thread(_scan_html, info.html)
     libraries: list[str] = []
     _merge_unique(libraries, html_frameworks)
     _merge_unique(libraries, findings.libraries if findings else [])
@@ -1298,7 +1427,6 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
     # On Medium, Kaggle, LinkedIn... the stack belongs to the platform, not to the person.
     if is_known_platform(final_host) or is_known_platform(host):
         libraries.clear()
-    html_lower = info.html.lower()
     built_with_lovable = (
         any(s in html_lower for s in _LOVABLE_HTML)
         or "lovable" in info.generator.lower()

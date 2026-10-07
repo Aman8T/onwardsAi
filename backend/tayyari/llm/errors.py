@@ -18,6 +18,9 @@ provider's own message) and is never sent to a client.
     SpendCeilingReached            the daily ceiling is hit; raised by the guard before any Claude or Jev call
     JevError                       any failure of the Jev API, with a kind the decision runner switches on
 
+`user_message` never names the operator's account state (key, billing, permission, model access): those four
+share `UNAVAILABLE_MESSAGE`, and the real reason lives in `kind`, `status` and `detail`.
+
 `asyncio.CancelledError` is never wrapped: let it propagate.
 """
 
@@ -48,9 +51,14 @@ ClaudeErrorKind = Literal[
     "unknown",
 ]
 
-# User-facing texts. The legacy wording is kept where it still fits; the key message names the server's key
-# (a visitor cannot fix it, and the old text told them to set an environment variable).
-AUTH_MESSAGE = "The server's Anthropic API key is missing or invalid."
+# User-facing texts. The legacy wording is kept where it still fits.
+#
+# Anything that reveals the operator's account state (a missing or invalid key, a billing problem, a key
+# without permission for a model, a model the account cannot use) is one generic sentence for the public:
+# a visitor cannot fix it and must not learn which of them it is. The specific reason stays in `kind`,
+# `status` and `detail` (and is logged by the client), never in `user_message`.
+UNAVAILABLE_MESSAGE = "The AI service isn't available right now. Please try again in a few minutes."
+AUTH_MESSAGE = UNAVAILABLE_MESSAGE
 BUSY_MESSAGE = "Claude is busy right now (rate limited or overloaded). Try again in a minute."
 NETWORK_MESSAGE = "Could not reach Claude (network error or timeout). Try again."
 INCOMPLETE_MESSAGE = "The model returned an incomplete answer. Try again."
@@ -59,9 +67,9 @@ BAD_REQUEST_MESSAGE = "Claude could not process that request. Try again, or try 
 TOO_LARGE_MESSAGE = "That input is too large for the model. Try again with less content."
 SERVER_MESSAGE = "Claude had a problem on its side. Try again in a minute."
 UNKNOWN_MESSAGE = "Something went wrong while talking to Claude."
-MODEL_UNAVAILABLE_MESSAGE = "The configured Claude model isn't available to the server's Anthropic account."
-PERMISSION_MESSAGE = "The server's Anthropic API key isn't allowed to use this model or feature."
-BILLING_MESSAGE = "The server's Anthropic account has a billing problem."
+MODEL_UNAVAILABLE_MESSAGE = UNAVAILABLE_MESSAGE
+PERMISSION_MESSAGE = UNAVAILABLE_MESSAGE
+BILLING_MESSAGE = UNAVAILABLE_MESSAGE
 SPEND_CEILING_MESSAGE = "Tayyari has reached today's usage limit. The pre-computed sample profile still works. Try again tomorrow."
 
 _REFUSAL_MESSAGES: Mapping[str, str] = {
@@ -352,12 +360,24 @@ def _from_status_error(exc: anthropic.APIStatusError) -> ClaudeError:
     kind = exc.type  # error.type of the body; also set for mid-stream SSE error events (HTTP 200)
     retry_after = _parse_retry_after(getattr(exc.response, "headers", None))
 
+    # The four operator-state failures share one public sentence; `status` and `detail` (the provider's own
+    # words, or its error type when it sent none) tell the logs which one it was.
     if kind == "authentication_error" or status == 401:
-        return ClaudeAuthError(status=status, request_id=rid, detail=detail)
+        return ClaudeAuthError(status=status, request_id=rid, detail=detail or "authentication_error")
     if kind == "billing_error" or status == 402:
-        return ClaudeAuthError(status=status, request_id=rid, user_message=BILLING_MESSAGE, detail=detail)
+        return ClaudeAuthError(
+            status=status,
+            request_id=rid,
+            user_message=BILLING_MESSAGE,
+            detail=detail or "billing_error",
+        )
     if kind == "permission_error" or status == 403:
-        return ClaudeAuthError(status=status, request_id=rid, user_message=PERMISSION_MESSAGE, detail=detail)
+        return ClaudeAuthError(
+            status=status,
+            request_id=rid,
+            user_message=PERMISSION_MESSAGE,
+            detail=detail or "permission_error",
+        )
     if kind == "rate_limit_error" or status == 429:
         return ClaudeRateLimited(retry_after, status=status, request_id=rid, detail=detail)
     if kind == "overloaded_error" or status in (503, 529):
@@ -366,7 +386,10 @@ def _from_status_error(exc: anthropic.APIStatusError) -> ClaudeError:
         return ClaudeTimeout(status=status, request_id=rid, detail=detail)
     if kind == "not_found_error" or status == 404:
         return ClaudeBadRequest(
-            status=status, request_id=rid, user_message=MODEL_UNAVAILABLE_MESSAGE, detail=detail
+            status=status,
+            request_id=rid,
+            user_message=MODEL_UNAVAILABLE_MESSAGE,
+            detail=detail or "not_found_error",
         )
     if status == 413:
         return ClaudeBadRequest(status=status, request_id=rid, user_message=TOO_LARGE_MESSAGE, detail=detail)
@@ -499,6 +522,7 @@ __all__ = [
     "SPEND_CEILING_MESSAGE",
     "TOO_LARGE_MESSAGE",
     "TRUNCATED_MESSAGE",
+    "UNAVAILABLE_MESSAGE",
     "UNKNOWN_MESSAGE",
     "ClaudeAuthError",
     "ClaudeBadRequest",

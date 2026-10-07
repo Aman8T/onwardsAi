@@ -24,7 +24,8 @@ def _normalise(text: str) -> str:
 
 def ingest_notes(text: str) -> SourceDoc:
     """Pasted notes as a source. Never fails."""
-    content = _normalise(text or "")[:MAX_NOTES_CHARS]
+    pasted = (text or "").replace("\x00", "")  # Postgres refuses a NUL in TEXT and JSONB
+    content = _normalise(pasted)[:MAX_NOTES_CHARS]
     return SourceDoc(
         id="notes",
         kind="notes",

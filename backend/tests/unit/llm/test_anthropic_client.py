@@ -30,11 +30,13 @@ from tayyari.core.settings import Settings
 from tayyari.llm import anthropic_client
 from tayyari.llm.anthropic_client import (
     EMIT_TOOL,
+    WEB_FETCH_MAX_CONTENT_TOKENS,
     WEB_TOOLS,
     AnthropicClaudeClient,
     parse_json_object,
 )
 from tayyari.llm.errors import (
+    UNAVAILABLE_MESSAGE,
     ClaudeAuthError,
     ClaudeBadRequest,
     ClaudeConnectionError,
@@ -692,6 +694,54 @@ async def test_auth_error_is_mapped_and_recorded(rig: Rig) -> None:
     assert (row.input_tokens, row.output_tokens, row.cost_micro_usd) == (0, 0, 0)
 
 
+@pytest.mark.parametrize(
+    ("status", "error_type", "message", "kind"),
+    [
+        (401, "authentication_error", "invalid x-api-key", "auth"),
+        (402, "billing_error", "Your credit balance is too low", "auth"),
+        (403, "permission_error", "key may not use this model", "auth"),
+        (404, "not_found_error", "model: claude-nope", "bad_request"),
+    ],
+)
+async def test_operator_failures_are_generic_for_the_visitor_and_specific_in_the_log(
+    rig: Rig, recorded_log: RecordingLog, status: int, error_type: str, message: str, kind: str
+) -> None:
+    """#17: the public message is one sentence; the real reason is logged where the provider's answer is at hand."""
+    rig.api.queue(error(status, error_type, message, request_id="req_op"))
+    with pytest.raises(ClaudeError) as caught:
+        await run_structured(rig)
+    assert caught.value.user_message == UNAVAILABLE_MESSAGE
+    assert caught.value.kind == kind and caught.value.status == status
+
+    (logged,) = recorded_log.named("claude_unavailable")
+    assert logged["status"] == status
+    assert logged["kind"] == kind
+    assert logged["detail"] == message
+    assert logged["anthropic_request_id"] == "req_op"
+
+
+async def test_chat_operator_failures_are_logged_too(rig: Rig, recorded_log: RecordingLog) -> None:
+    rig.api.queue(error(402, "billing_error", "Your credit balance is too low"))
+    with pytest.raises(ClaudeAuthError) as caught:
+        await run_chat(rig)
+    assert caught.value.user_message == UNAVAILABLE_MESSAGE
+    (logged,) = recorded_log.named("claude_unavailable")
+    assert (logged["status"], logged["detail"]) == (402, "Your credit balance is too low")
+
+
+@pytest.mark.parametrize(
+    ("status", "error_type", "expected"),
+    [(529, "overloaded_error", ClaudeOverloaded), (400, "invalid_request_error", ClaudeBadRequest)],
+)
+async def test_ordinary_failures_are_not_reported_as_operator_problems(
+    rig: Rig, recorded_log: RecordingLog, status: int, error_type: str, expected: type[ClaudeError]
+) -> None:
+    rig.api.queue(error(status, error_type, "nope", headers={"retry-after-ms": "1"}), repeat_last=True)
+    with pytest.raises(expected):
+        await run_structured(rig)
+    assert recorded_log.named("claude_unavailable") == []
+
+
 async def test_overloaded_is_mapped_after_the_sdk_retries_and_is_one_row(rig: Rig) -> None:
     rig.api.queue(
         error(529, "overloaded_error", "Overloaded", headers={"retry-after-ms": "1"}),
@@ -860,7 +910,7 @@ async def test_chat_streams_text_maps_tool_names_and_builds_the_request(rig: Rig
     assert body["stream"] is True
     assert body["tools"] == [
         {"type": "web_search_20260209", "name": "web_search", "max_uses": 5},
-        {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": 5},
+        {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": 5, "max_content_tokens": 20000},
     ]
     assert body["system"] == [
         {"type": "text", "text": "rules"},
@@ -892,6 +942,22 @@ async def test_chat_tool_choice_none_keeps_every_tool_declared(rig: Rig) -> None
     assert without["system"] == with_tools["system"]
     assert "cache_control" not in without
     assert "output_config" not in without
+
+
+async def test_web_fetch_is_capped_in_the_content_it_adds_to_the_context(rig: Rig) -> None:
+    """#5: one fetched page must not be able to add an unbounded number of input tokens to a turn."""
+    assert WEB_FETCH_MAX_CONTENT_TOKENS == 20_000
+    fetch = next(t for t in WEB_TOOLS if t["name"] == "web_fetch")
+    assert fetch["max_content_tokens"] == WEB_FETCH_MAX_CONTENT_TOKENS
+    assert "max_content_tokens" not in next(t for t in WEB_TOOLS if t["name"] == "web_search")
+
+    rig.api.queue(ok("chat_plain"), ok("chat_plain"))
+    await run_chat(rig, tools="web")
+    await run_chat(rig, tools="none")  # withheld tools stay declared, and with the same cap
+    for body in rig.api.requests:
+        sent_fetch = next(t for t in body["tools"] if t["name"] == "web_fetch")
+        assert sent_fetch["max_content_tokens"] == 20_000
+        assert sent_fetch["max_uses"] == fetch["max_uses"]
 
 
 async def test_chat_events_carry_timing(rig: Rig) -> None:

@@ -21,6 +21,14 @@ Behaviour:
   - Cost: input tokens from the response's ``usage`` (estimated from the request size when it is missing, so
     spend is never undercounted) priced with `jev_cost_micro`.
 
+Transport hardening (the Jev endpoint is operator-configured, but a typo or a compromised setting must not
+turn the client into a leak or a memory hog):
+  - ``trust_env=False``: proxy variables and netrc files of the environment are ignored.
+  - A ``base_url`` that is not https is refused (``JevError("disabled")``, nothing is sent, the reason is logged
+    once); plain http is accepted only for localhost, 127.0.0.1 and ::1.
+  - The response body is read as a stream and capped at `MAX_RESPONSE_BYTES` (1 MiB): a bigger success body is an
+    ``invalid_response``, a bigger error body is truncated (only its first characters are ever looked at).
+
 Bodies are never logged: only the status, the error kind and the request id.
 """
 
@@ -34,6 +42,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 from pydantic import SecretStr
@@ -57,6 +66,10 @@ _BACKOFF_JITTER_S = 0.15
 _MAX_RETRY_AFTER_S = 3600.0
 _DETAIL_CHARS = 200
 _BYTES_PER_TOKEN = 4  # rough estimate used only when the API does not report usage
+MAX_RESPONSE_BYTES = 1024 * 1024
+"""A Jev answer is a few KB of JSON; anything near this size is not one."""
+_LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+_DROPPED_HEADERS = frozenset({"content-encoding", "content-length", "transfer-encoding"})
 
 
 # ───────────────────────── state preparation ─────────────────────────
@@ -87,6 +100,67 @@ def prepare_state(state: JsonContent, *, redact: bool) -> JsonContent:
     string leaf (never a key) passed through `redact_pii`. Applying it twice gives the same result."""
     prepared: JsonContent = _walk(state, redact=redact)
     return prepared
+
+
+# ───────────────────────── transport helpers ─────────────────────────
+
+
+def base_url_problem(base_url: str) -> str | None:
+    """Why ``base_url`` may not be used (None when it may): it must be https, or http to this machine only.
+
+    The API key travels in every request, so an endpoint on plain http across the network is refused.
+    """
+    try:
+        parts = urlsplit(base_url.strip())
+        host = (parts.hostname or "").lower()
+    except ValueError:
+        return "jev.base_url is not a valid URL"
+    if not host:
+        return "jev.base_url has no host"
+    if parts.scheme == "https":
+        return None
+    if parts.scheme == "http" and host in _LOCAL_HOSTS:
+        return None
+    return (
+        "jev.base_url must use https (plain http is only accepted for localhost); "
+        f"got scheme {parts.scheme or '(none)'!r} for host {host!r}"
+    )
+
+
+def _too_large(response: httpx.Response) -> JevError:
+    return JevError(
+        "invalid_response",
+        f"the response is larger than {MAX_RESPONSE_BYTES} bytes",
+        request_id=_header_request_id(response.headers),
+        status=response.status_code,
+    )
+
+
+async def _read_capped(response: httpx.Response) -> httpx.Response:
+    """Read the body of a streamed ``response`` (decoded) and return it as an ordinary, fully read response.
+
+    A success body over `MAX_RESPONSE_BYTES` is an ``invalid_response``; an error body over it is truncated.
+    The cap counts decoded bytes; a compressed body is decoded one network chunk at a time, so the peak is the
+    cap plus one expanded chunk (the request asks for ``identity``, which an honest server honours).
+    """
+    ok = 200 <= response.status_code < 300
+    declared = response.headers.get("content-length", "")
+    if ok and declared.isdigit() and int(declared) > MAX_RESPONSE_BYTES:
+        raise _too_large(response)
+    chunks: list[bytes] = []
+    size = 0
+    async for chunk in response.aiter_bytes():
+        if size + len(chunk) > MAX_RESPONSE_BYTES:
+            if ok:
+                raise _too_large(response)
+            chunks.append(chunk[: MAX_RESPONSE_BYTES - size])
+            break
+        chunks.append(chunk)
+        size += len(chunk)
+    headers = [(k, v) for k, v in response.headers.multi_items() if k.lower() not in _DROPPED_HEADERS]
+    return httpx.Response(
+        response.status_code, headers=headers, content=b"".join(chunks), request=response.request
+    )
 
 
 # ───────────────────────── response helpers ─────────────────────────
@@ -167,11 +241,17 @@ class HttpJevClient:
         self._http: httpx.AsyncClient = (
             http
             if http is not None
-            else httpx.AsyncClient(limits=httpx.Limits(max_connections=32, max_keepalive_connections=8))
+            else httpx.AsyncClient(
+                limits=httpx.Limits(max_connections=32, max_keepalive_connections=8), trust_env=False
+            )
         )
         self._clock: Clock = clock if clock is not None else SystemClock()
         self._url = settings.base_url.rstrip("/") + ENDPOINT_PATH
         self._rng = random.Random()
+        self._refusal: str | None = base_url_problem(settings.base_url)
+        """Why every call is refused (an unusable ``base_url``), or None."""
+        if self._refusal is not None:
+            log.error("jev_base_url_refused", reason=self._refusal)
 
     def __repr__(self) -> str:
         return f"HttpJevClient(url={self._url!r}, model={self._settings.model!r}, key={'set' if self._key else 'unset'})"
@@ -182,8 +262,8 @@ class HttpJevClient:
 
     @property
     def enabled(self) -> bool:
-        """True when a call would actually be sent (switched on and a key is present)."""
-        return self._settings.enabled and self._key is not None
+        """True when a call would actually be sent (switched on, a key is present, the URL is usable)."""
+        return self._settings.enabled and self._key is not None and self._refusal is None
 
     async def aclose(self) -> None:
         """Close the connection pool when this adapter created it; a client passed in stays open."""
@@ -203,6 +283,8 @@ class HttpJevClient:
             raise JevError("disabled", "Jev is switched off (TAYYARI_JEV__ENABLED=false)")
         if self._key is None:
             raise JevError("disabled", "no Jev API key is configured")
+        if self._refusal is not None:
+            raise JevError("disabled", self._refusal)
         if not questions:
             raise JevError("bad_request", "a Jev call needs at least one question")
 
@@ -246,13 +328,15 @@ class HttpJevClient:
             "Authorization": f"Bearer {key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "Accept-Encoding": "identity",  # a few KB of JSON: compression only adds a decompression-bomb risk
             "User-Agent": "tayyari-backend",
         }
         try:
             async with asyncio.timeout(timeout_s):
-                return await self._http.post(
-                    self._url, content=body, headers=headers, timeout=httpx.Timeout(timeout_s)
-                )
+                async with self._http.stream(
+                    "POST", self._url, content=body, headers=headers, timeout=httpx.Timeout(timeout_s)
+                ) as response:
+                    return await _read_capped(response)
         except TimeoutError as exc:
             raise JevError("timeout", f"Jev did not answer within {timeout_s:g}s") from exc
         except httpx.TimeoutException as exc:
@@ -353,4 +437,4 @@ class HttpJevClient:
         )
 
 
-__all__ = ["ENDPOINT_PATH", "HttpJevClient", "prepare_state"]
+__all__ = ["ENDPOINT_PATH", "MAX_RESPONSE_BYTES", "HttpJevClient", "base_url_problem", "prepare_state"]

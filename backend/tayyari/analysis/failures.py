@@ -23,7 +23,7 @@ from tayyari.llm.errors import (
 
 GENERIC_MESSAGE = "Something went wrong."
 CANCELLED_MESSAGE = "Cancelled."
-READER_AUTH_LINE = "API key missing or invalid · skipped"
+READER_AUTH_LINE = "AI service unavailable · skipped"
 """The one-line reason under a reader that could not start because the server's key is missing or invalid."""
 
 

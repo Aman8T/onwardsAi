@@ -10,6 +10,7 @@ import asyncio
 import dataclasses
 import json
 from collections.abc import Callable
+from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import Any
 
@@ -359,6 +360,13 @@ def _slot_request() -> Request:
     return Request(http_scope(path="/api/analyze"))
 
 
+def _held(released: list[int]) -> AsyncExitStack:
+    """What the route hands the response: guard holds that, once closed, record that they were released."""
+    held = AsyncExitStack()
+    held.callback(lambda: released.append(1))
+    return held
+
+
 async def _events_until_cancelled(started: asyncio.Event) -> Any:
     started.set()
     await asyncio.sleep(3600)
@@ -372,7 +380,7 @@ async def test_the_slot_is_released_once_when_the_stream_finishes() -> None:
         return
         yield  # pragma: no cover
 
-    response = analyze_route._SlotResponse(_slot_request(), events(), "analyze", lambda: released.append(1))
+    response = analyze_route.HeldResponse(_slot_request(), events(), "analyze", _held(released))
     exchange = AsgiExchange(http_scope(path="/api/analyze"))
     await asyncio.wait_for(response(exchange.scope, exchange.receive, exchange.send), 5)
     assert released == [1]
@@ -383,11 +391,11 @@ async def test_the_slot_is_released_when_the_client_disconnects() -> None:
     released: list[int] = []
     started = asyncio.Event()
     exchange = AsgiExchange(http_scope(path="/api/analyze"))
-    response = analyze_route._SlotResponse(
+    response = analyze_route.HeldResponse(
         Request(exchange.scope, exchange.receive),
         _events_until_cancelled(started),
         "analyze",
-        lambda: released.append(1),
+        _held(released),
     )
     task = exchange.run(response)
     await asyncio.wait_for(started.wait(), 5)
@@ -400,8 +408,8 @@ async def test_the_slot_is_released_when_the_client_disconnects() -> None:
 async def test_the_slot_is_released_when_the_server_cancels_the_response() -> None:
     released: list[int] = []
     started = asyncio.Event()
-    response = analyze_route._SlotResponse(
-        _slot_request(), _events_until_cancelled(started), "analyze", lambda: released.append(1)
+    response = analyze_route.HeldResponse(
+        _slot_request(), _events_until_cancelled(started), "analyze", _held(released)
     )
     exchange = AsgiExchange(http_scope(path="/api/analyze"))
     task = exchange.run(response)

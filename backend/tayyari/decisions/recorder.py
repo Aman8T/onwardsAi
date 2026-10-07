@@ -13,9 +13,11 @@ A flush happens when the buffer reaches `max_rows` calls plus decisions, or `flu
 row was added, whichever is first; `drain()` flushes everything now (end of an analysis, shutdown). The
 background flusher exists only while there is something to write, so an idle recorder holds no task.
 
-Decision logs are not critical: a failed flush is logged, never raised. The batch is put back and retried on
-the next flush up to three times in a row, then dropped; the buffer is capped at `max_buffered` rows (the
-oldest are dropped first), so an unreachable database cannot grow memory without bound.
+Decision logs are not critical: a failed flush is logged, never raised. Only the exception class goes to the
+log: a database error's message can carry the bound parameters of the failed statement, which hold resume and
+chat text. The batch is put back and retried on the next flush up to three times in a row, then dropped; the
+buffer is capped at `max_buffered` rows (the oldest are dropped first), so an unreachable database cannot grow
+memory without bound.
 """
 
 from __future__ import annotations
@@ -157,7 +159,7 @@ class DecisionRecorder:
                         "decision_flush_dropped",
                         calls=len(calls),
                         rows=len(rows),
-                        error=f"{type(exc).__name__}: {exc}"[:300],
+                        error=type(exc).__name__,
                     )
                 else:
                     log.warning(
@@ -165,7 +167,7 @@ class DecisionRecorder:
                         calls=len(calls),
                         rows=len(rows),
                         attempt=self._failures_in_a_row,
-                        error=f"{type(exc).__name__}: {exc}"[:300],
+                        error=type(exc).__name__,
                     )
                     self._put_back(states, calls, rows)
                 return

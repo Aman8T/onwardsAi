@@ -21,6 +21,7 @@ from fastapi.responses import JSONResponse
 from tayyari.api.deps import RequestIdMiddleware
 from tayyari.api.errors import install_error_handlers
 from tayyari.api.ndjson import NdjsonResponse
+from tayyari.api.security import API_CSP, CrossSiteGuard, SecurityHeadersMiddleware
 from tayyari.api.uploads import parse_analyze_form
 from tayyari.contract import AnalysisEvent, ChatEvent, ev_chat_done, ev_log
 from tests.unit.api.helpers import eventually
@@ -37,6 +38,10 @@ class Probe:
 def make_app(probe: Probe) -> FastAPI:
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     install_error_handlers(app)
+    app.add_middleware(
+        CrossSiteGuard
+    )  # the same stack as create_app: the headers must not hold a stream back
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestIdMiddleware)
 
     @app.post("/stream")
@@ -55,6 +60,7 @@ def make_app(probe: Probe) -> FastAPI:
         return NdjsonResponse(request, events(), "analyze", heartbeat_s=0.2, poll_s=0.05)
 
     @app.post("/analyze")
+    @app.post("/api/analyze")
     async def analyze(request: Request) -> JSONResponse:
         req = await parse_analyze_form(request)
         return JSONResponse({"resume": len(req.resume_bytes or b"")})
@@ -92,6 +98,8 @@ async def test_heartbeats_arrive_while_quiet_and_a_hang_up_cancels_the_producer(
             assert response.headers["cache-control"] == "no-cache, no-transform"
             assert response.headers["x-accel-buffering"] == "no"
             assert response.headers["x-request-id"] == "live-1"
+            assert response.headers["content-security-policy"] == API_CSP
+            assert response.headers["x-content-type-options"] == "nosniff"
             pieces: list[bytes] = []
             async for piece in response.aiter_raw():
                 pieces.append(piece)
@@ -140,3 +148,19 @@ async def test_http_errors_are_json_over_a_real_connection() -> None:
         missing = await client.get("/nothing")
         assert missing.status_code == 404
         assert missing.json() == {"error": "Not Found"}
+
+
+async def test_a_cross_site_post_is_refused_over_a_real_connection() -> None:
+    probe = Probe()
+    async with serving(make_app(probe)) as client:
+        res = await client.post(
+            "/api/analyze", data={"goal": "x"}, headers={"origin": "https://evil.example"}
+        )
+        assert res.status_code == 403
+        assert res.headers["content-security-policy"] == API_CSP
+        assert res.json() == {"error": "Cross-site requests are not allowed."}
+        # the same request from the page's own origin gets as far as the form check
+        own = await client.post(
+            "/analyze", data={"goal": "x"}, headers={"origin": str(client.base_url).rstrip("/")}
+        )
+        assert own.status_code == 400

@@ -207,14 +207,29 @@ RESUME_MAX_CHARS: Final[int] = 30_000
 """Only this many characters of a resume are analysed and kept."""
 RESUME_MAX_EXTRACT_CHARS: Final[int] = 250_000
 """PDF extraction stops after this many characters."""
-RESUME_MAX_PDF_PAGES: Final[int] = 60
-RESUME_MAX_DOCX_UNZIPPED_BYTES: Final[int] = 30 * MIB
-"""A DOCX whose parts declare more than this is refused (zip bomb)."""
+RESUME_MAX_PDF_PAGES: Final[int] = 20
+"""Pages read from a PDF. A resume is one to three pages; the cap bounds the work a page-heavy file can cost."""
+RESUME_MAX_PDF_STREAM_BYTES: Final[int] = 1 * MIB
+"""One PDF stream may inflate to at most this much (a resume's content streams are a few hundred KB at most)."""
+RESUME_MAX_DOCX_UNZIPPED_BYTES: Final[int] = 4 * MIB
+"""A DOCX whose parts declare more than this in total is refused (zip bomb)."""
+RESUME_MAX_DOCX_XML_BYTES: Final[int] = 2 * MIB
+"""No single XML part of a DOCX (word/document.xml above all) may be larger than this once unpacked."""
+RESUME_MAX_DOCX_ELEMENTS: Final[int] = 60_000
+"""Paragraph and run start tags allowed across a DOCX's XML parts, counted before python-docx builds its tree."""
 RESUME_MIN_TEXT_CHARS: Final[int] = 200
 """Below this a PDF counts as scanned and is sent to the reader as a document block."""
 
 WEB_REQUEST_TIMEOUT_S: Final[float] = 10.0
 """One request, every redirect hop included."""
+WEB_DNS_TIMEOUT_S: Final[float] = 4.0
+"""One host-name lookup. The resolver thread cannot be cancelled, so the wait is abandoned after this long."""
+WEB_DNS_WORKERS: Final[int] = 8
+"""Threads of the pool that only resolves host names (a stuck resolver can never starve the shared default pool)."""
+WEB_DNS_FAILURE_TTL_S: Final[float] = 30.0
+"""A host whose lookup failed or timed out is refused straight away for this long."""
+WEB_DNS_FAILURE_CACHE_MAX: Final[int] = 512
+"""Failed hosts remembered at once (the oldest are dropped first)."""
 WEB_MAX_BODY_BYTES: Final[int] = 2 * MIB
 WEB_MAX_REDIRECTS: Final[int] = 6
 WEB_MAX_BUNDLES: Final[int] = 2

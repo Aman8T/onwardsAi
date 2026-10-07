@@ -28,6 +28,7 @@ from tayyari.llm.errors import (
     SPEND_CEILING_MESSAGE,
     TOO_LARGE_MESSAGE,
     TRUNCATED_MESSAGE,
+    UNAVAILABLE_MESSAGE,
     ClaudeAuthError,
     ClaudeBadRequest,
     ClaudeConnectionError,
@@ -78,7 +79,7 @@ def _status_error(
 # ───────────────────────── mapping the SDK's HTTP errors ─────────────────────────
 
 
-def test_401_is_an_auth_error_with_the_key_message() -> None:
+def test_401_is_an_auth_error_with_the_generic_message() -> None:
     exc = _status_error(
         anthropic.AuthenticationError,
         401,
@@ -94,12 +95,15 @@ def test_401_is_an_auth_error_with_the_key_message() -> None:
         401,
         "req_401",
     )
-    assert mapped.user_message == AUTH_MESSAGE == "The server's Anthropic API key is missing or invalid."
+    assert mapped.user_message == AUTH_MESSAGE == UNAVAILABLE_MESSAGE
+    assert (
+        UNAVAILABLE_MESSAGE == "The AI service isn't available right now. Please try again in a few minutes."
+    )
     assert mapped.detail == "invalid x-api-key"  # the provider's words stay in the log detail only
     assert "x-api-key" not in mapped.user_message
 
 
-def test_403_and_402_keep_the_auth_family_with_their_own_text() -> None:
+def test_403_and_402_keep_the_auth_family_with_the_same_public_text() -> None:
     forbidden = from_anthropic(
         _status_error(anthropic.PermissionDeniedError, 403, error_type="permission_error")
     )
@@ -112,6 +116,93 @@ def test_403_and_402_keep_the_auth_family_with_their_own_text() -> None:
     )
     assert isinstance(billing, ClaudeAuthError)
     assert (billing.status, billing.user_message, billing.retryable) == (402, BILLING_MESSAGE, False)
+    assert billing.detail == "credit balance too low"  # the reason stays in the log detail
+
+
+# Words that would tell a visitor something about the operator's Anthropic account.
+_OPERATOR_WORDS = (
+    "anthropic",
+    "api key",
+    "billing",
+    "credit",
+    "permission",
+    "account",
+    "model",
+    "configured",
+)
+
+
+def test_operator_state_failures_share_one_generic_public_message() -> None:
+    """#17: key, billing, permission and model-access failures must look identical to a visitor."""
+    mapped = [
+        from_anthropic(_status_error(anthropic.AuthenticationError, 401, error_type="authentication_error")),
+        from_anthropic(_status_error(anthropic.APIStatusError, 402, error_type="billing_error")),
+        from_anthropic(_status_error(anthropic.PermissionDeniedError, 403, error_type="permission_error")),
+        from_anthropic(_status_error(anthropic.NotFoundError, 404, error_type="not_found_error")),
+        from_anthropic(anthropic.CredentialsError("no key")),
+        ClaudeNotConfigured(),
+        ClaudeAuthError(),
+    ]
+    assert {err.user_message for err in mapped} == {UNAVAILABLE_MESSAGE}
+    assert (
+        AUTH_MESSAGE
+        == BILLING_MESSAGE
+        == PERMISSION_MESSAGE
+        == MODEL_UNAVAILABLE_MESSAGE
+        == UNAVAILABLE_MESSAGE
+    )
+    lowered = UNAVAILABLE_MESSAGE.lower()
+    assert not [word for word in _OPERATOR_WORDS if word in lowered]
+    # ... while the logs can still tell them apart: the class family, the status and the detail
+    assert [err.kind for err in mapped] == [
+        "auth",
+        "auth",
+        "auth",
+        "bad_request",
+        "not_configured",
+        "not_configured",
+        "auth",
+    ]
+    assert [err.status for err in mapped[:4]] == [401, 402, 403, 404]
+
+
+@pytest.mark.parametrize(
+    ("status", "error_type"),
+    [
+        (401, "authentication_error"),
+        (402, "billing_error"),
+        (403, "permission_error"),
+        (404, "not_found_error"),
+    ],
+)
+def test_an_operator_failure_without_provider_text_still_names_its_reason_for_the_logs(
+    status: int, error_type: str
+) -> None:
+    exc = anthropic.APIStatusError("", response=_response(status), body=None)
+    mapped = from_anthropic(exc)
+    assert mapped.status == status
+    assert mapped.detail == error_type
+    assert mapped.user_message == UNAVAILABLE_MESSAGE
+
+
+def test_the_other_public_messages_are_unchanged() -> None:
+    """Only the four operator-state messages were folded together; rate limits and network keep their words."""
+    assert (
+        from_anthropic(
+            _status_error(anthropic.RateLimitError, 429, error_type="rate_limit_error")
+        ).user_message
+        == BUSY_MESSAGE
+    )
+    assert (
+        from_anthropic(
+            _status_error(anthropic.InternalServerError, 529, error_type="overloaded_error")
+        ).user_message
+        == BUSY_MESSAGE
+    )
+    assert from_anthropic(anthropic.APIConnectionError(request=REQUEST)).user_message == NETWORK_MESSAGE
+    assert from_anthropic(anthropic.APITimeoutError(request=REQUEST)).user_message == NETWORK_MESSAGE
+    assert ClaudeBadRequest().user_message == BAD_REQUEST_MESSAGE
+    assert BUSY_MESSAGE != UNAVAILABLE_MESSAGE != NETWORK_MESSAGE
 
 
 def test_429_carries_retry_after_seconds() -> None:
@@ -301,6 +392,7 @@ def test_missing_credentials_mean_not_configured() -> None:
     mapped = from_anthropic(anthropic.CredentialsError("no key"))
     assert isinstance(mapped, ClaudeNotConfigured)
     assert (mapped.kind, mapped.retryable, mapped.user_message) == ("not_configured", False, AUTH_MESSAGE)
+    assert mapped.detail == "no key"
 
 
 def test_an_unparseable_api_response_is_a_retryable_server_problem() -> None:

@@ -13,6 +13,7 @@ import pytest
 from tayyari.contract.records import DecisionRecord, JevCallRecord, StateBlob
 from tayyari.core.hashing import canonical_json, sha256_hex
 from tayyari.core.ids import uuid7
+from tayyari.decisions import recorder as recorder_module
 from tayyari.decisions.recorder import MAX_CONSECUTIVE_FAILURES, DecisionRecorder, make_state_blob
 from tests.fakes.clock import FakeClock
 from tests.fakes.repos import FakeRepositories
@@ -260,6 +261,56 @@ async def test_a_batch_that_keeps_failing_is_dropped_after_a_few_attempts() -> N
     recorder.add_decision(decision())
     await recorder.flush()
     assert len(repos.decisions.rows) == 1  # the poison batch is gone, new rows flow
+
+
+class RecordingLog:
+    """Stands in for the module's structlog logger."""
+
+    def __init__(self) -> None:
+        self.events: list[tuple[str, str, dict[str, Any]]] = []
+
+    def _add(self, level: str, event: str, **fields: Any) -> None:
+        self.events.append((level, event, fields))
+
+    def info(self, event: str, **fields: Any) -> None:
+        self._add("info", event, **fields)
+
+    def warning(self, event: str, **fields: Any) -> None:
+        self._add("warning", event, **fields)
+
+    def error(self, event: str, **fields: Any) -> None:
+        self._add("error", event, **fields)
+
+
+class LeakyDatabaseError(Exception):
+    """What SQLAlchemy raises when parameters are not hidden: the statement's bound values are in the text."""
+
+
+SECRET = "MARKER_RESUME_TEXT about my layoff at ACME"
+
+
+async def test_flush_failures_are_logged_by_class_name_never_by_message(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """#10: a database error's text can hold the bound parameters of the statement (resume, chat, Jev states)."""
+    log = RecordingLog()
+    clock = FakeClock()
+    repos = FakeRepositories(clock)
+    boom = LeakyDatabaseError(f"(psycopg.errors.DataError) invalid input [parameters: ('{SECRET}', 3)]")
+    repo = FlakyRepo(repos.decisions, failures=100, error=boom)
+    recorder = DecisionRecorder(repo, clock, 3600.0, 50)  # type: ignore[arg-type]
+    monkeypatch.setattr(recorder_module, "log", log)
+    recorder.add_decision(decision())
+    for _ in range(MAX_CONSECUTIVE_FAILURES + 1):  # failed, failed, failed, then dropped
+        await recorder.flush()
+
+    names = [event for _level, event, _fields in log.events]
+    assert names == ["decision_flush_failed"] * MAX_CONSECUTIVE_FAILURES + ["decision_flush_dropped"]
+    for _level, _event, fields in log.events:
+        assert fields["error"] == "LeakyDatabaseError"
+        assert SECRET not in json.dumps(fields, default=str)
+        assert "parameters" not in json.dumps(fields, default=str)
+    assert recorder.stats.failures == MAX_CONSECUTIVE_FAILURES + 1 and recorder.stats.rows_dropped == 1
 
 
 async def test_drain_survives_a_database_that_is_down() -> None:

@@ -3,20 +3,24 @@
 The order of the guards is part of the contract (everything before the stream is a JSON error):
 
 1. ``rate_limiter.shed``: the in-memory bucket turns hammering away before the body is read.
-2. ``parse_analyze_form``: streamed multipart with hard caps (413 / 400).
+2. ``parse_analyze_form``: streamed multipart with hard caps (413 / 400), a deadline for the whole read (408),
+   one upload being read per client (429) and a process-wide budget of buffered upload bytes (503).
 3. a quick look at the per-process slots, so a busy server does not charge the caller's rate-limit windows.
 4. ``rate_limiter.check(memory=False)``: the shared per-IP and global counters (429).
-5. ``spend_guard.admit``: the daily spend ceiling (503 with ``Retry-After`` until UTC midnight).
+5. ``spend_guard.reserve``: the daily spend ceiling (503 with ``Retry-After`` until UTC midnight). Unlike a
+   one-off check, the estimate stays reserved against the ceiling until the stream is over, so analyses that
+   start together cannot all be admitted by the same stale ledger reading.
 6. one of `max_concurrent_analyses` slots, taken without waiting (429 "busy").
 
-The slot is given back when the response is over: the stream finished, the producer crashed, or the client
-went away. It is tied to the response object (not to the event generator), because a generator that never
-started cannot run its ``finally``.
+The reservation and the slot are given back when the response is over: the stream finished, the producer
+crashed, or the client went away. They are tied to the response object (not to the event generator), because
+a generator that never started cannot run its ``finally``.
 """
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator
+from contextlib import AsyncExitStack
 
 from fastapi import APIRouter, Request
 from starlette.responses import Response
@@ -25,7 +29,8 @@ from starlette.types import Receive, Scope, Send
 from tayyari.api.deps import get_request_context
 from tayyari.api.lifespan import get_container
 from tayyari.api.ndjson import NdjsonResponse
-from tayyari.api.uploads import parse_analyze_form
+from tayyari.api.security import subnet_hash
+from tayyari.api.uploads import parse_analyze_form, upload_gate
 from tayyari.contract.events import AnalysisEvent, ChatEvent
 from tayyari.core.errors import RateLimited
 
@@ -36,24 +41,25 @@ BUSY_MESSAGE = "Tayyari is busy, try again in a minute."
 BUSY_RETRY_AFTER_S = 30.0
 
 
-class _SlotResponse(NdjsonResponse):
-    """An `NdjsonResponse` that runs ``release`` once it is over, however it ends."""
+class HeldResponse(NdjsonResponse):
+    """An `NdjsonResponse` that closes ``held`` (the guard slots and reservations it was given) once it is over,
+    however it ends: finished, failed, the client left or the server cancelled it."""
 
     def __init__(
         self,
         request: Request,
         events: AsyncIterator[AnalysisEvent | ChatEvent],
         tag: str,
-        release: Callable[[], None],
+        held: AsyncExitStack,
     ) -> None:
         super().__init__(request, events, tag)
-        self._release = release
+        self._held = held
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         try:
             await super().__call__(scope, receive, send)
         finally:
-            self._release()
+            await self._held.aclose()
 
 
 def _busy() -> RateLimited:
@@ -65,32 +71,33 @@ async def analyze(request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
     limiter = container.rate_limiter
-    limiter.shed("analyze", rc.ip_hash)
-    req = await parse_analyze_form(request)
+    guard = container.settings.guard
+    ip48 = subnet_hash(container.ip_hash_key, rc.client_ip)
+    limiter.shed("analyze", rc.ip_hash, ip_hash_48=ip48)
+    req = await parse_analyze_form(
+        request,
+        read_timeout_s=guard.upload_read_timeout_s,
+        gate=upload_gate(request, guard),
+        client_key=rc.ip_hash,
+    )
 
     slots = container.analysis_slots
     if slots.locked():
         raise _busy()
-    await limiter.check("analyze", rc.ip_hash, memory=False)
-    await container.spend_guard.admit(container.settings.guard.est_analyze_usd)
+    await limiter.check("analyze", rc.ip_hash, ip_hash_48=ip48, memory=False)
 
-    # No await between this check and the acquire, so the slot is ours (the semaphore is never waited on).
-    if slots.locked():
-        raise _busy()
-    await slots.acquire()
-    released = False
-
-    def release() -> None:
-        nonlocal released
-        if not released:
-            released = True
-            slots.release()
-
+    held = AsyncExitStack()
     try:
-        return _SlotResponse(request, container.analysis.run(req, rc), TAG, release)
+        await held.enter_async_context(container.spend_guard.reserve(guard.est_analyze_usd))
+        # No await between this check and the acquire, so the slot is ours (the semaphore is never waited on).
+        if slots.locked():
+            raise _busy()
+        await slots.acquire()
+        held.callback(slots.release)
+        return HeldResponse(request, container.analysis.run(req, rc), TAG, held)
     except BaseException:
-        release()
+        await held.aclose()
         raise
 
 
-__all__ = ["BUSY_MESSAGE", "BUSY_RETRY_AFTER_S", "router"]
+__all__ = ["BUSY_MESSAGE", "BUSY_RETRY_AFTER_S", "HeldResponse", "router"]

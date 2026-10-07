@@ -8,7 +8,7 @@ from collections.abc import Iterator
 import pytest
 import respx
 
-from tayyari.ingest.web import ssl_context
+from tayyari.ingest.web import clear_dns_failures, ssl_context
 from tests.unit.ingest.helpers import FakeDns, FakeWeb, LogRecorder
 
 
@@ -17,6 +17,14 @@ def _warm_tls_contexts() -> None:
     """Building the CA bundle context takes up to half a second; do it once, before any timing-sensitive test."""
     ssl_context(False)
     ssl_context(True)
+
+
+@pytest.fixture(autouse=True)
+def _forget_dns_failures() -> Iterator[None]:
+    """The remembered lookup failures are process-wide state: no test may inherit another test's."""
+    clear_dns_failures()
+    yield
+    clear_dns_failures()
 
 
 @pytest.fixture

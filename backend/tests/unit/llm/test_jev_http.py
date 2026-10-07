@@ -8,8 +8,9 @@ state (email and phone masking, the PII switch, lone surrogates).
 from __future__ import annotations
 
 import asyncio
+import gzip
 import json
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 from typing import Any
 
 import httpx
@@ -18,9 +19,16 @@ import respx
 from pydantic import SecretStr
 
 from tayyari.core.settings import JevSettings
+from tayyari.llm import jev_http
 from tayyari.llm.errors import JevError
 from tayyari.llm.jev import JevClient, JevQuestion
-from tayyari.llm.jev_http import ENDPOINT_PATH, HttpJevClient, prepare_state
+from tayyari.llm.jev_http import (
+    ENDPOINT_PATH,
+    MAX_RESPONSE_BYTES,
+    HttpJevClient,
+    base_url_problem,
+    prepare_state,
+)
 from tayyari.llm.models import jev_cost_micro
 from tayyari.llm.types import CallContext
 from tests.fakes.clock import FakeClock
@@ -431,6 +439,236 @@ async def test_a_state_that_is_not_json_is_a_bad_request_without_a_call(router: 
         await ask(make_client(), {"when": object()})
     assert caught.value.kind == "bad_request"
     assert route.call_count == 0
+
+
+# ───────────────────────── transport hardening ─────────────────────────
+
+
+class RecordingLog:
+    """Stands in for the module's structlog logger."""
+
+    def __init__(self) -> None:
+        self.events: list[tuple[str, dict[str, Any]]] = []
+
+    def _add(self, event: str, **fields: Any) -> None:
+        self.events.append((event, fields))
+
+    info = warning = error = _add
+
+    def named(self, event: str) -> list[dict[str, Any]]:
+        return [fields for name, fields in self.events if name == event]
+
+
+@pytest.fixture
+def recorded_log(monkeypatch: pytest.MonkeyPatch) -> RecordingLog:
+    stub = RecordingLog()
+    monkeypatch.setattr(jev_http, "log", stub)
+    return stub
+
+
+async def test_the_environment_proxy_is_ignored(monkeypatch: pytest.MonkeyPatch) -> None:
+    """#21: the key must never be sent through a proxy that merely happens to be set in the environment."""
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.invalid:3128")
+    monkeypatch.setenv("HTTP_PROXY", "http://proxy.invalid:3128")
+    monkeypatch.setenv("ALL_PROXY", "http://proxy.invalid:3128")
+
+    control = httpx.AsyncClient()  # the default (trust_env=True) really would pick the proxy up
+    assert control._mounts
+    await control.aclose()
+
+    client = make_client()
+    assert client._http._mounts == {}
+    assert client._http.trust_env is False
+    await client.aclose()
+
+
+async def test_the_request_asks_for_an_uncompressed_answer(router: respx.MockRouter) -> None:
+    route = router.post(URL).mock(return_value=httpx.Response(200, json=PLAYGROUND_BODY))
+    await ask(make_client())
+    assert route.calls[0].request.headers["accept-encoding"] == "identity"
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "http://api.typesafe.ai",
+        "http://localhost.evil.test",
+        "http://127.0.0.1.evil.test",
+        "http://user@localhost.evil.test",
+        "ftp://api.typesafe.ai",
+        "api.typesafe.ai",
+        "//api.typesafe.ai",
+        "https://",
+        "",
+    ],
+)
+async def test_a_base_url_that_is_not_https_is_refused_and_nothing_is_sent(
+    router: respx.MockRouter, recorded_log: RecordingLog, base_url: str
+) -> None:
+    route = router.route().mock(return_value=httpx.Response(200, json=PLAYGROUND_BODY))
+    client = make_client(base_url=base_url)
+    assert not client.enabled
+    with pytest.raises(JevError) as caught:
+        await ask(client)
+    assert caught.value.kind == "disabled" and not caught.value.retryable
+    assert "jev.base_url" in str(caught.value)
+    assert route.call_count == 0
+    (logged,) = recorded_log.named("jev_base_url_refused")
+    assert "jev.base_url" in logged["reason"]
+    assert KEY not in json.dumps(logged)
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "http://localhost:8080",
+        "http://127.0.0.1:9000/",
+        "http://[::1]:9000",
+        "http://LOCALHOST",
+        "https://jev.example.test/",
+    ],
+)
+async def test_https_and_plain_http_to_this_machine_are_accepted(
+    router: respx.MockRouter, recorded_log: RecordingLog, base_url: str
+) -> None:
+    route = router.route().mock(return_value=httpx.Response(200, json=PLAYGROUND_BODY))
+    client = make_client(base_url=base_url)
+    assert client.enabled
+    assert (await ask(client)).request_id == "req_8f3a1c"
+    assert route.call_count == 1
+    assert recorded_log.named("jev_base_url_refused") == []
+
+
+def test_base_url_problem_names_the_reason_without_the_credentials_in_the_url() -> None:
+    assert base_url_problem("https://api.typesafe.ai") is None
+    assert base_url_problem("http://localhost") is None
+    reason = base_url_problem("http://user:hunter2@api.typesafe.ai/x")
+    assert reason is not None and "hunter2" not in reason and "api.typesafe.ai" in reason
+    assert base_url_problem("http://[::1") is not None  # unparseable
+
+
+def _padded(size: int) -> bytes:
+    """A valid Jev answer of exactly ``size`` bytes."""
+    base = json.dumps({**PLAYGROUND_BODY, "pad": ""}, separators=(",", ":")).encode()
+    return json.dumps({**PLAYGROUND_BODY, "pad": "x" * (size - len(base))}, separators=(",", ":")).encode()
+
+
+async def test_an_answer_of_exactly_the_cap_is_accepted(router: respx.MockRouter) -> None:
+    body = _padded(MAX_RESPONSE_BYTES)
+    assert len(body) == MAX_RESPONSE_BYTES == 1024 * 1024
+    router.post(URL).mock(return_value=httpx.Response(200, content=body))
+    assert (await ask(make_client())).request_id == "req_8f3a1c"
+
+
+async def test_a_success_body_over_the_cap_is_an_invalid_response_and_is_not_retried(
+    router: respx.MockRouter,
+) -> None:
+    route = router.post(URL).mock(
+        return_value=httpx.Response(
+            200, content=_padded(MAX_RESPONSE_BYTES + 1), headers={"x-request-id": "big-1"}
+        )
+    )
+    with pytest.raises(JevError) as caught:
+        await ask(make_client())
+    assert caught.value.kind == "invalid_response" and not caught.value.retryable
+    assert caught.value.request_id == "big-1" and caught.value.status == 200
+    assert "larger than" in str(caught.value)
+    assert route.call_count == 1
+
+
+async def test_the_body_is_not_read_past_the_cap(router: respx.MockRouter) -> None:
+    """A server that never stops sending is cut off after the cap, not drained."""
+    pulled = 0
+    chunk = b"x" * 65_536
+
+    async def endless() -> AsyncIterator[bytes]:
+        nonlocal pulled
+        while True:
+            pulled += 1
+            yield chunk
+
+    router.post(URL).mock(return_value=httpx.Response(200, content=endless()))
+    with pytest.raises(JevError) as caught:
+        await ask(make_client())
+    assert caught.value.kind == "invalid_response"
+    assert MAX_RESPONSE_BYTES // len(chunk) <= pulled <= MAX_RESPONSE_BYTES // len(chunk) + 2
+
+
+async def test_a_declared_length_over_the_cap_is_refused_before_the_body_is_read(
+    router: respx.MockRouter,
+) -> None:
+    pulled = 0
+
+    async def body() -> AsyncIterator[bytes]:
+        nonlocal pulled
+        pulled += 1
+        yield b"{}"
+
+    router.post(URL).mock(
+        return_value=httpx.Response(
+            200, content=body(), headers={"content-length": str(MAX_RESPONSE_BYTES + 1)}
+        )
+    )
+    with pytest.raises(JevError) as caught:
+        await ask(make_client())
+    assert caught.value.kind == "invalid_response"
+    assert pulled == 0
+
+
+async def test_a_compressed_bomb_is_stopped_by_the_cap_on_the_decoded_size(
+    router: respx.MockRouter,
+) -> None:
+    bomb = gzip.compress(b"0" * (8 * MAX_RESPONSE_BYTES))  # about 8 KB on the wire
+    assert len(bomb) < 20_000
+    route = router.post(URL).mock(
+        return_value=httpx.Response(200, content=bomb, headers={"content-encoding": "gzip"})
+    )
+    with pytest.raises(JevError) as caught:
+        await ask(make_client())
+    assert caught.value.kind == "invalid_response"
+    assert route.call_count == 1
+
+
+async def test_a_compressed_answer_within_the_cap_still_works(router: respx.MockRouter) -> None:
+    packed = gzip.compress(json.dumps(PLAYGROUND_BODY).encode())
+    router.post(URL).mock(
+        return_value=httpx.Response(200, content=packed, headers={"content-encoding": "gzip"})
+    )
+    assert (await ask(make_client())).request_id == "req_8f3a1c"
+
+
+async def test_an_error_body_over_the_cap_is_truncated_not_fatal(router: respx.MockRouter) -> None:
+    """The status decides the error kind; only the first characters of the body are ever looked at."""
+    huge = b'{"error":{"message":"' + b"y" * (3 * MAX_RESPONSE_BYTES) + b'"}}'
+    route = router.post(URL).mock(return_value=httpx.Response(400, content=huge))
+    with pytest.raises(JevError) as caught:
+        await ask(make_client())
+    assert caught.value.kind == "bad_request" and caught.value.status == 400
+    assert len(str(caught.value)) < 300
+    assert route.call_count == 1
+
+
+async def test_a_5xx_with_a_huge_body_is_still_retried(router: respx.MockRouter) -> None:
+    route = router.post(URL).mock(
+        side_effect=[
+            httpx.Response(502, content=b"z" * (2 * MAX_RESPONSE_BYTES)),
+            httpx.Response(200, json=PLAYGROUND_BODY),
+        ]
+    )
+    assert (await ask(make_client())).request_id == "req_8f3a1c"
+    assert route.call_count == 2
+
+
+async def test_a_slow_body_is_cut_off_by_the_attempt_deadline(router: respx.MockRouter) -> None:
+    async def trickle() -> AsyncIterator[bytes]:
+        yield b"{"
+        await asyncio.sleep(2)
+        yield b"}"
+
+    router.post(URL).mock(return_value=httpx.Response(200, content=trickle()))
+    with pytest.raises(JevError) as caught:
+        await ask(make_client(max_retries=0), timeout_s=0.05)
+    assert caught.value.kind == "timeout"
 
 
 # ───────────────────────── privacy ─────────────────────────

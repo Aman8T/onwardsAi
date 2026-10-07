@@ -5,7 +5,7 @@ from collections.abc import Sequence
 import pytest
 from starlette.requests import Request
 
-from tayyari.guard.client_ip import client_ip, ip_subject
+from tayyari.guard.client_ip import client_ip, ip_subject, ip_subjects
 
 PEER = "10.1.2.3"
 
@@ -189,3 +189,64 @@ def test_ipv6_is_counted_by_its_slash_64() -> None:
 
 def test_something_that_is_not_an_ip_is_unchanged() -> None:
     assert ip_subject("testclient") == "testclient"
+
+
+# ───────────────────────────── ip_subjects ─────────────────────────────
+
+
+def test_ipv4_has_one_subject() -> None:
+    assert ip_subjects("203.0.113.5") == ["203.0.113.5"]
+
+
+def test_ipv6_has_the_slash_64_and_the_slash_48() -> None:
+    assert ip_subjects("2001:db8:1:2:aaaa:bbbb:cccc:dddd") == ["2001:db8:1:2::/64", "2001:db8:1::/48"]
+
+
+def test_the_first_subject_is_always_the_one_the_per_client_limits_already_used() -> None:
+    for ip in ("203.0.113.5", "2001:db8:1:2::1", "::1", "testclient"):
+        assert ip_subjects(ip)[0] == ip_subject(ip)
+
+
+def test_slash_64s_inside_one_slash_48_share_the_second_subject() -> None:
+    first = ip_subjects("2001:db8:1:2::1")
+    other = ip_subjects("2001:db8:1:ffff:1234::9")
+    assert first[0] != other[0]  # different households
+    assert first[1] == other[1] == "2001:db8:1::/48"  # one customer's block
+
+
+def test_different_slash_48s_have_different_second_subjects() -> None:
+    assert ip_subjects("2001:db8:1:2::1")[1] != ip_subjects("2001:db8:2:2::1")[1]
+
+
+def test_the_slash_48_subject_never_equals_a_slash_64_subject() -> None:
+    subjects = ip_subjects("2001:db8:1::1")  # a /64 that starts exactly where its /48 does
+    assert subjects == ["2001:db8:1::/64", "2001:db8:1::/48"]
+    assert subjects[0] != subjects[1]
+
+
+def test_something_that_is_not_an_ip_has_one_unchanged_subject() -> None:
+    assert ip_subjects("testclient") == ["testclient"]
+
+
+# ───────────────────────────── the header-first order (security review finding 6) ─────────────────────────────
+
+
+def test_a_forged_xff_prefix_does_not_change_the_address_from_the_three_hop_fallback() -> None:
+    # Cloudflare edge address, then two internal hops: the client is three entries from the right, and
+    # whatever the client put on the left of that is ignored, however much of it there is.
+    chain = "9.9.9.9, 8.8.8.8, 7.7.7.7, 203.0.113.5, 172.68.1.1, 10.0.0.7, 10.0.0.8"
+    assert xff(chain, hops=4) == "203.0.113.5"
+    assert xff("203.0.113.5, 172.68.1.1, 10.0.0.7", hops=3) == "203.0.113.5"
+    assert xff("6.6.6.6, 203.0.113.5, 172.68.1.1, 10.0.0.7", hops=3) == "203.0.113.5"
+
+
+def test_the_named_header_is_still_tried_before_xff() -> None:
+    # Cloudflare rejects a client-sent CF-Connecting-IP (403, error 1000), so the value the app sees is the
+    # edge's own and is trusted first; see the module docstring.
+    request = make(
+        [
+            ("CF-Connecting-IP", "203.0.113.5"),
+            ("X-Forwarded-For", "6.6.6.6, 6.6.6.7, 203.0.113.9, 172.68.1.1, 10.0.0.7"),
+        ]
+    )
+    assert client_ip(request, trusted_hops=3, header="cf-connecting-ip") == "203.0.113.5"

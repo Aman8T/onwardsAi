@@ -14,6 +14,11 @@ starting at once, and zero-downtime rollouts:
    is checked again under the lock, so the replicas that lost the race find nothing to do.
 4. Postgres DDL is transactional: a failing migration rolls back whole, startup fails, and the platform
    keeps the previous version serving. Migrations are therefore additive only (see the lint test).
+5. Rollbacks: because migrations are additive, code one release back still works on a schema that a newer
+   release already upgraded. A database at a revision this code has never heard of is therefore *not* an
+   error: `migrate_to_head` logs a warning and leaves it alone instead of crash-looping the old version.
+   A genuinely broken state (an unreadable ``alembic_version``, a failing migration, no migrations at all)
+   still raises.
 """
 
 from __future__ import annotations
@@ -75,6 +80,23 @@ def head_revision() -> str:
     return head
 
 
+def _known_revisions() -> frozenset[str]:
+    """Every revision id in the script directory (the revisions this code can account for)."""
+    from alembic.script import ScriptDirectory
+
+    script = ScriptDirectory.from_config(alembic_config())
+    return frozenset(rev.revision for rev in script.walk_revisions())
+
+
+def _is_newer_than_code(current: str | None) -> bool:
+    """True when the database is stamped with a revision that is not in the script directory.
+
+    That is what older code sees after a newer release migrated the shared database. A database that was
+    never migrated (None) or has an empty stamp is not "newer": it needs the upgrade, or it is broken.
+    """
+    return bool(current) and current not in _known_revisions()
+
+
 def _current_revision(connection: Connection) -> str | None:
     """The revision recorded in ``alembic_version`` (None for a database that was never migrated)."""
     if not inspect(connection).has_table("alembic_version"):
@@ -127,8 +149,23 @@ async def _connect_with_retry(
             delay = min(delay * 2, _BACKOFF_MAX_S)
 
 
+def _warn_newer_schema(current: str, head: str) -> None:
+    log.warning(
+        "migrations_schema_newer_than_code",
+        db_revision=current,
+        code_head=head,
+        effect="not upgrading; this code runs on the newer schema (migrations are additive)",
+        hint="expected after a rollback; deploy the newer release or ignore",
+    )
+
+
 async def migrate_to_head(db: Database, *, connect_timeout_s: float = 45.0) -> str:
-    """Bring the database schema to the newest revision and return it. Safe to call from every replica."""
+    """Bring the database schema to the newest revision and return the revision it ends up at.
+
+    Safe to call from every replica. That revision is the code's head, except when the database is already
+    at a revision newer than this code knows (a rollback): then nothing is upgraded, a warning is logged and
+    the database's own revision is returned.
+    """
     head = head_revision()
     # A local SQLite file answers at once or never: only a remote database is worth waiting for.
     wait_s = connect_timeout_s if db.kind == "postgres" else 0.0
@@ -139,6 +176,9 @@ async def migrate_to_head(db: Database, *, connect_timeout_s: float = 45.0) -> s
     if current == head:
         log.info("migrations_current", revision=head, connect_attempts=attempts)
         return head
+    if current and _is_newer_than_code(current):
+        _warn_newer_schema(current, head)
+        return current
 
     log.info("migrations_start", current=current, head=head, dialect=db.dialect)
     async with db.engine.begin() as conn:
@@ -149,6 +189,9 @@ async def migrate_to_head(db: Database, *, connect_timeout_s: float = 45.0) -> s
         if current == head:
             log.info("migrations_applied_by_peer", revision=head)
             return head
+        if current and _is_newer_than_code(current):  # a newer release got there first
+            _warn_newer_schema(current, head)
+            return current
         await conn.run_sync(_upgrade, head)
     log.info("migrations_done", previous=current, revision=head)
     return head

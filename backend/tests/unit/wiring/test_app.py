@@ -15,6 +15,8 @@ from uvicorn.importer import import_from_string
 import tayyari
 from tayyari.api import app as app_module
 from tayyari.api.app import create_app
+from tayyari.api.deps import RequestIdMiddleware
+from tayyari.api.security import CrossSiteGuard, SecurityHeadersMiddleware
 from tayyari.container import ContainerOverrides
 from tayyari.core.settings import Settings
 from tests.unit.wiring.support import BASE_URL, FakeAnalysis, FakeChat
@@ -58,6 +60,26 @@ def test_settings_default_to_the_process_wide_ones(
     settings = make_settings()
     monkeypatch.setattr(app_module, "get_settings", lambda: settings)
     assert create_app().state.settings is settings
+
+
+def test_the_middlewares_are_stacked_in_the_agreed_order(make_settings: MakeSettings) -> None:
+    """Outermost first: the request id, then the security headers (so a refusal carries them), then the guard."""
+    app = create_app(make_settings())
+    assert [m.cls for m in app.user_middleware] == [
+        RequestIdMiddleware,
+        SecurityHeadersMiddleware,
+        CrossSiteGuard,
+    ]
+
+
+def test_the_security_headers_read_the_web_builds_index_page(
+    make_settings: MakeSettings, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    index = tmp_path / "static" / "index.html"
+    monkeypatch.setattr(app_module, "STATIC_DIR", index.parent)
+    app = create_app(make_settings())
+    headers = next(m for m in app.user_middleware if m.cls is SecurityHeadersMiddleware)
+    assert headers.kwargs == {"index_html": index}
 
 
 def test_the_web_app_routes_come_last(make_settings: MakeSettings) -> None:

@@ -50,6 +50,9 @@ def test_relationships_between_limits() -> None:
     assert limits.CHAT_RESUME_EXCERPT_MIN_CHARS < limits.CHAT_EXCERPT_BUDGET_CHARS
     assert limits.MAX_LINKS <= limits.LINKS_MAX_PER_REQUEST
     assert limits.RESUME_MIN_TEXT_CHARS < limits.RESUME_MAX_CHARS < limits.RESUME_MAX_EXTRACT_CHARS
+    # one XML part fits in the total, and a lookup is only a part of one request
+    assert limits.RESUME_MAX_DOCX_XML_BYTES <= limits.RESUME_MAX_DOCX_UNZIPPED_BYTES
+    assert limits.WEB_DNS_TIMEOUT_S < limits.WEB_REQUEST_TIMEOUT_S
     assert limits.ID_MAX_CHARS <= limits.CHAT_PROFILE_ID_MAX_CHARS
     assert limits.SYNTH_NOTES_CLIP_CHARS <= limits.NOTES_MAX_CHARS
 
@@ -141,8 +144,15 @@ def test_ingest_limits_match_the_ingest_modules() -> None:
     assert limits.RESUME_MAX_EXTRACT_CHARS == resume.MAX_EXTRACT_CHARS
     assert limits.RESUME_MAX_PDF_PAGES == resume.MAX_PDF_PAGES
     assert limits.RESUME_MAX_DOCX_UNZIPPED_BYTES == resume.MAX_DOCX_UNZIPPED
+    assert limits.RESUME_MAX_DOCX_XML_BYTES == resume.MAX_DOCX_XML
+    assert limits.RESUME_MAX_DOCX_ELEMENTS == resume.MAX_DOCX_ELEMENTS
+    assert limits.RESUME_MAX_PDF_STREAM_BYTES == resume.MAX_PDF_STREAM_BYTES
     assert limits.RESUME_MIN_TEXT_CHARS == resume.MIN_TEXT_CHARS
     assert limits.WEB_REQUEST_TIMEOUT_S == web.REQUEST_TIMEOUT
+    assert limits.WEB_DNS_TIMEOUT_S == web.DNS_TIMEOUT
+    assert limits.WEB_DNS_WORKERS == web.DNS_WORKERS
+    assert limits.WEB_DNS_FAILURE_TTL_S == web.DNS_FAILURE_TTL
+    assert limits.WEB_DNS_FAILURE_CACHE_MAX == web.DNS_FAILURE_CACHE_MAX
     assert limits.WEB_MAX_BODY_BYTES == web.MAX_BODY_BYTES
     assert limits.WEB_MAX_REDIRECTS == web.MAX_REDIRECTS
     assert limits.WEB_MAX_BUNDLES == web.MAX_BUNDLES

@@ -362,6 +362,87 @@ async def test_maintenance_runs_in_the_background(
     assert await ran(), "run_maintenance never claimed its interval"
 
 
+async def test_maintenance_is_told_to_keep_the_bundled_sample_persona(
+    make_settings: MakeSettings, build: Build, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """#9: sample profiles are purged after the profile window, except the persona "Try a sample" serves."""
+    seen: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
+
+    async def recording(*args: Any, **kwargs: Any) -> dict[str, int]:
+        seen.append((args, kwargs))
+        return {}
+
+    monkeypatch.setattr(container_module, "MAINTENANCE_DELAY_S", 0.0)
+    monkeypatch.setattr(container_module, "run_maintenance", recording)
+    container = await build(make_settings())
+    await eventually(lambda: len(seen) >= 1)
+
+    sample_id = container.sample.sample_profile_id()
+    assert sample_id is not None and sample_id.startswith("sample-")
+    args, kwargs = seen[0]
+    assert args[0] is container.db and args[1] is container.settings
+    assert set(kwargs["keep_profile_ids"]) == {sample_id}
+
+
+async def test_maintenance_keeps_nothing_when_there_is_no_bundled_persona(
+    make_settings: MakeSettings, build: Build, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    class NoSample(SampleProvider):
+        def __init__(self) -> None:
+            super().__init__(sample_dir=tmp_path / "no-fixtures")
+
+    seen: list[dict[str, Any]] = []
+
+    async def recording(*_args: Any, **kwargs: Any) -> dict[str, int]:
+        seen.append(kwargs)
+        return {}
+
+    monkeypatch.setattr(container_module, "SampleProvider", NoSample)
+    monkeypatch.setattr(container_module, "MAINTENANCE_DELAY_S", 0.0)
+    monkeypatch.setattr(container_module, "run_maintenance", recording)
+    container = await build(make_settings())
+    await eventually(lambda: len(seen) >= 1)
+
+    assert container.sample.sample_profile_id() is None
+    assert set(seen[0]["keep_profile_ids"]) == set()
+
+
+async def test_the_real_purge_keeps_the_bundled_persona_and_drops_an_old_sample_run(
+    make_settings: MakeSettings, build: Build, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """End to end through the container's own maintenance loop, with a clock a year in the future."""
+    clock = FakeClock()
+    container = await build(make_settings(), clock=clock)
+    sample_id = container.sample.sample_profile_id()
+    assert sample_id is not None
+    old_run = "sample-0123456789abcdef0123456789abcdef"
+    await container.repos.profiles.save(
+        old_run, {"id": old_run}, container.sample.sample_context, goal=None, owner_hash=None, is_sample=True
+    )
+    clock.advance(400 * 86400)  # both profiles are now idle for far longer than the window
+
+    monkeypatch.setattr(container_module, "MAINTENANCE_DELAY_S", 0.0)
+    task = asyncio.create_task(
+        container_module._maintenance_loop(container.db, container.settings, clock, {sample_id}),  # type: ignore[arg-type]
+        name="test-maintenance",
+    )
+    try:
+
+        async def profile_ids() -> set[str]:
+            # Straight from the table: get_profile() would "touch" the row and make it recent again.
+            async with container.db.session() as s:  # type: ignore[union-attr]
+                return set((await s.execute(select(ProfileRow.id))).scalars().all())
+
+        for _ in range(200):
+            if old_run not in await profile_ids():
+                break
+            await asyncio.sleep(0.02)
+        assert await profile_ids() == {sample_id}, "the idle sample run should go and the persona stay"
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+
 async def test_a_failing_maintenance_run_is_logged_and_retried(
     make_settings: MakeSettings, build: Build, monkeypatch: pytest.MonkeyPatch, container_log: RecordingLog
 ) -> None:

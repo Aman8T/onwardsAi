@@ -11,6 +11,7 @@ import os
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import Any
 
 INGEST_SECTIONS_HELP = "classify, terms, resume, notes, github, web, errors (opt-in: github-repo)"
 """Shown in ``ingest-check --help``; `ingest_check.SECTIONS` is the real list (a test keeps them equal)."""
@@ -27,6 +28,31 @@ def _port(value: str) -> int:
     if not 1 <= port <= 65535:
         raise argparse.ArgumentTypeError(f"port must be between 1 and 65535, got {port}")
     return port
+
+
+def _count(minimum: int) -> Callable[[str], int]:
+    """An argparse type for an integer that must be at least ``minimum``."""
+
+    def parse(value: str) -> int:
+        try:
+            number = int(value)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"{value!r} is not a whole number") from None
+        if number < minimum:
+            raise argparse.ArgumentTypeError(f"must be at least {minimum}, got {number}")
+        return number
+
+    return parse
+
+
+def _fraction(value: str) -> float:
+    try:
+        number = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{value!r} is not a number") from None
+    if not 0.0 < number <= 1.0:
+        raise argparse.ArgumentTypeError(f"must be above 0 and at most 1, got {number:g}")
+    return number
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -103,7 +129,139 @@ def build_parser() -> argparse.ArgumentParser:
         "deploy --json .` in backend/ (with UTF-8 forced for the child on any shell).",
     )
     deploy.add_argument("--skip-build", action="store_true", help="do not run `npm run build:static` first")
+
+    _add_eval_commands(commands)
     return parser
+
+
+def _add_eval_commands(commands: Any) -> None:
+    """``export``, ``replay`` and ``eval``: the Jev adoption tools (the procedure is in evals/README.md)."""
+    export = commands.add_parser(
+        "export",
+        help="write the Jev decision log of a time window as a JSONL corpus",
+        description="Read the decision log of DATABASE_URL (or --database-url; use a read-only connection string) "
+        "and write one JSONL line per decision that can be asked again: the state as sent, the stored question, "
+        "and the old Jev, Claude and incumbent answers. Skips rows whose payload was purged.",
+    )
+    export.add_argument(
+        "--since", required=True, metavar="WHEN", help="start of the window: 7d, 12h, 2w or an ISO date"
+    )
+    export.add_argument("--until", default=None, metavar="WHEN", help="end of the window (default: now)")
+    export.add_argument(
+        "--spec",
+        action="append",
+        default=None,
+        metavar="PATTERN",
+        help="only these spec ids, a glob such as 'first_read.*' (repeat it, or separate patterns with commas)",
+    )
+    export.add_argument(
+        "--out", type=Path, default=None, help="output file (default: evals/corpus/<today>.jsonl)"
+    )
+    export.add_argument(
+        "--include-sample", action="store_true", help="also export the rows of the bundled sample persona"
+    )
+    export.add_argument(
+        "--database-url",
+        default=None,
+        help="database to read (default: DATABASE_URL; the variable keeps it out of the shell history)",
+    )
+    export.add_argument("--limit", type=_count(1), default=None, metavar="N", help="stop after N rows")
+    export.add_argument("--force", action="store_true", help="replace the output file if it exists")
+
+    replay = commands.add_parser(
+        "replay",
+        help="ask a Jev model the questions of a corpus again (costs real Jev calls)",
+        description="Re-send each original Jev call (grouped by state and pack) to --model with the real key from "
+        "JEV_API_KEY, and write the new answer next to the old one, one line per decision. --dry-run prints the "
+        "counts and the estimated cost without calling.",
+    )
+    replay.add_argument(
+        "--corpus", type=Path, required=True, metavar="FILE", help="the JSONL written by `export`"
+    )
+    replay.add_argument(
+        "--model", required=True, metavar="JEV_MODEL", help="the Jev model to ask, e.g. jev-1.14.0"
+    )
+    replay.add_argument(
+        "--concurrency", type=_count(1), default=8, metavar="N", help="requests in flight (default: 8)"
+    )
+    replay.add_argument(
+        "--shuffle",
+        type=_count(0),
+        default=0,
+        metavar="N",
+        help="also send the choice questions N times with the options shuffled, to measure order instability",
+    )
+    replay.add_argument(
+        "--limit", type=_count(1), default=None, metavar="N", help="replay only the first N rows"
+    )
+    replay.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="output file (default: evals/reports/replay-<model>-<timestamp>.jsonl)",
+    )
+    replay.add_argument("--seed", type=int, default=0, help="seed of the option shuffles (default: 0)")
+    replay.add_argument(
+        "--timeout", type=float, default=30.0, metavar="S", help="seconds per Jev attempt (default: 30)"
+    )
+    replay.add_argument(
+        "--dry-run", action="store_true", help="print counts and the estimated cost; send nothing"
+    )
+
+    evaluate = commands.add_parser(
+        "eval",
+        help="judge a replay: report agreement, or propose thresholds",
+        description="`eval report` compares the new answers with a reference (hand label, Claude answer, incumbent, "
+        "old Jev). `eval promote` proposes the lowest confidence thresholds that meet a target agreement.",
+    )
+    actions = evaluate.add_subparsers(dest="eval_command", metavar="<action>", required=True)
+    report = actions.add_parser(
+        "report",
+        help="agreement, accuracy by confidence, escalation, order instability and cost per spec",
+        description="Print the table and write it as JSON next to the replay file (<replay>.report.json).",
+    )
+    report.add_argument(
+        "--replay", type=Path, required=True, metavar="FILE", help="the JSONL written by `replay`"
+    )
+    report.add_argument(
+        "--labels",
+        nargs="*",
+        default=None,
+        metavar="FILE",
+        help="hand label files or globs, e.g. evals/labels/*.jsonl",
+    )
+    promote = actions.add_parser(
+        "promote",
+        help="propose confidence thresholds for the primary specs (prints a defaults.toml patch)",
+        description="For each primary spec, the lowest threshold whose answers at or above it agree with the "
+        "reference at --target or better over at least --min-rows decisions. Prints a patch; never edits "
+        "defaults.toml.",
+    )
+    promote.add_argument(
+        "--replay", type=Path, required=True, metavar="FILE", help="the JSONL written by `replay`"
+    )
+    promote.add_argument(
+        "--target", type=_fraction, default=0.9, metavar="X", help="agreement to reach (default: 0.9)"
+    )
+    promote.add_argument(
+        "--min-rows",
+        type=_count(1),
+        default=30,
+        metavar="N",
+        help="rows needed above a threshold (default: 30)",
+    )
+    promote.add_argument(
+        "--labels",
+        nargs="*",
+        default=None,
+        metavar="FILE",
+        help="hand label files or globs, e.g. evals/labels/*.jsonl",
+    )
+    promote.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="only print; without it the proposal is also written as JSON next to the replay",
+    )
 
 
 # One small function per command, importing its module on demand (and looked up at call time, so tests can patch it).
@@ -151,6 +309,51 @@ def _deploy(args: argparse.Namespace) -> int:
     return deploy.run(skip_build=args.skip_build)
 
 
+def _export(args: argparse.Namespace) -> int:
+    from . import export
+
+    return export.run(
+        since=args.since,
+        until=args.until,
+        specs=args.spec,
+        out=args.out,
+        include_sample=args.include_sample,
+        database_url=args.database_url,
+        limit=args.limit,
+        force=args.force,
+    )
+
+
+def _replay(args: argparse.Namespace) -> int:
+    from . import replay
+
+    return replay.run(
+        corpus=args.corpus,
+        model=args.model,
+        concurrency=args.concurrency,
+        shuffle=args.shuffle,
+        limit=args.limit,
+        out=args.out,
+        dry_run=args.dry_run,
+        seed=args.seed,
+        timeout_s=args.timeout,
+    )
+
+
+def _eval(args: argparse.Namespace) -> int:
+    from . import evals
+
+    if args.eval_command == "report":
+        return evals.run_report(replay=args.replay, labels=args.labels)
+    return evals.run_promote(
+        replay=args.replay,
+        target=args.target,
+        min_rows=args.min_rows,
+        labels=args.labels,
+        dry_run=args.dry_run,
+    )
+
+
 _HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "dev": _dev,
     "serve": _serve,
@@ -159,6 +362,9 @@ _HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "make-sample": _make_sample,
     "ingest-check": _ingest_check,
     "deploy": _deploy,
+    "export": _export,
+    "replay": _replay,
+    "eval": _eval,
 }
 
 

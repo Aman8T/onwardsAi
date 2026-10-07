@@ -10,11 +10,20 @@ How a request is judged (`RateLimiter.check`):
    stopping at the first one exceeded, so a rejected burst does not eat the longer budgets. The bucket key
    carries the window (``analyze:min:<ip_hash>``): two window sizes starting at the same instant must not
    share a counter.
-3. For ``analyze`` only, a global hourly counter caps the whole service (the cost backstop for a distributed
-   crowd that no single address gives away).
+3. For IPv6 clients, when the caller passes ``ip_hash_48`` (the keyed hash of the client's /48 network, see
+   `guard.client_ip.ip_subjects`), the same minute/hour/day counters again for the /48 at
+   `SUBNET_LIMIT_FACTOR` (4) times the per-IP limit, in the bucket ``<route>:<window>:48:<hash>``. A /64 is one
+   household, but a /48 holds 65,536 of them and a client can hop between /64s for free; the wider bucket
+   catches that without punishing a few real neighbours. It is only reached by requests the per-IP
+   rules accepted, so one noisy /64 cannot use up its neighbours' share. The in-memory token bucket has the same
+   second bucket (4x capacity and refill).
+4. A global hourly counter per route caps the whole service (the cost backstop for a distributed crowd that no
+   single address gives away): ``analyze:global:hour`` (`GuardSettings.analyze_global_per_hour`) and
+   ``chat:global:hour`` (`chat_global_per_hour`).
 
-`shed(route, ip_hash)` runs step 1 alone, synchronously, so a route can turn hammering away before it reads the
-request body; it then calls ``check(..., memory=False)`` after validating, so one request takes one token.
+`shed(route, ip_hash, ip_hash_48)` runs step 1 alone, synchronously, so a route can turn hammering away before it
+reads the request body; it then calls ``check(..., memory=False)`` after validating, so one request takes one
+token. Callers that do not know the /48 simply omit ``ip_hash_48``; behaviour is then exactly as before.
 
 A limit of 0 means "this window is not enforced"; ``GuardSettings.enabled = False`` switches the limiter off.
 When the repository errors or is slow, the limiter fails open to the in-memory bucket, logs it, and stops
@@ -30,7 +39,7 @@ import math
 from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal
+from typing import Literal, NoReturn
 
 from tayyari.core.clock import Clock
 from tayyari.core.errors import RateLimited
@@ -46,6 +55,9 @@ WindowName = Literal["min", "hour", "day"]
 UNKNOWN_SUBJECT = "unknown"
 """Clients whose address could not be determined share one bucket (the strict choice)."""
 GLOBAL_ANALYZE_BUCKET = "analyze:global:hour"
+GLOBAL_CHAT_BUCKET = "chat:global:hour"
+SUBNET_LIMIT_FACTOR = 4
+"""An IPv6 /48 may use this many times the per-IP limit (a /64 is one household, a /48 is up to 65,536)."""
 
 _BURST_FACTOR = 2.0
 _MAX_BUCKETS = 10_000
@@ -114,6 +126,7 @@ _MESSAGES: dict[tuple[str, str], str] = {
     ("chat", "min"): "You're sending messages quickly. Please wait {wait} and try again.",
     ("chat", "hour"): "You've reached the hourly limit for chat messages. Please try again in {wait}.",
     ("chat", "day"): "You've reached today's limit for chat messages. It resets in {wait}.",
+    ("chat", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
 }
 
 
@@ -162,42 +175,82 @@ class RateLimiter:
         return [_Window(name, _WINDOW_SECONDS[name], limit) for name, limit in limits if limit > 0]
 
     def _limited(
-        self, route: str, window: str, retry_after_s: float, *, count: int | None, limit: int | None
+        self,
+        route: str,
+        window: str,
+        retry_after_s: float,
+        *,
+        count: int | None,
+        limit: int | None,
+        subnet: str | None = None,
     ) -> RateLimited:
+        scope = f"{route}:{window}" + (f":{subnet}" if subnet else "")
         return RateLimited(
             limit_message(route, window, retry_after_s),
             retry_after_s=retry_after_s,
-            detail=f"{route}:{window} count={count} limit={limit}",
+            detail=f"{scope} count={count} limit={limit}",
         )
 
-    def _take_token(self, route: Route, ip_hash: str | None, windows: list[_Window]) -> None:
-        """Take a token from this client's in-memory bucket, or raise `RateLimited`."""
+    def _global_rule(self, route: Route) -> tuple[str, int]:
+        """The bucket name and hourly limit of the whole-service backstop for ``route`` (0 = not enforced)."""
+        if route == "analyze":
+            return GLOBAL_ANALYZE_BUCKET, self._settings.analyze_global_per_hour
+        return GLOBAL_CHAT_BUCKET, self._settings.chat_global_per_hour
+
+    def _take_token(
+        self, route: Route, ip_hash: str | None, windows: list[_Window], ip_hash_48: str | None = None
+    ) -> None:
+        """Take a token from this client's in-memory bucket (and its /48's), or raise `RateLimited`.
+
+        The /48 bucket is only touched by a request the /64 bucket granted.
+        """
         if not windows:
             return
         shortest = windows[0]
+        capacity = max(1.0, _BURST_FACTOR * shortest.limit)
+        refill_per_s = shortest.limit / shortest.seconds
         wait = self._bucket.take(
-            f"{route}:{ip_hash or UNKNOWN_SUBJECT}",
-            capacity=max(1.0, _BURST_FACTOR * shortest.limit),
-            refill_per_s=shortest.limit / shortest.seconds,
+            f"{route}:{ip_hash or UNKNOWN_SUBJECT}", capacity=capacity, refill_per_s=refill_per_s
         )
+        subnet = None
+        if wait <= 0 and ip_hash_48:
+            subnet = "48"
+            wait = self._bucket.take(
+                f"{route}:48:{ip_hash_48}",
+                capacity=capacity * SUBNET_LIMIT_FACTOR,
+                refill_per_s=refill_per_s * SUBNET_LIMIT_FACTOR,
+            )
         if wait > 0:
             retry = min(wait, float(shortest.seconds))
-            log.info("rate_limited", route=route, window=shortest.name, layer="memory", ip_hash=ip_hash)
-            raise self._limited(route, shortest.name, retry, count=None, limit=shortest.limit)
+            log.info(
+                "rate_limited",
+                route=route,
+                window=shortest.name,
+                layer="memory",
+                subnet=subnet,
+                ip_hash=ip_hash,
+            )
+            limit = shortest.limit * (SUBNET_LIMIT_FACTOR if subnet else 1)
+            raise self._limited(route, shortest.name, retry, count=None, limit=limit, subnet=subnet)
 
-    def shed(self, route: Route, ip_hash: str | None) -> None:
+    def shed(self, route: Route, ip_hash: str | None, ip_hash_48: str | None = None) -> None:
         """Only the in-memory bucket, no database: cheap enough to run before the request body is read.
 
         Raises `RateLimited` when this client is hammering. A route that calls this first and `check` later
         (after validation) passes ``memory=False`` to `check` so one request takes one token, not two.
+        ``ip_hash_48`` (IPv6 clients) adds the wider /48 bucket.
         """
         if self._settings.enabled:
-            self._take_token(route, ip_hash, self._windows(route))
+            self._take_token(route, ip_hash, self._windows(route), ip_hash_48)
 
-    async def check(self, route: Route, ip_hash: str | None, *, memory: bool = True) -> None:
+    async def check(
+        self, route: Route, ip_hash: str | None, ip_hash_48: str | None = None, *, memory: bool = True
+    ) -> None:
         """Count this request against every rule, or raise `RateLimited`. Never raises anything else.
 
         ``memory=False`` skips the in-memory bucket (see `shed`) and applies only the shared counters.
+        ``ip_hash_48`` is the keyed hash of an IPv6 client's /48 network; when given, the /48 is counted too
+        at `SUBNET_LIMIT_FACTOR` times the per-IP limits. Leave it out for IPv4 and unknown clients.
         """
         settings = self._settings
         if not settings.enabled:
@@ -206,7 +259,7 @@ class RateLimiter:
         windows = self._windows(route)
 
         if memory:
-            self._take_token(route, ip_hash, windows)
+            self._take_token(route, ip_hash, windows, ip_hash_48)
 
         if self._db_down_until is not None:
             if self._clock.monotonic() < self._db_down_until:
@@ -218,31 +271,46 @@ class RateLimiter:
             for window in windows:
                 count = await self._hit(f"{route}:{window.name}:{subject}", window.seconds, now)
                 if count > window.limit:
-                    retry = seconds_to_window_end(now, window.seconds)
-                    log.info(
-                        "rate_limited",
-                        route=route,
-                        window=window.name,
-                        count=count,
-                        limit=window.limit,
-                        ip_hash=ip_hash,
-                    )
-                    raise self._limited(route, window.name, retry, count=count, limit=window.limit)
-            if route == "analyze" and settings.analyze_global_per_hour > 0:
-                count = await self._hit(GLOBAL_ANALYZE_BUCKET, 3600, now)
-                if count > settings.analyze_global_per_hour:
+                    self._reject(route, window, now, count, window.limit, ip_hash, subnet=None)
+            if ip_hash_48:
+                for window in windows:
+                    count = await self._hit(f"{route}:{window.name}:48:{ip_hash_48}", window.seconds, now)
+                    limit = window.limit * SUBNET_LIMIT_FACTOR
+                    if count > limit:
+                        self._reject(route, window, now, count, limit, ip_hash, subnet="48")
+            bucket, global_limit = self._global_rule(route)
+            if global_limit > 0:
+                count = await self._hit(bucket, 3600, now)
+                if count > global_limit:
                     retry = seconds_to_window_end(now, 3600)
-                    log.warning(
-                        "rate_limited_global",
-                        route=route,
-                        count=count,
-                        limit=settings.analyze_global_per_hour,
-                    )
-                    raise self._limited(
-                        route, "global", retry, count=count, limit=settings.analyze_global_per_hour
-                    )
+                    log.warning("rate_limited_global", route=route, count=count, limit=global_limit)
+                    raise self._limited(route, "global", retry, count=count, limit=global_limit)
         except _RepoUnavailable:
             return
+
+    def _reject(
+        self,
+        route: Route,
+        window: _Window,
+        now: datetime,
+        count: int,
+        limit: int,
+        ip_hash: str | None,
+        *,
+        subnet: str | None,
+    ) -> NoReturn:
+        """Log and raise the 429 for a per-client window (``subnet`` names a wider bucket, else None)."""
+        retry = seconds_to_window_end(now, window.seconds)
+        log.info(
+            "rate_limited",
+            route=route,
+            window=window.name,
+            count=count,
+            limit=limit,
+            subnet=subnet,
+            ip_hash=ip_hash,
+        )
+        raise self._limited(route, window.name, retry, count=count, limit=limit, subnet=subnet)
 
     async def _hit(self, bucket: str, window_s: int, now: datetime) -> int:
         try:
@@ -261,6 +329,8 @@ class RateLimiter:
 
 __all__ = [
     "GLOBAL_ANALYZE_BUCKET",
+    "GLOBAL_CHAT_BUCKET",
+    "SUBNET_LIMIT_FACTOR",
     "UNKNOWN_SUBJECT",
     "InProcessBucket",
     "RateLimiter",

@@ -110,7 +110,7 @@ class _GitHubClient:
         except (httpx.HTTPError, TimeoutError):
             return _GhResult(0, False, failed=True)
 
-        body = raw.decode("utf-8", errors="replace")
+        body = raw.decode("utf-8", errors="replace").replace("\x00", "")  # Postgres refuses NUL in TEXT/JSONB
         limited = status == 429 or (
             status == 403 and (remaining == "0" or bool(_RATE_LIMIT_BODY.search(body)))
         )

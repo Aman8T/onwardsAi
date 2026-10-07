@@ -24,6 +24,7 @@ from .classify import (
     classify_url,
     is_known_platform,
     normalize_url,
+    strip_nul,
     usable_links,
 )
 from .github import ingest_github
@@ -58,6 +59,7 @@ __all__ = [
     "normalize_url",
     "parse_resume",
     "plan_sources",
+    "strip_nul",
     "usable_links",
 ]
 
@@ -184,6 +186,7 @@ async def ingest_planned(p: PlannedSource, log: IngestLog) -> SourceDoc:
     doc.url = doc.url or p.url
     doc.src = doc.src or p.src
     doc.kind_label = doc.kind_label or p.kind_label
+    doc.scrub()  # the last stop before the text leaves ingest: no NUL character gets past it (Postgres refuses them)
     return doc
 
 

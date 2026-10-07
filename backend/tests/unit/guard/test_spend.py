@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from contextlib import AbstractAsyncContextManager
 from datetime import UTC, date, datetime, timedelta, timezone
 
 import pytest
@@ -403,6 +404,284 @@ async def test_aclose_cancels_a_pending_refresh() -> None:
     await guard.aclose()
     assert guard._refresh_task is None
     await guard.aclose()  # idempotent
+
+
+# ───────────────────────────── reserve: counting the work in flight ─────────────────────────────
+
+
+async def test_reserve_is_an_async_context_manager_that_admits_and_releases() -> None:
+    guard, _, _ = make(10.0)
+    cm = guard.reserve(1.0)
+    assert isinstance(cm, AbstractAsyncContextManager)
+    async with cm:
+        assert guard.reserved_micro == 1 * USD
+        assert guard.reservations_in_flight == 1
+    assert guard.reserved_micro == 0
+    assert guard.reservations_in_flight == 0
+
+
+async def test_200_concurrent_reservations_only_those_that_fit_are_admitted() -> None:
+    guard, _, _ = make(0.0)  # ceiling 20.00, each turn estimated at 1.50
+    gate = asyncio.Event()
+    decided = asyncio.Event()
+    admitted = 0
+    refused = 0
+    peak_reserved = 0
+
+    def decide() -> None:
+        if admitted + refused == 200:
+            decided.set()
+
+    async def turn() -> None:
+        nonlocal admitted, refused, peak_reserved
+        try:
+            async with guard.reserve(1.50):
+                admitted += 1
+                peak_reserved = max(peak_reserved, guard.reserved_micro)
+                decide()
+                await gate.wait()  # every admitted turn is still running while the others arrive
+        except SpendCeilingReached:
+            refused += 1
+            decide()
+
+    tasks = [asyncio.create_task(turn()) for _ in range(200)]
+    await decided.wait()
+
+    # 13 x 1.50 = 19.50 fits under 20.00 (the 13th is admitted at 18.00 + 1.50 < 20); a 14th would reach 21.
+    assert admitted == 13
+    assert refused == 187
+    assert guard.reservations_in_flight == 13
+    assert guard.reserved_micro == round(13 * 1.50 * USD)
+    assert peak_reserved == round(13 * 1.50 * USD) < guard.ceiling_micro
+
+    gate.set()
+    await asyncio.gather(*tasks)
+    assert guard.reserved_micro == 0
+    assert guard.reservations_in_flight == 0
+    async with guard.reserve(1.50):  # the freed headroom is usable again
+        assert guard.reserved_micro == round(1.50 * USD)
+
+
+async def test_without_reserve_the_same_burst_is_admitted_in_full() -> None:
+    """The flaw that `reserve` fixes: admit() alone sees only the lagging ledger, so every caller passes."""
+    guard, _, _ = make(0.0)
+    results = await asyncio.gather(*(guard.admit(1.50) for _ in range(200)), return_exceptions=True)
+    assert not any(isinstance(r, Exception) for r in results)
+
+
+async def test_a_reservation_is_released_when_the_body_raises() -> None:
+    guard, _, _ = make(0.0)
+    with pytest.raises(RuntimeError, match="boom"):
+        async with guard.reserve(5.0):
+            assert guard.reserved_micro == 5 * USD
+            raise RuntimeError("boom")
+    assert guard.reserved_micro == 0
+    assert guard.reservations_in_flight == 0
+
+
+async def test_exceptions_in_many_concurrent_bodies_release_every_reservation() -> None:
+    guard, _, _ = make(0.0)
+
+    async def failing(i: int) -> None:
+        async with guard.reserve(1.0):
+            await asyncio.sleep(0)
+            if i % 2:
+                raise ValueError(i)
+
+    results = await asyncio.gather(*(failing(i) for i in range(15)), return_exceptions=True)
+    assert sum(isinstance(r, ValueError) for r in results) == 7
+    assert guard.reserved_micro == 0
+    assert guard.reservations_in_flight == 0
+
+
+async def test_a_reservation_is_released_when_the_task_is_cancelled() -> None:
+    guard, _, _ = make(0.0)
+    started = asyncio.Event()
+
+    async def turn() -> None:
+        async with guard.reserve(4.0):
+            started.set()
+            await asyncio.sleep(3600)
+
+    task = asyncio.create_task(turn())
+    await started.wait()
+    assert guard.reserved_micro == 4 * USD
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert guard.reserved_micro == 0
+    assert guard.reservations_in_flight == 0
+
+
+async def test_cancelling_while_the_ledger_is_being_read_holds_nothing() -> None:
+    guard, ledger, _ = make(0.0)
+    ledger.hang = True
+
+    async def turn() -> None:
+        async with guard.reserve(4.0):
+            raise AssertionError("must not be admitted")  # pragma: no cover
+
+    task = asyncio.create_task(turn())
+    await asyncio.sleep(0.01)  # inside the ledger read
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert guard.reserved_micro == 0
+    assert guard.reservations_in_flight == 0
+
+
+async def test_a_refused_reservation_holds_nothing_and_says_when_to_retry() -> None:
+    guard, _, _ = make(19.0)
+    with pytest.raises(SpendCeilingReached) as info:
+        async with guard.reserve(1.0):  # 19 + 1 reaches the ceiling
+            raise AssertionError("must not be admitted")  # pragma: no cover
+    assert info.value.status == 503
+    assert info.value.retry_after_s == pytest.approx(12 * 3600)
+    assert guard.reserved_micro == 0
+    assert guard.reservations_in_flight == 0
+
+
+async def test_reservations_add_to_the_ledger_when_admitting() -> None:
+    guard, _, _ = make(10.0)
+    async with guard.reserve(8.0):  # 10 + 8 < 20
+        with pytest.raises(SpendCeilingReached):
+            async with guard.reserve(2.0):  # 10 + 8 + 2 reaches 20
+                raise AssertionError("must not be admitted")  # pragma: no cover
+        async with guard.reserve(1.99):
+            assert guard.reserved_micro == round(9.99 * USD)
+    assert guard.reserved_micro == 0
+    async with guard.reserve(2.0):  # the first reservation is gone: 10 + 2 is fine
+        pass
+
+
+async def test_release_order_does_not_matter() -> None:
+    guard, _, _ = make(0.0)
+    a = guard.reserve(3.0)
+    b = guard.reserve(4.0)
+    await a.__aenter__()
+    await b.__aenter__()
+    assert guard.reserved_micro == 7 * USD
+    await a.__aexit__(None, None, None)
+    assert guard.reserved_micro == 4 * USD
+    await b.__aexit__(None, None, None)
+    assert guard.reserved_micro == 0
+
+
+async def test_admit_sees_the_reservations_in_flight() -> None:
+    guard, _, _ = make(0.0)
+    await guard.admit(5.0)  # nothing in flight
+    async with guard.reserve(15.0):
+        await guard.admit(4.99)  # 15 + 4.99 < 20
+        with pytest.raises(SpendCeilingReached):
+            await guard.admit(5.0)  # 15 + 5 reaches 20
+        assert guard.reserved_micro == 15 * USD  # admit holds nothing of its own
+    await guard.admit(5.0)
+
+
+async def test_admit_logs_the_reservations_too(log: RecordingLog) -> None:
+    guard, _, _ = make(0.0)
+    async with guard.reserve(15.0):
+        with pytest.raises(SpendCeilingReached) as info:
+            await guard.admit(6.0)
+    (level, event, fields) = log.records[-1]
+    assert (level, event) == ("info", "spend_ceiling_reached")
+    assert fields["stage"] == "admit"
+    assert fields["reserved_micro_usd"] == 15 * USD
+    assert "reserved=15000000" in (info.value.detail or "")
+
+
+async def test_reserve_logs_its_own_stage(log: RecordingLog) -> None:
+    guard, _, _ = make(25.0)
+    with pytest.raises(SpendCeilingReached):
+        async with guard.reserve(1.0):
+            pass
+    assert log.records[-1][2]["stage"] == "reserve"
+
+
+async def test_admit_call_sees_the_reservations_in_flight() -> None:
+    guard, ledger, clock = make(10.0)  # ceiling 20, hard stop 25
+    async with guard.reserve(5.0):  # admitted: 10 + 5 < 20
+        await guard.admit_call("reader")  # 10 + 5 < 25
+        ledger.micro = 20 * USD  # the run's own readers have been paid for meanwhile
+        clock.advance(6)
+        # The ledger alone (20) is under the hard stop (25); with the 5.00 still reserved it is not.
+        with pytest.raises(SpendCeilingReached) as info:
+            await guard.admit_call("synth")
+        assert info.value.status == 503
+        assert "reserved=5000000" in (info.value.detail or "")
+    clock.advance(6)
+    await guard.admit_call("synth")  # the reservation is gone: 20 < 25
+
+
+async def test_admit_call_blocks_once_ledger_and_reservations_reach_ceiling_times_grace() -> None:
+    guard, ledger, clock = make(0.0)
+    async with guard.reserve(19.0):
+        ledger.micro = round(5.99 * USD)
+        clock.advance(6)
+        await guard.admit_call("reader")  # 5.99 + 19 = 24.99 < 25
+        ledger.micro = 6 * USD
+        clock.advance(6)
+        with pytest.raises(SpendCeilingReached):
+            await guard.admit_call("reader")  # 6 + 19 = 25 >= 25
+
+
+async def test_reserve_fails_closed_when_the_ledger_cannot_be_read(log: RecordingLog) -> None:
+    guard, ledger, _ = make(0.0)
+    ledger.error = RuntimeError("down")
+    with pytest.raises(SpendCeilingReached) as info:
+        async with guard.reserve(0.10):
+            raise AssertionError("must not be admitted")  # pragma: no cover
+    assert info.value.retry_after_s == LEDGER_UNAVAILABLE_RETRY_S
+    assert guard.reserved_micro == 0
+    assert "spend_guard_failing_closed" in log.events("error")
+
+
+async def test_a_ceiling_of_zero_refuses_every_reservation() -> None:
+    guard, _, _ = make(0.0, ceiling=0.0)
+    with pytest.raises(SpendCeilingReached):
+        async with guard.reserve(0.0):
+            raise AssertionError("must not be admitted")  # pragma: no cover
+
+
+async def test_a_negative_estimate_reserves_nothing() -> None:
+    guard, _, _ = make(19.9)
+    async with guard.reserve(-5.0):
+        assert guard.reserved_micro == 0
+        assert guard.reservations_in_flight == 1
+
+
+async def test_a_disabled_guard_reserves_nothing_and_never_reads_the_ledger() -> None:
+    clock = FakeClock(NOON)
+    ledger = Ledger(30 * USD)
+    guard = SpendGuard(ledger, GuardSettings(enabled=False, daily_ceiling_usd=1.0), clock)
+    async with guard.reserve(50.0):
+        assert guard.reserved_micro == 0
+        assert guard.reservations_in_flight == 0
+    assert ledger.reads == []
+
+
+async def test_tripped_looks_only_at_the_ledger_not_at_reservations() -> None:
+    guard, _, _ = make(0.0)
+    await guard.refresh()
+    async with guard.reserve(19.0):
+        assert guard.tripped() is False
+
+
+async def test_the_ledger_is_still_read_once_for_a_whole_burst_of_reservations() -> None:
+    guard, ledger, _ = make(0.0)
+    async with asyncio.TaskGroup() as group:
+        for _ in range(50):
+            group.create_task(_hold_briefly(guard))
+    assert len(ledger.reads) == 1
+    assert guard.reserved_micro == 0
+
+
+async def _hold_briefly(guard: SpendGuard) -> None:
+    try:
+        async with guard.reserve(0.10):
+            await asyncio.sleep(0)
+    except SpendCeilingReached:  # pragma: no cover - 50 x 0.10 fits under 20
+        pass
 
 
 # ───────────────────────────── switched off ─────────────────────────────

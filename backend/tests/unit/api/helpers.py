@@ -108,6 +108,46 @@ def make_request(
     return Request(scope, receive)
 
 
+def make_stalling_request(
+    chunks: Iterable[bytes],
+    *,
+    content_type: str | None = None,
+    release: asyncio.Event | None = None,
+    tail: bytes = b"",
+    pulled: Pulled | None = None,
+    method: str = "POST",
+    path: str = "/api/analyze",
+) -> Request:
+    """A request whose body arrives in ``chunks`` and then stalls, like a client that stopped sending.
+
+    The body stays open until ``release`` is set (then ``tail`` arrives and the body ends); without a
+    ``release`` it never ends.
+    """
+    stats = pulled if pulled is not None else Pulled()
+    iterator = iter(chunks)
+    base = make_request([], content_type=content_type, method=method, path=path)
+    state = {"ended": False}
+
+    async def receive() -> Message:
+        if state["ended"]:
+            return {"type": "http.disconnect"}
+        try:
+            chunk = next(iterator)
+        except StopIteration:
+            if release is None:
+                await asyncio.Event().wait()  # a client that never sends another byte
+            else:
+                await release.wait()
+            state["ended"] = True
+            stats.bytes += len(tail)
+            return {"type": "http.request", "body": tail, "more_body": False}
+        stats.bytes += len(chunk)
+        stats.chunks += 1
+        return {"type": "http.request", "body": chunk, "more_body": True}
+
+    return Request(base.scope, receive)
+
+
 def repeated(chunk: bytes, count: int) -> Iterable[bytes]:
     """``count`` copies of the same chunk object, produced lazily (no big body is ever built in memory)."""
     return (chunk for _ in range(count))
@@ -148,6 +188,8 @@ class AsgiExchange:
     scope: Scope
     messages: list[Message] = field(default_factory=list)
     send_error: BaseException | None = None
+    body: bytes = b""
+    """The request body, delivered in one message."""
     _disconnect: asyncio.Event = field(default_factory=asyncio.Event)
     _body_sent: asyncio.Event = field(default_factory=asyncio.Event)
     _requested: bool = False
@@ -159,7 +201,7 @@ class AsgiExchange:
     async def receive(self) -> Message:
         if not self._requested:
             self._requested = True
-            return {"type": "http.request", "body": b"", "more_body": False}
+            return {"type": "http.request", "body": self.body, "more_body": False}
         await self._disconnect.wait()
         return {"type": "http.disconnect"}
 

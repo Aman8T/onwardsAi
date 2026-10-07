@@ -84,9 +84,18 @@ log = get_logger(__name__)
 
 EMIT_TOOL: Final = "emit"
 """Name of the strict tool used when a model does not accept ``output_config.format``."""
+WEB_FETCH_MAX_CONTENT_TOKENS: Final = 20_000
+"""Approximate cap on the text one ``web_fetch`` puts into the context (the API parameter ``max_content_tokens``;
+binary content such as PDFs is not capped by it). Without it a single fetched page can add far more input
+tokens than the chat estimate allows for, which makes the cost of a turn unbounded."""
 WEB_TOOLS: Final[tuple[dict[str, Any], ...]] = (
     {"type": "web_search_20260209", "name": "web_search", "max_uses": WEB_SEARCH_MAX_USES},
-    {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": WEB_FETCH_MAX_USES},
+    {
+        "type": "web_fetch_20260209",
+        "name": "web_fetch",
+        "max_uses": WEB_FETCH_MAX_USES,
+        "max_content_tokens": WEB_FETCH_MAX_CONTENT_TOKENS,
+    },
 )
 """Declared on every chat request, even when `tool_choice` is ``none``, so the cached prefix is identical."""
 WEB_TOOL_UI_NAMES: Final[dict[str, str]] = {"web_search": "WebSearch", "web_fetch": "WebFetch"}
@@ -313,13 +322,31 @@ def _is_cache_control_rejection(exc: BaseException) -> bool:
     return isinstance(exc, anthropic.BadRequestError) and _mentions(exc, ("cache_control",))
 
 
+def _is_operator_problem(error: ClaudeError) -> bool:
+    """A failure that only the operator can fix (key, billing, permission, model access)."""
+    return error.kind in ("auth", "not_configured") or (error.kind == "bad_request" and error.status == 404)
+
+
 def _map_error(exc: Exception) -> ClaudeError:
-    """`from_anthropic`, plus the raw ``httpx2`` errors the SDK does not wrap once a stream has started."""
+    """`from_anthropic`, plus the raw ``httpx2`` errors the SDK does not wrap once a stream has started.
+
+    The public message of an operator-state failure is one generic sentence (see `llm.errors`), so the real
+    reason is logged here, where the provider's answer is still at hand.
+    """
     if isinstance(exc, httpx2.TimeoutException):
         return ClaudeTimeout(detail=type(exc).__name__)
     if isinstance(exc, httpx2.RequestError):
         return ClaudeConnectionError(detail=type(exc).__name__)
-    return from_anthropic(exc)
+    mapped = from_anthropic(exc)
+    if _is_operator_problem(mapped):
+        log.error(
+            "claude_unavailable",
+            kind=mapped.kind,
+            status=mapped.status,
+            detail=mapped.detail,
+            anthropic_request_id=mapped.request_id,
+        )
+    return mapped
 
 
 def _int_attr(obj: Any, name: str) -> int:
@@ -979,6 +1006,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "EMIT_TOOL",
+    "WEB_FETCH_MAX_CONTENT_TOKENS",
     "WEB_TOOLS",
     "WEB_TOOL_UI_NAMES",
     "AnthropicClaudeClient",

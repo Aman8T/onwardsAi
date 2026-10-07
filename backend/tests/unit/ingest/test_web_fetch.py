@@ -57,10 +57,10 @@ def redirect(to: str, status: int = 302) -> Handler:
     return handler
 
 
-def gzip_stream(raw_size: int, *, wbits: int = 31, level: int = 9) -> bytes:
-    """`raw_size` zero bytes, compressed (gzip by default; wbits 15 is zlib deflate, -15 raw deflate)."""
+def gzip_stream(raw_size: int, *, wbits: int = 31, level: int = 9, fill: bytes = b"\0") -> bytes:
+    """`raw_size` bytes of `fill`, compressed (gzip by default; wbits 15 is zlib deflate, -15 raw deflate)."""
     compressor = zlib.compressobj(level, zlib.DEFLATED, wbits)
-    block = b"\0" * (1 << 20)
+    block = fill * (1 << 20)
     parts = [compressor.compress(block) for _ in range(raw_size >> 20)]
     parts.append(compressor.flush())
     return b"".join(parts)
@@ -91,15 +91,15 @@ async def test_the_request_goes_to_the_validated_address_with_the_original_host_
     assert dns.lookups("example.test") == 1
 
 
-async def test_plain_http_sends_no_sni_and_keeps_a_custom_port_in_the_host_header(
+async def test_plain_http_sends_no_sni_and_keeps_a_non_default_allowed_port_in_the_host_header(
     dns: FakeDns, web: FakeWeb
 ) -> None:
     dns.answer("example.test", [PUBLIC_IP])
     web.serve(PUBLIC_IP, page())
-    await fetch_text("http://example.test:8080/x", MAX_BODY_BYTES, ACCEPT)
+    await fetch_text("http://example.test:443/x", MAX_BODY_BYTES, ACCEPT)  # 80 and 443 are the allowed ports
     [request] = web.requests
-    assert request.url.port == 8080
-    assert request.headers["host"] == "example.test:8080"
+    assert request.url.port == 443
+    assert request.headers["host"] == "example.test:443"
     assert "sni_hostname" not in request.extensions
 
 
@@ -424,7 +424,7 @@ async def test_a_bomb_in_a_single_huge_chunk_is_bounded_too() -> None:
 
 
 async def test_a_bomb_fetched_end_to_end_comes_back_truncated(dns: FakeDns, web: FakeWeb) -> None:
-    bomb = gzip_stream(64 << 20)
+    bomb = gzip_stream(64 << 20, fill=b"a")  # not NUL: those are stripped from the text, which would empty it
     dns.answer("example.test", [PUBLIC_IP])
     web.serve(
         PUBLIC_IP,
@@ -713,7 +713,9 @@ async def test_a_decoding_failure_is_explained(dns: FakeDns, web: FakeWeb) -> No
     assert doc.error == "That site sent a response that could not be decoded."
 
 
-async def test_a_slow_site_is_reported_as_too_slow(dns: FakeDns, web: FakeWeb, short_budget: float) -> None:
+async def test_a_slow_site_gets_the_same_answer_as_an_unreachable_one(
+    dns: FakeDns, web: FakeWeb, short_budget: float
+) -> None:
     async def hang(request: httpx.Request) -> httpx.Response:
         await asyncio.sleep(30)
         return httpx.Response(200)
@@ -722,7 +724,7 @@ async def test_a_slow_site_is_reported_as_too_slow(dns: FakeDns, web: FakeWeb, s
     web.serve(PUBLIC_IP, hang)
     doc, _ = await read("https://example.test/")
     assert doc.ok is False
-    assert doc.error.startswith("The page took too long to respond")
+    assert doc.error == web_module.UNREACHABLE_MSG
 
 
 async def test_an_unknown_host_is_reported_as_not_found(dns: FakeDns, web: FakeWeb) -> None:

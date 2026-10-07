@@ -6,6 +6,7 @@ raises. The explicit `github_token` argument is covered next to the old `GITHUB_
 
 from __future__ import annotations
 
+import json
 import re
 import time
 from collections.abc import Callable
@@ -603,3 +604,25 @@ def test_shared_helpers_are_the_core_ones() -> None:
 def test_ago_wording(days: float, expected: str) -> None:
     now = datetime.now(UTC).timestamp()
     assert gh._ago(iso(days + 0.01), now) == expected
+
+
+# ----------------------------------------------------------------------------- NUL characters
+
+
+async def test_nul_characters_from_the_api_never_leave_the_ingester(api: GitHubApi) -> None:
+    """Postgres refuses a NUL in TEXT and JSONB, so a bio such as "a\\u0000b" must not reach the stored row."""
+    nul = chr(0)
+    fully_loaded(api)
+    api.user = user(name="The" + nul + " Octocat", bio="Builds" + nul + " tools", location="SF" + nul)
+    api.repos[0] = repo("repo0", stars=99, description="A" + nul + " description")
+    api.readmes["repo0"] = "# repo0" + nul + "\n\nThis repository shows repo0 in action with Docker."
+    api.readmes[LOGIN] = "Hi, I write Python" + nul + " and Rust."
+    doc, _ = await run()
+    assert doc.ok is True
+    assert "Builds tools" in doc.text
+    everything = json.dumps(
+        {"text": doc.text, "meta": doc.meta, "notes": doc.notes, "signals": doc.quick_signals}
+    )
+    assert nul not in doc.text
+    assert nul not in everything
+    assert "\\u0000" not in everything

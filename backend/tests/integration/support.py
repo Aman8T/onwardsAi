@@ -73,6 +73,9 @@ def roomy_guard(**overrides: Any) -> GuardSettings:
         "chat_per_minute": 1000,
         "chat_per_hour": 1000,
         "chat_per_day": 1000,
+        "chat_global_per_hour": 0,
+        "chat_streams_per_ip": 0,
+        "chat_streams_per_process": 0,
         "daily_ceiling_usd": 1000.0,
     }
     values.update(overrides)

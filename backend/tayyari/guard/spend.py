@@ -1,21 +1,30 @@
 """The daily spend ceiling: a soft stop that switches AI off until the next UTC midnight.
 
 Spend is read from the ``spend_daily`` ledger (`LimitRepo.spent_today`, micro-USD, scope ``total``), which
-every recorded Claude and Jev call adds to. The guard reads one row, cached for a few seconds, and offers three
+every recorded Claude and Jev call adds to. The guard reads one row, cached for a few seconds, and offers these
 checks with deliberately different strictness:
 
-- `admit(est_usd)`: before an analysis or chat turn starts. Raises `SpendCeilingReached` when today's spend
-  plus the estimate reaches the ceiling. **Fails closed**: if the ledger cannot be read the request is
-  refused (a server-side log says why), because without the database nothing can be saved anyway.
+- `reserve(est_usd)`: an async context manager around an analysis or chat turn. It admits like `admit`, but
+  the ledger only grows when a call *finishes*, so requests that start together would all see the same
+  stale number. Every admitted reservation is therefore held (in this process, in micro-USD) until the
+  ``async with`` block exits, however it exits, and counts against the ceiling for everyone else:
+  ``ledger + reservations + estimate >= ceiling`` refuses. Use this for work that costs money.
+- `admit(est_usd)`: the same check without holding anything (kept for compatibility). Raises
+  `SpendCeilingReached` when today's spend, the reservations in flight and the estimate reach the ceiling.
+  **Fails closed**: if the ledger cannot be read the request is refused (a server-side log says why),
+  because without the database nothing can be saved anyway.
 - `admit_call(purpose)`: before each individual model call. A run that has already paid for its readers
-  may finish while spend is under ``ceiling x ceiling_grace``; beyond that the call is refused. **Fails
-  open** when the ledger cannot be read, so a ledger hiccup never kills a run half way.
+  may finish while ledger plus reservations are under ``ceiling x ceiling_grace``; beyond that the call is
+  refused. **Fails open** when the ledger cannot be read, so a ledger hiccup never kills a run half way.
 - `tripped()`: a synchronous yes/no for code that cannot await (the decision runner answers with its
   neutral value while tripped). It only looks at the cached reading and, when that has gone stale, starts a
   background refresh, so it may lag by one TTL plus one query. Unknown counts as "not tripped".
 
-The ceiling is soft by design: replicas and in-flight runs overshoot it by a few dollars; the Anthropic
-workspace spend limit is the hard backstop. A ceiling of 0 switches AI off entirely; to disable the guard
+Reservations are per process: other replicas only show up through the ledger. They deliberately overlap
+with the ledger while a run is in progress (a finished reader's cost is in the ledger and still inside the
+run's reservation), which errs on the side of refusing. The ceiling is soft by design: replicas and the
+ledger's few seconds of lag overshoot it by a few dollars; the Anthropic workspace spend limit is the hard
+backstop. A ceiling of 0 switches AI off entirely; to disable the guard
 use ``GuardSettings.enabled = False``. `SpendCeilingReached.retry_after_s` is the number of seconds to the
 next UTC midnight (the ledger's day boundary).
 """
@@ -23,6 +32,8 @@ next UTC midnight (the ledger's day boundary).
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 
@@ -81,6 +92,8 @@ class SpendGuard:
         self._failed_until: float | None = None
         self._lock = asyncio.Lock()
         self._refresh_task: asyncio.Task[None] | None = None
+        self._reserved_micro = 0
+        self._reservations = 0
 
     # ───────────────────────── configuration ─────────────────────────
 
@@ -93,6 +106,16 @@ class SpendGuard:
     def hard_ceiling_micro(self) -> int:
         """The level at which `admit_call` refuses: ceiling x grace."""
         return round(self.ceiling_micro * self._settings.ceiling_grace)
+
+    @property
+    def reserved_micro(self) -> int:
+        """Micro-USD held by the reservations currently in flight in this process."""
+        return self._reserved_micro
+
+    @property
+    def reservations_in_flight(self) -> int:
+        """How many `reserve` blocks are open in this process right now."""
+        return self._reservations
 
     def _today(self) -> date:
         return self._clock.now().astimezone(UTC).date()
@@ -144,34 +167,80 @@ class SpendGuard:
 
     # ───────────────────────── checks ─────────────────────────
 
-    async def admit(self, est_usd: float) -> None:
-        """Before an analysis or chat turn: refuse when spent today plus ``est_usd`` reaches the ceiling.
+    @staticmethod
+    def _micro(est_usd: float) -> int:
+        """An estimate in whole micro-USD; negative (and NaN) counts as zero."""
+        return round(est_usd * MICRO) if est_usd > 0 else 0
 
-        Fails closed: a ledger that cannot be read also refuses (`SpendCeilingReached`, logged server-side).
+    async def _check(self, est_usd: float, *, stage: str) -> int:
+        """Refuse when ledger + reservations in flight + the estimate reach the ceiling; else the estimate.
+
+        Nothing is held here. Everything after the ledger read is synchronous, so a caller that records the
+        estimate right after this returns (with no await in between) does so atomically.
         """
-        if not self._settings.enabled:
-            return
         try:
             spent = await self._spent()
         except _LedgerUnavailable:
             log.error("spend_guard_failing_closed", reason="ledger unavailable")
             raise SpendCeilingReached(LEDGER_UNAVAILABLE_RETRY_S, detail="spend ledger unavailable") from None
-        estimate = round(max(est_usd, 0.0) * MICRO)
-        if spent + estimate >= self.ceiling_micro:
+        estimate = self._micro(est_usd)
+        reserved = self._reserved_micro
+        if spent + reserved + estimate >= self.ceiling_micro:
             log.info(
                 "spend_ceiling_reached",
-                stage="admit",
+                stage=stage,
                 spent_micro_usd=spent,
+                reserved_micro_usd=reserved,
                 estimate_micro_usd=estimate,
                 ceiling_micro_usd=self.ceiling_micro,
             )
             raise SpendCeilingReached(
                 seconds_to_utc_midnight(self._clock.now()),
-                detail=f"spent={spent} estimate={estimate} ceiling={self.ceiling_micro}",
+                detail=f"spent={spent} reserved={reserved} estimate={estimate} ceiling={self.ceiling_micro}",
             )
+        return estimate
+
+    async def admit(self, est_usd: float) -> None:
+        """Before an analysis or chat turn: refuse when spent today, the reservations in flight and
+        ``est_usd`` reach the ceiling. Holds nothing; use `reserve` for work that is about to start.
+
+        Fails closed: a ledger that cannot be read also refuses (`SpendCeilingReached`, logged server-side).
+        """
+        if not self._settings.enabled:
+            return
+        await self._check(est_usd, stage="admit")
+
+    def reserve(self, est_usd: float) -> AbstractAsyncContextManager[None]:
+        """Admit like `admit`, then hold ``est_usd`` against the ceiling until the block exits::
+
+            async with spend_guard.reserve(settings.guard.est_chat_usd):
+                ...  # run the turn
+
+        Raises `SpendCeilingReached` from ``__aenter__`` (nothing is held then). The hold is released when the
+        block ends by any route: normal exit, an exception, or the task being cancelled. Fails closed when the
+        ledger cannot be read, like `admit`. With the guard disabled it holds nothing.
+        """
+        return self._reserve(est_usd)
+
+    @asynccontextmanager
+    async def _reserve(self, est_usd: float) -> AsyncIterator[None]:
+        if not self._settings.enabled:
+            yield
+            return
+        estimate = await self._check(est_usd, stage="reserve")
+        # No await between the check above and this hold, so two reservations cannot both pass on the same
+        # free headroom.
+        self._reserved_micro += estimate
+        self._reservations += 1
+        try:
+            yield
+        finally:
+            self._reserved_micro = max(0, self._reserved_micro - estimate)
+            self._reservations = max(0, self._reservations - 1)
 
     async def admit_call(self, purpose: str) -> None:
-        """Before each model call: refuse once spent today reaches ``ceiling x ceiling_grace``.
+        """Before each model call: refuse once spent today plus the reservations in flight reach
+        ``ceiling x ceiling_grace``.
 
         Fails open: a ledger that cannot be read lets the call through.
         """
@@ -182,21 +251,28 @@ class SpendGuard:
         except _LedgerUnavailable:
             log.warning("spend_guard_failing_open", purpose=purpose)
             return
-        if spent >= self.hard_ceiling_micro:
+        reserved = self._reserved_micro
+        if spent + reserved >= self.hard_ceiling_micro:
             log.info(
                 "spend_ceiling_reached",
                 stage="call",
                 purpose=purpose,
                 spent_micro_usd=spent,
+                reserved_micro_usd=reserved,
                 hard_ceiling_micro_usd=self.hard_ceiling_micro,
             )
             raise SpendCeilingReached(
                 seconds_to_utc_midnight(self._clock.now()),
-                detail=f"purpose={purpose} spent={spent} hard_ceiling={self.hard_ceiling_micro}",
+                detail=(
+                    f"purpose={purpose} spent={spent} reserved={reserved} "
+                    f"hard_ceiling={self.hard_ceiling_micro}"
+                ),
             )
 
     def tripped(self) -> bool:
         """True when the cached ledger reading says today's spend has reached the ceiling.
+
+        Reservations are not counted: this means "AI is switched off", not "one more request would not fit".
 
         Synchronous: it never waits for the database. A stale or missing reading starts a background refresh
         (when an event loop is running) and an unknown ledger counts as not tripped.

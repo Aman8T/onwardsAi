@@ -30,12 +30,41 @@ __all__ = [
     "is_known_platform",
     "normalize_url",
     "plural",
+    "strip_nul",
     "strip_www",
     "usable_links",
 ]
 
 IngestLog = Callable[[str], None]
 """Progress callback for one source: one short, human line per step ("Fetched profile, 34 public repos")."""
+
+
+def strip_nul(value: Any) -> Any:
+    """`value` with every NUL character removed from the strings in it (lists, tuples and dicts included).
+
+    PostgreSQL refuses a NUL in TEXT and in JSONB, so a row holding one fails to save, long after the answer was
+    streamed. Text leaves ingest through here. The same object comes back when there was nothing to remove.
+    """
+    if isinstance(value, str):
+        return value.replace("\x00", "") if "\x00" in value else value
+    if isinstance(value, list):
+        items = [strip_nul(v) for v in value]
+        return value if all(a is b for a, b in zip(items, value, strict=True)) else items
+    if isinstance(value, tuple):
+        items = [strip_nul(v) for v in value]
+        return value if all(a is b for a, b in zip(items, value, strict=True)) else tuple(items)
+    if isinstance(value, dict):
+        pairs = [(strip_nul(k), strip_nul(v)) for k, v in value.items()]
+        same = all(k2 is k and v2 is v for (k2, v2), (k, v) in zip(pairs, value.items(), strict=True))
+        return value if same else dict(pairs)
+    return value
+
+
+_TEXT_FIELDS = (
+    *("id", "kind", "label", "sub", "url", "text", "notes", "meta"),
+    *("error", "src", "kind_label", "quick_signals"),
+)
+"""The `SourceDoc` fields that hold text (or containers of it) and so must never carry a NUL character."""
 
 
 def _fallback_sub(meta: dict[str, Any], kind_label: str, error: str | None) -> str:
@@ -89,10 +118,22 @@ class SourceDoc:
     """The original PDF when its text could not be extracted (scanned resume): attach it to the reader call."""
 
     def __post_init__(self) -> None:
+        self.scrub()
         if self.error:
             self.ok = False
         if not self.sub:
             self.sub = _fallback_sub(self.meta, self.kind_label, self.error)
+
+    def scrub(self) -> None:
+        """Remove NUL characters from every text field.
+
+        Runs when the doc is built and again in `ingest_planned`, because fields can be set after construction.
+        """
+        for name in _TEXT_FIELDS:
+            current = getattr(self, name)
+            cleaned = strip_nul(current)
+            if cleaned is not current:
+                setattr(self, name, cleaned)
 
     @classmethod
     def failure(

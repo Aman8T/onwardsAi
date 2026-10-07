@@ -116,7 +116,7 @@ def test_reader_error_line() -> None:
     assert len(line) <= 64
     assert not line.endswith(".")
     assert line.startswith("Claude is busy right now")
+    # Billing, permission and key problems share one public line (security review #17): details stay in logs.
     billing = reader_error_line(ClaudeAuthError(status=402, user_message=BILLING_MESSAGE))
-    assert billing != READER_AUTH_LINE
-    assert billing.startswith("The server's Anthropic account has a billing problem")
+    assert billing == READER_AUTH_LINE
     assert reader_error_line(ValueError("x")) == "Something went wrong"

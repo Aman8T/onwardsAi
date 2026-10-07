@@ -8,7 +8,8 @@
     HttpJevClient, DecisionRecorder, DecisionRunner -> JevDecisionService (or NullDecisionService)
     SampleProvider                                (the bundled sample persona, also seeded into the database)
     PipelineAnalysisService, CoachChatService
-    maintenance                                   (retention purge, a tracked background task)
+    maintenance                                   (retention purge, a tracked background task; it keeps
+                                                   the bundled sample persona's profile)
 
 The FastAPI lifespan builds one container per process and `aclose`s it on shutdown. The CLI builds its own
 from the same settings. Tests hand in `ContainerOverrides` to swap any part for a fake; the container closes
@@ -26,7 +27,7 @@ mid-rewrite.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Collection
 from dataclasses import dataclass, field
 
 from tayyari.analysis.ports import AnalysisService
@@ -294,8 +295,11 @@ class Container:
 
             # ── background work: never blocks startup ──
             if db is not None:
+                # The bundled sample persona is the one sample profile the purge must never delete.
+                sample_id = sample.sample_profile_id()
+                keep = {sample_id} if sample_id else set()
                 maintenance = asyncio.create_task(
-                    _maintenance_loop(db, settings, clock), name="tayyari-maintenance"
+                    _maintenance_loop(db, settings, clock, keep), name="tayyari-maintenance"
                 )
         except BaseException:
             if maintenance is not None:
@@ -357,12 +361,17 @@ async def _run_closers(closers: list[tuple[str, _Closer]]) -> None:
             log.error("shutdown_step_failed", step=name, exc_info=True)
 
 
-async def _maintenance_loop(db: Database, settings: Settings, clock: Clock) -> None:
-    """Retention purge shortly after startup and then every few hours. Never raises (except cancellation)."""
+async def _maintenance_loop(
+    db: Database, settings: Settings, clock: Clock, keep_profile_ids: Collection[str] = ()
+) -> None:
+    """Retention purge shortly after startup and then every few hours. Never raises (except cancellation).
+
+    ``keep_profile_ids`` are the sample profiles the purge leaves alone (the bundled persona).
+    """
     await asyncio.sleep(MAINTENANCE_DELAY_S)
     while True:
         try:
-            await run_maintenance(db, settings, clock.now())
+            await run_maintenance(db, settings, clock.now(), keep_profile_ids=keep_profile_ids)
         except Exception:
             log.error("maintenance_failed", exc_info=True)
         # Real time on purpose: a test clock that "sleeps" instantly would turn this into a busy loop.

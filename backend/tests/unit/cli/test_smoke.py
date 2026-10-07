@@ -13,7 +13,7 @@ from tayyari.cli import smoke
 from tayyari.contract.records import LlmCallRecord
 from tayyari.core.settings import Settings
 from tayyari.llm.anthropic_client import AnthropicClaudeClient
-from tayyari.llm.errors import ClaudeAuthError, ClaudeRefusal, JevError
+from tayyari.llm.errors import AUTH_MESSAGE, ClaudeAuthError, ClaudeRefusal, JevError
 from tayyari.llm.jev_http import HttpJevClient
 from tayyari.llm.models import jev_cost_micro
 from tayyari.llm.types import ChatStreamEvent, StructuredResult, TurnEnd, Usage
@@ -330,10 +330,7 @@ async def test_a_claude_error_fails_that_check_with_its_user_message(
 
     assert await smoke.run_smoke(settings, skip_jev=True, claude_factory=factory) == 1
     out = capsys.readouterr().out
-    assert (
-        "[FAIL] haiku structured - ClaudeAuthError: The server's Anthropic API key is missing or invalid."
-        in out
-    )
+    assert f"[FAIL] haiku structured - ClaudeAuthError: {AUTH_MESSAGE}" in out
     assert "[FAIL] sonnet chat + cache - ClaudeRefusal" in out
     assert "[PASS] docx resume parse" in out  # the offline check does not depend on Claude
 

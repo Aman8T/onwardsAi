@@ -46,6 +46,10 @@ class FakeDns:
         """`host` does not exist (NXDOMAIN)."""
         self._rounds[host.lower()] = [None]
 
+    def flaky(self, host: str, *addresses: str) -> None:
+        """`host` does not exist at the first lookup and answers with `addresses` from the second on."""
+        self._rounds[host.lower()] = [None, list(addresses)]
+
     def lookups(self, host: str) -> int:
         return self.calls.count(host.lower())
 

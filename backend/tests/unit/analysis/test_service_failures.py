@@ -140,7 +140,7 @@ async def test_the_failed_reader_cards_end_in_error(harness: Harness) -> None:
     events = await harness.run(RESUME_ONLY)
     cards = [e.reader for e in events if isinstance(e, ReaderEvent)]
     assert cards[-1].status == "error"
-    assert cards[-1].line == "API key missing or invalid · skipped"
+    assert cards[-1].line == "AI service unavailable · skipped"
 
 
 async def test_one_failed_reader_does_not_stop_the_others(harness: Harness, web: FakeWeb) -> None:

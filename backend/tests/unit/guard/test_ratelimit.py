@@ -10,6 +10,8 @@ from tayyari.core.settings import GuardSettings
 from tayyari.guard import ratelimit
 from tayyari.guard.ratelimit import (
     GLOBAL_ANALYZE_BUCKET,
+    GLOBAL_CHAT_BUCKET,
+    SUBNET_LIMIT_FACTOR,
     InProcessBucket,
     RateLimiter,
     limit_message,
@@ -56,9 +58,11 @@ def make(clock: FakeClock | None = None, **guard: object) -> tuple[RateLimiter, 
     return limiter, spy, clock
 
 
-async def refused(limiter: RateLimiter, route: str, ip: str | None = H) -> RateLimited:
+async def refused(
+    limiter: RateLimiter, route: str, ip: str | None = H, ip_48: str | None = None
+) -> RateLimited:
     with pytest.raises(RateLimited) as info:
-        await limiter.check(route, ip)  # type: ignore[arg-type]
+        await limiter.check(route, ip, ip_48)  # type: ignore[arg-type]
     return info.value
 
 
@@ -169,6 +173,7 @@ async def test_bucket_keys_carry_the_window_so_sizes_never_share_a_counter() -> 
         f"chat:min:{H}",
         f"chat:hour:{H}",
         f"chat:day:{H}",
+        GLOBAL_CHAT_BUCKET,
     }
     # All three windows start at the same instant (midnight would be the extreme): the counters stay apart.
     window_starts = {key: start for key, start in spy.inner.hits}
@@ -237,6 +242,261 @@ async def test_the_global_backstop_text_wording() -> None:
         limit_message("analyze", "global", 1800)
         == "Tayyari is very busy right now. Please try again in about 30 minutes."
     )
+
+
+# ───────────────────────────── the global chat backstop ─────────────────────────────
+
+
+async def test_the_chat_global_backstop_caps_chat_turns_across_all_clients() -> None:
+    limiter, spy, clock = make(chat_global_per_hour=5)
+    for i in range(5):
+        await limiter.check("chat", f"client{i:011d}")
+    err = await refused(limiter, "chat", "someone-else-0000")
+    assert err.status == 429
+    assert err.code == "rate_limited"
+    assert err.user_message == "Tayyari is very busy right now. Please try again in about an hour."
+    assert err.retry_after_s == pytest.approx(3600)
+    assert err.retry_after_header() == "3600"
+    assert "chat:global" in (err.detail or "")
+    assert spy.inner.hits[(GLOBAL_CHAT_BUCKET, NOON)] == 6
+    clock.advance(3600)  # a new hour has a new counter
+    await limiter.check("chat", "someone-else-0000")
+
+
+async def test_the_chat_global_bucket_is_named_like_the_analyze_one() -> None:
+    assert GLOBAL_CHAT_BUCKET == "chat:global:hour"
+    limiter, spy, _ = make()
+    await limiter.check("chat", H)
+    assert (GLOBAL_CHAT_BUCKET, NOON) in spy.inner.hits
+    assert spy.inner.hits[(GLOBAL_CHAT_BUCKET, NOON)] == 1
+
+
+async def test_the_chat_global_backstop_defaults_to_600_an_hour() -> None:
+    assert GuardSettings().chat_global_per_hour == 600
+    limiter, _, _ = make(chat_per_minute=0, chat_per_hour=0, chat_per_day=0)
+    for i in range(600):
+        await limiter.check("chat", f"client{i:011d}")
+    await refused(limiter, "chat", "one-too-many-000")
+
+
+async def test_the_chat_global_backstop_does_not_apply_to_analyze() -> None:
+    limiter, spy, _ = make(chat_global_per_hour=1)
+    for i in range(5):
+        await limiter.check("analyze", f"client{i:011d}")
+    assert GLOBAL_CHAT_BUCKET not in {bucket for bucket, _ in spy.inner.hits}
+
+
+async def test_the_two_global_backstops_count_separately() -> None:
+    limiter, _, _ = make(chat_global_per_hour=2, analyze_global_per_hour=2)
+    for i in range(2):
+        await limiter.check("chat", f"chat{i:012d}")
+    await refused(limiter, "chat", "chat-extra-00000")
+    for i in range(2):  # analyze still has its whole budget
+        await limiter.check("analyze", f"analyze{i:09d}")
+    await refused(limiter, "analyze", "analyze-extra-00")
+
+
+async def test_a_zero_chat_global_limit_means_not_enforced() -> None:
+    limiter, spy, _ = make(chat_global_per_hour=0, chat_per_minute=0, chat_per_hour=0, chat_per_day=0)
+    for i in range(50):
+        await limiter.check("chat", f"client{i:011d}")
+    assert spy.hit_calls == 0
+
+
+async def test_a_chat_client_over_its_own_limit_does_not_use_up_the_global_budget() -> None:
+    limiter, spy, _ = make(chat_per_minute=1, chat_global_per_hour=10)
+    await limiter.check("chat", H)
+    for _ in range(5):
+        await refused(limiter, "chat")
+    assert spy.inner.hits[(GLOBAL_CHAT_BUCKET, NOON.replace(minute=0))] == 1
+
+
+async def test_the_chat_global_backstop_fails_open_with_the_database() -> None:
+    limiter, spy, _ = make(chat_global_per_hour=1)
+    spy.error = RuntimeError("down")
+    for i in range(3):
+        await limiter.check("chat", f"client{i:011d}")
+
+
+def test_the_chat_global_text_wording() -> None:
+    assert (
+        limit_message("chat", "global", 1800)
+        == "Tayyari is very busy right now. Please try again in about 30 minutes."
+    )
+
+
+# ───────────────────────────── the IPv6 /48 bucket ─────────────────────────────
+
+H48 = "dddd111122223333"
+OTHER_48 = "eeee111122223333"
+
+
+def slash64(i: int) -> str:
+    """The keyed hash of the i-th /64 inside one /48 (any distinct strings do for the limiter)."""
+    return f"{i:016x}"
+
+
+async def test_addresses_hopping_between_slash64s_inside_one_slash48_trip_the_wider_bucket() -> None:
+    limiter, _, _ = make()  # 2 a minute per /64, so 8 a minute per /48
+    for i in range(2 * SUBNET_LIMIT_FACTOR):
+        await limiter.check("analyze", slash64(i), H48)  # every /64 is far under its own limit
+    err = await refused(limiter, "analyze", slash64(99), H48)
+    assert err.status == 429
+    assert err.user_message == "That's a lot of analyses in a row. Please wait about a minute and try again."
+    assert err.retry_after_s == pytest.approx(60)
+    assert "analyze:min:48" in (err.detail or "")
+    assert "count=9 limit=8" in (err.detail or "")
+
+
+async def test_without_the_slash48_the_same_hopping_goes_unnoticed() -> None:
+    limiter, _, _ = make()
+    for i in range(30):  # the hole the /48 bucket closes: a fresh /64 for every request
+        await limiter.check("analyze", slash64(i))
+    await limiter.check("analyze", slash64(100), None)
+
+
+async def test_the_slash48_limit_is_four_times_the_per_ip_limit_in_every_window() -> None:
+    limiter, _, clock = make(
+        analyze_per_minute=0, analyze_per_hour=1, analyze_per_day=0, analyze_global_per_hour=0
+    )
+    for i in range(4):
+        await limiter.check("analyze", slash64(i), H48)
+    err = await refused(limiter, "analyze", slash64(4), H48)
+    assert (
+        err.user_message == "You've reached the hourly limit for analyses. Please try again in about an hour."
+    )
+    assert "analyze:hour:48" in (err.detail or "")
+    clock.advance(3600)
+    await limiter.check("analyze", slash64(5), H48)
+
+    limiter, _, _ = make(
+        analyze_per_minute=0, analyze_per_hour=0, analyze_per_day=2, analyze_global_per_hour=0
+    )
+    for i in range(8):
+        await limiter.check("analyze", slash64(i), H48)
+    err = await refused(limiter, "analyze", slash64(8), H48)
+    assert "analyze:day:48" in (err.detail or "")
+    assert err.user_message == "You've reached today's limit for analyses. It resets in about 12 hours."
+
+
+async def test_different_slash48s_do_not_share_a_budget() -> None:
+    limiter, _, _ = make(analyze_global_per_hour=0)
+    for i in range(8):
+        await limiter.check("analyze", slash64(i), H48)
+    await limiter.check("analyze", slash64(50), OTHER_48)
+    await refused(limiter, "analyze", slash64(51), H48)
+
+
+async def test_the_slash48_is_counted_per_route() -> None:
+    limiter, spy, _ = make(chat_per_minute=3, analyze_global_per_hour=0)
+    for i in range(8):
+        await limiter.check("analyze", slash64(i), H48)
+    await limiter.check("chat", slash64(60), H48)  # chat keeps its own /48 counters
+    assert f"chat:min:48:{H48}" in {bucket for bucket, _ in spy.inner.hits}
+    assert spy.inner.hits[(f"chat:min:48:{H48}", NOON)] == 1
+    assert spy.inner.hits[(f"analyze:min:48:{H48}", NOON)] == 8
+
+
+async def test_the_slash48_buckets_are_named_after_route_window_and_network() -> None:
+    limiter, spy, _ = make()
+    await limiter.check("analyze", H, H48)
+    assert {bucket for bucket, _ in spy.inner.hits} == {
+        f"analyze:min:{H}",
+        f"analyze:hour:{H}",
+        f"analyze:day:{H}",
+        f"analyze:min:48:{H48}",
+        f"analyze:hour:48:{H48}",
+        f"analyze:day:48:{H48}",
+        GLOBAL_ANALYZE_BUCKET,
+    }
+
+
+async def test_a_noisy_slash64_does_not_eat_the_slash48_budget() -> None:
+    limiter, spy, _ = make(analyze_global_per_hour=0)
+    await limiter.check("analyze", H, H48, memory=False)
+    await limiter.check("analyze", H, H48, memory=False)
+    for _ in range(10):  # refused by its own minute window, so the /48 counters are never reached
+        with pytest.raises(RateLimited):
+            await limiter.check("analyze", H, H48, memory=False)
+    assert spy.inner.hits[(f"analyze:min:48:{H48}", NOON)] == 2
+    assert spy.inner.hits[(f"analyze:hour:48:{H48}", NOON.replace(minute=0))] == 2
+
+
+async def test_a_slash48_rejection_does_not_use_up_the_global_budget() -> None:
+    limiter, spy, _ = make(analyze_global_per_hour=60)
+    for i in range(8):
+        await limiter.check("analyze", slash64(i), H48)
+    await refused(limiter, "analyze", slash64(9), H48)
+    assert spy.inner.hits[(GLOBAL_ANALYZE_BUCKET, NOON.replace(minute=0))] == 8
+
+
+async def test_the_slash48_bucket_fails_open_with_the_database() -> None:
+    limiter, spy, _ = make(analyze_global_per_hour=0)
+    spy.error = RuntimeError("down")
+    for i in range(4):  # the memory bucket (4 tokens per /64, 16 per /48) is still in front
+        await limiter.check("analyze", slash64(i), H48)
+
+
+async def test_shed_has_a_slash48_bucket_too_and_never_touches_the_database() -> None:
+    limiter, spy, _ = make(chat_per_minute=3)  # 6 tokens per /64, 24 per /48
+    for i in range(24):
+        limiter.shed("chat", slash64(i), H48)
+    with pytest.raises(RateLimited) as info:
+        limiter.shed("chat", slash64(24), H48)
+    assert info.value.status == 429
+    assert "chat:min:48" in (info.value.detail or "")
+    assert spy.hit_calls == 0
+
+
+async def test_shed_without_the_slash48_is_unchanged() -> None:
+    limiter, _, _ = make(chat_per_minute=3)
+    for i in range(100):
+        limiter.shed("chat", slash64(i))  # a new /64 each time: nothing to count them together by
+    for _ in range(6):
+        limiter.shed("chat", H)
+    with pytest.raises(RateLimited):
+        limiter.shed("chat", H)
+
+
+async def test_the_slash48_memory_bucket_is_only_charged_for_requests_the_slash64_bucket_grants() -> None:
+    limiter, _, _ = make(chat_per_minute=1)  # 2 tokens per /64, 8 per /48
+    for _ in range(2):
+        limiter.shed("chat", H, H48)
+    for _ in range(20):  # one /64 hammering: refused by its own bucket, the /48 is not drained
+        with pytest.raises(RateLimited):
+            limiter.shed("chat", H, H48)
+    for i in range(6):  # six tokens are left for the neighbours
+        limiter.shed("chat", slash64(i), H48)
+    with pytest.raises(RateLimited):
+        limiter.shed("chat", slash64(7), H48)
+
+
+async def test_shed_then_check_takes_one_slash48_token_per_request() -> None:
+    limiter, _, _ = make(
+        chat_per_minute=2, chat_per_hour=0, chat_per_day=0, chat_global_per_hour=0
+    )  # 16 /48 tokens in memory, 8 in the shared minute counter
+    for i in range(8):
+        limiter.shed("chat", slash64(i), H48)
+        await limiter.check("chat", slash64(i), H48, memory=False)
+    with pytest.raises(RateLimited):
+        await limiter.check("chat", slash64(9), H48, memory=False)  # the ninth: the shared /48 counter
+    for i in range(8):
+        limiter.shed("chat", slash64(20 + i), H48)  # eight memory tokens are still left
+    with pytest.raises(RateLimited):
+        limiter.shed("chat", slash64(40), H48)
+
+
+async def test_ip_hash_48_can_be_passed_by_keyword() -> None:
+    limiter, spy, _ = make()
+    await limiter.check("analyze", H, ip_hash_48=H48, memory=False)
+    limiter.shed("analyze", H, ip_hash_48=H48)
+    assert (f"analyze:min:48:{H48}", NOON) in spy.inner.hits
+
+
+async def test_a_missing_slash48_means_only_the_per_client_rules_apply() -> None:
+    limiter, spy, _ = make()
+    await limiter.check("analyze", H, None)
+    assert not any(":48:" in bucket for bucket, _ in spy.inner.hits)
 
 
 # ───────────────────────────── the in-process bucket ─────────────────────────────
