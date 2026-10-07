@@ -1,0 +1,90 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API (uvicorn, no reload)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["tayyari.api.app:create_app", "--factory", "--port", "8787"],
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "API (reload)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["tayyari.api.app:create_app", "--factory", "--port", "8787", "--reload"],
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "justMyCode": false,
+      "subProcess": true
+    },
+    {
+      "name": "Pytest: current file",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}", "-q"],
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": false
+    },
+    {
+      "name": "CLI: smoke",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tayyari.cli",
+      "args": ["smoke"],
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "CLI: make-sample",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tayyari.cli",
+      "args": ["make-sample"],
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "API + web",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["tayyari.api.app:create_app", "--factory", "--port", "8787"],
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "justMyCode": false,
+      "preLaunchTask": "npm: dev:web (compound)"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "API + web",
+      "configurations": [
+        "API (uvicorn, no reload)"
+      ],
+      "preLaunchTask": "npm: dev:web"
+    }
+  ]
+}

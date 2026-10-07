@@ -20,7 +20,17 @@
     "check:restraint": "tsx scripts/restraint-check.ts",
     "check:build": "vite build && tsx scripts/build-check.ts",
     "check": "npm run typecheck && npm run check:palette && npm run check:restraint && npm run check:build",
-    "cloud:build": "vite build && node backend/build-static.mjs"
+    "cloud:build": "vite build && node backend/build-static.mjs",
+    "dev:api:py": "uv run --directory backend python -m tayyari.cli dev",
+    "dev:py": "concurrently -k -n api,web \"npm:dev:api:py\" \"npm:dev:web\"",
+    "test:py": "uv run --directory backend pytest -q",
+    "lint:py": "uv run --directory backend ruff check . && uv run --directory backend ruff format --check .",
+    "typecheck:py": "uv run --directory backend mypy tayyari",
+    "smoke:py": "uv run --directory backend python -m tayyari.cli smoke",
+    "make-sample:py": "uv run --directory backend python -m tayyari.cli make-sample",
+    "ingest-check:py": "uv run --directory backend python -m tayyari.cli ingest-check",
+    "build:static": "vite build && node backend/build-static.mjs",
+    "deploy": "npm run build:static && uv run --directory backend python -m tayyari.cli deploy --skip-build"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.290",

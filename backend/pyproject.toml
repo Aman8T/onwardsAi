@@ -71,8 +71,9 @@ known-first-party = ["tayyari"]
 # Tests: asserts and prints are normal, hard-coded secrets/ids are fixtures, and compound asserts, nested
 # `with` blocks and constant-first comparisons read fine in test code.
 "tests/**" = ["S101", "S105", "S106", "S108", "T20", "PT012", "PT018", "SIM117", "SIM300"]
-# The CLI is the one place that prints to the terminal.
-"tayyari/cli/**" = ["T20"]
+# The CLI is the one place that prints to the terminal, runs subprocesses (npm, uvx) by name and may bind
+# a server to an explicit host the developer chose.
+"tayyari/cli/**" = ["T20", "S603", "S607", "S104"]
 # ingest/ and sample/ are moved-as-is code (Wave 1 cleans them up): keep the gate on real errors only.
 "tayyari/ingest/**" = ["T20", "S", "SIM", "B", "RUF", "N", "ASYNC", "PT", "UP"]
 "tayyari/sample/**" = ["T20", "S", "SIM", "B", "RUF", "N", "ASYNC", "PT", "UP"]

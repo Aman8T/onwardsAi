@@ -4,13 +4,32 @@
     {
       "name": "tayyari-api",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["tsx", "server/index.ts"],
+      "runtimeArgs": [
+        "tsx",
+        "server/index.ts"
+      ],
+      "port": 8787
+    },
+    {
+      "name": "tayyari-api-py",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "--directory",
+        "backend",
+        "python",
+        "-m",
+        "tayyari.cli",
+        "dev"
+      ],
       "port": 8787
     },
     {
       "name": "tayyari-web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite"],
+      "runtimeArgs": [
+        "vite"
+      ],
       "port": 5173
     }
   ]
