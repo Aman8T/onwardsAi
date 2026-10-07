@@ -74,8 +74,8 @@ def test_nested_defaults_match_the_spec() -> None:
         est_analyze_usd=0.40,
         est_chat_usd=0.10,
         ceiling_grace=1.25,
-        trusted_proxy_hops=1,
-        client_ip_header=None,
+        trusted_proxy_hops=3,
+        client_ip_header="cf-connecting-ip",
         enabled=True,
     )
     assert (s.concurrency.reader_concurrency, s.concurrency.reader_timeout_s) == (6, 90)
@@ -223,7 +223,7 @@ def test_blank_tayyari_variables_fall_back_to_defaults(monkeypatch: pytest.Monke
     assert s.synth_model == "claude-sonnet-5-5"
     assert s.api_port == 8787
     assert s.guard.daily_ceiling_usd == 20.0
-    assert s.guard.client_ip_header is None
+    assert s.guard.client_ip_header == "cf-connecting-ip"
     assert s.decision_overrides == {}
 
 

@@ -25,6 +25,7 @@ from typing import Any, Literal
 
 import platformdirs
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr, field_validator
+from pydantic_core import PydanticUseDefault
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .dburl import DbConfig, normalise_database_url
@@ -94,15 +95,25 @@ class GuardSettings(BaseModel):
     est_chat_usd: float = Field(default=0.10, ge=0)
     ceiling_grace: float = Field(default=1.25, ge=1.0)
     """A run already past the readers may finish while spend is under ceiling x grace."""
-    trusted_proxy_hops: int = Field(default=1, ge=0)
-    """Proxies in front of the app; the client IP is that many entries from the right of X-Forwarded-For."""
-    client_ip_header: str | None = None
-    """Read the client IP from this header instead (when the platform sets a trustworthy one)."""
+    trusted_proxy_hops: int = Field(default=3, ge=0)
+    """Proxies in front of the app; the client IP is that many entries from the right of X-Forwarded-For.
+
+    Measured on FastAPI Cloud (Wave 0c canary, 2026-10-07): client, Cloudflare edge, then two internal hops.
+    """
+    client_ip_header: str | None = "cf-connecting-ip"
+    """Read the client IP from this header when present (Cloudflare sets it in front of FastAPI Cloud and
+    overwrites any client-sent value); otherwise fall back to X-Forwarded-For, then the socket peer."""
 
     @field_validator("client_ip_header", mode="before")
     @classmethod
     def _blank_header_is_none(cls, v: object) -> object:
-        return None if isinstance(v, str) and not v.strip() else v
+        """Blank keeps the default (like every other variable); "none" or "off" disables the header."""
+        if isinstance(v, str):
+            if not v.strip():
+                raise PydanticUseDefault()
+            if v.strip().lower() in {"none", "off", "false", "0"}:
+                return None
+        return v
 
 
 class ConcurrencySettings(BaseModel):
