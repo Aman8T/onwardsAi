@@ -1,0 +1,20 @@
+[project]
+name = "tayyari-cloud"
+version = "0.1.0"
+description = "Tayyari API on FastAPI: resume and link analysis, skill graph synthesis and career chat."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.116",
+    "anthropic>=0.60",
+    "httpx>=0.27",
+    "pypdf>=5",
+    "python-docx>=1.1",
+    "pydantic>=2.7",
+]
+
+# Names the app explicitly for `fastapi dev`, `fastapi run` and FastAPI Cloud (needs
+# fastapi-cli >= 0.0.16, which `fastapi[standard]` pulls in). Auto-discovery would also
+# find main.py:app, but the explicit entrypoint cannot drift if another candidate
+# module is ever added next to it.
+[tool.fastapi]
+entrypoint = "main:app"

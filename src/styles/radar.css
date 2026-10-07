@@ -1,0 +1,311 @@
+/*
+ * Radar — thin, airy data display on the calm theme.
+ * Tokens only (no colour literals); motion is opacity and transform only;
+ * hairline strokes stay 1 px at any size via vector-effect.
+ *
+ * Hooks for views:  --radar-max (wrapper max-width, 620px)
+ *                   --radar-pad (plot inset so labels have room; 0 by default,
+ *                                52px at phone width — the plot shrinks, labels keep their place)
+ */
+
+.radar {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--radar-max, 620px);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  padding: var(--radar-pad, 0px);
+  outline: none;
+}
+
+.radar-empty {
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+}
+
+/* ---------- SVG plot ---------- */
+
+.radar-svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.radar-ring,
+.radar-spoke {
+  fill: none;
+  stroke: var(--grid);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.radar-spoke {
+  transition:
+    stroke var(--d-fast) var(--ease),
+    opacity var(--d-fast) var(--ease);
+}
+.radar-spoke.is-hot {
+  stroke: var(--accent-ui);
+  opacity: 0.5;
+}
+
+/* "You": 12 % fill, 1.5 px stroke. */
+.radar-poly {
+  fill: var(--fill);
+  stroke: var(--accent-ui);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The target series: unfilled hairline, dashed (Few's bullet-graph logic). */
+.radar-poly-2 {
+  fill: none;
+  stroke: var(--accent-ui);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.8;
+}
+.radar-poly-2.is-reveal {
+  animation: radarFadeIn var(--d-base) var(--ease) 500ms backwards;
+}
+
+/* Vertex dots sit at the final values and fade in once the tween has landed. */
+.radar-dots {
+  animation: radarFadeIn 200ms var(--ease) backwards;
+}
+.radar-dot {
+  fill: var(--accent-ui);
+  transition: opacity var(--d-fast) var(--ease);
+}
+.radar-dot.is-dim {
+  opacity: 0.35;
+}
+.radar-dot-2 {
+  fill: var(--surface);
+  stroke: var(--accent-ui);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Invisible, generous targets over each primary vertex: a transparent layer above the labels and
+   the centre slot (same box as the plot), where only the circles take the pointer. */
+.radar-hits {
+  position: absolute;
+  left: var(--radar-pad, 0px);
+  top: var(--radar-pad, 0px);
+  width: calc(100% - 2 * var(--radar-pad, 0px));
+  aspect-ratio: 1;
+  display: block;
+  pointer-events: none;
+}
+.radar-hit {
+  fill: none;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+/* ---------- Axis labels (real buttons, outside the rim) ---------- */
+
+.radar-axes {
+  position: absolute;
+  inset: var(--radar-pad, 0px);
+  pointer-events: none;
+  animation: radarAxesIn 300ms var(--ease) 120ms both;
+}
+
+.radar-axis {
+  position: absolute;
+  /* Size from the text, not from the room left in the containing block: an absolutely
+     positioned box with only `left` set would otherwise be squeezed on the right-hand sides. */
+  width: max-content;
+  pointer-events: auto;
+  display: grid;
+  gap: 2px;
+  justify-items: inherit;
+  margin: 0;
+  padding: 4px 6px;
+  background: none;
+  border: 0;
+  border-radius: var(--r-s);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    opacity var(--d-fast) var(--ease);
+}
+
+/* Push the label away from its anchor so it sits outside the rim. */
+.radar-axis[data-side='n'] {
+  translate: -50% -100%;
+  text-align: center;
+  justify-items: center;
+}
+.radar-axis[data-side='s'] {
+  translate: -50% 0;
+  text-align: center;
+  justify-items: center;
+}
+.radar-axis[data-side='e'] {
+  translate: 0 -50%;
+  text-align: left;
+  justify-items: start;
+}
+.radar-axis[data-side='w'] {
+  translate: -100% -50%;
+  text-align: right;
+  justify-items: end;
+}
+.radar-axis[data-side='ne'] {
+  translate: 0 -100%;
+  text-align: left;
+  justify-items: start;
+}
+.radar-axis[data-side='nw'] {
+  translate: -100% -100%;
+  text-align: right;
+  justify-items: end;
+}
+.radar-axis[data-side='se'] {
+  translate: 0 0;
+  text-align: left;
+  justify-items: start;
+}
+.radar-axis[data-side='sw'] {
+  translate: -100% 0;
+  text-align: right;
+  justify-items: end;
+}
+
+.radar-lbl {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-width: 120px;
+  font-size: var(--fs-1);
+  line-height: var(--lh-snug);
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+  overflow-wrap: break-word;
+  transition: color var(--d-fast) var(--ease);
+}
+
+/* The one visible number per axis sits over the lobes: muted ink (≥ 4.5:1 there), never faint. */
+.radar-val {
+  font-size: var(--fs-0);
+  line-height: var(--lh-tight);
+  color: var(--text-muted);
+}
+
+/* Quiet states: hover darkens one step, selected underlines, related takes the accent. */
+.radar-axis:hover .radar-lbl,
+.radar-axis.is-hov .radar-lbl {
+  color: var(--text);
+}
+.radar-axis.is-sel .radar-lbl {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--accent-ui);
+  text-underline-offset: 3px;
+}
+.radar-axis.is-rel .radar-lbl {
+  color: var(--accent);
+}
+/* A dimmed axis is still a live button, so its ink and focus ring keep full strength: muted is
+   already the lightest tone that reads at 4.5:1 over the lobes, and any opacity would take it
+   under. The vertex dots carry the dim; the selected and related labels carry the emphasis. */
+
+/* ---------- Centre slot ---------- */
+
+.radar-centre {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  pointer-events: auto;
+}
+
+/* ---------- Rail glyph ---------- */
+
+.radar-glyph {
+  display: block;
+  flex: none;
+}
+.radar-glyph-ring {
+  fill: none;
+  stroke: var(--grid);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.radar-glyph-poly {
+  fill: var(--fill);
+  stroke: var(--accent-ui);
+  stroke-width: 1;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ---------- Motion (opacity only) ---------- */
+
+@keyframes radarAxesIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* No `to`: the element lands on its own cascaded opacity (.8 for the target polygon). */
+@keyframes radarFadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radar-axes,
+  .radar-dots,
+  .radar-poly-2.is-reveal {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+  .radar-spoke,
+  .radar-dot,
+  .radar-axis,
+  .radar-lbl {
+    transition: none;
+  }
+}
+
+/* ---------- Phone ---------- */
+
+/* Below the two-column layouts the plot shrinks so east/west labels stay inside the column. */
+@media (max-width: 760px) {
+  .radar {
+    --radar-pad: 56px;
+  }
+  .radar-lbl {
+    max-width: 96px;
+  }
+}
+
+/* The plot shrinks so the widest east/west label (76px + padding) still clears a 360px screen. */
+@media (max-width: 420px) {
+  .radar {
+    --radar-pad: 52px;
+  }
+  .radar-lbl {
+    font-size: var(--fs-0);
+    max-width: 76px;
+  }
+}

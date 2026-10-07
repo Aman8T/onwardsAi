@@ -1,0 +1,290 @@
+/*
+ * Tayyari — calm visual layer: global styles and primitives.
+ *
+ * Depth comes from tone, space and type: no shadows, no blur, no border thicker
+ * than 1px (the 2px focus ring is the one exception). Every colour is a token
+ * from src/theme/tokens.css. Motion is opacity and transform only.
+ */
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+img,
+picture,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  font: 400 var(--fs-3) / var(--lh-body) var(--font-sans);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--selection);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-strong);
+  transition: text-decoration-color var(--d-fast) var(--ease);
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-ui);
+  outline-offset: 2px;
+}
+
+/* Type roles */
+.serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: var(--track-tight);
+  line-height: var(--lh-tight);
+}
+
+.kicker {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  letter-spacing: var(--track-open);
+}
+
+.numeral {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  color: var(--text);
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.btn:hover {
+  border-color: var(--line-strong);
+}
+
+.btn[disabled],
+.btn[aria-disabled='true'] {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.btn-primary {
+  background: var(--accent-strong);
+  color: var(--surface);
+  border-color: transparent;
+}
+
+.btn-primary:hover {
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.btn-quiet,
+.btn-quiet:hover {
+  border-color: transparent;
+}
+
+.btn-quiet {
+  color: var(--text-muted);
+}
+
+.btn-quiet:hover {
+  color: var(--text);
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: var(--fs-1);
+}
+
+/* Fields */
+.field {
+  width: 100%;
+  padding: 10px 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--text);
+  font: inherit;
+  transition: border-color var(--d-fast) var(--ease);
+}
+
+.field::placeholder {
+  color: var(--text-faint);
+}
+
+.field:focus {
+  outline: none;
+  border-bottom-color: var(--accent-ui);
+}
+
+textarea.field {
+  resize: none;
+}
+
+/* Surfaces and small parts */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-l);
+}
+
+.hairline {
+  border-top: 1px solid var(--line);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.wrap {
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--s5);
+}
+
+/* The view frame (src/App.tsx): above the ambient layer, at least the visible viewport tall —
+   the dynamic viewport where supported, so a phone's collapsing toolbar never adds a page scroll. */
+.app-view {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Atmosphere menu (src/components/Atmosphere.tsx) */
+.atmo {
+  position: relative;
+}
+
+.atmo-btn {
+  font-size: var(--fs-1);
+  color: var(--text);
+}
+
+.atmo-state {
+  color: var(--text-muted);
+  transition: color var(--d-fast) var(--ease);
+}
+
+.atmo-btn:hover .atmo-state {
+  color: var(--text);
+}
+
+/* Sized by its longest line (the Drift hint), within reason: the trigger is its containing block. */
+.atmo-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  width: max-content;
+  min-width: 200px;
+  max-width: min(320px, calc(100vw - 2 * var(--s4)));
+  padding: var(--s2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  z-index: 50;
+}
+
+/* Label, then its hint on the line below. */
+.atmo-item {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--r-s);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  text-align: left;
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.atmo-item[aria-checked='true'] {
+  color: var(--text);
+}
+
+.atmo-item:hover {
+  background: var(--surface-2);
+}
+
+.atmo-hint {
+  font-size: var(--fs-0);
+  line-height: var(--lh-snug);
+  color: var(--text-muted);
+}
+
+/* Reduced motion: every animation and transition collapses to a single frame. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

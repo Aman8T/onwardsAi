@@ -1,0 +1,396 @@
+/*
+ * Next roles — the back face of the graph (calm theme, CalmNext board).
+ *
+ * A rail of roles ranked by alignment beside the selected role's header, its
+ * have/gap chips and a requirements radar ("You" filled, "Role expects" dashed).
+ * All classes are prefixed "next-". Tokens only (src/theme/tokens.css): no
+ * shadows, no colour literals, 1px hairlines; motion is opacity and transform.
+ * The graph shell (shell.css) owns the page width and gutters, so this view adds
+ * no outer margin of its own.
+ *
+ * Axis labels of the radar kit reach up to ~132px outside the plot box on the
+ * east and west sides. Each breakpoint below gives them that room, either as
+ * margin around the plot or through the kit's --radar-pad hook, so the page
+ * never scrolls sideways.
+ */
+
+/* ───────────── row: rail | centre ───────────── */
+
+.next-row {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  column-gap: 56px;
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+/* ───────────── rail ───────────── */
+
+.next-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+  padding-top: var(--s2);
+}
+
+.next-rail-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.next-title {
+  font-size: 30px;
+  overflow-wrap: anywhere;
+}
+
+.next-sub {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+/* The list only scrolls when the viewport is too short for it; NextGraph.tsx
+   measures the scroll position and sets .fade-top / .fade-bottom, which soften
+   the clipped edge. The mask uses the ink token for "opaque" and transparent
+   for "faded": only its alpha matters. */
+.next-roles {
+  --next-fade-t: var(--text);
+  --next-fade-b: var(--text);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: min(70vh, 560px);
+  /* Bleed by the focus ring's reach (2px + 2px offset) so the scroll box never clips it. */
+  margin: -4px -6px;
+  padding: 4px 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding: var(--s1);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    var(--next-fade-t),
+    var(--text) 26px,
+    var(--text) calc(100% - 26px),
+    var(--next-fade-b)
+  );
+  mask-image: linear-gradient(to bottom, var(--next-fade-t), var(--text) 26px, var(--text) calc(100% - 26px), var(--next-fade-b));
+}
+
+.next-roles.fade-top {
+  --next-fade-t: transparent;
+}
+
+.next-roles.fade-bottom {
+  --next-fade-b: transparent;
+}
+
+/* One role: rank, title and the requirement glyph on the first line, alignment and eta under the title. */
+.next-role-row {
+  flex: none;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 20px;
+  gap: 2px 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px 8px;
+  border-radius: 8px;
+  color: var(--text);
+  text-align: left;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.next-role-row:hover,
+.next-role-row[aria-pressed='true'] {
+  background: var(--surface-2);
+}
+
+.next-rank {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.next-role-title {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 14.5px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.next-role-glyph {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+.next-role-meta {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.next-role-pct {
+  font-size: 13.5px;
+}
+
+/* ───────────── centre: the selected role ───────────── */
+
+.next-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  min-width: 0;
+  padding-top: var(--s2);
+}
+
+/* Identity on the left; the why and the one action on the right. */
+.next-head {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 56ch);
+  column-gap: 56px;
+  align-items: start;
+}
+
+.next-head-id {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.next-role-name {
+  font-size: 36px;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.next-align {
+  margin-top: var(--s1);
+  font-size: 15px;
+}
+
+.next-muted {
+  color: var(--text-muted);
+}
+
+.next-head-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+  /* Starts level with the title, under the kicker line. */
+  padding-top: 25px;
+}
+
+.next-why {
+  max-width: 56ch;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.next-cta {
+  font-size: var(--fs-2);
+}
+
+/* Have / gap chips: muted for what you have, full ink for a gap (the board's one emphasis). */
+.next-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.next-chip.is-gap {
+  color: var(--text);
+}
+
+/* "You have ·" / "Gap ·" lead the first chip of each group; every chip carries the prefix for screen readers. */
+.next-chip-group {
+  margin-right: 0.3em;
+}
+
+/* ───────────── plot: the radar (or a short list), its legend and the popover ───────────── */
+
+.next-plot {
+  --radar-max: 560px;
+  position: relative;
+  width: 100%;
+  max-width: var(--radar-max);
+  margin-inline: auto;
+}
+
+.next-legend {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2) 28px;
+  margin-top: var(--s3);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  letter-spacing: var(--track-open);
+}
+
+.next-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.next-legend svg {
+  display: block;
+  flex: none;
+}
+
+.next-lg-you,
+.next-lg-exp {
+  fill: none;
+  stroke: var(--accent-ui);
+}
+
+.next-lg-you {
+  stroke-width: 1.5;
+}
+
+.next-lg-exp {
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  opacity: 0.8;
+}
+
+/* Fewer than three requirements: a quiet list instead of a radar, same popover. */
+.next-req-list {
+  display: flex;
+  flex-direction: column;
+  padding: var(--s2) 0;
+}
+
+.next-req-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s1) var(--s3);
+  align-items: baseline;
+  width: 100%;
+  padding: 10px var(--s4);
+  color: var(--text);
+  text-align: left;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.next-req-row:hover {
+  background: var(--surface-2);
+}
+
+.next-req-row[aria-expanded='true'] .next-req-name {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--accent-ui);
+  text-underline-offset: 3px;
+}
+
+.next-req-name {
+  font-size: var(--fs-2);
+}
+
+.next-req-val {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.next-req-row .vl {
+  grid-column: 1 / -1;
+  margin-top: var(--s1);
+}
+
+.next-empty {
+  max-width: var(--measure);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+/* ───────────── responsive ───────────── */
+
+/* A narrower rail keeps two columns; the plot insets itself so labels stay inside the gutter. */
+@media (max-width: 1100px) {
+  .next-row {
+    grid-template-columns: 240px minmax(0, 1fr);
+    column-gap: var(--s6);
+  }
+
+  .next-plot {
+    --radar-pad: 56px;
+  }
+}
+
+/* The header's two columns no longer fit side by side. */
+@media (max-width: 1000px) {
+  .next-head {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--s4);
+  }
+
+  .next-head-copy {
+    padding-top: 0;
+  }
+}
+
+/* One column: the rail stacks above the centre, its rows in two columns so the radar stays near the top. */
+@media (max-width: 900px) {
+  .next-row {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--s6);
+  }
+
+  .next-roles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: none;
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .next-plot {
+    --radar-pad: 0px;
+  }
+}
+
+/* Phones: rail rows in one column; the requirement popover becomes a bottom sheet (NextGraph.tsx). */
+@media (max-width: 760px) {
+  .next-roles {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .next-title {
+    font-size: var(--fs-6);
+  }
+
+  .next-role-name {
+    font-size: 30px;
+  }
+
+  .next-plot {
+    --radar-pad: 72px;
+  }
+}
+
+/* The kit shrinks labels at 420px; this view needs the same from 600px down, where the plot is width-bound. */
+@media (max-width: 600px) {
+  .next-plot {
+    --radar-pad: 56px;
+  }
+
+  .next-plot .radar-lbl {
+    max-width: 76px;
+    font-size: var(--fs-0);
+  }
+}

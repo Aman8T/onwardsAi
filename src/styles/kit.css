@@ -1,0 +1,290 @@
+/*
+ * Shared UI kit: Ring, ValueLine, Popover, Brand.
+ * Tokens only (src/theme/tokens.css): no colour literals, no shadows, 1px borders.
+ * Hover and selected states change tone or underline, never animate paint.
+ */
+
+/* ───────────── Ring ───────────── */
+
+.ring {
+  display: block;
+  flex: none;
+}
+
+.ring-track,
+.ring-bar {
+  fill: none;
+}
+
+.ring-track {
+  stroke: var(--grid);
+}
+
+.ring-bar {
+  stroke: var(--accent-ui);
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--d-slow) var(--ease);
+}
+
+/* A zero-length round-capped dash still paints a dot; hide the arc at 0. */
+.ring[data-empty] .ring-bar {
+  opacity: 0;
+}
+
+/* ───────────── ValueLine ───────────── */
+
+.vl {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--line);
+}
+
+.vl-bar {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent-ui);
+  transform-origin: left center;
+  transition: transform var(--d-slow) var(--ease);
+}
+
+.vl-tick {
+  position: absolute;
+  top: 50%;
+  width: var(--hair);
+  height: 8px;
+  margin-left: -0.5px;
+  background: var(--text-muted);
+  transform: translateY(-50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-bar,
+  .vl-bar {
+    transition: none;
+  }
+}
+
+/* ───────────── Popover ───────────── */
+
+.pop {
+  position: absolute;
+  z-index: 20;
+  width: var(--pop-w, 304px);
+  padding: var(--s5);
+  background: var(--surface);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-l);
+  color: var(--text);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  text-align: left;
+}
+
+/* :where() keeps the reset at zero specificity so the spacing rules below win. */
+.pop :where(p, h3, ul) {
+  margin: 0;
+}
+
+.pop :where(ul) {
+  padding: 0;
+  list-style: none;
+}
+
+.pop-close {
+  position: absolute;
+  top: var(--s3);
+  right: var(--s3);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-s);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.pop-close:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* Keep the first lines clear of the close button. */
+.pop > .kicker,
+.pop-title {
+  padding-right: var(--s5);
+}
+
+.pop > .kicker {
+  margin-bottom: var(--s2);
+}
+
+.pop-title {
+  font-size: var(--fs-4);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  text-wrap: balance;
+}
+
+.pop-score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  margin-top: var(--s4);
+}
+
+.pop-num {
+  font-size: var(--fs-6);
+  line-height: 1;
+}
+
+.pop-suffix {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.pop-score .chip {
+  align-self: center;
+  margin-left: auto;
+}
+
+.pop-vl {
+  margin-top: var(--s3);
+}
+
+.pop-summary {
+  margin-top: var(--s4);
+  color: var(--text-muted);
+}
+
+.pop-bullets {
+  display: grid;
+  gap: var(--s2);
+  margin-top: var(--s4);
+}
+
+/* Run-in label: the tag leads the sentence on the same line (overrides .kicker's own display). */
+.pop .pop-tag {
+  display: inline;
+  margin-right: var(--s1);
+  white-space: nowrap;
+}
+
+.pop-foot {
+  margin-top: var(--s4);
+  padding-top: var(--s3);
+  border-top: var(--hair) solid var(--line);
+  font-size: var(--fs-1);
+}
+
+.pop-skills {
+  /* Rows bleed into the card padding so their hover tone is wider than the text column. */
+  margin: var(--s4) calc(var(--s3) * -1) 0;
+}
+
+.pop-skill {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  width: 100%;
+  padding: var(--s2) var(--s3);
+  border: 0;
+  border-radius: var(--r-s);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pop-skill:hover {
+  background: var(--surface-2);
+}
+
+.pop-skill .numeral {
+  flex: none;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.pop-cta {
+  justify-content: center;
+  width: 100%;
+  margin-top: var(--s5);
+}
+
+/* Narrow screens: a bottom sheet over a transparent click-catcher. */
+
+.pop-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: transparent;
+}
+
+.pop-sheet {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  max-height: 80vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(var(--s5) + env(safe-area-inset-bottom, 0px));
+  border-bottom-width: 0;
+  border-radius: var(--r-l) var(--r-l) 0 0;
+}
+
+/* ───────────── Brand ───────────── */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  color: var(--text);
+  text-decoration: none;
+}
+
+button.brand {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.brand-mark {
+  flex: none;
+  width: calc(20px * var(--brand-s, 1));
+  height: calc(20px * var(--brand-s, 1));
+  color: var(--accent-ui);
+}
+
+button.brand:hover .brand-mark {
+  color: var(--accent-strong);
+}
+
+.brand-word {
+  font-size: calc(22px * var(--brand-s, 1));
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--text);
+}
+
+.brand-tag {
+  margin-left: var(--s2);
+  padding-left: var(--s3);
+  border-left: var(--hair) solid var(--line);
+  white-space: nowrap;
+}

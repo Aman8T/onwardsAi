@@ -1,0 +1,502 @@
+/*
+ * Now — the current-role skill radar (CalmNow / CalmNowSkills boards).
+ * Tokens only (src/theme/tokens.css): no colour literals, no shadows, 1px hairlines.
+ * Depth from tone (hover = var(--surface-2)), selected = underline or tone; motion is
+ * opacity and transform only. Radar visuals live in radar.css, the popover in kit.css.
+ */
+
+/* ───────────── row: rail | chart column ───────────── */
+
+.now-row {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: var(--s6) 56px;
+  align-items: start;
+  width: 100%;
+  padding-top: var(--s2);
+}
+
+/* ───────────── rail ───────────── */
+
+.now-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.now-rail-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.now-name {
+  font-size: 30px;
+  overflow-wrap: anywhere;
+}
+
+.now-headline {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+/* Role mastery: a quiet row that bleeds into the rail gutter. */
+.now-mastery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: calc(100% + 2 * var(--s3));
+  margin: 0 calc(-1 * var(--s3));
+  padding: 14px var(--s3);
+  border-radius: var(--r-m);
+  color: var(--text);
+  text-align: left;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.now-mastery:hover,
+.now-mastery[aria-pressed='true'] {
+  background: var(--surface-2);
+}
+
+.now-mastery-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.now-mastery-num {
+  font-size: var(--fs-5);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.now-of {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.now-mastery-insight {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* Domains: list rows; the drilled one is pressed. */
+.now-doms {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.now-doms-k {
+  padding: 0 var(--s2) 6px;
+}
+
+.now-dom-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.now-dom-row,
+.now-skill-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s1) var(--s3);
+  align-items: baseline;
+  width: 100%;
+  padding: 10px var(--s2);
+  border-radius: var(--r-s);
+  color: var(--text);
+  text-align: left;
+  transition:
+    background-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+
+.now-dom-row:hover,
+.now-dom-row[aria-pressed='true'],
+.now-skill-row:hover,
+.now-skill-row[aria-pressed='true'] {
+  background: var(--surface-2);
+}
+
+.now-dom-row .vl,
+.now-skill-row .vl {
+  grid-column: 1 / -1;
+}
+
+.now-dom-name,
+.now-skill-name {
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.now-dom-num,
+.now-skill-num {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.now-dom-row.is-rel .now-dom-name {
+  color: var(--accent);
+}
+
+.now-legend {
+  padding: 0 var(--s2);
+  line-height: 1.6;
+}
+
+/* ───────────── chart column ───────────── */
+
+.now-chart {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  /* Axis labels sit outside the rim and may reach into the page gutter: the graph stack
+     (shell.css) clips sideways overflow, not this column, so a long label is not cut here. */
+}
+
+/* Level 1 (a domain's skills): the header reads left to right like a page. */
+.now-chart.is-drilled {
+  align-items: stretch;
+  gap: 22px;
+}
+
+.now-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.now-head-domain {
+  align-items: stretch;
+  gap: 22px;
+  text-align: left;
+}
+
+/* The one serif line of the screen. */
+.now-title {
+  font-size: 36px;
+  text-wrap: balance;
+}
+
+/* Breadcrumb */
+.now-crumb {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.now-crumb-up {
+  padding: 0;
+  color: var(--text-muted);
+  transition: color var(--d-fast) var(--ease);
+}
+
+.now-crumb-up:hover {
+  color: var(--text);
+}
+
+.now-crumb-sep {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.now-crumb [aria-current] {
+  color: var(--text);
+}
+
+/* Level-1 domain header: name + score on the left, summary + text CTA on the right. */
+.now-dom-head {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px 56px;
+}
+
+.now-dom-id {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.now-dom-id .now-title {
+  text-align: left;
+}
+
+.now-dom-score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+}
+
+.now-dom-score .numeral {
+  font-size: var(--fs-5);
+  font-weight: 500;
+}
+
+.now-dom-score .chip {
+  align-self: center;
+  margin-left: 6px;
+}
+
+.now-dom-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 520px;
+}
+
+.now-dom-summary {
+  font-size: var(--fs-2);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* The domain CTA as a text link. */
+.now-lnk {
+  align-self: flex-start;
+  padding: 0;
+  font-size: var(--fs-2);
+  color: var(--accent);
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition: text-decoration-color var(--d-fast) var(--ease);
+}
+
+.now-lnk:hover {
+  text-decoration-color: var(--accent-ui);
+}
+
+/* ───────────── plot: the radar or the list panel ───────────── */
+
+.now-plot {
+  --radar-max: 600px;
+  position: relative;
+  width: 100%;
+}
+
+.now-chart.is-drilled .now-plot {
+  --radar-max: 552px;
+}
+
+/* A wide column leaves the domain panel its slot to the right of the radar. */
+.now-chart.is-drilled.is-wide .now-plot .radar,
+.now-chart.is-drilled.is-wide .now-skill-list {
+  margin-inline: 0;
+}
+
+/* Centre slot: the mastery numeral (level 0) or the domain score (level 1). */
+.now-centre {
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  padding: 10px var(--s4);
+  border-radius: var(--r-m);
+  color: var(--text);
+  text-align: center;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.now-centre:hover {
+  background: var(--surface);
+}
+
+.now-centre[aria-pressed='true'] {
+  background: var(--surface-2);
+}
+
+.now-centre-num {
+  font-size: 52px;
+  line-height: 1;
+}
+
+.now-centre-num.is-domain {
+  font-size: 44px;
+}
+
+/* Too few points for a radar: a calm list instead. */
+.now-skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+  padding: var(--s3);
+}
+
+.now-skill-row[aria-pressed='true'] .now-skill-name {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--accent-ui);
+  text-underline-offset: 3px;
+}
+
+.now-skill-empty {
+  padding: var(--s2);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+/* ───────────── sources ───────────── */
+
+.now-sources {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2);
+  margin-top: 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.now-chart.is-drilled.is-wide .now-sources {
+  justify-content: flex-start;
+}
+
+.now-src {
+  gap: 6px;
+  padding: 3px 11px;
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease),
+    opacity var(--d-fast) var(--ease);
+}
+
+.now-src:hover {
+  color: var(--text);
+}
+
+.now-src[aria-pressed='true'] {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--accent-ui);
+  text-underline-offset: 3px;
+}
+
+/* Evidences the hovered or selected skill. */
+.now-src.is-rel {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.now-src.is-rel:hover {
+  color: var(--accent-strong);
+}
+
+/* Unrelated to the current selection: the chip recedes by losing its fill, not by fading — it is
+   still a live button, and its ink must keep 4.5:1. */
+.now-src.is-dim {
+  background: transparent;
+}
+
+.now-src-sub {
+  color: var(--text-muted);
+}
+
+.now-hint {
+  margin-top: var(--s2);
+  text-align: center;
+}
+
+.now-chart.is-drilled.is-wide .now-hint {
+  text-align: left;
+}
+
+/* ───────────── responsive ───────────── */
+
+/* A narrower chart column: the plot insets itself (as Next does) so east and west labels have room. */
+@media (max-width: 1100px) {
+  .now-plot {
+    --radar-pad: 56px;
+  }
+}
+
+/* The rail stacks above the chart; domain rows flow into columns. */
+@media (max-width: 1000px) {
+  .now-row {
+    grid-template-columns: 1fr;
+    gap: var(--s5);
+  }
+
+  .now-dom-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+    gap: 2px var(--s2);
+  }
+}
+
+/* Phones: single column, smaller display sizes; popovers become the sheet (kit.css). */
+@media (max-width: 760px) {
+  .now-rail {
+    gap: var(--s5);
+  }
+
+  .now-name,
+  .now-title {
+    font-size: var(--fs-6);
+  }
+
+  .now-dom-list {
+    grid-template-columns: 1fr;
+  }
+
+  .now-dom-head {
+    gap: var(--s3) var(--s5);
+  }
+
+  .now-centre-num {
+    font-size: 44px;
+  }
+
+  .now-centre-num.is-domain {
+    font-size: 36px;
+  }
+
+  .now-sources {
+    justify-content: center;
+  }
+}
+
+/* The plot is width-bound from here down: shorter labels, as the kit does at 420px. */
+@media (max-width: 600px) {
+  .now-plot .radar-lbl {
+    max-width: 76px;
+    font-size: var(--fs-0);
+  }
+}
+
+/* A 240px plot: the centre slot shrinks with it, to the numeral alone (its label is in the rail above
+   and in the button's name), so it covers fewer of the low-score vertices. */
+@media (max-width: 480px) {
+  .now-centre {
+    padding: 6px 10px;
+  }
+
+  .now-centre .kicker {
+    display: none;
+  }
+
+  .now-centre-num {
+    font-size: 36px;
+  }
+
+  .now-centre-num.is-domain {
+    font-size: 32px;
+  }
+}

@@ -1,0 +1,615 @@
+/*
+ * Analysis view, calm theme (class prefix an-).
+ * Board: CalmAnalysis. Tone and hairlines for depth; tokens only; nothing loops.
+ * Motion is a single one-shot opacity fade for things that arrive (chips, log lines,
+ * the active step dot) plus the Ring's own transition from kit.css.
+ */
+
+@keyframes an-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.an-root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 40px 48px;
+}
+
+/* ───────────── header ───────────── */
+
+.an-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s5);
+  min-height: 72px;
+}
+
+.an-brand {
+  display: flex;
+  align-items: center;
+}
+
+/* ───────────── title block + overall ───────────── */
+
+.an-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s5) 40px;
+}
+
+.an-title-l {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  max-width: var(--measure);
+}
+
+.an-h1 {
+  font-size: clamp(32px, 2.4vw + 16px, 40px);
+}
+
+.an-h1-in {
+  display: block;
+}
+
+.an-sub {
+  /* two lines of room so the pipeline below does not jump when the copy changes length */
+  min-height: calc(var(--lh-body) * 2em);
+  color: var(--text-muted);
+}
+
+.an-overall {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.an-overall-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.an-pct {
+  font-size: var(--fs-5);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.an-overall-failed {
+  color: var(--danger);
+}
+
+/* ───────────── pipeline panel ───────────── */
+
+.an-pipe {
+  --an-cols: minmax(200px, 1fr) minmax(0, 2fr) 72px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s5);
+}
+
+.an-pipe-main {
+  min-width: 0;
+}
+
+.an-cols,
+.an-row {
+  display: grid;
+  grid-template-columns: var(--an-cols);
+  column-gap: var(--s6);
+  align-items: center;
+}
+
+.an-cols {
+  padding-bottom: 10px;
+}
+
+.an-cols-r {
+  text-align: right;
+}
+
+.an-rows {
+  padding: 0;
+  list-style: none;
+}
+
+.an-row {
+  min-height: 68px;
+  padding: 12px 0;
+}
+
+.an-src {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.an-src-name {
+  font-size: 14.5px;
+  font-weight: 500;
+}
+
+.an-src-sub {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.an-reader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.an-ring {
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 28px;
+}
+
+.an-check {
+  position: absolute;
+  inset: 0;
+  fill: none;
+  stroke: var(--accent-ui);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: opacity var(--d-base) var(--ease);
+}
+
+.an-row[data-status='done'] .an-check {
+  opacity: 1;
+}
+
+.an-reader-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.an-line {
+  overflow: hidden;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.an-stat {
+  justify-self: end;
+  font-size: 13.5px;
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.an-stat[data-status='done'] {
+  color: var(--text);
+}
+
+.an-stat[data-status='reading'] {
+  color: var(--accent);
+}
+
+.an-stat[data-status='error'] {
+  color: var(--danger);
+}
+
+/* a failed reader's ring reads as the one fixed hue */
+.an-row[data-status='error'] .ring-bar {
+  stroke: var(--danger);
+}
+
+/* skeletons: still tone blocks, no shimmer */
+.an-sk {
+  display: block;
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+
+.an-sk-a {
+  height: 11px;
+}
+
+.an-sk-b {
+  height: 13px;
+}
+
+.an-sk-chip {
+  height: 26px;
+  border-radius: 999px;
+}
+
+.an-stat-sk {
+  justify-self: end;
+  width: 56px;
+}
+
+/* ───────────── synthesizer ───────────── */
+
+.an-synth {
+  padding-top: var(--s5);
+}
+
+.an-synth-in {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  column-gap: var(--s5);
+  row-gap: var(--s4);
+  align-items: center;
+}
+
+.an-synth-ring {
+  position: relative;
+  flex: none;
+  width: 56px;
+  height: 56px;
+}
+
+.an-frac {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-4);
+}
+
+.an-synth[data-state='error'] .ring-bar {
+  stroke: var(--danger);
+}
+
+.an-synth-mid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+.an-synth-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.an-synth-title {
+  font-size: 24px;
+}
+
+.an-synth-title-in {
+  display: block;
+}
+
+.an-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) 28px;
+  padding: 0;
+  list-style: none;
+}
+
+.an-step {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+.an-step[data-state='active'] {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.an-dot {
+  flex: none;
+  box-sizing: border-box;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.an-step[data-state='done'] .an-dot {
+  background: var(--text-muted);
+}
+
+.an-step[data-state='active'] .an-dot {
+  background: var(--accent);
+  /* one fade as the step becomes current; it does not loop */
+  animation: an-in var(--d-base) var(--ease) both;
+}
+
+.an-step[data-state='todo'] .an-dot {
+  border: 1px solid var(--line-strong);
+}
+
+.an-step-state {
+  font-size: var(--fs-1);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.an-cta-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.an-chars .numeral {
+  font-size: 13px;
+}
+
+.an-open {
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease),
+    opacity var(--d-base) var(--ease);
+}
+
+.an-open:disabled,
+.an-open:disabled:hover {
+  background: var(--accent-strong);
+  color: var(--surface);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.an-auto {
+  opacity: 0;
+  transition: opacity var(--d-base) var(--ease);
+}
+
+.an-auto[data-on='true'] {
+  opacity: 1;
+}
+
+/* error card */
+.an-err {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s4);
+  max-width: var(--measure);
+}
+
+.an-err-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s5);
+}
+
+.an-err-msg {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}
+
+.an-hint {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.an-hint-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.an-hint code {
+  padding: 3px 10px;
+  border-radius: var(--r-s);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  color: var(--text);
+}
+
+.an-err-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+}
+
+.an-err-note {
+  font-size: var(--fs-2);
+  color: var(--danger);
+}
+
+/* ───────────── signals + log ───────────── */
+
+.an-bottom {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
+  gap: 40px;
+  align-items: start;
+}
+
+.an-signals,
+.an-log {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.an-h2 {
+  font-weight: 400;
+}
+
+.an-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  padding: 0;
+  list-style: none;
+}
+
+.an-sig {
+  gap: 6px;
+  padding: 3px 11px;
+  /* a new chip fades in once as it streams; chips already on screen are never replayed */
+  animation: an-in var(--d-base) var(--ease) both;
+}
+
+.an-sig .numeral {
+  font-size: var(--fs-1);
+  color: var(--text);
+}
+
+.an-empty {
+  margin-top: var(--s3);
+}
+
+.an-log .an-empty {
+  margin-top: 0;
+}
+
+.an-legend {
+  margin: 0;
+}
+
+.an-log-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+}
+
+.an-logbox {
+  max-height: 176px;
+  padding-right: var(--s2);
+  overflow-y: auto;
+}
+
+.an-ll {
+  display: grid;
+  grid-template-columns: 44px 84px minmax(0, 1fr);
+  column-gap: var(--s3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  line-height: 22px;
+  animation: an-in var(--d-base) var(--ease) both;
+}
+
+.an-ll-t,
+.an-ll-text {
+  color: var(--text-muted);
+}
+
+.an-ll-who {
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.an-ll-text {
+  overflow-wrap: anywhere;
+}
+
+/* ───────────── narrow ───────────── */
+
+@media (max-width: 860px) {
+  .an-cols {
+    display: none;
+  }
+
+  .an-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: var(--s3);
+  }
+
+  /* with the column headers hidden the first hairline would double the panel edge */
+  .an-row:first-child {
+    border-top: 0;
+  }
+
+  .an-reader {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .an-src-sub,
+  .an-line {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .an-synth-in {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .an-cta-wrap {
+    grid-column: 1 / -1;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .an-root {
+    gap: var(--s5);
+    padding: 0 var(--s4) var(--s7);
+  }
+
+  .an-header {
+    min-height: 64px;
+  }
+
+  .an-title {
+    gap: var(--s4);
+  }
+
+  .an-sub {
+    min-height: 0;
+  }
+
+  .an-pipe {
+    padding: var(--s4);
+  }
+
+  .an-bottom {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s6);
+  }
+
+  .an-logbox {
+    max-height: 200px;
+  }
+
+  .an-ll {
+    grid-template-columns: 40px 68px minmax(0, 1fr);
+    column-gap: var(--s2);
+  }
+
+  .an-err-head {
+    gap: var(--s4);
+  }
+}

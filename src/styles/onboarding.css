@@ -1,0 +1,508 @@
+/*
+ * Onboarding view, calm theme (board CalmMain.dc.html). Class prefix ob-.
+ * A centred 560px column on the ambient field (mounted once in index.html, so no background here).
+ * Tokens only: no colour literals, no shadows, 1px hairlines, depth from tone and space.
+ * Primitives come from global.css (.btn, .btn-primary, .btn-quiet, .btn-sm, .field, .chip, .panel,
+ * .kicker, .numeral, .serif, .sr-only, .wrap); this file only places them.
+ */
+
+.ob-root {
+  position: relative;
+  min-height: 100vh;
+}
+
+.ob-root .ob-wrap {
+  max-width: 1360px;
+  padding-inline: clamp(var(--s4), 3.5vw, 40px);
+  padding-bottom: var(--s8);
+}
+
+/* ───────────── header ───────────── */
+
+.ob-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s5);
+  min-height: 76px;
+  padding-block: var(--s3);
+}
+
+.ob-brand {
+  display: inline-flex;
+}
+
+.ob-brand .brand {
+  min-height: 44px;
+}
+
+.ob-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ob-nav .btn {
+  font-size: var(--fs-2);
+  text-decoration: none;
+}
+
+/* ───────────── the centred column ───────────── */
+
+.ob-main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--col);
+  margin-inline: auto;
+  padding-top: 72px;
+}
+
+.ob-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.ob-h1 {
+  font-size: clamp(40px, 9vw, 56px);
+  text-wrap: balance;
+}
+
+.ob-h1-line {
+  display: block;
+}
+
+.ob-h1-line.em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.ob-sub {
+  max-width: var(--measure);
+  font-size: var(--fs-4);
+  line-height: var(--lh-body);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.ob-reads {
+  margin-top: var(--s3);
+}
+
+.ob-reads-list {
+  margin-left: 10px;
+  color: var(--text);
+}
+
+/* ───────────── the form panel ───────────── */
+
+.ob-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  margin-top: var(--s7);
+  padding: var(--s6);
+}
+
+.ob-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ob-card-title {
+  font-size: var(--fs-6);
+}
+
+.ob-card-sub {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.ob-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.ob-field-links {
+  gap: var(--s3);
+}
+
+.ob-field-more {
+  gap: var(--s3);
+}
+
+.ob-error {
+  margin-top: var(--s2);
+  font-size: var(--fs-1);
+  letter-spacing: var(--track-open);
+  color: var(--danger);
+}
+
+/* Boxed fields inside the panel, as on the board (global .field is the underline form). */
+.ob-form .field {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface-2);
+  font-size: var(--fs-2);
+  transition: border-color var(--d-fast) var(--ease);
+}
+
+.ob-form .field:hover {
+  border-color: var(--line-strong);
+}
+
+.ob-form .field:focus,
+.ob-form .field:focus-visible {
+  border-color: var(--accent-ui);
+  outline: 2px solid var(--accent-ui);
+  outline-offset: 2px;
+}
+
+.ob-form textarea.field {
+  height: auto;
+  min-height: 120px;
+  padding: var(--s3) 14px;
+  line-height: var(--lh-body);
+  resize: vertical;
+}
+
+/* ───────────── resume drop zone ───────────── */
+
+.ob-drop {
+  display: flex;
+  align-items: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-m);
+  transition:
+    background-color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.ob-drop:hover,
+.ob-drop.is-armed {
+  background: var(--surface-2);
+}
+
+.ob-drop.is-over {
+  border-color: var(--accent-ui);
+  background: var(--accent-soft);
+}
+
+.ob-drop-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+  padding: 28px var(--s5);
+  border-radius: inherit;
+  text-align: center;
+}
+
+.ob-drop-icon {
+  flex: none;
+  color: var(--accent-ui);
+}
+
+.ob-drop-label {
+  font-size: var(--fs-3);
+}
+
+/* "browse" reads as a link, but the whole zone is the button. */
+.ob-browse {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-strong);
+  transition: text-decoration-color var(--d-fast) var(--ease);
+}
+
+.ob-drop-main:hover .ob-browse {
+  text-decoration-color: currentColor;
+}
+
+.ob-file-name {
+  font-size: var(--fs-3);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ob-file-meta {
+  display: block;
+}
+
+/* A chosen file: the dashed hairline settles to a solid one and the zone becomes a row. */
+.ob-drop.has-file {
+  border-style: solid;
+  border-color: var(--line);
+}
+
+.ob-drop.has-file .ob-drop-main {
+  flex-direction: row;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  text-align: left;
+}
+
+.ob-drop-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ob-ready {
+  flex: none;
+}
+
+.ob-drop-x {
+  flex: none;
+  margin-right: var(--s2);
+}
+
+/* ───────────── link rows ───────────── */
+
+.ob-links {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  list-style: none;
+}
+
+.ob-li {
+  border-bottom: 1px solid var(--line);
+}
+
+.ob-li:first-child {
+  border-top: 1px solid var(--line);
+}
+
+.ob-link-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 6px 0;
+}
+
+.ob-tag {
+  flex: 0 1 auto;
+  justify-content: center;
+  min-width: 78px;
+  max-width: 45%;
+}
+
+.ob-tag-text,
+.ob-url {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ob-url {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.ob-remove {
+  flex: none;
+  margin-right: calc(var(--s2) * -1);
+}
+
+.ob-note {
+  padding: 0 0 var(--s3);
+  font-size: var(--fs-1);
+  letter-spacing: var(--track-open);
+  color: var(--text-muted);
+}
+
+.ob-add-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s3);
+}
+
+.ob-add-row .field {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.ob-add {
+  flex: none;
+  justify-content: center;
+  height: 44px;
+  padding-inline: 18px;
+}
+
+.ob-links-error {
+  margin-top: var(--s2);
+}
+
+/* ───────────── extra context ───────────── */
+
+.ob-more {
+  align-self: flex-start;
+  margin-left: -14px;
+}
+
+.ob-more-badge {
+  margin-left: var(--s1);
+}
+
+.ob-collapse {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.ob-count {
+  align-self: flex-end;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+/* ───────────── submit ───────────── */
+
+.ob-submit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.ob-cta {
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+  font-size: var(--fs-3);
+  font-weight: 500;
+}
+
+/* Not ready: muted ink on the quiet tone, not a dimmed primary. Still clickable, so it can nudge the hint. */
+.ob-cta[aria-disabled='true'],
+.ob-cta[aria-disabled='true']:hover {
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.ob-hint {
+  text-align: center;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+/* inline-block so the transform nudge from the submit handler applies */
+.ob-hint-text {
+  display: inline-block;
+}
+
+.ob-fine {
+  text-align: center;
+}
+
+.ob-sample-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s6);
+}
+
+.ob-sample-wrap .ob-error {
+  margin-top: 0;
+}
+
+/* ───────────── how it works ───────────── */
+
+.ob-how {
+  max-width: 960px;
+  margin: 72px auto 0;
+}
+
+.ob-how-title {
+  margin-bottom: var(--s5);
+  font-weight: 400;
+}
+
+.ob-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s7);
+  padding: 0;
+  list-style: none;
+  /* leave the "How it works" heading in view when the nav link scrolls here */
+  scroll-margin-top: 72px;
+}
+
+.ob-step {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.ob-step h3 {
+  font-size: var(--fs-5);
+}
+
+.ob-step p {
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--text-muted);
+}
+
+/* ───────────── phone ───────────── */
+
+@media (max-width: 760px) {
+  .ob-nav .btn {
+    min-height: 44px;
+  }
+
+  .ob-main {
+    padding-top: var(--s7);
+  }
+
+  .ob-form {
+    margin-top: var(--s6);
+    padding: var(--s5);
+  }
+
+  /* 16px keeps iOS from zooming the page when a field is focused */
+  .ob-form .field {
+    font-size: 16px;
+  }
+
+  .ob-how {
+    margin-top: var(--s8);
+  }
+
+  .ob-steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s6);
+  }
+}
+
+@media (max-width: 480px) {
+  .ob-nav .btn {
+    padding-inline: 10px;
+    font-size: var(--fs-1);
+  }
+}

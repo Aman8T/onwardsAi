@@ -1,0 +1,26 @@
+node_modules/
+dist/
+data/
+*.log
+.env
+.env.*
+.DS_Store
+!.env.example
+.claude/settings.local.json
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.sqlite3
+*.sqlite3-*
+
+# Build output copied into the deploy folder (un-ignored for FastAPI Cloud in backend/.fastapicloudignore)
+cloud/static/
+backend/static/
+backend/evals/reports/
