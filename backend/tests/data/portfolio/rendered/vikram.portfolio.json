@@ -1,0 +1,1230 @@
+{
+  "profileId": "4a4bab93e5bbe33828926b133e0f03ed",
+  "publicId": "b75e1ee611410b1d6806e2e7",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T08:10:35Z",
+  "updatedAt": "2026-10-08T08:10:35Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "ledger",
+      "style": {
+        "family": "lagoon",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "square",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "atlas",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "numbers",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "ledger",
+          "because": "A senior record that reads best as a ledger and 4 roles in the record"
+        },
+        {
+          "dimension": "graph",
+          "choice": "atlas",
+          "because": "23 skills across 7 areas suit small multiples"
+        },
+        {
+          "dimension": "family",
+          "choice": "lagoon",
+          "because": "Suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "A long record reads better with tighter spacing"
+        }
+      ]
+    },
+    {
+      "composition": "signature",
+      "style": {
+        "family": "glacier",
+        "field": "dawn",
+        "type": "technical",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "halo",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "A different take: 4 roles to lay out and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "halo",
+          "because": "Scores are balanced (top is 8 above the median) and the mastery sits in the centre"
+        },
+        {
+          "dimension": "family",
+          "choice": "glacier",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners are the friendly default"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    },
+    {
+      "composition": "builder",
+      "style": {
+        "family": "iris",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "square",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "index",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "stellar",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "grid",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "numbers",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "builder",
+          "because": "A different take: public work to show and 5 projects to feature"
+        },
+        {
+          "dimension": "graph",
+          "choice": "stellar",
+          "because": "7 axes read cleanly as spears"
+        },
+        {
+          "dimension": "family",
+          "choice": "iris",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "Technical type suits tighter spacing"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "ledger",
+    "style": {
+      "family": "lagoon",
+      "field": "horizon",
+      "type": "technical",
+      "corners": "square",
+      "density": "compact"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "statement",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "atlas",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "ledger",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "numbers",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "compact",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "links",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "ledger",
+        "because": "A senior record that reads best as a ledger and 4 roles in the record"
+      },
+      {
+        "dimension": "graph",
+        "choice": "atlas",
+        "because": "23 skills across 7 areas suit small multiples"
+      },
+      {
+        "dimension": "family",
+        "choice": "lagoon",
+        "because": "Suits backend and systems work"
+      },
+      {
+        "dimension": "type",
+        "choice": "technical",
+        "because": "Mono details suit backend and systems work"
+      },
+      {
+        "dimension": "field",
+        "choice": "horizon",
+        "because": "A calm band keeps a dense or early page quiet"
+      },
+      {
+        "dimension": "corners",
+        "choice": "square",
+        "because": "Sharp corners suit precise or editorial type"
+      },
+      {
+        "dimension": "density",
+        "choice": "compact",
+        "because": "A long record reads better with tighter spacing"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Vikram Rao",
+      "headline": "Staff Engineer · 11 yrs · Hyderabad",
+      "role": "Staff Engineer",
+      "location": "Hyderabad, India",
+      "yearsExperience": 11.0,
+      "monogram": "VR"
+    },
+    "facts": [
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:vikram.rao.eng@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "vikram.rao.eng@example.com"
+          }
+        ]
+      },
+      {
+        "id": "contact-2",
+        "kind": "contact",
+        "title": "Phone",
+        "detail": "+91 90000 45678",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "+91 90000 45678"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "GitHub",
+        "url": "https://github.com/vikramrao",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "github.com/vikramrao"
+          },
+          {
+            "sourceId": "github",
+            "quote": "GitHub: Vikram Rao (@vikramrao)"
+          }
+        ]
+      },
+      {
+        "id": "link-2",
+        "kind": "link",
+        "title": "LinkedIn",
+        "url": "https://linkedin.com/in/vikram-rao-eng",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "linkedin.com/in/vikram-rao-eng"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "I like boring, correct systems: idempotent writes, sharding without downtime and a quiet pager.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "I like boring, correct systems: idempotent writes, sharding without downtime and a quiet pager."
+          }
+        ]
+      },
+      {
+        "id": "exp-1",
+        "kind": "experience",
+        "title": "Staff Engineer",
+        "org": "Parcelwise",
+        "location": "Hyderabad",
+        "start": "2021-04",
+        "current": true,
+        "detail": "Logistics platform. Go services on Kubernetes, PostgreSQL on AWS.",
+        "highlights": [
+          "Cut p99 route-quote latency from 820 ms to 140 ms (Redis caching, query tuning, load tests before every release).",
+          "Moved the shipment ledger (2.1 billion rows) from a single Postgres to a sharded cluster with no downtime.",
+          "Lead the routing platform team of 9 (Go, gRPC, Kubernetes)."
+        ],
+        "tags": [
+          "Go",
+          "gRPC",
+          "Kubernetes",
+          "PostgreSQL",
+          "AWS",
+          "Redis"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Parcelwise — Staff Engineer Hyderabad · Apr 2021 – Present"
+          }
+        ]
+      },
+      {
+        "id": "exp-2",
+        "kind": "experience",
+        "title": "Senior Software Engineer",
+        "org": "Finmint",
+        "location": "Bengaluru",
+        "start": "2017-07",
+        "end": "2021-03",
+        "detail": "Payments company (PCI DSS scope).",
+        "highlights": [
+          "Built the idempotent payout service handling ₹1,200 crore a month; payout events flow through Kafka.",
+          "On-call lead for 2 years at 99.99% monthly availability."
+        ],
+        "tags": [
+          "Kafka",
+          "PCI DSS"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Finmint — Senior Software Engineer Bengaluru · Jul 2017 – Mar 2021"
+          }
+        ]
+      },
+      {
+        "id": "exp-3",
+        "kind": "experience",
+        "title": "Software Engineer",
+        "org": "ShopLane",
+        "location": "Bengaluru",
+        "start": "2014-06",
+        "end": "2017-06",
+        "detail": "E-commerce company.",
+        "highlights": [
+          "Built the search indexing pipeline in Java and Elasticsearch; cut catalog reindex time from 6 hours to 40 minutes."
+        ],
+        "tags": [
+          "Java",
+          "Elasticsearch"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "ShopLane — Software Engineer Bengaluru · Jun 2014 – Jun 2017"
+          }
+        ]
+      },
+      {
+        "id": "exp-4",
+        "kind": "experience",
+        "title": "Associate Engineer",
+        "org": "Infosys",
+        "location": "Mysuru",
+        "start": "2013-08",
+        "end": "2014-05",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Infosys — Associate Engineer Mysuru · Aug 2013 – May 2014"
+          }
+        ]
+      },
+      {
+        "id": "proj-1",
+        "kind": "project",
+        "title": "pgshard",
+        "highlights": [
+          "Contributor to pgshard (12 merged PRs)."
+        ],
+        "tags": [
+          "PostgreSQL"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Contributor to pgshard (12 merged PRs)."
+          }
+        ]
+      },
+      {
+        "id": "ach-1",
+        "kind": "achievement",
+        "title": "Sharding without tears",
+        "org": "GopherCon India",
+        "start": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "\"Sharding without tears\" — GopherCon India 2024"
+          }
+        ]
+      },
+      {
+        "id": "ach-2",
+        "kind": "achievement",
+        "title": "Idempotency at ₹1,200 crore a month",
+        "org": "Rootconf",
+        "start": "2022",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "\"Idempotency at ₹1,200 crore a month\" — Rootconf 2022"
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "B.E. Computer Science",
+        "org": "NIT Karnataka (Surathkal)",
+        "start": "2009",
+        "end": "2013",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.E. Computer Science — NIT Karnataka (Surathkal) 2009 – 2013"
+          }
+        ]
+      },
+      {
+        "id": "quote-2",
+        "kind": "quote",
+        "title": "Staff engineer @ Parcelwise. Postgres, Go and calm on-call rotations.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "Staff engineer @ Parcelwise. Postgres, Go and calm on-call rotations."
+          }
+        ]
+      },
+      {
+        "id": "proj-2",
+        "kind": "project",
+        "title": "talks",
+        "detail": "Slides and demo code for conference talks: sharding without downtime, idempotency at scale.",
+        "highlights": [
+          "Language: Go, stars: 64, forks: 7, license: MIT",
+          "Topics: postgres, sharding, idempotency"
+        ],
+        "tags": [
+          "Go",
+          "postgres",
+          "sharding",
+          "idempotency"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "talks"
+          }
+        ]
+      },
+      {
+        "id": "proj-3",
+        "kind": "project",
+        "title": "pg-failover-lab",
+        "detail": "A docker-compose lab for rehearsing Postgres failover, replica promotion and split-brain handling.",
+        "highlights": [
+          "Language: Shell, stars: 58, forks: 9, license: MIT",
+          "Topics: postgres, replication, failover"
+        ],
+        "tags": [
+          "Shell",
+          "postgres",
+          "replication",
+          "failover"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "pg-failover-lab"
+          }
+        ]
+      },
+      {
+        "id": "proj-4",
+        "kind": "project",
+        "title": "dotfiles",
+        "detail": "Shell, tmux and editor configuration.",
+        "highlights": [],
+        "tags": [
+          "Shell",
+          "tmux"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "dotfiles"
+          }
+        ]
+      },
+      {
+        "id": "proj-5",
+        "kind": "project",
+        "title": "tf-sandbox",
+        "detail": "Terraform examples for rehearsing infrastructure changes safely: plan reviews, state moves and drift checks.",
+        "highlights": [
+          "Topics: terraform, aws"
+        ],
+        "tags": [
+          "HCL",
+          "Terraform",
+          "AWS"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "tf-sandbox"
+          }
+        ]
+      },
+      {
+        "id": "ach-3",
+        "kind": "achievement",
+        "title": "\"Sharding without tears\" — GopherCon India 2024",
+        "org": "GopherCon India",
+        "start": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "link-1",
+            "quote": "\"Sharding without tears\" — GopherCon India 2024"
+          }
+        ]
+      },
+      {
+        "id": "ach-4",
+        "kind": "achievement",
+        "title": "\"Idempotency at ₹1,200 crore a month\" — Rootconf 2022",
+        "org": "Rootconf",
+        "start": "2022",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "link-1",
+            "quote": "\"Idempotency at ₹1,200 crore a month\" — Rootconf 2022"
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "Staff engineer @ Parcelwise. Postgres, Go and calm on-call rotations.",
+        "origin": "model",
+        "factIds": [
+          "quote-2"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Staff Engineer at Parcelwise who cut p99 route-quote latency from 820 ms to 140 ms and moved a 2.1 billion row ledger to a sharded cluster with no downtime.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Earlier, Vikram built the idempotent payout service at Finmint, handling ₹1,200 crore a month, and the search indexing pipeline at ShopLane. Vikram has spoken on sharding at GopherCon India in 2024 and on idempotency at Rootconf in 2022.",
+        "origin": "model",
+        "factIds": [
+          "exp-2",
+          "exp-3",
+          "ach-1",
+          "ach-2"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Parcelwise Staff Engineer Cuts Route-Quote Latency From 820 ms to 140 ms",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Vikram Rao also moved the shipment ledger of 2.1 billion rows from a single Postgres to a sharded cluster with no downtime.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-1",
+        "text": "Cut p99 route-quote latency from 820 ms to 140 ms with Redis caching, query tuning and load tests before every release.\nMoved the shipment ledger of 2.1 billion rows from a single Postgres to a sharded cluster with no downtime.\nLead the routing platform team of 9.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-2",
+        "text": "Built the idempotent payout service handling ₹1,200 crore a month; payout events flow through Kafka.\nOn-call lead for 2 years at 99.99% monthly availability.",
+        "origin": "model",
+        "factIds": [
+          "exp-2"
+        ]
+      },
+      {
+        "id": "exp:exp-3",
+        "text": "Built the search indexing pipeline in Java and Elasticsearch.\nCut catalog reindex time from 6 hours to 40 minutes.",
+        "origin": "model",
+        "factIds": [
+          "exp-3"
+        ]
+      },
+      {
+        "id": "proj:proj-1",
+        "text": "Vikram contributes to pgshard, a PostgreSQL project, with 12 merged PRs.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-2",
+        "text": "Slides and demo code for conference talks on sharding without downtime and idempotency at scale. Go, MIT license, 64 stars and 7 forks.",
+        "origin": "model",
+        "factIds": [
+          "proj-2"
+        ]
+      },
+      {
+        "id": "proj:proj-3",
+        "text": "A docker-compose lab for rehearsing Postgres failover, replica promotion and split-brain handling. Built with Shell and released under the MIT license.",
+        "origin": "model",
+        "factIds": [
+          "proj-3"
+        ]
+      },
+      {
+        "id": "proj:proj-4",
+        "text": "Shell, tmux and editor configuration, kept as a dotfiles project.",
+        "origin": "model",
+        "factIds": [
+          "proj-4"
+        ]
+      },
+      {
+        "id": "proj:proj-5",
+        "text": "Terraform examples for rehearsing infrastructure changes safely: plan reviews, state moves and drift checks. Uses HCL, Terraform and AWS.",
+        "origin": "model",
+        "factIds": [
+          "proj-5"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "152",
+        "label": "GitHub stars",
+        "sourceId": "github"
+      },
+      {
+        "value": "4",
+        "label": "GitHub repos",
+        "sourceId": "github"
+      },
+      {
+        "value": "2",
+        "label": "Conference talks",
+        "sourceId": "link-1"
+      },
+      {
+        "value": "3",
+        "label": "GitHub languages",
+        "sourceId": "github"
+      }
+    ],
+    "openTo": [
+      "Principal Engineer",
+      "Distributed Systems Architect"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 92,
+        "skills": [
+          {
+            "id": "go",
+            "name": "Go",
+            "score": 94,
+            "evidence": "Routing platform at Parcelwise: Go services on Kubernetes"
+          },
+          {
+            "id": "api-design",
+            "name": "API design",
+            "score": 92,
+            "evidence": "Idempotent payout service handling ₹1,200 crore a month at Finmint"
+          },
+          {
+            "id": "grpc",
+            "name": "gRPC",
+            "score": 88,
+            "evidence": "Routing platform team of 9 builds Go and gRPC services"
+          },
+          {
+            "id": "java",
+            "name": "Java",
+            "score": 85,
+            "evidence": "ShopLane search indexing pipeline in Java and Elasticsearch"
+          }
+        ]
+      },
+      {
+        "id": "distributed-systems",
+        "name": "Distributed Systems",
+        "short": "Distributed",
+        "score": 88,
+        "skills": [
+          {
+            "id": "idempotency",
+            "name": "Idempotency",
+            "score": 93,
+            "evidence": "Built the idempotent payout service handling ₹1,200 crore a month"
+          },
+          {
+            "id": "event-streaming",
+            "name": "Event streaming (Kafka)",
+            "score": 90,
+            "evidence": "Finmint payout events flow through Kafka"
+          },
+          {
+            "id": "consensus-replication",
+            "name": "Consensus & replication",
+            "score": 84,
+            "evidence": "pg-failover-lab: replica promotion and split-brain rehearsal, 58 stars"
+          }
+        ]
+      },
+      {
+        "id": "data-storage",
+        "name": "Data & Storage",
+        "short": "Data & Storage",
+        "score": 86,
+        "skills": [
+          {
+            "id": "postgresql",
+            "name": "PostgreSQL",
+            "score": 92,
+            "evidence": "Moved the 2.1 billion-row shipment ledger from a single Postgres to a sharded cluster"
+          },
+          {
+            "id": "sharding",
+            "name": "Sharding",
+            "score": 89,
+            "evidence": "Sharded the shipment ledger (2.1 billion rows) with no downtime"
+          },
+          {
+            "id": "query-tuning",
+            "name": "Query tuning",
+            "score": 86,
+            "evidence": "Cut p99 route-quote latency from 820 ms to 140 ms with caching and query tuning"
+          },
+          {
+            "id": "redis",
+            "name": "Redis",
+            "score": 78,
+            "evidence": "Redis caching behind the route-quote latency cut at Parcelwise"
+          }
+        ]
+      },
+      {
+        "id": "reliability",
+        "name": "Reliability",
+        "short": "Reliability",
+        "score": 84,
+        "skills": [
+          {
+            "id": "incident-response",
+            "name": "Incident response",
+            "score": 88,
+            "evidence": "On-call lead for 2 years at Finmint, 99.99% monthly availability"
+          },
+          {
+            "id": "slos",
+            "name": "SLOs",
+            "score": 85,
+            "evidence": "Held 99.99% monthly availability as on-call lead at Finmint"
+          },
+          {
+            "id": "load-testing",
+            "name": "Load testing",
+            "score": 80,
+            "evidence": "Load tests before every release on the Parcelwise routing platform"
+          }
+        ]
+      },
+      {
+        "id": "cloud-infra",
+        "name": "Cloud & Infra",
+        "short": "Cloud & Infra",
+        "score": 80,
+        "skills": [
+          {
+            "id": "kubernetes",
+            "name": "Kubernetes",
+            "score": 82,
+            "evidence": "Routing platform runs as Go services on Kubernetes at Parcelwise"
+          },
+          {
+            "id": "aws",
+            "name": "AWS",
+            "score": 81,
+            "evidence": "PostgreSQL on AWS at Parcelwise; RDS, EKS and S3 listed"
+          },
+          {
+            "id": "terraform",
+            "name": "Terraform",
+            "score": 78,
+            "evidence": "tf-sandbox: Terraform plan reviews, state moves and drift checks, 11 stars"
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "name": "Security",
+        "short": "Security",
+        "score": 70,
+        "skills": [
+          {
+            "id": "auth-secrets",
+            "name": "Auth & secrets",
+            "score": 72,
+            "evidence": "Auth and secrets management listed; payout APIs at Finmint"
+          },
+          {
+            "id": "pci-dss",
+            "name": "PCI DSS",
+            "score": 71,
+            "evidence": "Finmint payments platform operated in PCI DSS scope"
+          },
+          {
+            "id": "threat-modelling",
+            "name": "Threat modelling",
+            "score": 66,
+            "evidence": "Threat modelling listed with no bullet or artifact that shows it"
+          }
+        ]
+      },
+      {
+        "id": "leadership",
+        "name": "Leadership",
+        "short": "Leadership",
+        "score": 82,
+        "skills": [
+          {
+            "id": "mentoring",
+            "name": "Mentoring",
+            "score": 85,
+            "evidence": "Mentors engineers on the routing team at Parcelwise"
+          },
+          {
+            "id": "tech-strategy",
+            "name": "Tech strategy",
+            "score": 84,
+            "evidence": "Leads the routing platform team of 9 at Parcelwise"
+          },
+          {
+            "id": "architecture-review",
+            "name": "Architecture review",
+            "score": 80,
+            "evidence": "Runs the weekly architecture review at Parcelwise"
+          }
+        ]
+      }
+    ],
+    "skillCount": 23,
+    "mastery": {
+      "score": 89,
+      "role": "Staff Engineer"
+    },
+    "sources": [
+      "Resume",
+      "GitHub",
+      "Talks"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

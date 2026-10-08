@@ -1,0 +1,889 @@
+{
+  "profileId": "7255527d689d0682a5f3e7d460bd752e",
+  "publicId": "142805aa3d4725a45d6e3e4f",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T07:55:58Z",
+  "updatedAt": "2026-10-08T07:55:58Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "foundations",
+      "style": {
+        "family": "sage",
+        "field": "horizon",
+        "type": "warm",
+        "corners": "round",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "centered",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "foundations",
+          "because": "Early in the journey, so education and projects lead and a new graph that reads best as areas of focus"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "3 areas and 5 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "sage",
+          "because": "Suits hardware and embedded work"
+        },
+        {
+          "dimension": "type",
+          "choice": "warm",
+          "because": "A friendly rounded face for an early-career page"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "round",
+          "because": "Round corners match a friendly type pairing"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    },
+    {
+      "composition": "builder",
+      "style": {
+        "family": "lagoon",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "square",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "index",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "grid",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "builder",
+          "because": "A different take: 3 projects are the main proof and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "3 areas and 5 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "lagoon",
+          "because": "A different hue to compare; it also suits hardware and embedded work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "A build log reads well in mono"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "Technical type suits tighter spacing"
+        }
+      ]
+    },
+    {
+      "composition": "signature",
+      "style": {
+        "family": "dune",
+        "field": "dawn",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "A different take: public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "3 areas and 5 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "dune",
+          "because": "A different hue to compare; it also suits hardware and embedded work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "A page built around the graph and the story"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "foundations",
+    "style": {
+      "family": "sage",
+      "field": "horizon",
+      "type": "warm",
+      "corners": "round",
+      "density": "airy"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "centered",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "focus",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "about",
+        "kind": "about",
+        "variant": "lede",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "featureList",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "row",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "timeline",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "links",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "foundations",
+        "because": "Early in the journey, so education and projects lead and a new graph that reads best as areas of focus"
+      },
+      {
+        "dimension": "graph",
+        "choice": "focus",
+        "because": "3 areas and 5 skills so far, so the graph reads as areas of focus"
+      },
+      {
+        "dimension": "family",
+        "choice": "sage",
+        "because": "Suits hardware and embedded work"
+      },
+      {
+        "dimension": "type",
+        "choice": "warm",
+        "because": "A friendly rounded face for an early-career page"
+      },
+      {
+        "dimension": "field",
+        "choice": "horizon",
+        "because": "A calm band keeps a dense or early page quiet"
+      },
+      {
+        "dimension": "corners",
+        "choice": "round",
+        "because": "Round corners match a friendly type pairing"
+      },
+      {
+        "dimension": "density",
+        "choice": "airy",
+        "because": "Little content, so it can breathe"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Aarav Mehta",
+      "headline": "ECE student · Mysuru",
+      "role": "ECE Student",
+      "location": "Mysuru, India",
+      "yearsExperience": 0.0,
+      "monogram": "AM"
+    },
+    "facts": [
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:aarav.mehta.ece@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "aarav.mehta.ece@example.com"
+          }
+        ]
+      },
+      {
+        "id": "contact-2",
+        "kind": "contact",
+        "title": "Phone",
+        "detail": "+91 90000 12345",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "+91 90000 12345"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "GitHub",
+        "url": "https://github.com/aaravmehta",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "github.com/aaravmehta"
+          },
+          {
+            "sourceId": "github",
+            "quote": "GitHub: Aarav Mehta (@aaravmehta)"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "I like building small devices that measure something real and show it on a screen.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "I like building small devices that measure something real and show it on a screen."
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "B.Tech, Electronics and Communication Engineering",
+        "org": "Kaveri Institute of Technology, Mysuru",
+        "start": "2022",
+        "end": "2026",
+        "grade": "CGPA 7.9 / 10",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.Tech, Electronics and Communication Engineering — Kaveri Institute of Technology, Mysuru 2022 – 2026 (expected)"
+          }
+        ]
+      },
+      {
+        "id": "proj-1",
+        "kind": "project",
+        "title": "Smart irrigation controller",
+        "url": "https://github.com/aaravmehta/soil-sense",
+        "detail": "An Arduino Uno reads two soil-moisture sensors and switches a 12V pump; readings go to a small web dashboard (HTML, CSS, JavaScript) over an ESP8266.",
+        "highlights": [
+          "An Arduino Uno reads two soil-moisture sensors and switches a 12V pump; readings go to a small web dashboard (HTML, CSS, JavaScript) over an ESP8266.",
+          "Team of 3. I wrote the sensor firmware in C and built the dashboard."
+        ],
+        "tags": [
+          "Arduino Uno",
+          "soil-moisture sensors",
+          "12V pump",
+          "ESP8266",
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "C"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Smart irrigation controller — final-year mini project github.com/aaravmehta/soil-sense"
+          }
+        ]
+      },
+      {
+        "id": "ach-1",
+        "kind": "achievement",
+        "title": "Member, IEEE student branch",
+        "start": "2023",
+        "end": "2025",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Member, IEEE student branch (2023 – 2025)."
+          }
+        ]
+      },
+      {
+        "id": "ach-2",
+        "kind": "achievement",
+        "title": "Smart India Hackathon 2025 (college round)",
+        "start": "2025",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Took part in the college round of Smart India Hackathon 2025."
+          }
+        ]
+      },
+      {
+        "id": "proj-2",
+        "kind": "project",
+        "title": "soil-sense",
+        "detail": "Smart irrigation controller: Arduino Uno, two soil-moisture sensors, a 12V pump relay and an ESP8266 uplink to a small web dashboard.",
+        "highlights": [
+          "Final-year mini project (team of 3). Two soil-moisture sensors feed an Arduino Uno; when the soil is dry the pump",
+          "relay switches on a 12V pump. An ESP8266 posts readings to a static dashboard (HTML, CSS, JavaScript)."
+        ],
+        "tags": [
+          "Arduino",
+          "ESP8266",
+          "C",
+          "IoT",
+          "irrigation",
+          "HTML",
+          "CSS",
+          "JavaScript"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "soil-sense"
+          }
+        ]
+      },
+      {
+        "id": "proj-3",
+        "kind": "project",
+        "title": "c-practice",
+        "detail": "Lab and self-study programs in C: pointers, arrays, bit manipulation and basic data structures.",
+        "highlights": [],
+        "tags": [
+          "C",
+          "pointers",
+          "arrays",
+          "bit manipulation",
+          "data structures"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "c-practice"
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "I like building small devices that measure something real and show it on a screen.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "ECE student at Kaveri Institute of Technology who built a smart irrigation controller with an Arduino Uno, an ESP8266 and a web dashboard.",
+        "origin": "model",
+        "factIds": [
+          "edu-1",
+          "proj-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Aarav is studying Electronics and Communication Engineering in Mysuru, 2022 to 2026. Aarav wrote the sensor firmware in C and built the dashboard in a team of 3. Member of the IEEE student branch from 2023 to 2025.",
+        "origin": "model",
+        "factIds": [
+          "edu-1",
+          "proj-1",
+          "ach-1"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Mysuru ECE Student Builds Irrigation Controller With Two Soil Sensors",
+        "origin": "model",
+        "factIds": [
+          "edu-1",
+          "proj-2"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Aarav Mehta wrote the sensor firmware in C and built the web dashboard for a team of 3 whose Arduino Uno switches a 12V pump.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-1",
+        "text": "Smart irrigation controller: an Arduino Uno reads two soil-moisture sensors and switches a 12V pump. Readings reach a web dashboard over an ESP8266. Aarav wrote the C firmware and built the dashboard.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-2",
+        "text": "A final-year mini project by a team of 3. Two soil-moisture sensors feed an Arduino Uno, and a relay switches a 12V pump when the soil is dry. An ESP8266 posts readings to a dashboard.",
+        "origin": "model",
+        "factIds": [
+          "proj-2"
+        ]
+      },
+      {
+        "id": "proj:proj-3",
+        "text": "Lab and self-study programs in C covering pointers, arrays, bit manipulation and basic data structures.",
+        "origin": "model",
+        "factIds": [
+          "proj-3"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "3",
+        "label": "GitHub stars",
+        "sourceId": "github"
+      },
+      {
+        "value": "2",
+        "label": "GitHub repos",
+        "sourceId": "github"
+      },
+      {
+        "value": "2",
+        "label": "GitHub languages",
+        "sourceId": "github"
+      },
+      {
+        "value": "1",
+        "label": "project",
+        "sourceId": "resume"
+      }
+    ],
+    "openTo": [
+      "IoT Developer Trainee",
+      "Embedded Software Engineer"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "hardware-iot",
+        "name": "Hardware & IoT",
+        "short": "Hardware & IoT",
+        "score": 51,
+        "skills": [
+          {
+            "id": "arduino-sensors",
+            "name": "Arduino & sensors",
+            "score": 58,
+            "evidence": "Arduino Uno reads two soil-moisture sensors and switches a 12V pump"
+          },
+          {
+            "id": "c-programming",
+            "name": "C programming",
+            "score": 44,
+            "evidence": "Wrote the soil-sense sensor firmware in C"
+          }
+        ]
+      },
+      {
+        "id": "web-basics",
+        "name": "Web Basics",
+        "short": "Web Basics",
+        "score": 42,
+        "skills": [
+          {
+            "id": "html-css",
+            "name": "HTML & CSS",
+            "score": 48,
+            "evidence": "Built the soil-sense dashboard in HTML and CSS"
+          },
+          {
+            "id": "javascript",
+            "name": "JavaScript",
+            "score": 36,
+            "evidence": "Dashboard logic in JavaScript; no other JavaScript project listed"
+          }
+        ]
+      },
+      {
+        "id": "python",
+        "name": "Python",
+        "short": "Python",
+        "score": 38,
+        "skills": [
+          {
+            "id": "python-scripting",
+            "name": "Python scripting",
+            "score": 40,
+            "evidence": "Python (basic) listed under Languages; no bullet or repo uses it"
+          }
+        ]
+      }
+    ],
+    "skillCount": 5,
+    "mastery": {
+      "score": 40,
+      "role": "ECE Student"
+    },
+    "sources": [
+      "Resume",
+      "GitHub"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

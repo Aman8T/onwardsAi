@@ -1,0 +1,1037 @@
+{
+  "profileId": "8ee0ad45d658300d705b480b7ad5137c",
+  "publicId": "02e3655661c0688085df6e28",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T07:58:33Z",
+  "updatedAt": "2026-10-08T07:58:33Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "signature",
+      "style": {
+        "family": "lagoon",
+        "field": "dawn",
+        "type": "technical",
+        "corners": "square",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "2 roles to lay out and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 16 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "lagoon",
+          "because": "Suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    },
+    {
+      "composition": "ledger",
+      "style": {
+        "family": "glacier",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "soft",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "ledger",
+          "because": "A different take: a senior record that reads best as a ledger and measured results to list"
+        },
+        {
+          "dimension": "graph",
+          "choice": "ledger",
+          "because": "Ranked rows stay readable at any size"
+        },
+        {
+          "dimension": "family",
+          "choice": "glacier",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners are the friendly default"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "A long record reads better with tighter spacing"
+        }
+      ]
+    },
+    {
+      "composition": "builder",
+      "style": {
+        "family": "iris",
+        "field": "horizon",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "index",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "grid",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "builder",
+          "because": "A different take: 4 projects are the main proof and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 16 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "iris",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "Expressive serif headlines are a safe default"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "signature",
+    "style": {
+      "family": "lagoon",
+      "field": "dawn",
+      "type": "technical",
+      "corners": "square",
+      "density": "airy"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "split",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "peaks",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "proof",
+        "kind": "proof",
+        "variant": "strip",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "about",
+        "kind": "about",
+        "variant": "lede",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "timeline",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "featureList",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "row",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "signOff",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "signature",
+        "because": "2 roles to lay out and public work to show"
+      },
+      {
+        "dimension": "graph",
+        "choice": "peaks",
+        "because": "The top area is 16 above the median"
+      },
+      {
+        "dimension": "family",
+        "choice": "lagoon",
+        "because": "Suits backend and systems work"
+      },
+      {
+        "dimension": "type",
+        "choice": "technical",
+        "because": "Mono details suit backend and systems work"
+      },
+      {
+        "dimension": "field",
+        "choice": "dawn",
+        "because": "The signature layout carries the fullest backdrop"
+      },
+      {
+        "dimension": "corners",
+        "choice": "square",
+        "because": "Sharp corners suit precise or editorial type"
+      },
+      {
+        "dimension": "density",
+        "choice": "airy",
+        "because": "Plenty of room to read"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "अनन्या शर्मा",
+      "headline": "Senior Engineer · 5.3 yrs · Pune",
+      "role": "Senior Engineer",
+      "location": "Pune, India",
+      "yearsExperience": 5.3,
+      "monogram": "अ"
+    },
+    "facts": [
+      {
+        "id": "exp-1",
+        "kind": "experience",
+        "title": "Senior Engineer, \"Orders & Loyalty\" Platform",
+        "org": "Café Délice",
+        "location": "Pune",
+        "start": "2023-06",
+        "current": true,
+        "detail": "French-style café chain with 60 outlets across Pune, Mumbai and Bengaluru; app and web ordering.",
+        "highlights": [
+          "Rebuilt the in-app ordering flow in React Native; weekly orders through the app rose 18% in the first quarter after launch.",
+          "Added Devanagari, Tamil and Kannada menu names with locale-aware sorting and search (ICU collation) for 100% of the menu in 3 languages.",
+          "Designed the \"Délice Points\" loyalty ledger; point-expiry bugs dropped from 14 a month to 1.",
+          "Migrated order history to PostgreSQL with no lost orders across 1.2 million records."
+        ],
+        "tags": [
+          "React Native",
+          "PostgreSQL",
+          "Devanagari",
+          "Tamil",
+          "Kannada",
+          "ICU collation"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Café Délice — Senior Engineer, \"Orders & Loyalty\" Platform Pune · Jun 2023 – Present"
+          }
+        ]
+      },
+      {
+        "id": "exp-2",
+        "kind": "experience",
+        "title": "Software Engineer",
+        "org": "Naïve Labs",
+        "location": "Mumbai",
+        "start": "2021-07",
+        "end": "2023-05",
+        "highlights": [
+          "Built a multilingual SMS reminder service (Hindi, Marathi, English) used by 3 clinic chains; delivery rate improved from 91% to 98%.",
+          "Wrote the text-normalisation library that handles Unicode combining marks in customer names, removing about 1,100 duplicate records."
+        ],
+        "tags": [
+          "SMS",
+          "Hindi",
+          "Marathi",
+          "English",
+          "Unicode"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Naïve Labs — Software Engineer Mumbai · Jul 2021 – May 2023"
+          }
+        ]
+      },
+      {
+        "id": "proj-1",
+        "kind": "project",
+        "title": "Crème",
+        "detail": "Recipe-scaling calculator for bakers; handles fractions such as ½ and ¾ and metric/imperial conversion. TypeScript.",
+        "highlights": [],
+        "tags": [
+          "TypeScript",
+          "fractions",
+          "metric",
+          "imperial conversion"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Crème — Recipe-scaling calculator for bakers; handles fractions such as ½ and ¾ and metric/imperial conversion."
+          }
+        ]
+      },
+      {
+        "id": "proj-2",
+        "kind": "project",
+        "title": "bhasha-sort",
+        "detail": "Unicode-aware collation for Indian-language menus (Devanagari, Tamil, Kannada) with test cases for conjuncts such as क्ष and ज्ञ. Python.",
+        "highlights": [
+          "Language: Python, stars: 31, forks: 4, license: MIT",
+          "Sort and search menu items the way a reader of the script expects. Handles conjuncts (क्ष, ज्ञ), nukta variants and mixed-script"
+        ],
+        "tags": [
+          "Unicode",
+          "Python",
+          "Devanagari",
+          "Tamil",
+          "Kannada",
+          "collation"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "bhasha-sort — Unicode-aware collation for Indian-language menus (Devanagari, Tamil, Kannada) with test cases for"
+          },
+          {
+            "sourceId": "github",
+            "quote": "bhasha-sort"
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "B.E. Computer Engineering",
+        "org": "Savitribai Phule Pune University",
+        "start": "2017",
+        "end": "2021",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.E. Computer Engineering — Savitribai Phule Pune University 2017 – 2021"
+          }
+        ]
+      },
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:ananya.sharma.dev@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "ananya.sharma.dev@example.com"
+          }
+        ]
+      },
+      {
+        "id": "contact-2",
+        "kind": "contact",
+        "title": "Phone",
+        "detail": "+91 90000 67890",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "+91 90000 67890"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "GitHub",
+        "url": "https://github.com/ananyasharma",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "github.com/ananyasharma"
+          },
+          {
+            "sourceId": "github",
+            "quote": "GitHub: Ananya Sharma (@ananyasharma)"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "I care about software that works in every script and every language our customers read.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "I care about software that works in every script and every language our customers read."
+          }
+        ]
+      },
+      {
+        "id": "quote-2",
+        "kind": "quote",
+        "title": "I write software that reads every script: ক, க, ಕ, क.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "I write software that reads every script: ক, க, ಕ, क."
+          }
+        ]
+      },
+      {
+        "id": "proj-3",
+        "kind": "project",
+        "title": "creme-scaler",
+        "detail": "Recipe-scaling calculator for bakers (Crème): fractions like ½ and ¾, metric and imperial.",
+        "highlights": [
+          "Language: TypeScript, stars: 14, forks: 1"
+        ],
+        "tags": [
+          "TypeScript",
+          "recipes",
+          "baking"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "creme-scaler"
+          }
+        ]
+      },
+      {
+        "id": "proj-4",
+        "kind": "project",
+        "title": "name-normalise",
+        "detail": "Normalise personal names for matching: NFC/NFKC, combining marks and stray whitespace.",
+        "highlights": [
+          "Language: TypeScript, stars: 7, forks: 0"
+        ],
+        "tags": [
+          "TypeScript",
+          "Unicode"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "name-normalise"
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "I care about software that works in every script and every language our customers read.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Senior Engineer at Café Délice who rebuilt the in-app ordering flow, lifting weekly app orders 18% in the first quarter after launch.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Added Devanagari, Tamil and Kannada menu names with locale-aware sorting and search (ICU collation) for 100% of the menu in 3 languages. Designed the \"Délice Points\" loyalty ledger; point-expiry bugs dropped from 14 a month to 1.",
+        "origin": "resume",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Café Délice Engineer Rebuilds App Ordering; Weekly Orders Rise 18%",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "The engineer behind the new ordering flow also added Devanagari, Tamil and Kannada menu names for 100% of the menu in 3 languages.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-1",
+        "text": "Rebuilt the in-app ordering flow in React Native: weekly orders rose 18% in the first quarter after launch.\nDesigned the Délice Points loyalty ledger: expiry bugs fell from 14 a month to 1.\nMigrated 1.2 million order records to PostgreSQL with none lost.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-2",
+        "text": "Built a multilingual SMS reminder service in Hindi, Marathi and English for 3 clinic chains; delivery rate improved from 91% to 98%.\nWrote the text-normalisation library for Unicode combining marks in customer names, removing about 1,100 duplicate records.",
+        "origin": "model",
+        "factIds": [
+          "exp-2"
+        ]
+      },
+      {
+        "id": "proj:proj-1",
+        "text": "Crème is a recipe-scaling calculator for bakers. It handles fractions such as ½ and ¾ and converts between metric and imperial. Built with TypeScript.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-2",
+        "text": "bhasha-sort is Unicode-aware collation for Indian-language menus in Devanagari, Tamil and Kannada, with test cases for conjuncts such as क्ष and ज्ञ. Built with Python.",
+        "origin": "model",
+        "factIds": [
+          "proj-2"
+        ]
+      },
+      {
+        "id": "proj:proj-3",
+        "text": "creme-scaler is a recipe-scaling calculator for bakers. It handles fractions like ½ and ¾ and converts between metric and imperial. Built in TypeScript.",
+        "origin": "model",
+        "factIds": [
+          "proj-3"
+        ]
+      },
+      {
+        "id": "proj:proj-4",
+        "text": "name-normalise is a TypeScript tool that normalises personal names for matching. It handles NFC/NFKC, combining marks and stray whitespace.",
+        "origin": "model",
+        "factIds": [
+          "proj-4"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "52",
+        "label": "GitHub stars",
+        "sourceId": "github"
+      },
+      {
+        "value": "7",
+        "label": "GitHub repos",
+        "sourceId": "github"
+      },
+      {
+        "value": "3",
+        "label": "GitHub languages",
+        "sourceId": "github"
+      },
+      {
+        "value": "2",
+        "label": "projects",
+        "sourceId": "resume"
+      }
+    ],
+    "openTo": [
+      "Localisation Engineer",
+      "Senior Mobile Engineer"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "mobile-apps",
+        "name": "Mobile Apps",
+        "short": "Mobile Apps",
+        "score": 66,
+        "skills": [
+          {
+            "id": "react-native",
+            "name": "React Native",
+            "score": 70,
+            "evidence": "Rebuilt the in-app ordering flow in React Native; weekly orders rose 18%"
+          },
+          {
+            "id": "typescript",
+            "name": "TypeScript",
+            "score": 68,
+            "evidence": "creme-scaler and name-normalise are TypeScript; 3 of 6 original repos"
+          },
+          {
+            "id": "mobile-ux",
+            "name": "Mobile UX",
+            "score": 60,
+            "evidence": "Ordering flow for a chain with 60 outlets across Pune, Mumbai and Bengaluru"
+          }
+        ]
+      },
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 62,
+        "skills": [
+          {
+            "id": "python",
+            "name": "Python",
+            "score": 66,
+            "evidence": "bhasha-sort in Python: 31 stars, 44 test files"
+          },
+          {
+            "id": "rest-apis",
+            "name": "REST APIs",
+            "score": 62,
+            "evidence": "SMS reminder service for 3 clinic chains at Naïve Labs"
+          },
+          {
+            "id": "loyalty-ledger",
+            "name": "Loyalty ledger design",
+            "score": 58,
+            "evidence": "Designed the \"Délice Points\" ledger; expiry bugs from 14 a month to 1"
+          }
+        ]
+      },
+      {
+        "id": "i18n",
+        "name": "Internationalisation",
+        "short": "i18n & L10n",
+        "score": 78,
+        "skills": [
+          {
+            "id": "unicode",
+            "name": "Unicode handling",
+            "score": 84,
+            "evidence": "Text-normalisation library for combining marks; removed about 1,100 duplicates"
+          },
+          {
+            "id": "locale-sorting",
+            "name": "Locale-aware sorting",
+            "score": 80,
+            "evidence": "ICU collation for Devanagari, Tamil and Kannada menu names"
+          },
+          {
+            "id": "multilingual-ux",
+            "name": "Multilingual UX",
+            "score": 72,
+            "evidence": "100% of the menu in 3 languages; SMS reminders in Hindi, Marathi and English"
+          }
+        ]
+      },
+      {
+        "id": "data-storage",
+        "name": "Data & Storage",
+        "short": "Data & Storage",
+        "score": 54,
+        "skills": [
+          {
+            "id": "postgresql",
+            "name": "PostgreSQL",
+            "score": 58,
+            "evidence": "Migrated order history to PostgreSQL across 1.2 million records"
+          },
+          {
+            "id": "data-migration",
+            "name": "Data migration",
+            "score": 54,
+            "evidence": "No lost orders across 1.2 million migrated records"
+          },
+          {
+            "id": "query-tuning",
+            "name": "Query tuning",
+            "score": 50,
+            "evidence": "SQL listed; no tuning result is described"
+          }
+        ]
+      },
+      {
+        "id": "eng-practice",
+        "name": "Engineering Practice",
+        "short": "Eng Practice",
+        "score": 56,
+        "skills": [
+          {
+            "id": "testing",
+            "name": "Automated testing",
+            "score": 62,
+            "evidence": "Tests in 4 of 7 repos; 44 test files in bhasha-sort"
+          },
+          {
+            "id": "ci-cd",
+            "name": "CI/CD",
+            "score": 54,
+            "evidence": "GitHub Actions in 4 of 7 repos"
+          },
+          {
+            "id": "code-review",
+            "name": "Code review",
+            "score": 52,
+            "evidence": "12 PR reviews in the last 90 days"
+          }
+        ]
+      }
+    ],
+    "skillCount": 15,
+    "mastery": {
+      "score": 72,
+      "role": "Senior Engineer"
+    },
+    "sources": [
+      "Resume",
+      "GitHub"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

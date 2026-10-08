@@ -1,0 +1,1127 @@
+{
+  "profileId": "baeca0616df1626e31e887bdc34450eb",
+  "publicId": "0178457df15184cfd2d87000",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T07:56:58Z",
+  "updatedAt": "2026-10-08T07:56:58Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "ledger",
+      "style": {
+        "family": "lagoon",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "square",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "halo",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "ledger",
+          "because": "A senior record that reads best as a ledger and measured results to list"
+        },
+        {
+          "dimension": "graph",
+          "choice": "halo",
+          "because": "Scores are balanced (top is 6 above the median) and the mastery sits in the centre"
+        },
+        {
+          "dimension": "family",
+          "choice": "lagoon",
+          "because": "Suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "A long record reads better with tighter spacing"
+        }
+      ]
+    },
+    {
+      "composition": "signature",
+      "style": {
+        "family": "glacier",
+        "field": "dawn",
+        "type": "technical",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "halo",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "A different take: 2 roles to lay out and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "halo",
+          "because": "Scores are balanced (top is 6 above the median) and the mastery sits in the centre"
+        },
+        {
+          "dimension": "family",
+          "choice": "glacier",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners are the friendly default"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    },
+    {
+      "composition": "builder",
+      "style": {
+        "family": "iris",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "square",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "index",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "grid",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "builder",
+          "because": "A different take: 6 projects are the main proof and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "ledger",
+          "because": "Ranked rows stay readable at any size"
+        },
+        {
+          "dimension": "family",
+          "choice": "iris",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "ledger",
+    "style": {
+      "family": "lagoon",
+      "field": "horizon",
+      "type": "technical",
+      "corners": "square",
+      "density": "compact"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "statement",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "halo",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "ledger",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "compact",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "links",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "ledger",
+        "because": "A senior record that reads best as a ledger and measured results to list"
+      },
+      {
+        "dimension": "graph",
+        "choice": "halo",
+        "because": "Scores are balanced (top is 6 above the median) and the mastery sits in the centre"
+      },
+      {
+        "dimension": "family",
+        "choice": "lagoon",
+        "because": "Suits backend and systems work"
+      },
+      {
+        "dimension": "type",
+        "choice": "technical",
+        "because": "Mono details suit backend and systems work"
+      },
+      {
+        "dimension": "field",
+        "choice": "horizon",
+        "because": "A calm band keeps a dense or early page quiet"
+      },
+      {
+        "dimension": "corners",
+        "choice": "square",
+        "because": "Sharp corners suit precise or editorial type"
+      },
+      {
+        "dimension": "density",
+        "choice": "compact",
+        "because": "A long record reads better with tighter spacing"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Kavya Reddy",
+      "headline": "Senior Backend Engineer · 4.3 yrs · Hyderabad",
+      "role": "Senior Backend Engineer",
+      "location": "Hyderabad, India",
+      "yearsExperience": 4.3,
+      "monogram": "KR"
+    },
+    "facts": [
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:kavya.reddy.backend@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "kavya.reddy.backend@example.com"
+          }
+        ]
+      },
+      {
+        "id": "contact-2",
+        "kind": "contact",
+        "title": "Phone",
+        "detail": "+91 90000 56789",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "+91 90000 56789"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "GitHub",
+        "url": "https://github.com/kavyareddy",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "github.com/kavyareddy"
+          },
+          {
+            "sourceId": "github",
+            "quote": "GitHub: Kavya Reddy (@kavyareddy)"
+          }
+        ]
+      },
+      {
+        "id": "link-2",
+        "kind": "link",
+        "title": "Portfolio",
+        "url": "https://kavyareddy.dev",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "kavyareddy.dev"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "I like systems where every rupee, and every record, has to be accounted for.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "I like systems where every rupee, and every record, has to be accounted for."
+          }
+        ]
+      },
+      {
+        "id": "exp-1",
+        "kind": "experience",
+        "title": "Senior Backend Software Development Engineer II, Payments Reconciliation, Settlement & Ledger Platform (Core Money Movement Infrastructure Group)",
+        "org": "Northwind Hollow International Payments & Financial Infrastructure Technologies Private Limited",
+        "location": "Hyderabad",
+        "start": "2024-01",
+        "current": true,
+        "highlights": [
+          "Own the reconciliation service that matches 3.2 million card and bank transactions a day against the ledger; the nightly run time dropped from 5 hours to 55 minutes.",
+          "Designed the event-sourced, append-only multi-currency settlement ledger now used by 4 downstream teams.",
+          "Reduced unmatched-transaction exceptions from 2.1% to 0.4% with deterministic matching rules and a review workbench.",
+          "On the platform on-call rotation; led 6 incident reviews and closed 23 follow-up actions."
+        ],
+        "tags": [
+          "reconciliation",
+          "ledger",
+          "settlement",
+          "event-sourced",
+          "Java",
+          "PostgreSQL",
+          "Kafka"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Northwind Hollow International Payments & Financial Infrastructure Technologies Private Limited — Senior Backend Software Development Engineer II, Payments Reconciliation, Settlement & Ledger Platform (Core Money Movement Infrastructure Group) Hyderabad · Jan 2024 – Present"
+          }
+        ]
+      },
+      {
+        "id": "exp-2",
+        "kind": "experience",
+        "title": "Associate Software Engineer (Backend Services, Integrations & Public Data APIs)",
+        "org": "Brightwater Municipal Smart-City Data Exchange & Citizen Services Cooperative Society",
+        "location": "Pune",
+        "start": "2022-07",
+        "end": "2023-12",
+        "highlights": [
+          "Built REST and gRPC services that publish ward-level service data to 11 municipal departments.",
+          "Replaced a nightly CSV exchange with an event feed, cutting data lag from 24 hours to 15 minutes.",
+          "Wrote integration adapters for 7 legacy department systems."
+        ],
+        "tags": [
+          "REST",
+          "gRPC",
+          "event feed",
+          "integration adapters"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Brightwater Municipal Smart-City Data Exchange & Citizen Services Cooperative Society — Associate Software Engineer (Backend Services, Integrations & Public Data APIs) Pune · Jul 2022 – Dec 2023"
+          }
+        ]
+      },
+      {
+        "id": "proj-1",
+        "kind": "project",
+        "title": "Event-Sourced Multi-Currency Settlement Ledger with Automated Exception Handling and Reconciliation Workbench",
+        "detail": "Append-only ledger with idempotent postings and an exception review UI. Java, PostgreSQL, Kafka.",
+        "highlights": [
+          "Event-Sourced Multi-Currency Settlement Ledger with Automated Exception Handling and Reconciliation Workbench — Append-only ledger with idempotent postings and an exception review UI. Java, PostgreSQL, Kafka."
+        ],
+        "tags": [
+          "Java",
+          "PostgreSQL",
+          "Kafka",
+          "idempotent",
+          "append-only"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Event-Sourced Multi-Currency Settlement Ledger with Automated Exception Handling and Reconciliation Workbench —"
+          }
+        ]
+      },
+      {
+        "id": "proj-2",
+        "kind": "project",
+        "title": "Open-Source Distributed Rate-Limiting and Quota Enforcement Library for Multi-Tenant gRPC and REST Gateways",
+        "detail": "Token-bucket and sliding-window limiters with per-tenant quotas. Go.",
+        "highlights": [],
+        "tags": [
+          "Go",
+          "token-bucket",
+          "sliding-window",
+          "gRPC",
+          "REST"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Open-Source Distributed Rate-Limiting and Quota Enforcement Library for Multi-Tenant gRPC and REST Gateways —"
+          }
+        ]
+      },
+      {
+        "id": "proj-3",
+        "kind": "project",
+        "title": "Citizen Grievance Routing and Escalation Service for Municipal Ward Offices and Department Heads",
+        "detail": "Pilot with 3 ward offices; routes and escalates complaints by SLA. Python, FastAPI.",
+        "highlights": [
+          "Citizen Grievance Routing and Escalation Service for Municipal Ward Offices and Department Heads — Pilot with 3 ward offices; routes and escalates complaints by SLA. Python, FastAPI."
+        ],
+        "tags": [
+          "Python",
+          "FastAPI"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Citizen Grievance Routing and Escalation Service for Municipal Ward Offices and Department Heads — Pilot with 3 ward"
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "B.Tech, Information Technology",
+        "org": "Jawaharlal Nehru Technological University Hyderabad College of Engineering Science and Technology",
+        "start": "2018",
+        "end": "2022",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.Tech, Information Technology — Jawaharlal Nehru Technological University Hyderabad College of Engineering Science and Technology 2018 – 2022"
+          }
+        ]
+      },
+      {
+        "id": "quote-2",
+        "kind": "quote",
+        "title": "Bio: Backend engineer. Ledgers, queues and the occasional rate limiter.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "Bio: Backend engineer. Ledgers, queues and the occasional rate limiter."
+          }
+        ]
+      },
+      {
+        "id": "proj-4",
+        "kind": "project",
+        "title": "multi-tenant-ratelimit-and-quota-enforcement-library",
+        "url": "https://github.com/kavyareddy/multi-tenant-ratelimit-and-quota-enforcement-library",
+        "highlights": [
+          "Language: Go, stars: 87, forks: 11, license: Apache-2.0",
+          "Topics: rate-limiting, grpc, multi-tenant, quotas"
+        ],
+        "tags": [
+          "Go",
+          "gRPC",
+          "rate-limiting",
+          "quotas",
+          "multi-tenant"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "multi-tenant-ratelimit-and-quota-enforcement-library"
+          }
+        ]
+      },
+      {
+        "id": "proj-5",
+        "kind": "project",
+        "title": "settlement-ledger-sketches",
+        "url": "https://github.com/kavyareddy/settlement-ledger-sketches",
+        "highlights": [
+          "Description: Design sketches and a small Java reference implementation of an append-only, event-sourced settlement ledger.",
+          "Language: Java, stars: 23, forks: 3"
+        ],
+        "tags": [
+          "Java",
+          "event-sourcing",
+          "ledger",
+          "payments"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "settlement-ledger-sketches"
+          }
+        ]
+      },
+      {
+        "id": "proj-6",
+        "kind": "project",
+        "title": "ward-grievance-router",
+        "url": "https://github.com/kavyareddy/ward-grievance-router",
+        "highlights": [
+          "Description: Pilot code for routing and escalating citizen complaints by SLA (municipal pilot)."
+        ],
+        "tags": [
+          "Python"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "ward-grievance-router"
+          }
+        ]
+      },
+      {
+        "id": "clip-1",
+        "kind": "clip",
+        "title": "Event-Sourced Multi-Currency Settlement Ledger with Automated Exception Handling and Reconciliation Workbench",
+        "org": "Northwind Hollow International Payments & Financial Infrastructure Technologies Private Limited",
+        "start": "2025",
+        "url": "https://kavyareddy.dev/engineering/case-studies/2025/event-sourced-multi-currency-settlement-ledger-with-automated-exception-handling-and-reconciliation-workbench/architecture-decision-records/adr-0042-append-only-ledger-and-idempotent-posting?utm_source=resume&utm_medium=pdf&utm_campaign=portfolio-fixture-long-url",
+        "detail": "Architecture write-up of the append-only settlement ledger and the reconciliation workbench built at Northwind Hollow International Payments & Financial Infrastructure Technologies Private Limited.",
+        "highlights": [
+          "Nightly run time: 5 hours to 55 minutes.",
+          "Unmatched exceptions: 2.1% to 0.4%.",
+          "Adopted by 4 downstream teams."
+        ],
+        "tags": [
+          "Append-only ledger",
+          "Idempotent postings",
+          "Multi-currency",
+          "Reconciliation",
+          "Architecture"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "link-1",
+            "quote": "Event-Sourced Multi-Currency Settlement Ledger with Automated Exception Handling and Reconciliation Workbench"
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "I like systems where every rupee, and every record, has to be accounted for.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Senior Backend Engineer at Northwind Hollow who owns reconciliation of 3.2 million daily transactions and cut the nightly run from 5 hours to 55 minutes.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Earlier, Kavya built REST and gRPC services at Brightwater that publish ward-level service data to 11 municipal departments. Kavya also designed the append-only settlement ledger now used by 4 downstream teams, and wrote a rate-limiting library in Go.",
+        "origin": "model",
+        "factIds": [
+          "exp-2",
+          "exp-1",
+          "proj-2"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Northwind Hollow Engineer Cuts Nightly Reconciliation From 5 Hours to 55 Minutes",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Kavya Reddy also designed the event-sourced settlement ledger, now used by 4 downstream teams, and brought unmatched exceptions from 2.1% to 0.4%.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-1",
+        "text": "Own the reconciliation service matching 3.2 million transactions a day; nightly run time dropped from 5 hours to 55 minutes.\nDesigned the settlement ledger now used by 4 downstream teams.\nCut unmatched exceptions from 2.1% to 0.4%.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-2",
+        "text": "Built REST and gRPC services that publish ward-level service data to 11 municipal departments.\nReplaced a nightly CSV exchange with an event feed, cutting data lag from 24 hours to 15 minutes.\nWrote integration adapters for 7 legacy department systems.",
+        "origin": "model",
+        "factIds": [
+          "exp-2"
+        ]
+      },
+      {
+        "id": "proj:proj-1",
+        "text": "An append-only, event-sourced multi-currency settlement ledger with idempotent postings and an exception review UI. Built with Java, PostgreSQL and Kafka.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-2",
+        "text": "An open-source rate-limiting and quota library for multi-tenant gRPC and REST gateways. It has token-bucket and sliding-window limiters with per-tenant quotas, in Go.",
+        "origin": "model",
+        "factIds": [
+          "proj-2"
+        ]
+      },
+      {
+        "id": "proj:proj-3",
+        "text": "A grievance routing service for municipal ward offices and department heads. Piloted with 3 ward offices, it routes and escalates complaints by SLA. Built with Python and FastAPI.",
+        "origin": "model",
+        "factIds": [
+          "proj-3"
+        ]
+      },
+      {
+        "id": "proj:proj-4",
+        "text": "A Go library for multi-tenant rate limiting and quota enforcement over gRPC, released under Apache-2.0. It has 87 stars and 11 forks.",
+        "origin": "model",
+        "factIds": [
+          "proj-4"
+        ]
+      },
+      {
+        "id": "proj:proj-5",
+        "text": "Design sketches and a small Java reference implementation of an append-only, event-sourced settlement ledger. The repository has 23 stars and 3 forks.",
+        "origin": "model",
+        "factIds": [
+          "proj-5"
+        ]
+      },
+      {
+        "id": "proj:proj-6",
+        "text": "Pilot code in Python for routing and escalating citizen complaints by SLA, written for a municipal pilot.",
+        "origin": "model",
+        "factIds": [
+          "proj-6"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "128",
+        "label": "GitHub stars",
+        "sourceId": "github"
+      },
+      {
+        "value": "11",
+        "label": "GitHub repos",
+        "sourceId": "github"
+      },
+      {
+        "value": "4",
+        "label": "GitHub languages",
+        "sourceId": "github"
+      },
+      {
+        "value": "3",
+        "label": "projects",
+        "sourceId": "resume"
+      }
+    ],
+    "openTo": [
+      "Payments Platform Engineer",
+      "Staff Backend Engineer"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "backend-apis",
+        "name": "Backend Services & API Engineering",
+        "short": "Backend & APIs",
+        "score": 76,
+        "skills": [
+          {
+            "id": "java",
+            "name": "Java",
+            "score": 82,
+            "evidence": "Event-sourced settlement ledger and reconciliation service at Northwind Hollow"
+          },
+          {
+            "id": "rest-grpc",
+            "name": "REST & gRPC APIs",
+            "score": 78,
+            "evidence": "Built REST and gRPC services publishing data to 11 municipal departments"
+          },
+          {
+            "id": "go",
+            "name": "Go",
+            "score": 74,
+            "evidence": "Rate-limiting and quota library in Go: 87 stars, 46 test files"
+          },
+          {
+            "id": "event-driven",
+            "name": "Event-driven design",
+            "score": 70,
+            "evidence": "Replaced a nightly CSV exchange with an event feed: lag from 24 hours to 15 minutes"
+          }
+        ]
+      },
+      {
+        "id": "data-storage",
+        "name": "Data Modelling & Storage",
+        "short": "Data & Storage",
+        "score": 70,
+        "skills": [
+          {
+            "id": "event-sourcing",
+            "name": "Event sourcing",
+            "score": 76,
+            "evidence": "Append-only, event-sourced settlement ledger with idempotent postings"
+          },
+          {
+            "id": "postgresql",
+            "name": "PostgreSQL",
+            "score": 72,
+            "evidence": "Ledger and exception workbench run on PostgreSQL"
+          },
+          {
+            "id": "schema-design",
+            "name": "Schema design",
+            "score": 64,
+            "evidence": "Multi-currency ledger used by 4 downstream teams"
+          }
+        ]
+      },
+      {
+        "id": "payments",
+        "name": "Payments & Reconciliation Systems",
+        "short": "Payments",
+        "score": 72,
+        "skills": [
+          {
+            "id": "reconciliation",
+            "name": "Reconciliation logic",
+            "score": 76,
+            "evidence": "Matches 3.2 million transactions a day; run time cut from 5 hours to 55 minutes"
+          },
+          {
+            "id": "ledger-design",
+            "name": "Ledger design",
+            "score": 72,
+            "evidence": "Designed the append-only multi-currency settlement ledger"
+          },
+          {
+            "id": "idempotent-posting",
+            "name": "Idempotent posting",
+            "score": 68,
+            "evidence": "ADR-0042: append-only ledger and idempotent posting"
+          }
+        ]
+      },
+      {
+        "id": "reliability",
+        "name": "Reliability & Incident Response",
+        "short": "Reliability",
+        "score": 60,
+        "skills": [
+          {
+            "id": "incident-response",
+            "name": "Incident response",
+            "score": 64,
+            "evidence": "On-call rotation; led 6 incident reviews and closed 23 follow-up actions"
+          },
+          {
+            "id": "observability",
+            "name": "Observability",
+            "score": 60,
+            "evidence": "Incident reviews on the platform; no dashboards or SLOs described"
+          },
+          {
+            "id": "capacity-planning",
+            "name": "Capacity planning",
+            "score": 56,
+            "evidence": "Run time held at 55 minutes for 3.2 million transactions a day"
+          }
+        ]
+      },
+      {
+        "id": "eng-practice",
+        "name": "Engineering Practice & Collaboration",
+        "short": "Eng Practice",
+        "score": 56,
+        "skills": [
+          {
+            "id": "testing",
+            "name": "Automated testing",
+            "score": 62,
+            "evidence": "Tests in 6 of 11 repos; the limiter library has 46 test files"
+          },
+          {
+            "id": "ci-cd",
+            "name": "CI/CD",
+            "score": 56,
+            "evidence": "GitHub Actions in 7 of 11 repos"
+          },
+          {
+            "id": "technical-writing",
+            "name": "Technical writing",
+            "score": 50,
+            "evidence": "Architecture write-up with ADR-0042"
+          }
+        ]
+      }
+    ],
+    "skillCount": 16,
+    "mastery": {
+      "score": 68,
+      "role": "Senior Backend Engineer"
+    },
+    "sources": [
+      "Resume",
+      "GitHub",
+      "Case study"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

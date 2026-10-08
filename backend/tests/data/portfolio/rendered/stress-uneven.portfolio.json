@@ -1,0 +1,1072 @@
+{
+  "profileId": "2b0c67399920c2ccaca7b9b4d5ebc8e3",
+  "publicId": "a3783882a61f69bf1d0c76a8",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T07:58:21Z",
+  "updatedAt": "2026-10-08T07:58:21Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "builder",
+      "style": {
+        "family": "lagoon",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "square",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "index",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "grid",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "builder",
+          "because": "5 projects are the main proof and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 83 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "lagoon",
+          "because": "Suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "Technical type suits tighter spacing"
+        }
+      ]
+    },
+    {
+      "composition": "signature",
+      "style": {
+        "family": "glacier",
+        "field": "dawn",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "A different take: 2 roles to lay out and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 83 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "glacier",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "A page built around the graph and the story"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    },
+    {
+      "composition": "narrative",
+      "style": {
+        "family": "iris",
+        "field": "corner",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "spotlight",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "prose",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "narrative",
+          "because": "A different take: one standout area, framed calmly"
+        },
+        {
+          "dimension": "graph",
+          "choice": "spotlight",
+          "because": "One area leads the next by 80"
+        },
+        {
+          "dimension": "family",
+          "choice": "iris",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "A page built around the graph and the story"
+        },
+        {
+          "dimension": "field",
+          "choice": "corner",
+          "because": "A single corner glow keeps attention on the words"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "builder",
+    "style": {
+      "family": "lagoon",
+      "field": "horizon",
+      "type": "technical",
+      "corners": "square",
+      "density": "compact"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "index",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "peaks",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "proof",
+        "kind": "proof",
+        "variant": "strip",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "grid",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "ledger",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "compact",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "links",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "builder",
+        "because": "5 projects are the main proof and public work to show"
+      },
+      {
+        "dimension": "graph",
+        "choice": "peaks",
+        "because": "The top area is 83 above the median"
+      },
+      {
+        "dimension": "family",
+        "choice": "lagoon",
+        "because": "Suits backend and systems work"
+      },
+      {
+        "dimension": "type",
+        "choice": "technical",
+        "because": "Mono details suit backend and systems work"
+      },
+      {
+        "dimension": "field",
+        "choice": "horizon",
+        "because": "A calm band keeps a dense or early page quiet"
+      },
+      {
+        "dimension": "corners",
+        "choice": "square",
+        "because": "Sharp corners suit precise or editorial type"
+      },
+      {
+        "dimension": "density",
+        "choice": "compact",
+        "because": "Technical type suits tighter spacing"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Karthik Nair",
+      "headline": "Compiler Engineer · 6.5 yrs · Bengaluru",
+      "role": "Compiler Engineer",
+      "location": "Bengaluru, India",
+      "yearsExperience": 6.5,
+      "monogram": "KN"
+    },
+    "facts": [
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:karthik.nair.compilers@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "karthik.nair.compilers@example.com"
+          }
+        ]
+      },
+      {
+        "id": "contact-2",
+        "kind": "contact",
+        "title": "Phone",
+        "detail": "+91 90000 01234",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "+91 90000 01234"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "GitHub",
+        "url": "https://github.com/karthiknair",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "github.com/karthiknair"
+          },
+          {
+            "sourceId": "github",
+            "quote": "GitHub: Karthik Nair (@karthiknair)"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "I work close to the metal and I am happy to stay there.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "I work close to the metal and I am happy to stay there."
+          }
+        ]
+      },
+      {
+        "id": "exp-1",
+        "kind": "experience",
+        "title": "Compiler Engineer",
+        "org": "Lattice Compilers",
+        "location": "Bengaluru",
+        "start": "2022-04",
+        "current": true,
+        "detail": "Compiler toolchains for embedded DSPs.",
+        "highlights": [
+          "Wrote 14 LLVM optimisation passes for an embedded DSP target; median kernel speed-up of 1.9x across 62 benchmarks.",
+          "Cut compile time for the largest build from 9 minutes to 3 minutes by caching analysis results across passes.",
+          "Designed the type checker, including generics, for the company's kernel language."
+        ],
+        "tags": [
+          "LLVM",
+          "optimisation passes",
+          "type checking",
+          "embedded DSP"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Lattice Compilers — Compiler Engineer Bengaluru · Apr 2022 – Present"
+          }
+        ]
+      },
+      {
+        "id": "exp-2",
+        "kind": "experience",
+        "title": "Software Engineer",
+        "org": "Orbit Toolchains",
+        "location": "Bengaluru",
+        "start": "2020-04",
+        "end": "2022-03",
+        "highlights": [
+          "Built the parser and error recovery for a configuration language used by 120 internal tools.",
+          "Wrote a fuzzer that found 37 parser crashes before release."
+        ],
+        "tags": [
+          "parser",
+          "error recovery",
+          "fuzzing"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Orbit Toolchains — Software Engineer Bengaluru · Apr 2020 – Mar 2022"
+          }
+        ]
+      },
+      {
+        "id": "proj-1",
+        "kind": "project",
+        "title": "tinyssa",
+        "url": "https://github.com/karthiknair/tinyssa",
+        "detail": "A small SSA-based optimiser in Rust with constant folding and dead-code elimination.",
+        "highlights": [
+          "Language: Rust, stars: 142, forks: 17, license: MIT",
+          "Topics: compilers, ssa, optimisation, rust"
+        ],
+        "tags": [
+          "SSA-based optimiser",
+          "Rust",
+          "constant folding",
+          "dead-code elimination",
+          "SSA"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "tinyssa — A small SSA-based optimiser in Rust with constant folding and dead-code elimination."
+          },
+          {
+            "sourceId": "github",
+            "quote": "tinyssa"
+          }
+        ]
+      },
+      {
+        "id": "proj-2",
+        "kind": "project",
+        "title": "mlir-toy-dialects",
+        "url": "https://github.com/karthiknair/mlir-toy-dialects",
+        "detail": "Teaching dialects and lowering passes for MLIR. C++.",
+        "highlights": [
+          "Language: C++, stars: 66, forks: 8, license: Apache-2.0",
+          "Topics: mlir, llvm, compilers"
+        ],
+        "tags": [
+          "Teaching dialects",
+          "lowering passes",
+          "MLIR",
+          "C++",
+          "LLVM"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "mlir-toy-dialects — Teaching dialects and lowering passes for MLIR. C++. github.com/karthiknair/mlir-toy-dialects"
+          },
+          {
+            "sourceId": "github",
+            "quote": "mlir-toy-dialects"
+          }
+        ]
+      },
+      {
+        "id": "proj-3",
+        "kind": "project",
+        "title": "parser-recovery",
+        "url": "https://github.com/karthiknair/parser-recovery",
+        "detail": "Error-recovering parser combinators in OCaml.",
+        "highlights": [
+          "Language: OCaml, stars: 41, forks: 3"
+        ],
+        "tags": [
+          "Error-recovering parser combinators",
+          "OCaml",
+          "error recovery",
+          "parser combinators"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "parser-recovery — Error-recovering parser combinators in OCaml. github.com/karthiknair/parser-recovery"
+          },
+          {
+            "sourceId": "github",
+            "quote": "parser-recovery"
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "B.Tech, Computer Science",
+        "org": "Bharathi Institute of Technology, Chennai",
+        "start": "2016",
+        "end": "2020",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.Tech, Computer Science — Bharathi Institute of Technology, Chennai 2016 – 2020"
+          }
+        ]
+      },
+      {
+        "id": "proj-4",
+        "kind": "project",
+        "title": "lintpack",
+        "detail": "Custom lints for rustc projects.",
+        "highlights": [
+          "Language: Rust, stars: 18, forks: 2"
+        ],
+        "tags": [
+          "Rust",
+          "rustc"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "lintpack"
+          }
+        ]
+      },
+      {
+        "id": "proj-5",
+        "kind": "project",
+        "title": "bench-plots",
+        "detail": "Python and NumPy script that plots compiler benchmark results.",
+        "highlights": [
+          "Language: Python, stars: 9, forks: 0"
+        ],
+        "tags": [
+          "Python",
+          "NumPy",
+          "benchmark"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "bench-plots"
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "I work close to the metal and I am happy to stay there.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Compiler Engineer at Lattice Compilers who wrote 14 LLVM optimisation passes and cut the largest build from 9 minutes to 3 minutes.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Karthik also designed the type checker, including generics, for the company's kernel language. Earlier, at Orbit Toolchains, Karthik built a parser and error recovery for a configuration language used by 120 internal tools.",
+        "origin": "model",
+        "factIds": [
+          "exp-1",
+          "exp-2"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Lattice Compilers Engineer Cuts Largest Build From 9 Minutes to 3",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Karthik Nair wrote 14 LLVM optimisation passes for an embedded DSP target, with a median kernel speed-up of 1.9x across 62 benchmarks.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-1",
+        "text": "Wrote 14 LLVM optimisation passes for an embedded DSP target: median kernel speed-up of 1.9x across 62 benchmarks.\nCut compile time for the largest build from 9 minutes to 3 minutes by caching analysis results across passes.\nDesigned the type checker, including generics, for the kernel language.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-2",
+        "text": "Built the parser and error recovery for a configuration language used by 120 internal tools.\nWrote a fuzzer that found 37 parser crashes before release.",
+        "origin": "model",
+        "factIds": [
+          "exp-2"
+        ]
+      },
+      {
+        "id": "proj:proj-1",
+        "text": "tinyssa is a small SSA-based optimiser written in Rust. It does constant folding and dead-code elimination. It has 142 stars and an MIT license.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-2",
+        "text": "mlir-toy-dialects is a set of teaching dialects and lowering passes for MLIR, written in C++ with LLVM. It has 66 stars and an Apache-2.0 license.",
+        "origin": "model",
+        "factIds": [
+          "proj-2"
+        ]
+      },
+      {
+        "id": "proj:proj-3",
+        "text": "parser-recovery is a library of error-recovering parser combinators written in OCaml.",
+        "origin": "model",
+        "factIds": [
+          "proj-3"
+        ]
+      },
+      {
+        "id": "proj:proj-4",
+        "text": "lintpack is a collection of custom lints for rustc projects, written in Rust.",
+        "origin": "model",
+        "factIds": [
+          "proj-4"
+        ]
+      },
+      {
+        "id": "proj:proj-5",
+        "text": "bench-plots is a Python and NumPy script that plots compiler benchmark results.",
+        "origin": "model",
+        "factIds": [
+          "proj-5"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "276",
+        "label": "GitHub stars",
+        "sourceId": "github"
+      },
+      {
+        "value": "8",
+        "label": "GitHub repos",
+        "sourceId": "github"
+      },
+      {
+        "value": "4",
+        "label": "GitHub languages",
+        "sourceId": "github"
+      },
+      {
+        "value": "3",
+        "label": "projects",
+        "sourceId": "resume"
+      }
+    ],
+    "openTo": [
+      "Principal Compiler Engineer",
+      "Developer Tools Engineer"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "compilers",
+        "name": "Compilers & Languages",
+        "short": "Compilers",
+        "score": 95,
+        "skills": [
+          {
+            "id": "llvm-passes",
+            "name": "LLVM IR & passes",
+            "score": 97,
+            "evidence": "Wrote 14 LLVM optimisation passes; median 1.9x speed-up across 62 benchmarks"
+          },
+          {
+            "id": "rust",
+            "name": "Rust",
+            "score": 96,
+            "evidence": "tinyssa in Rust: 142 stars, 58 test files; Rust in 4 of 8 repos"
+          },
+          {
+            "id": "parser-design",
+            "name": "Parser design",
+            "score": 94,
+            "evidence": "Parser and error recovery for a config language used by 120 internal tools"
+          },
+          {
+            "id": "type-systems",
+            "name": "Type systems",
+            "score": 92,
+            "evidence": "Designed the kernel-language type checker, including generics"
+          }
+        ]
+      },
+      {
+        "id": "web-frontend",
+        "name": "Web Frontend",
+        "short": "Web Frontend",
+        "score": 10,
+        "skills": [
+          {
+            "id": "html-css",
+            "name": "HTML & CSS",
+            "score": 12,
+            "evidence": "HTML and CSS listed as basics; no page or project uses them"
+          },
+          {
+            "id": "javascript",
+            "name": "JavaScript",
+            "score": 8,
+            "evidence": "JavaScript listed as a basic; no repo or bullet uses it"
+          }
+        ]
+      },
+      {
+        "id": "databases",
+        "name": "Databases",
+        "short": "Databases",
+        "score": 12,
+        "skills": [
+          {
+            "id": "sql-basics",
+            "name": "SQL basics",
+            "score": 14,
+            "evidence": "SQL listed as a basic; no query or schema appears"
+          },
+          {
+            "id": "indexing",
+            "name": "Indexing concepts",
+            "score": 10,
+            "evidence": "No database work is described in either role"
+          }
+        ]
+      },
+      {
+        "id": "machine-learning",
+        "name": "Machine Learning",
+        "short": "Machine Learning",
+        "score": 8,
+        "skills": [
+          {
+            "id": "numpy",
+            "name": "NumPy",
+            "score": 10,
+            "evidence": "bench-plots: a 18 KB Python and NumPy plotting script"
+          },
+          {
+            "id": "model-training",
+            "name": "Model training",
+            "score": 6,
+            "evidence": "No model training in any of 8 repos"
+          }
+        ]
+      },
+      {
+        "id": "cloud-devops",
+        "name": "Cloud & DevOps",
+        "short": "Cloud & DevOps",
+        "score": 15,
+        "skills": [
+          {
+            "id": "docker-basics",
+            "name": "Docker basics",
+            "score": 18,
+            "evidence": "Docker listed as a basic; no repo has a Docker setup"
+          },
+          {
+            "id": "ci-pipelines",
+            "name": "CI pipelines",
+            "score": 12,
+            "evidence": "GitHub Actions in 3 of 8 repos"
+          }
+        ]
+      },
+      {
+        "id": "product-design",
+        "name": "Product & Design",
+        "short": "Product & Design",
+        "score": 11,
+        "skills": [
+          {
+            "id": "writing-specs",
+            "name": "Writing specs",
+            "score": 12,
+            "evidence": "No spec or design document is mentioned"
+          },
+          {
+            "id": "user-research",
+            "name": "User research",
+            "score": 10,
+            "evidence": "No user-facing work is described in either role"
+          }
+        ]
+      }
+    ],
+    "skillCount": 14,
+    "mastery": {
+      "score": 86,
+      "role": "Compiler Engineer"
+    },
+    "sources": [
+      "Resume",
+      "GitHub"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

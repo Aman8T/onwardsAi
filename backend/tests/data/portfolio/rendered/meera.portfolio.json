@@ -1,0 +1,1175 @@
+{
+  "profileId": "a8c8c3725513f4ca026bb76bfd059e54",
+  "publicId": "6ffd418594c328ceb64f33dd",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T08:08:05Z",
+  "updatedAt": "2026-10-08T08:08:05Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "pivot",
+      "style": {
+        "family": "clay",
+        "field": "corner",
+        "type": "editorial",
+        "corners": "square",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "grid",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "thenNow",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "pivot",
+          "because": "A change of field to tell from the facts and earlier work to set against the new role"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 15 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "clay",
+          "because": "Suits data and analysis work"
+        },
+        {
+          "dimension": "type",
+          "choice": "editorial",
+          "because": "A reading-first serif to tell a change of field"
+        },
+        {
+          "dimension": "field",
+          "choice": "corner",
+          "because": "A single corner glow keeps attention on the words"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    },
+    {
+      "composition": "builder",
+      "style": {
+        "family": "glacier",
+        "field": "horizon",
+        "type": "editorial",
+        "corners": "soft",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "index",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "grid",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "builder",
+          "because": "A different take: 4 projects are the main proof and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 15 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "glacier",
+          "because": "A different hue to compare; it also suits data and analysis work"
+        },
+        {
+          "dimension": "type",
+          "choice": "editorial",
+          "because": "A reading-first serif to tell a change of field"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners are the friendly default"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "A build log is dense by nature"
+        }
+      ]
+    },
+    {
+      "composition": "signature",
+      "style": {
+        "family": "sage",
+        "field": "dawn",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "A different take: 2 roles to lay out and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 15 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "sage",
+          "because": "A different hue to compare; it also suits data and analysis work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "A page built around the graph and the story"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "pivot",
+    "style": {
+      "family": "clay",
+      "field": "corner",
+      "type": "editorial",
+      "corners": "square",
+      "density": "airy"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "statement",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "about",
+        "kind": "about",
+        "variant": "lede",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "peaks",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "grid",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "thenNow",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "row",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "signOff",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "pivot",
+        "because": "A change of field to tell from the facts and earlier work to set against the new role"
+      },
+      {
+        "dimension": "graph",
+        "choice": "peaks",
+        "because": "The top area is 15 above the median"
+      },
+      {
+        "dimension": "family",
+        "choice": "clay",
+        "because": "Suits data and analysis work"
+      },
+      {
+        "dimension": "type",
+        "choice": "editorial",
+        "because": "A reading-first serif to tell a change of field"
+      },
+      {
+        "dimension": "field",
+        "choice": "corner",
+        "because": "A single corner glow keeps attention on the words"
+      },
+      {
+        "dimension": "corners",
+        "choice": "square",
+        "because": "Sharp corners suit precise or editorial type"
+      },
+      {
+        "dimension": "density",
+        "choice": "airy",
+        "because": "Plenty of room to read"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Meera Iyer",
+      "headline": "Data Analyst · Pune",
+      "role": "Data Analyst",
+      "location": "Pune, India",
+      "monogram": "MI"
+    },
+    "facts": [
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:meera.iyer.data@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "meera.iyer.data@example.com"
+          }
+        ]
+      },
+      {
+        "id": "contact-2",
+        "kind": "contact",
+        "title": "Phone",
+        "detail": "+91 90000 23456",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "+91 90000 23456"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "LinkedIn",
+        "url": "https://linkedin.com/in/meera-iyer-data",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "linkedin.com/in/meera-iyer-data"
+          }
+        ]
+      },
+      {
+        "id": "link-2",
+        "kind": "link",
+        "title": "Tableau Public",
+        "url": "https://public.tableau.com/app/profile/meera.iyer",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "public.tableau.com/app/profile/meera.iyer"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "quote": "https://public.tableau.com/app/profile/meera.iyer"
+          }
+        ]
+      },
+      {
+        "id": "link-3",
+        "kind": "link",
+        "title": "Medium",
+        "url": "https://medium.com/@meeraiyer",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "medium.com/@meeraiyer"
+          },
+          {
+            "sourceId": "link-1",
+            "quote": "https://medium.com/@meeraiyer"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "I spent six years in the classroom and now build the dashboards and SQL behind learner-engagement decisions at an edtech company.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "I spent six years in the classroom and now build the dashboards and SQL behind learner-engagement decisions at an edtech company."
+          }
+        ]
+      },
+      {
+        "id": "exp-1",
+        "kind": "experience",
+        "title": "Junior Data Analyst",
+        "org": "Lumen Learning Labs",
+        "location": "Pune",
+        "start": "2025-02",
+        "current": true,
+        "detail": "Edtech company.",
+        "highlights": [
+          "Built the weekly learner-engagement dashboard in Tableau, used by 4 course teams.",
+          "Wrote the SQL that joins quiz attempts to course completions (12 tables).",
+          "Cut a manual Monday report from 3 hours to 20 minutes with a scheduled Google Sheets + BigQuery pipeline."
+        ],
+        "tags": [
+          "Tableau",
+          "SQL",
+          "BigQuery",
+          "Google Sheets"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Lumen Learning Labs — Junior Data Analyst Pune · Feb 2025 – Present"
+          }
+        ]
+      },
+      {
+        "id": "exp-2",
+        "kind": "experience",
+        "title": "Mathematics Teacher (grades 9–12)",
+        "org": "Greenfield Public School",
+        "location": "Pune",
+        "start": "2018-06",
+        "end": "2023-12",
+        "highlights": [
+          "Taught 450+ students across six years.",
+          "Built the school's Google Sheets grade tracker, used by 30 teachers.",
+          "Coordinated the school's Olympiad programme."
+        ],
+        "tags": [
+          "Google Sheets"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Greenfield Public School — Mathematics Teacher (grades 9–12) Pune · Jun 2018 – Dec 2023"
+          }
+        ]
+      },
+      {
+        "id": "proj-1",
+        "kind": "project",
+        "title": "Does attendance predict board results?",
+        "start": "2024",
+        "detail": "Analysis of a public Maharashtra school dataset (9,800 rows) in Python and pandas; found that attendance explains less than a third of the variance in results.",
+        "highlights": [],
+        "tags": [
+          "Python",
+          "pandas"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Does attendance predict board results? (2024) — Analysis of a public Maharashtra school dataset (9,800 rows) in"
+          }
+        ]
+      },
+      {
+        "id": "proj-2",
+        "kind": "project",
+        "title": "Board results explorer",
+        "start": "2024",
+        "detail": "A public Tableau dashboard of district-level pass rates.",
+        "highlights": [
+          "Contents: a district map coloured by pass rate, a ranked table of districts, a year selector and a stream filter (Science, Commerce, Arts)."
+        ],
+        "tags": [
+          "Tableau",
+          "Maharashtra board exams",
+          "district-level pass rates"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Board results explorer (2024) — A public Tableau dashboard of district-level pass rates."
+          },
+          {
+            "sourceId": "portfolio-1",
+            "quote": "Board results explorer"
+          }
+        ]
+      },
+      {
+        "id": "proj-3",
+        "kind": "project",
+        "title": "Quiz-to-completion SQL case study",
+        "start": "2024",
+        "detail": "A written walkthrough of the Lumen engagement query.",
+        "highlights": [],
+        "tags": [
+          "SQL"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Quiz-to-completion SQL case study (2024) — A written walkthrough of the Lumen engagement query."
+          }
+        ]
+      },
+      {
+        "id": "ach-1",
+        "kind": "achievement",
+        "title": "Google Data Analytics Professional Certificate",
+        "org": "Coursera",
+        "start": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Google Data Analytics Professional Certificate (Coursera), 2024. Self-directed projects in 2024."
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "M.Sc. Mathematics",
+        "org": "Savitribai Phule Pune University",
+        "start": "2016",
+        "end": "2018",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "M.Sc. Mathematics — Savitribai Phule Pune University 2016 – 2018"
+          }
+        ]
+      },
+      {
+        "id": "edu-2",
+        "kind": "education",
+        "title": "B.Ed.",
+        "start": "2018",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.Ed. 2018"
+          }
+        ]
+      },
+      {
+        "id": "quote-2",
+        "kind": "quote",
+        "title": "I like dashboards a head teacher can read in a minute.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "I like dashboards a head teacher can read in a minute."
+          }
+        ]
+      },
+      {
+        "id": "proj-4",
+        "kind": "project",
+        "title": "Attendance and results by district",
+        "start": "2024-09",
+        "detail": "Scatter plot of average attendance against pass rate for each district, with a trend line and a tooltip per district.",
+        "highlights": [
+          "Description: Scatter plot of average attendance against pass rate for each district, with a trend line and a tooltip per district."
+        ],
+        "tags": [
+          "scatter plot",
+          "attendance",
+          "pass rate",
+          "Tableau"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "Attendance and results by district"
+          }
+        ]
+      },
+      {
+        "id": "clip-1",
+        "kind": "clip",
+        "title": "Does attendance predict board results?",
+        "org": "Medium",
+        "url": "https://medium.com/@meeraiyer",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "link-1",
+            "quote": "\"Does attendance predict board results?\" — 2024-10-06, 7 min read"
+          }
+        ]
+      },
+      {
+        "id": "clip-2",
+        "kind": "clip",
+        "title": "Six years of teaching, one lesson about messy data",
+        "org": "Medium",
+        "url": "https://medium.com/@meeraiyer",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "link-1",
+            "quote": "\"Six years of teaching, one lesson about messy data\" — 2024-11-12, 5 min read"
+          }
+        ]
+      },
+      {
+        "id": "clip-3",
+        "kind": "clip",
+        "title": "Joins, explained for teachers",
+        "org": "Medium",
+        "url": "https://medium.com/@meeraiyer",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "link-1",
+            "quote": "\"Joins, explained for teachers\" — 2025-03-02, 6 min read"
+          }
+        ]
+      },
+      {
+        "id": "quote-3",
+        "kind": "quote",
+        "title": "Bio: Maths teacher turned data analyst, writing about data for people who do not do data. Pune.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "link-1",
+            "quote": "Bio: Maths teacher turned data analyst, writing about data for people who do not do data. Pune."
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "I like dashboards a head teacher can read in a minute.",
+        "origin": "model",
+        "factIds": [
+          "quote-2"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Junior Data Analyst at Lumen Learning Labs who built a Tableau dashboard used by 4 course teams and cut a 3-hour Monday report to 20 minutes.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Meera taught mathematics for six years at Greenfield Public School in Pune before moving into data. There, Meera built the school's Google Sheets grade tracker, used by 30 teachers. Meera also writes on Medium about data for teachers.",
+        "origin": "model",
+        "factIds": [
+          "exp-2",
+          "clip-2",
+          "clip-3"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Lumen Learning Labs Analyst Cuts a 3-Hour Report to 20 Minutes",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Meera Iyer wrote the SQL joining quiz attempts to course completions across 12 tables, after six years teaching mathematics.",
+        "origin": "model",
+        "factIds": [
+          "exp-1",
+          "exp-2"
+        ]
+      },
+      {
+        "id": "exp:exp-1",
+        "text": "Built the weekly learner-engagement dashboard in Tableau, used by 4 course teams.\nWrote the SQL that joins quiz attempts to course completions across 12 tables.\nCut a manual Monday report from 3 hours to 20 minutes with a scheduled Google Sheets and BigQuery pipeline.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-2",
+        "text": "Taught 450+ students across six years.\nBuilt the school's Google Sheets grade tracker, used by 30 teachers.\nCoordinated the school's Olympiad programme.",
+        "origin": "model",
+        "factIds": [
+          "exp-2"
+        ]
+      },
+      {
+        "id": "proj:proj-1",
+        "text": "Analysis of a public Maharashtra school dataset of 9,800 rows, built in Python and pandas. It found that attendance explains less than a third of the variance in results.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-2",
+        "text": "A public Tableau dashboard of district-level pass rates. It has a district map coloured by pass rate, a ranked table, a year selector and a stream filter for Science, Commerce and Arts.",
+        "origin": "model",
+        "factIds": [
+          "proj-2"
+        ]
+      },
+      {
+        "id": "proj:proj-3",
+        "text": "A written walkthrough of the Lumen engagement query, built in SQL.",
+        "origin": "model",
+        "factIds": [
+          "proj-3"
+        ]
+      },
+      {
+        "id": "proj:proj-4",
+        "text": "A Tableau scatter plot of average attendance against pass rate for each district, with a trend line and a tooltip per district.",
+        "origin": "model",
+        "factIds": [
+          "proj-4"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "2",
+        "label": "Tableau Public dashboards",
+        "sourceId": "portfolio-1"
+      },
+      {
+        "value": "3",
+        "label": "Medium posts",
+        "sourceId": "link-1"
+      },
+      {
+        "value": "3",
+        "label": "projects",
+        "sourceId": "resume"
+      },
+      {
+        "value": "2",
+        "label": "roles",
+        "sourceId": "resume"
+      }
+    ],
+    "openTo": [
+      "Learning Analytics Specialist",
+      "Data Analyst"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "data-analysis",
+        "name": "Data Analysis",
+        "short": "Data Analysis",
+        "score": 68,
+        "skills": [
+          {
+            "id": "excel-sheets",
+            "name": "Excel & Sheets",
+            "score": 82,
+            "evidence": "Built the school's Google Sheets grade tracker, used by 30 teachers"
+          },
+          {
+            "id": "sql",
+            "name": "SQL",
+            "score": 70,
+            "evidence": "Wrote the Lumen SQL joining quiz attempts to course completions (12 tables)"
+          },
+          {
+            "id": "data-cleaning",
+            "name": "Data cleaning",
+            "score": 62,
+            "evidence": "Medium: 'Six years of teaching, one lesson about messy data'"
+          },
+          {
+            "id": "python-pandas",
+            "name": "Python & pandas",
+            "score": 58,
+            "evidence": "Attendance analysis of a public school dataset (9,800 rows) in Python and pandas"
+          }
+        ]
+      },
+      {
+        "id": "visualisation",
+        "name": "Visualisation",
+        "short": "Visualisation",
+        "score": 74,
+        "skills": [
+          {
+            "id": "dashboard-design",
+            "name": "Dashboard design",
+            "score": 76,
+            "evidence": "Board results explorer: district map, ranked table, year and stream filters"
+          },
+          {
+            "id": "chart-choice",
+            "name": "Chart choice",
+            "score": 74,
+            "evidence": "Attendance vs results scatter with trend line and per-district tooltip"
+          },
+          {
+            "id": "tableau",
+            "name": "Tableau",
+            "score": 72,
+            "evidence": "Built the weekly learner-engagement dashboard in Tableau for 4 course teams"
+          }
+        ]
+      },
+      {
+        "id": "statistics",
+        "name": "Statistics",
+        "short": "Statistics",
+        "score": 64,
+        "skills": [
+          {
+            "id": "descriptive-stats",
+            "name": "Descriptive statistics",
+            "score": 72,
+            "evidence": "M.Sc. Mathematics, Savitribai Phule Pune University"
+          },
+          {
+            "id": "hypothesis-testing",
+            "name": "Hypothesis testing",
+            "score": 62,
+            "evidence": "Medium: 'Does attendance predict board results?'"
+          },
+          {
+            "id": "regression-basics",
+            "name": "Regression basics",
+            "score": 58,
+            "evidence": "Found attendance explains less than a third of the variance in board results"
+          }
+        ]
+      },
+      {
+        "id": "communication",
+        "name": "Communication",
+        "short": "Communication",
+        "score": 86,
+        "skills": [
+          {
+            "id": "explaining-non-experts",
+            "name": "Explaining to non-experts",
+            "score": 90,
+            "evidence": "Taught 450+ students across six years at Greenfield Public School"
+          },
+          {
+            "id": "data-storytelling",
+            "name": "Data storytelling",
+            "score": 81,
+            "evidence": "Weekly Lumen dashboard used by 4 course teams"
+          },
+          {
+            "id": "written-reports",
+            "name": "Written reports",
+            "score": 81,
+            "evidence": "Quiz-to-completion SQL case study, a written walkthrough of the Lumen query"
+          }
+        ]
+      },
+      {
+        "id": "education-domain",
+        "name": "Education Domain",
+        "short": "Education Domain",
+        "score": 80,
+        "skills": [
+          {
+            "id": "assessment-design",
+            "name": "Assessment design",
+            "score": 80,
+            "evidence": "Coordinated the school's Olympiad programme at Greenfield Public School"
+          },
+          {
+            "id": "learner-engagement",
+            "name": "Learner engagement",
+            "score": 80,
+            "evidence": "Built the weekly learner-engagement dashboard for 4 course teams at Lumen"
+          },
+          {
+            "id": "curriculum-planning",
+            "name": "Curriculum planning",
+            "score": 78,
+            "evidence": "Mathematics Teacher, grades 9–12, Jun 2018 – Dec 2023; taught 450+ students"
+          }
+        ]
+      },
+      {
+        "id": "machine-learning",
+        "name": "Machine Learning",
+        "short": "Machine Learning",
+        "score": 22,
+        "skills": [
+          {
+            "id": "sklearn-basics",
+            "name": "Scikit-learn basics",
+            "score": 26,
+            "evidence": "scikit-learn (beginner) is listed under Machine learning; no bullet or project uses it"
+          },
+          {
+            "id": "model-evaluation",
+            "name": "Model evaluation",
+            "score": 18,
+            "evidence": "No project trains or evaluates a model"
+          }
+        ]
+      }
+    ],
+    "skillCount": 18,
+    "mastery": {
+      "score": 71,
+      "role": "Data Analyst"
+    },
+    "sources": [
+      "Resume",
+      "Tableau Public",
+      "Medium"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

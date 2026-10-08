@@ -1,0 +1,827 @@
+{
+  "profileId": "73c624b7a7f1ab78edd5bdd5a92cf19b",
+  "publicId": "0ca0e3664cb9bc98231532b2",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T08:10:52Z",
+  "updatedAt": "2026-10-08T08:10:52Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "foundations",
+      "style": {
+        "family": "lagoon",
+        "field": "horizon",
+        "type": "warm",
+        "corners": "round",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "centered",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "foundations",
+          "because": "Early in the journey, so education and projects lead and a new graph that reads best as areas of focus"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "3 areas and 9 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "lagoon",
+          "because": "Suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "warm",
+          "because": "A friendly rounded face for an early-career page"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "round",
+          "because": "Round corners match a friendly type pairing"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    },
+    {
+      "composition": "builder",
+      "style": {
+        "family": "glacier",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "square",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "index",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "grid",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "builder",
+          "because": "A different take: 3 projects are the main proof and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "3 areas and 9 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "glacier",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "Technical type suits tighter spacing"
+        }
+      ]
+    },
+    {
+      "composition": "signature",
+      "style": {
+        "family": "iris",
+        "field": "dawn",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "A different take: public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "3 areas and 9 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "iris",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "A page built around the graph and the story"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "foundations",
+    "style": {
+      "family": "lagoon",
+      "field": "horizon",
+      "type": "warm",
+      "corners": "round",
+      "density": "airy"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "centered",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "focus",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "about",
+        "kind": "about",
+        "variant": "lede",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "featureList",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "row",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "timeline",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "links",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "foundations",
+        "because": "Early in the journey, so education and projects lead and a new graph that reads best as areas of focus"
+      },
+      {
+        "dimension": "graph",
+        "choice": "focus",
+        "because": "3 areas and 9 skills so far, so the graph reads as areas of focus"
+      },
+      {
+        "dimension": "family",
+        "choice": "lagoon",
+        "because": "Suits backend and systems work"
+      },
+      {
+        "dimension": "type",
+        "choice": "warm",
+        "because": "A friendly rounded face for an early-career page"
+      },
+      {
+        "dimension": "field",
+        "choice": "horizon",
+        "because": "A calm band keeps a dense or early page quiet"
+      },
+      {
+        "dimension": "corners",
+        "choice": "round",
+        "because": "Round corners match a friendly type pairing"
+      },
+      {
+        "dimension": "density",
+        "choice": "airy",
+        "because": "Little content, so it can breathe"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Ishaan Verma",
+      "headline": "Python Developer · Jaipur",
+      "role": "Python Developer",
+      "location": "Jaipur, India",
+      "monogram": "IV"
+    },
+    "facts": [
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "GitHub",
+        "url": "https://github.com/ishaanverma",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "GitHub: Ishaan Verma (@ishaanverma)"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "Python developer. Scrapers, small APIs and automation.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "Python developer. Scrapers, small APIs and automation."
+          }
+        ]
+      },
+      {
+        "id": "link-2",
+        "kind": "link",
+        "title": "Website",
+        "url": "https://ishaanverma.example.dev",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "https://ishaanverma.example.dev"
+          }
+        ]
+      },
+      {
+        "id": "proj-1",
+        "kind": "project",
+        "title": "price-tracker-api",
+        "detail": "FastAPI service that tracks product prices from scraped pages and sends alerts when a price drops.",
+        "highlights": [
+          "Language: Python, stars: 24, forks: 3, license: MIT",
+          "Detected: tests yes (17 test files), CI yes (GitHub Actions), Docker yes, docs yes, manifests: pyproject.toml"
+        ],
+        "tags": [
+          "FastAPI",
+          "scraping",
+          "price-tracking",
+          "SQLite",
+          "Docker"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "price-tracker-api"
+          }
+        ]
+      },
+      {
+        "id": "proj-2",
+        "kind": "project",
+        "title": "jaipur-bus-scraper",
+        "detail": "Scrapes city bus timetable pages into clean JSON.",
+        "highlights": [
+          "Language: Python, stars: 15, forks: 2"
+        ],
+        "tags": [
+          "scraping",
+          "transit"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "jaipur-bus-scraper"
+          }
+        ]
+      },
+      {
+        "id": "proj-3",
+        "kind": "project",
+        "title": "inbox-sorter",
+        "detail": "Automation script that labels emails by rules in a YAML file.",
+        "highlights": [],
+        "tags": [
+          "Python",
+          "YAML",
+          "automation"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "inbox-sorter"
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "Python developer. Scrapers, small APIs and automation.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Python developer in Jaipur who built price-tracker-api, a FastAPI service that sends alerts when a scraped product price drops.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Ishaan also wrote jaipur-bus-scraper, which turns city bus timetable pages into clean JSON. Another project, inbox-sorter, labels emails by rules kept in a YAML file. Price-tracker-api has 17 test files, GitHub Actions CI and Docker.",
+        "origin": "model",
+        "factIds": [
+          "proj-1",
+          "proj-2",
+          "proj-3"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Jaipur Python Developer Builds FastAPI Service That Alerts on Price Drops",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Ishaan Verma's price-tracker-api has 24 stars on GitHub and tracks product prices from scraped pages, with SQLite storage and Docker support.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-1",
+        "text": "price-tracker-api is a FastAPI service that tracks product prices from scraped pages and sends alerts when a price drops. Built in Python with SQLite and Docker, and tested through GitHub Actions.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-2",
+        "text": "jaipur-bus-scraper is a Python project that scrapes city bus timetable pages into clean JSON.",
+        "origin": "model",
+        "factIds": [
+          "proj-2"
+        ]
+      },
+      {
+        "id": "proj:proj-3",
+        "text": "inbox-sorter is an automation script written in Python that labels emails by rules kept in a YAML file.",
+        "origin": "model",
+        "factIds": [
+          "proj-3"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "64",
+        "label": "GitHub stars",
+        "sourceId": "github"
+      },
+      {
+        "value": "12",
+        "label": "GitHub repos",
+        "sourceId": "github"
+      },
+      {
+        "value": "3",
+        "label": "GitHub languages",
+        "sourceId": "github"
+      }
+    ],
+    "openTo": [
+      "Python Backend Engineer",
+      "Data Automation Engineer"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 56,
+        "skills": [
+          {
+            "id": "python",
+            "name": "Python",
+            "score": 66,
+            "evidence": "Python in 8 of 11 original repos, including price-tracker-api"
+          },
+          {
+            "id": "fastapi",
+            "name": "FastAPI",
+            "score": 56,
+            "evidence": "price-tracker-api: FastAPI service with 17 test files, 24 stars"
+          },
+          {
+            "id": "rest-design",
+            "name": "REST API design",
+            "score": 46,
+            "evidence": "price-tracker-api exposes add, list and alert endpoints; no API docs shown"
+          }
+        ]
+      },
+      {
+        "id": "data-automation",
+        "name": "Data & Automation",
+        "short": "Automation",
+        "score": 48,
+        "skills": [
+          {
+            "id": "web-scraping",
+            "name": "Web scraping",
+            "score": 58,
+            "evidence": "jaipur-bus-scraper (15 stars) and the price-tracker-api scrapers"
+          },
+          {
+            "id": "pandas",
+            "name": "Pandas",
+            "score": 44,
+            "evidence": "No notebook or data analysis repo; pandas appears only in small scripts"
+          },
+          {
+            "id": "automation",
+            "name": "Automation scripts",
+            "score": 42,
+            "evidence": "inbox-sorter: rule-based email labelling script, 9 stars"
+          }
+        ]
+      },
+      {
+        "id": "eng-practice",
+        "name": "Engineering Practice",
+        "short": "Eng Practice",
+        "score": 40,
+        "skills": [
+          {
+            "id": "testing",
+            "name": "Automated testing",
+            "score": 46,
+            "evidence": "Tests in 4 of 12 repos; 17 test files in price-tracker-api"
+          },
+          {
+            "id": "ci-cd",
+            "name": "CI/CD",
+            "score": 38,
+            "evidence": "GitHub Actions in 3 of 12 repos"
+          },
+          {
+            "id": "git-workflows",
+            "name": "Git workflows",
+            "score": 36,
+            "evidence": "5 pull requests opened and 3 PR reviews in 90 days"
+          }
+        ]
+      }
+    ],
+    "skillCount": 9,
+    "mastery": {
+      "score": 44,
+      "role": "Python Developer"
+    },
+    "sources": [
+      "GitHub"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

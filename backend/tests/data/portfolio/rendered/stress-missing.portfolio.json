@@ -1,0 +1,697 @@
+{
+  "profileId": "e416ea745ffaf1880a86872ef5af01c4",
+  "publicId": "7bbbb132fa50360d409013a4",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T07:57:35Z",
+  "updatedAt": "2026-10-08T07:57:35Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "foundations",
+      "style": {
+        "family": "lagoon",
+        "field": "horizon",
+        "type": "warm",
+        "corners": "round",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "centered",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": false
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "foundations",
+          "because": "Early in the journey, so education and projects lead and a new graph that reads best as areas of focus"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "4 areas and 8 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "lagoon",
+          "because": "Suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "warm",
+          "because": "A friendly rounded face for an early-career page"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "round",
+          "because": "Round corners match a friendly type pairing"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    },
+    {
+      "composition": "narrative",
+      "style": {
+        "family": "glacier",
+        "field": "corner",
+        "type": "technical",
+        "corners": "square",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "prose",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": false
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "narrative",
+          "because": "A different take: a story-first page"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "4 areas and 8 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "glacier",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "corner",
+          "because": "A single corner glow keeps attention on the words"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    },
+    {
+      "composition": "signature",
+      "style": {
+        "family": "iris",
+        "field": "dawn",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": false
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "A different take: a balanced page that suits most profiles"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "4 areas and 8 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "iris",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "A page built around the graph and the story"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "foundations",
+    "style": {
+      "family": "lagoon",
+      "field": "horizon",
+      "type": "warm",
+      "corners": "round",
+      "density": "airy"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "centered",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "focus",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "about",
+        "kind": "about",
+        "variant": "lede",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "featureList",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "row",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "timeline",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "links",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": false
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "foundations",
+        "because": "Early in the journey, so education and projects lead and a new graph that reads best as areas of focus"
+      },
+      {
+        "dimension": "graph",
+        "choice": "focus",
+        "because": "4 areas and 8 skills so far, so the graph reads as areas of focus"
+      },
+      {
+        "dimension": "family",
+        "choice": "lagoon",
+        "because": "Suits backend and systems work"
+      },
+      {
+        "dimension": "type",
+        "choice": "warm",
+        "because": "A friendly rounded face for an early-career page"
+      },
+      {
+        "dimension": "field",
+        "choice": "horizon",
+        "because": "A calm band keeps a dense or early page quiet"
+      },
+      {
+        "dimension": "corners",
+        "choice": "round",
+        "because": "Round corners match a friendly type pairing"
+      },
+      {
+        "dimension": "density",
+        "choice": "airy",
+        "because": "Little content, so it can breathe"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Rohan Desai",
+      "headline": "Aspiring Developer",
+      "role": "Aspiring Developer",
+      "monogram": "RD"
+    },
+    "facts": [
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "Aspiring software developer looking for a first role.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Aspiring software developer looking for a first role."
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "Aspiring software developer looking for a first role.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Aspiring software developer who is looking for a first role.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Aspiring Software Developer Looks for a First Role",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Rohan Desai is an aspiring software developer looking for a first role.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      }
+    ],
+    "stats": [],
+    "openTo": [
+      "Junior Web Developer",
+      "QA Analyst"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "programming",
+        "name": "Programming",
+        "short": "Programming",
+        "score": 38,
+        "skills": [
+          {
+            "id": "python",
+            "name": "Python",
+            "score": 40,
+            "evidence": "Python listed under SKILLS with no project or role to back it"
+          },
+          {
+            "id": "javascript",
+            "name": "JavaScript",
+            "score": 36,
+            "evidence": "JavaScript listed under SKILLS with no project or role to back it"
+          }
+        ]
+      },
+      {
+        "id": "web-basics",
+        "name": "Web Basics",
+        "short": "Web Basics",
+        "score": 42,
+        "skills": [
+          {
+            "id": "html",
+            "name": "HTML",
+            "score": 44,
+            "evidence": "HTML listed under SKILLS; no page or project is described"
+          },
+          {
+            "id": "css",
+            "name": "CSS",
+            "score": 40,
+            "evidence": "CSS listed under SKILLS; no page or project is described"
+          }
+        ]
+      },
+      {
+        "id": "databases",
+        "name": "Databases",
+        "short": "Databases",
+        "score": 28,
+        "skills": [
+          {
+            "id": "sql",
+            "name": "SQL",
+            "score": 28,
+            "evidence": "SQL listed under SKILLS; no query or schema is described"
+          }
+        ]
+      },
+      {
+        "id": "tools-workflow",
+        "name": "Tools & Workflow",
+        "short": "Tools & Workflow",
+        "score": 24,
+        "skills": [
+          {
+            "id": "git",
+            "name": "Git",
+            "score": 26,
+            "evidence": "Git listed under SKILLS; no repository is linked"
+          },
+          {
+            "id": "excel",
+            "name": "Excel",
+            "score": 26,
+            "evidence": "Excel listed under SKILLS with no task that uses it"
+          },
+          {
+            "id": "linux",
+            "name": "Linux",
+            "score": 20,
+            "evidence": "Linux listed under SKILLS with no task that uses it"
+          }
+        ]
+      }
+    ],
+    "skillCount": 8,
+    "mastery": {
+      "score": 24,
+      "role": "Aspiring Developer"
+    },
+    "sources": [
+      "Resume"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

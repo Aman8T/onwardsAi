@@ -758,7 +758,10 @@ def _label_for(url: str) -> str:
 
 _LEAD_MARK = re.compile(r"^\s*(?:[-*+•>]|#{1,6}|\d{1,3}[.)])\s+")
 _LIST_HEAD = re.compile(r"^\s*(?:[-*+•]|\d{1,3}[.)])\s+")
-_LABEL = re.compile(r"^(?:description|about|summary|overview|bio)\s*:\s+", re.IGNORECASE)
+_LABEL = re.compile(
+    r"^(?:description|about(?: me)?|summary|overview|bio|profile|objective|tagline|headline)\s*[:–—-]\s+",
+    re.IGNORECASE,
+)
 _TRAILING_URL = re.compile(r"\s+(?:https?://\S+|(?:[a-z0-9-]+\.)+[a-z]{2,}/\S*)[.,;]*$", re.IGNORECASE)
 _FILE_SUFFIXES = vocabulary("js ts jsx tsx py rb md json css html yml yaml txt sh toml")
 """Last labels of a dotted word that are file or library names (``Next.js``), not a web address."""
@@ -907,7 +910,7 @@ def _quote_words(src: Source, cited: _Line) -> str:
     """The person's own words from the cited line: its paragraph from the first sentence in the first person (and the
     next one, if that is first person too, or if none is), without wrapping quote marks, cut to the limit at a
     sentence end, with a trailing fragment (a sentence the lines did not finish) left off."""
-    sentences = _SENTENCE_SPLIT.split(_paragraph(src, cited.number))
+    sentences = _SENTENCE_SPLIT.split(_LABEL.sub("", _paragraph(src, cited.number)))
     start = next((i for i, s in enumerate(sentences) if _FIRST_PERSON.match(s)), 0)
     chosen = sentences[start : start + 1]
     if start + 1 < len(sentences) and (

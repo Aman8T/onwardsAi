@@ -796,3 +796,33 @@ def test_a_grade_number_is_only_private_for_the_facts_the_slot_cites() -> None:
     text = "Engineer at Acme who cut p95 latency from 8.6s to 2s."
     assert check_slot(slot("aboutLede", text, "exp-9"), {"exp-9": work, "edu-1": edu}).ok
     assert not check_slot(slot("aboutLede", text, "exp-9", "edu-1"), {"exp-9": work, "edu-1": edu}).ok
+
+
+# ───────────────────────── truncated quotes ─────────────────────────
+
+
+def test_a_quote_cut_off_mid_phrase_is_rejected() -> None:
+    quote = Fact(
+        id="quote-1",
+        kind="quote",
+        title="I like boring, correct systems: idempotent writes, sharding without downtime and a quiet pager.",
+        highlights=[],
+        tags=[],
+        sourceRefs=[
+            SourceRef(
+                sourceId="resume",
+                quote="I like boring, correct systems: idempotent writes, sharding without downtime and a quiet pager.",
+            )
+        ],
+    )
+    cut = CopySlot(
+        id="tagline",
+        text="I like boring, correct systems: idempotent writes, sharding without downtime and a quiet",
+        origin="model",
+        factIds=["quote-1"],
+    )
+    assert any("mid-phrase" in p for p in check_slot(cut, {"quote-1": quote}).problems)
+    clause = CopySlot(
+        id="tagline", text="I like boring, correct systems.", origin="model", factIds=["quote-1"]
+    )
+    assert not any("mid-phrase" in p for p in check_slot(clause, {"quote-1": quote}).problems)

@@ -1,0 +1,755 @@
+{
+  "profileId": "43e34d199d405c0d2c3768334070486d",
+  "publicId": "194d6d2c1348bc0694e7739a",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T08:08:36Z",
+  "updatedAt": "2026-10-08T08:08:36Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "signature",
+      "style": {
+        "family": "iris",
+        "field": "dawn",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": false
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "A working record to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "2 areas and 3 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "iris",
+          "because": "Suits design-led product work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "Expressive serif headlines suit design and written work"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    },
+    {
+      "composition": "foundations",
+      "style": {
+        "family": "orchid",
+        "field": "horizon",
+        "type": "warm",
+        "corners": "round",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "centered",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "focus",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": false
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "foundations",
+          "because": "A different take: a new graph that reads best as areas of focus"
+        },
+        {
+          "dimension": "graph",
+          "choice": "focus",
+          "because": "2 areas and 3 skills so far, so the graph reads as areas of focus"
+        },
+        {
+          "dimension": "family",
+          "choice": "orchid",
+          "because": "A different hue to compare; it also suits design-led product work"
+        },
+        {
+          "dimension": "type",
+          "choice": "warm",
+          "because": "A friendly rounded face for a first few years"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "round",
+          "because": "Round corners match a friendly type pairing"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    },
+    {
+      "composition": "ledger",
+      "style": {
+        "family": "rose",
+        "field": "horizon",
+        "type": "studio",
+        "corners": "soft",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": false
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "ledger",
+          "because": "A different take: measured results to list"
+        },
+        {
+          "dimension": "graph",
+          "choice": "ledger",
+          "because": "Ranked rows stay readable at any size"
+        },
+        {
+          "dimension": "family",
+          "choice": "rose",
+          "because": "A different hue to compare; it also suits design-led product work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "Expressive serif headlines suit design and written work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "A long record reads better with tighter spacing"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "signature",
+    "style": {
+      "family": "iris",
+      "field": "dawn",
+      "type": "studio",
+      "corners": "soft",
+      "density": "airy"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "split",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "focus",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "proof",
+        "kind": "proof",
+        "variant": "strip",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "about",
+        "kind": "about",
+        "variant": "lede",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "timeline",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "featureList",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "row",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "signOff",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": false
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "signature",
+        "because": "A working record to show"
+      },
+      {
+        "dimension": "graph",
+        "choice": "focus",
+        "because": "2 areas and 3 skills so far, so the graph reads as areas of focus"
+      },
+      {
+        "dimension": "family",
+        "choice": "iris",
+        "because": "Suits design-led product work"
+      },
+      {
+        "dimension": "type",
+        "choice": "studio",
+        "because": "Expressive serif headlines suit design and written work"
+      },
+      {
+        "dimension": "field",
+        "choice": "dawn",
+        "because": "The signature layout carries the fullest backdrop"
+      },
+      {
+        "dimension": "corners",
+        "choice": "soft",
+        "because": "Soft corners sit well with serif headlines"
+      },
+      {
+        "dimension": "density",
+        "choice": "airy",
+        "because": "Little content, so it can breathe"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Neha Bhatia",
+      "headline": "QA Tester · 1.8 yrs · Nagpur",
+      "role": "QA Tester",
+      "location": "Nagpur, India",
+      "yearsExperience": 1.8,
+      "monogram": "NB"
+    },
+    "facts": [
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:neha.bhatia.qa@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "neha.bhatia.qa@example.com"
+          }
+        ]
+      },
+      {
+        "id": "contact-2",
+        "kind": "contact",
+        "title": "Phone",
+        "detail": "+91 90000 90123",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "+91 90000 90123"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "LinkedIn",
+        "url": "https://linkedin.com/in/neha-bhatia-qa",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "linkedin.com/in/neha-bhatia-qa"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "Manual QA tester with 1.8 years of experience testing web and mobile apps for a school-fee payments product.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Manual QA tester with 1.8 years of experience testing web and mobile apps for a school-fee payments product."
+          }
+        ]
+      },
+      {
+        "id": "exp-1",
+        "kind": "experience",
+        "title": "QA Tester",
+        "org": "Paywise Systems",
+        "location": "Nagpur",
+        "start": "2024-12",
+        "current": true,
+        "detail": "School-fee payments product (web and Android).",
+        "highlights": [
+          "Wrote and ran 240 manual test cases across the web and Android apps for each fortnightly release.",
+          "Logged 310 bugs in Jira in a year; 92% were fixed by the developers without follow-up questions.",
+          "Started learning Selenium and wrote 6 basic automated checks for the login flow."
+        ],
+        "tags": [
+          "Jira",
+          "Selenium",
+          "test case design",
+          "bug reporting",
+          "regression testing"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Paywise Systems — QA Tester Nagpur · Dec 2024 – Present"
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "B.Sc. Computer Science",
+        "org": "Vidarbha Science College, Nagpur",
+        "start": "2021",
+        "end": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.Sc. Computer Science — Vidarbha Science College, Nagpur 2021 – 2024"
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "Manual QA tester testing web and mobile apps for a school-fee payments product.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "QA Tester at Paywise Systems who logged 310 bugs in Jira in a year and wrote 240 manual test cases for each fortnightly release.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Neha tests a school-fee payments product on web and Android. Of the bugs logged, 92% were fixed without follow-up questions. Neha also started learning Selenium and wrote 6 basic automated checks for the login flow. Earlier, Neha studied B.Sc. Computer Science at Vidarbha Science College in Nagpur.",
+        "origin": "model",
+        "factIds": [
+          "exp-1",
+          "edu-1"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Paywise Systems QA Tester Logs 310 Bugs; 92% Fixed Without Follow-Up",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Neha Bhatia also wrote 240 manual test cases for each fortnightly release of the school-fee payments product and 6 automated checks for the login flow.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-1",
+        "text": "Writes and runs 240 manual test cases across the web and Android apps for each fortnightly release.\nLogged 310 bugs in Jira in a year; 92% were fixed without follow-up questions.\nStarted learning Selenium and wrote 6 basic automated checks for the login flow.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "1",
+        "label": "role",
+        "sourceId": "resume"
+      }
+    ],
+    "openTo": [
+      "Senior QA Tester",
+      "QA Automation Engineer"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "manual-testing",
+        "name": "Manual Testing",
+        "short": "Manual Testing",
+        "score": 61,
+        "skills": [
+          {
+            "id": "test-case-design",
+            "name": "Test case design",
+            "score": 66,
+            "evidence": "Wrote and ran 240 manual test cases per fortnightly release"
+          },
+          {
+            "id": "bug-reporting",
+            "name": "Bug reporting",
+            "score": 56,
+            "evidence": "Logged 310 bugs in Jira in a year; 92% fixed without follow-up questions"
+          }
+        ]
+      },
+      {
+        "id": "test-automation",
+        "name": "Test Automation",
+        "short": "Test Automation",
+        "score": 33,
+        "skills": [
+          {
+            "id": "selenium-basics",
+            "name": "Selenium basics",
+            "score": 33,
+            "evidence": "Wrote 6 basic automated checks for the login flow"
+          }
+        ]
+      }
+    ],
+    "skillCount": 3,
+    "mastery": {
+      "score": 52,
+      "role": "QA Tester"
+    },
+    "sources": [
+      "Resume"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

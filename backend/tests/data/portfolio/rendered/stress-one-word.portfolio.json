@@ -1,0 +1,883 @@
+{
+  "profileId": "813f7d369a4516d2278521c2cd276a75",
+  "publicId": "e8ff3b6aebed2a3dfed1f006",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T07:57:44Z",
+  "updatedAt": "2026-10-08T07:57:44Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "signature",
+      "style": {
+        "family": "lagoon",
+        "field": "dawn",
+        "type": "technical",
+        "corners": "square",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "halo",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "Public work to show and a working record to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "halo",
+          "because": "Scores are balanced (top is 11 above the median) and the mastery sits in the centre"
+        },
+        {
+          "dimension": "family",
+          "choice": "lagoon",
+          "because": "Suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    },
+    {
+      "composition": "builder",
+      "style": {
+        "family": "glacier",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "soft",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "index",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "grid",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "builder",
+          "because": "A different take: public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "ledger",
+          "because": "Ranked rows stay readable at any size"
+        },
+        {
+          "dimension": "family",
+          "choice": "glacier",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners are the friendly default"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "Technical type suits tighter spacing"
+        }
+      ]
+    },
+    {
+      "composition": "ledger",
+      "style": {
+        "family": "iris",
+        "field": "horizon",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "halo",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "ledger",
+          "because": "A different take: measured results to list"
+        },
+        {
+          "dimension": "graph",
+          "choice": "halo",
+          "because": "Scores are balanced (top is 11 above the median) and the mastery sits in the centre"
+        },
+        {
+          "dimension": "family",
+          "choice": "iris",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "Expressive serif headlines are a safe default"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Little content, so it can breathe"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "signature",
+    "style": {
+      "family": "lagoon",
+      "field": "dawn",
+      "type": "technical",
+      "corners": "square",
+      "density": "airy"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "split",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "halo",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "proof",
+        "kind": "proof",
+        "variant": "strip",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "about",
+        "kind": "about",
+        "variant": "lede",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "timeline",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "featureList",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "row",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "signOff",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "signature",
+        "because": "Public work to show and a working record to show"
+      },
+      {
+        "dimension": "graph",
+        "choice": "halo",
+        "because": "Scores are balanced (top is 11 above the median) and the mastery sits in the centre"
+      },
+      {
+        "dimension": "family",
+        "choice": "lagoon",
+        "because": "Suits backend and systems work"
+      },
+      {
+        "dimension": "type",
+        "choice": "technical",
+        "because": "Mono details suit backend and systems work"
+      },
+      {
+        "dimension": "field",
+        "choice": "dawn",
+        "because": "The signature layout carries the fullest backdrop"
+      },
+      {
+        "dimension": "corners",
+        "choice": "square",
+        "because": "Sharp corners suit precise or editorial type"
+      },
+      {
+        "dimension": "density",
+        "choice": "airy",
+        "because": "Little content, so it can breathe"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Tanvi Joshi",
+      "headline": "Software Engineer · 3.2 yrs · Pune",
+      "role": "Software Engineer",
+      "location": "Pune, India",
+      "yearsExperience": 3.2,
+      "monogram": "TJ"
+    },
+    "facts": [
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:tanvi.joshi.dev@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "tanvi.joshi.dev@example.com"
+          }
+        ]
+      },
+      {
+        "id": "contact-2",
+        "kind": "contact",
+        "title": "Phone",
+        "detail": "+91 90000 78901",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "+91 90000 78901"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "GitHub",
+        "url": "https://github.com/tanvijoshi",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "github.com/tanvijoshi"
+          },
+          {
+            "sourceId": "github",
+            "quote": "GitHub: Tanvi Joshi (@tanvijoshi)"
+          }
+        ]
+      },
+      {
+        "id": "exp-1",
+        "kind": "experience",
+        "title": "Software Engineer",
+        "org": "Zenmark Software",
+        "location": "Pune",
+        "start": "2023-08",
+        "current": true,
+        "detail": "B2B SaaS company (billing software).",
+        "highlights": [
+          "Built the invoice-export service (Python, FastAPI) that generates PDF and CSV exports; export failures dropped from 4.8% to 0.6%.",
+          "Added Postgres indexes and rewrote 6 queries, cutting the slowest dashboard report from 14 s to 3 s.",
+          "Wrote the team's first integration test suite (86 tests) and wired it into GitHub Actions."
+        ],
+        "tags": [
+          "Python",
+          "FastAPI",
+          "Postgres",
+          "GitHub Actions",
+          "pytest"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Zenmark Software — Software Engineer Pune · Aug 2023 – Present"
+          }
+        ]
+      },
+      {
+        "id": "proj-1",
+        "kind": "project",
+        "title": "bill-splitter",
+        "detail": "A small web app that splits shared bills between flatmates. FastAPI, SQLite, plain JavaScript.",
+        "highlights": [
+          "Language: Python, stars: 6, forks: 0"
+        ],
+        "tags": [
+          "FastAPI",
+          "SQLite",
+          "JavaScript"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "bill-splitter — A small web app that splits shared bills between flatmates. FastAPI, SQLite, plain JavaScript."
+          },
+          {
+            "sourceId": "github",
+            "quote": "bill-splitter"
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "B.E. Computer Engineering",
+        "org": "Sahyadri Institute of Technology, Pune",
+        "start": "2019",
+        "end": "2023",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.E. Computer Engineering — Sahyadri Institute of Technology, Pune 2019 – 2023"
+          }
+        ]
+      },
+      {
+        "id": "proj-2",
+        "kind": "project",
+        "title": "advent-of-code",
+        "detail": "Solutions to Advent of Code in Python.",
+        "highlights": [
+          "Language: Python, stars: 2, forks: 0"
+        ],
+        "tags": [
+          "Python"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "advent-of-code"
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "Software engineer in Pune building backend services for billing software.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Software Engineer at Zenmark Software who built an invoice-export service that cut export failures from 4.8% to 0.6%.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Tanvi also rewrote 6 queries, cutting the slowest dashboard report from 14 s to 3 s, and wrote the team's first integration test suite of 86 tests. Studied B.E. Computer Engineering at Sahyadri Institute of Technology, Pune. Builds side projects like bill-splitter, a web app for flatmates.",
+        "origin": "model",
+        "factIds": [
+          "exp-1",
+          "edu-1",
+          "proj-1"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Tanvi Joshi, Software Engineer",
+        "origin": "resume",
+        "factIds": []
+      },
+      {
+        "id": "pressDeck",
+        "text": "Tanvi Joshi also rewrote 6 queries at Zenmark Software, cutting the slowest dashboard report from 14 s to 3 s.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-1",
+        "text": "Built the invoice-export service in Python and FastAPI: export failures dropped from 4.8% to 0.6%.\nRewrote 6 queries and added Postgres indexes, cutting the slowest report from 14 s to 3 s.\nWrote the first integration test suite (86 tests) and ran it in GitHub Actions.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "proj:proj-1",
+        "text": "bill-splitter is a small web app that splits shared bills between flatmates. It is built with FastAPI, SQLite and plain JavaScript.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-2",
+        "text": "advent-of-code holds Tanvi's solutions to Advent of Code puzzles, written in Python.",
+        "origin": "model",
+        "factIds": [
+          "proj-2"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "9",
+        "label": "GitHub stars",
+        "sourceId": "github"
+      },
+      {
+        "value": "6",
+        "label": "GitHub repos",
+        "sourceId": "github"
+      },
+      {
+        "value": "3",
+        "label": "GitHub languages",
+        "sourceId": "github"
+      },
+      {
+        "value": "1",
+        "label": "project",
+        "sourceId": "resume"
+      }
+    ],
+    "openTo": [
+      "Senior Backend Engineer",
+      "Data Engineer"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 64,
+        "skills": [
+          {
+            "id": "python",
+            "name": "Python",
+            "score": 70,
+            "evidence": "Invoice-export service in Python and FastAPI at Zenmark"
+          },
+          {
+            "id": "fastapi",
+            "name": "FastAPI",
+            "score": 66,
+            "evidence": "Built the invoice-export service in FastAPI"
+          },
+          {
+            "id": "rest-design",
+            "name": "REST API design",
+            "score": 58,
+            "evidence": "REST listed under Backend; export endpoints for PDF and CSV"
+          }
+        ]
+      },
+      {
+        "id": "data-storage",
+        "name": "Data & Storage",
+        "short": "Data & Storage",
+        "score": 52,
+        "skills": [
+          {
+            "id": "postgresql",
+            "name": "PostgreSQL",
+            "score": 56,
+            "evidence": "Added Postgres indexes and rewrote 6 queries at Zenmark"
+          },
+          {
+            "id": "query-tuning",
+            "name": "Query tuning",
+            "score": 52,
+            "evidence": "Cut the slowest dashboard report from 14 s to 3 s"
+          },
+          {
+            "id": "data-modelling",
+            "name": "Data modelling",
+            "score": 48,
+            "evidence": "bill-splitter uses SQLite with a small schema"
+          }
+        ]
+      },
+      {
+        "id": "eng-practice",
+        "name": "Engineering Practice",
+        "short": "Eng Practice",
+        "score": 54,
+        "skills": [
+          {
+            "id": "integration-testing",
+            "name": "Integration testing",
+            "score": 62,
+            "evidence": "Wrote the team's first integration test suite (86 tests)"
+          },
+          {
+            "id": "ci-cd",
+            "name": "CI/CD",
+            "score": 54,
+            "evidence": "Wired the test suite into GitHub Actions"
+          },
+          {
+            "id": "code-review",
+            "name": "Code review",
+            "score": 46,
+            "evidence": "3 PR reviews in the last 90 days"
+          }
+        ]
+      },
+      {
+        "id": "product-collab",
+        "name": "Product & Collaboration",
+        "short": "Product & Collab",
+        "score": 40,
+        "skills": [
+          {
+            "id": "stakeholder-updates",
+            "name": "Stakeholder updates",
+            "score": 44,
+            "evidence": "Export failure drop reported as a result, but no audience is named"
+          },
+          {
+            "id": "writing-specs",
+            "name": "Writing specs",
+            "score": 36,
+            "evidence": "No spec, design doc or planning work is described"
+          }
+        ]
+      }
+    ],
+    "skillCount": 11,
+    "mastery": {
+      "score": 58,
+      "role": "Software Engineer"
+    },
+    "sources": [
+      "Resume",
+      "GitHub"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

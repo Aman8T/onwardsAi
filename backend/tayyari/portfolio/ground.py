@@ -737,6 +737,33 @@ def _grade_problems(text: str, cited: Sequence[Fact]) -> list[str]:
     return [f"the number {n} is a grade; grades are private" for n in leaked]
 
 
+# ───────────────────────── truncation ─────────────────────────
+
+_FOLD_SPACE = re.compile(r"\s+")
+
+
+def _folded(text: str) -> str:
+    return _FOLD_SPACE.sub(" ", fold(text)).strip()
+
+
+def _truncation_problems(text: str, cited: Sequence[Fact]) -> list[str]:
+    """A slot that is the start of a longer sentence from the facts, cut off mid-phrase ("... and a quiet")."""
+    mine = _folded(text).rstrip(" .,;:!?—–-")
+    if len(mine) < 12:
+        return []
+    for fact in cited:
+        for source in (fact.title, fact.detail or "", *fact.highlights, *(r.quote for r in fact.sourceRefs)):
+            theirs = _folded(source)
+            if len(theirs) > len(mine) and theirs.startswith(mine):
+                rest = theirs[len(mine) :]
+                # Cut at a clause or sentence end ("x, y" -> "x") is a fine shortening; inside a phrase is not.
+                if rest[:1].isalnum() or rest[:2].strip()[:1].isalnum():
+                    return [
+                        "cuts a sentence from the facts off mid-phrase; use it whole or write a complete line"
+                    ]
+    return []
+
+
 def check_slot(
     slot: CopySlot, facts_by_id: Mapping[str, Fact], *, person: PortfolioPerson | None = None
 ) -> SlotCheck:
@@ -783,7 +810,10 @@ def check_slot(
         return SlotCheck(slot.id, False, _dedupe(problems), sentences)
     corpus_text = slot_corpus(slot, facts_by_id, person)
     corpus = Corpus.of(corpus_text)
-    problems += _grade_problems(text, [facts_by_id[i] for i in cited_ids if i in facts_by_id])
+    cited_facts = [facts_by_id[i] for i in cited_ids if i in facts_by_id]
+    problems += _grade_problems(text, cited_facts)
+    if slot.id == "tagline":
+        problems += _truncation_problems(text, cited_facts)
     headline = slot.id == "pressHeadline"
     for sentence in sentences:
         problems += _anchor_problems(sentence, corpus, headline=headline)

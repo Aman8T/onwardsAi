@@ -1,0 +1,1662 @@
+{
+  "profileId": "sample-muw68cno-d358c0",
+  "publicId": "23ade792aecfd98aaabde1e9",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T07:56:23Z",
+  "updatedAt": "2026-10-08T07:56:23Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "signature",
+      "style": {
+        "family": "iris",
+        "field": "dawn",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "7 roles to lay out and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 28 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "iris",
+          "because": "Suits design-led product work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "Expressive serif headlines suit design and written work"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    },
+    {
+      "composition": "builder",
+      "style": {
+        "family": "orchid",
+        "field": "horizon",
+        "type": "studio",
+        "corners": "soft",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "index",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "builder",
+          "because": "A different take: 16 projects are the main proof and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 28 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "orchid",
+          "because": "A different hue to compare; it also suits design-led product work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "Expressive serif headlines suit design and written work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "28 entries to fit"
+        }
+      ]
+    },
+    {
+      "composition": "ledger",
+      "style": {
+        "family": "rose",
+        "field": "horizon",
+        "type": "warm",
+        "corners": "round",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "ledger",
+          "because": "A different take: 7 roles in the record and measured results to list"
+        },
+        {
+          "dimension": "graph",
+          "choice": "ledger",
+          "because": "Ranked rows stay readable at any size"
+        },
+        {
+          "dimension": "family",
+          "choice": "rose",
+          "because": "A different hue to compare; it also suits design-led product work"
+        },
+        {
+          "dimension": "type",
+          "choice": "warm",
+          "because": "A friendly rounded face for a first few years"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "round",
+          "because": "Round corners match a friendly type pairing"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "A long record reads better with tighter spacing"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "signature",
+    "style": {
+      "family": "iris",
+      "field": "dawn",
+      "type": "studio",
+      "corners": "soft",
+      "density": "airy"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "split",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "peaks",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "proof",
+        "kind": "proof",
+        "variant": "strip",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "about",
+        "kind": "about",
+        "variant": "lede",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "timeline",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "row",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "signOff",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "signature",
+        "because": "7 roles to lay out and public work to show"
+      },
+      {
+        "dimension": "graph",
+        "choice": "peaks",
+        "because": "The top area is 28 above the median"
+      },
+      {
+        "dimension": "family",
+        "choice": "iris",
+        "because": "Suits design-led product work"
+      },
+      {
+        "dimension": "type",
+        "choice": "studio",
+        "because": "Expressive serif headlines suit design and written work"
+      },
+      {
+        "dimension": "field",
+        "choice": "dawn",
+        "because": "The signature layout carries the fullest backdrop"
+      },
+      {
+        "dimension": "corners",
+        "choice": "soft",
+        "because": "Soft corners sit well with serif headlines"
+      },
+      {
+        "dimension": "density",
+        "choice": "airy",
+        "because": "Plenty of room to read"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Riya Kapoor",
+      "headline": "Frontend Engineer · 2.4 yrs · Bengaluru",
+      "role": "Frontend Engineer",
+      "location": "Bengaluru, India",
+      "yearsExperience": 2.4,
+      "monogram": "RK"
+    },
+    "facts": [
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:riya.kapoor.dev@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "riya.kapoor.dev@example.com"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "GitHub",
+        "url": "https://github.com/riyakapoor",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "github.com/riyakapoor"
+          },
+          {
+            "sourceId": "github",
+            "quote": "GitHub: Riya Kapoor (@riyakapoor)"
+          }
+        ]
+      },
+      {
+        "id": "link-2",
+        "kind": "link",
+        "title": "Portfolio",
+        "url": "https://riyakapoor.design",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "riyakapoor.design"
+          },
+          {
+            "sourceId": "github",
+            "quote": "https://riyakapoor.design"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "quote": "https://riyakapoor.design"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "I care about motion, design systems and the details that make a product feel finished.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "I care about motion, design systems and the details that make a product feel finished."
+          }
+        ]
+      },
+      {
+        "id": "exp-1",
+        "kind": "experience",
+        "title": "Frontend Engineer II",
+        "org": "Kitebird",
+        "location": "Bengaluru",
+        "start": "2025-07",
+        "current": true,
+        "detail": "D2C commerce startup (home goods), ~40 engineers, storefront + mobile web.",
+        "highlights": [
+          "Rebuilt the three-step checkout as a single-page flow in React and TypeScript with optimistic cart updates; checkout conversion rose 9.4% in the A/B test and LCP on the payment step dropped from 4.1s to 1.9s.",
+          "Own Kite UI, the shared React component library (42 components, typed tokens, Storybook docs) used by 3 product squads.",
+          "Led the storefront migration to React 18 and Vite, removing the legacy CRA build and cutting local build times.",
+          "Ran a WCAG 2.1 AA accessibility audit of checkout with design and fixed the critical issues (focus order, labels, colour contrast, screen-reader announcements for cart updates).",
+          "Mentored 2 frontend interns through their 6-month internships; both received full-time offers."
+        ],
+        "tags": [
+          "React",
+          "TypeScript",
+          "Node.js",
+          "Express",
+          "WCAG 2.1",
+          "Storybook",
+          "Figma"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Kitebird — Frontend Engineer II Bengaluru · Jul 2025 – Present"
+          }
+        ]
+      },
+      {
+        "id": "exp-2",
+        "kind": "experience",
+        "title": "Frontend Engineer",
+        "org": "Kitebird",
+        "location": "Bengaluru",
+        "start": "2024-05",
+        "end": "2025-06",
+        "current": true,
+        "detail": "D2C commerce startup (home goods), ~40 engineers, storefront + mobile web.",
+        "highlights": [
+          "Built the backend-for-frontend (Node.js, Express) for the mobile web app, aggregating catalog, pricing and inventory APIs into one typed endpoint per screen.",
+          "Owned API contracts with 2 backend teams (REST and a GraphQL catalog service) and wrote the client-side data layer.",
+          "Set up preview deployments for every pull request with GitHub Actions and Vercel.",
+          "Shipped the product-detail page redesign, including image galleries, variant pickers and delivery-date estimates."
+        ],
+        "tags": [
+          "Node.js",
+          "Express",
+          "REST",
+          "GraphQL",
+          "React",
+          "TypeScript",
+          "GitHub Actions",
+          "Vercel"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Kitebird — Frontend Engineer Bengaluru · May 2024 – Jun 2025"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"I build interfaces that feel physical — springs, not durations.\" Frontend engineer at Kitebird in Bengaluru."
+          }
+        ]
+      },
+      {
+        "id": "exp-3",
+        "kind": "experience",
+        "title": "Frontend Engineering Intern",
+        "org": "Saffron Ledger",
+        "location": "Bengaluru",
+        "start": "2024-01",
+        "end": "2024-04",
+        "detail": "Fintech startup building bookkeeping software for small businesses.",
+        "highlights": [
+          "Built dashboard widgets (cash-flow charts, invoice tables) in React with TypeScript and Recharts.",
+          "Fixed table rendering performance for accounts with 10,000+ invoices using virtualised lists."
+        ],
+        "tags": [
+          "React",
+          "TypeScript",
+          "Recharts",
+          "Figma"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Saffron Ledger — Frontend Engineering Intern Bengaluru · Jan 2024 – Apr 2024"
+          }
+        ]
+      },
+      {
+        "id": "exp-4",
+        "kind": "experience",
+        "title": "UI Developer",
+        "org": "Freelance",
+        "location": "Remote",
+        "start": "2023-06",
+        "end": "2023-12",
+        "highlights": [
+          "Designed and built marketing sites and a component kit for 3 early-stage clients (Next.js, Tailwind CSS, Figma).",
+          "Delivered responsive, animated landing pages and handed over a reusable design system to each client."
+        ],
+        "tags": [
+          "Next.js",
+          "Tailwind CSS",
+          "Figma"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Freelance — UI Developer Remote · Jun 2023 – Dec 2023"
+          }
+        ]
+      },
+      {
+        "id": "exp-5",
+        "kind": "experience",
+        "title": "Web Lead",
+        "org": "Google Developer Student Club, Nandi Institute of Technology",
+        "location": "Bengaluru",
+        "start": "2022",
+        "end": "2023",
+        "highlights": [
+          "Ran weekly React workshops for 60+ students and organised a 24-hour campus hackathon."
+        ],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Google Developer Student Club, Nandi Institute of Technology — Web Lead Bengaluru · 2022 – 2023"
+          }
+        ]
+      },
+      {
+        "id": "exp-6",
+        "kind": "experience",
+        "title": "Maintainer, motion-kit",
+        "start": "2023",
+        "current": true,
+        "highlights": [
+          "Maintain motion-kit, a spring-physics animation library for React (212 GitHub stars), and review community PRs."
+        ],
+        "tags": [
+          "React",
+          "TypeScript",
+          "GitHub"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Open source — Maintainer, motion-kit 2023 – Present"
+          }
+        ]
+      },
+      {
+        "id": "proj-1",
+        "kind": "project",
+        "title": "motion-kit",
+        "url": "https://github.com/riyakapoor/motion-kit",
+        "detail": "Spring-physics animation primitives for React with gesture support and reduced-motion handling. TypeScript, Vitest, GitHub Actions.",
+        "highlights": [
+          "Maintain motion-kit, a spring-physics animation library for React (212 GitHub stars), and review community PRs.",
+          "Language: TypeScript, stars: 212, forks: 19, license: MIT",
+          "`useSpring` / `useSprings` with velocity-aware retargeting",
+          "`usePresence` for exit animations",
+          "drag-to-dismiss with velocity handoff"
+        ],
+        "tags": [
+          "React",
+          "TypeScript",
+          "Vitest",
+          "GitHub Actions",
+          "springs",
+          "animation",
+          "gestures"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "motion-kit — Spring-physics animation primitives for React with gesture support and reduced-motion handling."
+          },
+          {
+            "sourceId": "github",
+            "quote": "motion-kit"
+          }
+        ]
+      },
+      {
+        "id": "proj-2",
+        "kind": "project",
+        "title": "checkout-lab",
+        "url": "https://checkout-lab.vercel.app",
+        "detail": "Experiments in checkout UX: optimistic updates, address autocomplete, skeleton states. Next.js.",
+        "highlights": [
+          "Language: TypeScript, stars: 37, forks: 4, license: MIT",
+          "A playground for the patterns behind a fast checkout. Every experiment has a \"why\", a demo route and the numbers I",
+          "measured locally (LCP, INP). Inspired by work I can't open-source."
+        ],
+        "tags": [
+          "Next.js",
+          "TypeScript",
+          "ecommerce",
+          "checkout",
+          "React Query"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "checkout-lab — Experiments in checkout UX: optimistic updates, address autocomplete, skeleton states. Next.js."
+          },
+          {
+            "sourceId": "github",
+            "quote": "checkout-lab"
+          }
+        ]
+      },
+      {
+        "id": "proj-3",
+        "kind": "project",
+        "title": "design-tokens",
+        "detail": "A Style Dictionary pipeline that turns Figma variables into CSS, TypeScript and Tailwind tokens.",
+        "highlights": [
+          "Language: TypeScript, stars: 58, forks: 6, license: MIT",
+          "Export variables from Figma, run `pnpm tokens`, and get typed tokens for every platform.",
+          "Supports light/dark modes and density scales. Used in production by one D2C storefront (Kite UI)."
+        ],
+        "tags": [
+          "TypeScript",
+          "Figma",
+          "style-dictionary",
+          "Tailwind",
+          "design-tokens"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "design-tokens — A Style Dictionary pipeline that turns Figma variables into CSS, TypeScript and Tailwind tokens."
+          },
+          {
+            "sourceId": "github",
+            "quote": "design-tokens"
+          }
+        ]
+      },
+      {
+        "id": "proj-4",
+        "kind": "project",
+        "title": "Kite UI docs",
+        "detail": "Public Storybook for Kitebird's component library (internal repo, public docs site).",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Kite UI docs — Public Storybook for Kitebird's component library (internal repo, public docs site)."
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "B.Tech, Computer Science and Engineering",
+        "org": "Nandi Institute of Technology, Bengaluru",
+        "start": "2020",
+        "end": "2024",
+        "grade": "CGPA 8.6 / 10",
+        "highlights": [
+          "CGPA 8.6 / 10. Final-year project: a real-time collaborative whiteboard in React and WebSockets."
+        ],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.Tech, Computer Science and Engineering — Nandi Institute of Technology, Bengaluru 2020 – 2024"
+          }
+        ]
+      },
+      {
+        "id": "ach-1",
+        "kind": "achievement",
+        "title": "Kitebird \"Ship It\" award",
+        "org": "Kitebird",
+        "start": "2025",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Kitebird \"Ship It\" award, H1 2025, for the checkout rebuild."
+          }
+        ]
+      },
+      {
+        "id": "clip-1",
+        "kind": "clip",
+        "title": "Springs, not durations — motion that feels physical",
+        "org": "ReactFoo Bengaluru community meetup",
+        "start": "2025",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Speaker, ReactFoo Bengaluru community meetup (2025): \"Springs, not durations — motion that feels physical\"."
+          }
+        ]
+      },
+      {
+        "id": "quote-2",
+        "kind": "quote",
+        "title": "I build interfaces that feel physical: springs, not durations.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "I build interfaces that feel physical: springs, not durations."
+          },
+          {
+            "sourceId": "portfolio-1",
+            "quote": "I build interfaces that feel physical — springs, not durations."
+          }
+        ]
+      },
+      {
+        "id": "proj-5",
+        "kind": "project",
+        "title": "notes-ai",
+        "detail": "Ask questions about your markdown notes. OpenAI embeddings + a local vector index + GPT answers.",
+        "highlights": [
+          "Language: TypeScript, stars: 41, forks: 3",
+          "Turns a folder of markdown notes into something you can talk to. Run `python scripts/ingest.py` to chunk and embed",
+          "your notes, then `pnpm dev` and ask anything."
+        ],
+        "tags": [
+          "TypeScript",
+          "OpenAI",
+          "embeddings",
+          "Next.js",
+          "markdown"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "notes-ai"
+          }
+        ]
+      },
+      {
+        "id": "proj-6",
+        "kind": "project",
+        "title": "recipe-genie-web",
+        "url": "https://recipe-genie.lovable.app",
+        "detail": "Code export of Recipe Genie, built with Lovable: dinner ideas from what's in your fridge.",
+        "highlights": [
+          "Language: TypeScript, stars: 23, forks: 2",
+          "Topics: lovable, supabase, openai, shadcn"
+        ],
+        "tags": [
+          "TypeScript",
+          "Lovable",
+          "Supabase",
+          "OpenAI"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "recipe-genie-web"
+          }
+        ]
+      },
+      {
+        "id": "proj-7",
+        "kind": "project",
+        "title": "a11y-checklist",
+        "detail": "A practical accessibility checklist for React component libraries, with focus-management and live-region examples.",
+        "highlights": [
+          "Language: MDX, stars: 19, forks: 2, license: CC-BY-4.0"
+        ],
+        "tags": [
+          "MDX",
+          "accessibility",
+          "React",
+          "WCAG"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "a11y-checklist"
+          }
+        ]
+      },
+      {
+        "id": "proj-8",
+        "kind": "project",
+        "title": "trpc-starter",
+        "detail": "Express + tRPC + Prisma + PostgreSQL starter with auth and typed API clients.",
+        "highlights": [],
+        "tags": [
+          "TypeScript",
+          "tRPC",
+          "Prisma",
+          "PostgreSQL"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "trpc-starter"
+          }
+        ]
+      },
+      {
+        "id": "proj-9",
+        "kind": "project",
+        "title": "habit-grid",
+        "url": "https://habit-grid.vercel.app",
+        "detail": "Habit tracker with a GitHub-style contribution grid. Next.js, Prisma, Postgres (Neon), Tailwind.",
+        "highlights": [],
+        "tags": [
+          "TypeScript",
+          "Next.js",
+          "Prisma",
+          "PostgreSQL",
+          "Tailwind"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "habit-grid"
+          }
+        ]
+      },
+      {
+        "id": "proj-10",
+        "kind": "project",
+        "title": "gql-playground",
+        "detail": "Apollo Client vs urql for a product catalog: caching, pagination, optimistic updates.",
+        "highlights": [],
+        "tags": [
+          "TypeScript",
+          "Apollo Client",
+          "GraphQL"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "gql-playground"
+          }
+        ]
+      },
+      {
+        "id": "proj-11",
+        "kind": "project",
+        "title": "portfolio-site",
+        "url": "https://riyakapoor.design",
+        "detail": "Source of riyakapoor.design. Next.js, Framer Motion, MDX case studies.",
+        "highlights": [],
+        "tags": [
+          "TypeScript",
+          "Next.js",
+          "Framer Motion",
+          "MDX"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "portfolio-site"
+          }
+        ]
+      },
+      {
+        "id": "proj-12",
+        "kind": "project",
+        "title": "Recipe Genie",
+        "detail": "Tell Recipe Genie what's in your kitchen and get three recipes you can cook tonight. Built with Lovable.",
+        "highlights": [
+          "Social proof line: \"Loved by 600+ home cooks\"",
+          "\"Pantry in seconds\" — type or paste your ingredients; Genie understands \"half an onion\" and \"leftover rice\".",
+          "\"Three good options\" — quick, comfort, or healthy, each with time, difficulty and a shopping gap list.",
+          "\"Swap anything\" — no cream? Genie rewrites the step with what you have.",
+          "\"Save your favourites\" — keep the recipes that worked and rate them."
+        ],
+        "tags": [
+          "React",
+          "Vite",
+          "Tailwind CSS",
+          "Supabase",
+          "OpenAI API",
+          "shadcn/ui",
+          "lucide-react",
+          "Lovable"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "lovable-1",
+            "quote": "Recipe Genie — dinner from whatever is in your fridge"
+          }
+        ]
+      },
+      {
+        "id": "link-3",
+        "kind": "link",
+        "title": "Recipe Genie",
+        "url": "https://recipe-genie.lovable.app",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "lovable-1",
+            "quote": "https://recipe-genie.lovable.app"
+          }
+        ]
+      },
+      {
+        "id": "link-4",
+        "kind": "link",
+        "title": "GitHub",
+        "url": "https://github.com/riyakapoor/recipe-genie-web",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "lovable-1",
+            "quote": "github.com/riyakapoor/recipe-genie-web"
+          }
+        ]
+      },
+      {
+        "id": "exp-7",
+        "kind": "experience",
+        "title": "Frontend engineer",
+        "highlights": [],
+        "tags": [
+          "React",
+          "TypeScript",
+          "Framer Motion",
+          "Figma",
+          "Storybook",
+          "Tailwind"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "Frontend engineer, 2.4 years. Previously interned at Saffron Ledger (fintech dashboards) and freelanced for early-stage"
+          }
+        ]
+      },
+      {
+        "id": "proj-13",
+        "kind": "project",
+        "title": "Checkout, rebuilt",
+        "org": "Kitebird",
+        "start": "2025",
+        "detail": "Problem: a three-step checkout with a 4.1s LCP on the payment step and a high drop-off at the address form.",
+        "highlights": [
+          "Outcome (stated near the end of the page): +9.4% checkout conversion, LCP 1.9s on the payment step.",
+          "shipped behind a feature flag, ran an A/B test for 3 weeks."
+        ],
+        "tags": [
+          "React",
+          "TypeScript",
+          "Framer Motion",
+          "Figma"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "Case study 1 — \"Checkout, rebuilt\" (Kitebird, 2025)"
+          }
+        ]
+      },
+      {
+        "id": "proj-14",
+        "kind": "project",
+        "title": "An accessibility audit that actually shipped",
+        "org": "Kitebird",
+        "start": "2025",
+        "detail": "Audited checkout against WCAG 2.1 AA with the design lead: 37 issues logged, 21 fixed in two sprints",
+        "highlights": [
+          "Audited checkout against WCAG 2.1 AA with the design lead: 37 issues logged, 21 fixed in two sprints",
+          "(focus order, form labels, contrast, live-region announcements for cart updates). Describes testing with NVDA and"
+        ],
+        "tags": [
+          "WCAG 2.1",
+          "NVDA",
+          "VoiceOver"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "Case study 2 — \"An accessibility audit that actually shipped\" (Kitebird, 2025)"
+          }
+        ]
+      },
+      {
+        "id": "proj-15",
+        "kind": "project",
+        "title": "Kite UI: a design system for a four-person team",
+        "org": "Kitebird",
+        "start": "2024",
+        "end": "2025",
+        "detail": "42 components, tokens generated from Figma variables via the design-tokens pipeline, Storybook docs,",
+        "highlights": [
+          "42 components, tokens generated from Figma variables via the design-tokens pipeline, Storybook docs,",
+          "adoption by 3 product squads. Explains the trade-offs of headless primitives vs styled components."
+        ],
+        "tags": [
+          "React",
+          "TypeScript",
+          "Figma",
+          "Storybook"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "Case study 3 — \"Kite UI: a design system for a four-person team\" (Kitebird, 2024–2025)"
+          }
+        ]
+      },
+      {
+        "id": "proj-16",
+        "kind": "project",
+        "title": "motion-kit: designing with springs",
+        "detail": "Why springs beat duration-based easing, the API design of useSpring/usePresence, gesture handoff, and how the",
+        "highlights": [
+          "library reached 212 GitHub stars. Embedded interactive demos."
+        ],
+        "tags": [
+          "springs",
+          "Framer Motion"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "Case study 4 — \"motion-kit: designing with springs\" (open source)"
+          }
+        ]
+      },
+      {
+        "id": "clip-2",
+        "kind": "clip",
+        "title": "Springs, not durations",
+        "start": "2025",
+        "highlights": [],
+        "tags": [
+          "motion design",
+          "React"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"Springs, not durations\" (2025) — essay version of her ReactFoo meetup talk."
+          }
+        ]
+      },
+      {
+        "id": "clip-3",
+        "kind": "clip",
+        "title": "Motion budgets: how much animation is too much?",
+        "start": "2024",
+        "highlights": [],
+        "tags": [
+          "motion design"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"Motion budgets: how much animation is too much?\" (2024)."
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "I care about motion, design systems and the details that make a product feel finished.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Frontend Engineer II at Kitebird who rebuilt checkout, lifting conversion 9.4%, and owns Kite UI, a component library used by 3 product squads.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Earlier at Kitebird, built the backend-for-frontend for the mobile web app in Node.js and Express. Maintains motion-kit, a spring-physics animation library for React with 212 GitHub stars. Started as a freelance UI developer for 3 early-stage clients.",
+        "origin": "model",
+        "factIds": [
+          "exp-2",
+          "exp-6",
+          "exp-4"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Kitebird Frontend Engineer Rebuilds Checkout; Conversion Rises 9.4%",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Riya Kapoor cut LCP on the payment step from 4.1s to 1.9s and also owns Kite UI, the shared component library of 42 components.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-1",
+        "text": "Rebuilt the three-step checkout as a single-page flow in React and TypeScript: conversion rose 9.4% in the A/B test and LCP on the payment step dropped from 4.1s to 1.9s.\nOwn Kite UI, the shared component library of 42 components used by 3 product squads.\nMentored 2 frontend interns.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-2",
+        "text": "Built the backend-for-frontend in Node.js and Express for the mobile web app, with one typed endpoint per screen.\nOwned API contracts with 2 backend teams and wrote the client-side data layer.\nSet up preview deployments for every pull request with GitHub Actions and Vercel.",
+        "origin": "model",
+        "factIds": [
+          "exp-2"
+        ]
+      },
+      {
+        "id": "exp:exp-3",
+        "text": "Built dashboard widgets, including cash-flow charts and invoice tables, in React with TypeScript and Recharts.\nFixed table rendering performance for accounts with 10,000+ invoices using virtualised lists.",
+        "origin": "model",
+        "factIds": [
+          "exp-3"
+        ]
+      },
+      {
+        "id": "exp:exp-4",
+        "text": "Designed and built marketing sites and a component kit for 3 early-stage clients with Next.js, Tailwind CSS and Figma.\nDelivered responsive, animated landing pages and handed over a reusable design system to each client.",
+        "origin": "model",
+        "factIds": [
+          "exp-4"
+        ]
+      },
+      {
+        "id": "exp:exp-5",
+        "text": "Ran weekly React workshops for 60+ students.\nOrganised a 24-hour campus hackathon.",
+        "origin": "model",
+        "factIds": [
+          "exp-5"
+        ]
+      },
+      {
+        "id": "exp:exp-6",
+        "text": "Maintains motion-kit, a spring-physics animation library for React with 212 GitHub stars.\nReviews community PRs.",
+        "origin": "model",
+        "factIds": [
+          "exp-6"
+        ]
+      },
+      {
+        "id": "proj:proj-1",
+        "text": "motion-kit is a spring-physics animation library for React with gesture support and reduced-motion handling. Riya maintains it, reviews community PRs, and it has 212 GitHub stars.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-2",
+        "text": "checkout-lab is a playground for checkout UX patterns: optimistic updates, address autocomplete and skeleton states. Built with Next.js, with local LCP and INP numbers for each experiment.",
+        "origin": "model",
+        "factIds": [
+          "proj-2"
+        ]
+      },
+      {
+        "id": "proj:proj-3",
+        "text": "design-tokens is a Style Dictionary pipeline that turns Figma variables into CSS, TypeScript and Tailwind tokens. One D2C storefront, Kite UI, uses it in production.",
+        "origin": "model",
+        "factIds": [
+          "proj-3"
+        ]
+      },
+      {
+        "id": "proj:proj-4",
+        "text": "Kite UI docs is the public Storybook for Kitebird's component library. The repo is internal and the docs site is public.",
+        "origin": "model",
+        "factIds": [
+          "proj-4"
+        ]
+      },
+      {
+        "id": "proj:proj-5",
+        "text": "notes-ai lets you ask questions about your markdown notes. It uses OpenAI embeddings, a local vector index and GPT answers, built with TypeScript and Next.js.",
+        "origin": "model",
+        "factIds": [
+          "proj-5"
+        ]
+      },
+      {
+        "id": "proj:proj-6",
+        "text": "recipe-genie-web is the code export of Recipe Genie, built with Lovable. It suggests dinner ideas from what is in your fridge, using Supabase and OpenAI.",
+        "origin": "model",
+        "factIds": [
+          "proj-6"
+        ]
+      },
+      {
+        "id": "proj:proj-7",
+        "text": "a11y-checklist is a practical accessibility checklist for React component libraries. It includes focus-management and live-region examples, written in MDX.",
+        "origin": "model",
+        "factIds": [
+          "proj-7"
+        ]
+      },
+      {
+        "id": "proj:proj-8",
+        "text": "trpc-starter is a starter built on Express, tRPC, Prisma and PostgreSQL. It comes with auth and typed API clients.",
+        "origin": "model",
+        "factIds": [
+          "proj-8"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "389",
+        "label": "GitHub stars",
+        "sourceId": "github"
+      },
+      {
+        "value": "34",
+        "label": "GitHub repos",
+        "sourceId": "github"
+      },
+      {
+        "value": "1",
+        "label": "Lovable app",
+        "sourceId": "lovable-1"
+      },
+      {
+        "value": "5",
+        "label": "case studies",
+        "sourceId": "portfolio-1"
+      }
+    ],
+    "openTo": [
+      "Design Engineer",
+      "Design Systems Engineer"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "frontend",
+        "name": "Frontend Engineering",
+        "short": "Frontend",
+        "score": 81,
+        "skills": [
+          {
+            "id": "react",
+            "name": "React",
+            "score": 90,
+            "evidence": "Rebuilt Kitebird checkout in React; owns 42-component Kite UI"
+          },
+          {
+            "id": "typescript",
+            "name": "TypeScript",
+            "score": 86,
+            "evidence": "196 of 412 recent commits in TypeScript"
+          },
+          {
+            "id": "accessibility",
+            "name": "Accessibility (WCAG)",
+            "score": 76,
+            "evidence": "WCAG 2.1 AA checkout audit: 37 issues logged, 21 fixed"
+          },
+          {
+            "id": "web-performance",
+            "name": "Web performance",
+            "score": 74,
+            "evidence": "Checkout LCP 4.1s to 1.9s at Kitebird"
+          },
+          {
+            "id": "nextjs",
+            "name": "Next.js",
+            "score": 66,
+            "evidence": "4 repos: checkout-lab, notes-ai, recipe-genie-web, portfolio-site"
+          }
+        ]
+      },
+      {
+        "id": "design-motion",
+        "name": "Design Systems & Motion",
+        "short": "Design & Motion",
+        "score": 85,
+        "skills": [
+          {
+            "id": "motion-design",
+            "name": "Motion & animation",
+            "score": 91,
+            "evidence": "motion-kit: spring physics, 212 stars, 4.2 KB gzipped"
+          },
+          {
+            "id": "design-systems",
+            "name": "Design systems",
+            "score": 87,
+            "evidence": "Owns Kite UI: 42 components, 3 squads, Storybook"
+          },
+          {
+            "id": "figma-to-code",
+            "name": "Figma-to-code",
+            "score": 74,
+            "evidence": "design-tokens syncs Figma variables to CSS, TS, Tailwind"
+          }
+        ]
+      },
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 58,
+        "skills": [
+          {
+            "id": "node-bff",
+            "name": "Node.js / BFF",
+            "score": 66,
+            "evidence": "Built Express BFF aggregating catalog, pricing, inventory APIs"
+          },
+          {
+            "id": "api-contracts",
+            "name": "REST & GraphQL APIs",
+            "score": 66,
+            "evidence": "Owned REST and GraphQL contracts with 2 backend teams"
+          },
+          {
+            "id": "postgres-prisma",
+            "name": "Postgres & Prisma",
+            "score": 50,
+            "evidence": "trpc-starter: Express, tRPC, Prisma, PostgreSQL with auth"
+          }
+        ]
+      },
+      {
+        "id": "ai-llm",
+        "name": "AI & LLM Apps",
+        "short": "AI & LLM",
+        "score": 36,
+        "skills": [
+          {
+            "id": "llm-integration",
+            "name": "LLM API integration",
+            "score": 52,
+            "evidence": "Recipe Genie: OpenAI via Supabase Edge Function, structured JSON"
+          },
+          {
+            "id": "rag-retrieval",
+            "name": "RAG & retrieval",
+            "score": 40,
+            "evidence": "notes-ai: embeddings search, TODO lists chunking and citations"
+          },
+          {
+            "id": "prompt-design",
+            "name": "Prompt design",
+            "score": 38,
+            "evidence": "Recipe Genie prompt takes dietary filters; no iteration shown"
+          },
+          {
+            "id": "ai-ux-patterns",
+            "name": "AI UX patterns",
+            "score": 32,
+            "evidence": "Only rotating loading text and a retry-less error toast"
+          },
+          {
+            "id": "llm-evals",
+            "name": "LLM evals",
+            "score": 12,
+            "evidence": "No eval harness in any of 34 repos; notes-ai has no tests"
+          }
+        ]
+      },
+      {
+        "id": "eng-practice",
+        "name": "Engineering Practice",
+        "short": "Eng Practice",
+        "score": 55,
+        "skills": [
+          {
+            "id": "ci-cd",
+            "name": "CI/CD & tooling",
+            "score": 62,
+            "evidence": "PR preview deploys via GitHub Actions and Vercel; Vite migration"
+          },
+          {
+            "id": "testing",
+            "name": "Automated testing",
+            "score": 48,
+            "evidence": "Tests in 6 of 34 repos; motion-kit has 31 test files"
+          }
+        ]
+      },
+      {
+        "id": "product-collab",
+        "name": "Product & Collaboration",
+        "short": "Product & Collab",
+        "score": 55,
+        "skills": [
+          {
+            "id": "mentoring-review",
+            "name": "Mentoring & review",
+            "score": 68,
+            "evidence": "Mentored 2 interns, both hired full-time; reviews for 4-person team"
+          },
+          {
+            "id": "experimentation",
+            "name": "Experimentation",
+            "score": 60,
+            "evidence": "3-week A/B test behind a feature flag on checkout"
+          },
+          {
+            "id": "product-analytics",
+            "name": "Product analytics",
+            "score": 18,
+            "evidence": "No GA, PostHog or Mixpanel on Recipe Genie despite 600+ users claimed"
+          }
+        ]
+      }
+    ],
+    "skillCount": 21,
+    "mastery": {
+      "score": 78,
+      "role": "Frontend Engineer"
+    },
+    "sources": [
+      "Resume",
+      "GitHub",
+      "Lovable",
+      "Portfolio"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

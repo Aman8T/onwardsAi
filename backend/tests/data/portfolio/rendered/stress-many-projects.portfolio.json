@@ -1,0 +1,1223 @@
+{
+  "profileId": "70370b808610fa1c8e4e7d5a53bbbfcc",
+  "publicId": "057691c0162ac4c3f27555c5",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T07:57:16Z",
+  "updatedAt": "2026-10-08T07:57:16Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "builder",
+      "style": {
+        "family": "lagoon",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "square",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "index",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "builder",
+          "because": "14 projects are the main proof and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 17 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "lagoon",
+          "because": "Suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "Technical type suits tighter spacing"
+        }
+      ]
+    },
+    {
+      "composition": "signature",
+      "style": {
+        "family": "glacier",
+        "field": "dawn",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "A different take: public work to show and a graph with clear peaks"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 17 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "glacier",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "A page built around the graph and the story"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    },
+    {
+      "composition": "ledger",
+      "style": {
+        "family": "iris",
+        "field": "horizon",
+        "type": "technical",
+        "corners": "square",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "stellar",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "ledger",
+          "because": "A different take: measured results to list"
+        },
+        {
+          "dimension": "graph",
+          "choice": "stellar",
+          "because": "6 axes read cleanly as spears"
+        },
+        {
+          "dimension": "family",
+          "choice": "iris",
+          "because": "A different hue to compare; it also suits backend and systems work"
+        },
+        {
+          "dimension": "type",
+          "choice": "technical",
+          "because": "Mono details suit backend and systems work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "A long record reads better with tighter spacing"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "builder",
+    "style": {
+      "family": "lagoon",
+      "field": "horizon",
+      "type": "technical",
+      "corners": "square",
+      "density": "compact"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "index",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "peaks",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "proof",
+        "kind": "proof",
+        "variant": "strip",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "ledger",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "compact",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "links",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "builder",
+        "because": "14 projects are the main proof and public work to show"
+      },
+      {
+        "dimension": "graph",
+        "choice": "peaks",
+        "because": "The top area is 17 above the median"
+      },
+      {
+        "dimension": "family",
+        "choice": "lagoon",
+        "because": "Suits backend and systems work"
+      },
+      {
+        "dimension": "type",
+        "choice": "technical",
+        "because": "Mono details suit backend and systems work"
+      },
+      {
+        "dimension": "field",
+        "choice": "horizon",
+        "because": "A calm band keeps a dense or early page quiet"
+      },
+      {
+        "dimension": "corners",
+        "choice": "square",
+        "because": "Sharp corners suit precise or editorial type"
+      },
+      {
+        "dimension": "density",
+        "choice": "compact",
+        "because": "Technical type suits tighter spacing"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Arjun Menon",
+      "headline": "Full-Stack Developer · 4.2 yrs · Kochi",
+      "role": "Full-Stack Developer",
+      "location": "Kochi, India",
+      "yearsExperience": 4.2,
+      "monogram": "AM"
+    },
+    "facts": [
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:arjun.menon.builds@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "arjun.menon.builds@example.com"
+          }
+        ]
+      },
+      {
+        "id": "contact-2",
+        "kind": "contact",
+        "title": "Phone",
+        "detail": "+91 90000 89012",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "+91 90000 89012"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "GitHub",
+        "url": "https://github.com/arjunmenon",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "github.com/arjunmenon"
+          },
+          {
+            "sourceId": "github",
+            "quote": "GitHub: Arjun Menon (@arjunmenon)"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "I learn a stack by building something small and useful with it.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "I learn a stack by building something small and useful with it."
+          }
+        ]
+      },
+      {
+        "id": "exp-1",
+        "kind": "experience",
+        "title": "Software Developer",
+        "org": "Tidewave Software",
+        "location": "Kochi",
+        "start": "2022-08",
+        "current": true,
+        "detail": "Travel-tech company (hotel booking software).",
+        "highlights": [
+          "Build and maintain a React and Node.js booking platform for 40 partner hotels; page load time dropped from 3.4 s to 1.6 s.",
+          "Added Stripe test-mode payments and webhooks; payment failures fell from 3.1% to 0.9%."
+        ],
+        "tags": [
+          "React",
+          "Node.js",
+          "AWS",
+          "Stripe"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Tidewave Software — Software Developer Kochi · Aug 2022 – Present"
+          }
+        ]
+      },
+      {
+        "id": "proj-1",
+        "kind": "project",
+        "title": "SplitEase",
+        "detail": "Expense splitting for flatmates with settle-up suggestions. React, Firebase.",
+        "highlights": [],
+        "tags": [
+          "React",
+          "Firebase"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "SplitEase — Expense splitting for flatmates with settle-up suggestions. React, Firebase."
+          }
+        ]
+      },
+      {
+        "id": "proj-2",
+        "kind": "project",
+        "title": "ChaiLog",
+        "detail": "Offline-first ledger PWA for tea-shop owners. TypeScript, IndexedDB.",
+        "highlights": [],
+        "tags": [
+          "TypeScript",
+          "IndexedDB"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "ChaiLog — Offline-first ledger PWA for tea-shop owners. TypeScript, IndexedDB."
+          }
+        ]
+      },
+      {
+        "id": "proj-3",
+        "kind": "project",
+        "title": "PinBoard CLI",
+        "detail": "Terminal bookmark manager with fuzzy search. Go.",
+        "highlights": [
+          "Language: Go, stars: 21, forks: 2, license: MIT"
+        ],
+        "tags": [
+          "Go"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "PinBoard CLI — Terminal bookmark manager with fuzzy search. Go. github.com/arjunmenon/pinboard-cli"
+          },
+          {
+            "sourceId": "github",
+            "quote": "pinboard-cli"
+          }
+        ]
+      },
+      {
+        "id": "proj-4",
+        "kind": "project",
+        "title": "Campus Carpool",
+        "detail": "Ride-sharing app for college commuters. Flutter, Firebase.",
+        "highlights": [],
+        "tags": [
+          "Flutter",
+          "Firebase"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Campus Carpool — Ride-sharing app for college commuters. Flutter, Firebase."
+          }
+        ]
+      },
+      {
+        "id": "proj-5",
+        "kind": "project",
+        "title": "Metro Minutes",
+        "detail": "Next-train API and timetable for Kochi Metro. FastAPI, PostgreSQL.",
+        "highlights": [
+          "Language: Python, stars: 47, forks: 6, license: MIT"
+        ],
+        "tags": [
+          "FastAPI",
+          "PostgreSQL",
+          "Python"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Metro Minutes — Next-train API and timetable for Kochi Metro. FastAPI, PostgreSQL."
+          },
+          {
+            "sourceId": "github",
+            "quote": "metro-minutes"
+          }
+        ]
+      },
+      {
+        "id": "proj-6",
+        "kind": "project",
+        "title": "Cinema Pulse",
+        "detail": "Sentiment dashboard for new film releases. Python, Streamlit.",
+        "highlights": [],
+        "tags": [
+          "Python",
+          "Streamlit"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Cinema Pulse — Sentiment dashboard for new film releases. Python, Streamlit."
+          }
+        ]
+      },
+      {
+        "id": "proj-7",
+        "kind": "project",
+        "title": "FocusTimer",
+        "detail": "Pomodoro desktop app with weekly stats. Electron, React.",
+        "highlights": [],
+        "tags": [
+          "Electron",
+          "React"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "FocusTimer — Pomodoro desktop app with weekly stats. Electron, React."
+          }
+        ]
+      },
+      {
+        "id": "proj-8",
+        "kind": "project",
+        "title": "Notely",
+        "detail": "Markdown notes with offline sync. Next.js, IndexedDB.",
+        "highlights": [],
+        "tags": [
+          "Next.js",
+          "IndexedDB",
+          "TypeScript"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Notely — Markdown notes with offline sync. Next.js, IndexedDB. github.com/arjunmenon/notely"
+          },
+          {
+            "sourceId": "github",
+            "quote": "notely"
+          }
+        ]
+      },
+      {
+        "id": "proj-9",
+        "kind": "project",
+        "title": "CricStats",
+        "detail": "Interactive IPL stats explorer. D3.js, TypeScript.",
+        "highlights": [
+          "Language: TypeScript, stars: 33, forks: 4"
+        ],
+        "tags": [
+          "D3.js",
+          "TypeScript"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "CricStats — Interactive IPL stats explorer. D3.js, TypeScript. github.com/arjunmenon/cricstats"
+          },
+          {
+            "sourceId": "github",
+            "quote": "cricstats"
+          }
+        ]
+      },
+      {
+        "id": "proj-10",
+        "kind": "project",
+        "title": "HabitHive",
+        "detail": "Habit tracker with streaks and reminders. React Native.",
+        "highlights": [],
+        "tags": [
+          "React Native"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "HabitHive — Habit tracker with streaks and reminders. React Native."
+          }
+        ]
+      },
+      {
+        "id": "proj-11",
+        "kind": "project",
+        "title": "Receipt Reader",
+        "detail": "OCR for grocery receipts into a spreadsheet. Python, Tesseract.",
+        "highlights": [],
+        "tags": [
+          "Python",
+          "Tesseract"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Receipt Reader — OCR for grocery receipts into a spreadsheet. Python, Tesseract."
+          }
+        ]
+      },
+      {
+        "id": "proj-12",
+        "kind": "project",
+        "title": "Quizzo",
+        "detail": "Real-time multiplayer quiz. Node.js, WebSockets.",
+        "highlights": [],
+        "tags": [
+          "Node.js",
+          "WebSockets",
+          "JavaScript"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Quizzo — Real-time multiplayer quiz. Node.js, WebSockets. github.com/arjunmenon/quizzo"
+          },
+          {
+            "sourceId": "github",
+            "quote": "quizzo"
+          }
+        ]
+      },
+      {
+        "id": "proj-13",
+        "kind": "project",
+        "title": "PortScan Lite",
+        "detail": "Educational port scanner. Rust.",
+        "highlights": [],
+        "tags": [
+          "Rust"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "PortScan Lite — Educational port scanner. Rust."
+          }
+        ]
+      },
+      {
+        "id": "proj-14",
+        "kind": "project",
+        "title": "Weather Watch",
+        "detail": "Telegram bot for rain alerts. Python, OpenWeather API.",
+        "highlights": [],
+        "tags": [
+          "Python",
+          "OpenWeather API"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Weather Watch — Telegram bot for rain alerts. Python, OpenWeather API."
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "B.Tech, Computer Science",
+        "org": "Malabar Institute of Technology, Kochi",
+        "start": "2018",
+        "end": "2022",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.Tech, Computer Science — Malabar Institute of Technology, Kochi 2018 – 2022"
+          }
+        ]
+      },
+      {
+        "id": "quote-2",
+        "kind": "quote",
+        "title": "I build small things every month.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "github",
+            "quote": "I build small things every month."
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "I learn a stack by building something small and useful with it.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Software Developer at Tidewave Software who cut booking page load time from 3.4 s to 1.6 s and brought payment failures from 3.1% to 0.9%.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Arjun studied Computer Science at Malabar Institute of Technology in Kochi, graduating in 2022. Since August 2022 the work has been at Tidewave Software, where payment failures fell from 3.1% to 0.9% after Stripe test-mode payments and webhooks were added.",
+        "origin": "model",
+        "factIds": [
+          "edu-1",
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Tidewave Developer Cuts Hotel Booking Page Load From 3.4 s to 1.6 s",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Arjun Menon builds and maintains a React and Node.js booking platform for 40 partner hotels, and added Stripe test-mode payments and webhooks.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-1",
+        "text": "Build and maintain a React and Node.js booking platform for 40 partner hotels; page load time dropped from 3.4 s to 1.6 s.\nAdded Stripe test-mode payments and webhooks; payment failures fell from 3.1% to 0.9%.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "proj:proj-1",
+        "text": "SplitEase splits shared expenses between flatmates and suggests how to settle up. Built with React and Firebase.",
+        "origin": "model",
+        "factIds": [
+          "proj-1"
+        ]
+      },
+      {
+        "id": "proj:proj-2",
+        "text": "ChaiLog is an offline-first ledger app for tea-shop owners. It is a PWA built with TypeScript and IndexedDB.",
+        "origin": "model",
+        "factIds": [
+          "proj-2"
+        ]
+      },
+      {
+        "id": "proj:proj-3",
+        "text": "PinBoard CLI is a terminal bookmark manager with fuzzy search, built in Go. It has 21 stars and 2 forks, under an MIT license.",
+        "origin": "model",
+        "factIds": [
+          "proj-3"
+        ]
+      },
+      {
+        "id": "proj:proj-4",
+        "text": "Campus Carpool is a ride-sharing app for college commuters. Built with Flutter and Firebase.",
+        "origin": "model",
+        "factIds": [
+          "proj-4"
+        ]
+      },
+      {
+        "id": "proj:proj-5",
+        "text": "Metro Minutes is a next-train API and timetable for Kochi Metro. Built with FastAPI and PostgreSQL in Python, MIT licensed, with 47 stars and 6 forks.",
+        "origin": "model",
+        "factIds": [
+          "proj-5"
+        ]
+      },
+      {
+        "id": "proj:proj-6",
+        "text": "Cinema Pulse is a sentiment dashboard for new film releases. Built with Python and Streamlit.",
+        "origin": "model",
+        "factIds": [
+          "proj-6"
+        ]
+      },
+      {
+        "id": "proj:proj-7",
+        "text": "FocusTimer is a Pomodoro desktop app that shows weekly stats. Built with Electron and React.",
+        "origin": "model",
+        "factIds": [
+          "proj-7"
+        ]
+      },
+      {
+        "id": "proj:proj-8",
+        "text": "Notely is a Markdown notes app with offline sync. Built with Next.js, TypeScript and IndexedDB.",
+        "origin": "model",
+        "factIds": [
+          "proj-8"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "143",
+        "label": "GitHub stars",
+        "sourceId": "github"
+      },
+      {
+        "value": "18",
+        "label": "GitHub repos",
+        "sourceId": "github"
+      },
+      {
+        "value": "7",
+        "label": "GitHub languages",
+        "sourceId": "github"
+      },
+      {
+        "value": "14",
+        "label": "projects",
+        "sourceId": "resume"
+      }
+    ],
+    "openTo": [
+      "Full-Stack Engineer",
+      "Founding Engineer"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "frontend",
+        "name": "Frontend",
+        "short": "Frontend",
+        "score": 70,
+        "skills": [
+          {
+            "id": "react",
+            "name": "React",
+            "score": 76,
+            "evidence": "React and Node.js booking platform for 40 partner hotels; load 3.4 s to 1.6 s"
+          },
+          {
+            "id": "typescript",
+            "name": "TypeScript",
+            "score": 70,
+            "evidence": "TypeScript is the main language of 6 of 17 original repos"
+          },
+          {
+            "id": "data-viz",
+            "name": "Data visualisation",
+            "score": 64,
+            "evidence": "cricstats: D3.js IPL stats explorer, 33 stars"
+          }
+        ]
+      },
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 62,
+        "skills": [
+          {
+            "id": "nodejs",
+            "name": "Node.js",
+            "score": 68,
+            "evidence": "Node.js booking platform backend; Quizzo real-time quiz"
+          },
+          {
+            "id": "fastapi",
+            "name": "FastAPI",
+            "score": 62,
+            "evidence": "metro-minutes: FastAPI and PostgreSQL, 47 stars, 22 test files"
+          },
+          {
+            "id": "websockets",
+            "name": "WebSockets",
+            "score": 56,
+            "evidence": "Quizzo: real-time multiplayer quiz on WebSockets"
+          }
+        ]
+      },
+      {
+        "id": "mobile",
+        "name": "Mobile",
+        "short": "Mobile",
+        "score": 50,
+        "skills": [
+          {
+            "id": "react-native",
+            "name": "React Native",
+            "score": 52,
+            "evidence": "HabitHive habit tracker in React Native"
+          },
+          {
+            "id": "flutter",
+            "name": "Flutter",
+            "score": 48,
+            "evidence": "Campus Carpool ride-sharing app in Flutter and Firebase"
+          }
+        ]
+      },
+      {
+        "id": "data-python",
+        "name": "Data & Python",
+        "short": "Data & Python",
+        "score": 52,
+        "skills": [
+          {
+            "id": "python",
+            "name": "Python",
+            "score": 62,
+            "evidence": "Python in 4 of 17 original repos, including metro-minutes"
+          },
+          {
+            "id": "ocr-text",
+            "name": "OCR & text processing",
+            "score": 48,
+            "evidence": "Receipt Reader: OCR for grocery receipts with Tesseract"
+          },
+          {
+            "id": "streamlit",
+            "name": "Dashboards (Streamlit)",
+            "score": 46,
+            "evidence": "Cinema Pulse sentiment dashboard in Streamlit"
+          }
+        ]
+      },
+      {
+        "id": "systems-tooling",
+        "name": "Systems & Tooling",
+        "short": "Systems",
+        "score": 40,
+        "skills": [
+          {
+            "id": "go",
+            "name": "Go",
+            "score": 44,
+            "evidence": "pinboard-cli: Go terminal tool, 21 stars, 11 test files"
+          },
+          {
+            "id": "cli-tooling",
+            "name": "CLI tooling",
+            "score": 40,
+            "evidence": "pinboard-cli with fuzzy search; dotfiles in Shell"
+          },
+          {
+            "id": "rust",
+            "name": "Rust",
+            "score": 36,
+            "evidence": "PortScan Lite in Rust; listed as basic"
+          }
+        ]
+      },
+      {
+        "id": "product-sense",
+        "name": "Product Sense",
+        "short": "Product Sense",
+        "score": 54,
+        "skills": [
+          {
+            "id": "ship-end-to-end",
+            "name": "Shipping end to end",
+            "score": 66,
+            "evidence": "14 side projects since 2021; ships schema, API, UI and AWS deployment at work"
+          },
+          {
+            "id": "prototyping",
+            "name": "Prototyping",
+            "score": 58,
+            "evidence": "18 repos, most of them small one-off builds"
+          },
+          {
+            "id": "user-feedback",
+            "name": "User feedback loops",
+            "score": 38,
+            "evidence": "No user numbers or feedback are mentioned for any of the 14 projects"
+          }
+        ]
+      }
+    ],
+    "skillCount": 17,
+    "mastery": {
+      "score": 60,
+      "role": "Full-Stack Developer"
+    },
+    "sources": [
+      "Resume",
+      "GitHub"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

@@ -1,0 +1,1174 @@
+{
+  "profileId": "d720d038f580467cfcf20a844aff952b",
+  "publicId": "df4b9ade164ef445eceea495",
+  "version": 1,
+  "kitVersion": 1,
+  "createdAt": "2026-10-08T07:56:42Z",
+  "updatedAt": "2026-10-08T07:56:42Z",
+  "lookIndex": 0,
+  "looks": [
+    {
+      "composition": "narrative",
+      "style": {
+        "family": "rose",
+        "field": "corner",
+        "type": "studio",
+        "corners": "soft",
+        "density": "airy"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "spotlight",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "prose",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "row",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "narrative",
+          "because": "12 writing samples carry the story and one standout area, framed calmly"
+        },
+        {
+          "dimension": "graph",
+          "choice": "spotlight",
+          "because": "One area leads the next by 44"
+        },
+        {
+          "dimension": "family",
+          "choice": "rose",
+          "because": "Suits writing and content work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "Expressive serif headlines suit design and written work"
+        },
+        {
+          "dimension": "field",
+          "choice": "corner",
+          "because": "A single corner glow keeps attention on the words"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "airy",
+          "because": "Plenty of room to read"
+        }
+      ]
+    },
+    {
+      "composition": "signature",
+      "style": {
+        "family": "orchid",
+        "field": "dawn",
+        "type": "studio",
+        "corners": "soft",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "split",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "peaks",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "proof",
+          "kind": "proof",
+          "variant": "strip",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "about",
+          "kind": "about",
+          "variant": "lede",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "timeline",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "featureList",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "signOff",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "signature",
+          "because": "A different take: 3 roles to lay out and public work to show"
+        },
+        {
+          "dimension": "graph",
+          "choice": "peaks",
+          "because": "The top area is 49 above the median"
+        },
+        {
+          "dimension": "family",
+          "choice": "orchid",
+          "because": "A different hue to compare; it also suits writing and content work"
+        },
+        {
+          "dimension": "type",
+          "choice": "studio",
+          "because": "Expressive serif headlines suit design and written work"
+        },
+        {
+          "dimension": "field",
+          "choice": "dawn",
+          "because": "The signature layout carries the fullest backdrop"
+        },
+        {
+          "dimension": "corners",
+          "choice": "soft",
+          "because": "Soft corners sit well with serif headlines"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "17 entries to fit"
+        }
+      ]
+    },
+    {
+      "composition": "ledger",
+      "style": {
+        "family": "clay",
+        "field": "horizon",
+        "type": "editorial",
+        "corners": "square",
+        "density": "compact"
+      },
+      "blocks": [
+        {
+          "id": "hero",
+          "kind": "hero",
+          "variant": "statement",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "graph",
+          "kind": "graph",
+          "variant": "stellar",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "experience",
+          "kind": "experience",
+          "variant": "ledger",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "achievements",
+          "kind": "achievements",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "projects",
+          "kind": "projects",
+          "variant": "list",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "clips",
+          "kind": "clips",
+          "variant": "list",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "education",
+          "kind": "education",
+          "variant": "compact",
+          "visible": true,
+          "public": true
+        },
+        {
+          "id": "openTo",
+          "kind": "openTo",
+          "variant": "note",
+          "visible": false,
+          "public": false
+        },
+        {
+          "id": "contact",
+          "kind": "contact",
+          "variant": "links",
+          "visible": true,
+          "public": true
+        }
+      ],
+      "graph": {
+        "hiddenDomainIds": [],
+        "stats": true
+      },
+      "privacy": {
+        "email": false,
+        "phone": false,
+        "grades": false
+      },
+      "reasons": [
+        {
+          "dimension": "composition",
+          "choice": "ledger",
+          "because": "A different take: 3 roles in the record and measured results to list"
+        },
+        {
+          "dimension": "graph",
+          "choice": "stellar",
+          "because": "6 axes read cleanly as spears"
+        },
+        {
+          "dimension": "family",
+          "choice": "clay",
+          "because": "A different hue to compare; it also suits writing and content work"
+        },
+        {
+          "dimension": "type",
+          "choice": "editorial",
+          "because": "Writing is the work"
+        },
+        {
+          "dimension": "field",
+          "choice": "horizon",
+          "because": "A calm band keeps a dense or early page quiet"
+        },
+        {
+          "dimension": "corners",
+          "choice": "square",
+          "because": "Sharp corners suit precise or editorial type"
+        },
+        {
+          "dimension": "density",
+          "choice": "compact",
+          "because": "A long record reads better with tighter spacing"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "composition": "narrative",
+    "style": {
+      "family": "rose",
+      "field": "corner",
+      "type": "studio",
+      "corners": "soft",
+      "density": "airy"
+    },
+    "blocks": [
+      {
+        "id": "hero",
+        "kind": "hero",
+        "variant": "statement",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "graph",
+        "kind": "graph",
+        "variant": "spotlight",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "proof",
+        "kind": "proof",
+        "variant": "strip",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "about",
+        "kind": "about",
+        "variant": "prose",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "experience",
+        "kind": "experience",
+        "variant": "timeline",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "clips",
+        "kind": "clips",
+        "variant": "list",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "projects",
+        "kind": "projects",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "achievements",
+        "kind": "achievements",
+        "variant": "list",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "education",
+        "kind": "education",
+        "variant": "row",
+        "visible": true,
+        "public": true
+      },
+      {
+        "id": "openTo",
+        "kind": "openTo",
+        "variant": "note",
+        "visible": false,
+        "public": false
+      },
+      {
+        "id": "contact",
+        "kind": "contact",
+        "variant": "signOff",
+        "visible": true,
+        "public": true
+      }
+    ],
+    "graph": {
+      "hiddenDomainIds": [],
+      "stats": true
+    },
+    "privacy": {
+      "email": false,
+      "phone": false,
+      "grades": false
+    },
+    "reasons": [
+      {
+        "dimension": "composition",
+        "choice": "narrative",
+        "because": "12 writing samples carry the story and one standout area, framed calmly"
+      },
+      {
+        "dimension": "graph",
+        "choice": "spotlight",
+        "because": "One area leads the next by 44"
+      },
+      {
+        "dimension": "family",
+        "choice": "rose",
+        "because": "Suits writing and content work"
+      },
+      {
+        "dimension": "type",
+        "choice": "studio",
+        "because": "Expressive serif headlines suit design and written work"
+      },
+      {
+        "dimension": "field",
+        "choice": "corner",
+        "because": "A single corner glow keeps attention on the words"
+      },
+      {
+        "dimension": "corners",
+        "choice": "soft",
+        "because": "Soft corners sit well with serif headlines"
+      },
+      {
+        "dimension": "density",
+        "choice": "airy",
+        "because": "Plenty of room to read"
+      }
+    ]
+  },
+  "content": {
+    "person": {
+      "name": "Sana Sheikh",
+      "headline": "Content Marketer · 1.5 yrs · Mumbai",
+      "role": "Content Marketer",
+      "location": "Mumbai, India",
+      "yearsExperience": 1.5,
+      "monogram": "SS"
+    },
+    "facts": [
+      {
+        "id": "contact-1",
+        "kind": "contact",
+        "title": "Email",
+        "url": "mailto:sana.sheikh.writes@example.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "sana.sheikh.writes@example.com"
+          }
+        ]
+      },
+      {
+        "id": "contact-2",
+        "kind": "contact",
+        "title": "Phone",
+        "detail": "+91 90000 34567",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "+91 90000 34567"
+          }
+        ]
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "title": "sanasheikh.in",
+        "url": "https://sanasheikh.in",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "sanasheikh.in"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "quote": "https://sanasheikh.in"
+          }
+        ]
+      },
+      {
+        "id": "link-2",
+        "kind": "link",
+        "title": "sanasheikh.substack.com",
+        "url": "https://sanasheikh.substack.com",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "sanasheikh.substack.com"
+          },
+          {
+            "sourceId": "link-1",
+            "quote": "https://sanasheikh.substack.com"
+          }
+        ]
+      },
+      {
+        "id": "quote-1",
+        "kind": "quote",
+        "title": "I write long-form posts and a newsletter people finish, and I edit my own drafts hard.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "I write long-form posts and a newsletter people finish, and I edit my own drafts hard."
+          }
+        ]
+      },
+      {
+        "id": "exp-1",
+        "kind": "experience",
+        "title": "Content Marketing Associate",
+        "org": "Brightleaf",
+        "location": "Mumbai",
+        "start": "2025-03",
+        "current": true,
+        "detail": "D2C skincare brand.",
+        "highlights": [
+          "Write the brand's long-form blog (2 posts a week) and the fortnightly newsletter (18,000 subscribers).",
+          "\"Why your sunscreen pills\" was the blog's most-read post of 2025."
+        ],
+        "tags": [
+          "long-form blog",
+          "newsletter",
+          "skincare"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "Brightleaf — Content Marketing Associate Mumbai · Mar 2025 – Present"
+          }
+        ]
+      },
+      {
+        "id": "exp-2",
+        "kind": "experience",
+        "title": "Content Intern",
+        "org": "The Daily Bowl",
+        "location": "Mumbai",
+        "start": "2024-09",
+        "end": "2025-02",
+        "detail": "Food media publication.",
+        "highlights": [
+          "31 published recipes and features."
+        ],
+        "tags": [
+          "recipes",
+          "food media"
+        ],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "The Daily Bowl — Content Intern Mumbai · Sep 2024 – Feb 2025"
+          }
+        ]
+      },
+      {
+        "id": "clip-1",
+        "kind": "clip",
+        "title": "Why your sunscreen pills",
+        "org": "Brightleaf blog",
+        "start": "2025",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "\"Why your sunscreen pills\" — Brightleaf blog, 2025"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"Why your sunscreen pills\" — Brightleaf blog, 2025"
+          }
+        ]
+      },
+      {
+        "id": "clip-2",
+        "kind": "clip",
+        "title": "The case for boring breakfasts",
+        "org": "The Daily Bowl",
+        "start": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "\"The case for boring breakfasts\" — The Daily Bowl, 2024"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"The case for boring breakfasts\" — The Daily Bowl, 2024"
+          }
+        ]
+      },
+      {
+        "id": "clip-3",
+        "kind": "clip",
+        "title": "A field guide to Mumbai's Irani cafés",
+        "org": "The Daily Bowl",
+        "start": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "\"A field guide to Mumbai's Irani cafés\" — The Daily Bowl, 2024"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"A field guide to Mumbai's Irani cafés\" — The Daily Bowl, 2024"
+          }
+        ]
+      },
+      {
+        "id": "clip-4",
+        "kind": "clip",
+        "title": "What 18,000 readers taught us about subject lines",
+        "org": "Brightleaf newsletter",
+        "start": "2026",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "\"What 18,000 readers taught us about subject lines\" — Brightleaf newsletter, 2026"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"What 18,000 readers taught us about subject lines\" — Brightleaf newsletter, 2026"
+          }
+        ]
+      },
+      {
+        "id": "edu-1",
+        "kind": "education",
+        "title": "B.A. English Literature",
+        "org": "St. Xavier's College, Mumbai",
+        "start": "2021",
+        "end": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "resume",
+            "quote": "B.A. English Literature — St. Xavier's College, Mumbai 2021 – 2024"
+          }
+        ]
+      },
+      {
+        "id": "quote-2",
+        "kind": "quote",
+        "title": "I write things people finish reading.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "I write things people finish reading."
+          }
+        ]
+      },
+      {
+        "id": "exp-3",
+        "kind": "experience",
+        "title": "Content marketer",
+        "org": "Brightleaf",
+        "location": "Mumbai",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "Content marketer in Mumbai. B.A. English Literature, St. Xavier's College. Writes the Brightleaf blog and newsletter; before that, food features at The Daily Bowl."
+          }
+        ]
+      },
+      {
+        "id": "edu-2",
+        "kind": "education",
+        "title": "B.A. English Literature",
+        "org": "St. Xavier's College",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "Content marketer in Mumbai. B.A. English Literature, St. Xavier's College. Writes the Brightleaf blog and newsletter; before that, food features at The Daily Bowl."
+          }
+        ]
+      },
+      {
+        "id": "clip-5",
+        "kind": "clip",
+        "title": "Ceramides, explained without the jargon",
+        "org": "Brightleaf blog",
+        "start": "2025",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"Ceramides, explained without the jargon\" — Brightleaf blog, 2025"
+          }
+        ]
+      },
+      {
+        "id": "clip-6",
+        "kind": "clip",
+        "title": "How to read a skincare label",
+        "org": "Brightleaf blog",
+        "start": "2025",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"How to read a skincare label\" — Brightleaf blog, 2025"
+          }
+        ]
+      },
+      {
+        "id": "clip-7",
+        "kind": "clip",
+        "title": "The monsoon routine, in five swaps",
+        "org": "Brightleaf blog",
+        "start": "2025",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"The monsoon routine, in five swaps\" — Brightleaf blog, 2025"
+          }
+        ]
+      },
+      {
+        "id": "clip-8",
+        "kind": "clip",
+        "title": "Eight ways to rescue leftover rice",
+        "org": "The Daily Bowl",
+        "start": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"Eight ways to rescue leftover rice\" — The Daily Bowl, 2024"
+          }
+        ]
+      },
+      {
+        "id": "clip-9",
+        "kind": "clip",
+        "title": "Kolkata roll or Mumbai frankie?",
+        "org": "The Daily Bowl",
+        "start": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"Kolkata roll or Mumbai frankie?\" — The Daily Bowl, 2024"
+          }
+        ]
+      },
+      {
+        "id": "clip-10",
+        "kind": "clip",
+        "title": "The dosa that took three days",
+        "org": "The Daily Bowl",
+        "start": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"The dosa that took three days\" — The Daily Bowl, 2024"
+          }
+        ]
+      },
+      {
+        "id": "clip-11",
+        "kind": "clip",
+        "title": "Chai stalls, ranked by cup size",
+        "org": "The Daily Bowl",
+        "start": "2024",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"Chai stalls, ranked by cup size\" — The Daily Bowl, 2024"
+          }
+        ]
+      },
+      {
+        "id": "clip-12",
+        "kind": "clip",
+        "title": "What a recipe tester actually does",
+        "org": "The Daily Bowl",
+        "start": "2025",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "portfolio-1",
+            "quote": "\"What a recipe tester actually does\" — The Daily Bowl, 2025"
+          }
+        ]
+      },
+      {
+        "id": "quote-3",
+        "kind": "quote",
+        "title": "Description: Notes on writing, editing and the small decisions behind good copy.",
+        "highlights": [],
+        "tags": [],
+        "sourceRefs": [
+          {
+            "sourceId": "link-1",
+            "quote": "Description: Notes on writing, editing and the small decisions behind good copy."
+          }
+        ]
+      }
+    ],
+    "slots": [
+      {
+        "id": "tagline",
+        "text": "I write long-form posts and a newsletter people finish, and I edit my own drafts hard.",
+        "origin": "model",
+        "factIds": [
+          "quote-1"
+        ]
+      },
+      {
+        "id": "aboutLede",
+        "text": "Content Marketing Associate at Brightleaf who writes 2 blog posts a week and a fortnightly newsletter for 18,000 subscribers.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "aboutBody",
+        "text": "Sana's post \"Why your sunscreen pills\" was the Brightleaf blog's most-read of 2025. Earlier, as a content intern at The Daily Bowl, Sana published 31 recipes and features. Sana studied English Literature at St. Xavier's College, Mumbai.",
+        "origin": "model",
+        "factIds": [
+          "exp-1",
+          "exp-2",
+          "edu-1"
+        ]
+      },
+      {
+        "id": "pressHeadline",
+        "text": "Brightleaf Content Marketer Writes 2 Blog Posts a Week for a Skincare Brand",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "pressDeck",
+        "text": "Sana Sheikh also writes the brand's fortnightly newsletter, which reaches 18,000 subscribers, and wrote the blog's most-read post of 2025.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-1",
+        "text": "Writes the long-form blog for a D2C skincare brand, 2 posts a week.\nWrites the fortnightly newsletter, which goes to 18,000 subscribers.\n\"Why your sunscreen pills\" was the blog's most-read post of 2025.",
+        "origin": "model",
+        "factIds": [
+          "exp-1"
+        ]
+      },
+      {
+        "id": "exp:exp-2",
+        "text": "Worked as Content Intern at The Daily Bowl, a food media publication in Mumbai.\nWrote 31 published recipes and features.",
+        "origin": "model",
+        "factIds": [
+          "exp-2"
+        ]
+      }
+    ],
+    "stats": [
+      {
+        "value": "12",
+        "label": "clips",
+        "sourceId": "portfolio-1"
+      },
+      {
+        "value": "40+",
+        "label": "Substack posts",
+        "sourceId": "link-1"
+      },
+      {
+        "value": "2",
+        "label": "roles",
+        "sourceId": "resume"
+      }
+    ],
+    "openTo": [
+      "Email & Newsletter Editor",
+      "Brand Copywriter"
+    ]
+  },
+  "graph": {
+    "asOf": "2026-10-08",
+    "domains": [
+      {
+        "id": "writing-content",
+        "name": "Writing & Content",
+        "short": "Writing",
+        "score": 78,
+        "skills": [
+          {
+            "id": "long-form-writing",
+            "name": "Long-form writing",
+            "score": 86,
+            "evidence": "Writes Brightleaf's long-form blog, 2 posts a week"
+          },
+          {
+            "id": "editing",
+            "name": "Editing",
+            "score": 81,
+            "evidence": "40+ Substack posts, many about editing drafts"
+          },
+          {
+            "id": "newsletter-writing",
+            "name": "Newsletter writing",
+            "score": 77,
+            "evidence": "Fortnightly Brightleaf newsletter with 18,000 subscribers"
+          },
+          {
+            "id": "brand-voice",
+            "name": "Brand voice",
+            "score": 68,
+            "evidence": "Clips for two different brands: Brightleaf and The Daily Bowl"
+          }
+        ]
+      },
+      {
+        "id": "seo",
+        "name": "SEO",
+        "short": "SEO",
+        "score": 34,
+        "skills": [
+          {
+            "id": "keyword-research",
+            "name": "Keyword research",
+            "score": 36,
+            "evidence": "No keyword or SEO tool appears in any bullet or skills line"
+          },
+          {
+            "id": "on-page-seo",
+            "name": "On-page SEO",
+            "score": 32,
+            "evidence": "Site pages have no visible meta descriptions or keyword-led titles"
+          }
+        ]
+      },
+      {
+        "id": "social-media",
+        "name": "Social Media",
+        "short": "Social Media",
+        "score": 30,
+        "skills": [
+          {
+            "id": "social-copy",
+            "name": "Social copywriting",
+            "score": 34,
+            "evidence": "No social media work is listed in either role"
+          },
+          {
+            "id": "content-calendars",
+            "name": "Content calendars",
+            "score": 26,
+            "evidence": "Publishes 2 posts a week; no calendar or planning tool is listed"
+          }
+        ]
+      },
+      {
+        "id": "analytics",
+        "name": "Analytics",
+        "short": "Analytics",
+        "score": 22,
+        "skills": [
+          {
+            "id": "newsletter-metrics",
+            "name": "Newsletter metrics",
+            "score": 28,
+            "evidence": "States 18,000 subscribers; no open or click rates are reported"
+          },
+          {
+            "id": "google-analytics",
+            "name": "Google Analytics",
+            "score": 16,
+            "evidence": "Google Analytics (basic) listed; no bullet uses it"
+          }
+        ]
+      },
+      {
+        "id": "design-tools",
+        "name": "Design Tools",
+        "short": "Design Tools",
+        "score": 28,
+        "skills": [
+          {
+            "id": "canva",
+            "name": "Canva",
+            "score": 34,
+            "evidence": "Canva (basic) listed under Tools"
+          },
+          {
+            "id": "photo-editing",
+            "name": "Photo editing",
+            "score": 22,
+            "evidence": "No design, photo or video work shown on the site"
+          }
+        ]
+      },
+      {
+        "id": "campaigns",
+        "name": "Campaigns",
+        "short": "Campaigns",
+        "score": 26,
+        "skills": [
+          {
+            "id": "email-campaigns",
+            "name": "Email campaign planning",
+            "score": 30,
+            "evidence": "Runs a fortnightly newsletter; no campaign plan or test is described"
+          },
+          {
+            "id": "campaign-measurement",
+            "name": "Campaign measurement",
+            "score": 22,
+            "evidence": "No campaign result beyond the most-read post of 2025"
+          }
+        ]
+      }
+    ],
+    "skillCount": 14,
+    "mastery": {
+      "score": 64,
+      "role": "Content Marketer"
+    },
+    "sources": [
+      "Resume",
+      "Personal site",
+      "Substack"
+    ]
+  },
+  "publish": {
+    "state": "draft",
+    "defaultView": "standard"
+  },
+  "graphOutdated": false
+}

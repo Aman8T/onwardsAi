@@ -1367,3 +1367,13 @@ async def test_extract_facts_over_every_fixture_is_one_call_per_source_and_the_v
     for src in fx.ctx.sources:
         shown = sum(f'<source id="{src.id}"' in call.user_text for call in claude.structured_calls)
         assert shown == (1 if src.content.strip() else 0)
+
+
+def test_a_quote_loses_its_profile_label() -> None:
+    from tayyari.portfolio.facts import _LABEL
+
+    assert _LABEL.sub("", "Bio: Staff engineer @ Parcelwise. Postgres, Go and calm on-call rotations.") == (
+        "Staff engineer @ Parcelwise. Postgres, Go and calm on-call rotations."
+    )
+    assert _LABEL.sub("", "About me — I like small devices.") == "I like small devices."
+    assert _LABEL.sub("", "Biography of a project") == "Biography of a project"

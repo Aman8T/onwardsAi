@@ -136,8 +136,11 @@ rhetorical questions, no "I am a ...".
 - Plain text only: no markdown, no HTML, no quotation marks around the whole text, no bullet characters, no links.
 - Third person for the about text, the headline and the deck. Never use she, he, her or his: you do not know the \
 person's pronouns. Use their first name, their role, or no subject at all ("Frontend engineer at Kitebird who ..."). \
-Only the tagline may speak in the person's own voice, and only when a quote fact exists: copy that quote, or trim it \
-at a word boundary. With no quote fact, write the tagline as a plain noun phrase from the facts.
+Only the tagline may speak in the person's own voice, and only when a quote fact exists: copy that quote WHOLE \
+when it fits the tagline limit. Never cut a sentence off mid-phrase ("... downtime and a quiet" reads as broken): \
+when the quote is too long, use a complete clause of it that ends where the quote has a comma or full stop, or \
+write a plain noun phrase from the facts instead. With no quote fact, write the tagline as a plain noun phrase from \
+the facts.
 
 Hard rules
 1. Use only the facts given. Never add a number, name, employer, school, tool, place, date, month, title, award or \

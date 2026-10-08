@@ -201,7 +201,8 @@ def fallback_slots(
             continue
         candidates: list[Candidate] = []
         if slot_id == "tagline":
-            candidates = [(trim(plain(q.title), limit), [q.id]) for q in quotes]
+            # The person's own words only when they fit whole: a cut-off quote reads as a mistake.
+            candidates = [(plain(q.title), [q.id]) for q in quotes if len(plain(q.title)) <= limit]
             candidates += [(trim(person.headline, limit), []), (trim(person.role, limit), [])]
         elif slot_id == "aboutLede":
             candidates = _lede_candidates(facts, person, limit)

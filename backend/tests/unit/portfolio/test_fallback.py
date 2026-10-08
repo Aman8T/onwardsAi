@@ -87,10 +87,11 @@ def test_the_persona_pages_get_their_own_facts_in_the_slots(name: str) -> None:
     quotes = [f for f in facts if f.kind == "quote"]
     assert quotes
     tagline = by_id["tagline"]
-    assert tagline.factIds == [quotes[0].id]
-    assert quotes[0].title.startswith(tagline.text) and len(tagline.text) <= SLOT_LIMITS["tagline"]
     if len(quotes[0].title) <= SLOT_LIMITS["tagline"]:
+        assert tagline.factIds == [quotes[0].id]
         assert tagline.text == quotes[0].title
+    else:  # a quote that does not fit whole is never cut: the headline stands in
+        assert tagline.text == person.headline[: SLOT_LIMITS["tagline"]] or tagline.factIds == []
     assert by_id["pressHeadline"].text == f"{person.name}, {person.role}"
     assert by_id["pressDeck"].text == by_id["aboutLede"].text
 
@@ -156,15 +157,13 @@ def test_long_titles_and_fourteen_projects_stay_within_the_limits() -> None:
 # ───────────────────────── choices ─────────────────────────
 
 
-def test_the_tagline_is_trimmed_at_a_word_boundary() -> None:
+def test_a_quote_too_long_for_the_tagline_is_never_cut() -> None:
     long_quote = "I build interfaces that feel physical, with springs and gestures and motion that respects people who prefer less."
     facts = [fact("quote-1", "quote", long_quote)]
     person = person_for(load_fixture("riya").profile)
     (slot,) = fallback_slots(facts, person, graph_for(load_fixture("riya").profile), ["tagline"])
-    assert len(slot.text) <= 90
-    assert long_quote.startswith(slot.text)
-    assert long_quote[len(slot.text)] in " ,"
-    assert slot.factIds == ["quote-1"]
+    assert slot.text == person.headline
+    assert slot.factIds == []
 
 
 def test_the_first_quote_wins_and_the_headline_is_the_last_resort() -> None:

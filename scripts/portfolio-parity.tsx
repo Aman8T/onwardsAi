@@ -253,21 +253,22 @@ async function main() {
   /* ─────────────────────────────────────────────────────────────────── */
 
   /**
-   * Load portfolio JSON files from backend/tests/data/portfolio/.
+   * Load the rendered portfolios (backend/tests/data/portfolio/rendered/*.portfolio.json, written by
+   * `python -m tayyari.cli portfolio-eval --write`) next to the hand-built sample.
    */
   function loadPortfolios(): Map<string, Portfolio> {
     const portfolios = new Map<string, Portfolio>();
 
     portfolios.set('RIYA', RIYA);
 
-    const dataDir = join(process.cwd(), 'backend/tests/data/portfolio');
+    const dataDir = join(process.cwd(), 'backend/tests/data/portfolio/rendered');
     if (existsSync(dataDir)) {
       for (const file of readdirSync(dataDir)) {
-        if (file.endsWith('.json')) {
+        if (file.endsWith('.portfolio.json')) {
           try {
             const content = readFileSync(join(dataDir, file), 'utf-8');
             const data = JSON.parse(content);
-            const id = file.replace(/\.json$/, '');
+            const id = file.replace(/\.portfolio\.json$/, '');
             portfolios.set(id, data);
           } catch (err) {
             console.error(`Failed to load ${file}:`, err);
