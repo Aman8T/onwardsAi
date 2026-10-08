@@ -146,6 +146,10 @@ All settings are optional unless noted. Edit `backend/.env.example` for defaults
 | `TAYYARI_SYNTH_EFFORT` | `medium` | Synthesis effort: `low`, `medium`, `high`, `xhigh`, `max` |
 | `TAYYARI_CHAT_EFFORT` | `medium` | Chat effort |
 
+**POC cost mode (since 2026-10-08):** the local `.env` and the FastAPI Cloud app set all three model variables to
+`claude-haiku-5-5` (no Sonnet): about $0.02 per analysis, $0.01 per portfolio and well under a cent per chat turn
+(web searches add $0.01 each). Unset the three variables to return to the defaults above.
+
 ### Jev decisions (nested: `TAYYARI_JEV__*`)
 
 | Variable | Default | Purpose |
