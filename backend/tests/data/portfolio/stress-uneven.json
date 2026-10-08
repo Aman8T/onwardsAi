@@ -1,0 +1,615 @@
+{
+  "name": "stress-uneven",
+  "about": "Stress: 6 domains where one is 95 and the others are 10, 12, 8, 15, 11 (listed in that fixed order); 14 skills, most under the 45 public cutoff.",
+  "profile": {
+    "id": "2b0c67399920c2ccaca7b9b4d5ebc8e3",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "Karthik Nair",
+      "headline": "Compiler Engineer · 6.5 yrs · Bengaluru",
+      "currentRole": "Compiler Engineer",
+      "location": "Bengaluru, India",
+      "yearsExperience": 6.5,
+      "summary": "Compiler engineer at Lattice Compilers who wrote 14 LLVM optimisation passes with a median 1.9x kernel speed-up across 62 benchmarks and designed the type checker for the company's kernel language."
+    },
+    "mastery": {
+      "score": 86,
+      "insight": "Staff-level compiler craft with measured results; everything outside the compiler stack is at an introductory level."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "3 projects · 2 roles · 1 page",
+        "summary": "Karthik Nair is a compiler engineer at Lattice Compilers in Bengaluru with 6.5 years of experience. He wrote 14 LLVM optimisation passes with a median 1.9x speed-up across 62 benchmarks and designed the type checker for the company's kernel language.",
+        "notes": [
+          "Compiler work is specific and measured: 14 passes, 1.9x across 62 benchmarks, 9 minutes to 3",
+          "Basics (SQL, HTML, CSS, JavaScript, Docker) are listed with no usage",
+          "Everything outside compilers is a single line; that is fine for the target roles"
+        ],
+        "ok": true
+      },
+      {
+        "id": "github",
+        "kind": "github",
+        "label": "GitHub",
+        "url": "https://github.com/karthiknair",
+        "sub": "8 repos · 4 languages · 276 stars",
+        "summary": "Compiler engineer in Bengaluru with eight public repositories, all about compilers except one benchmark plotting script. tinyssa has 142 stars and 58 test files; mlir-toy-dialects has 66 stars.",
+        "notes": [
+          "tinyssa (142 stars, 58 test files) and mlir-toy-dialects (66 stars) are credible artifacts",
+          "Tests in 7 of 8 repos; CI in only 3",
+          "Nothing here shows work outside the compiler stack"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "compilers",
+        "name": "Compilers & Languages",
+        "short": "Compilers",
+        "score": 95,
+        "summary": "LLVM passes with measured speed-ups, a type checker with generics and three public compiler repos with 142, 66 and 41 stars."
+      },
+      {
+        "id": "web-frontend",
+        "name": "Web Frontend",
+        "short": "Web Frontend",
+        "score": 10,
+        "summary": "HTML, CSS and JavaScript are listed as basics with no page or project."
+      },
+      {
+        "id": "databases",
+        "name": "Databases",
+        "short": "Databases",
+        "score": 12,
+        "summary": "SQL is listed as a basic; no schema or query work appears."
+      },
+      {
+        "id": "machine-learning",
+        "name": "Machine Learning",
+        "short": "Machine Learning",
+        "score": 8,
+        "summary": "One NumPy plotting script; no model has been trained."
+      },
+      {
+        "id": "cloud-devops",
+        "name": "Cloud & DevOps",
+        "short": "Cloud & DevOps",
+        "score": 15,
+        "summary": "GitHub Actions in 3 of 8 repos and Docker listed as a basic."
+      },
+      {
+        "id": "product-design",
+        "name": "Product & Design",
+        "short": "Product & Design",
+        "score": 11,
+        "summary": "No product, design or user-facing work is described."
+      }
+    ],
+    "skills": [
+      {
+        "id": "llvm-passes",
+        "name": "LLVM IR & passes",
+        "domainId": "compilers",
+        "score": 97,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Wrote 14 LLVM optimisation passes; median 1.9x speed-up across 62 benchmarks"
+          },
+          {
+            "sourceId": "github",
+            "text": "mlir-toy-dialects: MLIR dialects and lowering passes, 66 stars"
+          }
+        ],
+        "unlocks": [
+          "Principal Compiler Engineer",
+          "ML Compiler Engineer"
+        ]
+      },
+      {
+        "id": "parser-design",
+        "name": "Parser design",
+        "domainId": "compilers",
+        "score": 94,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Parser and error recovery for a config language used by 120 internal tools"
+          },
+          {
+            "sourceId": "github",
+            "text": "parser-recovery: OCaml error-recovering combinators, 41 stars"
+          }
+        ],
+        "unlocks": [
+          "Principal Compiler Engineer",
+          "Developer Tools Engineer"
+        ]
+      },
+      {
+        "id": "type-systems",
+        "name": "Type systems",
+        "domainId": "compilers",
+        "score": 92,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Designed the kernel-language type checker, including generics"
+          }
+        ],
+        "unlocks": [
+          "Principal Compiler Engineer"
+        ]
+      },
+      {
+        "id": "rust",
+        "name": "Rust",
+        "domainId": "compilers",
+        "score": 96,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "tinyssa in Rust: 142 stars, 58 test files; Rust in 4 of 8 repos"
+          }
+        ],
+        "unlocks": [
+          "Principal Compiler Engineer",
+          "Developer Tools Engineer",
+          "ML Compiler Engineer"
+        ]
+      },
+      {
+        "id": "html-css",
+        "name": "HTML & CSS",
+        "domainId": "web-frontend",
+        "score": 12,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "HTML and CSS listed as basics; no page or project uses them"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "javascript",
+        "name": "JavaScript",
+        "domainId": "web-frontend",
+        "score": 8,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "JavaScript listed as a basic; no repo or bullet uses it"
+          }
+        ],
+        "unlocks": [
+          "Developer Tools Engineer"
+        ]
+      },
+      {
+        "id": "sql-basics",
+        "name": "SQL basics",
+        "domainId": "databases",
+        "score": 14,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "SQL listed as a basic; no query or schema appears"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "indexing",
+        "name": "Indexing concepts",
+        "domainId": "databases",
+        "score": 10,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "No database work is described in either role"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "numpy",
+        "name": "NumPy",
+        "domainId": "machine-learning",
+        "score": 10,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "bench-plots: a 18 KB Python and NumPy plotting script"
+          }
+        ],
+        "unlocks": [
+          "ML Compiler Engineer"
+        ]
+      },
+      {
+        "id": "model-training",
+        "name": "Model training",
+        "domainId": "machine-learning",
+        "score": 6,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "No model training in any of 8 repos"
+          }
+        ],
+        "unlocks": [
+          "ML Compiler Engineer"
+        ]
+      },
+      {
+        "id": "docker-basics",
+        "name": "Docker basics",
+        "domainId": "cloud-devops",
+        "score": 18,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Docker listed as a basic; no repo has a Docker setup"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "ci-pipelines",
+        "name": "CI pipelines",
+        "domainId": "cloud-devops",
+        "score": 12,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "GitHub Actions in 3 of 8 repos"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "writing-specs",
+        "name": "Writing specs",
+        "domainId": "product-design",
+        "score": 12,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "No spec or design document is mentioned"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "user-research",
+        "name": "User research",
+        "domainId": "product-design",
+        "score": 10,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "No user-facing work is described in either role"
+          }
+        ],
+        "unlocks": []
+      }
+    ],
+    "roles": [
+      {
+        "id": "principal-compiler",
+        "title": "Principal Compiler Engineer",
+        "alignment": 77,
+        "eta": "~8 months",
+        "why": "Deep, measured compiler work and three strong public repos. Needs visible technical leadership across teams.",
+        "requirements": [
+          {
+            "name": "LLVM IR & passes",
+            "skillId": "llvm-passes",
+            "have": true,
+            "current": 97,
+            "target": 90
+          },
+          {
+            "name": "Type systems",
+            "skillId": "type-systems",
+            "have": true,
+            "current": 92,
+            "target": 88
+          },
+          {
+            "name": "Rust",
+            "skillId": "rust",
+            "have": true,
+            "current": 96,
+            "target": 88
+          },
+          {
+            "name": "Parser design",
+            "skillId": "parser-design",
+            "have": true,
+            "current": 94,
+            "target": 85
+          },
+          {
+            "name": "Technical leadership",
+            "have": false,
+            "current": 45,
+            "target": 80
+          }
+        ]
+      },
+      {
+        "id": "devtools-engineer",
+        "title": "Developer Tools Engineer",
+        "alignment": 58,
+        "eta": "~6 months",
+        "why": "Parser and type-system strength transfers directly. Needs editor and language-server experience plus some web tooling.",
+        "requirements": [
+          {
+            "name": "Parser design",
+            "skillId": "parser-design",
+            "have": true,
+            "current": 94,
+            "target": 85
+          },
+          {
+            "name": "Rust",
+            "skillId": "rust",
+            "have": true,
+            "current": 96,
+            "target": 85
+          },
+          {
+            "name": "JavaScript",
+            "skillId": "javascript",
+            "have": false,
+            "current": 8,
+            "target": 60
+          },
+          {
+            "name": "Language server protocol",
+            "have": false,
+            "current": 40,
+            "target": 75
+          },
+          {
+            "name": "Editor extensions",
+            "have": false,
+            "current": 10,
+            "target": 60
+          }
+        ]
+      },
+      {
+        "id": "ml-compiler",
+        "title": "ML Compiler Engineer",
+        "alignment": 52,
+        "eta": "~1 year",
+        "why": "LLVM and MLIR depth is a strong base. No model training, GPU kernels or numerical-library experience yet.",
+        "requirements": [
+          {
+            "name": "LLVM IR & passes",
+            "skillId": "llvm-passes",
+            "have": true,
+            "current": 97,
+            "target": 85
+          },
+          {
+            "name": "Rust",
+            "skillId": "rust",
+            "have": true,
+            "current": 96,
+            "target": 80
+          },
+          {
+            "name": "NumPy",
+            "skillId": "numpy",
+            "have": false,
+            "current": 10,
+            "target": 70
+          },
+          {
+            "name": "Model training",
+            "skillId": "model-training",
+            "have": false,
+            "current": 6,
+            "target": 60
+          },
+          {
+            "name": "MLIR dialect design",
+            "have": false,
+            "current": 62,
+            "target": 85
+          },
+          {
+            "name": "GPU kernels",
+            "have": false,
+            "current": 10,
+            "target": 70
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "KARTHIK NAIR\nCompiler Engineer · Bengaluru, India\nkarthik.nair.compilers@example.com · +91 90000 01234 · github.com/karthiknair\n\nSUMMARY\nCompiler engineer with 6.5 years of experience in optimisation passes, type checking and language tooling. I work\nclose to the metal and I am happy to stay there.\n\nEXPERIENCE\n\nLattice Compilers — Compiler Engineer                                             Bengaluru · Apr 2022 – Present\nCompiler toolchains for embedded DSPs.\n- Wrote 14 LLVM optimisation passes for an embedded DSP target; median kernel speed-up of 1.9x across 62 benchmarks.\n- Cut compile time for the largest build from 9 minutes to 3 minutes by caching analysis results across passes.\n- Designed the type checker, including generics, for the company's kernel language.\n\nOrbit Toolchains — Software Engineer                                             Bengaluru · Apr 2020 – Mar 2022\n- Built the parser and error recovery for a configuration language used by 120 internal tools.\n- Wrote a fuzzer that found 37 parser crashes before release.\n\nPROJECTS\n- tinyssa — A small SSA-based optimiser in Rust with constant folding and dead-code elimination.\n  github.com/karthiknair/tinyssa\n- mlir-toy-dialects — Teaching dialects and lowering passes for MLIR. C++. github.com/karthiknair/mlir-toy-dialects\n- parser-recovery — Error-recovering parser combinators in OCaml. github.com/karthiknair/parser-recovery\n\nEDUCATION\nB.Tech, Computer Science — Bharathi Institute of Technology, Chennai                                 2016 – 2020\n\nSKILLS\nLanguages: Rust, C++, OCaml, Python (basic)\nCompilers: LLVM, MLIR, parsing, type systems, dataflow analysis, fuzzing\nBasics: SQL, HTML and CSS, JavaScript, Docker"
+      },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "kind": "github",
+        "url": "https://github.com/karthiknair",
+        "content": "# GitHub: Karthik Nair (@karthiknair)\n\n## Profile\n- Name: Karthik Nair\n- Account type: User\n- Bio: Compiler engineer. SSA, passes and error recovery.\n- Company: Lattice Compilers\n- Location: Bengaluru, India\n- Followers: 305, following: 12\n- On GitHub since 2016-06-18 (about 10 years)\n\n## Totals\n- Public repositories: 8\n- Original repos: 8, forks: 0\n- Stars across original repos: 276\n- Languages by number of original repos: Rust (4), C++ (2), OCaml (1), Python (1)\n- Repos with a description: 6/8, with topics: 5, with a live homepage link: 0\n- Engineering practice (checked 8 repos): tests in 7, CI in 3, Docker in 0\n\n## Top repositories (5, ranked by stars, recency and substance)\n\n### 1. tinyssa\n- Description: A small SSA-based optimiser in Rust: constant folding, dead-code elimination and a textual IR.\n- Language: Rust, stars: 142, forks: 17, license: MIT\n- Topics: compilers, ssa, optimisation, rust\n- Last push: 2026-09-10 (4 weeks ago), created 2023-01-15, size 860 KB\n- Detected: tests yes (58 test files), CI yes (GitHub Actions), Docker no, docs yes, manifests: Cargo.toml\n\n### 2. mlir-toy-dialects\n- Description: Teaching dialects and lowering passes for MLIR.\n- Language: C++, stars: 66, forks: 8, license: Apache-2.0\n- Topics: mlir, llvm, compilers\n- Last push: 2026-07-02 (3 months ago), created 2024-05-21, size 1,420 KB\n- Detected: tests yes (31 test files), CI no, Docker no, docs yes, manifests: CMakeLists.txt\n\n### 3. parser-recovery\n- Description: Error-recovering parser combinators in OCaml.\n- Language: OCaml, stars: 41, forks: 3\n- Last push: 2026-02-27 (7 months ago), created 2022-09-09, size 210 KB\n- Detected: tests yes (19 test files), CI no, Docker no, docs yes, manifests: dune-project\n\n### 4. lintpack\n- Description: Custom lints for rustc projects.\n- Language: Rust, stars: 18, forks: 2\n- Last push: 2025-12-01 (10 months ago), created 2024-10-03, size 130 KB\n- Detected: tests yes (14 test files), CI yes (GitHub Actions), Docker no, docs no, manifests: Cargo.toml\n\n### 5. bench-plots\n- Description: Python and NumPy script that plots compiler benchmark results.\n- Language: Python, stars: 9, forks: 0\n- Last push: 2025-06-12 (1 year ago), created 2025-06-10, size 18 KB\n- Detected: tests no, CI no, Docker no, docs no, manifests: requirements.txt\n\n## Recent public activity\n- 52 public events over about 90 days, most recent 2026-10-03 (5 days ago)\n- 24 pushes (41 commits), 3 pull requests opened, 3 PRs merged, 2 issues opened, 4 PR reviews\n\n## Technologies mentioned across repos\nRust, C++, OCaml, LLVM, MLIR, NumPy, GitHub Actions"
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "3 projects · 2 roles · 1 page",
+        "summary": "Karthik Nair is a compiler engineer at Lattice Compilers in Bengaluru with 6.5 years of experience. He wrote 14 LLVM optimisation passes with a median 1.9x speed-up across 62 benchmarks and designed the type checker for the company's kernel language.",
+        "person": {
+          "name": "Karthik Nair",
+          "currentRole": "Compiler Engineer",
+          "yearsExperience": 6.5,
+          "location": "Bengaluru, India"
+        },
+        "signals": [
+          {
+            "label": "14 LLVM passes",
+            "detail": "median 1.9x across 62 benchmarks"
+          },
+          {
+            "label": "Compile time",
+            "detail": "9 minutes to 3 minutes"
+          },
+          {
+            "label": "Kernel-language type checker",
+            "detail": "generics"
+          },
+          {
+            "label": "Config-language parser",
+            "detail": "120 internal tools, 37 fuzz crashes"
+          },
+          {
+            "label": "Open source",
+            "detail": "tinyssa, mlir-toy-dialects, parser-recovery"
+          }
+        ],
+        "skills": [
+          {
+            "name": "LLVM IR & passes",
+            "evidence": "Wrote 14 LLVM optimisation passes; median 1.9x speed-up across 62 benchmarks",
+            "strength": 5
+          },
+          {
+            "name": "Parser design",
+            "evidence": "Parser and error recovery for a config language used by 120 internal tools",
+            "strength": 5
+          },
+          {
+            "name": "Type systems",
+            "evidence": "Designed the kernel-language type checker, including generics",
+            "strength": 5
+          },
+          {
+            "name": "HTML & CSS",
+            "evidence": "HTML and CSS listed as basics; no page or project uses them",
+            "strength": 1
+          },
+          {
+            "name": "JavaScript",
+            "evidence": "JavaScript listed as a basic; no repo or bullet uses it",
+            "strength": 1
+          },
+          {
+            "name": "SQL basics",
+            "evidence": "SQL listed as a basic; no query or schema appears",
+            "strength": 1
+          },
+          {
+            "name": "Indexing concepts",
+            "evidence": "No database work is described in either role",
+            "strength": 1
+          },
+          {
+            "name": "Docker basics",
+            "evidence": "Docker listed as a basic; no repo has a Docker setup",
+            "strength": 1
+          },
+          {
+            "name": "Writing specs",
+            "evidence": "No spec or design document is mentioned",
+            "strength": 1
+          },
+          {
+            "name": "User research",
+            "evidence": "No user-facing work is described in either role",
+            "strength": 1
+          }
+        ],
+        "notes": [
+          "Compiler work is specific and measured: 14 passes, 1.9x across 62 benchmarks, 9 minutes to 3",
+          "Basics (SQL, HTML, CSS, JavaScript, Docker) are listed with no usage",
+          "Everything outside compilers is a single line; that is fine for the target roles"
+        ]
+      },
+      "github": {
+        "sub": "8 repos · 4 languages · 276 stars",
+        "summary": "Compiler engineer in Bengaluru with eight public repositories, all about compilers except one benchmark plotting script. tinyssa has 142 stars and 58 test files; mlir-toy-dialects has 66 stars.",
+        "person": {
+          "name": "Karthik Nair",
+          "currentRole": "Compiler Engineer",
+          "location": "Bengaluru, India"
+        },
+        "signals": [
+          {
+            "label": "tinyssa",
+            "detail": "142 stars, 58 test files"
+          },
+          {
+            "label": "mlir-toy-dialects",
+            "detail": "66 stars, MLIR dialects"
+          },
+          {
+            "label": "parser-recovery",
+            "detail": "41 stars, OCaml"
+          },
+          {
+            "label": "Rust in 4 of 8 repos",
+            "detail": "compilers and lints"
+          }
+        ],
+        "skills": [
+          {
+            "name": "LLVM IR & passes",
+            "evidence": "mlir-toy-dialects: MLIR dialects and lowering passes, 66 stars",
+            "strength": 5
+          },
+          {
+            "name": "Parser design",
+            "evidence": "parser-recovery: OCaml error-recovering combinators, 41 stars",
+            "strength": 5
+          },
+          {
+            "name": "Rust",
+            "evidence": "tinyssa in Rust: 142 stars, 58 test files; Rust in 4 of 8 repos",
+            "strength": 5
+          },
+          {
+            "name": "NumPy",
+            "evidence": "bench-plots: a 18 KB Python and NumPy plotting script",
+            "strength": 1
+          },
+          {
+            "name": "Model training",
+            "evidence": "No model training in any of 8 repos",
+            "strength": 1
+          },
+          {
+            "name": "CI pipelines",
+            "evidence": "GitHub Actions in 3 of 8 repos",
+            "strength": 1
+          }
+        ],
+        "notes": [
+          "tinyssa (142 stars, 58 test files) and mlir-toy-dialects (66 stars) are credible artifacts",
+          "Tests in 7 of 8 repos; CI in only 3",
+          "Nothing here shows work outside the compiler stack"
+        ]
+      }
+    }
+  }
+}

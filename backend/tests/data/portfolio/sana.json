@@ -1,0 +1,710 @@
+{
+  "name": "sana",
+  "about": "Uneven graph: one strong domain (78) and five very low ones (22-34), 14 skills of which 10 are below the 45 public cutoff; resume + personal site + Substack (spotlight variant).",
+  "profile": {
+    "id": "d720d038f580467cfcf20a844aff952b",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "Sana Sheikh",
+      "headline": "Content Marketer · 1.5 yrs · Mumbai",
+      "currentRole": "Content Marketer",
+      "location": "Mumbai, India",
+      "yearsExperience": 1.5,
+      "summary": "Content marketer at Brightleaf who writes the D2C skincare brand's long-form blog (2 posts a week) and fortnightly newsletter (18,000 subscribers); 'Why your sunscreen pills' was the blog's most-read post of 2025."
+    },
+    "mastery": {
+      "score": 64,
+      "insight": "A proven writer and editor with real audience numbers; SEO, social, analytics and design tools are mostly untouched."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "2 roles · 4 clips · 1 page",
+        "summary": "Sana Sheikh is a Content Marketing Associate at Brightleaf, a D2C skincare brand in Mumbai, with 1.5 years of experience including an internship at The Daily Bowl. She writes the long-form blog and a newsletter with 18,000 subscribers, and her post 'Why your sunscreen pills' was the blog's most-read of 2025.",
+        "notes": [
+          "Strong audience facts: 2 posts a week, 18,000 subscribers, most-read post of 2025",
+          "No SEO, social, analytics or campaign results appear in any bullet",
+          "Canva and Google Analytics are listed as basic with no evidence"
+        ],
+        "ok": true
+      },
+      {
+        "id": "portfolio-1",
+        "kind": "portfolio",
+        "label": "Personal site",
+        "url": "https://sanasheikh.in",
+        "sub": "12 clips · 4 pages",
+        "summary": "Sana's personal site is a text-first clip portfolio with 12 pieces for Brightleaf and The Daily Bowl, plus an about page and a link to her Substack. It shows no metrics, design work or search-oriented titles.",
+        "notes": [
+          "12 clips grouped by publication make her range easy to scan",
+          "No reads, open rates or other results next to any clip",
+          "Titles and meta descriptions are not written for search"
+        ],
+        "ok": true
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "label": "Substack",
+        "url": "https://sanasheikh.substack.com",
+        "sub": "Newsletter · 40+ posts",
+        "summary": "Sana's Substack, sanasheikh.substack.com, has 40+ posts since 2024 about editing, subject lines and newsletter craft, published steadily with no visible subscriber count.",
+        "notes": [
+          "40+ posts show consistency and a clear editing voice",
+          "Subscriber count and reader results are not shown",
+          "Link the Brightleaf work from the posts"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "writing-content",
+        "name": "Writing & Content",
+        "short": "Writing",
+        "score": 78,
+        "summary": "Long-form blog, a newsletter of 18,000 subscribers and 12 clips; clear strength and the reason for the role."
+      },
+      {
+        "id": "seo",
+        "name": "SEO",
+        "short": "SEO",
+        "score": 34,
+        "summary": "No keyword work or search-oriented titles appear in the resume or the site."
+      },
+      {
+        "id": "social-media",
+        "name": "Social Media",
+        "short": "Social Media",
+        "score": 30,
+        "summary": "No social channel, calendar or campaign is described anywhere."
+      },
+      {
+        "id": "analytics",
+        "name": "Analytics",
+        "short": "Analytics",
+        "score": 22,
+        "summary": "18,000 subscribers is stated, but no open rates, clicks or reads are reported."
+      },
+      {
+        "id": "design-tools",
+        "name": "Design Tools",
+        "short": "Design Tools",
+        "score": 28,
+        "summary": "Canva is listed as basic and no design or photo work is shown."
+      },
+      {
+        "id": "campaigns",
+        "name": "Campaigns",
+        "short": "Campaigns",
+        "score": 26,
+        "summary": "Runs a fortnightly newsletter, but no campaign plan or result is described."
+      }
+    ],
+    "skills": [
+      {
+        "id": "long-form-writing",
+        "name": "Long-form writing",
+        "domainId": "writing-content",
+        "score": 86,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Writes Brightleaf's long-form blog, 2 posts a week"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "text": "12 clips across Brightleaf and The Daily Bowl"
+          }
+        ],
+        "unlocks": [
+          "Content Marketer",
+          "Brand Copywriter",
+          "SEO Content Manager"
+        ]
+      },
+      {
+        "id": "editing",
+        "name": "Editing",
+        "domainId": "writing-content",
+        "score": 81,
+        "evidence": [
+          {
+            "sourceId": "link-1",
+            "text": "40+ Substack posts, many about editing drafts"
+          },
+          {
+            "sourceId": "resume",
+            "text": "31 published recipes and features at The Daily Bowl"
+          }
+        ],
+        "unlocks": [
+          "Content Marketer",
+          "Email & Newsletter Editor",
+          "Brand Copywriter"
+        ]
+      },
+      {
+        "id": "newsletter-writing",
+        "name": "Newsletter writing",
+        "domainId": "writing-content",
+        "score": 77,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Fortnightly Brightleaf newsletter with 18,000 subscribers"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "text": "Clip: 'What 18,000 readers taught us about subject lines'"
+          }
+        ],
+        "unlocks": [
+          "Email & Newsletter Editor"
+        ]
+      },
+      {
+        "id": "brand-voice",
+        "name": "Brand voice",
+        "domainId": "writing-content",
+        "score": 68,
+        "evidence": [
+          {
+            "sourceId": "portfolio-1",
+            "text": "Clips for two different brands: Brightleaf and The Daily Bowl"
+          }
+        ],
+        "unlocks": [
+          "Email & Newsletter Editor",
+          "Brand Copywriter"
+        ]
+      },
+      {
+        "id": "keyword-research",
+        "name": "Keyword research",
+        "domainId": "seo",
+        "score": 36,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "No keyword or SEO tool appears in any bullet or skills line"
+          }
+        ],
+        "unlocks": [
+          "Content Marketer",
+          "SEO Content Manager"
+        ]
+      },
+      {
+        "id": "on-page-seo",
+        "name": "On-page SEO",
+        "domainId": "seo",
+        "score": 32,
+        "evidence": [
+          {
+            "sourceId": "portfolio-1",
+            "text": "Site pages have no visible meta descriptions or keyword-led titles"
+          }
+        ],
+        "unlocks": [
+          "SEO Content Manager"
+        ]
+      },
+      {
+        "id": "social-copy",
+        "name": "Social copywriting",
+        "domainId": "social-media",
+        "score": 34,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "No social media work is listed in either role"
+          }
+        ],
+        "unlocks": [
+          "Content Marketer",
+          "Brand Copywriter"
+        ]
+      },
+      {
+        "id": "content-calendars",
+        "name": "Content calendars",
+        "domainId": "social-media",
+        "score": 26,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Publishes 2 posts a week; no calendar or planning tool is listed"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "newsletter-metrics",
+        "name": "Newsletter metrics",
+        "domainId": "analytics",
+        "score": 28,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "States 18,000 subscribers; no open or click rates are reported"
+          }
+        ],
+        "unlocks": [
+          "Content Marketer",
+          "Email & Newsletter Editor"
+        ]
+      },
+      {
+        "id": "google-analytics",
+        "name": "Google Analytics",
+        "domainId": "analytics",
+        "score": 16,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Google Analytics (basic) listed; no bullet uses it"
+          }
+        ],
+        "unlocks": [
+          "SEO Content Manager"
+        ]
+      },
+      {
+        "id": "canva",
+        "name": "Canva",
+        "domainId": "design-tools",
+        "score": 34,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Canva (basic) listed under Tools"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "photo-editing",
+        "name": "Photo editing",
+        "domainId": "design-tools",
+        "score": 22,
+        "evidence": [
+          {
+            "sourceId": "portfolio-1",
+            "text": "No design, photo or video work shown on the site"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "email-campaigns",
+        "name": "Email campaign planning",
+        "domainId": "campaigns",
+        "score": 30,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Runs a fortnightly newsletter; no campaign plan or test is described"
+          }
+        ],
+        "unlocks": [
+          "Email & Newsletter Editor"
+        ]
+      },
+      {
+        "id": "campaign-measurement",
+        "name": "Campaign measurement",
+        "domainId": "campaigns",
+        "score": 22,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "No campaign result beyond the most-read post of 2025"
+          }
+        ],
+        "unlocks": [
+          "SEO Content Manager"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "id": "content-marketer",
+        "title": "Content Marketer",
+        "alignment": 66,
+        "eta": "~4 months",
+        "why": "Writing, editing and a newsletter of 18,000 subscribers are proven. SEO, social and measurement are the gaps for the full role.",
+        "requirements": [
+          {
+            "name": "Long-form writing",
+            "skillId": "long-form-writing",
+            "have": true,
+            "current": 86,
+            "target": 75
+          },
+          {
+            "name": "Editing",
+            "skillId": "editing",
+            "have": true,
+            "current": 81,
+            "target": 70
+          },
+          {
+            "name": "Keyword research",
+            "skillId": "keyword-research",
+            "have": false,
+            "current": 36,
+            "target": 60
+          },
+          {
+            "name": "Social copywriting",
+            "skillId": "social-copy",
+            "have": false,
+            "current": 34,
+            "target": 55
+          },
+          {
+            "name": "Newsletter metrics",
+            "skillId": "newsletter-metrics",
+            "have": false,
+            "current": 28,
+            "target": 60
+          }
+        ]
+      },
+      {
+        "id": "newsletter-editor",
+        "title": "Email & Newsletter Editor",
+        "alignment": 74,
+        "eta": "~3 months",
+        "why": "Runs a fortnightly newsletter of 18,000 subscribers and writes about subject lines. Needs open-rate and click evidence.",
+        "requirements": [
+          {
+            "name": "Newsletter writing",
+            "skillId": "newsletter-writing",
+            "have": true,
+            "current": 77,
+            "target": 75
+          },
+          {
+            "name": "Editing",
+            "skillId": "editing",
+            "have": true,
+            "current": 81,
+            "target": 75
+          },
+          {
+            "name": "Brand voice",
+            "skillId": "brand-voice",
+            "have": true,
+            "current": 68,
+            "target": 70
+          },
+          {
+            "name": "Newsletter metrics",
+            "skillId": "newsletter-metrics",
+            "have": false,
+            "current": 28,
+            "target": 60
+          },
+          {
+            "name": "Email campaign planning",
+            "skillId": "email-campaigns",
+            "have": false,
+            "current": 30,
+            "target": 60
+          }
+        ]
+      },
+      {
+        "id": "brand-copywriter",
+        "title": "Brand Copywriter",
+        "alignment": 70,
+        "eta": "~4 months",
+        "why": "Two brands, two voices and the most-read post of 2025. Needs short-form and campaign copy samples.",
+        "requirements": [
+          {
+            "name": "Long-form writing",
+            "skillId": "long-form-writing",
+            "have": true,
+            "current": 86,
+            "target": 75
+          },
+          {
+            "name": "Brand voice",
+            "skillId": "brand-voice",
+            "have": true,
+            "current": 68,
+            "target": 75
+          },
+          {
+            "name": "Editing",
+            "skillId": "editing",
+            "have": true,
+            "current": 81,
+            "target": 75
+          },
+          {
+            "name": "Social copywriting",
+            "skillId": "social-copy",
+            "have": false,
+            "current": 34,
+            "target": 55
+          },
+          {
+            "name": "Short-form copy",
+            "have": false,
+            "current": 30,
+            "target": 65
+          }
+        ]
+      },
+      {
+        "id": "seo-content-manager",
+        "title": "SEO Content Manager",
+        "alignment": 38,
+        "eta": "~1 year",
+        "why": "Strong writing, but no keyword research, on-page SEO or analytics evidence yet.",
+        "requirements": [
+          {
+            "name": "Keyword research",
+            "skillId": "keyword-research",
+            "have": false,
+            "current": 36,
+            "target": 75
+          },
+          {
+            "name": "On-page SEO",
+            "skillId": "on-page-seo",
+            "have": false,
+            "current": 32,
+            "target": 70
+          },
+          {
+            "name": "Google Analytics",
+            "skillId": "google-analytics",
+            "have": false,
+            "current": 16,
+            "target": 60
+          },
+          {
+            "name": "Long-form writing",
+            "skillId": "long-form-writing",
+            "have": true,
+            "current": 86,
+            "target": 75
+          },
+          {
+            "name": "Campaign measurement",
+            "skillId": "campaign-measurement",
+            "have": false,
+            "current": 22,
+            "target": 60
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "SANA SHEIKH\nContent Marketing Associate · Mumbai, India\nsana.sheikh.writes@example.com · +91 90000 34567 · sanasheikh.in · sanasheikh.substack.com\n\nSUMMARY\nContent marketer with 1.5 years of experience, including an internship, in D2C skincare and food media. I write\nlong-form posts and a newsletter people finish, and I edit my own drafts hard.\n\nEXPERIENCE\n\nBrightleaf — Content Marketing Associate                                             Mumbai · Mar 2025 – Present\nD2C skincare brand.\n- Write the brand's long-form blog (2 posts a week) and the fortnightly newsletter (18,000 subscribers).\n- \"Why your sunscreen pills\" was the blog's most-read post of 2025.\n\nThe Daily Bowl — Content Intern                                                     Mumbai · Sep 2024 – Feb 2025\nFood media publication.\n- 31 published recipes and features.\n\nWRITING SAMPLES\n- \"Why your sunscreen pills\" — Brightleaf blog, 2025\n- \"The case for boring breakfasts\" — The Daily Bowl, 2024\n- \"A field guide to Mumbai's Irani cafés\" — The Daily Bowl, 2024\n- \"What 18,000 readers taught us about subject lines\" — Brightleaf newsletter, 2026\n\nEDUCATION\nB.A. English Literature — St. Xavier's College, Mumbai                                               2021 – 2024\n\nSKILLS\nWriting: long-form writing, editing, newsletter writing, brand voice\nTools: Google Docs, Substack, Canva (basic), Google Analytics (basic)"
+      },
+      {
+        "id": "portfolio-1",
+        "label": "Personal site",
+        "kind": "portfolio",
+        "url": "https://sanasheikh.in",
+        "content": "# Sana Sheikh — Writer and content marketer\n\nURL: https://sanasheikh.in\nDescription: Long-form writing, newsletters and food writing. Mumbai.\nPages crawled: / · /about · /clips · /contact\n\n## Home\n\"I write things people finish reading.\" Content marketing associate at Brightleaf in Mumbai. Links to 12 clips and to a newsletter on Substack.\n\n## About\nContent marketer in Mumbai. B.A. English Literature, St. Xavier's College. Writes the Brightleaf blog and newsletter; before that, food features at The Daily Bowl.\n\n## Clips (12)\n1. \"Why your sunscreen pills\" — Brightleaf blog, 2025\n2. \"What 18,000 readers taught us about subject lines\" — Brightleaf newsletter, 2026\n3. \"Ceramides, explained without the jargon\" — Brightleaf blog, 2025\n4. \"How to read a skincare label\" — Brightleaf blog, 2025\n5. \"The monsoon routine, in five swaps\" — Brightleaf blog, 2025\n6. \"The case for boring breakfasts\" — The Daily Bowl, 2024\n7. \"A field guide to Mumbai's Irani cafés\" — The Daily Bowl, 2024\n8. \"Eight ways to rescue leftover rice\" — The Daily Bowl, 2024\n9. \"Kolkata roll or Mumbai frankie?\" — The Daily Bowl, 2024\n10. \"The dosa that took three days\" — The Daily Bowl, 2024\n11. \"Chai stalls, ranked by cup size\" — The Daily Bowl, 2024\n12. \"What a recipe tester actually does\" — The Daily Bowl, 2025\n\n## Observations\n- Clean, text-first design; clips are grouped by publication.\n- No reads, open rates or other results are shown next to any clip.\n- Pages have no visible meta descriptions or keyword-led titles.\n- No design, photo or video work appears on the site."
+      },
+      {
+        "id": "link-1",
+        "label": "Substack",
+        "kind": "link",
+        "url": "https://sanasheikh.substack.com",
+        "content": "# Substack: Sana Sheikh\n\nURL: https://sanasheikh.substack.com\nDescription: Notes on writing, editing and the small decisions behind good copy.\nPosts: 40+ published since 2024\n\n## Recent posts\n- \"How I cut a long draft without losing the voice\" — 2026-09-24\n- \"Subject lines are a promise\" — 2026-09-10\n- \"Why I write the headline last\" — 2026-08-27\n- \"The boring breakfast essay, annotated\" — 2026-08-13\n- \"Notes from the Brightleaf newsletter inbox\" — 2026-07-30\n\n## Observations\n- Publishes steadily; 40+ posts, most about editing and newsletter craft.\n- Subscriber count is not shown.\n- No images, social cards or links back to the Brightleaf work."
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "2 roles · 4 clips · 1 page",
+        "summary": "Sana Sheikh is a Content Marketing Associate at Brightleaf, a D2C skincare brand in Mumbai, with 1.5 years of experience including an internship at The Daily Bowl. She writes the long-form blog and a newsletter with 18,000 subscribers, and her post 'Why your sunscreen pills' was the blog's most-read of 2025.",
+        "person": {
+          "name": "Sana Sheikh",
+          "currentRole": "Content Marketing Associate",
+          "yearsExperience": 1.5,
+          "location": "Mumbai, India"
+        },
+        "signals": [
+          {
+            "label": "Brightleaf blog",
+            "detail": "2 posts a week, long-form"
+          },
+          {
+            "label": "Brightleaf newsletter",
+            "detail": "fortnightly, 18,000 subscribers"
+          },
+          {
+            "label": "'Why your sunscreen pills'",
+            "detail": "most-read post of 2025"
+          },
+          {
+            "label": "The Daily Bowl internship",
+            "detail": "31 published recipes and features"
+          },
+          {
+            "label": "Writing samples",
+            "detail": "4 clips across two publications"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Long-form writing",
+            "evidence": "Writes Brightleaf's long-form blog, 2 posts a week",
+            "strength": 4
+          },
+          {
+            "name": "Editing",
+            "evidence": "31 published recipes and features at The Daily Bowl",
+            "strength": 4
+          },
+          {
+            "name": "Newsletter writing",
+            "evidence": "Fortnightly Brightleaf newsletter with 18,000 subscribers",
+            "strength": 4
+          },
+          {
+            "name": "Keyword research",
+            "evidence": "No keyword or SEO tool appears in any bullet or skills line",
+            "strength": 2
+          },
+          {
+            "name": "Social copywriting",
+            "evidence": "No social media work is listed in either role",
+            "strength": 2
+          },
+          {
+            "name": "Content calendars",
+            "evidence": "Publishes 2 posts a week; no calendar or planning tool is listed",
+            "strength": 1
+          },
+          {
+            "name": "Newsletter metrics",
+            "evidence": "States 18,000 subscribers; no open or click rates are reported",
+            "strength": 1
+          },
+          {
+            "name": "Google Analytics",
+            "evidence": "Google Analytics (basic) listed; no bullet uses it",
+            "strength": 1
+          },
+          {
+            "name": "Canva",
+            "evidence": "Canva (basic) listed under Tools",
+            "strength": 2
+          },
+          {
+            "name": "Email campaign planning",
+            "evidence": "Runs a fortnightly newsletter; no campaign plan or test is described",
+            "strength": 2
+          },
+          {
+            "name": "Campaign measurement",
+            "evidence": "No campaign result beyond the most-read post of 2025",
+            "strength": 1
+          }
+        ],
+        "notes": [
+          "Strong audience facts: 2 posts a week, 18,000 subscribers, most-read post of 2025",
+          "No SEO, social, analytics or campaign results appear in any bullet",
+          "Canva and Google Analytics are listed as basic with no evidence"
+        ]
+      },
+      "portfolio-1": {
+        "sub": "12 clips · 4 pages",
+        "summary": "Sana's personal site is a text-first clip portfolio with 12 pieces for Brightleaf and The Daily Bowl, plus an about page and a link to her Substack. It shows no metrics, design work or search-oriented titles.",
+        "signals": [
+          {
+            "label": "12 clips",
+            "detail": "Brightleaf and The Daily Bowl"
+          },
+          {
+            "label": "Brightleaf",
+            "detail": "5 clips, 2025 – 2026"
+          },
+          {
+            "label": "The Daily Bowl",
+            "detail": "7 clips, 2024 – 2025"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Long-form writing",
+            "evidence": "12 clips across Brightleaf and The Daily Bowl",
+            "strength": 4
+          },
+          {
+            "name": "Newsletter writing",
+            "evidence": "Clip: 'What 18,000 readers taught us about subject lines'",
+            "strength": 4
+          },
+          {
+            "name": "Brand voice",
+            "evidence": "Clips for two different brands: Brightleaf and The Daily Bowl",
+            "strength": 3
+          },
+          {
+            "name": "On-page SEO",
+            "evidence": "Site pages have no visible meta descriptions or keyword-led titles",
+            "strength": 2
+          },
+          {
+            "name": "Photo editing",
+            "evidence": "No design, photo or video work shown on the site",
+            "strength": 1
+          }
+        ],
+        "notes": [
+          "12 clips grouped by publication make her range easy to scan",
+          "No reads, open rates or other results next to any clip",
+          "Titles and meta descriptions are not written for search"
+        ]
+      },
+      "link-1": {
+        "sub": "Newsletter · 40+ posts",
+        "summary": "Sana's Substack, sanasheikh.substack.com, has 40+ posts since 2024 about editing, subject lines and newsletter craft, published steadily with no visible subscriber count.",
+        "signals": [
+          {
+            "label": "40+ posts",
+            "detail": "since 2024, steady cadence"
+          },
+          {
+            "label": "Newsletter craft",
+            "detail": "subject lines, editing, headlines"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Editing",
+            "evidence": "40+ Substack posts, many about editing drafts",
+            "strength": 4
+          }
+        ],
+        "notes": [
+          "40+ posts show consistency and a clear editing voice",
+          "Subscriber count and reader results are not shown",
+          "Link the Brightleaf work from the posts"
+        ]
+      }
+    }
+  }
+}

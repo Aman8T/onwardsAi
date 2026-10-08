@@ -1,0 +1,876 @@
+{
+  "name": "vikram",
+  "about": "Staff engineer with a strong balanced graph: 4 roles incl. a bullet-less one, 7 domains, 23 skills, unicode rupee sign, resume + GitHub + talks link without a url (ledger/atlas).",
+  "profile": {
+    "id": "4a4bab93e5bbe33828926b133e0f03ed",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "Vikram Rao",
+      "headline": "Staff Engineer · 11 yrs · Hyderabad",
+      "currentRole": "Staff Engineer",
+      "location": "Hyderabad, India",
+      "yearsExperience": 11,
+      "summary": "Staff Engineer at Parcelwise who leads a routing platform team of 9, cut p99 route-quote latency from 820 ms to 140 ms and moved a shipment ledger of 2.1 billion rows from a single Postgres to a sharded cluster with no downtime."
+    },
+    "mastery": {
+      "score": 89,
+      "insight": "Staff-level scale on every claim: latency, rows, rupees and availability. Security and threat modelling are the thinner areas."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "4 roles · 11 yrs · 1 page",
+        "summary": "Vikram Rao is a Staff Engineer at Parcelwise in Hyderabad with 11 years across logistics, payments and e-commerce. He leads a routing platform team of 9, cut p99 route-quote latency from 820 ms to 140 ms and moved a 2.1 billion-row shipment ledger to a sharded Postgres cluster with no downtime.",
+        "notes": [
+          "Every role carries a number: latency, rows, rupees per month, availability",
+          "Infosys entry has no bullets; fine for a first job, but say what you worked on",
+          "Security is listed but has little evidence beyond PCI DSS scope at Finmint"
+        ],
+        "ok": true
+      },
+      {
+        "id": "github",
+        "kind": "github",
+        "label": "GitHub",
+        "url": "https://github.com/vikramrao",
+        "sub": "4 repos · 3 languages · 152 stars",
+        "summary": "Staff engineer at Parcelwise whose GitHub shows depth over volume: 12 merged PRs to the pgshard Postgres sharding tool, a failover lab (58 stars) and a repository of conference-talk slides and demo code.",
+        "notes": [
+          "pgshard contributions are the strongest signal: 12 merged PRs and regular reviews",
+          "pg-failover-lab (58 stars) and talks (64 stars) are credible public artifacts",
+          "Only 2 of 4 repos have tests; dotfiles is the oldest and least relevant"
+        ],
+        "ok": true
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "label": "Talks",
+        "sub": "Conference talks · 2",
+        "summary": "Two conference talks, both about systems Vikram built: 'Sharding without tears' (GopherCon India 2024) on the Parcelwise ledger migration and 'Idempotency at ₹1,200 crore a month' (Rootconf 2022) on the Finmint payout service.",
+        "notes": [
+          "Each talk names its scale in the title or abstract",
+          "No recordings are linked; add video links where they exist"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 92,
+        "summary": "Go and Java services, gRPC between services and idempotent payout and quote APIs at logistics and payments scale."
+      },
+      {
+        "id": "distributed-systems",
+        "name": "Distributed Systems",
+        "short": "Distributed",
+        "score": 88,
+        "summary": "Event streaming, replication and idempotent writes in production, with two conference talks on the designs."
+      },
+      {
+        "id": "data-storage",
+        "name": "Data & Storage",
+        "short": "Data & Storage",
+        "score": 86,
+        "summary": "Sharded a 2.1 billion-row Postgres ledger with no downtime; 12 merged PRs to pgshard."
+      },
+      {
+        "id": "reliability",
+        "name": "Reliability",
+        "short": "Reliability",
+        "score": 84,
+        "summary": "On-call lead for 2 years at 99.99% monthly availability; latency work verified with load tests."
+      },
+      {
+        "id": "cloud-infra",
+        "name": "Cloud & Infra",
+        "short": "Cloud & Infra",
+        "score": 80,
+        "summary": "Kubernetes and AWS in production at Parcelwise; Terraform appears mostly in a public sandbox."
+      },
+      {
+        "id": "security",
+        "name": "Security",
+        "short": "Security",
+        "score": 70,
+        "summary": "Payments work under PCI DSS scope, but there is little public or written evidence of threat modelling."
+      },
+      {
+        "id": "leadership",
+        "name": "Leadership",
+        "short": "Leadership",
+        "score": 82,
+        "summary": "Leads a team of 9, runs the weekly architecture review and mentors engineers on the routing team."
+      }
+    ],
+    "skills": [
+      {
+        "id": "go",
+        "name": "Go",
+        "domainId": "backend-apis",
+        "score": 94,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Routing platform at Parcelwise: Go services on Kubernetes"
+          },
+          {
+            "sourceId": "github",
+            "text": "pgshard (Go): 12 merged PRs; talks repo in Go"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "java",
+        "name": "Java",
+        "domainId": "backend-apis",
+        "score": 85,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "ShopLane search indexing pipeline in Java and Elasticsearch"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "api-design",
+        "name": "API design",
+        "domainId": "backend-apis",
+        "score": 92,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Idempotent payout service handling ₹1,200 crore a month at Finmint"
+          },
+          {
+            "sourceId": "resume",
+            "text": "p99 route-quote latency cut from 820 ms to 140 ms at Parcelwise"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "grpc",
+        "name": "gRPC",
+        "domainId": "backend-apis",
+        "score": 88,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Routing platform team of 9 builds Go and gRPC services"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "consensus-replication",
+        "name": "Consensus & replication",
+        "domainId": "distributed-systems",
+        "score": 84,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "pg-failover-lab: replica promotion and split-brain rehearsal, 58 stars"
+          },
+          {
+            "sourceId": "github",
+            "text": "pgshard: 12 merged PRs including online shard rebalancing"
+          }
+        ],
+        "unlocks": [
+          "Principal Engineer",
+          "Distributed Systems Architect"
+        ]
+      },
+      {
+        "id": "event-streaming",
+        "name": "Event streaming (Kafka)",
+        "domainId": "distributed-systems",
+        "score": 90,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Finmint payout events flow through Kafka"
+          }
+        ],
+        "unlocks": [
+          "Distributed Systems Architect"
+        ]
+      },
+      {
+        "id": "idempotency",
+        "name": "Idempotency",
+        "domainId": "distributed-systems",
+        "score": 93,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Built the idempotent payout service handling ₹1,200 crore a month"
+          },
+          {
+            "sourceId": "link-1",
+            "text": "Rootconf 2022 talk: 'Idempotency at ₹1,200 crore a month'"
+          }
+        ],
+        "unlocks": [
+          "Distributed Systems Architect"
+        ]
+      },
+      {
+        "id": "postgresql",
+        "name": "PostgreSQL",
+        "domainId": "data-storage",
+        "score": 92,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Moved the 2.1 billion-row shipment ledger from a single Postgres to a sharded cluster"
+          },
+          {
+            "sourceId": "github",
+            "text": "pg-failover-lab: Postgres failover lab, 58 stars"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "sharding",
+        "name": "Sharding",
+        "domainId": "data-storage",
+        "score": 89,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Sharded the shipment ledger (2.1 billion rows) with no downtime"
+          },
+          {
+            "sourceId": "link-1",
+            "text": "GopherCon India 2024 talk: 'Sharding without tears'"
+          }
+        ],
+        "unlocks": [
+          "Distributed Systems Architect"
+        ]
+      },
+      {
+        "id": "query-tuning",
+        "name": "Query tuning",
+        "domainId": "data-storage",
+        "score": 86,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Cut p99 route-quote latency from 820 ms to 140 ms with caching and query tuning"
+          },
+          {
+            "sourceId": "resume",
+            "text": "Cut ShopLane catalog reindex time from 6 hours to 40 minutes"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "redis",
+        "name": "Redis",
+        "domainId": "data-storage",
+        "score": 78,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Redis caching behind the route-quote latency cut at Parcelwise"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "incident-response",
+        "name": "Incident response",
+        "domainId": "reliability",
+        "score": 88,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "On-call lead for 2 years at Finmint, 99.99% monthly availability"
+          }
+        ],
+        "unlocks": [
+          "Engineering Manager"
+        ]
+      },
+      {
+        "id": "slos",
+        "name": "SLOs",
+        "domainId": "reliability",
+        "score": 85,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Held 99.99% monthly availability as on-call lead at Finmint"
+          },
+          {
+            "sourceId": "resume",
+            "text": "SLOs listed under Reliability skills"
+          }
+        ],
+        "unlocks": [
+          "Distributed Systems Architect"
+        ]
+      },
+      {
+        "id": "load-testing",
+        "name": "Load testing",
+        "domainId": "reliability",
+        "score": 80,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Load tests before every release on the Parcelwise routing platform"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "kubernetes",
+        "name": "Kubernetes",
+        "domainId": "cloud-infra",
+        "score": 82,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Routing platform runs as Go services on Kubernetes at Parcelwise"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "terraform",
+        "name": "Terraform",
+        "domainId": "cloud-infra",
+        "score": 78,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "tf-sandbox: Terraform plan reviews, state moves and drift checks, 11 stars"
+          },
+          {
+            "sourceId": "resume",
+            "text": "Terraform listed under Infrastructure"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "aws",
+        "name": "AWS",
+        "domainId": "cloud-infra",
+        "score": 81,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "PostgreSQL on AWS at Parcelwise; RDS, EKS and S3 listed"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "auth-secrets",
+        "name": "Auth & secrets",
+        "domainId": "security",
+        "score": 72,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Auth and secrets management listed; payout APIs at Finmint"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "threat-modelling",
+        "name": "Threat modelling",
+        "domainId": "security",
+        "score": 66,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Threat modelling listed with no bullet or artifact that shows it"
+          }
+        ],
+        "unlocks": [
+          "Distributed Systems Architect"
+        ]
+      },
+      {
+        "id": "pci-dss",
+        "name": "PCI DSS",
+        "domainId": "security",
+        "score": 71,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Finmint payments platform operated in PCI DSS scope"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "tech-strategy",
+        "name": "Tech strategy",
+        "domainId": "leadership",
+        "score": 84,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Leads the routing platform team of 9 at Parcelwise"
+          }
+        ],
+        "unlocks": [
+          "Principal Engineer",
+          "Engineering Manager"
+        ]
+      },
+      {
+        "id": "mentoring",
+        "name": "Mentoring",
+        "domainId": "leadership",
+        "score": 85,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Mentors engineers on the routing team at Parcelwise"
+          }
+        ],
+        "unlocks": [
+          "Principal Engineer",
+          "Engineering Manager"
+        ]
+      },
+      {
+        "id": "architecture-review",
+        "name": "Architecture review",
+        "domainId": "leadership",
+        "score": 80,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Runs the weekly architecture review at Parcelwise"
+          }
+        ],
+        "unlocks": [
+          "Principal Engineer"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "id": "principal-engineer",
+        "title": "Principal Engineer",
+        "alignment": 81,
+        "eta": "~8 months",
+        "why": "Leads a team of 9, runs the architecture review and has two conference talks. Needs strategy visible beyond one team.",
+        "requirements": [
+          {
+            "name": "Tech strategy",
+            "skillId": "tech-strategy",
+            "have": true,
+            "current": 84,
+            "target": 85
+          },
+          {
+            "name": "Architecture review",
+            "skillId": "architecture-review",
+            "have": true,
+            "current": 80,
+            "target": 85
+          },
+          {
+            "name": "Consensus & replication",
+            "skillId": "consensus-replication",
+            "have": true,
+            "current": 84,
+            "target": 88
+          },
+          {
+            "name": "Mentoring",
+            "skillId": "mentoring",
+            "have": true,
+            "current": 85,
+            "target": 80
+          },
+          {
+            "name": "Cross-org influence",
+            "have": false,
+            "current": 62,
+            "target": 80
+          }
+        ]
+      },
+      {
+        "id": "engineering-manager",
+        "title": "Engineering Manager",
+        "alignment": 66,
+        "eta": "~1 year",
+        "why": "Leads 9 people informally with strong mentoring. No evidence yet of hiring, performance reviews or budget ownership.",
+        "requirements": [
+          {
+            "name": "Mentoring",
+            "skillId": "mentoring",
+            "have": true,
+            "current": 85,
+            "target": 80
+          },
+          {
+            "name": "Tech strategy",
+            "skillId": "tech-strategy",
+            "have": true,
+            "current": 84,
+            "target": 80
+          },
+          {
+            "name": "Incident response",
+            "skillId": "incident-response",
+            "have": true,
+            "current": 88,
+            "target": 75
+          },
+          {
+            "name": "People management",
+            "have": false,
+            "current": 52,
+            "target": 75
+          },
+          {
+            "name": "Hiring & performance reviews",
+            "have": false,
+            "current": 35,
+            "target": 70
+          }
+        ]
+      },
+      {
+        "id": "distributed-architect",
+        "title": "Distributed Systems Architect",
+        "alignment": 76,
+        "eta": "~6 months",
+        "why": "Idempotency, Kafka and sharding are production-proven and have talks. Threat modelling and formal SLO practice are thin.",
+        "requirements": [
+          {
+            "name": "Consensus & replication",
+            "skillId": "consensus-replication",
+            "have": true,
+            "current": 84,
+            "target": 88
+          },
+          {
+            "name": "Event streaming (Kafka)",
+            "skillId": "event-streaming",
+            "have": true,
+            "current": 90,
+            "target": 88
+          },
+          {
+            "name": "Sharding",
+            "skillId": "sharding",
+            "have": true,
+            "current": 89,
+            "target": 88
+          },
+          {
+            "name": "Idempotency",
+            "skillId": "idempotency",
+            "have": true,
+            "current": 93,
+            "target": 90
+          },
+          {
+            "name": "Threat modelling",
+            "skillId": "threat-modelling",
+            "have": true,
+            "current": 66,
+            "target": 75
+          },
+          {
+            "name": "SLOs",
+            "skillId": "slos",
+            "have": true,
+            "current": 85,
+            "target": 85
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "VIKRAM RAO\nStaff Engineer · Hyderabad, India\nvikram.rao.eng@example.com · +91 90000 45678 · github.com/vikramrao · linkedin.com/in/vikram-rao-eng\n\nSUMMARY\nStaff engineer with 11 years of experience building high-throughput backend platforms in logistics and payments. I\nlike boring, correct systems: idempotent writes, sharding without downtime and a quiet pager.\n\nEXPERIENCE\n\nParcelwise — Staff Engineer                                                       Hyderabad · Apr 2021 – Present\nLogistics platform. Go services on Kubernetes, PostgreSQL on AWS.\n- Lead the routing platform team of 9 (Go, gRPC, Kubernetes).\n- Cut p99 route-quote latency from 820 ms to 140 ms (Redis caching, query tuning, load tests before every release).\n- Moved the shipment ledger (2.1 billion rows) from a single Postgres to a sharded cluster with no downtime.\n- Run the weekly architecture review and mentor engineers on the routing team.\n\nFinmint — Senior Software Engineer                                               Bengaluru · Jul 2017 – Mar 2021\nPayments company (PCI DSS scope).\n- Built the idempotent payout service handling ₹1,200 crore a month; payout events flow through Kafka.\n- On-call lead for 2 years at 99.99% monthly availability.\n\nShopLane — Software Engineer                                                     Bengaluru · Jun 2014 – Jun 2017\nE-commerce company.\n- Built the search indexing pipeline in Java and Elasticsearch; cut catalog reindex time from 6 hours to 40 minutes.\n\nInfosys — Associate Engineer                                                        Mysuru · Aug 2013 – May 2014\n\nOPEN SOURCE\n- Contributor to pgshard (12 merged PRs).\n\nTALKS\n- \"Sharding without tears\" — GopherCon India 2024\n- \"Idempotency at ₹1,200 crore a month\" — Rootconf 2022\n\nEDUCATION\nB.E. Computer Science — NIT Karnataka (Surathkal)                                                    2009 – 2013\n\nSKILLS\nLanguages: Go, Java, SQL, Bash\nData: PostgreSQL, Redis, Kafka, Elasticsearch\nInfrastructure: Kubernetes, Terraform, AWS (RDS, EKS, S3)\nReliability: SLOs, incident response, load testing\nSecurity: auth and secrets management, threat modelling, PCI DSS\nLeadership: technical strategy, mentoring, architecture review"
+      },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "kind": "github",
+        "url": "https://github.com/vikramrao",
+        "content": "# GitHub: Vikram Rao (@vikramrao)\n\n## Profile\n- Name: Vikram Rao\n- Account type: User\n- Bio: Staff engineer @ Parcelwise. Postgres, Go and calm on-call rotations.\n- Company: Parcelwise\n- Location: Hyderabad, India\n- Followers: 412, following: 38\n- On GitHub since 2012-03-09 (about 14 years)\n\n## Totals\n- Public repositories: 4\n- Original repos: 4, forks: 0\n- Stars across original repos: 152\n- Languages by number of original repos: Go (1), Shell (2), HCL (1)\n- Repos with a description: 4/4, with topics: 3, with a live homepage link: 0\n- Engineering practice (checked 4 repos): tests in 2, CI in 3, Docker in 2\n\n## Contributions to other people's repositories\n- pgshard (Go, Postgres sharding tool): 12 merged PRs. Online shard rebalancing, routing-table fixes and docs.\n  Listed as a regular contributor; reviews other people's pull requests there.\n\n## Top repositories (4, ranked by stars, recency and substance)\n\n### 1. talks\n- Description: Slides and demo code for conference talks: sharding without downtime, idempotency at scale.\n- Language: Go, stars: 64, forks: 7, license: MIT\n- Topics: postgres, sharding, idempotency\n- Last push: 2026-03-30 (6 months ago), created 2022-10-02, size 5,100 KB\n- Detected: tests yes (14 test files), CI yes (GitHub Actions), Docker yes, docs yes, manifests: go.mod\n\n### 2. pg-failover-lab\n- Description: A docker-compose lab for rehearsing Postgres failover, replica promotion and split-brain handling.\n- Language: Shell, stars: 58, forks: 9, license: MIT\n- Topics: postgres, replication, failover\n- Last push: 2026-08-11 (2 months ago), created 2023-05-19, size 340 KB\n- Detected: tests no, CI yes (GitHub Actions), Docker yes, docs yes, manifests: none\n\n### 3. dotfiles\n- Description: Shell, tmux and editor configuration.\n- Language: Shell, stars: 19, forks: 2\n- Last push: 2026-09-12 (3 weeks ago), created 2013-09-22, size 120 KB\n\n### 4. tf-sandbox\n- Description: Terraform examples for rehearsing infrastructure changes safely: plan reviews, state moves and drift checks.\n- Language: HCL, stars: 11, forks: 1, license: MIT\n- Topics: terraform, aws\n- Last push: 2025-12-18 (10 months ago), created 2024-04-02, size 96 KB\n- Detected: tests yes (4 test files), CI yes (GitHub Actions), Docker no, docs yes, manifests: none\n\n## Recent public activity\n- 78 public events over about 90 days, most recent 2026-10-05 (3 days ago)\n- 31 pushes (52 commits), 6 pull requests opened (all to pgshard), 4 merged, 11 PR reviews, 9 comments, 0 new repos\n- Most active repos: pgshard (38), pg-failover-lab (14), talks (9)\n\n## Technologies mentioned across repos\nGo, PostgreSQL, Docker, Terraform, AWS, GitHub Actions"
+      },
+      {
+        "id": "link-1",
+        "label": "Talks",
+        "kind": "link",
+        "content": "# Talks: Vikram Rao\n\n## Conference talks (2)\n\n### 1. \"Sharding without tears\" — GopherCon India 2024\nFormat: conference talk\nAbstract: How Parcelwise moved a shipment ledger of 2.1 billion rows from a single Postgres to a sharded cluster with no\ndowntime: dual writes, backfill, shadow reads and the cutover checklist.\n\n### 2. \"Idempotency at ₹1,200 crore a month\" — Rootconf 2022\nFormat: conference talk\nAbstract: Design of an idempotent payout service: idempotency keys, retry safety, ledger reconciliation and what to do when a\ndownstream bank times out.\n\n## Observations\n- Both talks are about systems he led or built, and each states the scale up front.\n- Slides and demo code are in the talks repository on GitHub; no recordings are linked."
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "4 roles · 11 yrs · 1 page",
+        "summary": "Vikram Rao is a Staff Engineer at Parcelwise in Hyderabad with 11 years across logistics, payments and e-commerce. He leads a routing platform team of 9, cut p99 route-quote latency from 820 ms to 140 ms and moved a 2.1 billion-row shipment ledger to a sharded Postgres cluster with no downtime.",
+        "person": {
+          "name": "Vikram Rao",
+          "currentRole": "Staff Engineer",
+          "yearsExperience": 11,
+          "location": "Hyderabad, India"
+        },
+        "signals": [
+          {
+            "label": "Routing platform team of 9",
+            "detail": "Parcelwise, Staff Engineer"
+          },
+          {
+            "label": "p99 route-quote latency",
+            "detail": "820 ms to 140 ms"
+          },
+          {
+            "label": "Shipment ledger sharding",
+            "detail": "2.1 billion rows, no downtime"
+          },
+          {
+            "label": "Idempotent payout service",
+            "detail": "₹1,200 crore a month, Finmint"
+          },
+          {
+            "label": "On-call lead",
+            "detail": "2 years at 99.99% monthly availability"
+          },
+          {
+            "label": "Search indexing pipeline",
+            "detail": "reindex 6 hours to 40 minutes"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Go",
+            "evidence": "Routing platform at Parcelwise: Go services on Kubernetes",
+            "strength": 5
+          },
+          {
+            "name": "Java",
+            "evidence": "ShopLane search indexing pipeline in Java and Elasticsearch",
+            "strength": 4
+          },
+          {
+            "name": "API design",
+            "evidence": "Idempotent payout service handling ₹1,200 crore a month at Finmint; p99 route-quote latency cut from 820 ms to 140 ms at Parcelwise",
+            "strength": 5
+          },
+          {
+            "name": "gRPC",
+            "evidence": "Routing platform team of 9 builds Go and gRPC services",
+            "strength": 4
+          },
+          {
+            "name": "Event streaming (Kafka)",
+            "evidence": "Finmint payout events flow through Kafka",
+            "strength": 5
+          },
+          {
+            "name": "Idempotency",
+            "evidence": "Built the idempotent payout service handling ₹1,200 crore a month",
+            "strength": 5
+          },
+          {
+            "name": "PostgreSQL",
+            "evidence": "Moved the 2.1 billion-row shipment ledger from a single Postgres to a sharded cluster",
+            "strength": 5
+          },
+          {
+            "name": "Sharding",
+            "evidence": "Sharded the shipment ledger (2.1 billion rows) with no downtime",
+            "strength": 4
+          },
+          {
+            "name": "Query tuning",
+            "evidence": "Cut p99 route-quote latency from 820 ms to 140 ms with caching and query tuning; Cut ShopLane catalog reindex time from 6 hours to 40 minutes",
+            "strength": 4
+          },
+          {
+            "name": "Redis",
+            "evidence": "Redis caching behind the route-quote latency cut at Parcelwise",
+            "strength": 4
+          },
+          {
+            "name": "Incident response",
+            "evidence": "On-call lead for 2 years at Finmint, 99.99% monthly availability",
+            "strength": 4
+          },
+          {
+            "name": "SLOs",
+            "evidence": "Held 99.99% monthly availability as on-call lead at Finmint; SLOs listed under Reliability skills",
+            "strength": 4
+          },
+          {
+            "name": "Load testing",
+            "evidence": "Load tests before every release on the Parcelwise routing platform",
+            "strength": 4
+          },
+          {
+            "name": "Kubernetes",
+            "evidence": "Routing platform runs as Go services on Kubernetes at Parcelwise",
+            "strength": 4
+          },
+          {
+            "name": "Terraform",
+            "evidence": "Terraform listed under Infrastructure",
+            "strength": 4
+          },
+          {
+            "name": "AWS",
+            "evidence": "PostgreSQL on AWS at Parcelwise; RDS, EKS and S3 listed",
+            "strength": 4
+          },
+          {
+            "name": "Auth & secrets",
+            "evidence": "Auth and secrets management listed; payout APIs at Finmint",
+            "strength": 4
+          },
+          {
+            "name": "Threat modelling",
+            "evidence": "Threat modelling listed with no bullet or artifact that shows it",
+            "strength": 3
+          },
+          {
+            "name": "PCI DSS",
+            "evidence": "Finmint payments platform operated in PCI DSS scope",
+            "strength": 4
+          },
+          {
+            "name": "Tech strategy",
+            "evidence": "Leads the routing platform team of 9 at Parcelwise",
+            "strength": 4
+          },
+          {
+            "name": "Mentoring",
+            "evidence": "Mentors engineers on the routing team at Parcelwise",
+            "strength": 4
+          },
+          {
+            "name": "Architecture review",
+            "evidence": "Runs the weekly architecture review at Parcelwise",
+            "strength": 4
+          }
+        ],
+        "notes": [
+          "Every role carries a number: latency, rows, rupees per month, availability",
+          "Infosys entry has no bullets; fine for a first job, but say what you worked on",
+          "Security is listed but has little evidence beyond PCI DSS scope at Finmint"
+        ]
+      },
+      "github": {
+        "sub": "4 repos · 3 languages · 152 stars",
+        "summary": "Staff engineer at Parcelwise whose GitHub shows depth over volume: 12 merged PRs to the pgshard Postgres sharding tool, a failover lab (58 stars) and a repository of conference-talk slides and demo code.",
+        "person": {
+          "name": "Vikram Rao",
+          "currentRole": "Staff Engineer",
+          "location": "Hyderabad, India"
+        },
+        "signals": [
+          {
+            "label": "pgshard contributor",
+            "detail": "12 merged PRs, 11 PR reviews in 90 days"
+          },
+          {
+            "label": "pg-failover-lab",
+            "detail": "58 stars, failover rehearsal lab"
+          },
+          {
+            "label": "talks",
+            "detail": "64 stars, slides and demo code"
+          },
+          {
+            "label": "tf-sandbox",
+            "detail": "11 stars, Terraform examples"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Go",
+            "evidence": "pgshard (Go): 12 merged PRs; talks repo in Go",
+            "strength": 5
+          },
+          {
+            "name": "Consensus & replication",
+            "evidence": "pg-failover-lab: replica promotion and split-brain rehearsal, 58 stars; pgshard: 12 merged PRs including online shard rebalancing",
+            "strength": 4
+          },
+          {
+            "name": "PostgreSQL",
+            "evidence": "pg-failover-lab: Postgres failover lab, 58 stars",
+            "strength": 5
+          },
+          {
+            "name": "Terraform",
+            "evidence": "tf-sandbox: Terraform plan reviews, state moves and drift checks, 11 stars",
+            "strength": 4
+          }
+        ],
+        "notes": [
+          "pgshard contributions are the strongest signal: 12 merged PRs and regular reviews",
+          "pg-failover-lab (58 stars) and talks (64 stars) are credible public artifacts",
+          "Only 2 of 4 repos have tests; dotfiles is the oldest and least relevant"
+        ]
+      },
+      "link-1": {
+        "sub": "Conference talks · 2",
+        "summary": "Two conference talks, both about systems Vikram built: 'Sharding without tears' (GopherCon India 2024) on the Parcelwise ledger migration and 'Idempotency at ₹1,200 crore a month' (Rootconf 2022) on the Finmint payout service.",
+        "signals": [
+          {
+            "label": "Sharding without tears",
+            "detail": "GopherCon India 2024"
+          },
+          {
+            "label": "Idempotency at ₹1,200 crore a month",
+            "detail": "Rootconf 2022"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Idempotency",
+            "evidence": "Rootconf 2022 talk: 'Idempotency at ₹1,200 crore a month'",
+            "strength": 5
+          },
+          {
+            "name": "Sharding",
+            "evidence": "GopherCon India 2024 talk: 'Sharding without tears'",
+            "strength": 4
+          }
+        ],
+        "notes": [
+          "Each talk names its scale in the title or abstract",
+          "No recordings are linked; add video links where they exist"
+        ]
+      }
+    }
+  }
+}

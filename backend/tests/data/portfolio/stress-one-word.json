@@ -1,0 +1,527 @@
+{
+  "name": "stress-one-word",
+  "about": "Stress: person.summary is the single word 'Engineer.' and the resume SUMMARY is one word; otherwise a normal small resume (1 job, 1 project).",
+  "profile": {
+    "id": "813f7d369a4516d2278521c2cd276a75",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "Tanvi Joshi",
+      "headline": "Software Engineer · 3.2 yrs · Pune",
+      "currentRole": "Software Engineer",
+      "location": "Pune, India",
+      "yearsExperience": 3.2,
+      "summary": "Engineer."
+    },
+    "mastery": {
+      "score": 58,
+      "insight": "Early-career backend delivery with measured results; breadth beyond one service is not yet shown."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "1 project · 1 role · 1 page",
+        "summary": "Tanvi Joshi is a software engineer at Zenmark Software in Pune with one role and one personal project. She built the invoice-export service, cut failures from 4.8% to 0.6%, and wrote the team's first integration test suite of 86 tests.",
+        "notes": [
+          "Role bullets carry numbers: 4.8% to 0.6% failures, 14 s to 3 s, 86 tests",
+          "The summary is a single word; say what you build and for whom",
+          "Only one project is listed; link its repository"
+        ],
+        "ok": true
+      },
+      {
+        "id": "github",
+        "kind": "github",
+        "label": "GitHub",
+        "url": "https://github.com/tanvijoshi",
+        "sub": "6 repos · 3 languages · 9 stars",
+        "summary": "Software engineer in Pune with six small public repositories, mostly Python. bill-splitter is a tested FastAPI app with CI; the rest are exercises. The bio is a single word.",
+        "notes": [
+          "bill-splitter has tests and CI, which most of the other repos lack",
+          "Tests in 3 of 6 repos; 2 repos have no description",
+          "The bio is a single word; say what you build"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 64,
+        "summary": "Python and FastAPI services in production plus a personal FastAPI app."
+      },
+      {
+        "id": "data-storage",
+        "name": "Data & Storage",
+        "short": "Data & Storage",
+        "score": 52,
+        "summary": "Postgres indexing and query rewrites at work; schema design is not shown."
+      },
+      {
+        "id": "eng-practice",
+        "name": "Engineering Practice",
+        "short": "Eng Practice",
+        "score": 54,
+        "summary": "Wrote the team's first integration test suite of 86 tests; CI appears in 2 of 6 repos."
+      },
+      {
+        "id": "product-collab",
+        "name": "Product & Collaboration",
+        "short": "Product & Collab",
+        "score": 40,
+        "summary": "No cross-team, product or stakeholder work is described."
+      }
+    ],
+    "skills": [
+      {
+        "id": "python",
+        "name": "Python",
+        "domainId": "backend-apis",
+        "score": 70,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Invoice-export service in Python and FastAPI at Zenmark"
+          },
+          {
+            "sourceId": "github",
+            "text": "4 of 6 repos are Python"
+          }
+        ],
+        "unlocks": [
+          "Senior Backend Engineer",
+          "Data Engineer"
+        ]
+      },
+      {
+        "id": "fastapi",
+        "name": "FastAPI",
+        "domainId": "backend-apis",
+        "score": 66,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Built the invoice-export service in FastAPI"
+          },
+          {
+            "sourceId": "github",
+            "text": "bill-splitter: FastAPI app with 9 test files"
+          }
+        ],
+        "unlocks": [
+          "Senior Backend Engineer"
+        ]
+      },
+      {
+        "id": "rest-design",
+        "name": "REST API design",
+        "domainId": "backend-apis",
+        "score": 58,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "REST listed under Backend; export endpoints for PDF and CSV"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "postgresql",
+        "name": "PostgreSQL",
+        "domainId": "data-storage",
+        "score": 56,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Added Postgres indexes and rewrote 6 queries at Zenmark"
+          }
+        ],
+        "unlocks": [
+          "Senior Backend Engineer",
+          "Data Engineer"
+        ]
+      },
+      {
+        "id": "query-tuning",
+        "name": "Query tuning",
+        "domainId": "data-storage",
+        "score": 52,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Cut the slowest dashboard report from 14 s to 3 s"
+          }
+        ],
+        "unlocks": [
+          "Data Engineer"
+        ]
+      },
+      {
+        "id": "data-modelling",
+        "name": "Data modelling",
+        "domainId": "data-storage",
+        "score": 48,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "bill-splitter uses SQLite with a small schema"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "integration-testing",
+        "name": "Integration testing",
+        "domainId": "eng-practice",
+        "score": 62,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Wrote the team's first integration test suite (86 tests)"
+          }
+        ],
+        "unlocks": [
+          "Senior Backend Engineer",
+          "Platform Engineer"
+        ]
+      },
+      {
+        "id": "ci-cd",
+        "name": "CI/CD",
+        "domainId": "eng-practice",
+        "score": 54,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Wired the test suite into GitHub Actions"
+          },
+          {
+            "sourceId": "github",
+            "text": "CI in 2 of 6 repos"
+          }
+        ],
+        "unlocks": [
+          "Platform Engineer"
+        ]
+      },
+      {
+        "id": "code-review",
+        "name": "Code review",
+        "domainId": "eng-practice",
+        "score": 46,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "3 PR reviews in the last 90 days"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "writing-specs",
+        "name": "Writing specs",
+        "domainId": "product-collab",
+        "score": 36,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "No spec, design doc or planning work is described"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "stakeholder-updates",
+        "name": "Stakeholder updates",
+        "domainId": "product-collab",
+        "score": 44,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Export failure drop reported as a result, but no audience is named"
+          }
+        ],
+        "unlocks": []
+      }
+    ],
+    "roles": [
+      {
+        "id": "senior-backend",
+        "title": "Senior Backend Engineer",
+        "alignment": 48,
+        "eta": "~1 year",
+        "why": "Ships measured fixes in one service. Needs broader system scope, stronger design writing and review habits.",
+        "requirements": [
+          {
+            "name": "Python",
+            "skillId": "python",
+            "have": true,
+            "current": 70,
+            "target": 80
+          },
+          {
+            "name": "FastAPI",
+            "skillId": "fastapi",
+            "have": true,
+            "current": 66,
+            "target": 75
+          },
+          {
+            "name": "PostgreSQL",
+            "skillId": "postgresql",
+            "have": false,
+            "current": 56,
+            "target": 75
+          },
+          {
+            "name": "Integration testing",
+            "skillId": "integration-testing",
+            "have": false,
+            "current": 62,
+            "target": 75
+          },
+          {
+            "name": "System design",
+            "have": false,
+            "current": 35,
+            "target": 70
+          }
+        ]
+      },
+      {
+        "id": "data-engineer",
+        "title": "Data Engineer",
+        "alignment": 44,
+        "eta": "~10 months",
+        "why": "Query tuning and Postgres work transfer well. No pipelines, orchestration or warehouse experience yet.",
+        "requirements": [
+          {
+            "name": "PostgreSQL",
+            "skillId": "postgresql",
+            "have": false,
+            "current": 56,
+            "target": 75
+          },
+          {
+            "name": "Query tuning",
+            "skillId": "query-tuning",
+            "have": false,
+            "current": 52,
+            "target": 70
+          },
+          {
+            "name": "Python",
+            "skillId": "python",
+            "have": true,
+            "current": 70,
+            "target": 75
+          },
+          {
+            "name": "Pipelines & orchestration",
+            "have": false,
+            "current": 10,
+            "target": 65
+          },
+          {
+            "name": "Data warehousing",
+            "have": false,
+            "current": 5,
+            "target": 60
+          }
+        ]
+      },
+      {
+        "id": "platform-engineer",
+        "title": "Platform Engineer",
+        "alignment": 38,
+        "eta": "~1 year",
+        "why": "CI and Docker are present at a basic level. Infrastructure as code and observability are not shown.",
+        "requirements": [
+          {
+            "name": "CI/CD",
+            "skillId": "ci-cd",
+            "have": false,
+            "current": 54,
+            "target": 70
+          },
+          {
+            "name": "Integration testing",
+            "skillId": "integration-testing",
+            "have": true,
+            "current": 62,
+            "target": 70
+          },
+          {
+            "name": "Docker & containers",
+            "have": false,
+            "current": 40,
+            "target": 70
+          },
+          {
+            "name": "Infrastructure as code",
+            "have": false,
+            "current": 5,
+            "target": 65
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "TANVI JOSHI\nSoftware Engineer · Pune, India\ntanvi.joshi.dev@example.com · +91 90000 78901 · github.com/tanvijoshi\n\nSUMMARY\nEngineer.\n\nEXPERIENCE\n\nZenmark Software — Software Engineer                                                   Pune · Aug 2023 – Present\nB2B SaaS company (billing software).\n- Built the invoice-export service (Python, FastAPI) that generates PDF and CSV exports; export failures dropped from\n  4.8% to 0.6%.\n- Added Postgres indexes and rewrote 6 queries, cutting the slowest dashboard report from 14 s to 3 s.\n- Wrote the team's first integration test suite (86 tests) and wired it into GitHub Actions.\n\nPROJECTS\n- bill-splitter — A small web app that splits shared bills between flatmates. FastAPI, SQLite, plain JavaScript.\n  github.com/tanvijoshi/bill-splitter\n\nEDUCATION\nB.E. Computer Engineering — Sahyadri Institute of Technology, Pune                                   2019 – 2023\n\nSKILLS\nLanguages: Python, SQL, JavaScript (basic)\nBackend: FastAPI, REST, PostgreSQL, SQLite\nTooling: GitHub Actions, pytest, Docker, Git"
+      },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "kind": "github",
+        "url": "https://github.com/tanvijoshi",
+        "content": "# GitHub: Tanvi Joshi (@tanvijoshi)\n\n## Profile\n- Name: Tanvi Joshi\n- Account type: User\n- Bio: Engineer.\n- Location: Pune, India\n- Followers: 21, following: 33\n- On GitHub since 2020-01-12 (about 6 years)\n\n## Totals\n- Public repositories: 6\n- Original repos: 6, forks: 0\n- Stars across original repos: 9\n- Languages by number of original repos: Python (4), JavaScript (1), Shell (1)\n- Repos with a description: 4/6, with topics: 2, with a live homepage link: 0\n- Engineering practice (checked 6 repos): tests in 3, CI in 2, Docker in 1\n\n## Top repositories (2, ranked by stars, recency and substance)\n\n### 1. bill-splitter\n- Description: Split shared bills between flatmates. FastAPI, SQLite, plain JavaScript.\n- Language: Python, stars: 6, forks: 0\n- Topics: fastapi, sqlite\n- Last push: 2026-06-04 (4 months ago), created 2025-05-17, size 190 KB\n- Detected: tests yes (9 test files), CI yes (GitHub Actions), Docker no, docs yes, manifests: pyproject.toml\n\n### 2. advent-of-code\n- Description: Solutions to Advent of Code in Python.\n- Language: Python, stars: 2, forks: 0\n- Last push: 2025-12-22 (10 months ago), created 2023-12-01, size 84 KB\n\n## Recent public activity\n- 34 public events over about 90 days, most recent 2026-09-29 (9 days ago)\n- 15 pushes (22 commits), 2 pull requests opened, 2 PRs merged, 0 issues opened, 3 PR reviews\n\n## Technologies mentioned across repos\nPython, FastAPI, SQLite, JavaScript, GitHub Actions"
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "1 project · 1 role · 1 page",
+        "summary": "Tanvi Joshi is a software engineer at Zenmark Software in Pune with one role and one personal project. She built the invoice-export service, cut failures from 4.8% to 0.6%, and wrote the team's first integration test suite of 86 tests.",
+        "person": {
+          "name": "Tanvi Joshi",
+          "currentRole": "Software Engineer",
+          "yearsExperience": 3.2,
+          "location": "Pune, India"
+        },
+        "signals": [
+          {
+            "label": "Invoice-export service",
+            "detail": "failures 4.8% to 0.6%"
+          },
+          {
+            "label": "Query tuning",
+            "detail": "slowest report 14 s to 3 s"
+          },
+          {
+            "label": "Integration tests",
+            "detail": "86 tests in GitHub Actions"
+          },
+          {
+            "label": "bill-splitter",
+            "detail": "FastAPI personal project"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Python",
+            "evidence": "Invoice-export service in Python and FastAPI at Zenmark",
+            "strength": 4
+          },
+          {
+            "name": "FastAPI",
+            "evidence": "Built the invoice-export service in FastAPI",
+            "strength": 3
+          },
+          {
+            "name": "REST API design",
+            "evidence": "REST listed under Backend; export endpoints for PDF and CSV",
+            "strength": 3
+          },
+          {
+            "name": "PostgreSQL",
+            "evidence": "Added Postgres indexes and rewrote 6 queries at Zenmark",
+            "strength": 3
+          },
+          {
+            "name": "Query tuning",
+            "evidence": "Cut the slowest dashboard report from 14 s to 3 s",
+            "strength": 3
+          },
+          {
+            "name": "Integration testing",
+            "evidence": "Wrote the team's first integration test suite (86 tests)",
+            "strength": 3
+          },
+          {
+            "name": "CI/CD",
+            "evidence": "Wired the test suite into GitHub Actions",
+            "strength": 3
+          },
+          {
+            "name": "Writing specs",
+            "evidence": "No spec, design doc or planning work is described",
+            "strength": 2
+          },
+          {
+            "name": "Stakeholder updates",
+            "evidence": "Export failure drop reported as a result, but no audience is named",
+            "strength": 2
+          }
+        ],
+        "notes": [
+          "Role bullets carry numbers: 4.8% to 0.6% failures, 14 s to 3 s, 86 tests",
+          "The summary is a single word; say what you build and for whom",
+          "Only one project is listed; link its repository"
+        ]
+      },
+      "github": {
+        "sub": "6 repos · 3 languages · 9 stars",
+        "summary": "Software engineer in Pune with six small public repositories, mostly Python. bill-splitter is a tested FastAPI app with CI; the rest are exercises. The bio is a single word.",
+        "person": {
+          "name": "Tanvi Joshi",
+          "currentRole": "Software Engineer",
+          "location": "Pune, India"
+        },
+        "signals": [
+          {
+            "label": "bill-splitter",
+            "detail": "6 stars, tests and CI"
+          },
+          {
+            "label": "advent-of-code",
+            "detail": "Python exercises, 2 stars"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Python",
+            "evidence": "4 of 6 repos are Python",
+            "strength": 4
+          },
+          {
+            "name": "FastAPI",
+            "evidence": "bill-splitter: FastAPI app with 9 test files",
+            "strength": 3
+          },
+          {
+            "name": "Data modelling",
+            "evidence": "bill-splitter uses SQLite with a small schema",
+            "strength": 2
+          },
+          {
+            "name": "CI/CD",
+            "evidence": "CI in 2 of 6 repos",
+            "strength": 3
+          },
+          {
+            "name": "Code review",
+            "evidence": "3 PR reviews in the last 90 days",
+            "strength": 2
+          }
+        ],
+        "notes": [
+          "bill-splitter has tests and CI, which most of the other repos lack",
+          "Tests in 3 of 6 repos; 2 repos have no description",
+          "The bio is a single word; say what you build"
+        ]
+      }
+    }
+  }
+}

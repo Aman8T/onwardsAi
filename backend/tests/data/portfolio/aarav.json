@@ -1,0 +1,398 @@
+{
+  "name": "aarav",
+  "about": "Student with a brand-new graph: 3 domains, 5 skills, one project, no experience, resume plus a tiny GitHub (focus variant, no experience section).",
+  "profile": {
+    "id": "7255527d689d0682a5f3e7d460bd752e",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "Aarav Mehta",
+      "headline": "ECE student · Mysuru",
+      "currentRole": "ECE Student",
+      "location": "Mysuru, India",
+      "yearsExperience": 0,
+      "summary": "Final-year Electronics and Communication Engineering student at Kaveri Institute of Technology (CGPA 7.9 / 10) who built a smart irrigation controller with an Arduino Uno, two soil-moisture sensors and an ESP8266 in a team of 3."
+    },
+    "mastery": {
+      "score": 40,
+      "insight": "One finished hardware project with firmware and a dashboard; coding depth and breadth are at an early stage."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "1 project · 0 roles · 1 page",
+        "summary": "Aarav Mehta is a final-year Electronics and Communication Engineering student at Kaveri Institute of Technology, Mysuru, with one hardware project and no work experience yet. The project, a smart irrigation controller, links an Arduino Uno and soil-moisture sensors to a web dashboard.",
+        "notes": [
+          "Project is specific: Arduino Uno, two sensors, 12V pump, ESP8266 uplink",
+          "No result is stated; add what the controller measured or saved",
+          "Python (basic) is listed with no project that uses it"
+        ],
+        "ok": true
+      },
+      {
+        "id": "github",
+        "kind": "github",
+        "label": "GitHub",
+        "url": "https://github.com/aaravmehta",
+        "sub": "2 repos · 2 languages · 3 stars",
+        "summary": "ECE student in Mysuru with two public repositories. soil-sense is the smart irrigation controller (Arduino Uno, ESP8266, web dashboard) with a README and wiring diagram; c-practice holds C lab programs.",
+        "notes": [
+          "soil-sense is public with a README and a wiring diagram",
+          "No tests, CI or releases in either repo",
+          "c-practice has no README; say what each program shows"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "hardware-iot",
+        "name": "Hardware & IoT",
+        "short": "Hardware & IoT",
+        "score": 51,
+        "summary": "One finished Arduino and ESP8266 project with sensor firmware in C; no second hardware project yet."
+      },
+      {
+        "id": "web-basics",
+        "name": "Web Basics",
+        "short": "Web Basics",
+        "score": 42,
+        "summary": "Built the soil-sense dashboard in HTML, CSS and JavaScript; JavaScript is still early."
+      },
+      {
+        "id": "python",
+        "name": "Python",
+        "short": "Python",
+        "score": 38,
+        "summary": "Python is listed as basic and no project uses it yet."
+      }
+    ],
+    "skills": [
+      {
+        "id": "arduino-sensors",
+        "name": "Arduino & sensors",
+        "domainId": "hardware-iot",
+        "score": 58,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Arduino Uno reads two soil-moisture sensors and switches a 12V pump"
+          },
+          {
+            "sourceId": "github",
+            "text": "soil-sense: Arduino Uno, 2 soil-moisture sensors, ESP8266 uplink"
+          }
+        ],
+        "unlocks": [
+          "IoT Developer Trainee",
+          "Embedded Software Engineer"
+        ]
+      },
+      {
+        "id": "c-programming",
+        "name": "C programming",
+        "domainId": "hardware-iot",
+        "score": 44,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Wrote the soil-sense sensor firmware in C"
+          },
+          {
+            "sourceId": "github",
+            "text": "c-practice: C lab programs on pointers, arrays and bit manipulation"
+          }
+        ],
+        "unlocks": [
+          "IoT Developer Trainee",
+          "Embedded Software Engineer"
+        ]
+      },
+      {
+        "id": "html-css",
+        "name": "HTML & CSS",
+        "domainId": "web-basics",
+        "score": 48,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Built the soil-sense dashboard in HTML and CSS"
+          }
+        ],
+        "unlocks": [
+          "Junior Web Developer"
+        ]
+      },
+      {
+        "id": "javascript",
+        "name": "JavaScript",
+        "domainId": "web-basics",
+        "score": 36,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Dashboard logic in JavaScript; no other JavaScript project listed"
+          }
+        ],
+        "unlocks": [
+          "IoT Developer Trainee",
+          "Junior Web Developer"
+        ]
+      },
+      {
+        "id": "python-scripting",
+        "name": "Python scripting",
+        "domainId": "python",
+        "score": 40,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Python (basic) listed under Languages; no bullet or repo uses it"
+          }
+        ],
+        "unlocks": [
+          "IoT Developer Trainee"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "id": "iot-trainee",
+        "title": "IoT Developer Trainee",
+        "alignment": 52,
+        "eta": "~8 months",
+        "why": "soil-sense is a complete sensor-to-dashboard loop. Needs deeper firmware, a networking protocol such as MQTT and a second project.",
+        "requirements": [
+          {
+            "name": "Arduino & sensors",
+            "skillId": "arduino-sensors",
+            "have": true,
+            "current": 58,
+            "target": 65
+          },
+          {
+            "name": "C programming",
+            "skillId": "c-programming",
+            "have": false,
+            "current": 44,
+            "target": 60
+          },
+          {
+            "name": "JavaScript",
+            "skillId": "javascript",
+            "have": false,
+            "current": 36,
+            "target": 50
+          },
+          {
+            "name": "Python scripting",
+            "skillId": "python-scripting",
+            "have": true,
+            "current": 40,
+            "target": 50
+          },
+          {
+            "name": "MQTT & networking",
+            "have": false,
+            "current": 12,
+            "target": 45
+          }
+        ]
+      },
+      {
+        "id": "embedded-engineer",
+        "title": "Embedded Software Engineer",
+        "alignment": 41,
+        "eta": "~1 year",
+        "why": "Has C firmware on one board. Missing RTOS basics, bus protocols (I2C, SPI) and debugging with instruments.",
+        "requirements": [
+          {
+            "name": "C programming",
+            "skillId": "c-programming",
+            "have": false,
+            "current": 44,
+            "target": 70
+          },
+          {
+            "name": "Arduino & sensors",
+            "skillId": "arduino-sensors",
+            "have": false,
+            "current": 58,
+            "target": 70
+          },
+          {
+            "name": "I2C & SPI interfacing",
+            "have": false,
+            "current": 20,
+            "target": 60
+          },
+          {
+            "name": "RTOS basics",
+            "have": false,
+            "current": 8,
+            "target": 55
+          }
+        ]
+      },
+      {
+        "id": "junior-web",
+        "title": "Junior Web Developer",
+        "alignment": 33,
+        "eta": "~1 year",
+        "why": "One small dashboard in plain HTML, CSS and JavaScript. No framework, no version-control history to show.",
+        "requirements": [
+          {
+            "name": "HTML & CSS",
+            "skillId": "html-css",
+            "have": false,
+            "current": 48,
+            "target": 70
+          },
+          {
+            "name": "JavaScript",
+            "skillId": "javascript",
+            "have": false,
+            "current": 36,
+            "target": 70
+          },
+          {
+            "name": "Git & version control",
+            "have": false,
+            "current": 45,
+            "target": 60
+          },
+          {
+            "name": "A frontend framework",
+            "have": false,
+            "current": 5,
+            "target": 55
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "AARAV MEHTA\nECE Student · Mysuru, India\naarav.mehta.ece@example.com · +91 90000 12345 · github.com/aaravmehta\n\nOBJECTIVE\nI like building small devices that measure something real and show it on a screen.\n\nEDUCATION\nB.Tech, Electronics and Communication Engineering — Kaveri Institute of Technology, Mysuru    2022 – 2026 (expected)\nCGPA 7.9 / 10.\n\nPROJECTS\nSmart irrigation controller — final-year mini project                           github.com/aaravmehta/soil-sense\n- An Arduino Uno reads two soil-moisture sensors and switches a 12V pump; readings go to a small web dashboard (HTML,\n  CSS, JavaScript) over an ESP8266.\n- Team of 3. I wrote the sensor firmware in C and built the dashboard.\n\nACTIVITIES\n- Member, IEEE student branch (2023 – 2025).\n- Took part in the college round of Smart India Hackathon 2025.\n\nSKILLS\nHardware: Arduino, ESP8266, soil-moisture sensors, relay-driven pumps, breadboard prototyping\nLanguages: C, Python (basic), HTML, CSS, JavaScript\nTools: Arduino IDE, Git, VS Code"
+      },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "kind": "github",
+        "url": "https://github.com/aaravmehta",
+        "content": "# GitHub: Aarav Mehta (@aaravmehta)\n\n## Profile\n- Name: Aarav Mehta\n- Account type: User\n- Bio: ECE student at Kaveri Institute of Technology. Sensors, firmware and small dashboards.\n- Location: Mysuru, India\n- Followers: 9, following: 14\n- On GitHub since 2022-08-20 (about 4 years)\n\n## Totals\n- Public repositories: 2\n- Original repos: 2, forks: 0\n- Stars across original repos: 3\n- Languages by number of original repos: C++ (1), C (1)\n- Repos with a description: 2/2, with topics: 1, with a live homepage link: 0\n- Engineering practice (checked 2 repos): tests in 0, CI in 0, Docker in 0\n\n## Top repositories (2, ranked by stars, recency and substance)\n\n### 1. soil-sense\n- Description: Smart irrigation controller: Arduino Uno, two soil-moisture sensors, a 12V pump relay and an ESP8266 uplink to a small web dashboard.\n- Language: C++, stars: 3, forks: 1\n- Topics: arduino, iot, esp8266, irrigation\n- Last push: 2026-04-28 (5 months ago), created 2025-11-09, size 148 KB\n- Detected: tests no, CI no, Docker no, docs yes, manifests: none\n- README excerpt:\n> # soil-sense\n> Final-year mini project (team of 3). Two soil-moisture sensors feed an Arduino Uno; when the soil is dry the pump\n> relay switches on a 12V pump. An ESP8266 posts readings to a static dashboard (HTML, CSS, JavaScript).\n> Firmware is written in C in the Arduino IDE. Wiring diagram in /docs.\n\n### 2. c-practice\n- Description: Lab and self-study programs in C: pointers, arrays, bit manipulation and basic data structures.\n- Language: C, stars: 0, forks: 0\n- Last push: 2026-02-14 (8 months ago), created 2023-09-03, size 62 KB\n- Detected: tests no, CI no, Docker no, docs no, manifests: none\n\n## Recent public activity\n- 21 public events over about 90 days, most recent 2026-09-18 (3 weeks ago)\n- 9 pushes (14 commits), 0 pull requests opened, 0 PR reviews, 1 comment, 0 new repos\n\n## Technologies mentioned across repos\nArduino, ESP8266, C, C++, HTML, CSS, JavaScript"
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "1 project · 0 roles · 1 page",
+        "summary": "Aarav Mehta is a final-year Electronics and Communication Engineering student at Kaveri Institute of Technology, Mysuru, with one hardware project and no work experience yet. The project, a smart irrigation controller, links an Arduino Uno and soil-moisture sensors to a web dashboard.",
+        "person": {
+          "name": "Aarav Mehta",
+          "currentRole": "ECE Student",
+          "yearsExperience": 0,
+          "location": "Mysuru, India"
+        },
+        "signals": [
+          {
+            "label": "Smart irrigation controller",
+            "detail": "Arduino Uno, 2 sensors, 12V pump"
+          },
+          {
+            "label": "ESP8266 web dashboard",
+            "detail": "HTML, CSS, JavaScript"
+          },
+          {
+            "label": "Team of 3",
+            "detail": "firmware in C plus the dashboard"
+          },
+          {
+            "label": "IEEE student branch",
+            "detail": "member, 2023 – 2025"
+          },
+          {
+            "label": "Smart India Hackathon 2025",
+            "detail": "took part in the college round"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Arduino & sensors",
+            "evidence": "Arduino Uno reads two soil-moisture sensors and switches a 12V pump",
+            "strength": 3
+          },
+          {
+            "name": "C programming",
+            "evidence": "Wrote the soil-sense sensor firmware in C",
+            "strength": 2
+          },
+          {
+            "name": "HTML & CSS",
+            "evidence": "Built the soil-sense dashboard in HTML and CSS",
+            "strength": 2
+          },
+          {
+            "name": "JavaScript",
+            "evidence": "Dashboard logic in JavaScript; no other JavaScript project listed",
+            "strength": 2
+          },
+          {
+            "name": "Python scripting",
+            "evidence": "Python (basic) listed under Languages; no bullet or repo uses it",
+            "strength": 2
+          }
+        ],
+        "notes": [
+          "Project is specific: Arduino Uno, two sensors, 12V pump, ESP8266 uplink",
+          "No result is stated; add what the controller measured or saved",
+          "Python (basic) is listed with no project that uses it"
+        ]
+      },
+      "github": {
+        "sub": "2 repos · 2 languages · 3 stars",
+        "summary": "ECE student in Mysuru with two public repositories. soil-sense is the smart irrigation controller (Arduino Uno, ESP8266, web dashboard) with a README and wiring diagram; c-practice holds C lab programs.",
+        "person": {
+          "name": "Aarav Mehta",
+          "currentRole": "ECE Student",
+          "location": "Mysuru, India"
+        },
+        "signals": [
+          {
+            "label": "soil-sense",
+            "detail": "3 stars, README, wiring diagram"
+          },
+          {
+            "label": "c-practice",
+            "detail": "C lab and self-study programs"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Arduino & sensors",
+            "evidence": "soil-sense: Arduino Uno, 2 soil-moisture sensors, ESP8266 uplink",
+            "strength": 3
+          },
+          {
+            "name": "C programming",
+            "evidence": "c-practice: C lab programs on pointers, arrays and bit manipulation",
+            "strength": 2
+          }
+        ],
+        "notes": [
+          "soil-sense is public with a README and a wiring diagram",
+          "No tests, CI or releases in either repo",
+          "c-practice has no README; say what each program shows"
+        ]
+      }
+    }
+  }
+}

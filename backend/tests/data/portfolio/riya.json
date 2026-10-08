@@ -1,0 +1,1408 @@
+{
+  "name": "riya",
+  "about": "Reference persona (bundled sample): frontend engineer, 6 domains, 21 skills, 4 sources (resume, GitHub, Lovable, portfolio), 2.4 yrs; Signature composition.",
+  "profile": {
+    "id": "sample-muw68cno-d358c0",
+    "createdAt": "2026-10-06T04:21:05.172Z",
+    "goal": "Move into AI product engineering within a year",
+    "person": {
+      "name": "Riya Kapoor",
+      "headline": "Frontend Engineer · 2.4 yrs · Bengaluru",
+      "currentRole": "Frontend Engineer",
+      "location": "Bengaluru, India",
+      "yearsExperience": 2.4,
+      "summary": "Frontend engineer at Kitebird who owns a 42-component design system and rebuilt checkout with a measured 9.4% conversion lift. Maintains motion-kit (212 stars), and her AI work is limited to two small OpenAI apps with no evaluation."
+    },
+    "mastery": {
+      "score": 78,
+      "insight": "Ships above-level UI, motion and design-system work with metrics; AI evaluation, testing and analytics are thin."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "4 roles · 2.4 yrs · 2 pages",
+        "summary": "Riya Kapoor is a Frontend Engineer II at Kitebird with 2.4 years of professional experience building React commerce interfaces. She owns the shared component library and checkout experience, shipping measurable improvements in conversion and performance. She also maintains motion-kit, a spring-physics animation library with 212 GitHub stars.",
+        "notes": [
+          "Checkout bullet has real metrics: +9.4% conversion, LCP 4.1s to 1.9s",
+          "Add AI projects (Recipe Genie, notes-ai); none appear in the resume",
+          "Freelance clients are unnamed; skills like Redux Toolkit and TanStack Query have no bullet"
+        ],
+        "ok": true
+      },
+      {
+        "id": "github",
+        "kind": "github",
+        "label": "GitHub",
+        "url": "https://github.com/riyakapoor",
+        "sub": "34 repos · 9 languages · 389 stars",
+        "summary": "Frontend engineer at Kitebird (Bengaluru) with 7 years on GitHub. Focuses on animation primitives, design systems, and checkout UX. Published motion-kit (212 stars, production React library) and design-tokens (58 stars, Figma-to-code pipeline). Maintains accessibility resources and explores LLM applications for note-taking.",
+        "notes": [
+          "motion-kit and design-tokens are credible public artifacts",
+          "Tests in 6 of 34 repos; notes-ai has no tests, CI or evals",
+          "Most repos are stale; pin the best 4 and archive the rest"
+        ],
+        "ok": true
+      },
+      {
+        "id": "lovable-1",
+        "kind": "lovable",
+        "label": "Lovable",
+        "url": "https://recipe-genie.lovable.app",
+        "sub": "1 app · 3 flows · 6 services",
+        "summary": "Recipe Genie is a Lovable-built web app that generates dinner recipes based on pantry ingredients. It wires Supabase auth and database with OpenAI API via Edge Functions, offers three recipe suggestions with ingredient swaps, and lets users save favourites. The app is linked from a public GitHub repository and landing page.",
+        "notes": [
+          "Full loop works: Supabase auth, Edge Function, OpenAI, share links",
+          "No analytics or output-quality feedback; add ratings and event tracking",
+          "Error toast has no retry or fallback; add streaming and graceful failure"
+        ],
+        "ok": true
+      },
+      {
+        "id": "portfolio-1",
+        "kind": "portfolio",
+        "label": "Portfolio",
+        "url": "https://riyakapoor.design",
+        "sub": "5 case studies · 2 essays",
+        "summary": "Frontend engineer in Bengaluru with 2.4 years' experience. Specializes in motion design, design systems, and checkout optimization. Has shipped accessibility fixes and a 42-component design system at Kitebird, created an open-source spring animation library (212 stars), and maintains strong visual craft with motion specs and interactive demos on every case study.",
+        "notes": [
+          "Case studies show process and metrics, but results sit near the end",
+          "AI projects are absent; add an AI case study for the goal role",
+          "Quantify the Saffron Ledger dashboard impact"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "frontend",
+        "name": "Frontend Engineering",
+        "short": "Frontend",
+        "score": 81,
+        "summary": "React and TypeScript are the core stack, with a measured checkout rebuild (LCP 4.1s to 1.9s) and a React 18/Vite migration."
+      },
+      {
+        "id": "design-motion",
+        "name": "Design Systems & Motion",
+        "short": "Design & Motion",
+        "score": 85,
+        "summary": "Owns Kite UI and maintains motion-kit (212 stars) and design-tokens (58 stars), which is her most distinctive strength."
+      },
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 58,
+        "summary": "Built a Node/Express BFF and owned REST and GraphQL contracts, but backend depth is mostly in starters and side repos."
+      },
+      {
+        "id": "ai-llm",
+        "name": "AI & LLM Apps",
+        "short": "AI & LLM",
+        "score": 36,
+        "summary": "Two working OpenAI apps (Recipe Genie, notes-ai) exist, but there is no evaluation, no tests and little prompt or retrieval rigor."
+      },
+      {
+        "id": "eng-practice",
+        "name": "Engineering Practice",
+        "short": "Eng Practice",
+        "score": 55,
+        "summary": "CI and preview deploys are in place, but tests exist in only 6 of 34 repos."
+      },
+      {
+        "id": "product-collab",
+        "name": "Product & Collaboration",
+        "short": "Product & Collab",
+        "score": 55,
+        "summary": "Ran an A/B test behind a feature flag, joined usability sessions, and mentored 2 interns who got offers. No product analytics anywhere."
+      }
+    ],
+    "skills": [
+      {
+        "id": "react",
+        "name": "React",
+        "domainId": "frontend",
+        "score": 90,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Rebuilt Kitebird checkout in React; owns 42-component Kite UI"
+          },
+          {
+            "sourceId": "github",
+            "text": "motion-kit: 212 stars, 31 test files"
+          }
+        ],
+        "unlocks": [
+          "Senior Frontend Engineer",
+          "Design Engineer"
+        ]
+      },
+      {
+        "id": "typescript",
+        "name": "TypeScript",
+        "domainId": "frontend",
+        "score": 86,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "196 of 412 recent commits in TypeScript"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "text": "Kite UI typed in strict TypeScript"
+          }
+        ],
+        "unlocks": [
+          "Senior Frontend Engineer",
+          "AI Product Engineer"
+        ]
+      },
+      {
+        "id": "nextjs",
+        "name": "Next.js",
+        "domainId": "frontend",
+        "score": 66,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "4 repos: checkout-lab, notes-ai, recipe-genie-web, portfolio-site"
+          },
+          {
+            "sourceId": "resume",
+            "text": "Freelance landing pages for 3 clients in Next.js"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Product Engineer",
+          "AI Product Engineer"
+        ]
+      },
+      {
+        "id": "web-performance",
+        "name": "Web performance",
+        "domainId": "frontend",
+        "score": 74,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Checkout LCP 4.1s to 1.9s at Kitebird"
+          },
+          {
+            "sourceId": "resume",
+            "text": "Virtualised 10,000+ invoice tables at Saffron Ledger"
+          }
+        ],
+        "unlocks": [
+          "Senior Frontend Engineer"
+        ]
+      },
+      {
+        "id": "accessibility",
+        "name": "Accessibility (WCAG)",
+        "domainId": "frontend",
+        "score": 76,
+        "evidence": [
+          {
+            "sourceId": "portfolio-1",
+            "text": "WCAG 2.1 AA checkout audit: 37 issues logged, 21 fixed"
+          },
+          {
+            "sourceId": "github",
+            "text": "a11y-checklist repo (19 stars)"
+          }
+        ],
+        "unlocks": [
+          "Senior Frontend Engineer",
+          "Design Systems Engineer"
+        ]
+      },
+      {
+        "id": "motion-design",
+        "name": "Motion & animation",
+        "domainId": "design-motion",
+        "score": 91,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "motion-kit: spring physics, 212 stars, 4.2 KB gzipped"
+          },
+          {
+            "sourceId": "resume",
+            "text": "ReactFoo talk 'Springs, not durations'; motion guidelines"
+          }
+        ],
+        "unlocks": [
+          "Design Engineer",
+          "AI Product Engineer"
+        ]
+      },
+      {
+        "id": "design-systems",
+        "name": "Design systems",
+        "domainId": "design-motion",
+        "score": 87,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Owns Kite UI: 42 components, 3 squads, Storybook"
+          },
+          {
+            "sourceId": "github",
+            "text": "design-tokens (58 stars) used by Kite UI in production"
+          }
+        ],
+        "unlocks": [
+          "Design Systems Engineer",
+          "Design Engineer"
+        ]
+      },
+      {
+        "id": "figma-to-code",
+        "name": "Figma-to-code",
+        "domainId": "design-motion",
+        "score": 74,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "design-tokens syncs Figma variables to CSS, TS, Tailwind"
+          },
+          {
+            "sourceId": "resume",
+            "text": "Pairs with designers on Figma-to-code handoffs"
+          }
+        ],
+        "unlocks": [
+          "Design Engineer",
+          "Design Systems Engineer"
+        ]
+      },
+      {
+        "id": "node-bff",
+        "name": "Node.js / BFF",
+        "domainId": "backend-apis",
+        "score": 66,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Built Express BFF aggregating catalog, pricing, inventory APIs"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Product Engineer"
+        ]
+      },
+      {
+        "id": "api-contracts",
+        "name": "REST & GraphQL APIs",
+        "domainId": "backend-apis",
+        "score": 66,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Owned REST and GraphQL contracts with 2 backend teams"
+          },
+          {
+            "sourceId": "github",
+            "text": "gql-playground compares Apollo and urql"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Product Engineer",
+          "Senior Frontend Engineer"
+        ]
+      },
+      {
+        "id": "postgres-prisma",
+        "name": "Postgres & Prisma",
+        "domainId": "backend-apis",
+        "score": 50,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "trpc-starter: Express, tRPC, Prisma, PostgreSQL with auth"
+          },
+          {
+            "sourceId": "lovable-1",
+            "text": "Recipe Genie uses three Supabase Postgres tables"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Product Engineer"
+        ]
+      },
+      {
+        "id": "llm-integration",
+        "name": "LLM API integration",
+        "domainId": "ai-llm",
+        "score": 52,
+        "evidence": [
+          {
+            "sourceId": "lovable-1",
+            "text": "Recipe Genie: OpenAI via Supabase Edge Function, structured JSON"
+          },
+          {
+            "sourceId": "github",
+            "text": "notes-ai and recipe-genie-web call OpenAI"
+          }
+        ],
+        "unlocks": [
+          "AI Product Engineer"
+        ]
+      },
+      {
+        "id": "prompt-design",
+        "name": "Prompt design",
+        "domainId": "ai-llm",
+        "score": 38,
+        "evidence": [
+          {
+            "sourceId": "lovable-1",
+            "text": "Recipe Genie prompt takes dietary filters; no iteration shown"
+          }
+        ],
+        "unlocks": [
+          "AI Product Engineer"
+        ]
+      },
+      {
+        "id": "rag-retrieval",
+        "name": "RAG & retrieval",
+        "domainId": "ai-llm",
+        "score": 40,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "notes-ai: embeddings search, TODO lists chunking and citations"
+          }
+        ],
+        "unlocks": [
+          "AI Product Engineer"
+        ]
+      },
+      {
+        "id": "llm-evals",
+        "name": "LLM evals",
+        "domainId": "ai-llm",
+        "score": 12,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "No eval harness in any of 34 repos; notes-ai has no tests"
+          },
+          {
+            "sourceId": "lovable-1",
+            "text": "Recipe Genie has no output rating beyond a favourite heart"
+          }
+        ],
+        "unlocks": [
+          "AI Product Engineer"
+        ]
+      },
+      {
+        "id": "ai-ux-patterns",
+        "name": "AI UX patterns",
+        "domainId": "ai-llm",
+        "score": 32,
+        "evidence": [
+          {
+            "sourceId": "lovable-1",
+            "text": "Only rotating loading text and a retry-less error toast"
+          }
+        ],
+        "unlocks": [
+          "AI Product Engineer",
+          "Design Engineer"
+        ]
+      },
+      {
+        "id": "testing",
+        "name": "Automated testing",
+        "domainId": "eng-practice",
+        "score": 48,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "Tests in 6 of 34 repos; motion-kit has 31 test files"
+          },
+          {
+            "sourceId": "resume",
+            "text": "Vitest and Jest listed; no testing bullet at work"
+          }
+        ],
+        "unlocks": [
+          "Senior Frontend Engineer",
+          "AI Product Engineer"
+        ]
+      },
+      {
+        "id": "ci-cd",
+        "name": "CI/CD & tooling",
+        "domainId": "eng-practice",
+        "score": 62,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "PR preview deploys via GitHub Actions and Vercel; Vite migration"
+          },
+          {
+            "sourceId": "github",
+            "text": "GitHub Actions in 9 of 34 repos"
+          }
+        ],
+        "unlocks": [
+          "Senior Frontend Engineer"
+        ]
+      },
+      {
+        "id": "experimentation",
+        "name": "Experimentation",
+        "domainId": "product-collab",
+        "score": 60,
+        "evidence": [
+          {
+            "sourceId": "portfolio-1",
+            "text": "3-week A/B test behind a feature flag on checkout"
+          },
+          {
+            "sourceId": "resume",
+            "text": "Checkout conversion +9.4%; won 'Ship It' award"
+          }
+        ],
+        "unlocks": [
+          "AI Product Engineer",
+          "Full-Stack Product Engineer"
+        ]
+      },
+      {
+        "id": "product-analytics",
+        "name": "Product analytics",
+        "domainId": "product-collab",
+        "score": 18,
+        "evidence": [
+          {
+            "sourceId": "lovable-1",
+            "text": "No GA, PostHog or Mixpanel on Recipe Genie despite 600+ users claimed"
+          }
+        ],
+        "unlocks": [
+          "AI Product Engineer",
+          "Full-Stack Product Engineer"
+        ]
+      },
+      {
+        "id": "mentoring-review",
+        "name": "Mentoring & review",
+        "domainId": "product-collab",
+        "score": 68,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Mentored 2 interns, both hired full-time; reviews for 4-person team"
+          },
+          {
+            "sourceId": "github",
+            "text": "19 PR reviews in 90 days"
+          }
+        ],
+        "unlocks": [
+          "Senior Frontend Engineer"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "id": "design-engineer",
+        "title": "Design Engineer",
+        "alignment": 86,
+        "eta": "~2 months",
+        "why": "motion-kit, Kite UI and design-tokens are direct proof. Mostly needs a portfolio that leads with outcomes.",
+        "requirements": [
+          {
+            "name": "Motion & animation",
+            "skillId": "motion-design",
+            "have": true,
+            "current": 91,
+            "target": 85
+          },
+          {
+            "name": "Design systems",
+            "skillId": "design-systems",
+            "have": true,
+            "current": 87,
+            "target": 80
+          },
+          {
+            "name": "Figma-to-code",
+            "skillId": "figma-to-code",
+            "have": true,
+            "current": 74,
+            "target": 75
+          },
+          {
+            "name": "React",
+            "skillId": "react",
+            "have": true,
+            "current": 90,
+            "target": 85
+          },
+          {
+            "name": "AI UX patterns",
+            "skillId": "ai-ux-patterns",
+            "have": false,
+            "current": 32,
+            "target": 55
+          }
+        ]
+      },
+      {
+        "id": "design-systems-engineer",
+        "title": "Design Systems Engineer",
+        "alignment": 80,
+        "eta": "~4 months",
+        "why": "Owns Kite UI, tokens pipeline and a11y work. Needs visual regression testing and evidence of adoption metrics across more teams.",
+        "requirements": [
+          {
+            "name": "Design systems",
+            "skillId": "design-systems",
+            "have": true,
+            "current": 87,
+            "target": 85
+          },
+          {
+            "name": "Figma-to-code",
+            "skillId": "figma-to-code",
+            "have": true,
+            "current": 74,
+            "target": 80
+          },
+          {
+            "name": "Accessibility (WCAG)",
+            "skillId": "accessibility",
+            "have": true,
+            "current": 76,
+            "target": 80
+          },
+          {
+            "name": "Automated testing",
+            "skillId": "testing",
+            "have": false,
+            "current": 48,
+            "target": 70
+          },
+          {
+            "name": "CI/CD & tooling",
+            "skillId": "ci-cd",
+            "have": true,
+            "current": 62,
+            "target": 70
+          }
+        ]
+      },
+      {
+        "id": "senior-frontend-engineer",
+        "title": "Senior Frontend Engineer",
+        "alignment": 78,
+        "eta": "~6 months",
+        "why": "Owns checkout and Kite UI with metrics and mentoring. Testing depth and cross-team scope beyond one product are the gaps.",
+        "requirements": [
+          {
+            "name": "React",
+            "skillId": "react",
+            "have": true,
+            "current": 90,
+            "target": 88
+          },
+          {
+            "name": "Web performance",
+            "skillId": "web-performance",
+            "have": true,
+            "current": 74,
+            "target": 80
+          },
+          {
+            "name": "Accessibility (WCAG)",
+            "skillId": "accessibility",
+            "have": true,
+            "current": 76,
+            "target": 75
+          },
+          {
+            "name": "Automated testing",
+            "skillId": "testing",
+            "have": false,
+            "current": 48,
+            "target": 75
+          },
+          {
+            "name": "Mentoring & review",
+            "skillId": "mentoring-review",
+            "have": true,
+            "current": 68,
+            "target": 75
+          },
+          {
+            "name": "System design",
+            "have": false,
+            "current": 45,
+            "target": 70
+          }
+        ]
+      },
+      {
+        "id": "full-stack-product-engineer",
+        "title": "Full-Stack Product Engineer",
+        "alignment": 62,
+        "eta": "~8 months",
+        "why": "Has a BFF, API ownership and tRPC/Prisma starters. Backend work is shallow, and nothing is shown running in production with data modelling.",
+        "requirements": [
+          {
+            "name": "Next.js",
+            "skillId": "nextjs",
+            "have": true,
+            "current": 66,
+            "target": 75
+          },
+          {
+            "name": "Node.js / BFF",
+            "skillId": "node-bff",
+            "have": true,
+            "current": 66,
+            "target": 75
+          },
+          {
+            "name": "REST & GraphQL APIs",
+            "skillId": "api-contracts",
+            "have": true,
+            "current": 66,
+            "target": 75
+          },
+          {
+            "name": "Postgres & Prisma",
+            "skillId": "postgres-prisma",
+            "have": false,
+            "current": 50,
+            "target": 70
+          },
+          {
+            "name": "Product analytics",
+            "skillId": "product-analytics",
+            "have": false,
+            "current": 18,
+            "target": 55
+          },
+          {
+            "name": "Automated testing",
+            "skillId": "testing",
+            "have": false,
+            "current": 48,
+            "target": 70
+          }
+        ]
+      },
+      {
+        "id": "ai-product-engineer",
+        "title": "AI Product Engineer",
+        "alignment": 50,
+        "eta": "~9 months",
+        "why": "Strong UI, motion and shipped product base plus two OpenAI apps. Missing evals, retrieval rigor, prompt iteration and analytics, and none of it is in the portfolio.",
+        "requirements": [
+          {
+            "name": "React",
+            "skillId": "react",
+            "have": true,
+            "current": 90,
+            "target": 85
+          },
+          {
+            "name": "TypeScript",
+            "skillId": "typescript",
+            "have": true,
+            "current": 86,
+            "target": 80
+          },
+          {
+            "name": "LLM API integration",
+            "skillId": "llm-integration",
+            "have": false,
+            "current": 52,
+            "target": 75
+          },
+          {
+            "name": "Prompt design",
+            "skillId": "prompt-design",
+            "have": false,
+            "current": 38,
+            "target": 70
+          },
+          {
+            "name": "RAG & retrieval",
+            "skillId": "rag-retrieval",
+            "have": false,
+            "current": 40,
+            "target": 65
+          },
+          {
+            "name": "LLM evals",
+            "skillId": "llm-evals",
+            "have": false,
+            "current": 12,
+            "target": 65
+          },
+          {
+            "name": "AI UX patterns",
+            "skillId": "ai-ux-patterns",
+            "have": false,
+            "current": 32,
+            "target": 70
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "RIYA KAPOOR\nFrontend Engineer · Bengaluru, India\nriya.kapoor.dev@example.com · github.com/riyakapoor · riyakapoor.design\n\nSUMMARY\nFrontend engineer with 2.4 years of experience building fast, accessible commerce interfaces in React and TypeScript.\nI care about motion, design systems and the details that make a product feel finished. Currently on the storefront\nteam at Kitebird, a D2C home-goods brand, where I own checkout and the shared component library.\n\nEXPERIENCE\n\nKitebird — Frontend Engineer II                                              Bengaluru · Jul 2025 – Present\nD2C commerce startup (home goods), ~40 engineers, storefront + mobile web.\n- Rebuilt the three-step checkout as a single-page flow in React and TypeScript with optimistic cart updates;\n  checkout conversion rose 9.4% in the A/B test and LCP on the payment step dropped from 4.1s to 1.9s.\n- Own Kite UI, the shared React component library (42 components, typed tokens, Storybook docs) used by 3 product squads.\n- Led the storefront migration to React 18 and Vite, removing the legacy CRA build and cutting local build times.\n- Ran a WCAG 2.1 AA accessibility audit of checkout with design and fixed the critical issues (focus order, labels,\n  colour contrast, screen-reader announcements for cart updates).\n- Review pull requests for the 4-person web team and pair with designers on Figma-to-code handoffs.\n- Mentored 2 frontend interns through their 6-month internships; both received full-time offers.\n\nKitebird — Frontend Engineer                                                  Bengaluru · May 2024 – Jun 2025\n- Built the backend-for-frontend (Node.js, Express) for the mobile web app, aggregating catalog, pricing and\n  inventory APIs into one typed endpoint per screen.\n- Owned API contracts with 2 backend teams (REST and a GraphQL catalog service) and wrote the client-side data layer.\n- Set up preview deployments for every pull request with GitHub Actions and Vercel.\n- Shipped the product-detail page redesign, including image galleries, variant pickers and delivery-date estimates.\n- Partnered with the PM and design lead on checkout research; joined 6 usability sessions and turned findings into tickets.\n- Wrote internal docs on motion guidelines and component usage for the web team.\n\nSaffron Ledger — Frontend Engineering Intern                                  Bengaluru · Jan 2024 – Apr 2024\nFintech startup building bookkeeping software for small businesses.\n- Built dashboard widgets (cash-flow charts, invoice tables) in React with TypeScript and Recharts.\n- Created a small Figma-backed component kit for the dashboard, later adopted for the whole web app.\n- Fixed table rendering performance for accounts with 10,000+ invoices using virtualised lists.\n\nFreelance — UI Developer                                                       Remote · Jun 2023 – Dec 2023\n- Designed and built marketing sites and a component kit for 3 early-stage clients (Next.js, Tailwind CSS, Figma).\n- Delivered responsive, animated landing pages and handed over a reusable design system to each client.\n\nGoogle Developer Student Club, Nandi Institute of Technology — Web Lead         Bengaluru · 2022 – 2023\n- Ran weekly React workshops for 60+ students and organised a 24-hour campus hackathon.\n\nOpen source — Maintainer, motion-kit                                           2023 – Present\n- Maintain motion-kit, a spring-physics animation library for React (212 GitHub stars), and review community PRs.\n\nPROJECTS\n- motion-kit — Spring-physics animation primitives for React with gesture support and reduced-motion handling.\n  TypeScript, Vitest, GitHub Actions. github.com/riyakapoor/motion-kit\n- checkout-lab — Experiments in checkout UX: optimistic updates, address autocomplete, skeleton states. Next.js.\n- design-tokens — A Style Dictionary pipeline that turns Figma variables into CSS, TypeScript and Tailwind tokens.\n- Kite UI docs — Public Storybook for Kitebird's component library (internal repo, public docs site).\n\nSKILLS\nLanguages: TypeScript, JavaScript, HTML, CSS, Python (basic), Go (basic)\nFrontend: React, Next.js, Framer Motion, Tailwind CSS, Storybook, Recharts, Redux Toolkit, TanStack Query\nBackend: Node.js, Express, tRPC, REST, GraphQL, PostgreSQL, Prisma\nTooling: Vite, Vitest, Jest, GitHub Actions, Vercel, Git\nDesign: Figma, design systems, motion design, accessibility (WCAG 2.1)\nWays of working: code review, mentoring, technical writing, working with PM and design\n\nEDUCATION\nB.Tech, Computer Science and Engineering — Nandi Institute of Technology, Bengaluru          2020 – 2024\nCGPA 8.6 / 10. Final-year project: a real-time collaborative whiteboard in React and WebSockets.\n\nACHIEVEMENTS\n- Kitebird \"Ship It\" award, H1 2025, for the checkout rebuild.\n- Speaker, ReactFoo Bengaluru community meetup (2025): \"Springs, not durations — motion that feels physical\"."
+      },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "kind": "github",
+        "url": "https://github.com/riyakapoor",
+        "content": "# GitHub: Riya Kapoor (@riyakapoor)\n\n## Profile\n- Name: Riya Kapoor\n- Account type: User\n- Bio: Frontend engineer @ Kitebird. Springs, tokens and tiny tools.\n- Company: Kitebird\n- Location: Bengaluru, India\n- Website: https://riyakapoor.design\n- Followers: 318, following: 61\n- On GitHub since 2019-08-14 (about 7 years)\n\n## Totals\n- Public repositories: 34\n- Original repos: 31, forks: 3\n- Stars across original repos: 389\n- Languages by number of original repos: TypeScript (17), JavaScript (6), CSS (3), MDX (2), Python (2), Go (1), Shell (1), Lua (1), HTML (1)\n- Repos with a description: 24/31, with topics: 11, with a live homepage link: 6\n- Common topics: react (6), nextjs (4), animation (2), design-tokens, figma, openai, embeddings, supabase, lovable, ecommerce, accessibility\n- Engineering practice (checked 34 repos): tests in 6, CI in 9, Docker in 0\n\n## Profile README (the repo named after the user)\n> Hi, I'm Riya. I build interfaces that feel physical: springs, not durations.\n> Currently: checkout + design system at Kitebird. Maintaining motion-kit.\n> Learning: retrieval and evals for LLM apps (see notes-ai).\n\n## Top repositories (10, ranked by stars, recency and substance)\n\n### 1. motion-kit\n- Description: Spring-physics animation primitives for React: useSpring, usePresence, gesture handoff. 4.2 KB gzipped.\n- Language: TypeScript, stars: 212, forks: 19, license: MIT\n- Topics: react, animation, springs, gestures, framer-motion\n- Last push: 2026-09-21 (2 weeks ago), created 2023-04-02, size 1,840 KB\n- Homepage: https://riyakapoor.design/work/motion-kit\n- Detected: tests yes (31 test files), CI yes (GitHub Actions), Docker no, docs yes, manifests: package.json\n- README excerpt:\n> # motion-kit\n> Physically based motion for React without the bundle cost. Springs are interruptible by default, so a drawer you\n> grab mid-animation just follows your finger.\n>\n> - `useSpring` / `useSprings` with velocity-aware retargeting\n> - `usePresence` for exit animations\n> - drag-to-dismiss with velocity handoff\n> - `prefers-reduced-motion` respected everywhere\n>\n> Install: `npm i @riyakapoor/motion-kit` · 4.2 KB gzipped · zero dependencies besides React.\n> 11 releases, 7 contributors. See CONTRIBUTING.md to get started.\n\n### 2. design-tokens\n- Description: Figma variables → CSS custom properties, TypeScript constants and a Tailwind preset (Style Dictionary).\n- Language: TypeScript, stars: 58, forks: 6, license: MIT\n- Topics: design-tokens, figma, style-dictionary, tailwind\n- Last push: 2026-08-02 (2 months ago), created 2024-09-10, size 412 KB\n- Detected: tests yes (9 test files), CI yes (GitHub Actions), Docker no, docs no, manifests: package.json\n- README excerpt:\n> # design-tokens\n> Export variables from Figma, run `pnpm tokens`, and get typed tokens for every platform.\n> Supports light/dark modes and density scales. Used in production by one D2C storefront (Kite UI).\n> Usage · Config reference · Contributing\n\n### 3. notes-ai\n- Description: Ask questions about your markdown notes. OpenAI embeddings + a local vector index + GPT answers.\n- Language: TypeScript, stars: 41, forks: 3\n- Topics: openai, embeddings, nextjs, notes\n- Last push: 2026-07-11 (3 months ago), created 2025-11-02, size 236 KB\n- Detected: tests no, CI no, Docker no, docs no, manifests: package.json, requirements.txt\n- README excerpt:\n> # notes-ai\n> Turns a folder of markdown notes into something you can talk to. Run `python scripts/ingest.py` to chunk and embed\n> your notes, then `pnpm dev` and ask anything.\n> Prompts live in /prompts and are versioned (answer.v3.md, summarize.v2.md).\n> TODO: better chunking, citations, and some way to know if the answers are actually right.\n\n### 4. checkout-lab\n- Description: Experiments in checkout UX: optimistic cart updates, address autocomplete, skeleton states, error recovery.\n- Language: TypeScript, stars: 37, forks: 4, license: MIT\n- Topics: ecommerce, checkout, ux, nextjs, react-query\n- Last push: 2026-06-18 (4 months ago), created 2025-02-14, size 958 KB\n- Homepage: https://checkout-lab.vercel.app\n- Detected: tests yes (12 test files), CI yes (GitHub Actions), Docker no, docs no, manifests: package.json\n- README excerpt:\n> # checkout-lab\n> A playground for the patterns behind a fast checkout. Every experiment has a \"why\", a demo route and the numbers I\n> measured locally (LCP, INP). Inspired by work I can't open-source.\n> Stack: Next.js, TanStack Query, zod, Framer Motion, Vitest + MSW.\n\n### 5. recipe-genie-web\n- Description: Code export of Recipe Genie, built with Lovable: dinner ideas from what's in your fridge.\n- Language: TypeScript, stars: 23, forks: 2\n- Topics: lovable, supabase, openai, shadcn\n- Last push: 2026-05-30 (4 months ago), created 2026-03-08, size 1,122 KB\n- Homepage: https://recipe-genie.lovable.app\n- README: default Lovable template (not customised)\n\n### 6. a11y-checklist\n- Description: A practical accessibility checklist for React component libraries, with focus-management and live-region examples.\n- Language: MDX, stars: 19, forks: 2, license: CC-BY-4.0\n- Topics: accessibility, react, wcag\n- Last push: 2026-04-09 (6 months ago), created 2025-06-21, size 88 KB\n\n### 7. trpc-starter\n- Description: Express + tRPC + Prisma + PostgreSQL starter with auth and typed API clients.\n- Language: TypeScript, stars: 11, forks: 1, license: MIT\n- Last push: 2025-12-03 (10 months ago), created 2024-11-19, size 310 KB\n\n### 8. habit-grid\n- Description: Habit tracker with a GitHub-style contribution grid. Next.js, Prisma, Postgres (Neon), Tailwind.\n- Language: TypeScript, stars: 8, forks: 0\n- Last push: 2025-10-20 (1 year ago), created 2025-08-30, size 274 KB\n- Homepage: https://habit-grid.vercel.app\n\n### 9. gql-playground\n- Description: Apollo Client vs urql for a product catalog: caching, pagination, optimistic updates.\n- Language: TypeScript, stars: 6, forks: 0\n- Last push: 2025-08-14 (1 year ago), created 2025-07-01, size 190 KB\n\n### 10. portfolio-site\n- Description: Source of riyakapoor.design. Next.js, Framer Motion, MDX case studies.\n- Language: TypeScript, stars: 5, forks: 0\n- Last push: 2026-09-02 (1 month ago), created 2024-06-05, size 5,320 KB\n- Homepage: https://riyakapoor.design\n\n## Other original repositories\n- spring-sandbox [JavaScript], 4 stars, pushed 2025-03-11: Spring physics vs cubic-bezier easing demos; the prototype that became motion-kit\n- dotfiles [Shell], 3 stars, pushed 2026-09-28: zsh, tmux and Neovim (Lua) config\n- py-notebooks [Python], 2 stars, pushed 2025-11-29: Notebooks from an online ML course (linear regression, k-means, text classifier); 3 of 8 modules done\n- leetcode-go [Go], 1 stars, pushed 2025-02-07: ~90 LeetCode solutions written while learning Go\n- tailwind-preset-kite [TypeScript], pushed 2025-09-17: Tailwind preset generated from design-tokens\n- figma-plugin-contrast [TypeScript], pushed 2025-05-02: Figma plugin that flags WCAG contrast failures\n- hackathon-whiteboard [JavaScript], pushed 2024-03-20: Real-time collaborative whiteboard (React + WebSockets), final-year project\n- gdsc-workshops [JavaScript], pushed 2023-04-11: Material for weekly React workshops\n- css-art [CSS], pushed 2023-01-29\n- kite-ui-docs-mirror [MDX], pushed 2026-02-10: Public Storybook docs for the Kite UI component library\n- nvim-motion [Lua], pushed 2026-01-05: Smooth-scroll plugin for Neovim\n- …and 10 more\n\n## Forks (3)\nreact, framer-motion, shadcn-ui\n\n## Recent public activity\n- 300 public events over about 90 days, most recent 2026-10-04 (2 days ago)\n- 146 pushes (412 commits), 14 pull requests opened (3 to other people's repos), 11 PRs merged, 6 issues opened, 19 PR reviews, 27 comments, 1 new repo\n- Most active repos: motion-kit (118), portfolio-site (41), dotfiles (22), notes-ai (17), design-tokens (9)\n- Languages of recent pushes: TypeScript (196), MDX (41), Shell (22)\n\n## Technologies mentioned across repos\nReact, TypeScript, Next.js, Framer Motion, Tailwind CSS, Vitest, OpenAI API, Supabase, PostgreSQL, Prisma, tRPC, GraphQL, Figma, Storybook"
+      },
+      {
+        "id": "lovable-1",
+        "label": "Lovable",
+        "kind": "lovable",
+        "url": "https://recipe-genie.lovable.app",
+        "content": "# Recipe Genie — dinner from whatever is in your fridge\n\nURL: https://recipe-genie.lovable.app\nDescription: Tell Recipe Genie what's in your kitchen and get three recipes you can cook tonight. Built with Lovable.\nBuilt with: Lovable (Vite + React)\nLovable badge: \"Edit with Lovable\" present\nLinked GitHub repository: github.com/riyakapoor/recipe-genie-web\n\n## Libraries and services detected\n- React + Vite (Lovable default stack)\n- Tailwind CSS\n- shadcn/ui components (Radix primitives: dialog, tabs, toast, dropdown-menu)\n- Supabase JS client: email magic-link auth, Postgres tables via REST (recipes, pantry_items, favourites)\n- OpenAI API (chat completions) called from a Supabase Edge Function `generate-recipes`\n- lucide-react icons\n- No analytics or product-tracking script detected (no GA, PostHog, Plausible, Mixpanel)\n- No error-monitoring script detected\n\n## Landing page (visible text)\nHero: \"Dinner, sorted. From whatever's in your fridge.\"\nSub: \"Add what you have. Recipe Genie suggests three recipes you can actually cook tonight — with swaps for what's missing.\"\nPrimary button: \"Try it free\" · Secondary: \"See an example\"\nSocial proof line: \"Loved by 600+ home cooks\"\nFeature cards:\n- \"Pantry in seconds\" — type or paste your ingredients; Genie understands \"half an onion\" and \"leftover rice\".\n- \"Three good options\" — quick, comfort, or healthy, each with time, difficulty and a shopping gap list.\n- \"Swap anything\" — no cream? Genie rewrites the step with what you have.\n- \"Save your favourites\" — keep the recipes that worked and rate them.\nFooter: \"Made by Riya Kapoor · riyakapoor.design · Built with Lovable\"\n\n## App screens and user flows\nFlow 1 — Sign in: email magic link (Supabase auth). Empty state after sign-in: \"Your pantry is empty. Add 3+ ingredients to start.\"\nFlow 2 — Generate: pantry input with chips → \"Ask the Genie\" button → loading state with rotating messages\n(\"Checking the spice rack…\") → three recipe cards (Quick / Comfort / Healthy) with time, difficulty and \"missing: 2 items\".\nRecipe detail: ingredients, numbered steps, \"Swap an ingredient\" dialog that regenerates one step.\nFlow 3 — Save & share: heart to save into Favourites; public share link per recipe (/r/:id) with Open Graph preview.\n\n## Prompt-driven UI notes\n- The generate screen shows the dietary preferences that are sent with the prompt (vegetarian, no nuts, under 30 min).\n- Recipes come back as structured JSON rendered into cards (fields: title, time, difficulty, ingredients, steps, swaps).\n- Regenerate button on each card; no visible rating of output quality beyond the favourite heart.\n- Error state: a toast \"The Genie is tired, try again\" when generation fails; no retry with backoff.\n\n## Other observations from the page\n- Settings page: dietary preferences and units (metric/imperial). No onboarding tour.\n- No privacy policy or terms page linked.\n- Lighthouse-style signals: images are lazy-loaded; the landing page ships ~410 KB of JS."
+      },
+      {
+        "id": "portfolio-1",
+        "label": "Portfolio",
+        "kind": "portfolio",
+        "url": "https://riyakapoor.design",
+        "content": "# Riya Kapoor — Frontend engineer who designs in motion\n\nURL: https://riyakapoor.design\nDescription: Frontend engineer in Bengaluru. Design systems, motion and the last 10% of polish.\nPages crawled: / · /about · /work/checkout-rebuilt · /work/accessibility-audit · /work/kite-ui · /work/motion-kit · /work/saffron-dashboard · /writing\n\n## Home\n\"I build interfaces that feel physical — springs, not durations.\" Frontend engineer at Kitebird in Bengaluru.\nSelected work (5 case studies), two essays on motion design, and a link to GitHub. Large animated hero with a\nspring-driven cursor trail (respects prefers-reduced-motion). No mention of AI or LLM work anywhere on the site.\n\n## About\nFrontend engineer, 2.4 years. Previously interned at Saffron Ledger (fintech dashboards) and freelanced for early-stage\nstartups. \"My favourite work sits between design and engineering: design systems, motion, and the last 10% of polish.\"\nTools listed: React, TypeScript, Framer Motion, Figma, Storybook, Tailwind.\n\n## Case study 1 — \"Checkout, rebuilt\" (Kitebird, 2025)\nRole: lead frontend engineer, with one designer and one PM.\nProblem: a three-step checkout with a 4.1s LCP on the payment step and a high drop-off at the address form.\nProcess: joined 6 usability sessions, mapped drop-off points, prototyped a single-page checkout in Figma and code,\nshipped behind a feature flag, ran an A/B test for 3 weeks.\nOutcome (stated near the end of the page): +9.4% checkout conversion, LCP 1.9s on the payment step.\nIncludes motion specs for the cart drawer and address autocomplete, and before/after screen recordings.\n\n## Case study 2 — \"An accessibility audit that actually shipped\" (Kitebird, 2025)\nAudited checkout against WCAG 2.1 AA with the design lead: 37 issues logged, 21 fixed in two sprints\n(focus order, form labels, contrast, live-region announcements for cart updates). Describes testing with NVDA and\nVoiceOver by hand. Notes that automated checks (axe) are \"next on the list\" — not yet in CI.\n\n## Case study 3 — \"Kite UI: a design system for a four-person team\" (Kitebird, 2024–2025)\n42 components, tokens generated from Figma variables via the design-tokens pipeline, Storybook docs,\nadoption by 3 product squads. Explains the trade-offs of headless primitives vs styled components.\nMentions typing the whole package in strict TypeScript.\n\n## Case study 4 — \"motion-kit: designing with springs\" (open source)\nWhy springs beat duration-based easing, the API design of useSpring/usePresence, gesture handoff, and how the\nlibrary reached 212 GitHub stars. Embedded interactive demos.\n\n## Case study 5 — \"Saffron Ledger dashboard\" (internship, 2024)\nCash-flow charts and invoice tables for small-business bookkeeping; virtualised lists for 10,000+ invoices;\na Figma-backed component kit later adopted across the web app. Outcome not quantified.\n\n## Writing\n- \"Springs, not durations\" (2025) — essay version of her ReactFoo meetup talk.\n- \"Motion budgets: how much animation is too much?\" (2024).\n\n## Observations\n- Strong visual craft; every case study has motion specs or interactive demos.\n- Outcomes are present but usually appear below the fold, after the process narrative.\n- Recipe Genie and notes-ai (AI projects) are not featured.\n- No contact form; email link only. Site built with Next.js and Framer Motion, deployed on Vercel."
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "4 roles · 24 skills",
+        "summary": "Riya Kapoor is a Frontend Engineer II at Kitebird with 2.4 years of professional experience building React commerce interfaces. She owns the shared component library and checkout experience, shipping measurable improvements in conversion and performance. She also maintains motion-kit, a spring-physics animation library with 212 GitHub stars.",
+        "person": {
+          "name": "Riya Kapoor",
+          "currentRole": "Frontend Engineer II",
+          "yearsExperience": 2.4,
+          "location": "Bengaluru, India"
+        },
+        "signals": [
+          {
+            "label": "React checkout rebuild",
+            "detail": "9.4% conversion lift + LCP 4.1s→1.9s"
+          },
+          {
+            "label": "Kite UI component library",
+            "detail": "42 components, 3 squads, owned"
+          },
+          {
+            "label": "React 18 & Vite migration",
+            "detail": "storefront, CRA removal"
+          },
+          {
+            "label": "motion-kit maintainer",
+            "detail": "212 GitHub stars, open source"
+          },
+          {
+            "label": "Accessibility audit",
+            "detail": "WCAG 2.1 AA checkout, critical fixes"
+          },
+          {
+            "label": "Backend-for-frontend",
+            "detail": "Node.js, Express BFF for mobile web"
+          },
+          {
+            "label": "API contracts ownership",
+            "detail": "REST + GraphQL, 2 backend teams"
+          },
+          {
+            "label": "Mentored 2 interns",
+            "detail": "6-month internships, both got offers"
+          },
+          {
+            "label": "TypeScript & React",
+            "detail": "primary stack across roles"
+          },
+          {
+            "label": "Design systems",
+            "detail": "Figma-backed kits, motion guidelines"
+          }
+        ],
+        "skills": [
+          {
+            "name": "React",
+            "evidence": "Rebuilt checkout flow in React and TypeScript; owned Kite UI library (42 components); built dashboard widgets at Saffron Ledger.",
+            "strength": 5
+          },
+          {
+            "name": "TypeScript",
+            "evidence": "Checkout rebuild in React and TypeScript; Kite UI with typed tokens; client-side data layer with type contracts.",
+            "strength": 5
+          },
+          {
+            "name": "Frontend architecture",
+            "evidence": "Led React 18 + Vite migration; built backend-for-frontend in Node.js/Express; owned API contracts with 2 backend teams.",
+            "strength": 4
+          },
+          {
+            "name": "Component libraries",
+            "evidence": "Own Kite UI (42 components, Storybook docs); created Figma-backed component kit at Saffron Ledger, adopted company-wide.",
+            "strength": 4
+          },
+          {
+            "name": "Motion design",
+            "evidence": "Maintain motion-kit spring-physics library (212 stars); wrote motion guidelines for web team; speaker on 'Springs, not durations'.",
+            "strength": 4
+          },
+          {
+            "name": "Node.js",
+            "evidence": "Built backend-for-frontend for mobile web app using Node.js and Express, aggregating multiple APIs.",
+            "strength": 3
+          },
+          {
+            "name": "Express",
+            "evidence": "Built BFF for mobile web app in Express, handling catalog, pricing and inventory API aggregation.",
+            "strength": 3
+          },
+          {
+            "name": "Design systems",
+            "evidence": "Own Kite UI with typed tokens; created Figma-backed component kit at Saffron Ledger; built design-tokens pipeline.",
+            "strength": 4
+          },
+          {
+            "name": "Accessibility (WCAG)",
+            "evidence": "Ran WCAG 2.1 AA audit of checkout; fixed focus order, labels, colour contrast and screen-reader announcements.",
+            "strength": 4
+          },
+          {
+            "name": "Performance optimization",
+            "evidence": "Checkout LCP dropped 4.1s to 1.9s; fixed table rendering for 10,000+ invoices using virtualised lists at Saffron Ledger.",
+            "strength": 3
+          },
+          {
+            "name": "Next.js",
+            "evidence": "Built responsive landing pages and component kits for 3 clients in Next.js; checkout-lab project uses Next.js.",
+            "strength": 3
+          },
+          {
+            "name": "Figma",
+            "evidence": "Paired with designers on Figma-to-code handoffs; created Figma-backed component kits; built design-tokens pipeline from Figma variables.",
+            "strength": 3
+          },
+          {
+            "name": "Tailwind CSS",
+            "evidence": "Built responsive landing pages and component kits for 3 freelance clients using Tailwind CSS.",
+            "strength": 3
+          },
+          {
+            "name": "GitHub Actions",
+            "evidence": "Set up preview deployments for PRs with GitHub Actions and Vercel; motion-kit uses GitHub Actions.",
+            "strength": 3
+          },
+          {
+            "name": "Storybook",
+            "evidence": "Kite UI library includes Storybook docs; maintains public Storybook for component library.",
+            "strength": 3
+          },
+          {
+            "name": "REST APIs",
+            "evidence": "Owned REST API contracts with 1 backend team; wrote client-side data layer for REST endpoints.",
+            "strength": 3
+          },
+          {
+            "name": "GraphQL",
+            "evidence": "Owned API contract with GraphQL catalog service; client-side data layer integration for 1 backend team.",
+            "strength": 3
+          },
+          {
+            "name": "Vite",
+            "evidence": "Led storefront migration to React 18 and Vite, removing legacy CRA build and cutting local build times.",
+            "strength": 3
+          },
+          {
+            "name": "Code review",
+            "evidence": "Review pull requests for 4-person web team at Kitebird; listed as way of working skill.",
+            "strength": 3
+          },
+          {
+            "name": "Mentoring",
+            "evidence": "Mentored 2 frontend interns through 6-month internships; both received full-time offers.",
+            "strength": 3
+          },
+          {
+            "name": "Recharts",
+            "evidence": "Built dashboard widgets (cash-flow charts, invoice tables) in React with Recharts at Saffron Ledger.",
+            "strength": 2
+          },
+          {
+            "name": "Vitest",
+            "evidence": "motion-kit uses Vitest for testing; TypeScript testing framework listed in projects.",
+            "strength": 2
+          },
+          {
+            "name": "Jest",
+            "evidence": "Jest listed in tooling skills; used alongside Vitest in testing stack.",
+            "strength": 2
+          },
+          {
+            "name": "JavaScript",
+            "evidence": "JavaScript listed in languages; React and frontend work primarily TypeScript but JavaScript core skill.",
+            "strength": 2
+          }
+        ],
+        "notes": [
+          "Checkout rebuild measured: 9.4% conversion lift and LCP improvement from 4.1s to 1.9s; strong metric evidence",
+          "motion-kit has 212 GitHub stars but lacks link to repo; evidence is strong but source reference missing",
+          "Freelance project section lacks client names or portfolio links; '3 early-stage clients' is unverifiable",
+          "Missing evidence for several listed skills: Python, Go, Redux Toolkit, TanStack Query, Prisma, Framer Motion not used in any bullet"
+        ]
+      },
+      "github": {
+        "sub": "34 repos · 9 languages · 389 stars",
+        "summary": "Frontend engineer at Kitebird (Bengaluru) with 7 years on GitHub. Focuses on animation primitives, design systems, and checkout UX. Published motion-kit (212 stars, production React library) and design-tokens (58 stars, Figma-to-code pipeline). Maintains accessibility resources and explores LLM applications for note-taking.",
+        "person": {
+          "name": "Riya Kapoor",
+          "currentRole": "Frontend Engineer",
+          "yearsExperience": 7.1,
+          "location": "Bengaluru, India"
+        },
+        "signals": [
+          {
+            "label": "Spring-physics animation library",
+            "detail": "motion-kit, 212 stars, 31 tests"
+          },
+          {
+            "label": "Figma→CSS design-tokens pipeline",
+            "detail": "design-tokens, 58 stars, production"
+          },
+          {
+            "label": "Checkout UX experiments",
+            "detail": "checkout-lab, 37 stars, 12 tests"
+          },
+          {
+            "label": "Markdown vector search",
+            "detail": "notes-ai, 41 stars, OpenAI embeddings"
+          },
+          {
+            "label": "Accessibility checklist",
+            "detail": "a11y-checklist, WCAG examples, 19 stars"
+          },
+          {
+            "label": "tRPC + Prisma + PostgreSQL",
+            "detail": "trpc-starter, 11 stars"
+          },
+          {
+            "label": "TypeScript production projects",
+            "detail": "196 of 412 recent commits"
+          },
+          {
+            "label": "CI/CD in half of repos",
+            "detail": "GitHub Actions in 9 of 34 repos"
+          },
+          {
+            "label": "React + Framer Motion patterns",
+            "detail": "gesture handoff, velocity retargeting"
+          }
+        ],
+        "skills": [
+          {
+            "name": "React",
+            "evidence": "motion-kit: useSpring, usePresence spring-physics library with 212 stars and 31 tests; 6 repos tagged react.",
+            "strength": 5
+          },
+          {
+            "name": "TypeScript",
+            "evidence": "17 of 31 original repos; 196 of 412 recent commits in TypeScript; type-safe APIs across motion-kit, design-tokens, checkout-lab.",
+            "strength": 5
+          },
+          {
+            "name": "Framer Motion",
+            "evidence": "motion-kit handles gesture handoff with drag-to-dismiss; checkout-lab uses Framer Motion for animation experiments; forks repo.",
+            "strength": 4
+          },
+          {
+            "name": "Next.js",
+            "evidence": "4 repos with Next.js topic: checkout-lab, notes-ai, recipe-genie-web, portfolio-site; 41 commits to portfolio-site recently.",
+            "strength": 4
+          },
+          {
+            "name": "Design systems",
+            "evidence": "design-tokens exports Figma variables to CSS custom properties, TypeScript constants, Tailwind presets; used by Kite UI in production.",
+            "strength": 4
+          },
+          {
+            "name": "Figma automation",
+            "evidence": "design-tokens syncs Figma variables to code; figma-plugin-contrast flags WCAG contrast failures; 2 repos with figma topic.",
+            "strength": 4
+          },
+          {
+            "name": "Accessibility (WCAG)",
+            "evidence": "a11y-checklist: practical checklist with focus-management and live-region examples; figma-plugin-contrast for contrast compliance.",
+            "strength": 3
+          },
+          {
+            "name": "Spring physics",
+            "evidence": "motion-kit: velocity-aware retargeting, interruptible springs, drag-to-dismiss with velocity handoff; spring-sandbox prototype.",
+            "strength": 4
+          },
+          {
+            "name": "Vitest",
+            "evidence": "checkout-lab uses Vitest + MSW for testing; 12 test files in checkout-lab; 31 test files in motion-kit.",
+            "strength": 3
+          },
+          {
+            "name": "OpenAI API",
+            "evidence": "notes-ai uses OpenAI embeddings and GPT for markdown-based QA; recipe-genie-web uses OpenAI for dinner ideas.",
+            "strength": 3
+          },
+          {
+            "name": "PostgreSQL",
+            "evidence": "trpc-starter: Express + tRPC + Prisma + PostgreSQL starter with auth; habit-grid uses Neon (Postgres).",
+            "strength": 3
+          },
+          {
+            "name": "Supabase",
+            "evidence": "recipe-genie-web uses Supabase backend; tagged in 1 repo; listed in common topics.",
+            "strength": 2
+          },
+          {
+            "name": "Tailwind CSS",
+            "evidence": "design-tokens generates Tailwind preset; checkout-lab and habit-grid use Tailwind; tailwind-preset-kite repo.",
+            "strength": 3
+          },
+          {
+            "name": "Prisma",
+            "evidence": "trpc-starter: Prisma + PostgreSQL integration; habit-grid uses Prisma with Neon.",
+            "strength": 3
+          },
+          {
+            "name": "GraphQL",
+            "evidence": "gql-playground compares Apollo Client vs urql for caching, pagination, optimistic updates; 6 test files.",
+            "strength": 2
+          },
+          {
+            "name": "tRPC",
+            "evidence": "trpc-starter: full-stack TypeScript with Express + tRPC + Prisma; typed API clients; 11 stars.",
+            "strength": 3
+          },
+          {
+            "name": "MDX",
+            "evidence": "portfolio-site uses MDX for case studies; 2 repos written in MDX; 41 recent commits in MDX.",
+            "strength": 3
+          },
+          {
+            "name": "Storybook",
+            "evidence": "kite-ui-docs-mirror: public Storybook docs for Kite UI component library; listed in tech stack.",
+            "strength": 2
+          },
+          {
+            "name": "Neovim (Lua)",
+            "evidence": "nvim-motion: smooth-scroll plugin for Neovim in Lua; dotfiles include Neovim config with Lua.",
+            "strength": 2
+          },
+          {
+            "name": "Git workflows",
+            "evidence": "300 public events over 90 days; 146 pushes, 14 PRs opened, 11 merged, 19 PR reviews; active contributor.",
+            "strength": 3
+          },
+          {
+            "name": "REST API design",
+            "evidence": "checkout-lab: optimistic cart updates, address autocomplete, skeleton states, error recovery patterns.",
+            "strength": 2
+          },
+          {
+            "name": "Performance optimization",
+            "evidence": "checkout-lab measures LCP and INP locally; motion-kit gzipped to 4.2 KB; zero dependencies besides React.",
+            "strength": 3
+          },
+          {
+            "name": "E-commerce UX",
+            "evidence": "checkout-lab: experiments in checkout patterns inspired by work at Kitebird; recipe-genie-web D2C product.",
+            "strength": 2
+          }
+        ],
+        "notes": [
+          "Tests in 6 of 34 repos; CI in 9 of 34 repos—many experimental projects lack coverage.",
+          "notes-ai lacks tests, CI, and evaluation (TODO lists: better chunking, citations, validation).",
+          "motion-kit dominates activity (118 of 412 recent commits); other repos stale (1–10 months).",
+          "Production impact documented (Kite UI storefront uses design-tokens); most others lack deployment evidence."
+        ]
+      },
+      "lovable-1": {
+        "sub": "1 shipped app · 3 user flows · 6 services",
+        "summary": "Recipe Genie is a Lovable-built web app that generates dinner recipes based on pantry ingredients. It wires Supabase auth and database with OpenAI API via Edge Functions, offers three recipe suggestions with ingredient swaps, and lets users save favourites. The app is linked from a public GitHub repository and landing page.",
+        "signals": [
+          {
+            "label": "Recipe generation (OpenAI)",
+            "detail": "Chat completions + Supabase Edge…"
+          },
+          {
+            "label": "Supabase auth",
+            "detail": "Email magic-link sign-in"
+          },
+          {
+            "label": "React + Vite",
+            "detail": "Lovable default stack"
+          },
+          {
+            "label": "Tailwind CSS + shadcn/ui",
+            "detail": "Landing, forms, dialogs, toasts"
+          },
+          {
+            "label": "Supabase Postgres",
+            "detail": "recipes, pantry_items, favourites tables"
+          },
+          {
+            "label": "Share/Open Graph",
+            "detail": "Public recipe link (/r/:id) with preview"
+          },
+          {
+            "label": "Ingredient swaps",
+            "detail": "Regenerate single step via dialog"
+          },
+          {
+            "label": "Dietary preferences",
+            "detail": "Vegetarian, nuts, time filters in prompt"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Product design",
+            "evidence": "Recipe Genie landing page: clear value prop, social proof (600+ users), feature cards, and CTA; app shows pantry input flow, recipe cards with structured…",
+            "strength": 3
+          },
+          {
+            "name": "React",
+            "evidence": "Recipe Genie built with React + Vite, uses component hierarchy (cards, dialogs, dropdowns, toasts) visible in UI.",
+            "strength": 3
+          },
+          {
+            "name": "Tailwind CSS",
+            "evidence": "Recipe Genie landing and app UI fully styled with Tailwind; responsive layout and component spacing evident.",
+            "strength": 3
+          },
+          {
+            "name": "shadcn/ui",
+            "evidence": "Recipe Genie uses Radix-based components: dialog (swap ingredient), tabs (dietary filters), toast (error messages), dropdown-menu.",
+            "strength": 2
+          },
+          {
+            "name": "Supabase auth",
+            "evidence": "Recipe Genie implements email magic-link sign-in flow via Supabase JS client.",
+            "strength": 3
+          },
+          {
+            "name": "Supabase database",
+            "evidence": "Recipe Genie queries three Postgres tables (recipes, pantry_items, favourites) via Supabase REST API.",
+            "strength": 3
+          },
+          {
+            "name": "OpenAI API",
+            "evidence": "Recipe Genie calls chat completions from a Supabase Edge Function (generate-recipes) to produce structured recipes.",
+            "strength": 3
+          },
+          {
+            "name": "Prompt design",
+            "evidence": "Recipe Genie sends dietary preferences (vegetarian, no nuts, time limit) with user pantry to OpenAI and renders structured JSON output.",
+            "strength": 2
+          },
+          {
+            "name": "Supabase Edge Functions",
+            "evidence": "Recipe Genie runs generate-recipes Edge Function that calls OpenAI API server-side.",
+            "strength": 2
+          },
+          {
+            "name": "Loading states",
+            "evidence": "Recipe Genie shows rotating loading messages ('Checking the spice rack…') during recipe generation.",
+            "strength": 2
+          },
+          {
+            "name": "Error handling",
+            "evidence": "Recipe Genie displays toast error 'The Genie is tired, try again' when generation fails.",
+            "strength": 1
+          },
+          {
+            "name": "Form design",
+            "evidence": "Recipe Genie pantry input accepts text or paste, parses 'half an onion' and 'leftover rice', renders chips.",
+            "strength": 2
+          },
+          {
+            "name": "Share/Social features",
+            "evidence": "Recipe Genie recipe share links (/r/:id) include Open Graph preview metadata.",
+            "strength": 2
+          },
+          {
+            "name": "Lovable (no-code/low-code)",
+            "evidence": "Recipe Genie was built with Lovable AI app builder; 'Edit with Lovable' badge present.",
+            "strength": 2
+          },
+          {
+            "name": "Settings/preferences",
+            "evidence": "Recipe Genie settings page stores dietary preferences and unit choice (metric/imperial).",
+            "strength": 1
+          }
+        ],
+        "notes": [
+          "No analytics or product feedback loop: no GA, PostHog, Plausible, or Mixpanel detected.",
+          "AI output quality not evaluated: regenerate button exists but no user ratings beyond favourite heart.",
+          "No onboarding tour or walkthrough; settings visible but no guided first-time use.",
+          "Minimal error recovery: 'Genie is tired' toast with no retry logic or exponential backoff on API failures."
+        ]
+      },
+      "portfolio-1": {
+        "sub": "5 case studies · 2 essays",
+        "summary": "Frontend engineer in Bengaluru with 2.4 years' experience. Specializes in motion design, design systems, and checkout optimization. Has shipped accessibility fixes and a 42-component design system at Kitebird, created an open-source spring animation library (212 stars), and maintains strong visual craft with motion specs and interactive demos on every case study.",
+        "signals": [
+          {
+            "label": "Spring animation library",
+            "detail": "motion-kit, 212 GitHub stars"
+          },
+          {
+            "label": "Checkout conversion optimization",
+            "detail": "Kitebird: +9.4%, 1.9s LCP"
+          },
+          {
+            "label": "WCAG 2.1 AA audit",
+            "detail": "37 issues logged, 21 fixed"
+          },
+          {
+            "label": "Design system",
+            "detail": "Kite UI, 42 components, 3 squads"
+          },
+          {
+            "label": "Usability testing",
+            "detail": "6 sessions, A/B test over 3 weeks"
+          },
+          {
+            "label": "Motion design writing",
+            "detail": "2 essays, ReactFoo talk"
+          },
+          {
+            "label": "React & TypeScript",
+            "detail": "Typed entire design system package"
+          },
+          {
+            "label": "Figma to code pipeline",
+            "detail": "Design tokens from Figma variables"
+          }
+        ],
+        "skills": [
+          {
+            "name": "React",
+            "evidence": "Kitebird checkout rebuilt with React frontend; motion-kit is a React animation library.",
+            "strength": 4
+          },
+          {
+            "name": "TypeScript",
+            "evidence": "Kite UI case study: 'typing the whole package in strict TypeScript'.",
+            "strength": 4
+          },
+          {
+            "name": "Framer Motion",
+            "evidence": "About page lists Framer Motion as primary tool; motion-kit case study shows API design.",
+            "strength": 4
+          },
+          {
+            "name": "Motion design",
+            "evidence": "motion-kit open-source library (212 stars) with interactive demos; featured in 2 essays.",
+            "strength": 5
+          },
+          {
+            "name": "Design systems",
+            "evidence": "Kite UI: 42 components, design-tokens pipeline, Storybook, adopted by 3 product squads.",
+            "strength": 4
+          },
+          {
+            "name": "Accessibility (WCAG)",
+            "evidence": "Case study 2: audited checkout against WCAG 2.1 AA, logged 37 issues, fixed 21 in two sprints.",
+            "strength": 3
+          },
+          {
+            "name": "Product performance",
+            "evidence": "Checkout case study: reduced LCP from 4.1s to 1.9s on payment step, +9.4% conversion.",
+            "strength": 4
+          },
+          {
+            "name": "Figma",
+            "evidence": "About page lists Figma; Kite UI used design-tokens pipeline from Figma variables.",
+            "strength": 3
+          },
+          {
+            "name": "A/B testing",
+            "evidence": "Checkout case study: ran A/B test over 3 weeks to validate single-page redesign.",
+            "strength": 2
+          },
+          {
+            "name": "Usability testing",
+            "evidence": "Checkout case study: joined 6 usability sessions, mapped drop-off points.",
+            "strength": 2
+          },
+          {
+            "name": "Storybook",
+            "evidence": "About page lists Storybook; Kite UI case study: 'Storybook docs' for 42 components.",
+            "strength": 3
+          },
+          {
+            "name": "Tailwind CSS",
+            "evidence": "About page lists Tailwind as a tool; used in Kitebird projects.",
+            "strength": 2
+          },
+          {
+            "name": "Screen reader testing",
+            "evidence": "Accessibility audit case study: 'testing with NVDA and VoiceOver by hand'.",
+            "strength": 2
+          },
+          {
+            "name": "Feature flags",
+            "evidence": "Checkout case study: 'shipped behind a feature flag' for A/B test validation.",
+            "strength": 2
+          },
+          {
+            "name": "Component libraries",
+            "evidence": "Saffron dashboard case study: created Figma-backed component kit later adopted across web app.",
+            "strength": 3
+          },
+          {
+            "name": "Data visualization",
+            "evidence": "Saffron dashboard internship: built cash-flow charts and invoice tables; virtualised lists.",
+            "strength": 2
+          },
+          {
+            "name": "Next.js",
+            "evidence": "Site footer states portfolio 'built with Next.js and Framer Motion, deployed on Vercel'.",
+            "strength": 1
+          },
+          {
+            "name": "Form design",
+            "evidence": "Checkout case study: addressed high drop-off at address form with autocomplete motion.",
+            "strength": 2
+          }
+        ],
+        "notes": [
+          "Outcomes buried below fold: 3 case studies show metrics only in closing sections.",
+          "AI work not featured: Recipe Genie and notes-ai projects excluded from portfolio.",
+          "Internship outcome unmeasured: Saffron dashboard case study lacks quantified impact metrics."
+        ]
+      }
+    }
+  }
+}

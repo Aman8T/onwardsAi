@@ -1,0 +1,435 @@
+{
+  "name": "stress-scanned",
+  "about": "Stress: scanned-PDF resume (source content is the empty string, marked failed) and a profile built from GitHub only (3 domains); the portfolio must not invent anything from the empty resume.",
+  "profile": {
+    "id": "73c624b7a7f1ab78edd5bdd5a92cf19b",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "Ishaan Verma",
+      "headline": "Python Developer · Jaipur",
+      "currentRole": "Python Developer",
+      "location": "Jaipur, India",
+      "summary": "Python developer in Jaipur whose public work is a FastAPI price-tracker service (24 stars, 17 test files), a bus-timetable scraper and small automation scripts."
+    },
+    "mastery": {
+      "score": 44,
+      "insight": "Solid public Python work with tests on one service; no resume text was read, so the fit to the current role is a rough estimate."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "No text found",
+        "summary": "The resume PDF has no readable text; it looks like a scan, so nothing could be read from it. No roles, dates, projects or education are known from this source.",
+        "notes": [
+          "Upload a text-based PDF or paste the resume text so it can be read",
+          "Until then the graph is built from GitHub only"
+        ],
+        "ok": false,
+        "error": "No text could be extracted from this PDF; it looks like a scan."
+      },
+      {
+        "id": "github",
+        "kind": "github",
+        "label": "GitHub",
+        "url": "https://github.com/ishaanverma",
+        "sub": "12 repos · 3 languages · 64 stars",
+        "summary": "Python developer in Jaipur with 12 public repositories. price-tracker-api (24 stars, 17 test files, CI and Docker) is the strongest; the rest are scrapers and small automation scripts.",
+        "notes": [
+          "price-tracker-api has tests, CI, Docker and a README with a run command",
+          "Tests in 4 of 12 repos; inbox-sorter has no tests or docs",
+          "No resume text was read, so employers and dates are unknown"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 56,
+        "summary": "A FastAPI price-tracking service with a worker, Docker setup and tests; the only service-level project."
+      },
+      {
+        "id": "data-automation",
+        "name": "Data & Automation",
+        "short": "Automation",
+        "score": 48,
+        "summary": "Scrapers and rule-based scripts in Python; no larger data pipeline is public."
+      },
+      {
+        "id": "eng-practice",
+        "name": "Engineering Practice",
+        "short": "Eng Practice",
+        "score": 40,
+        "summary": "Tests in 4 of 12 repos and CI in 3; the best repo is well covered and most others are not."
+      }
+    ],
+    "skills": [
+      {
+        "id": "python",
+        "name": "Python",
+        "domainId": "backend-apis",
+        "score": 66,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "Python in 8 of 11 original repos, including price-tracker-api"
+          }
+        ],
+        "unlocks": [
+          "Python Backend Engineer"
+        ]
+      },
+      {
+        "id": "fastapi",
+        "name": "FastAPI",
+        "domainId": "backend-apis",
+        "score": 56,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "price-tracker-api: FastAPI service with 17 test files, 24 stars"
+          }
+        ],
+        "unlocks": [
+          "Python Backend Engineer"
+        ]
+      },
+      {
+        "id": "rest-design",
+        "name": "REST API design",
+        "domainId": "backend-apis",
+        "score": 46,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "price-tracker-api exposes add, list and alert endpoints; no API docs shown"
+          }
+        ],
+        "unlocks": [
+          "Python Backend Engineer"
+        ]
+      },
+      {
+        "id": "web-scraping",
+        "name": "Web scraping",
+        "domainId": "data-automation",
+        "score": 58,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "jaipur-bus-scraper (15 stars) and the price-tracker-api scrapers"
+          }
+        ],
+        "unlocks": [
+          "Data Automation Engineer"
+        ]
+      },
+      {
+        "id": "pandas",
+        "name": "Pandas",
+        "domainId": "data-automation",
+        "score": 44,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "No notebook or data analysis repo; pandas appears only in small scripts"
+          }
+        ],
+        "unlocks": [
+          "Data Automation Engineer"
+        ]
+      },
+      {
+        "id": "automation",
+        "name": "Automation scripts",
+        "domainId": "data-automation",
+        "score": 42,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "inbox-sorter: rule-based email labelling script, 9 stars"
+          }
+        ],
+        "unlocks": [
+          "Data Automation Engineer"
+        ]
+      },
+      {
+        "id": "testing",
+        "name": "Automated testing",
+        "domainId": "eng-practice",
+        "score": 46,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "Tests in 4 of 12 repos; 17 test files in price-tracker-api"
+          }
+        ],
+        "unlocks": [
+          "Python Backend Engineer",
+          "QA Automation Engineer"
+        ]
+      },
+      {
+        "id": "ci-cd",
+        "name": "CI/CD",
+        "domainId": "eng-practice",
+        "score": 38,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "GitHub Actions in 3 of 12 repos"
+          }
+        ],
+        "unlocks": [
+          "QA Automation Engineer"
+        ]
+      },
+      {
+        "id": "git-workflows",
+        "name": "Git workflows",
+        "domainId": "eng-practice",
+        "score": 36,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "5 pull requests opened and 3 PR reviews in 90 days"
+          }
+        ],
+        "unlocks": []
+      }
+    ],
+    "roles": [
+      {
+        "id": "python-backend",
+        "title": "Python Backend Engineer",
+        "alignment": 54,
+        "eta": "~6 months",
+        "why": "One well-tested FastAPI service with Docker. Needs more production-style backend work, and the resume could not be read to show any.",
+        "requirements": [
+          {
+            "name": "Python",
+            "skillId": "python",
+            "have": true,
+            "current": 66,
+            "target": 75
+          },
+          {
+            "name": "FastAPI",
+            "skillId": "fastapi",
+            "have": false,
+            "current": 56,
+            "target": 72
+          },
+          {
+            "name": "REST API design",
+            "skillId": "rest-design",
+            "have": false,
+            "current": 46,
+            "target": 70
+          },
+          {
+            "name": "Automated testing",
+            "skillId": "testing",
+            "have": false,
+            "current": 46,
+            "target": 70
+          },
+          {
+            "name": "Relational database design",
+            "have": false,
+            "current": 35,
+            "target": 65
+          }
+        ]
+      },
+      {
+        "id": "data-automation",
+        "title": "Data Automation Engineer",
+        "alignment": 49,
+        "eta": "~6 months",
+        "why": "Scrapers and scheduled jobs are a good base. Pipelines, orchestration and data quality checks are not shown.",
+        "requirements": [
+          {
+            "name": "Web scraping",
+            "skillId": "web-scraping",
+            "have": false,
+            "current": 58,
+            "target": 70
+          },
+          {
+            "name": "Automation scripts",
+            "skillId": "automation",
+            "have": false,
+            "current": 42,
+            "target": 65
+          },
+          {
+            "name": "Pandas",
+            "skillId": "pandas",
+            "have": false,
+            "current": 44,
+            "target": 65
+          },
+          {
+            "name": "Workflow orchestration",
+            "have": false,
+            "current": 10,
+            "target": 60
+          }
+        ]
+      },
+      {
+        "id": "qa-automation",
+        "title": "QA Automation Engineer",
+        "alignment": 36,
+        "eta": "~9 months",
+        "why": "Tests exist in 4 repos, but no end-to-end or browser testing is public.",
+        "requirements": [
+          {
+            "name": "Automated testing",
+            "skillId": "testing",
+            "have": false,
+            "current": 46,
+            "target": 75
+          },
+          {
+            "name": "CI/CD",
+            "skillId": "ci-cd",
+            "have": false,
+            "current": 38,
+            "target": 65
+          },
+          {
+            "name": "Browser automation",
+            "have": false,
+            "current": 20,
+            "target": 65
+          },
+          {
+            "name": "Test planning",
+            "have": false,
+            "current": 15,
+            "target": 60
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": ""
+      },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "kind": "github",
+        "url": "https://github.com/ishaanverma",
+        "content": "# GitHub: Ishaan Verma (@ishaanverma)\n\n## Profile\n- Name: Ishaan Verma\n- Account type: User\n- Bio: Python developer. Scrapers, small APIs and automation.\n- Location: Jaipur, India\n- Website: https://ishaanverma.example.dev\n- Followers: 57, following: 40\n- On GitHub since 2021-04-09 (about 5 years)\n\n## Totals\n- Public repositories: 12\n- Original repos: 11, forks: 1\n- Stars across original repos: 64\n- Languages by number of original repos: Python (8), JavaScript (2), Shell (1)\n- Repos with a description: 9/11, with topics: 5, with a live homepage link: 1\n- Engineering practice (checked 12 repos): tests in 4, CI in 3, Docker in 2\n\n## Top repositories (3, ranked by stars, recency and substance)\n\n### 1. price-tracker-api\n- Description: FastAPI service that tracks product prices from scraped pages and sends alerts when a price drops.\n- Language: Python, stars: 24, forks: 3, license: MIT\n- Topics: fastapi, scraping, price-tracking\n- Last push: 2026-09-05 (1 month ago), created 2025-02-20, size 420 KB\n- Detected: tests yes (17 test files), CI yes (GitHub Actions), Docker yes, docs yes, manifests: pyproject.toml\n- README excerpt:\n> # price-tracker-api\n> Add a product URL, pick a target price and get an email when it drops. Scrapers run on a schedule; results are stored in SQLite.\n> Run `docker compose up` to start the API and the worker.\n\n### 2. jaipur-bus-scraper\n- Description: Scrapes city bus timetable pages into clean JSON.\n- Language: Python, stars: 15, forks: 2\n- Topics: scraping, transit\n- Last push: 2026-03-11 (7 months ago), created 2024-11-02, size 96 KB\n- Detected: tests yes (5 test files), CI no, Docker no, docs yes, manifests: requirements.txt\n\n### 3. inbox-sorter\n- Description: Automation script that labels emails by rules in a YAML file.\n- Language: Python, stars: 9, forks: 0\n- Last push: 2025-10-14 (1 year ago), created 2025-04-30, size 40 KB\n- Detected: tests no, CI no, Docker no, docs no, manifests: requirements.txt\n\n## Other original repositories\n- dotfiles [Shell], 4 stars, pushed 2026-09-20\n- portfolio-v1 [JavaScript], 3 stars, pushed 2024-05-12: A first personal site\n- quote-widget [JavaScript], 2 stars, pushed 2023-12-02\n- …and 5 more small Python scripts\n\n## Recent public activity\n- 71 public events over about 90 days, most recent 2026-10-06 (2 days ago)\n- 33 pushes (58 commits), 5 pull requests opened (1 to another person's repo), 4 PRs merged, 2 issues opened, 3 PR reviews\n\n## Technologies mentioned across repos\nPython, FastAPI, SQLite, Docker, GitHub Actions"
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "No text found",
+        "summary": "The resume PDF has no readable text; it looks like a scan, so nothing could be read from it. No roles, dates, projects or education are known from this source.",
+        "signals": [],
+        "skills": [],
+        "notes": [
+          "Upload a text-based PDF or paste the resume text so it can be read",
+          "Until then the graph is built from GitHub only"
+        ]
+      },
+      "github": {
+        "sub": "12 repos · 3 languages · 64 stars",
+        "summary": "Python developer in Jaipur with 12 public repositories. price-tracker-api (24 stars, 17 test files, CI and Docker) is the strongest; the rest are scrapers and small automation scripts.",
+        "person": {
+          "name": "Ishaan Verma",
+          "currentRole": "Python Developer",
+          "location": "Jaipur, India"
+        },
+        "signals": [
+          {
+            "label": "price-tracker-api",
+            "detail": "24 stars, 17 test files, Docker"
+          },
+          {
+            "label": "jaipur-bus-scraper",
+            "detail": "15 stars, timetable scraper"
+          },
+          {
+            "label": "inbox-sorter",
+            "detail": "9 stars, email rules script"
+          },
+          {
+            "label": "Active in 90 days",
+            "detail": "58 commits"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Python",
+            "evidence": "Python in 8 of 11 original repos, including price-tracker-api",
+            "strength": 3
+          },
+          {
+            "name": "FastAPI",
+            "evidence": "price-tracker-api: FastAPI service with 17 test files, 24 stars",
+            "strength": 3
+          },
+          {
+            "name": "REST API design",
+            "evidence": "price-tracker-api exposes add, list and alert endpoints; no API docs shown",
+            "strength": 2
+          },
+          {
+            "name": "Web scraping",
+            "evidence": "jaipur-bus-scraper (15 stars) and the price-tracker-api scrapers",
+            "strength": 3
+          },
+          {
+            "name": "Pandas",
+            "evidence": "No notebook or data analysis repo; pandas appears only in small scripts",
+            "strength": 2
+          },
+          {
+            "name": "Automation scripts",
+            "evidence": "inbox-sorter: rule-based email labelling script, 9 stars",
+            "strength": 2
+          },
+          {
+            "name": "Automated testing",
+            "evidence": "Tests in 4 of 12 repos; 17 test files in price-tracker-api",
+            "strength": 2
+          },
+          {
+            "name": "CI/CD",
+            "evidence": "GitHub Actions in 3 of 12 repos",
+            "strength": 2
+          },
+          {
+            "name": "Git workflows",
+            "evidence": "5 pull requests opened and 3 PR reviews in 90 days",
+            "strength": 2
+          }
+        ],
+        "notes": [
+          "price-tracker-api has tests, CI, Docker and a README with a run command",
+          "Tests in 4 of 12 repos; inbox-sorter has no tests or docs",
+          "No resume text was read, so employers and dates are unknown"
+        ]
+      }
+    }
+  }
+}

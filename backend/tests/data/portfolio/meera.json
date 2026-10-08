@@ -1,0 +1,849 @@
+{
+  "name": "meera",
+  "about": "Career switcher (teacher to data analyst): Pivot composition, opt-in open-to from the goal, Now/Before experience, resume + Tableau Public + Medium.",
+  "profile": {
+    "id": "a8c8c3725513f4ca026bb76bfd059e54",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "goal": "Data Analyst roles in edtech",
+    "person": {
+      "name": "Meera Iyer",
+      "headline": "Data Analyst · Pune",
+      "currentRole": "Data Analyst",
+      "location": "Pune, India",
+      "summary": "Former mathematics teacher now working as a Junior Data Analyst at Lumen Learning Labs, where she built the learner-engagement dashboard in Tableau used by 4 course teams and cut a manual Monday report from 3 hours to 20 minutes."
+    },
+    "mastery": {
+      "score": 71,
+      "insight": "Explains data and runs spreadsheets better than most juniors; SQL depth, statistics and machine learning are still developing."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "3 projects · 2 roles · 1 page",
+        "summary": "Meera Iyer is a Junior Data Analyst at Lumen Learning Labs in Pune after six years as a mathematics teacher. She owns a weekly learner-engagement Tableau dashboard, the SQL behind it and an automated Google Sheets and BigQuery report, and has three self-directed analysis projects from 2024.",
+        "notes": [
+          "Lumen bullets carry numbers: 4 course teams, 12 tables, 3 hours to 20 minutes",
+          "Teaching years show scale (450+ students, 30 teachers) and bridge to analytics",
+          "Python and machine learning are listed but only one project uses pandas"
+        ],
+        "ok": true
+      },
+      {
+        "id": "portfolio-1",
+        "kind": "portfolio",
+        "label": "Tableau Public",
+        "url": "https://public.tableau.com/app/profile/meera.iyer",
+        "sub": "2 dashboards",
+        "summary": "Tableau Public profile with two dashboards built on a public Maharashtra school dataset: a board results explorer of district-level pass rates and a scatter of attendance against results by district.",
+        "notes": [
+          "Dashboards keep one headline number and one filter per view",
+          "No work dashboards are public, so Lumen impact is not visible here",
+          "Add a short method note to each dashboard"
+        ],
+        "ok": true
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "label": "Medium",
+        "url": "https://medium.com/@meeraiyer",
+        "sub": "Blog · 3 posts",
+        "summary": "Medium blog with three posts, 2024 to 2025, explaining data to non-experts: an attendance-versus-results analysis, a post on messy data from six years of teaching, and an introduction to SQL joins for teachers.",
+        "notes": [
+          "Plain explanations; each post opens with the question and the answer",
+          "Newest post is from March 2025; nothing since joining Lumen",
+          "Link the posts to the dashboards and the Python analysis"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "data-analysis",
+        "name": "Data Analysis",
+        "short": "Data Analysis",
+        "score": 68,
+        "summary": "Production SQL across 12 tables and spreadsheet automation at Lumen; Python and pandas appear in one project."
+      },
+      {
+        "id": "visualisation",
+        "name": "Visualisation",
+        "short": "Visualisation",
+        "score": 74,
+        "summary": "A weekly Tableau dashboard in daily use by 4 course teams and two public dashboards."
+      },
+      {
+        "id": "statistics",
+        "name": "Statistics",
+        "short": "Statistics",
+        "score": 64,
+        "summary": "M.Sc. Mathematics base; applied once in the attendance analysis, with no experiments or modelling at work."
+      },
+      {
+        "id": "communication",
+        "name": "Communication",
+        "short": "Communication",
+        "score": 86,
+        "summary": "Six years of teaching and three plain-language posts; explains data to non-experts better than it does anything else."
+      },
+      {
+        "id": "education-domain",
+        "name": "Education Domain",
+        "short": "Education Domain",
+        "score": 80,
+        "summary": "Taught 450+ students, ran an Olympiad programme and now analyses learner engagement for an edtech company."
+      },
+      {
+        "id": "machine-learning",
+        "name": "Machine Learning",
+        "short": "Machine Learning",
+        "score": 22,
+        "summary": "scikit-learn is listed as beginner; no project trains or evaluates a model yet."
+      }
+    ],
+    "skills": [
+      {
+        "id": "excel-sheets",
+        "name": "Excel & Sheets",
+        "domainId": "data-analysis",
+        "score": 82,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Built the school's Google Sheets grade tracker, used by 30 teachers"
+          },
+          {
+            "sourceId": "resume",
+            "text": "Cut a Monday report from 3 hours to 20 minutes with Google Sheets and BigQuery"
+          }
+        ],
+        "unlocks": [
+          "Data Analyst"
+        ]
+      },
+      {
+        "id": "sql",
+        "name": "SQL",
+        "domainId": "data-analysis",
+        "score": 70,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Wrote the Lumen SQL joining quiz attempts to course completions (12 tables)"
+          },
+          {
+            "sourceId": "link-1",
+            "text": "Medium: 'Joins, explained for teachers'"
+          }
+        ],
+        "unlocks": [
+          "Data Analyst",
+          "Learning Analytics Specialist",
+          "BI Analyst"
+        ]
+      },
+      {
+        "id": "python-pandas",
+        "name": "Python & pandas",
+        "domainId": "data-analysis",
+        "score": 58,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Attendance analysis of a public school dataset (9,800 rows) in Python and pandas"
+          }
+        ],
+        "unlocks": [
+          "Data Analyst",
+          "Data Scientist"
+        ]
+      },
+      {
+        "id": "data-cleaning",
+        "name": "Data cleaning",
+        "domainId": "data-analysis",
+        "score": 62,
+        "evidence": [
+          {
+            "sourceId": "link-1",
+            "text": "Medium: 'Six years of teaching, one lesson about messy data'"
+          },
+          {
+            "sourceId": "resume",
+            "text": "Attendance analysis on a 9,800-row public school dataset"
+          }
+        ],
+        "unlocks": [
+          "BI Analyst"
+        ]
+      },
+      {
+        "id": "tableau",
+        "name": "Tableau",
+        "domainId": "visualisation",
+        "score": 72,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Built the weekly learner-engagement dashboard in Tableau for 4 course teams"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "text": "2 public dashboards on Tableau Public"
+          }
+        ],
+        "unlocks": [
+          "Data Analyst",
+          "Learning Analytics Specialist",
+          "BI Analyst"
+        ]
+      },
+      {
+        "id": "dashboard-design",
+        "name": "Dashboard design",
+        "domainId": "visualisation",
+        "score": 76,
+        "evidence": [
+          {
+            "sourceId": "portfolio-1",
+            "text": "Board results explorer: district map, ranked table, year and stream filters"
+          },
+          {
+            "sourceId": "resume",
+            "text": "Weekly dashboard adopted by 4 course teams"
+          }
+        ],
+        "unlocks": [
+          "BI Analyst"
+        ]
+      },
+      {
+        "id": "chart-choice",
+        "name": "Chart choice",
+        "domainId": "visualisation",
+        "score": 74,
+        "evidence": [
+          {
+            "sourceId": "portfolio-1",
+            "text": "Attendance vs results scatter with trend line and per-district tooltip"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "descriptive-stats",
+        "name": "Descriptive statistics",
+        "domainId": "statistics",
+        "score": 72,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "M.Sc. Mathematics, Savitribai Phule Pune University"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "text": "District pass-rate and attendance summaries across the public dataset"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "hypothesis-testing",
+        "name": "Hypothesis testing",
+        "domainId": "statistics",
+        "score": 62,
+        "evidence": [
+          {
+            "sourceId": "link-1",
+            "text": "Medium: 'Does attendance predict board results?'"
+          }
+        ],
+        "unlocks": [
+          "Learning Analytics Specialist",
+          "Data Scientist"
+        ]
+      },
+      {
+        "id": "regression-basics",
+        "name": "Regression basics",
+        "domainId": "statistics",
+        "score": 58,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Found attendance explains less than a third of the variance in board results"
+          }
+        ],
+        "unlocks": [
+          "Data Analyst",
+          "Data Scientist"
+        ]
+      },
+      {
+        "id": "explaining-non-experts",
+        "name": "Explaining to non-experts",
+        "domainId": "communication",
+        "score": 90,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Taught 450+ students across six years at Greenfield Public School"
+          },
+          {
+            "sourceId": "link-1",
+            "text": "3 Medium posts that explain joins, variance and messy data in plain language"
+          }
+        ],
+        "unlocks": [
+          "Data Analyst",
+          "Learning Analytics Specialist"
+        ]
+      },
+      {
+        "id": "data-storytelling",
+        "name": "Data storytelling",
+        "domainId": "communication",
+        "score": 81,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Weekly Lumen dashboard used by 4 course teams"
+          },
+          {
+            "sourceId": "portfolio-1",
+            "text": "Each dashboard leads with one headline number"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "written-reports",
+        "name": "Written reports",
+        "domainId": "communication",
+        "score": 81,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Quiz-to-completion SQL case study, a written walkthrough of the Lumen query"
+          },
+          {
+            "sourceId": "link-1",
+            "text": "Medium posts from 2024 to 2025"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "assessment-design",
+        "name": "Assessment design",
+        "domainId": "education-domain",
+        "score": 80,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Coordinated the school's Olympiad programme at Greenfield Public School"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "learner-engagement",
+        "name": "Learner engagement",
+        "domainId": "education-domain",
+        "score": 80,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Built the weekly learner-engagement dashboard for 4 course teams at Lumen"
+          }
+        ],
+        "unlocks": [
+          "Learning Analytics Specialist"
+        ]
+      },
+      {
+        "id": "curriculum-planning",
+        "name": "Curriculum planning",
+        "domainId": "education-domain",
+        "score": 78,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Mathematics Teacher, grades 9–12, Jun 2018 – Dec 2023; taught 450+ students"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "sklearn-basics",
+        "name": "Scikit-learn basics",
+        "domainId": "machine-learning",
+        "score": 26,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "scikit-learn (beginner) is listed under Machine learning; no bullet or project uses it"
+          }
+        ],
+        "unlocks": [
+          "Data Scientist"
+        ]
+      },
+      {
+        "id": "model-evaluation",
+        "name": "Model evaluation",
+        "domainId": "machine-learning",
+        "score": 18,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "No project trains or evaluates a model"
+          }
+        ],
+        "unlocks": [
+          "Data Scientist"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "id": "data-analyst",
+        "title": "Data Analyst",
+        "alignment": 74,
+        "eta": "~4 months",
+        "why": "Ships a weekly Tableau dashboard and 12-table SQL at Lumen. Needs deeper SQL, more Python and statistics evidence.",
+        "requirements": [
+          {
+            "name": "SQL",
+            "skillId": "sql",
+            "have": true,
+            "current": 70,
+            "target": 80
+          },
+          {
+            "name": "Tableau",
+            "skillId": "tableau",
+            "have": true,
+            "current": 72,
+            "target": 75
+          },
+          {
+            "name": "Excel & Sheets",
+            "skillId": "excel-sheets",
+            "have": true,
+            "current": 82,
+            "target": 75
+          },
+          {
+            "name": "Python & pandas",
+            "skillId": "python-pandas",
+            "have": false,
+            "current": 58,
+            "target": 70
+          },
+          {
+            "name": "Regression basics",
+            "skillId": "regression-basics",
+            "have": false,
+            "current": 58,
+            "target": 70
+          },
+          {
+            "name": "Explaining to non-experts",
+            "skillId": "explaining-non-experts",
+            "have": true,
+            "current": 90,
+            "target": 70
+          }
+        ]
+      },
+      {
+        "id": "learning-analytics",
+        "title": "Learning Analytics Specialist",
+        "alignment": 79,
+        "eta": "~3 months",
+        "why": "Teaching background, an engagement dashboard and plain-language writing line up directly. Needs experiments and more statistics.",
+        "requirements": [
+          {
+            "name": "Learner engagement",
+            "skillId": "learner-engagement",
+            "have": true,
+            "current": 80,
+            "target": 75
+          },
+          {
+            "name": "Explaining to non-experts",
+            "skillId": "explaining-non-experts",
+            "have": true,
+            "current": 90,
+            "target": 75
+          },
+          {
+            "name": "Tableau",
+            "skillId": "tableau",
+            "have": true,
+            "current": 72,
+            "target": 70
+          },
+          {
+            "name": "SQL",
+            "skillId": "sql",
+            "have": true,
+            "current": 70,
+            "target": 75
+          },
+          {
+            "name": "Hypothesis testing",
+            "skillId": "hypothesis-testing",
+            "have": true,
+            "current": 62,
+            "target": 70
+          }
+        ]
+      },
+      {
+        "id": "bi-analyst",
+        "title": "BI Analyst",
+        "alignment": 68,
+        "eta": "~6 months",
+        "why": "Strong dashboard craft and Tableau in daily use. Needs data modelling and warehouse experience beyond one BigQuery pipeline.",
+        "requirements": [
+          {
+            "name": "Tableau",
+            "skillId": "tableau",
+            "have": true,
+            "current": 72,
+            "target": 80
+          },
+          {
+            "name": "Dashboard design",
+            "skillId": "dashboard-design",
+            "have": true,
+            "current": 76,
+            "target": 80
+          },
+          {
+            "name": "SQL",
+            "skillId": "sql",
+            "have": true,
+            "current": 70,
+            "target": 80
+          },
+          {
+            "name": "Data cleaning",
+            "skillId": "data-cleaning",
+            "have": true,
+            "current": 62,
+            "target": 70
+          },
+          {
+            "name": "Data modelling",
+            "have": false,
+            "current": 40,
+            "target": 65
+          }
+        ]
+      },
+      {
+        "id": "data-scientist",
+        "title": "Data Scientist",
+        "alignment": 38,
+        "eta": "~14 months",
+        "why": "Statistics base and one pandas project help, but no model has been trained or evaluated yet.",
+        "requirements": [
+          {
+            "name": "Python & pandas",
+            "skillId": "python-pandas",
+            "have": false,
+            "current": 58,
+            "target": 80
+          },
+          {
+            "name": "Hypothesis testing",
+            "skillId": "hypothesis-testing",
+            "have": false,
+            "current": 62,
+            "target": 75
+          },
+          {
+            "name": "Regression basics",
+            "skillId": "regression-basics",
+            "have": false,
+            "current": 58,
+            "target": 75
+          },
+          {
+            "name": "Scikit-learn basics",
+            "skillId": "sklearn-basics",
+            "have": false,
+            "current": 26,
+            "target": 70
+          },
+          {
+            "name": "Model evaluation",
+            "skillId": "model-evaluation",
+            "have": false,
+            "current": 18,
+            "target": 70
+          },
+          {
+            "name": "Feature engineering",
+            "have": false,
+            "current": 20,
+            "target": 65
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "MEERA IYER\nJunior Data Analyst · Pune, India\nmeera.iyer.data@example.com · +91 90000 23456 · linkedin.com/in/meera-iyer-data\npublic.tableau.com/app/profile/meera.iyer · medium.com/@meeraiyer\n\nSUMMARY\nFormer mathematics teacher turned data analyst. I spent six years in the classroom and now build the dashboards and\nSQL behind learner-engagement decisions at an edtech company. I like turning messy numbers into something a non-expert\ncan act on.\n\nEXPERIENCE\n\nLumen Learning Labs — Junior Data Analyst                                              Pune · Feb 2025 – Present\nEdtech company.\n- Built the weekly learner-engagement dashboard in Tableau, used by 4 course teams.\n- Wrote the SQL that joins quiz attempts to course completions (12 tables).\n- Cut a manual Monday report from 3 hours to 20 minutes with a scheduled Google Sheets + BigQuery pipeline.\n\nGreenfield Public School — Mathematics Teacher (grades 9–12)                          Pune · Jun 2018 – Dec 2023\n- Taught 450+ students across six years.\n- Built the school's Google Sheets grade tracker, used by 30 teachers.\n- Coordinated the school's Olympiad programme.\n\nPROJECTS\n- Does attendance predict board results? (2024) — Analysis of a public Maharashtra school dataset (9,800 rows) in\n  Python and pandas; found that attendance explains less than a third of the variance in results.\n- Board results explorer (2024) — A public Tableau dashboard of district-level pass rates.\n- Quiz-to-completion SQL case study (2024) — A written walkthrough of the Lumen engagement query.\n\nCERTIFICATION\nGoogle Data Analytics Professional Certificate (Coursera), 2024. Self-directed projects in 2024.\n\nEDUCATION\nM.Sc. Mathematics — Savitribai Phule Pune University                                                 2016 – 2018\nB.Ed.                                                                                                       2018\n\nSKILLS\nAnalysis: SQL, BigQuery, Python (pandas), Excel, Google Sheets\nVisualisation: Tableau\nStatistics: descriptive statistics, hypothesis testing, regression basics\nMachine learning: scikit-learn (beginner)\nWays of working: explaining data to non-experts, written reports, assessment design"
+      },
+      {
+        "id": "portfolio-1",
+        "label": "Tableau Public",
+        "kind": "portfolio",
+        "url": "https://public.tableau.com/app/profile/meera.iyer",
+        "content": "# Tableau Public: Meera Iyer\n\nURL: https://public.tableau.com/app/profile/meera.iyer\nLocation: Pune\nBio: Maths teacher turned data analyst. I like dashboards a head teacher can read in a minute.\nFollowers: 23, following: 41\n\n## Published dashboards (2)\n\n### 1. Board results explorer\nPublished: 2024-08-17\nDescription: District-level pass rates for Maharashtra board exams, by year and stream.\nContents: a district map coloured by pass rate, a ranked table of districts, a year selector and a stream filter (Science, Commerce, Arts).\nData: public Maharashtra school results dataset.\n\n### 2. Attendance and results by district\nPublished: 2024-09-29\nDescription: Scatter plot of average attendance against pass rate for each district, with a trend line and a tooltip per district.\nData: the same public dataset as her Python analysis (9,800 rows).\n\n## Observations\n- Both dashboards use a single headline number and one filter per view; titles say what the chart shows.\n- No dashboard from work is public (the Lumen dashboard is internal).\n- Dashboards have no written method note."
+      },
+      {
+        "id": "link-1",
+        "label": "Medium",
+        "kind": "link",
+        "url": "https://medium.com/@meeraiyer",
+        "content": "# Medium: Meera Iyer (@meeraiyer)\n\nURL: https://medium.com/@meeraiyer\nBio: Maths teacher turned data analyst, writing about data for people who do not do data. Pune.\nFollowers: 64\n\n## Posts (3)\n1. \"Does attendance predict board results?\" — 2024-10-06, 7 min read\n   Walks through the analysis of a public Maharashtra school dataset (9,800 rows) in Python and pandas, and explains why\n   attendance explaining less than a third of the variance is not the same as attendance not mattering.\n2. \"Six years of teaching, one lesson about messy data\" — 2024-11-12, 5 min read\n   What grading 450+ students by hand taught her about missing values, inconsistent labels and checking your own spreadsheet.\n3. \"Joins, explained for teachers\" — 2025-03-02, 6 min read\n   A gentle introduction to SQL joins using quiz attempts and course completions as the example tables.\n\n## Observations\n- Plain language throughout; each post opens with the question and the answer in two sentences.\n- Last post is from March 2025; nothing since she started at Lumen Learning Labs."
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "3 projects · 2 roles · 1 page",
+        "summary": "Meera Iyer is a Junior Data Analyst at Lumen Learning Labs in Pune after six years as a mathematics teacher. She owns a weekly learner-engagement Tableau dashboard, the SQL behind it and an automated Google Sheets and BigQuery report, and has three self-directed analysis projects from 2024.",
+        "person": {
+          "name": "Meera Iyer",
+          "currentRole": "Junior Data Analyst",
+          "location": "Pune, India"
+        },
+        "signals": [
+          {
+            "label": "Learner-engagement dashboard",
+            "detail": "Tableau, used by 4 course teams"
+          },
+          {
+            "label": "Quiz-to-completion SQL",
+            "detail": "joins across 12 tables"
+          },
+          {
+            "label": "Monday report automation",
+            "detail": "3 hours to 20 minutes"
+          },
+          {
+            "label": "Attendance analysis",
+            "detail": "9,800 rows, Python and pandas"
+          },
+          {
+            "label": "Google Data Analytics Certificate",
+            "detail": "Coursera, 2024"
+          },
+          {
+            "label": "Mathematics teacher",
+            "detail": "450+ students, Jun 2018 – Dec 2023"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Excel & Sheets",
+            "evidence": "Built the school's Google Sheets grade tracker, used by 30 teachers; Cut a Monday report from 3 hours to 20 minutes with Google Sheets and BigQuery",
+            "strength": 4
+          },
+          {
+            "name": "SQL",
+            "evidence": "Wrote the Lumen SQL joining quiz attempts to course completions (12 tables)",
+            "strength": 4
+          },
+          {
+            "name": "Python & pandas",
+            "evidence": "Attendance analysis of a public school dataset (9,800 rows) in Python and pandas",
+            "strength": 3
+          },
+          {
+            "name": "Data cleaning",
+            "evidence": "Attendance analysis on a 9,800-row public school dataset",
+            "strength": 3
+          },
+          {
+            "name": "Tableau",
+            "evidence": "Built the weekly learner-engagement dashboard in Tableau for 4 course teams",
+            "strength": 4
+          },
+          {
+            "name": "Dashboard design",
+            "evidence": "Weekly dashboard adopted by 4 course teams",
+            "strength": 4
+          },
+          {
+            "name": "Descriptive statistics",
+            "evidence": "M.Sc. Mathematics, Savitribai Phule Pune University",
+            "strength": 4
+          },
+          {
+            "name": "Regression basics",
+            "evidence": "Found attendance explains less than a third of the variance in board results",
+            "strength": 3
+          },
+          {
+            "name": "Explaining to non-experts",
+            "evidence": "Taught 450+ students across six years at Greenfield Public School",
+            "strength": 5
+          },
+          {
+            "name": "Data storytelling",
+            "evidence": "Weekly Lumen dashboard used by 4 course teams",
+            "strength": 4
+          },
+          {
+            "name": "Written reports",
+            "evidence": "Quiz-to-completion SQL case study, a written walkthrough of the Lumen query",
+            "strength": 4
+          },
+          {
+            "name": "Assessment design",
+            "evidence": "Coordinated the school's Olympiad programme at Greenfield Public School",
+            "strength": 4
+          },
+          {
+            "name": "Learner engagement",
+            "evidence": "Built the weekly learner-engagement dashboard for 4 course teams at Lumen",
+            "strength": 4
+          },
+          {
+            "name": "Curriculum planning",
+            "evidence": "Mathematics Teacher, grades 9–12, Jun 2018 – Dec 2023; taught 450+ students",
+            "strength": 4
+          },
+          {
+            "name": "Scikit-learn basics",
+            "evidence": "scikit-learn (beginner) is listed under Machine learning; no bullet or project uses it",
+            "strength": 1
+          },
+          {
+            "name": "Model evaluation",
+            "evidence": "No project trains or evaluates a model",
+            "strength": 1
+          }
+        ],
+        "notes": [
+          "Lumen bullets carry numbers: 4 course teams, 12 tables, 3 hours to 20 minutes",
+          "Teaching years show scale (450+ students, 30 teachers) and bridge to analytics",
+          "Python and machine learning are listed but only one project uses pandas"
+        ]
+      },
+      "portfolio-1": {
+        "sub": "2 dashboards",
+        "summary": "Tableau Public profile with two dashboards built on a public Maharashtra school dataset: a board results explorer of district-level pass rates and a scatter of attendance against results by district.",
+        "signals": [
+          {
+            "label": "Board results explorer",
+            "detail": "district map, ranked table, filters"
+          },
+          {
+            "label": "Attendance and results by district",
+            "detail": "scatter with trend line"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Tableau",
+            "evidence": "2 public dashboards on Tableau Public",
+            "strength": 4
+          },
+          {
+            "name": "Dashboard design",
+            "evidence": "Board results explorer: district map, ranked table, year and stream filters",
+            "strength": 4
+          },
+          {
+            "name": "Chart choice",
+            "evidence": "Attendance vs results scatter with trend line and per-district tooltip",
+            "strength": 4
+          },
+          {
+            "name": "Descriptive statistics",
+            "evidence": "District pass-rate and attendance summaries across the public dataset",
+            "strength": 4
+          },
+          {
+            "name": "Data storytelling",
+            "evidence": "Each dashboard leads with one headline number",
+            "strength": 4
+          }
+        ],
+        "notes": [
+          "Dashboards keep one headline number and one filter per view",
+          "No work dashboards are public, so Lumen impact is not visible here",
+          "Add a short method note to each dashboard"
+        ]
+      },
+      "link-1": {
+        "sub": "Blog · 3 posts",
+        "summary": "Medium blog with three posts, 2024 to 2025, explaining data to non-experts: an attendance-versus-results analysis, a post on messy data from six years of teaching, and an introduction to SQL joins for teachers.",
+        "signals": [
+          {
+            "label": "Does attendance predict board results?",
+            "detail": "2024, 9,800 rows"
+          },
+          {
+            "label": "Six years of teaching, one lesson about messy data",
+            "detail": "2024"
+          },
+          {
+            "label": "Joins, explained for teachers",
+            "detail": "2025"
+          }
+        ],
+        "skills": [
+          {
+            "name": "SQL",
+            "evidence": "Medium: 'Joins, explained for teachers'",
+            "strength": 4
+          },
+          {
+            "name": "Data cleaning",
+            "evidence": "Medium: 'Six years of teaching, one lesson about messy data'",
+            "strength": 3
+          },
+          {
+            "name": "Hypothesis testing",
+            "evidence": "Medium: 'Does attendance predict board results?'",
+            "strength": 3
+          },
+          {
+            "name": "Explaining to non-experts",
+            "evidence": "3 Medium posts that explain joins, variance and messy data in plain language",
+            "strength": 5
+          },
+          {
+            "name": "Written reports",
+            "evidence": "Medium posts from 2024 to 2025",
+            "strength": 4
+          }
+        ],
+        "notes": [
+          "Plain explanations; each post opens with the question and the answer",
+          "Newest post is from March 2025; nothing since joining Lumen",
+          "Link the posts to the dashboards and the Python analysis"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,682 @@
+{
+  "name": "stress-long-titles",
+  "about": "Stress: very long employer, job title (120+ chars), project and repo names and a 200+ char URL; two domain shorts at the 14-char limit.",
+  "profile": {
+    "id": "baeca0616df1626e31e887bdc34450eb",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "Kavya Reddy",
+      "headline": "Senior Backend Engineer · 4.3 yrs · Hyderabad",
+      "currentRole": "Senior Backend Engineer",
+      "location": "Hyderabad, India",
+      "yearsExperience": 4.3,
+      "summary": "Backend engineer at Northwind Hollow who owns a reconciliation service for 3.2 million transactions a day and cut its nightly run from 5 hours to 55 minutes, and who designed an event-sourced settlement ledger used by 4 downstream teams."
+    },
+    "mastery": {
+      "score": 68,
+      "insight": "Owns a high-volume reconciliation service with measured gains; observability and test depth trail the senior bar."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "3 projects · 2 roles · 1 page",
+        "summary": "Kavya Reddy is a backend engineer in Hyderabad with 4.3 years in payments and public-sector data platforms. At Northwind Hollow she owns a reconciliation service for 3.2 million transactions a day and designed an event-sourced settlement ledger used by 4 downstream teams.",
+        "notes": [
+          "Bullets carry numbers: 3.2 million transactions, 5 hours to 55 minutes, 2.1% to 0.4%",
+          "Employer and title lines are very long; the layout will need to wrap them",
+          "Add a one-line headline so the current role reads at a glance"
+        ],
+        "ok": true
+      },
+      {
+        "id": "github",
+        "kind": "github",
+        "label": "GitHub",
+        "url": "https://github.com/kavyareddy",
+        "sub": "11 repos · 4 languages · 128 stars",
+        "summary": "Backend engineer in Hyderabad. Maintains a Go rate-limiting and quota library (87 stars, 46 test files) and publishes a Java reference implementation of an event-sourced settlement ledger.",
+        "notes": [
+          "The rate-limiting library is a credible artifact: 87 stars, tests, CI and docs",
+          "Tests in 6 of 11 repos; the municipal pilot repo is stale",
+          "Repository names are very long; pin the best 3 with short descriptions"
+        ],
+        "ok": true
+      },
+      {
+        "id": "link-1",
+        "kind": "link",
+        "label": "Case study",
+        "url": "https://kavyareddy.dev/engineering/case-studies/2025/event-sourced-multi-currency-settlement-ledger-with-automated-exception-handling-and-reconciliation-workbench/architecture-decision-records/adr-0042-append-only-ledger-and-idempotent-posting?utm_source=resume&utm_medium=pdf&utm_campaign=portfolio-fixture-long-url",
+        "sub": "Case study · 1 page",
+        "summary": "Architecture write-up of the append-only settlement ledger: idempotent postings, deterministic matching rules and a review workbench, with nightly run time down from 5 hours to 55 minutes and exceptions down from 2.1% to 0.4%.",
+        "notes": [
+          "States problem, design and measured results clearly",
+          "The diagram has no alt text"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "backend-apis",
+        "name": "Backend Services & API Engineering",
+        "short": "Backend & APIs",
+        "score": 76,
+        "summary": "Java and Go services with REST and gRPC, an event-driven reconciliation service and a public rate-limiting library."
+      },
+      {
+        "id": "data-storage",
+        "name": "Data Modelling & Storage",
+        "short": "Data & Storage",
+        "score": 70,
+        "summary": "Event-sourced ledger design on PostgreSQL; schema work is solid but not shown at larger scale."
+      },
+      {
+        "id": "payments",
+        "name": "Payments & Reconciliation Systems",
+        "short": "Payments",
+        "score": 72,
+        "summary": "Owns reconciliation for 3.2 million transactions a day and cut exceptions from 2.1% to 0.4%."
+      },
+      {
+        "id": "reliability",
+        "name": "Reliability & Incident Response",
+        "short": "Reliability",
+        "score": 60,
+        "summary": "On-call and 6 incident reviews are listed; no SLOs, dashboards or load tests are described."
+      },
+      {
+        "id": "eng-practice",
+        "name": "Engineering Practice & Collaboration",
+        "short": "Eng Practice",
+        "score": 56,
+        "summary": "Tests exist in 6 of 11 repos and CI in 7; code review and writing are present but light."
+      }
+    ],
+    "skills": [
+      {
+        "id": "java",
+        "name": "Java",
+        "domainId": "backend-apis",
+        "score": 82,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Event-sourced settlement ledger and reconciliation service at Northwind Hollow"
+          },
+          {
+            "sourceId": "github",
+            "text": "settlement-ledger-sketches: Java reference ledger, 23 stars"
+          }
+        ],
+        "unlocks": [
+          "Staff Backend Engineer"
+        ]
+      },
+      {
+        "id": "go",
+        "name": "Go",
+        "domainId": "backend-apis",
+        "score": 74,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "Rate-limiting and quota library in Go: 87 stars, 46 test files"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "rest-grpc",
+        "name": "REST & gRPC APIs",
+        "domainId": "backend-apis",
+        "score": 78,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Built REST and gRPC services publishing data to 11 municipal departments"
+          },
+          {
+            "sourceId": "github",
+            "text": "Rate-limiting library targets multi-tenant gRPC and REST gateways"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "event-driven",
+        "name": "Event-driven design",
+        "domainId": "backend-apis",
+        "score": 70,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Replaced a nightly CSV exchange with an event feed: lag from 24 hours to 15 minutes"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "postgresql",
+        "name": "PostgreSQL",
+        "domainId": "data-storage",
+        "score": 72,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Ledger and exception workbench run on PostgreSQL"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "event-sourcing",
+        "name": "Event sourcing",
+        "domainId": "data-storage",
+        "score": 76,
+        "evidence": [
+          {
+            "sourceId": "link-1",
+            "text": "Append-only, event-sourced settlement ledger with idempotent postings"
+          },
+          {
+            "sourceId": "github",
+            "text": "settlement-ledger-sketches: event-sourced reference implementation"
+          }
+        ],
+        "unlocks": [
+          "Payments Platform Engineer"
+        ]
+      },
+      {
+        "id": "schema-design",
+        "name": "Schema design",
+        "domainId": "data-storage",
+        "score": 64,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Multi-currency ledger used by 4 downstream teams"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "reconciliation",
+        "name": "Reconciliation logic",
+        "domainId": "payments",
+        "score": 76,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Matches 3.2 million transactions a day; run time cut from 5 hours to 55 minutes"
+          },
+          {
+            "sourceId": "link-1",
+            "text": "Deterministic matching in three passes; exceptions 2.1% to 0.4%"
+          }
+        ],
+        "unlocks": [
+          "Payments Platform Engineer"
+        ]
+      },
+      {
+        "id": "ledger-design",
+        "name": "Ledger design",
+        "domainId": "payments",
+        "score": 72,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Designed the append-only multi-currency settlement ledger"
+          }
+        ],
+        "unlocks": [
+          "Payments Platform Engineer"
+        ]
+      },
+      {
+        "id": "idempotent-posting",
+        "name": "Idempotent posting",
+        "domainId": "payments",
+        "score": 68,
+        "evidence": [
+          {
+            "sourceId": "link-1",
+            "text": "ADR-0042: append-only ledger and idempotent posting"
+          }
+        ],
+        "unlocks": [
+          "Payments Platform Engineer"
+        ]
+      },
+      {
+        "id": "incident-response",
+        "name": "Incident response",
+        "domainId": "reliability",
+        "score": 64,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "On-call rotation; led 6 incident reviews and closed 23 follow-up actions"
+          }
+        ],
+        "unlocks": [
+          "Staff Backend Engineer",
+          "Engineering Manager"
+        ]
+      },
+      {
+        "id": "observability",
+        "name": "Observability",
+        "domainId": "reliability",
+        "score": 60,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Incident reviews on the platform; no dashboards or SLOs described"
+          }
+        ],
+        "unlocks": [
+          "Staff Backend Engineer"
+        ]
+      },
+      {
+        "id": "capacity-planning",
+        "name": "Capacity planning",
+        "domainId": "reliability",
+        "score": 56,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Run time held at 55 minutes for 3.2 million transactions a day"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "testing",
+        "name": "Automated testing",
+        "domainId": "eng-practice",
+        "score": 62,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "Tests in 6 of 11 repos; the limiter library has 46 test files"
+          }
+        ],
+        "unlocks": [
+          "Staff Backend Engineer"
+        ]
+      },
+      {
+        "id": "ci-cd",
+        "name": "CI/CD",
+        "domainId": "eng-practice",
+        "score": 56,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "GitHub Actions in 7 of 11 repos"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "technical-writing",
+        "name": "Technical writing",
+        "domainId": "eng-practice",
+        "score": 50,
+        "evidence": [
+          {
+            "sourceId": "link-1",
+            "text": "Architecture write-up with ADR-0042"
+          }
+        ],
+        "unlocks": [
+          "Engineering Manager"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "id": "payments-platform",
+        "title": "Payments Platform Engineer",
+        "alignment": 79,
+        "eta": "~3 months",
+        "why": "Reconciliation, ledger design and idempotent posting are proven with metrics. Needs card-network and settlement-file depth.",
+        "requirements": [
+          {
+            "name": "Reconciliation logic",
+            "skillId": "reconciliation",
+            "have": true,
+            "current": 76,
+            "target": 80
+          },
+          {
+            "name": "Ledger design",
+            "skillId": "ledger-design",
+            "have": true,
+            "current": 72,
+            "target": 78
+          },
+          {
+            "name": "Idempotent posting",
+            "skillId": "idempotent-posting",
+            "have": true,
+            "current": 68,
+            "target": 75
+          },
+          {
+            "name": "Event sourcing",
+            "skillId": "event-sourcing",
+            "have": true,
+            "current": 76,
+            "target": 75
+          },
+          {
+            "name": "Card network settlement",
+            "have": false,
+            "current": 35,
+            "target": 65
+          }
+        ]
+      },
+      {
+        "id": "staff-backend",
+        "title": "Staff Backend Engineer",
+        "alignment": 52,
+        "eta": "~1 year",
+        "why": "Strong ownership of one platform. Needs cross-team scope, observability depth and broader system design evidence.",
+        "requirements": [
+          {
+            "name": "Java",
+            "skillId": "java",
+            "have": true,
+            "current": 82,
+            "target": 85
+          },
+          {
+            "name": "Observability",
+            "skillId": "observability",
+            "have": false,
+            "current": 60,
+            "target": 75
+          },
+          {
+            "name": "Incident response",
+            "skillId": "incident-response",
+            "have": false,
+            "current": 64,
+            "target": 75
+          },
+          {
+            "name": "Automated testing",
+            "skillId": "testing",
+            "have": false,
+            "current": 62,
+            "target": 75
+          },
+          {
+            "name": "System design at scale",
+            "have": false,
+            "current": 50,
+            "target": 80
+          }
+        ]
+      },
+      {
+        "id": "engineering-manager",
+        "title": "Engineering Manager",
+        "alignment": 41,
+        "eta": "~1.5 years",
+        "why": "Leads incident reviews but has no people-management evidence yet.",
+        "requirements": [
+          {
+            "name": "Incident response",
+            "skillId": "incident-response",
+            "have": false,
+            "current": 64,
+            "target": 75
+          },
+          {
+            "name": "Technical writing",
+            "skillId": "technical-writing",
+            "have": false,
+            "current": 50,
+            "target": 70
+          },
+          {
+            "name": "People management",
+            "have": false,
+            "current": 15,
+            "target": 70
+          },
+          {
+            "name": "Hiring & performance reviews",
+            "have": false,
+            "current": 10,
+            "target": 65
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "KAVYA REDDY\nBackend Engineer · Hyderabad, India\nkavya.reddy.backend@example.com · +91 90000 56789 · github.com/kavyareddy · kavyareddy.dev\n\nSUMMARY\nBackend engineer with 4.3 years of experience in payments reconciliation, ledgers and public-sector data platforms. I\nlike systems where every rupee, and every record, has to be accounted for.\n\nEXPERIENCE\n\nNorthwind Hollow International Payments & Financial Infrastructure Technologies Private Limited — Senior Backend Software Development Engineer II, Payments Reconciliation, Settlement & Ledger Platform (Core Money Movement Infrastructure Group)    Hyderabad · Jan 2024 – Present\n- Own the reconciliation service that matches 3.2 million card and bank transactions a day against the ledger; the\n  nightly run time dropped from 5 hours to 55 minutes.\n- Designed the event-sourced, append-only multi-currency settlement ledger now used by 4 downstream teams.\n- Reduced unmatched-transaction exceptions from 2.1% to 0.4% with deterministic matching rules and a review workbench.\n- On the platform on-call rotation; led 6 incident reviews and closed 23 follow-up actions.\n\nBrightwater Municipal Smart-City Data Exchange & Citizen Services Cooperative Society — Associate Software Engineer (Backend Services, Integrations & Public Data APIs)    Pune · Jul 2022 – Dec 2023\n- Built REST and gRPC services that publish ward-level service data to 11 municipal departments.\n- Replaced a nightly CSV exchange with an event feed, cutting data lag from 24 hours to 15 minutes.\n- Wrote integration adapters for 7 legacy department systems.\n\nPROJECTS\n- Event-Sourced Multi-Currency Settlement Ledger with Automated Exception Handling and Reconciliation Workbench —\n  Append-only ledger with idempotent postings and an exception review UI. Java, PostgreSQL, Kafka.\n  https://kavyareddy.dev/engineering/case-studies/2025/event-sourced-multi-currency-settlement-ledger-with-automated-exception-handling-and-reconciliation-workbench/architecture-decision-records/adr-0042-append-only-ledger-and-idempotent-posting?utm_source=resume&utm_medium=pdf&utm_campaign=portfolio-fixture-long-url\n- Open-Source Distributed Rate-Limiting and Quota Enforcement Library for Multi-Tenant gRPC and REST Gateways —\n  Token-bucket and sliding-window limiters with per-tenant quotas. Go.\n  github.com/kavyareddy/multi-tenant-ratelimit-and-quota-enforcement-library\n- Citizen Grievance Routing and Escalation Service for Municipal Ward Offices and Department Heads — Pilot with 3 ward\n  offices; routes and escalates complaints by SLA. Python, FastAPI.\n\nEDUCATION\nB.Tech, Information Technology — Jawaharlal Nehru Technological University Hyderabad College of Engineering Science and Technology    2018 – 2022\n\nSKILLS\nLanguages: Java, Go, Python, SQL\nSystems: PostgreSQL, Kafka, gRPC, REST, Docker, Kubernetes basics\nPractices: event sourcing, idempotent design, reconciliation, incident reviews, code review"
+      },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "kind": "github",
+        "url": "https://github.com/kavyareddy",
+        "content": "# GitHub: Kavya Reddy (@kavyareddy)\n\n## Profile\n- Name: Kavya Reddy\n- Account type: User\n- Bio: Backend engineer. Ledgers, queues and the occasional rate limiter.\n- Location: Hyderabad, India\n- Followers: 143, following: 52\n- On GitHub since 2018-07-30 (about 8 years)\n\n## Totals\n- Public repositories: 11\n- Original repos: 10, forks: 1\n- Stars across original repos: 128\n- Languages by number of original repos: Go (4), Java (3), Python (2), Shell (1)\n- Repos with a description: 10/10, with topics: 6, with a live homepage link: 1\n- Engineering practice (checked 11 repos): tests in 6, CI in 7, Docker in 5\n\n## Top repositories (3, ranked by stars, recency and substance)\n\n### 1. multi-tenant-ratelimit-and-quota-enforcement-library\n- Description: Distributed rate-limiting and quota enforcement for multi-tenant gRPC and REST gateways: token bucket, sliding window, per-tenant quotas.\n- Language: Go, stars: 87, forks: 11, license: Apache-2.0\n- Topics: rate-limiting, grpc, multi-tenant, quotas\n- Last push: 2026-09-14 (3 weeks ago), created 2024-06-21, size 1,240 KB\n- Detected: tests yes (46 test files), CI yes (GitHub Actions), Docker yes, docs yes, manifests: go.mod\n\n### 2. settlement-ledger-sketches\n- Description: Design sketches and a small Java reference implementation of an append-only, event-sourced settlement ledger.\n- Language: Java, stars: 23, forks: 3\n- Topics: event-sourcing, ledger, payments\n- Last push: 2026-05-02 (5 months ago), created 2025-03-11, size 412 KB\n- Detected: tests yes (18 test files), CI yes (GitHub Actions), Docker no, docs yes, manifests: pom.xml\n\n### 3. ward-grievance-router\n- Description: Pilot code for routing and escalating citizen complaints by SLA (municipal pilot).\n- Language: Python, stars: 9, forks: 1\n- Last push: 2024-01-12 (2 years ago), created 2023-02-06, size 220 KB\n\n## Recent public activity\n- 112 public events over about 90 days, most recent 2026-10-06 (2 days ago)\n- 48 pushes (91 commits), 9 pull requests opened (4 to other people's repos), 7 PRs merged, 5 issues opened, 14 PR reviews\n- Most active repos: multi-tenant-ratelimit-and-quota-enforcement-library (64), settlement-ledger-sketches (11)\n\n## Technologies mentioned across repos\nGo, Java, Python, gRPC, Kafka, PostgreSQL, Docker, GitHub Actions"
+      },
+      {
+        "id": "link-1",
+        "label": "Case study",
+        "kind": "link",
+        "url": "https://kavyareddy.dev/engineering/case-studies/2025/event-sourced-multi-currency-settlement-ledger-with-automated-exception-handling-and-reconciliation-workbench/architecture-decision-records/adr-0042-append-only-ledger-and-idempotent-posting?utm_source=resume&utm_medium=pdf&utm_campaign=portfolio-fixture-long-url",
+        "content": "# Event-Sourced Multi-Currency Settlement Ledger with Automated Exception Handling and Reconciliation Workbench\n\nURL: https://kavyareddy.dev/engineering/case-studies/2025/event-sourced-multi-currency-settlement-ledger-with-automated-exception-handling-and-reconciliation-workbench/architecture-decision-records/adr-0042-append-only-ledger-and-idempotent-posting?utm_source=resume&utm_medium=pdf&utm_campaign=portfolio-fixture-long-url\nDescription: Architecture write-up of the append-only settlement ledger and the reconciliation workbench built at Northwind Hollow International Payments & Financial Infrastructure Technologies Private Limited.\n\n## Problem\nNightly reconciliation of 3.2 million transactions a day took 5 hours and left 2.1% of transactions unmatched for manual review.\n\n## Design\n- Append-only, event-sourced ledger with idempotent postings (ADR-0042).\n- Deterministic matching rules applied in three passes; unmatched items go to a review workbench with an audit trail.\n- Multi-currency postings with explicit rounding rules.\n\n## Results\n- Nightly run time: 5 hours to 55 minutes.\n- Unmatched exceptions: 2.1% to 0.4%.\n- Adopted by 4 downstream teams.\n\n## Observations\n- The page states the outcome clearly; the diagram has no alt text."
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "3 projects · 2 roles · 1 page",
+        "summary": "Kavya Reddy is a backend engineer in Hyderabad with 4.3 years in payments and public-sector data platforms. At Northwind Hollow she owns a reconciliation service for 3.2 million transactions a day and designed an event-sourced settlement ledger used by 4 downstream teams.",
+        "person": {
+          "name": "Kavya Reddy",
+          "currentRole": "Senior Backend Engineer II",
+          "yearsExperience": 4.3,
+          "location": "Hyderabad, India"
+        },
+        "signals": [
+          {
+            "label": "Reconciliation service",
+            "detail": "3.2 million transactions a day"
+          },
+          {
+            "label": "Settlement ledger",
+            "detail": "event-sourced, used by 4 teams"
+          },
+          {
+            "label": "Exceptions 2.1% to 0.4%",
+            "detail": "matching rules and review workbench"
+          },
+          {
+            "label": "Public data APIs",
+            "detail": "11 municipal departments"
+          },
+          {
+            "label": "Rate-limiting library",
+            "detail": "Go, open source"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Java",
+            "evidence": "Event-sourced settlement ledger and reconciliation service at Northwind Hollow",
+            "strength": 4
+          },
+          {
+            "name": "REST & gRPC APIs",
+            "evidence": "Built REST and gRPC services publishing data to 11 municipal departments",
+            "strength": 4
+          },
+          {
+            "name": "Event-driven design",
+            "evidence": "Replaced a nightly CSV exchange with an event feed: lag from 24 hours to 15 minutes",
+            "strength": 4
+          },
+          {
+            "name": "PostgreSQL",
+            "evidence": "Ledger and exception workbench run on PostgreSQL",
+            "strength": 4
+          },
+          {
+            "name": "Schema design",
+            "evidence": "Multi-currency ledger used by 4 downstream teams",
+            "strength": 3
+          },
+          {
+            "name": "Reconciliation logic",
+            "evidence": "Matches 3.2 million transactions a day; run time cut from 5 hours to 55 minutes",
+            "strength": 4
+          },
+          {
+            "name": "Ledger design",
+            "evidence": "Designed the append-only multi-currency settlement ledger",
+            "strength": 4
+          },
+          {
+            "name": "Incident response",
+            "evidence": "On-call rotation; led 6 incident reviews and closed 23 follow-up actions",
+            "strength": 3
+          },
+          {
+            "name": "Observability",
+            "evidence": "Incident reviews on the platform; no dashboards or SLOs described",
+            "strength": 3
+          },
+          {
+            "name": "Capacity planning",
+            "evidence": "Run time held at 55 minutes for 3.2 million transactions a day",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "Bullets carry numbers: 3.2 million transactions, 5 hours to 55 minutes, 2.1% to 0.4%",
+          "Employer and title lines are very long; the layout will need to wrap them",
+          "Add a one-line headline so the current role reads at a glance"
+        ]
+      },
+      "github": {
+        "sub": "11 repos · 4 languages · 128 stars",
+        "summary": "Backend engineer in Hyderabad. Maintains a Go rate-limiting and quota library (87 stars, 46 test files) and publishes a Java reference implementation of an event-sourced settlement ledger.",
+        "person": {
+          "name": "Kavya Reddy",
+          "currentRole": "Backend Engineer",
+          "location": "Hyderabad, India"
+        },
+        "signals": [
+          {
+            "label": "Rate-limiting library",
+            "detail": "87 stars, 46 test files"
+          },
+          {
+            "label": "Settlement ledger sketches",
+            "detail": "23 stars, Java reference"
+          },
+          {
+            "label": "Active in 90 days",
+            "detail": "91 commits, 14 PR reviews"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Java",
+            "evidence": "settlement-ledger-sketches: Java reference ledger, 23 stars",
+            "strength": 4
+          },
+          {
+            "name": "Go",
+            "evidence": "Rate-limiting and quota library in Go: 87 stars, 46 test files",
+            "strength": 4
+          },
+          {
+            "name": "REST & gRPC APIs",
+            "evidence": "Rate-limiting library targets multi-tenant gRPC and REST gateways",
+            "strength": 4
+          },
+          {
+            "name": "Event sourcing",
+            "evidence": "settlement-ledger-sketches: event-sourced reference implementation",
+            "strength": 4
+          },
+          {
+            "name": "Automated testing",
+            "evidence": "Tests in 6 of 11 repos; the limiter library has 46 test files",
+            "strength": 3
+          },
+          {
+            "name": "CI/CD",
+            "evidence": "GitHub Actions in 7 of 11 repos",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "The rate-limiting library is a credible artifact: 87 stars, tests, CI and docs",
+          "Tests in 6 of 11 repos; the municipal pilot repo is stale",
+          "Repository names are very long; pin the best 3 with short descriptions"
+        ]
+      },
+      "link-1": {
+        "sub": "Case study · 1 page",
+        "summary": "Architecture write-up of the append-only settlement ledger: idempotent postings, deterministic matching rules and a review workbench, with nightly run time down from 5 hours to 55 minutes and exceptions down from 2.1% to 0.4%.",
+        "signals": [
+          {
+            "label": "Settlement ledger write-up",
+            "detail": "5 hours to 55 minutes, exceptions 2.1% to 0.4%"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Event sourcing",
+            "evidence": "Append-only, event-sourced settlement ledger with idempotent postings",
+            "strength": 4
+          },
+          {
+            "name": "Reconciliation logic",
+            "evidence": "Deterministic matching in three passes; exceptions 2.1% to 0.4%",
+            "strength": 4
+          },
+          {
+            "name": "Idempotent posting",
+            "evidence": "ADR-0042: append-only ledger and idempotent posting",
+            "strength": 3
+          },
+          {
+            "name": "Technical writing",
+            "evidence": "Architecture write-up with ADR-0042",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "States problem, design and measured results clearly",
+          "The diagram has no alt text"
+        ]
+      }
+    }
+  }
+}

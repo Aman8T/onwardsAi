@@ -1,0 +1,239 @@
+{
+  "name": "stress-two-domains",
+  "about": "Stress: only 2 domains and 3 skills, a single source (resume only); sparse graph that must not look empty.",
+  "profile": {
+    "id": "43e34d199d405c0d2c3768334070486d",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "Neha Bhatia",
+      "headline": "QA Tester · 1.8 yrs · Nagpur",
+      "currentRole": "QA Tester",
+      "location": "Nagpur, India",
+      "yearsExperience": 1.8,
+      "summary": "QA tester at Paywise Systems who writes and runs 240 manual test cases per release, logged 310 bugs in a year and has written 6 basic Selenium checks for the login flow."
+    },
+    "mastery": {
+      "score": 52,
+      "insight": "Solid manual testing habits with real counts; automation is at its first steps."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "0 projects · 1 role · 1 page",
+        "summary": "Neha Bhatia is a QA tester at Paywise Systems in Nagpur with 1.8 years of experience. She writes and runs 240 manual test cases per release, logged 310 bugs in a year and has started Selenium with 6 basic checks.",
+        "notes": [
+          "Counts are specific: 240 test cases, 310 bugs, 92% fixed without questions",
+          "Selenium work is at the first step; link a repository of the 6 checks",
+          "No projects, certifications or tools beyond Jira are listed"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "manual-testing",
+        "name": "Manual Testing",
+        "short": "Manual Testing",
+        "score": 61,
+        "summary": "Test design and bug reporting backed by counts: 240 test cases per release and 310 bugs logged."
+      },
+      {
+        "id": "test-automation",
+        "name": "Test Automation",
+        "short": "Test Automation",
+        "score": 33,
+        "summary": "Six basic Selenium checks for one login flow; nothing in CI yet."
+      }
+    ],
+    "skills": [
+      {
+        "id": "test-case-design",
+        "name": "Test case design",
+        "domainId": "manual-testing",
+        "score": 66,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Wrote and ran 240 manual test cases per fortnightly release"
+          }
+        ],
+        "unlocks": [
+          "Senior QA Tester",
+          "QA Automation Engineer"
+        ]
+      },
+      {
+        "id": "bug-reporting",
+        "name": "Bug reporting",
+        "domainId": "manual-testing",
+        "score": 56,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Logged 310 bugs in Jira in a year; 92% fixed without follow-up questions"
+          }
+        ],
+        "unlocks": [
+          "Senior QA Tester"
+        ]
+      },
+      {
+        "id": "selenium-basics",
+        "name": "Selenium basics",
+        "domainId": "test-automation",
+        "score": 33,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Wrote 6 basic automated checks for the login flow"
+          }
+        ],
+        "unlocks": [
+          "QA Automation Engineer"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "id": "senior-qa",
+        "title": "Senior QA Tester",
+        "alignment": 62,
+        "eta": "~6 months",
+        "why": "Test design and bug reporting are backed by counts. Needs test planning and risk-based testing evidence.",
+        "requirements": [
+          {
+            "name": "Test case design",
+            "skillId": "test-case-design",
+            "have": true,
+            "current": 66,
+            "target": 75
+          },
+          {
+            "name": "Bug reporting",
+            "skillId": "bug-reporting",
+            "have": false,
+            "current": 56,
+            "target": 75
+          },
+          {
+            "name": "Test planning",
+            "have": false,
+            "current": 45,
+            "target": 70
+          },
+          {
+            "name": "Risk-based testing",
+            "have": false,
+            "current": 35,
+            "target": 65
+          }
+        ]
+      },
+      {
+        "id": "qa-automation",
+        "title": "QA Automation Engineer",
+        "alignment": 38,
+        "eta": "~1 year",
+        "why": "Selenium has been started on one flow. Needs a programming language, API testing and CI integration.",
+        "requirements": [
+          {
+            "name": "Selenium basics",
+            "skillId": "selenium-basics",
+            "have": false,
+            "current": 33,
+            "target": 70
+          },
+          {
+            "name": "Test case design",
+            "skillId": "test-case-design",
+            "have": true,
+            "current": 66,
+            "target": 70
+          },
+          {
+            "name": "API testing",
+            "have": false,
+            "current": 15,
+            "target": 60
+          },
+          {
+            "name": "CI integration",
+            "have": false,
+            "current": 10,
+            "target": 55
+          },
+          {
+            "name": "Python or Java",
+            "have": false,
+            "current": 20,
+            "target": 65
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "NEHA BHATIA\nQA Tester · Nagpur, India\nneha.bhatia.qa@example.com · +91 90000 90123 · linkedin.com/in/neha-bhatia-qa\n\nSUMMARY\nManual QA tester with 1.8 years of experience testing web and mobile apps for a school-fee payments product.\n\nEXPERIENCE\n\nPaywise Systems — QA Tester                                                          Nagpur · Dec 2024 – Present\nSchool-fee payments product (web and Android).\n- Wrote and ran 240 manual test cases across the web and Android apps for each fortnightly release.\n- Logged 310 bugs in Jira in a year; 92% were fixed by the developers without follow-up questions.\n- Started learning Selenium and wrote 6 basic automated checks for the login flow.\n\nEDUCATION\nB.Sc. Computer Science — Vidarbha Science College, Nagpur                                            2021 – 2024\n\nSKILLS\nTesting: test case design, bug reporting, regression testing, Jira\nAutomation: Selenium (basic)"
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "0 projects · 1 role · 1 page",
+        "summary": "Neha Bhatia is a QA tester at Paywise Systems in Nagpur with 1.8 years of experience. She writes and runs 240 manual test cases per release, logged 310 bugs in a year and has started Selenium with 6 basic checks.",
+        "person": {
+          "name": "Neha Bhatia",
+          "currentRole": "QA Tester",
+          "yearsExperience": 1.8,
+          "location": "Nagpur, India"
+        },
+        "signals": [
+          {
+            "label": "Manual test cases",
+            "detail": "240 per fortnightly release"
+          },
+          {
+            "label": "Bug reporting",
+            "detail": "310 bugs logged in Jira in a year"
+          },
+          {
+            "label": "Selenium checks",
+            "detail": "6 basic automated checks"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Test case design",
+            "evidence": "Wrote and ran 240 manual test cases per fortnightly release",
+            "strength": 3
+          },
+          {
+            "name": "Bug reporting",
+            "evidence": "Logged 310 bugs in Jira in a year; 92% fixed without follow-up questions",
+            "strength": 3
+          },
+          {
+            "name": "Selenium basics",
+            "evidence": "Wrote 6 basic automated checks for the login flow",
+            "strength": 2
+          }
+        ],
+        "notes": [
+          "Counts are specific: 240 test cases, 310 bugs, 92% fixed without questions",
+          "Selenium work is at the first step; link a repository of the 6 checks",
+          "No projects, certifications or tools beyond Jira are listed"
+        ]
+      }
+    }
+  }
+}

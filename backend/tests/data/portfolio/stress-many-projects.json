@@ -1,0 +1,645 @@
+{
+  "name": "stress-many-projects",
+  "about": "Stress: 14 distinct projects in the resume (one line each, 5 with repo links), 6 domains, 17 skills, resume + GitHub.",
+  "profile": {
+    "id": "70370b808610fa1c8e4e7d5a53bbbfcc",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "Arjun Menon",
+      "headline": "Full-Stack Developer · 4.2 yrs · Kochi",
+      "currentRole": "Full-Stack Developer",
+      "location": "Kochi, India",
+      "yearsExperience": 4.2,
+      "summary": "Full-stack developer at Tidewave Software who has shipped 14 side projects since 2021 and builds a hotel booking platform for 40 partner hotels, cutting page load from 3.4 s to 1.6 s."
+    },
+    "mastery": {
+      "score": 60,
+      "insight": "Ships constantly across stacks with a measured result at work; depth in any one stack and user feedback are the open questions."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "14 projects · 1 role · 1 page",
+        "summary": "Arjun Menon is a full-stack developer at Tidewave Software in Kochi with 4.2 years of experience and 14 side projects across web, mobile, data and tooling. At work he builds a hotel booking platform for 40 partners and cut page load from 3.4 s to 1.6 s.",
+        "notes": [
+          "14 projects are listed with one line each; lead with the 3 strongest and link them",
+          "Work bullets carry numbers: 40 hotels, 3.4 s to 1.6 s, failures 3.1% to 0.9%",
+          "Only 5 of 14 projects link a repository"
+        ],
+        "ok": true
+      },
+      {
+        "id": "github",
+        "kind": "github",
+        "label": "GitHub",
+        "url": "https://github.com/arjunmenon",
+        "sub": "18 repos · 7 languages · 143 stars",
+        "summary": "Full-stack developer in Kochi with 18 public repositories across seven languages and a monthly cadence of small projects. metro-minutes (47 stars, 22 test files) and cricstats (33 stars) are the strongest; many others are one-off builds.",
+        "notes": [
+          "metro-minutes is the standout: 47 stars, tests, CI, Docker and docs",
+          "Tests in 5 of 18 repos; quizzo and notely have no tests or CI",
+          "Pin the best 4 repos; the other 14 dilute the profile"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "frontend",
+        "name": "Frontend",
+        "short": "Frontend",
+        "score": 70,
+        "summary": "React, TypeScript and D3.js across several shipped projects and the hotel booking platform."
+      },
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 62,
+        "summary": "Node.js and FastAPI services, including the public metro-minutes API."
+      },
+      {
+        "id": "mobile",
+        "name": "Mobile",
+        "short": "Mobile",
+        "score": 50,
+        "summary": "Two mobile projects (Flutter, React Native); neither is in a store or has tests."
+      },
+      {
+        "id": "data-python",
+        "name": "Data & Python",
+        "short": "Data & Python",
+        "score": 52,
+        "summary": "Streamlit dashboards and OCR scripts; no larger data pipeline."
+      },
+      {
+        "id": "systems-tooling",
+        "name": "Systems & Tooling",
+        "short": "Systems",
+        "score": 40,
+        "summary": "A Go CLI and a basic Rust port scanner; no production systems work."
+      },
+      {
+        "id": "product-sense",
+        "name": "Product Sense",
+        "short": "Product Sense",
+        "score": 54,
+        "summary": "Ships constantly and end to end, but user feedback and metrics are rarely mentioned."
+      }
+    ],
+    "skills": [
+      {
+        "id": "react",
+        "name": "React",
+        "domainId": "frontend",
+        "score": 76,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "React and Node.js booking platform for 40 partner hotels; load 3.4 s to 1.6 s"
+          },
+          {
+            "sourceId": "resume",
+            "text": "SplitEase, FocusTimer and Notely use React or Next.js"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Engineer",
+          "Founding Engineer"
+        ]
+      },
+      {
+        "id": "typescript",
+        "name": "TypeScript",
+        "domainId": "frontend",
+        "score": 70,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "TypeScript is the main language of 6 of 17 original repos"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Engineer",
+          "Mobile Engineer"
+        ]
+      },
+      {
+        "id": "data-viz",
+        "name": "Data visualisation",
+        "domainId": "frontend",
+        "score": 64,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "cricstats: D3.js IPL stats explorer, 33 stars"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "nodejs",
+        "name": "Node.js",
+        "domainId": "backend-apis",
+        "score": 68,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Node.js booking platform backend; Quizzo real-time quiz"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Engineer"
+        ]
+      },
+      {
+        "id": "fastapi",
+        "name": "FastAPI",
+        "domainId": "backend-apis",
+        "score": 62,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "metro-minutes: FastAPI and PostgreSQL, 47 stars, 22 test files"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Engineer"
+        ]
+      },
+      {
+        "id": "websockets",
+        "name": "WebSockets",
+        "domainId": "backend-apis",
+        "score": 56,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Quizzo: real-time multiplayer quiz on WebSockets"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "flutter",
+        "name": "Flutter",
+        "domainId": "mobile",
+        "score": 48,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Campus Carpool ride-sharing app in Flutter and Firebase"
+          }
+        ],
+        "unlocks": [
+          "Mobile Engineer"
+        ]
+      },
+      {
+        "id": "react-native",
+        "name": "React Native",
+        "domainId": "mobile",
+        "score": 52,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "HabitHive habit tracker in React Native"
+          }
+        ],
+        "unlocks": [
+          "Mobile Engineer"
+        ]
+      },
+      {
+        "id": "python",
+        "name": "Python",
+        "domainId": "data-python",
+        "score": 62,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "Python in 4 of 17 original repos, including metro-minutes"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "ocr-text",
+        "name": "OCR & text processing",
+        "domainId": "data-python",
+        "score": 48,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Receipt Reader: OCR for grocery receipts with Tesseract"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "streamlit",
+        "name": "Dashboards (Streamlit)",
+        "domainId": "data-python",
+        "score": 46,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Cinema Pulse sentiment dashboard in Streamlit"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "go",
+        "name": "Go",
+        "domainId": "systems-tooling",
+        "score": 44,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "pinboard-cli: Go terminal tool, 21 stars, 11 test files"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "rust",
+        "name": "Rust",
+        "domainId": "systems-tooling",
+        "score": 36,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "PortScan Lite in Rust; listed as basic"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "cli-tooling",
+        "name": "CLI tooling",
+        "domainId": "systems-tooling",
+        "score": 40,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "pinboard-cli with fuzzy search; dotfiles in Shell"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "ship-end-to-end",
+        "name": "Shipping end to end",
+        "domainId": "product-sense",
+        "score": 66,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "14 side projects since 2021; ships schema, API, UI and AWS deployment at work"
+          }
+        ],
+        "unlocks": [
+          "Founding Engineer"
+        ]
+      },
+      {
+        "id": "prototyping",
+        "name": "Prototyping",
+        "domainId": "product-sense",
+        "score": 58,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "18 repos, most of them small one-off builds"
+          }
+        ],
+        "unlocks": [
+          "Founding Engineer"
+        ]
+      },
+      {
+        "id": "user-feedback",
+        "name": "User feedback loops",
+        "domainId": "product-sense",
+        "score": 38,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "No user numbers or feedback are mentioned for any of the 14 projects"
+          }
+        ],
+        "unlocks": [
+          "Founding Engineer"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "id": "full-stack",
+        "title": "Full-Stack Engineer",
+        "alignment": 72,
+        "eta": "~3 months",
+        "why": "Ships schema, API and UI at work and in 14 projects. Needs depth in one stack and tests on the biggest projects.",
+        "requirements": [
+          {
+            "name": "React",
+            "skillId": "react",
+            "have": true,
+            "current": 76,
+            "target": 80
+          },
+          {
+            "name": "Node.js",
+            "skillId": "nodejs",
+            "have": true,
+            "current": 68,
+            "target": 75
+          },
+          {
+            "name": "FastAPI",
+            "skillId": "fastapi",
+            "have": true,
+            "current": 62,
+            "target": 70
+          },
+          {
+            "name": "TypeScript",
+            "skillId": "typescript",
+            "have": true,
+            "current": 70,
+            "target": 75
+          },
+          {
+            "name": "Automated testing",
+            "have": false,
+            "current": 45,
+            "target": 70
+          }
+        ]
+      },
+      {
+        "id": "founding-engineer",
+        "title": "Founding Engineer",
+        "alignment": 64,
+        "eta": "~6 months",
+        "why": "Builds fast and broadly. Needs user feedback loops, metrics and production ownership beyond side projects.",
+        "requirements": [
+          {
+            "name": "Shipping end to end",
+            "skillId": "ship-end-to-end",
+            "have": true,
+            "current": 66,
+            "target": 75
+          },
+          {
+            "name": "Prototyping",
+            "skillId": "prototyping",
+            "have": false,
+            "current": 58,
+            "target": 70
+          },
+          {
+            "name": "User feedback loops",
+            "skillId": "user-feedback",
+            "have": false,
+            "current": 38,
+            "target": 65
+          },
+          {
+            "name": "React",
+            "skillId": "react",
+            "have": true,
+            "current": 76,
+            "target": 75
+          },
+          {
+            "name": "Production operations",
+            "have": false,
+            "current": 35,
+            "target": 65
+          }
+        ]
+      },
+      {
+        "id": "mobile-engineer",
+        "title": "Mobile Engineer",
+        "alignment": 42,
+        "eta": "~10 months",
+        "why": "Two mobile projects in different frameworks, none published or tested.",
+        "requirements": [
+          {
+            "name": "React Native",
+            "skillId": "react-native",
+            "have": false,
+            "current": 52,
+            "target": 72
+          },
+          {
+            "name": "Flutter",
+            "skillId": "flutter",
+            "have": false,
+            "current": 48,
+            "target": 70
+          },
+          {
+            "name": "TypeScript",
+            "skillId": "typescript",
+            "have": true,
+            "current": 70,
+            "target": 70
+          },
+          {
+            "name": "App store release",
+            "have": false,
+            "current": 15,
+            "target": 60
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "ARJUN MENON\nFull-Stack Developer · Kochi, India\narjun.menon.builds@example.com · +91 90000 89012 · github.com/arjunmenon\n\nSUMMARY\nFull-stack developer with 4.2 years of experience who has built and shipped 14 side projects since 2021 across web,\nmobile, data and tooling. I learn a stack by building something small and useful with it.\n\nEXPERIENCE\n\nTidewave Software — Software Developer                                                Kochi · Aug 2022 – Present\nTravel-tech company (hotel booking software).\n- Build and maintain a React and Node.js booking platform for 40 partner hotels; page load time dropped from 3.4 s to\n  1.6 s.\n- Added Stripe test-mode payments and webhooks; payment failures fell from 3.1% to 0.9%.\n- Ship features end to end: schema, API, UI and deployment on AWS.\n\nPROJECTS\n- SplitEase — Expense splitting for flatmates with settle-up suggestions. React, Firebase.\n- ChaiLog — Offline-first ledger PWA for tea-shop owners. TypeScript, IndexedDB.\n- PinBoard CLI — Terminal bookmark manager with fuzzy search. Go. github.com/arjunmenon/pinboard-cli\n- Campus Carpool — Ride-sharing app for college commuters. Flutter, Firebase.\n- Metro Minutes — Next-train API and timetable for Kochi Metro. FastAPI, PostgreSQL.\n  github.com/arjunmenon/metro-minutes\n- Cinema Pulse — Sentiment dashboard for new film releases. Python, Streamlit.\n- FocusTimer — Pomodoro desktop app with weekly stats. Electron, React.\n- Notely — Markdown notes with offline sync. Next.js, IndexedDB. github.com/arjunmenon/notely\n- CricStats — Interactive IPL stats explorer. D3.js, TypeScript. github.com/arjunmenon/cricstats\n- HabitHive — Habit tracker with streaks and reminders. React Native.\n- Receipt Reader — OCR for grocery receipts into a spreadsheet. Python, Tesseract.\n- Quizzo — Real-time multiplayer quiz. Node.js, WebSockets. github.com/arjunmenon/quizzo\n- PortScan Lite — Educational port scanner. Rust.\n- Weather Watch — Telegram bot for rain alerts. Python, OpenWeather API.\n\nEDUCATION\nB.Tech, Computer Science — Malabar Institute of Technology, Kochi                                    2018 – 2022\n\nSKILLS\nLanguages: TypeScript, JavaScript, Python, Go, Rust (basic), Dart\nWeb: React, Next.js, Node.js, FastAPI, D3.js, PostgreSQL, Firebase\nMobile: React Native, Flutter\nTooling: Git, Docker, GitHub Actions, AWS"
+      },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "kind": "github",
+        "url": "https://github.com/arjunmenon",
+        "content": "# GitHub: Arjun Menon (@arjunmenon)\n\n## Profile\n- Name: Arjun Menon\n- Account type: User\n- Bio: Full-stack developer in Kochi. I build small things every month.\n- Company: Tidewave Software\n- Location: Kochi, India\n- Followers: 188, following: 90\n- On GitHub since 2018-09-01 (about 8 years)\n\n## Totals\n- Public repositories: 18\n- Original repos: 17, forks: 1\n- Stars across original repos: 143\n- Languages by number of original repos: TypeScript (6), Python (4), Go (2), JavaScript (2), Rust (1), Dart (1), Shell (1)\n- Repos with a description: 15/17, with topics: 8, with a live homepage link: 5\n- Engineering practice (checked 18 repos): tests in 5, CI in 6, Docker in 2\n\n## Top repositories (5, ranked by stars, recency and substance)\n\n### 1. metro-minutes\n- Description: Next-train API and timetable for Kochi Metro. FastAPI and PostgreSQL.\n- Language: Python, stars: 47, forks: 6, license: MIT\n- Topics: fastapi, transit, kochi\n- Last push: 2026-08-22 (1 month ago), created 2024-02-10, size 380 KB\n- Detected: tests yes (22 test files), CI yes (GitHub Actions), Docker yes, docs yes, manifests: pyproject.toml\n\n### 2. cricstats\n- Description: Interactive IPL stats explorer built with D3.js and TypeScript.\n- Language: TypeScript, stars: 33, forks: 4\n- Topics: d3, ipl, dataviz\n- Last push: 2026-04-30 (5 months ago), created 2023-03-18, size 1,020 KB\n- Homepage: https://cricstats.example.app\n- Detected: tests no, CI yes (GitHub Actions), Docker no, docs yes, manifests: package.json\n\n### 3. pinboard-cli\n- Description: Terminal bookmark manager with fuzzy search, written in Go.\n- Language: Go, stars: 21, forks: 2, license: MIT\n- Last push: 2026-02-05 (8 months ago), created 2023-10-02, size 150 KB\n- Detected: tests yes (11 test files), CI yes (GitHub Actions), Docker no, docs yes, manifests: go.mod\n\n### 4. quizzo\n- Description: Real-time multiplayer quiz. Node.js and WebSockets.\n- Language: JavaScript, stars: 14, forks: 1\n- Last push: 2025-11-20 (11 months ago), created 2024-07-09, size 240 KB\n- Detected: tests no, CI no, Docker yes, docs no, manifests: package.json\n\n### 5. notely\n- Description: Markdown notes with offline sync. Next.js and IndexedDB.\n- Language: TypeScript, stars: 10, forks: 0\n- Last push: 2026-06-30 (3 months ago), created 2025-03-04, size 520 KB\n- Detected: tests no, CI no, Docker no, docs no, manifests: package.json\n\n## Other original repositories\n- splitease [TypeScript], chailog [TypeScript], campus-carpool [Dart], cinema-pulse [Python], focustimer [JavaScript], habithive [TypeScript],\n  receipt-reader [Python], portscan-lite [Rust], weather-watch [Python], dotfiles [Shell], …and 2 more\n\n## Recent public activity\n- 141 public events over about 90 days, most recent 2026-10-07 (1 day ago)\n- 63 pushes (118 commits), 11 pull requests opened (3 to other people's repos), 9 PRs merged, 4 issues opened, 6 PR reviews\n\n## Technologies mentioned across repos\nTypeScript, React, Next.js, Node.js, FastAPI, PostgreSQL, D3.js, Go, Rust, Flutter, React Native, Docker, GitHub Actions"
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "14 projects · 1 role · 1 page",
+        "summary": "Arjun Menon is a full-stack developer at Tidewave Software in Kochi with 4.2 years of experience and 14 side projects across web, mobile, data and tooling. At work he builds a hotel booking platform for 40 partners and cut page load from 3.4 s to 1.6 s.",
+        "person": {
+          "name": "Arjun Menon",
+          "currentRole": "Software Developer",
+          "yearsExperience": 4.2,
+          "location": "Kochi, India"
+        },
+        "signals": [
+          {
+            "label": "14 side projects",
+            "detail": "web, mobile, data and tooling"
+          },
+          {
+            "label": "Booking platform",
+            "detail": "40 partner hotels, load 3.4 s to 1.6 s"
+          },
+          {
+            "label": "Payments",
+            "detail": "failures 3.1% to 0.9%"
+          },
+          {
+            "label": "Metro Minutes",
+            "detail": "API for Kochi Metro, FastAPI"
+          },
+          {
+            "label": "CricStats",
+            "detail": "D3.js IPL explorer"
+          }
+        ],
+        "skills": [
+          {
+            "name": "React",
+            "evidence": "React and Node.js booking platform for 40 partner hotels; load 3.4 s to 1.6 s; SplitEase, FocusTimer and Notely use React or Next.js",
+            "strength": 4
+          },
+          {
+            "name": "Node.js",
+            "evidence": "Node.js booking platform backend; Quizzo real-time quiz",
+            "strength": 3
+          },
+          {
+            "name": "WebSockets",
+            "evidence": "Quizzo: real-time multiplayer quiz on WebSockets",
+            "strength": 3
+          },
+          {
+            "name": "Flutter",
+            "evidence": "Campus Carpool ride-sharing app in Flutter and Firebase",
+            "strength": 2
+          },
+          {
+            "name": "React Native",
+            "evidence": "HabitHive habit tracker in React Native",
+            "strength": 3
+          },
+          {
+            "name": "OCR & text processing",
+            "evidence": "Receipt Reader: OCR for grocery receipts with Tesseract",
+            "strength": 2
+          },
+          {
+            "name": "Dashboards (Streamlit)",
+            "evidence": "Cinema Pulse sentiment dashboard in Streamlit",
+            "strength": 2
+          },
+          {
+            "name": "Rust",
+            "evidence": "PortScan Lite in Rust; listed as basic",
+            "strength": 2
+          },
+          {
+            "name": "Shipping end to end",
+            "evidence": "14 side projects since 2021; ships schema, API, UI and AWS deployment at work",
+            "strength": 3
+          },
+          {
+            "name": "User feedback loops",
+            "evidence": "No user numbers or feedback are mentioned for any of the 14 projects",
+            "strength": 2
+          }
+        ],
+        "notes": [
+          "14 projects are listed with one line each; lead with the 3 strongest and link them",
+          "Work bullets carry numbers: 40 hotels, 3.4 s to 1.6 s, failures 3.1% to 0.9%",
+          "Only 5 of 14 projects link a repository"
+        ]
+      },
+      "github": {
+        "sub": "18 repos · 7 languages · 143 stars",
+        "summary": "Full-stack developer in Kochi with 18 public repositories across seven languages and a monthly cadence of small projects. metro-minutes (47 stars, 22 test files) and cricstats (33 stars) are the strongest; many others are one-off builds.",
+        "person": {
+          "name": "Arjun Menon",
+          "currentRole": "Full-Stack Developer",
+          "location": "Kochi, India"
+        },
+        "signals": [
+          {
+            "label": "metro-minutes",
+            "detail": "47 stars, 22 test files"
+          },
+          {
+            "label": "cricstats",
+            "detail": "33 stars, D3.js"
+          },
+          {
+            "label": "pinboard-cli",
+            "detail": "21 stars, Go"
+          },
+          {
+            "label": "Active in 90 days",
+            "detail": "118 commits"
+          }
+        ],
+        "skills": [
+          {
+            "name": "TypeScript",
+            "evidence": "TypeScript is the main language of 6 of 17 original repos",
+            "strength": 4
+          },
+          {
+            "name": "Data visualisation",
+            "evidence": "cricstats: D3.js IPL stats explorer, 33 stars",
+            "strength": 3
+          },
+          {
+            "name": "FastAPI",
+            "evidence": "metro-minutes: FastAPI and PostgreSQL, 47 stars, 22 test files",
+            "strength": 3
+          },
+          {
+            "name": "Python",
+            "evidence": "Python in 4 of 17 original repos, including metro-minutes",
+            "strength": 3
+          },
+          {
+            "name": "Go",
+            "evidence": "pinboard-cli: Go terminal tool, 21 stars, 11 test files",
+            "strength": 2
+          },
+          {
+            "name": "CLI tooling",
+            "evidence": "pinboard-cli with fuzzy search; dotfiles in Shell",
+            "strength": 2
+          },
+          {
+            "name": "Prototyping",
+            "evidence": "18 repos, most of them small one-off builds",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "metro-minutes is the standout: 47 stars, tests, CI, Docker and docs",
+          "Tests in 5 of 18 repos; quizzo and notely have no tests or CI",
+          "Pin the best 4 repos; the other 14 dilute the profile"
+        ]
+      }
+    }
+  }
+}

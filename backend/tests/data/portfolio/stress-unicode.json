@@ -1,0 +1,631 @@
+{
+  "name": "stress-unicode",
+  "about": "Stress: Devanagari name with a Latin transliteration line, emoji and mixed scripts in GitHub source text, accented company names (Café Délice, Naïve Labs), a job title with an ampersand and quotes.",
+  "profile": {
+    "id": "8ee0ad45d658300d705b480b7ad5137c",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "अनन्या शर्मा",
+      "headline": "Senior Engineer · 5.3 yrs · Pune",
+      "currentRole": "Senior Engineer",
+      "location": "Pune, India",
+      "yearsExperience": 5.3,
+      "summary": "Senior engineer for the \"Orders & Loyalty\" platform at Café Délice who rebuilt the in-app ordering flow, with weekly orders up 18%, and added Devanagari, Tamil and Kannada menu names."
+    },
+    "mastery": {
+      "score": 72,
+      "insight": "Strong internationalisation craft with measured product results; backend scale and data-modelling evidence are thinner."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "2 projects · 2 roles · 1 page",
+        "summary": "अनन्या शर्मा (Ananya Sharma) is a senior engineer on the \"Orders & Loyalty\" platform at Café Délice in Pune, with 5.3 years of experience. She rebuilt the in-app ordering flow, added Devanagari, Tamil and Kannada menu names and migrated 1.2 million order records to PostgreSQL.",
+        "notes": [
+          "Bullets carry numbers: 18% more weekly orders, 1.2 million records, 91% to 98% delivery",
+          "Internationalisation is the clearest strength; make it the headline",
+          "Name appears in Devanagari and Latin; keep the Latin line for search"
+        ],
+        "ok": true
+      },
+      {
+        "id": "github",
+        "kind": "github",
+        "label": "GitHub",
+        "url": "https://github.com/ananyasharma",
+        "sub": "7 repos · 3 languages · 52 stars",
+        "summary": "Engineer at Café Délice in Pune whose repositories centre on text and scripts. bhasha-sort (31 stars, 44 test files) handles Indian-language collation; creme-scaler and name-normalise are smaller tested utilities. The bio uses emoji and three scripts.",
+        "notes": [
+          "bhasha-sort is a credible artifact: 31 stars, 44 test files, CI and docs",
+          "Tests in 4 of 7 repos; creme-scaler has no README docs",
+          "Pin bhasha-sort and name-normalise; they match the day job"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "mobile-apps",
+        "name": "Mobile Apps",
+        "short": "Mobile Apps",
+        "score": 66,
+        "summary": "React Native ordering app for a chain with 60 outlets; weekly orders up 18% after the rebuild."
+      },
+      {
+        "id": "backend-apis",
+        "name": "Backend & APIs",
+        "short": "Backend & APIs",
+        "score": 62,
+        "summary": "Python and TypeScript services, a loyalty ledger and an SMS reminder service."
+      },
+      {
+        "id": "i18n",
+        "name": "Internationalisation",
+        "short": "i18n & L10n",
+        "score": 78,
+        "summary": "Unicode normalisation and collation for Devanagari, Tamil and Kannada menus; the clearest strength."
+      },
+      {
+        "id": "data-storage",
+        "name": "Data & Storage",
+        "short": "Data & Storage",
+        "score": 54,
+        "summary": "Migrated 1.2 million order records to PostgreSQL; schema and tuning work is light."
+      },
+      {
+        "id": "eng-practice",
+        "name": "Engineering Practice",
+        "short": "Eng Practice",
+        "score": 56,
+        "summary": "Tests in 4 of 7 repos and CI in 4; well-tested libraries, thin at work."
+      }
+    ],
+    "skills": [
+      {
+        "id": "react-native",
+        "name": "React Native",
+        "domainId": "mobile-apps",
+        "score": 70,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Rebuilt the in-app ordering flow in React Native; weekly orders rose 18%"
+          }
+        ],
+        "unlocks": [
+          "Senior Mobile Engineer"
+        ]
+      },
+      {
+        "id": "typescript",
+        "name": "TypeScript",
+        "domainId": "mobile-apps",
+        "score": 68,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "creme-scaler and name-normalise are TypeScript; 3 of 6 original repos"
+          }
+        ],
+        "unlocks": [
+          "Senior Mobile Engineer",
+          "Full-Stack Engineer"
+        ]
+      },
+      {
+        "id": "mobile-ux",
+        "name": "Mobile UX",
+        "domainId": "mobile-apps",
+        "score": 60,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Ordering flow for a chain with 60 outlets across Pune, Mumbai and Bengaluru"
+          }
+        ],
+        "unlocks": [
+          "Senior Mobile Engineer"
+        ]
+      },
+      {
+        "id": "python",
+        "name": "Python",
+        "domainId": "backend-apis",
+        "score": 66,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "bhasha-sort in Python: 31 stars, 44 test files"
+          },
+          {
+            "sourceId": "resume",
+            "text": "pytest listed; bhasha-sort project in Python"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Engineer"
+        ]
+      },
+      {
+        "id": "rest-apis",
+        "name": "REST APIs",
+        "domainId": "backend-apis",
+        "score": 62,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "SMS reminder service for 3 clinic chains at Naïve Labs"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "loyalty-ledger",
+        "name": "Loyalty ledger design",
+        "domainId": "backend-apis",
+        "score": 58,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Designed the \"Délice Points\" ledger; expiry bugs from 14 a month to 1"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "unicode",
+        "name": "Unicode handling",
+        "domainId": "i18n",
+        "score": 84,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Text-normalisation library for combining marks; removed about 1,100 duplicates"
+          },
+          {
+            "sourceId": "github",
+            "text": "name-normalise: NFC/NFKC, 9 test files"
+          }
+        ],
+        "unlocks": [
+          "Localisation Engineer"
+        ]
+      },
+      {
+        "id": "locale-sorting",
+        "name": "Locale-aware sorting",
+        "domainId": "i18n",
+        "score": 80,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "ICU collation for Devanagari, Tamil and Kannada menu names"
+          },
+          {
+            "sourceId": "github",
+            "text": "bhasha-sort: conjunct consonants, 44 test files"
+          }
+        ],
+        "unlocks": [
+          "Localisation Engineer"
+        ]
+      },
+      {
+        "id": "multilingual-ux",
+        "name": "Multilingual UX",
+        "domainId": "i18n",
+        "score": 72,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "100% of the menu in 3 languages; SMS reminders in Hindi, Marathi and English"
+          }
+        ],
+        "unlocks": [
+          "Localisation Engineer"
+        ]
+      },
+      {
+        "id": "postgresql",
+        "name": "PostgreSQL",
+        "domainId": "data-storage",
+        "score": 58,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Migrated order history to PostgreSQL across 1.2 million records"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Engineer"
+        ]
+      },
+      {
+        "id": "data-migration",
+        "name": "Data migration",
+        "domainId": "data-storage",
+        "score": 54,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "No lost orders across 1.2 million migrated records"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "query-tuning",
+        "name": "Query tuning",
+        "domainId": "data-storage",
+        "score": 50,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "SQL listed; no tuning result is described"
+          }
+        ],
+        "unlocks": [
+          "Full-Stack Engineer"
+        ]
+      },
+      {
+        "id": "testing",
+        "name": "Automated testing",
+        "domainId": "eng-practice",
+        "score": 62,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "Tests in 4 of 7 repos; 44 test files in bhasha-sort"
+          }
+        ],
+        "unlocks": [
+          "Localisation Engineer"
+        ]
+      },
+      {
+        "id": "ci-cd",
+        "name": "CI/CD",
+        "domainId": "eng-practice",
+        "score": 54,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "GitHub Actions in 4 of 7 repos"
+          }
+        ],
+        "unlocks": [
+          "Senior Mobile Engineer"
+        ]
+      },
+      {
+        "id": "code-review",
+        "name": "Code review",
+        "domainId": "eng-practice",
+        "score": 52,
+        "evidence": [
+          {
+            "sourceId": "github",
+            "text": "12 PR reviews in the last 90 days"
+          }
+        ],
+        "unlocks": []
+      }
+    ],
+    "roles": [
+      {
+        "id": "localisation-engineer",
+        "title": "Localisation Engineer",
+        "alignment": 76,
+        "eta": "~3 months",
+        "why": "Unicode, collation and multilingual UX are proven in production and in public repos. Needs translation-pipeline tooling.",
+        "requirements": [
+          {
+            "name": "Unicode handling",
+            "skillId": "unicode",
+            "have": true,
+            "current": 84,
+            "target": 80
+          },
+          {
+            "name": "Locale-aware sorting",
+            "skillId": "locale-sorting",
+            "have": true,
+            "current": 80,
+            "target": 78
+          },
+          {
+            "name": "Multilingual UX",
+            "skillId": "multilingual-ux",
+            "have": true,
+            "current": 72,
+            "target": 72
+          },
+          {
+            "name": "Automated testing",
+            "skillId": "testing",
+            "have": true,
+            "current": 62,
+            "target": 70
+          },
+          {
+            "name": "Translation tooling (TMS)",
+            "have": false,
+            "current": 20,
+            "target": 60
+          }
+        ]
+      },
+      {
+        "id": "senior-mobile",
+        "title": "Senior Mobile Engineer",
+        "alignment": 70,
+        "eta": "~5 months",
+        "why": "Owns the React Native ordering flow with a measured result. Needs native-module depth and release automation.",
+        "requirements": [
+          {
+            "name": "React Native",
+            "skillId": "react-native",
+            "have": true,
+            "current": 70,
+            "target": 80
+          },
+          {
+            "name": "TypeScript",
+            "skillId": "typescript",
+            "have": true,
+            "current": 68,
+            "target": 78
+          },
+          {
+            "name": "Mobile UX",
+            "skillId": "mobile-ux",
+            "have": false,
+            "current": 60,
+            "target": 72
+          },
+          {
+            "name": "CI/CD",
+            "skillId": "ci-cd",
+            "have": false,
+            "current": 54,
+            "target": 70
+          },
+          {
+            "name": "Native modules (iOS/Android)",
+            "have": false,
+            "current": 30,
+            "target": 65
+          }
+        ]
+      },
+      {
+        "id": "full-stack",
+        "title": "Full-Stack Engineer",
+        "alignment": 58,
+        "eta": "~8 months",
+        "why": "Covers app, API and database work at one employer. Backend scale and data modelling evidence is thinner.",
+        "requirements": [
+          {
+            "name": "TypeScript",
+            "skillId": "typescript",
+            "have": true,
+            "current": 68,
+            "target": 75
+          },
+          {
+            "name": "Python",
+            "skillId": "python",
+            "have": true,
+            "current": 66,
+            "target": 72
+          },
+          {
+            "name": "PostgreSQL",
+            "skillId": "postgresql",
+            "have": false,
+            "current": 58,
+            "target": 70
+          },
+          {
+            "name": "Query tuning",
+            "skillId": "query-tuning",
+            "have": false,
+            "current": 50,
+            "target": 65
+          },
+          {
+            "name": "System design",
+            "have": false,
+            "current": 35,
+            "target": 65
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "अनन्या शर्मा\nAnanya Sharma\nSoftware Engineer · Pune, India\nananya.sharma.dev@example.com · +91 90000 67890 · github.com/ananyasharma\n\nSUMMARY\nSoftware engineer with 5.3 years of experience building ordering and loyalty platforms for food and beverage brands. I\ncare about software that works in every script and every language our customers read.\n\nEXPERIENCE\n\nCafé Délice — Senior Engineer, \"Orders & Loyalty\" Platform                             Pune · Jun 2023 – Present\nFrench-style café chain with 60 outlets across Pune, Mumbai and Bengaluru; app and web ordering.\n- Rebuilt the in-app ordering flow in React Native; weekly orders through the app rose 18% in the first quarter after\n  launch.\n- Added Devanagari, Tamil and Kannada menu names with locale-aware sorting and search (ICU collation) for 100% of the\n  menu in 3 languages.\n- Designed the \"Délice Points\" loyalty ledger; point-expiry bugs dropped from 14 a month to 1.\n- Migrated order history to PostgreSQL with no lost orders across 1.2 million records.\n\nNaïve Labs — Software Engineer                                                      Mumbai · Jul 2021 – May 2023\n- Built a multilingual SMS reminder service (Hindi, Marathi, English) used by 3 clinic chains; delivery rate improved\n  from 91% to 98%.\n- Wrote the text-normalisation library that handles Unicode combining marks in customer names, removing about 1,100\n  duplicate records.\n\nPROJECTS\n- Crème — Recipe-scaling calculator for bakers; handles fractions such as ½ and ¾ and metric/imperial conversion.\n  TypeScript. github.com/ananyasharma/creme-scaler\n- bhasha-sort — Unicode-aware collation for Indian-language menus (Devanagari, Tamil, Kannada) with test cases for\n  conjuncts such as क्ष and ज्ञ. Python. github.com/ananyasharma/bhasha-sort\n\nEDUCATION\nB.E. Computer Engineering — Savitribai Phule Pune University                                         2017 – 2021\n\nSKILLS\nLanguages: TypeScript, Python, SQL\nMobile and web: React Native, React\nData: PostgreSQL\nInternationalisation: Unicode, ICU, CLDR, locale-aware sorting, text normalisation\nTooling: GitHub Actions, Jest, pytest"
+      },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "kind": "github",
+        "url": "https://github.com/ananyasharma",
+        "content": "# GitHub: Ananya Sharma (@ananyasharma)\n\n## Profile\n- Name: Ananya Sharma\n- Account type: User\n- Bio: Building tasty software 🥐☕ | मराठी · हिन्दी · English 🚀\n- Company: Café Délice\n- Location: Pune, India 🇮🇳\n- Followers: 96, following: 74\n- On GitHub since 2019-02-03 (about 7 years)\n\n## Totals\n- Public repositories: 7\n- Original repos: 6, forks: 1\n- Stars across original repos: 52\n- Languages by number of original repos: TypeScript (3), Python (2), Shell (1)\n- Repos with a description: 6/6, with topics: 4, with a live homepage link: 1\n- Engineering practice (checked 7 repos): tests in 4, CI in 4, Docker in 1\n\n## Profile README (the repo named after the user)\n> नमस्ते! I write software that reads every script: ক, க, ಕ, क.\n> Currently: ordering + loyalty at Café Délice 🥐. Always testing with names like \"Zoë\", \"Ñandú\" and \"अनन्या\".\n\n## Top repositories (3, ranked by stars, recency and substance)\n\n### 1. bhasha-sort\n- Description: Unicode-aware collation for Indian-language menus: Devanagari, Tamil and Kannada, including conjunct consonants.\n- Language: Python, stars: 31, forks: 4, license: MIT\n- Topics: unicode, collation, devanagari, i18n\n- Last push: 2026-09-02 (1 month ago), created 2024-08-14, size 410 KB\n- Detected: tests yes (44 test files), CI yes (GitHub Actions), Docker no, docs yes, manifests: pyproject.toml\n- README excerpt:\n> # bhasha-sort\n> Sort and search menu items the way a reader of the script expects. Handles conjuncts (क्ष, ज्ञ), nukta variants and mixed-script\n> strings such as \"Café फ़िल्टर कॉफ़ी\". Test cases are written as table-driven fixtures.\n\n### 2. creme-scaler\n- Description: Recipe-scaling calculator for bakers (Crème): fractions like ½ and ¾, metric and imperial.\n- Language: TypeScript, stars: 14, forks: 1\n- Topics: recipes, baking\n- Last push: 2026-03-19 (6 months ago), created 2025-01-26, size 188 KB\n- Homepage: https://creme-scaler.example.app\n- Detected: tests yes (12 test files), CI yes (GitHub Actions), Docker no, docs no, manifests: package.json\n\n### 3. name-normalise\n- Description: Normalise personal names for matching: NFC/NFKC, combining marks and stray whitespace.\n- Language: TypeScript, stars: 7, forks: 0\n- Last push: 2026-01-08 (9 months ago), created 2025-09-10, size 76 KB\n- Detected: tests yes (9 test files), CI yes (GitHub Actions), Docker no, docs no, manifests: package.json\n\n## Recent public activity\n- 87 public events over about 90 days, most recent 2026-10-04 (4 days ago)\n- 38 pushes (64 commits), 7 pull requests opened (2 to other people's repos), 6 PRs merged, 3 issues opened, 12 PR reviews\n\n## Technologies mentioned across repos\nTypeScript, Python, Unicode, ICU, GitHub Actions"
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "2 projects · 2 roles · 1 page",
+        "summary": "अनन्या शर्मा (Ananya Sharma) is a senior engineer on the \"Orders & Loyalty\" platform at Café Délice in Pune, with 5.3 years of experience. She rebuilt the in-app ordering flow, added Devanagari, Tamil and Kannada menu names and migrated 1.2 million order records to PostgreSQL.",
+        "person": {
+          "name": "अनन्या शर्मा",
+          "currentRole": "Senior Engineer",
+          "yearsExperience": 5.3,
+          "location": "Pune, India"
+        },
+        "signals": [
+          {
+            "label": "In-app ordering rebuild",
+            "detail": "weekly orders up 18%"
+          },
+          {
+            "label": "Multilingual menus",
+            "detail": "Devanagari, Tamil, Kannada"
+          },
+          {
+            "label": "Délice Points ledger",
+            "detail": "expiry bugs 14 a month to 1"
+          },
+          {
+            "label": "Order history migration",
+            "detail": "1.2 million records, none lost"
+          },
+          {
+            "label": "SMS reminder service",
+            "detail": "delivery 91% to 98%"
+          }
+        ],
+        "skills": [
+          {
+            "name": "React Native",
+            "evidence": "Rebuilt the in-app ordering flow in React Native; weekly orders rose 18%",
+            "strength": 4
+          },
+          {
+            "name": "Mobile UX",
+            "evidence": "Ordering flow for a chain with 60 outlets across Pune, Mumbai and Bengaluru",
+            "strength": 3
+          },
+          {
+            "name": "Python",
+            "evidence": "pytest listed; bhasha-sort project in Python",
+            "strength": 3
+          },
+          {
+            "name": "REST APIs",
+            "evidence": "SMS reminder service for 3 clinic chains at Naïve Labs",
+            "strength": 3
+          },
+          {
+            "name": "Loyalty ledger design",
+            "evidence": "Designed the \"Délice Points\" ledger; expiry bugs from 14 a month to 1",
+            "strength": 3
+          },
+          {
+            "name": "Unicode handling",
+            "evidence": "Text-normalisation library for combining marks; removed about 1,100 duplicates",
+            "strength": 4
+          },
+          {
+            "name": "Locale-aware sorting",
+            "evidence": "ICU collation for Devanagari, Tamil and Kannada menu names",
+            "strength": 4
+          },
+          {
+            "name": "Multilingual UX",
+            "evidence": "100% of the menu in 3 languages; SMS reminders in Hindi, Marathi and English",
+            "strength": 4
+          },
+          {
+            "name": "PostgreSQL",
+            "evidence": "Migrated order history to PostgreSQL across 1.2 million records",
+            "strength": 3
+          },
+          {
+            "name": "Data migration",
+            "evidence": "No lost orders across 1.2 million migrated records",
+            "strength": 3
+          },
+          {
+            "name": "Query tuning",
+            "evidence": "SQL listed; no tuning result is described",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "Bullets carry numbers: 18% more weekly orders, 1.2 million records, 91% to 98% delivery",
+          "Internationalisation is the clearest strength; make it the headline",
+          "Name appears in Devanagari and Latin; keep the Latin line for search"
+        ]
+      },
+      "github": {
+        "sub": "7 repos · 3 languages · 52 stars",
+        "summary": "Engineer at Café Délice in Pune whose repositories centre on text and scripts. bhasha-sort (31 stars, 44 test files) handles Indian-language collation; creme-scaler and name-normalise are smaller tested utilities. The bio uses emoji and three scripts.",
+        "person": {
+          "name": "Ananya Sharma",
+          "currentRole": "Software Engineer",
+          "location": "Pune, India"
+        },
+        "signals": [
+          {
+            "label": "bhasha-sort",
+            "detail": "31 stars, 44 test files"
+          },
+          {
+            "label": "creme-scaler",
+            "detail": "14 stars, 12 test files"
+          },
+          {
+            "label": "name-normalise",
+            "detail": "7 stars, 9 test files"
+          }
+        ],
+        "skills": [
+          {
+            "name": "TypeScript",
+            "evidence": "creme-scaler and name-normalise are TypeScript; 3 of 6 original repos",
+            "strength": 3
+          },
+          {
+            "name": "Python",
+            "evidence": "bhasha-sort in Python: 31 stars, 44 test files",
+            "strength": 3
+          },
+          {
+            "name": "Unicode handling",
+            "evidence": "name-normalise: NFC/NFKC, 9 test files",
+            "strength": 4
+          },
+          {
+            "name": "Locale-aware sorting",
+            "evidence": "bhasha-sort: conjunct consonants, 44 test files",
+            "strength": 4
+          },
+          {
+            "name": "Automated testing",
+            "evidence": "Tests in 4 of 7 repos; 44 test files in bhasha-sort",
+            "strength": 3
+          },
+          {
+            "name": "CI/CD",
+            "evidence": "GitHub Actions in 4 of 7 repos",
+            "strength": 3
+          },
+          {
+            "name": "Code review",
+            "evidence": "12 PR reviews in the last 90 days",
+            "strength": 3
+          }
+        ],
+        "notes": [
+          "bhasha-sort is a credible artifact: 31 stars, 44 test files, CI and docs",
+          "Tests in 4 of 7 repos; creme-scaler has no README docs",
+          "Pin bhasha-sort and name-normalise; they match the day job"
+        ]
+      }
+    }
+  }
+}

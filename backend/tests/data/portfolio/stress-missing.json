@@ -1,0 +1,347 @@
+{
+  "name": "stress-missing",
+  "about": "Stress: a resume with only a name, a one-line summary and a SKILLS list (no experience, projects or education); 4 low-scoring domains (24-42), all self-reported.",
+  "profile": {
+    "id": "e416ea745ffaf1880a86872ef5af01c4",
+    "createdAt": "2026-10-08T09:00:00Z",
+    "person": {
+      "name": "Rohan Desai",
+      "headline": "Aspiring Developer",
+      "currentRole": "Aspiring Developer",
+      "summary": "Aspiring software developer who lists Python, JavaScript, HTML, CSS, SQL, Git, Linux and Excel; the resume shows no experience, projects or education yet."
+    },
+    "mastery": {
+      "score": 24,
+      "insight": "Skills are listed but nothing shows them in use; one project and one role or course would start the graph."
+    },
+    "sources": [
+      {
+        "id": "resume",
+        "kind": "resume",
+        "label": "Resume",
+        "sub": "0 projects · 0 roles · 1 page",
+        "summary": "Rohan Desai's resume has a name, a one-line summary and a skills list of eight items. It has no experience, projects or education, so none of the listed skills is shown in use.",
+        "notes": [
+          "Skills are listed but no role, project or course shows any of them in use",
+          "Add one project that uses Python or JavaScript, with a link",
+          "Add an education or course line, even if self-taught"
+        ],
+        "ok": true
+      }
+    ],
+    "domains": [
+      {
+        "id": "programming",
+        "name": "Programming",
+        "short": "Programming",
+        "score": 38,
+        "summary": "Python and JavaScript are listed, with no project or role that uses them."
+      },
+      {
+        "id": "web-basics",
+        "name": "Web Basics",
+        "short": "Web Basics",
+        "score": 42,
+        "summary": "HTML and CSS are listed, with no page or project to show them."
+      },
+      {
+        "id": "databases",
+        "name": "Databases",
+        "short": "Databases",
+        "score": 28,
+        "summary": "SQL is listed with no query, schema or project behind it."
+      },
+      {
+        "id": "tools-workflow",
+        "name": "Tools & Workflow",
+        "short": "Tools & Workflow",
+        "score": 24,
+        "summary": "Git, Linux and Excel are listed with no repository or task that shows them."
+      }
+    ],
+    "skills": [
+      {
+        "id": "python",
+        "name": "Python",
+        "domainId": "programming",
+        "score": 40,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Python listed under SKILLS with no project or role to back it"
+          }
+        ],
+        "unlocks": []
+      },
+      {
+        "id": "javascript",
+        "name": "JavaScript",
+        "domainId": "programming",
+        "score": 36,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "JavaScript listed under SKILLS with no project or role to back it"
+          }
+        ],
+        "unlocks": [
+          "Junior Web Developer"
+        ]
+      },
+      {
+        "id": "html",
+        "name": "HTML",
+        "domainId": "web-basics",
+        "score": 44,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "HTML listed under SKILLS; no page or project is described"
+          }
+        ],
+        "unlocks": [
+          "Junior Web Developer"
+        ]
+      },
+      {
+        "id": "css",
+        "name": "CSS",
+        "domainId": "web-basics",
+        "score": 40,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "CSS listed under SKILLS; no page or project is described"
+          }
+        ],
+        "unlocks": [
+          "Junior Web Developer"
+        ]
+      },
+      {
+        "id": "sql",
+        "name": "SQL",
+        "domainId": "databases",
+        "score": 28,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "SQL listed under SKILLS; no query or schema is described"
+          }
+        ],
+        "unlocks": [
+          "QA Analyst"
+        ]
+      },
+      {
+        "id": "git",
+        "name": "Git",
+        "domainId": "tools-workflow",
+        "score": 26,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Git listed under SKILLS; no repository is linked"
+          }
+        ],
+        "unlocks": [
+          "Junior Web Developer"
+        ]
+      },
+      {
+        "id": "linux",
+        "name": "Linux",
+        "domainId": "tools-workflow",
+        "score": 20,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Linux listed under SKILLS with no task that uses it"
+          }
+        ],
+        "unlocks": [
+          "QA Analyst"
+        ]
+      },
+      {
+        "id": "excel",
+        "name": "Excel",
+        "domainId": "tools-workflow",
+        "score": 26,
+        "evidence": [
+          {
+            "sourceId": "resume",
+            "text": "Excel listed under SKILLS with no task that uses it"
+          }
+        ],
+        "unlocks": [
+          "QA Analyst"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "id": "junior-web",
+        "title": "Junior Web Developer",
+        "alignment": 36,
+        "eta": "~10 months",
+        "why": "HTML, CSS and JavaScript are listed but not yet shown in any project. One public project would change this quickly.",
+        "requirements": [
+          {
+            "name": "HTML",
+            "skillId": "html",
+            "have": false,
+            "current": 44,
+            "target": 60
+          },
+          {
+            "name": "CSS",
+            "skillId": "css",
+            "have": false,
+            "current": 40,
+            "target": 60
+          },
+          {
+            "name": "JavaScript",
+            "skillId": "javascript",
+            "have": false,
+            "current": 36,
+            "target": 65
+          },
+          {
+            "name": "Git",
+            "skillId": "git",
+            "have": false,
+            "current": 26,
+            "target": 55
+          },
+          {
+            "name": "A frontend framework",
+            "have": false,
+            "current": 5,
+            "target": 55
+          }
+        ]
+      },
+      {
+        "id": "qa-analyst",
+        "title": "QA Analyst",
+        "alignment": 33,
+        "eta": "~8 months",
+        "why": "SQL, Linux and Excel are listed. No testing or bug-reporting work is shown yet.",
+        "requirements": [
+          {
+            "name": "SQL",
+            "skillId": "sql",
+            "have": false,
+            "current": 28,
+            "target": 55
+          },
+          {
+            "name": "Linux",
+            "skillId": "linux",
+            "have": false,
+            "current": 20,
+            "target": 50
+          },
+          {
+            "name": "Excel",
+            "skillId": "excel",
+            "have": false,
+            "current": 26,
+            "target": 55
+          },
+          {
+            "name": "Test case writing",
+            "have": false,
+            "current": 5,
+            "target": 60
+          },
+          {
+            "name": "Bug reporting",
+            "have": false,
+            "current": 5,
+            "target": 55
+          }
+        ]
+      }
+    ],
+    "models": {
+      "reader": "claude-haiku-4-5",
+      "synth": "claude-sonnet-5-5"
+    }
+  },
+  "context": {
+    "sources": [
+      {
+        "id": "resume",
+        "label": "Resume",
+        "kind": "resume",
+        "content": "ROHAN DESAI\n\nSUMMARY\nAspiring software developer looking for a first role.\n\nSKILLS\nPython, JavaScript, HTML, CSS, SQL, Git, Linux, Excel"
+      }
+    ],
+    "readers": {
+      "resume": {
+        "sub": "0 projects · 0 roles · 1 page",
+        "summary": "Rohan Desai's resume has a name, a one-line summary and a skills list of eight items. It has no experience, projects or education, so none of the listed skills is shown in use.",
+        "person": {
+          "name": "Rohan Desai",
+          "currentRole": "Aspiring Developer"
+        },
+        "signals": [
+          {
+            "label": "Skills list",
+            "detail": "8 skills named, none used in a bullet"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Python",
+            "evidence": "Python listed under SKILLS with no project or role to back it",
+            "strength": 2
+          },
+          {
+            "name": "JavaScript",
+            "evidence": "JavaScript listed under SKILLS with no project or role to back it",
+            "strength": 2
+          },
+          {
+            "name": "HTML",
+            "evidence": "HTML listed under SKILLS; no page or project is described",
+            "strength": 2
+          },
+          {
+            "name": "CSS",
+            "evidence": "CSS listed under SKILLS; no page or project is described",
+            "strength": 2
+          },
+          {
+            "name": "SQL",
+            "evidence": "SQL listed under SKILLS; no query or schema is described",
+            "strength": 1
+          },
+          {
+            "name": "Git",
+            "evidence": "Git listed under SKILLS; no repository is linked",
+            "strength": 1
+          },
+          {
+            "name": "Linux",
+            "evidence": "Linux listed under SKILLS with no task that uses it",
+            "strength": 1
+          },
+          {
+            "name": "Excel",
+            "evidence": "Excel listed under SKILLS with no task that uses it",
+            "strength": 1
+          }
+        ],
+        "notes": [
+          "Skills are listed but no role, project or course shows any of them in use",
+          "Add one project that uses Python or JavaScript, with a link",
+          "Add an education or course line, even if self-taught"
+        ]
+      }
+    }
+  }
+}
