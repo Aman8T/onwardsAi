@@ -49,6 +49,36 @@ The package is importable as `backend/tayyari/`, laid out in layers with import 
 
 **Cost per turn**: ~$0.02–$0.10 (first turn ~$0.05 with cache write, later turns ~$0.002–$0.005 with cache read).
 
+### Portfolio (`POST /api/portfolio`, Resume → Portfolio)
+
+Turns a profile into a portfolio page from a closed kit (`tayyari/portfolio/`, contract `shared/portfolio.ts` ⇄
+`contract/portfolio.py`). Nothing a model writes is markup; every visible fact traces to a source line.
+
+1. **Facts** (Haiku, one call per source, concurrent): the sources are shown with numbered lines; the model cites
+   line numbers and types only short fields (title, employer, dates). Code copies the cited lines verbatim and keeps a
+   fact only when its title/employer are in the cited window. Lines with contact details, addresses or a date of birth
+   are refused. Cached by `facts_hash` (source texts + `FACTS_VERSION`); partial extractions are not cached.
+2. **Shape** (Jev `first_read`, live): career stage, family, public-proof flags feed the composer (heuristics when off).
+3. **Design** (code, `compose.py`): scores every valid composition × graph variant × style from features, breaks ties
+   with `person_seed(profile_id)`, stores the top 3 distinct looks with reasons. A spec can never be invalid
+   (`spec_problems`). A regenerate keeps the owner's visibility, privacy and hidden domains.
+4. **Draft** event: the page with verbatim fallback wording (`fallback.py`), so it paints before the copy.
+5. **Copy** (Sonnet, up to 3 concurrent calls: fixed slots, `exp:*`, `proj:*`), then **grounding** (`ground.py`):
+   per-sentence anchors (numbers with units, names, dates, multipliers) must be in the quotes of the facts the slot
+   cites; seniority verbs, puffery, pronouns, grades and truncated quotes are refused; then Jev `check_copy` judges each
+   sentence (supports / contradicts / says nothing; Claude fallback). Failed slots get one re-ask, then fallback wording.
+6. **Done** event + save (`portfolios` table, no FK to profiles; `generated` slots kept for "reset").
+
+Other routes: `GET/PATCH/DELETE /api/portfolio/{profileId}` (edits validated against the kit; user text is plain,
+`origin: "user"`), `POST …/rewrite` (one slot), `GET …/public-preview` and `GET /api/p/{publicId}` (published only)
+return `PublicPortfolio`: visible + public blocks only, no profile id, no skill evidence, no skills under 45, no
+email/phone/grades unless opted in, PII scrubbed. `/p/*` pages send `X-Robots-Tag: noindex`.
+
+**Cost per portfolio**: ~$0.03–0.08 (live eval over 13 fixtures: $0.54 total, 9–21 s each, 0 ungrounded slots).
+Check it with `uv run python -m tayyari.cli portfolio-eval [--only riya] [--write] [--details]` (needs the API key;
+`--write` refreshes `tests/data/portfolio/rendered/*.portfolio.json`, which the dev gallery `/dev/portfolios` and
+`npm run check:portfolio` read).
+
 ## Jev decisions framework
 
 ### Decision specifications

@@ -106,6 +106,11 @@ Evidence checks (post-synth, Jev + code): drop unsupported claims
 profile + chat history → durable storage (Postgres on FastAPI Cloud, SQLite locally)
 ```
 
+**Resume → Portfolio.** From the graph screen, "Portfolio" turns the profile into a public-ready portfolio page:
+Haiku extracts line-cited facts, Jev reads the career shape, code composes the page from a closed kit (6 compositions,
+7 Skill Graph variants, 8 gradient families), Sonnet writes the copy and every sentence is checked against the cited
+facts. The same content renders as an "Old Newspaper" front page. Details: `docs/backend.md` → Portfolio.
+
 ## Key backend paths
 
 | Path | Module | Purpose |
