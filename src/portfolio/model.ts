@@ -138,9 +138,12 @@ export function growing(domains: GraphDomain[], n = 2): GraphDomain[] {
   return peaks(domains, n + 1).slice(1);
 }
 
+/** Source labels that are ordinary words (lower-cased mid-sentence); anything else is a name ("Substack", "GitHub"). */
+const GENERIC_SOURCES = new Set(['resume', 'portfolio', 'notes', 'personal site', 'website', 'site', 'link', 'talks', 'blog']);
+
 /** "resume, GitHub, Lovable and portfolio" for the provenance line. */
 export function sourcesLine(graph: GraphSnapshot): string {
-  return andList(graph.sources.map((s) => (s === 'GitHub' || s === 'Lovable' ? s : s.toLowerCase())));
+  return andList(graph.sources.map((s) => (GENERIC_SOURCES.has(s.toLowerCase()) ? s.toLowerCase() : s)));
 }
 
 /** "8 Oct 2026" from the snapshot's ISO date. */

@@ -4,7 +4,7 @@
  * band is the hero and graph side by side when the hero is `split`), and the provenance footer.
  * With `skin === 'press'` it hands over to the Old Newspaper renderer. Data flows in through props only.
  */
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
 import { useReducedMotion } from 'motion/react';
 import type { BlockKind, BlockSpec } from '../../shared/portfolio';
@@ -119,7 +119,10 @@ function NewspaperIcon() {
 /* ───────────────────────── the standard skin ───────────────────────── */
 
 function StandardSkin({ spec, content, graph, mode, onToggleSkin, editing, renderGraph }: PortfolioViewProps) {
-  const reduced = !!useReducedMotion();
+  // No entrance when motion is reduced, or when the page loads in a hidden tab (a link opened in the background, a
+  // headless capture): frame-driven animations do not run there, and the sections would sit at opacity 0.
+  const [hiddenAtLoad] = useState(() => typeof document !== 'undefined' && document.visibilityState === 'hidden');
+  const reduced = !!useReducedMotion() || hiddenAtLoad;
   const uid = useId().replace(/[^A-Za-z0-9_-]/g, '');
 
   const shown = shownBlocks(spec, mode);
