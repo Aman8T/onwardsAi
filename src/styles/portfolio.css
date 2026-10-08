@@ -1,0 +1,1550 @@
+/*
+ * Resume -> Portfolio: the standard skin (src/portfolio/PortfolioView.tsx and src/portfolio/blocks/*).
+ *
+ * Everything lives under `.pf-scope`, the portfolio wrapper. tokens.css recomputes every role colour
+ * inside it from the person's own --h / --h2 / --h3, so the only colours here are tokens:
+ * --text, --text-muted, --accent*, --line, --grid, --surface, --bg, --lobe-1..3.
+ * No shadows, no blur, no border thicker than 1px, no animation: entrance motion is motion/react.
+ * The font roles (--pf-display, --pf-body, --pf-mono, weights, tracking) come from src/portfolio/kit/type.ts;
+ * --r (corners) and --sec (section rhythm) from styleVars() in src/portfolio/model.ts.
+ */
+
+/* ───────────── scope, field shapes ───────────── */
+
+.pf-scope {
+  position: relative;
+  color: var(--text);
+  font-family: var(--pf-body, var(--font-sans));
+  font-size: 16px;
+  line-height: 1.55;
+  background-color: var(--bg);
+  background-repeat: no-repeat;
+  overflow-x: clip;
+}
+
+/* Each lobe fades to transparent; gradients interpolate premultiplied, so no hue swing in the falloff. */
+.pf-field-dawn {
+  background-image:
+    radial-gradient(900px 640px at 6% 0px, var(--lobe-1) 0%, transparent 70%),
+    radial-gradient(780px 560px at 94% 140px, var(--lobe-2) 0%, transparent 70%),
+    radial-gradient(1100px 640px at 50% 100%, var(--lobe-3) 0%, transparent 70%);
+}
+
+.pf-field-horizon {
+  background-image:
+    radial-gradient(1400px 520px at 50% -80px, var(--lobe-1) 0%, transparent 70%),
+    radial-gradient(1100px 640px at 50% 100%, var(--lobe-3) 0%, transparent 70%);
+}
+
+.pf-field-corner {
+  background-image:
+    radial-gradient(1000px 720px at 100% 0px, var(--lobe-2) 0%, transparent 70%),
+    radial-gradient(1100px 640px at 50% 100%, var(--lobe-3) 0%, transparent 70%);
+}
+
+.pf-scope :where(h1, h2, h3, h4) {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.pf-scope :where(ul, ol) {
+  padding: 0;
+  list-style: none;
+}
+
+/* Long titles, names and URLs wrap instead of overflowing. */
+.pf-scope :where(h1, h2, h3, h4, p, li, dd, dt, a) {
+  overflow-wrap: anywhere;
+}
+
+.pf-scope a {
+  color: var(--accent-strong);
+}
+
+.pf-scope a:hover {
+  color: var(--text);
+}
+
+.pf-wrap {
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: clamp(20px, 5vw, 64px);
+}
+
+/* A translucent surface without a colour function: the tint is a pseudo-element at partial opacity. */
+.pf-glass {
+  position: relative;
+  isolation: isolate;
+}
+
+.pf-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--surface);
+  opacity: var(--pf-glass, 0.72);
+  pointer-events: none;
+}
+
+/* ───────────── header and navigation ───────────── */
+
+.pf-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 80px;
+}
+
+.pf-header-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.pf-scope a.pf-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.pf-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  font-family: var(--pf-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.pf-brand-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pf-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.pf-scope a.pf-navlink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--d-fast) var(--ease);
+}
+
+.pf-scope a.pf-navlink:hover {
+  color: var(--text);
+}
+
+/* Section links under the hero, phones only. */
+.pf-nav--pills {
+  display: none;
+  gap: 8px;
+  padding: 0 0 24px;
+}
+
+.pf-main > .pf-b-graph + .pf-nav--pills {
+  margin-top: 24px;
+}
+
+.pf-scope a.pf-navpill {
+  --pf-glass: 0.6;
+  flex: 1 1 0;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+}
+
+.pf-pill {
+  --pf-glass: 0.6;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-left: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--text);
+  transition: border-color var(--d-fast) var(--ease);
+}
+
+.pf-pill:hover {
+  border-color: var(--line-strong);
+}
+
+/* ───────────── blocks: rhythm ───────────── */
+
+/* Section rhythm is a margin (not padding) so an editor outline hugs the block's content. */
+.pf-block {
+  margin-top: var(--sec);
+  min-width: 0;
+}
+
+.pf-b-hero {
+  margin-top: 0;
+  padding: clamp(40px, 6vw, 88px) 0 clamp(32px, 4vw, 56px);
+}
+
+.pf-b-hero.pf-v-statement {
+  padding: clamp(48px, 7vw, 104px) 0 clamp(24px, 3vw, 40px);
+}
+
+.pf-b-hero.pf-v-centered {
+  padding: clamp(40px, 6vw, 88px) 0 clamp(40px, 5vw, 72px);
+}
+
+.pf-density-compact .pf-b-hero {
+  padding: clamp(32px, 5vw, 64px) 0 0;
+}
+
+.pf-b-proof {
+  margin-top: clamp(32px, 4vw, 56px);
+}
+
+.pf-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(32px, 5vw, 72px);
+  padding: clamp(40px, 6vw, 88px) 0 clamp(32px, 4vw, 56px);
+}
+
+.pf-band > .pf-b-hero {
+  flex: 1 1 420px;
+  padding: 0;
+}
+
+.pf-band > .pf-b-graph {
+  flex: 1 1 400px;
+  margin-top: 0;
+}
+
+.pf-band + .pf-b-proof {
+  margin-top: 0;
+}
+
+.pf-main > .pf-b-hero + .pf-b-graph {
+  margin-top: clamp(24px, 4vw, 56px);
+}
+
+.pf-b-openTo {
+  margin-top: 56px;
+}
+
+/* ───────────── blocks: label rail and bar ───────────── */
+
+.pf-label {
+  font-family: var(--pf-mono);
+  font-weight: 400;
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.pf-meta {
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.pf-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px 48px;
+}
+
+.pf-rail-label {
+  flex: 1 1 160px;
+  max-width: 220px;
+}
+
+.pf-rail-body {
+  flex: 999 1 560px;
+  min-width: 0;
+}
+
+.pf-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--grid);
+}
+
+.pf-bar-body {
+  padding-top: 20px;
+}
+
+.pf-bar-meta {
+  font-family: var(--pf-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.pf-empty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 20px 0;
+  border-top: 1px dashed var(--line);
+}
+
+/* ───────────── shared text parts ───────────── */
+
+.pf-slot-edit {
+  min-width: 0;
+  width: 100%;
+}
+
+.pf-scope a.pf-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pf-link-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pf-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 16px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  font-family: var(--pf-mono);
+  font-size: 13px;
+  color: var(--text);
+  transition: border-color var(--d-fast) var(--ease);
+}
+
+.pf-more:hover {
+  border-color: var(--line-strong);
+}
+
+.pf-title {
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.pf-type-technical .pf-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.pf-org {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.pf-sub {
+  margin-top: 4px;
+  font-size: 14.5px;
+  color: var(--text-muted);
+}
+
+.pf-bullets {
+  margin-top: 14px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: disc;
+  font-size: 15.5px;
+  max-width: 62ch;
+}
+
+.pf-kicker {
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.pf-tags {
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* ───────────── hero ───────────── */
+
+.pf-hero-main,
+.pf-hero-centered,
+.pf-hero-index {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.pf-eyebrow {
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.pf-name {
+  --pf-name-size: clamp(60px, 7.4vw, 108px);
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-name);
+  font-size: calc(var(--pf-name-size) * var(--pf-name-k, 1));
+  line-height: var(--pf-name-lh);
+  letter-spacing: var(--pf-t-name);
+  text-wrap: balance;
+}
+
+.pf-v-statement .pf-name {
+  --pf-name-size: clamp(64px, 13.5vw, 192px);
+}
+
+.pf-density-compact .pf-v-statement .pf-name {
+  --pf-name-size: clamp(56px, 10vw, 136px);
+}
+
+.pf-v-centered .pf-name {
+  --pf-name-size: clamp(52px, 9vw, 124px);
+}
+
+.pf-name--long {
+  --pf-name-k: 0.64;
+}
+
+.pf-name--xl {
+  --pf-name-k: 0.44;
+}
+
+.pf-v-index .pf-name {
+  --pf-name-size: 18px;
+  --pf-name-k: 1;
+  font-family: var(--pf-body);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.pf-tagline {
+  max-width: 30ch;
+  font-size: clamp(19px, 1.6vw, 23px);
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.pf-v-statement .pf-tagline,
+.pf-v-centered .pf-tagline {
+  max-width: 26em;
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-lede);
+  font-size: clamp(24px, 2.7vw, 36px);
+  line-height: 1.22;
+  letter-spacing: var(--pf-t-lede);
+}
+
+.pf-v-centered .pf-tagline {
+  max-width: 24ch;
+  text-wrap: balance;
+}
+
+.pf-tagline--index {
+  max-width: 22ch;
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-name);
+  font-size: clamp(34px, 5.8vw, 80px);
+  line-height: 1.02;
+  letter-spacing: var(--pf-t-name);
+  text-wrap: balance;
+}
+
+.pf-hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.pf-hero-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px 64px;
+}
+
+.pf-hero-row .pf-tagline {
+  flex: 1 1 340px;
+  min-width: 0;
+}
+
+.pf-hero-dl {
+  flex: 1 1 380px;
+  min-width: 0;
+  max-width: 520px;
+  font-family: var(--pf-mono);
+  font-size: 13px;
+  border-bottom: 1px solid var(--grid);
+}
+
+.pf-hero-dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--grid);
+}
+
+.pf-hero-dl dt {
+  color: var(--text-muted);
+}
+
+.pf-hero-dl dd {
+  text-align: right;
+}
+
+.pf-hero-centered {
+  align-items: center;
+  text-align: center;
+}
+
+.pf-hero-centered .pf-hero-facts,
+.pf-actions--center {
+  justify-content: center;
+}
+
+.pf-ring {
+  --pf-glass: 0.5;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 124px;
+  height: 124px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+}
+
+.pf-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--surface);
+  opacity: var(--pf-glass);
+}
+
+.pf-ring-in {
+  display: grid;
+  place-items: center;
+  width: 106px;
+  height: 106px;
+  border-radius: 50%;
+  border: 1px solid var(--grid);
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-name);
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: var(--pf-t-name);
+}
+
+.pf-index-id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.pf-scope a.pf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  background: var(--accent-strong);
+  color: var(--surface);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.pf-scope a.pf-btn:hover {
+  background: var(--accent);
+  color: var(--surface);
+}
+
+.pf-scope a.pf-btn--ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.pf-scope a.pf-btn--ghost:hover {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+/* ───────────── proof strip ───────────── */
+
+.pf-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 24px;
+  padding: 28px 0;
+  border-top: 1px solid var(--grid);
+  border-bottom: 1px solid var(--grid);
+}
+
+.pf-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pf-stat-v {
+  font-family: var(--pf-mono);
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.pf-stat-l {
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+/* ───────────── about ───────────── */
+
+.pf-about {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pf-lede {
+  max-width: 24em;
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-lede);
+  font-size: clamp(28px, 3.2vw, 40px);
+  line-height: 1.18;
+  letter-spacing: var(--pf-t-lede);
+  text-wrap: pretty;
+}
+
+.pf-body-muted {
+  max-width: 62ch;
+  font-size: 17px;
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.pf-prose {
+  max-width: 62ch;
+  font-size: 18px;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.pf-prose--muted {
+  color: var(--text-muted);
+}
+
+.pf-facts {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 16px 24px;
+}
+
+.pf-facts dt {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.pf-facts dd {
+  margin-top: 2px;
+  font-size: 15px;
+}
+
+.pf-about--facts {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 32px 48px;
+}
+
+.pf-about-bio {
+  flex: 3 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pf-facts--stacked {
+  flex: 2 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 0;
+  padding-top: 8px;
+}
+
+/* ───────────── experience ───────────── */
+
+.pf-when {
+  flex: 0 0 150px;
+  padding-top: 4px;
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.pf-when:empty {
+  display: none;
+}
+
+/* timeline */
+
+.pf-tl {
+  display: flex;
+  flex-direction: column;
+}
+
+.pf-tl-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 32px;
+}
+
+.pf-tl-body {
+  position: relative;
+  flex: 1 1 360px;
+  min-width: 0;
+  padding: 0 0 40px 28px;
+  border-left: 1px solid var(--line);
+}
+
+.pf-tl-item:last-child .pf-tl-body {
+  padding-bottom: 8px;
+}
+
+.pf-dot {
+  position: absolute;
+  left: -4px;
+  top: 10px;
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-ui);
+  background: var(--bg);
+}
+
+.pf-dot--on {
+  left: -5px;
+  top: 9px;
+  width: 9px;
+  height: 9px;
+  background: var(--accent-ui);
+}
+
+.pf-dot--inline {
+  position: static;
+  flex: none;
+}
+
+/* ledger */
+
+.pf-lg-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--grid);
+}
+
+.pf-lg-row:first-child {
+  padding-top: 8px;
+}
+
+.pf-lg-row .pf-when {
+  flex-basis: 168px;
+}
+
+.pf-lg-id {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.pf-lg-lines {
+  flex: 1.4 1 320px;
+  min-width: 0;
+}
+
+.pf-lg-lines:empty {
+  display: none;
+}
+
+.pf-lg-lines .pf-bullets {
+  margin-top: 0;
+  font-size: 15px;
+}
+
+/* then / now */
+
+.pf-tn {
+  display: flex;
+  flex-direction: column;
+}
+
+.pf-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.pf-tn-group + .pf-tn-group {
+  margin-top: 8px;
+}
+
+.pf-tn-now,
+.pf-tn-before {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 32px;
+  padding: 24px 0 40px;
+  border-top: 1px solid var(--grid);
+}
+
+.pf-tn-before {
+  padding-bottom: 8px;
+}
+
+.pf-tn-main {
+  flex: 1 1 360px;
+  min-width: 0;
+}
+
+.pf-title--lg {
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-head);
+  font-size: 32px;
+  line-height: 1.12;
+  letter-spacing: var(--pf-t-head);
+}
+
+.pf-title--sm {
+  font-size: 18px;
+}
+
+.pf-tn-row + .pf-tn-row {
+  margin-top: 24px;
+}
+
+.pf-bullets--muted {
+  margin-top: 12px;
+  padding-left: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px 24px;
+  list-style: none;
+  font-size: 14.5px;
+  color: var(--text-muted);
+}
+
+/* ───────────── projects ───────────── */
+
+.pf-pj {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pf-feature {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding: clamp(24px, 4vw, 44px);
+  border-radius: var(--r);
+  border: 1px solid var(--grid);
+}
+
+.pf-feature-main {
+  flex: 1 1 300px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pf-feature-title {
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-head);
+  font-size: clamp(40px, 4.4vw, 56px);
+  line-height: 1;
+  letter-spacing: var(--pf-t-head);
+  text-wrap: balance;
+}
+
+.pf-feature-blurb {
+  max-width: 42ch;
+  font-size: 16.5px;
+  text-wrap: pretty;
+}
+
+.pf-feature-main .pf-link {
+  align-self: flex-start;
+}
+
+.pf-feature-points {
+  flex: 1 1 240px;
+  min-width: 0;
+  align-self: center;
+}
+
+.pf-feature-points li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--grid);
+  font-family: var(--pf-mono);
+  font-size: 13.5px;
+}
+
+.pf-feature-points li:last-child {
+  border-bottom: 0;
+}
+
+.pf-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.pf-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 24px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--grid);
+}
+
+.pf-row:last-child {
+  border-bottom: 0;
+}
+
+.pf-row-n {
+  flex: 0 0 32px;
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.pf-row-main {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.pf-row-title {
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-head);
+  font-size: 27px;
+  line-height: 1.15;
+  letter-spacing: var(--pf-t-head);
+}
+
+.pf-row-blurb {
+  margin-top: 4px;
+  max-width: 56ch;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.pf-row-meta {
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.pf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: 16px;
+}
+
+.pf-tile {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: clamp(24px, 3.4vw, 36px);
+  border-radius: var(--r);
+  border: 1px solid var(--grid);
+}
+
+.pf-tile--wide {
+  grid-column: 1 / -1;
+}
+
+.pf-tile-title {
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-head);
+  font-size: clamp(28px, 2.8vw, 36px);
+  line-height: 1.1;
+  letter-spacing: var(--pf-t-head);
+  text-wrap: balance;
+}
+
+.pf-tile-blurb {
+  max-width: 42ch;
+  font-size: 16px;
+  text-wrap: pretty;
+}
+
+.pf-tile .pf-link {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+/* ───────────── clips ───────────── */
+
+.pf-clip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--grid);
+}
+
+.pf-clip:first-child {
+  padding-top: 0;
+}
+
+.pf-clip:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.pf-clip-main {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.pf-clip-title {
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-head);
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: var(--pf-t-head);
+}
+
+.pf-clip-meta {
+  margin-top: 6px;
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.pf-scope a.pf-clip-read {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ───────────── achievements ───────────── */
+
+.pf-nums {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr));
+  gap: 0 48px;
+}
+
+.pf-numcell {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 32px 0 28px;
+  border-bottom: 1px solid var(--grid);
+}
+
+.pf-num {
+  font-family: var(--pf-mono);
+  font-size: clamp(40px, 5.2vw, 64px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.pf-num--sm {
+  font-size: clamp(30px, 4vw, 48px);
+}
+
+.pf-num--ord {
+  font-size: clamp(26px, 3vw, 34px);
+  color: var(--text-muted);
+}
+
+.pf-num-unit {
+  font-size: 0.38em;
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
+
+.pf-num-label {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.pf-ach-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 24px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--grid);
+}
+
+.pf-ach-row:first-child {
+  padding-top: 0;
+}
+
+.pf-ach-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.pf-ach-title {
+  flex: 1 1 280px;
+  min-width: 0;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.pf-ach-meta {
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* ───────────── education ───────────── */
+
+.pf-edu-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 24px;
+}
+
+.pf-edu-item + .pf-edu-item {
+  margin-top: 24px;
+}
+
+.pf-edu-main {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.pf-edu-title {
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.pf-edu-org,
+.pf-edu-detail {
+  margin-top: 2px;
+  font-size: 14.5px;
+  color: var(--text-muted);
+}
+
+.pf-edu-when,
+.pf-edu-meta {
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.pf-edu-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  text-align: right;
+}
+
+.pf-edu--cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 24px 32px;
+}
+
+.pf-edu--cols .pf-edu-item + .pf-edu-item {
+  margin-top: 0;
+}
+
+.pf-edu-item--col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--grid);
+}
+
+.pf-edu-item--col .pf-edu-main {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pf-edu-item--col .pf-edu-title {
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-head);
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: var(--pf-t-head);
+}
+
+.pf-edu-item--col .pf-edu-org,
+.pf-edu-item--col .pf-edu-detail {
+  margin-top: 0;
+}
+
+.pf-grade {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.pf-grade-v {
+  font-family: var(--pf-mono);
+  font-size: clamp(40px, 5vw, 56px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.pf-grade-out {
+  font-size: 18px;
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
+
+.pf-grade-l {
+  font-family: var(--pf-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.pf-grade-text {
+  font-family: var(--pf-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.pf-edu-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--grid);
+}
+
+.pf-edu-line:first-child {
+  padding-top: 0;
+}
+
+.pf-edu-line:last-child {
+  border-bottom: 0;
+}
+
+/* ───────────── open to ───────────── */
+
+.pf-open-note {
+  --pf-glass: 0.6;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  max-width: 100%;
+  padding: 14px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  font-size: 15.5px;
+}
+
+.pf-open-k {
+  font-family: var(--pf-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ───────────── contact ───────────── */
+
+.pf-sign {
+  font-family: var(--pf-display);
+  font-weight: var(--pf-w-name);
+  font-size: clamp(52px, 7vw, 96px);
+  line-height: 1;
+  letter-spacing: var(--pf-t-name);
+}
+
+.pf-contact--sign {
+  margin-top: calc(var(--sec) * 1.25);
+  padding-bottom: clamp(48px, 7vw, 96px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.pf-contact--row {
+  padding-bottom: clamp(48px, 7vw, 96px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 48px;
+}
+
+.pf-contact--row .pf-sign {
+  font-size: clamp(40px, 5vw, 64px);
+}
+
+.pf-contact--bar {
+  padding-bottom: clamp(40px, 6vw, 72px);
+}
+
+.pf-contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+}
+
+.pf-contact-links .pf-link {
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.pf-contact-links--mono .pf-link {
+  font-family: var(--pf-mono);
+  font-size: 15px;
+}
+
+.pf-contact-text {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 17px;
+}
+
+.pf-contact-k {
+  margin-right: 8px;
+  color: var(--text-muted);
+}
+
+/* ───────────── footer ───────────── */
+
+.pf-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 20px 0 32px;
+  border-top: 1px solid var(--grid);
+  font-family: var(--pf-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ───────────── editor affordances ───────────── */
+
+.pf-block[data-editable='true'] {
+  cursor: pointer;
+}
+
+.pf-block[data-editable='true']:hover {
+  outline: 1px dashed var(--line-strong);
+  outline-offset: 12px;
+}
+
+.pf-block[data-selected='true'],
+.pf-block[data-selected='true']:hover {
+  outline: 1px solid var(--accent-ui);
+  outline-offset: 12px;
+}
+
+/* ───────────── phones ───────────── */
+
+@media (max-width: 640px) {
+  .pf-header {
+    flex-wrap: nowrap;
+    min-height: 72px;
+  }
+
+  .pf-brand-name {
+    display: none;
+  }
+
+  .pf-nav--top {
+    display: none;
+  }
+
+  .pf-nav--pills {
+    display: flex;
+  }
+
+  .pf-pill {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .pf-actions .pf-btn {
+    flex: 1 1 140px;
+  }
+
+  .pf-stats {
+    grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+    gap: 24px 16px;
+  }
+
+  .pf-stat-v {
+    font-size: 28px;
+    line-height: 1.3;
+  }
+
+  /* The dated spine: the date moves above the entry and the spine runs down the left edge. */
+  .pf-tl-item {
+    position: relative;
+    display: block;
+    padding: 0 0 36px 24px;
+    border-left: 1px solid var(--line);
+  }
+
+  .pf-tl-item:last-child {
+    padding-bottom: 8px;
+  }
+
+  .pf-tl-item .pf-when {
+    padding-top: 0;
+    margin-bottom: 4px;
+  }
+
+  .pf-tl-body {
+    position: static;
+    padding: 0;
+    border-left: 0;
+  }
+
+  .pf-tl-item:last-child .pf-tl-body {
+    padding-bottom: 0;
+  }
+
+  .pf-tl-body .pf-dot {
+    top: 6px;
+  }
+
+  .pf-tl-body .pf-dot--on {
+    top: 5px;
+  }
+
+  .pf-tn-now,
+  .pf-tn-before {
+    padding-top: 16px;
+  }
+
+  .pf-lg-row {
+    padding: 20px 0;
+  }
+
+  .pf-row {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 4px 12px;
+  }
+
+  .pf-row-n {
+    flex: none;
+    padding-top: 6px;
+  }
+
+  .pf-row-meta {
+    grid-column: 2;
+  }
+
+  .pf-feature-points {
+    align-self: stretch;
+  }
+
+  .pf-clip-title {
+    font-size: 26px;
+  }
+}

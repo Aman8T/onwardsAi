@@ -23,6 +23,11 @@ is a three-way choice: supports / contradicts / says_nothing.
 **Drop rule**: a claim is dropped only when the anchors are missing AND the relation is ``says_nothing`` or
 ``contradicts`` at confidence 0.8 or more. One signal alone keeps the claim. Anything that did not finish in time,
 errored, or came back unsure keeps it too (fail open).
+
+**Portfolio copy** reuses the same question (`copy_question`, `copy_verdict`): the generated sentence is the claim and
+the verbatim quotes of the facts it cites are the source. There is no code stage (the portfolio grounder has already
+checked the anchors, strictly) and no anchor short-cut: every sentence is asked. A sentence is dropped when the
+relation is ``contradicts``, or ``says_nothing`` at confidence 0.8 or more; anything else keeps it.
 """
 
 from __future__ import annotations
@@ -35,7 +40,7 @@ from typing import Any, Literal
 
 from ...core.limits import JEV_EVIDENCE_WINDOW_CHARS
 from ...llm.jev import JevQuestion
-from ..service import EvidenceClaim, EvidenceVerdict
+from ..service import CopyClaim, CopyVerdict, EvidenceClaim, EvidenceVerdict
 from ..spec import DecisionConfig, DecisionPack, DecisionResult, DecisionSpec
 from .common import choice_label
 
@@ -462,6 +467,47 @@ def jev_verdict(
     return kept(claim, f"{absent}, but the check says {relation} ({confidence:.2f}), kept", relation)
 
 
+# ───────────────────────── portfolio copy ─────────────────────────
+
+
+_COPY_DROP_WORDS = {CONTRADICTS: "contradict it", SAYS_NOTHING: "say nothing about it"}
+
+
+def copy_question(claim: CopyClaim) -> EvidenceQuestion:
+    """The evidence question for one portfolio sentence: the sentence and the best window of its corpus."""
+    return EvidenceQuestion(claim.sentence, best_window(claim.corpus, claim.sentence))
+
+
+def copy_kept(
+    claim: CopyClaim, reason: str, relation: str | None = None, confidence: float | None = None
+) -> CopyVerdict:
+    return CopyVerdict(
+        claim.slot_id, claim.sentence, keep=True, relation=relation, confidence=confidence, reason=reason
+    )
+
+
+def copy_verdict(claim: CopyClaim, result: DecisionResult[Any] | None) -> CopyVerdict:
+    """The verdict for a portfolio sentence given Jev's (or the Claude fallback's) answer.
+
+    Dropped when the relation is ``contradicts``, or ``says_nothing`` with confidence >= `DROP_CONFIDENCE`.
+    No answer, an unsure answer (the runner already escalated it to Claude) or ``supports`` keeps the sentence.
+    """
+    if result is None or not result.used or not isinstance(result.value, str):
+        return copy_kept(claim, "the check gave no answer, kept")
+    relation = result.value
+    confidence = result.confidence or 0.0
+    if relation == CONTRADICTS or (relation == SAYS_NOTHING and confidence >= DROP_CONFIDENCE):
+        return CopyVerdict(
+            claim.slot_id,
+            claim.sentence,
+            keep=False,
+            relation=relation,
+            confidence=confidence,
+            reason=f"the facts it cites {_COPY_DROP_WORDS[relation]} ({confidence:.2f})",
+        )
+    return copy_kept(claim, f"the check answered {relation} ({confidence:.2f}), kept", relation, confidence)
+
+
 __all__ = [
     "CONCURRENCY",
     "CONTRADICTS",
@@ -487,6 +533,9 @@ __all__ = [
     "build_state",
     "code_check",
     "code_verdict",
+    "copy_kept",
+    "copy_question",
+    "copy_verdict",
     "extract_anchors",
     "fold",
     "fragments",

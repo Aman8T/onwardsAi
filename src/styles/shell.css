@@ -116,6 +116,7 @@
 }
 
 .gv-ask,
+.gv-portfolio,
 .gv-new {
   font-size: var(--fs-2);
   white-space: nowrap;

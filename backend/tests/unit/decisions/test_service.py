@@ -12,6 +12,8 @@ import pytest
 from tayyari.contract import Profile
 from tayyari.decisions import service as facade
 from tayyari.decisions.service import (
+    CopyClaim,
+    CopyVerdict,
     DecisionContext,
     DecisionService,
     EvidenceClaim,
@@ -32,6 +34,10 @@ CTX = DecisionContext(profile_id="p1", analysis_id=UUID(int=3), is_sample=False,
 
 def claim(skill: str = "python", source: str = "github") -> EvidenceClaim:
     return EvidenceClaim(skill, source, f"{skill} claim", "source text", None, None)
+
+
+def copy_claim(slot: str = "aboutLede", sentence: str = "Built a thing.") -> CopyClaim:
+    return CopyClaim(slot, sentence, "I built a thing at Acme.")
 
 
 def test_decision_context_fields_and_default_tag() -> None:
@@ -67,6 +73,8 @@ def test_the_frozen_facade_types_have_the_agreed_fields() -> None:
     ]
     assert names(EvidenceClaim) == ["skill_id", "source_id", "text", "source_text", "reader_output", "facts"]
     assert names(EvidenceVerdict) == ["skill_id", "source_id", "text", "keep", "relation", "reason"]
+    assert names(CopyClaim) == ["slot_id", "sentence", "corpus"]
+    assert names(CopyVerdict) == ["slot_id", "sentence", "keep", "relation", "confidence", "reason"]
     assert names(GateInput) == ["message", "thread"]
     assert names(GateResult) == ["allow_tools", "reason", "p_outside"]
     assert names(ShadowMaterials) == ["profile", "reader_outputs", "resume_text"]
@@ -81,8 +89,17 @@ def test_results_do_not_share_their_default_lists() -> None:
 
 def test_the_protocol_lists_the_methods_the_packs_implement() -> None:
     public = {n for n, _ in inspect.getmembers(DecisionService) if not n.startswith("_")}
-    assert public == {"first_read", "triage", "check_evidence", "chat_web_gate", "shadow_compare", "drain"}
+    assert public == {
+        "first_read",
+        "triage",
+        "check_evidence",
+        "check_copy",
+        "chat_web_gate",
+        "shadow_compare",
+        "drain",
+    }
     assert inspect.iscoroutinefunction(DecisionService.first_read)
+    assert inspect.iscoroutinefunction(DecisionService.check_copy)
     assert not inspect.iscoroutinefunction(DecisionService.shadow_compare)  # returns at once
     assert inspect.iscoroutinefunction(DecisionService.drain)
 
@@ -108,6 +125,14 @@ async def test_the_null_service_is_neutral_everywhere(sample_profile: Profile) -
     assert verdicts[0].text == "python claim" and verdicts[0].relation is None
     assert await service.check_evidence([], CTX) == []
 
+    copy = await service.check_copy([copy_claim("tagline", "One."), copy_claim("exp:exp-1", "Two.")], CTX)
+    assert [(v.slot_id, v.sentence, v.keep, v.relation, v.confidence) for v in copy] == [
+        ("tagline", "One.", True, None, None),
+        ("exp:exp-1", "Two.", True, None, None),
+    ]
+    assert copy[0].reason == "decisions off"
+    assert await service.check_copy([], CTX) == []
+
     gate = await service.chat_web_gate(GateInput("What courses?", "skill: python"), CTX)
     assert gate.allow_tools is True and gate.p_outside is None
 
@@ -124,6 +149,7 @@ async def test_the_fake_is_neutral_by_default_and_records_every_call(sample_prof
     assert await fake.first_read(inp, CTX) is None
     assert (await fake.triage(TriageInput("s", "link", None, None, "t"), CTX)) == TriageResult()
     assert [v.keep for v in await fake.check_evidence([claim(), claim("sql")], CTX)] == [True, True]
+    assert [v.keep for v in await fake.check_copy([copy_claim(), copy_claim("tagline")], CTX)] == [True, True]
     assert (await fake.chat_web_gate(GateInput("hi", "chat"), CTX)).allow_tools is True
     fake.shadow_compare(ShadowMaterials(sample_profile, {"s": {}}, "resume"), CTX)
     await fake.drain(2.5)
@@ -132,13 +158,16 @@ async def test_the_fake_is_neutral_by_default_and_records_every_call(sample_prof
         "first_read": 1,
         "triage": 1,
         "check_evidence": 1,
+        "check_copy": 1,
         "chat_web_gate": 1,
         "shadow_compare": 1,
         "drain": 1,
     }
     assert fake.first_read_calls[0] == (inp, CTX)
+    assert fake.copy_calls[0] == ([copy_claim(), copy_claim("tagline")], CTX)
     assert fake.drain_calls == [2.5]
     assert fake.snapshot()["chat_web_gate"] == [GateInput("hi", "chat")]
+    assert fake.snapshot()["check_copy"] == [[copy_claim(), copy_claim("tagline")]]
 
 
 async def test_the_fake_returns_scripted_results_or_calls_scripts() -> None:
@@ -176,6 +205,33 @@ async def test_the_fake_evidence_script_can_be_a_callable_returning_a_verdict() 
     assert [(v.keep, v.relation) for v in verdicts] == [(True, None), (False, "contradicts")]
 
 
+async def test_the_fake_copy_script_is_a_mapping_by_sentence_or_slot_or_a_callable() -> None:
+    claims = [
+        copy_claim("aboutLede", "Kept."),
+        copy_claim("aboutLede", "Dropped sentence."),
+        copy_claim("tagline", "Another."),
+        copy_claim("exp:exp-1", "Slot dropped."),
+    ]
+    fake = FakeDecisionService(copy={"Dropped sentence.": False, "exp:exp-1": False, "tagline": True})
+    verdicts = await fake.check_copy(claims, CTX)
+    assert [v.keep for v in verdicts] == [True, False, True, False]
+    assert [v.relation for v in verdicts] == [None, "says_nothing", None, "says_nothing"]
+    assert [(v.slot_id, v.sentence) for v in verdicts] == [(c.slot_id, c.sentence) for c in claims]
+
+    def script(c: CopyClaim) -> bool | CopyVerdict:
+        if c.slot_id == "tagline":
+            return CopyVerdict(c.slot_id, c.sentence, keep=False, relation="contradicts", confidence=0.9)
+        return True
+
+    scripted = await FakeDecisionService(copy=script).check_copy(claims, CTX)
+    assert [(v.keep, v.relation) for v in scripted] == [
+        (True, None),
+        (True, None),
+        (False, "contradicts"),
+        (True, None),
+    ]
+
+
 async def test_the_fake_can_be_told_to_fail() -> None:
     fake = FakeDecisionService().fail("triage", RuntimeError("boom"), times=2).fail("drain", TimeoutError())
     for _ in range(2):
@@ -185,12 +241,19 @@ async def test_the_fake_can_be_told_to_fail() -> None:
     with pytest.raises(TimeoutError):
         await fake.drain(1.0)
     assert fake.calls["triage"] == 3  # failed calls are recorded too
+    broken = FakeDecisionService().fail("check_copy", RuntimeError("copy boom"))
+    with pytest.raises(RuntimeError, match="copy boom"):
+        await broken.check_copy([copy_claim()], CTX)
+    assert [v.keep for v in await broken.check_copy([copy_claim()], CTX)] == [True]
+    assert broken.calls["check_copy"] == 2
     with pytest.raises(ValueError, match="unknown"):
         fake.fail("nope", RuntimeError())
 
 
 def test_the_facade_module_exports_exactly_its_public_names() -> None:
     assert set(facade.__all__) == {
+        "CopyClaim",
+        "CopyVerdict",
         "DecisionContext",
         "DecisionService",
         "EvidenceClaim",

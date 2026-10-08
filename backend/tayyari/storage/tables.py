@@ -314,6 +314,34 @@ class KvRow(Base):
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
 
 
+# ───────────────────────────── portfolios ─────────────────────────────
+
+
+class PortfolioRow(Base):
+    """One portfolio document: the Portfolio JSON with metadata, facts_hash for extraction caching,
+    and generated slots for "reset to generated wording". No foreign key: a portfolio survives profile
+    deletion (60-day purge)."""
+
+    __tablename__ = "portfolios"
+
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    public_id: Mapped[str] = mapped_column(String(64), unique=True)
+    doc: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    generated: Mapped[list[dict[str, Any]]] = mapped_column(JSONType)
+    facts_hash: Mapped[str | None] = mapped_column(String(HASH_LEN))
+    version: Mapped[int] = mapped_column(Integer)
+    published: Mapped[bool] = mapped_column(Boolean)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    published_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    last_viewed_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        Index("ix_portfolios_public_id", "public_id"),
+        Index("ix_portfolios_updated_at", "updated_at"),
+    )
+
+
 __all__ = [
     "HASH_LEN",
     "ID_LEN",
@@ -327,6 +355,7 @@ __all__ = [
     "JevCallRow",
     "KvRow",
     "LlmCallRow",
+    "PortfolioRow",
     "ProfileContextRow",
     "ProfileRow",
     "RateLimitHitRow",

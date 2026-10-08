@@ -11,6 +11,7 @@ from tayyari.guard import ratelimit
 from tayyari.guard.ratelimit import (
     GLOBAL_ANALYZE_BUCKET,
     GLOBAL_CHAT_BUCKET,
+    GLOBAL_PORTFOLIO_BUCKET,
     SUBNET_LIMIT_FACTOR,
     InProcessBucket,
     RateLimiter,
@@ -322,6 +323,78 @@ def test_the_chat_global_text_wording() -> None:
     assert (
         limit_message("chat", "global", 1800)
         == "Tayyari is very busy right now. Please try again in about 30 minutes."
+    )
+
+
+# ───────────────────────────── portfolio route ─────────────────────────────
+
+
+async def test_portfolio_has_its_own_rules_and_texts() -> None:
+    limiter, _, _ = make(portfolio_per_minute=2)
+    for _ in range(2):
+        await limiter.check("portfolio", H)
+    err = await refused(limiter, "portfolio")
+    assert (
+        err.user_message == "You're generating portfolios quickly. Please wait about a minute and try again."
+    )
+    await limiter.check("analyze", H)  # analyze counters are separate
+
+
+async def test_the_portfolio_global_backstop_caps_portfolios_across_all_clients() -> None:
+    limiter, _, clock = make(portfolio_global_per_hour=3)
+    for i in range(3):
+        await limiter.check("portfolio", f"client{i:011d}")
+    err = await refused(limiter, "portfolio", "someone-else-0000")
+    assert err.user_message == "Tayyari is very busy right now. Please try again in about an hour."
+    assert err.status == 429
+    assert err.retry_after_s == pytest.approx(3600)
+    clock.advance(3600)
+    await limiter.check("portfolio", "someone-else-0000")
+
+
+async def test_a_zero_portfolio_limit_means_not_enforced() -> None:
+    limiter, spy, _ = make(
+        portfolio_per_minute=0, portfolio_per_hour=0, portfolio_per_day=0, portfolio_global_per_hour=0
+    )
+    for _ in range(50):
+        await limiter.check("portfolio", H)
+    assert spy.hit_calls == 0
+
+
+async def test_the_portfolio_global_backstop_does_not_apply_to_other_routes() -> None:
+    limiter, spy, _ = make(portfolio_global_per_hour=1)
+    for i in range(10):
+        await limiter.check("chat", f"client{i:011d}")
+    assert GLOBAL_PORTFOLIO_BUCKET not in {bucket for bucket, _ in spy.inner.hits}
+
+
+async def test_a_portfolio_client_over_its_own_limit_does_not_use_up_the_global_budget() -> None:
+    limiter, spy, _ = make(portfolio_per_minute=1, portfolio_global_per_hour=60)
+    await limiter.check("portfolio", H)
+    for _ in range(5):
+        await refused(limiter, "portfolio")
+    assert spy.inner.hits[(GLOBAL_PORTFOLIO_BUCKET, NOON.replace(minute=0))] == 1
+
+
+def test_the_portfolio_global_text_wording() -> None:
+    assert (
+        limit_message("portfolio", "global", 1800)
+        == "Tayyari is very busy right now. Please try again in about 30 minutes."
+    )
+
+
+def test_portfolio_window_messages() -> None:
+    assert (
+        limit_message("portfolio", "min", 30)
+        == "You're generating portfolios quickly. Please wait 30 seconds and try again."
+    )
+    assert (
+        limit_message("portfolio", "hour", 3600)
+        == "You've reached the hourly limit for portfolios. Please try again in about an hour."
+    )
+    assert (
+        limit_message("portfolio", "day", 43200)
+        == "You've reached today's limit for portfolios. It resets in about 12 hours."
     )
 
 
@@ -731,12 +804,13 @@ def test_wait_phrase(seconds: float, text: str) -> None:
 
 
 def test_every_route_and_window_has_a_friendly_message() -> None:
-    for route in ("analyze", "chat"):
+    for route in ("analyze", "chat", "portfolio"):
         for window in ("min", "hour", "day"):
             text = limit_message(route, window, 120)
             assert "{" not in text
             assert "about 2 minutes" in text
     assert "about 2 minutes" in limit_message("analyze", "global", 120)
+    assert "about 2 minutes" in limit_message("portfolio", "global", 120)
     assert "about 2 minutes" in limit_message("elsewhere", "min", 120)  # an unknown pair still reads fine
 
 

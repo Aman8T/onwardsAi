@@ -3,6 +3,7 @@
     first_read      the instant read of the resume (lines and chips for the analysis screen)
     triage          one source: skip a login wall or an empty page, label the rest
     check_evidence  one verdict per evidence claim: code first, Jev only for claims whose names or numbers are missing
+    check_copy      one verdict per generated portfolio sentence: Jev (or Claude) is asked about every one
     chat_web_gate   may the coach use web tools for this message
     shadow_compare  queue Jev's own skill, requirement and role numbers next to Sonnet's (logged, never used)
     drain           wait for the background work and flush the decision log
@@ -14,6 +15,7 @@ for long:
 
     first_read    timeout_display_s + 0.5 s        triage   2 x timeout_display_s (room for one Claude fallback)
     check_evidence  timeout_evidence_s, for all claims together (what finished by then counts, the rest is kept)
+    check_copy      timeout_evidence_s, for all sentences together (same rule)
     chat_web_gate  timeout_display_s + 0.5 s
 
 `build_registry()` lists every pack, for the container to log config ids that match no spec.
@@ -22,6 +24,7 @@ for long:
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -32,6 +35,8 @@ from ...core.settings import Settings
 from ..registry import DecisionRegistry
 from ..runner import DecisionRunner
 from ..service import (
+    CopyClaim,
+    CopyVerdict,
     DecisionContext,
     EvidenceClaim,
     EvidenceVerdict,
@@ -55,6 +60,9 @@ from .triage import TRIAGE_PACK, interpret_triage
 from .triage import spec_ids_to_ask as triage_questions
 
 log = get_logger(__name__)
+
+COPY_PURPOSE = "portfolio"
+"""The ``purpose_tag`` of the decision-log rows written by `JevDecisionService.check_copy`."""
 
 ALL_PACKS: tuple[DecisionPack[Any], ...] = (
     FIRST_READ_PACK,
@@ -91,6 +99,7 @@ class JevDecisionService:
         self._triage_budget_s = 2 * display_s
         self._gate_budget_s = display_s + 0.5
         self._evidence_budget_s = settings.jev.timeout_evidence_s
+        self._copy_budget_s = settings.jev.timeout_evidence_s
 
     # ───────────────────────── first read ─────────────────────────
 
@@ -222,22 +231,86 @@ class JevDecisionService:
 
         A question that did not finish in time (or whose wave failed) has no answer: its claim is kept.
         """
+        return await self._ask_support(
+            questions, ctx, budget_s=self._evidence_budget_s, event="evidence_budget_spent"
+        )
+
+    async def _ask_support(
+        self, questions: list[EvidenceQuestion], ctx: DecisionContext, *, budget_s: float, event: str
+    ) -> list[DecisionResult[Any] | None]:
+        """The shared asking loop of the evidence and portfolio checks (see `_ask_evidence`)."""
         answers: list[DecisionResult[Any] | None] = [None] * len(questions)
         width = evidence.CONCURRENCY
         try:
-            async with asyncio.timeout(self._evidence_budget_s):
+            async with asyncio.timeout(budget_s):
                 for start in range(0, len(questions), width):
                     wave = questions[start : start + width]
                     packs = await self._runner.run_many(EVIDENCE_PACK, wave, concurrency=width, ctx=ctx)
                     for offset, pack_result in enumerate(packs):
                         answers[start + offset] = pack_result.get(evidence.SPEC_ID)
         except TimeoutError:
-            log.warning(
-                "evidence_budget_spent",
-                budget_s=self._evidence_budget_s,
-                unanswered=sum(a is None for a in answers),
-            )
+            log.warning(event, budget_s=budget_s, unanswered=sum(a is None for a in answers))
         return answers
+
+    # ───────────────────────── portfolio copy ─────────────────────────
+
+    async def check_copy(self, claims: Sequence[CopyClaim], ctx: DecisionContext) -> list[CopyVerdict]:
+        items = list(claims)
+        verdicts: list[CopyVerdict | None] = [None] * len(items)
+        ctx = dataclasses.replace(ctx, purpose_tag=COPY_PURPOSE)
+        try:
+            await self._check_copy(items, ctx, verdicts)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.error("copy_check_failed", exc_info=True)
+        return [
+            v if v is not None else evidence.copy_kept(claim, "the check did not finish, kept")
+            for claim, v in zip(items, verdicts, strict=True)
+        ]
+
+    async def _check_copy(
+        self, claims: list[CopyClaim], ctx: DecisionContext, verdicts: list[CopyVerdict | None]
+    ) -> None:
+        """Fill ``verdicts`` (None stays "kept"). Every sentence is asked: no anchor short-cut, the portfolio
+        grounder has already checked names and numbers strictly, and this is the semantic second opinion."""
+        asks: dict[tuple[str, str], list[int]] = {}
+        questions: list[EvidenceQuestion] = []
+        for index, claim in enumerate(claims):
+            try:
+                if not claim.sentence.strip():
+                    verdicts[index] = evidence.copy_kept(claim, "empty sentence, kept")
+                    continue
+                if not claim.corpus.strip():
+                    verdicts[index] = evidence.copy_kept(claim, "no text to check against, kept")
+                    continue
+                key = (evidence.normalise(claim.sentence), claim.corpus)
+                slots = asks.get(key)
+                if slots is None:
+                    question = evidence.copy_question(claim)
+                    asks[key] = slots = []
+                    questions.append(question)
+                slots.append(index)
+            except Exception:
+                log.warning("copy_question_failed", slot=claim.slot_id, exc_info=True)
+        # a sentence whose question could not be built is in no list: it stays None (kept)
+        indices_by_question = list(asks.values())
+
+        answered = 0
+        dropped = 0
+        if questions:
+            results = await self._ask_support(
+                questions, ctx, budget_s=self._copy_budget_s, event="copy_budget_spent"
+            )
+            for indices, result in zip(indices_by_question, results, strict=True):
+                answered += result is not None and result.used
+                for index in indices:
+                    verdict = evidence.copy_verdict(claims[index], result)
+                    verdicts[index] = verdict
+                    dropped += not verdict.keep
+        log.info(
+            "copy_checked", sentences=len(claims), asked=len(questions), answered=answered, dropped=dropped
+        )
 
     # ───────────────────────── chat gate ─────────────────────────
 

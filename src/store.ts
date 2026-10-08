@@ -4,10 +4,11 @@
  * `actions.*` — no prop drilling, no context providers.
  */
 import { useSyncExternalStore } from 'react';
+import type { Portfolio, PortfolioPatch } from '../shared/portfolio';
 import type { AnalysisEvent, ChatOrigin, Profile, ReaderState, SourceKind } from '../shared/types';
 import * as api from './lib/api';
 
-export type View = 'onboarding' | 'analysis' | 'graph' | 'chat';
+export type View = 'onboarding' | 'analysis' | 'graph' | 'chat' | 'portfolio';
 
 export interface Signal {
   id: number;
@@ -62,6 +63,21 @@ export interface Thread {
   messages: ChatMessage[];
 }
 
+/**
+ * The owner's portfolio for the current profile. Never persisted: the server is the source of truth and the
+ * screen fetches it whenever it opens. With no `doc`, `status` says what the screen shows (loading, generating,
+ * error). With a `doc`, `error` is a transient notice and `busy` a calm label for work in progress.
+ */
+export interface PortfolioState {
+  doc: Portfolio | null;
+  status: 'idle' | 'loading' | 'generating' | 'ready' | 'error';
+  /** The latest generation progress label ("Reading your sources…"). */
+  step?: string;
+  error?: string;
+  /** A short status line while one edit-side action runs ("Rewriting this section…"). */
+  busy?: string;
+}
+
 export interface AppState {
   view: View;
   profile: Profile | null;
@@ -70,6 +86,7 @@ export interface AppState {
   analysis: AnalysisState;
   threads: Thread[];
   activeThreadId: string | null;
+  portfolio: PortfolioState;
 }
 
 const STORAGE_KEY = 'tayyari.v1';
@@ -86,8 +103,18 @@ const emptyAnalysis = (sample = false): AnalysisState => ({
   sample,
 });
 
+const emptyPortfolio = (): PortfolioState => ({ doc: null, status: 'idle' });
+
 function load(): AppState {
-  const base: AppState = { view: 'onboarding', profile: null, flipped: false, analysis: emptyAnalysis(), threads: [], activeThreadId: null };
+  const base: AppState = {
+    view: 'onboarding',
+    profile: null,
+    flipped: false,
+    analysis: emptyAnalysis(),
+    threads: [],
+    activeThreadId: null,
+    portfolio: emptyPortfolio(),
+  };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return base;
@@ -98,7 +125,9 @@ function load(): AppState {
       // a reload interrupts any in-flight stream
       messages: t.messages.map((m) => (m.status === 'streaming' ? { ...m, status: 'error' as const, error: 'Interrupted by reload' } : m)),
     }));
-    return { ...base, profile: saved.profile, threads, flipped: !!saved.flipped, view: 'graph', activeThreadId: saved.activeThreadId ?? null };
+    // only the portfolio screen is restored on reload (it refetches its document); everything else opens on the graph
+    const view = saved.view === 'portfolio' ? 'portfolio' : 'graph';
+    return { ...base, profile: saved.profile, threads, flipped: !!saved.flipped, view, activeThreadId: saved.activeThreadId ?? null };
   } catch {
     return base;
   }
@@ -110,7 +139,9 @@ const listeners = new Set<() => void>();
 function persist() {
   try {
     const { profile, threads, flipped, activeThreadId } = state;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile, threads, flipped, activeThreadId }));
+    // the portfolio document itself is never stored locally: the view is enough to reopen it
+    const view = state.view === 'portfolio' ? 'portfolio' : undefined;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile, threads, flipped, activeThreadId, view }));
   } catch {
     /* storage unavailable — the app still works for this session */
   }
@@ -118,7 +149,12 @@ function persist() {
 
 let persistTimer: ReturnType<typeof setTimeout> | undefined;
 function set(patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) {
-  const next = typeof patch === 'function' ? patch(state) : patch;
+  let next = typeof patch === 'function' ? patch(state) : patch;
+  if (state.view === 'portfolio' && next.view !== undefined && next.view !== 'portfolio') {
+    // leaving the portfolio screen stops its stream and any queued edits, and settles the state
+    next = { ...next, portfolio: settlePortfolio(next.portfolio ?? state.portfolio) };
+    haltPortfolioWork();
+  }
   state = { ...state, ...next };
   listeners.forEach((l) => l());
   clearTimeout(persistTimer);
@@ -169,11 +205,131 @@ function applyAnalysisEvent(e: AnalysisEvent) {
       case 'synth':
         return { analysis: { ...a, synthStep: Math.max(a.synthStep, e.step), synthChars: e.chars ?? a.synthChars } };
       case 'done':
-        return { profile: e.profile, threads: [], activeThreadId: null, flipped: false, analysis: { ...a, phase: 'done', phaseLabel: 'Your graph is ready', synthStep: 3 } };
+        return {
+          profile: e.profile,
+          threads: [],
+          activeThreadId: null,
+          flipped: false,
+          portfolio: emptyPortfolio(),
+          analysis: { ...a, phase: 'done', phaseLabel: 'Your graph is ready', synthStep: 3 },
+        };
       case 'error':
         return { analysis: { ...a, phase: 'error', error: e.message, phaseLabel: 'Analysis failed' } };
     }
   });
+}
+
+/* ───────────────────────── portfolio ───────────────────────── */
+
+/** Bumped whenever the portfolio screen is left or a new load starts; work from an older run is dropped. */
+let portfolioRun = 0;
+let portfolioAbort: AbortController | null = null;
+/** The load or generation in progress; queued edits wait for it so a late `done` never overwrites them. */
+let portfolioLoad: Promise<void> = Promise.resolve();
+/** Edits, rewrites and graph refreshes run one at a time, so their responses can never arrive out of order. */
+let portfolioQueue: Promise<void> = Promise.resolve();
+
+const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+function setPortfolio(patch: Partial<PortfolioState>) {
+  set((s) => ({ portfolio: { ...s.portfolio, ...patch } }));
+}
+
+/**
+ * What stays when the screen is left: a loaded document (refreshed on return), a failure (so the page that is
+ * fading out does not change under the reader), and nothing in flight.
+ */
+function settlePortfolio(p: PortfolioState): PortfolioState {
+  if (p.doc) return { doc: p.doc, status: 'ready' };
+  return p.status === 'error' ? { doc: null, status: 'error', error: p.error } : emptyPortfolio();
+}
+
+function haltPortfolioWork() {
+  portfolioRun++;
+  portfolioAbort?.abort();
+  portfolioAbort = null;
+}
+
+/** A load or generation failed: keep a draft that already arrived (the error becomes a notice), else show the error page. */
+function failPortfolio(message: string) {
+  set((s) => ({
+    portfolio: {
+      ...s.portfolio,
+      status: s.portfolio.doc ? 'ready' : 'error',
+      step: undefined,
+      busy: undefined,
+      error: message,
+    },
+  }));
+}
+
+async function generatePortfolio(profileId: string, regenerate: boolean, run: number, ctrl: AbortController) {
+  setPortfolio({ status: 'generating', step: undefined, error: undefined, busy: undefined, ...(regenerate ? { doc: null } : {}) });
+  let finished = false;
+  try {
+    await api.generatePortfolio(
+      profileId,
+      regenerate,
+      (e) => {
+        if (run !== portfolioRun) return;
+        if (e.type === 'progress') setPortfolio({ step: e.label });
+        else if (e.type === 'draft') setPortfolio({ doc: e.portfolio, status: 'generating' });
+        else if (e.type === 'done') {
+          finished = true;
+          setPortfolio({ doc: e.portfolio, status: 'ready', step: undefined, error: undefined });
+        } else if (e.type === 'error') {
+          finished = true;
+          failPortfolio(e.message);
+        }
+      },
+      ctrl.signal,
+    );
+    if (!finished && run === portfolioRun && !ctrl.signal.aborted) failPortfolio('The portfolio stream ended unexpectedly.');
+  } catch (err) {
+    if (ctrl.signal.aborted || run !== portfolioRun) return;
+    failPortfolio(messageOf(err));
+  }
+}
+
+/** Fetch the owner's portfolio; with none yet (404) build one. `have` shows meanwhile and stays if the refresh fails. */
+async function loadPortfolio(profileId: string, have: Portfolio | null) {
+  haltPortfolioWork();
+  const run = portfolioRun;
+  const ctrl = new AbortController();
+  portfolioAbort = ctrl;
+  setPortfolio({ doc: have, status: have ? 'ready' : 'loading', step: undefined, error: undefined, busy: undefined });
+  try {
+    const doc = await api.getPortfolio(profileId, ctrl.signal);
+    if (run !== portfolioRun) return;
+    if (doc) setPortfolio({ doc, status: 'ready' });
+    else await generatePortfolio(profileId, false, run, ctrl);
+  } catch (err) {
+    if (ctrl.signal.aborted || run !== portfolioRun) return;
+    if (have) setPortfolio({ status: 'ready' });
+    else failPortfolio(messageOf(err));
+  }
+}
+
+/** Queue one edit-side job behind any generation and earlier jobs; `busy` shows while it runs. */
+function queuePortfolioJob(busy: string | undefined, job: (profileId: string) => Promise<Portfolio>): Promise<void> {
+  const profileId = state.portfolio.doc?.profileId;
+  if (!profileId) return Promise.resolve();
+  const run = portfolioRun;
+  const next = portfolioQueue.then(async () => {
+    await portfolioLoad;
+    if (run !== portfolioRun) return;
+    if (busy) setPortfolio({ busy });
+    try {
+      const doc = await job(profileId);
+      if (run !== portfolioRun) return;
+      setPortfolio({ doc, error: undefined, busy: undefined });
+    } catch (err) {
+      if (run !== portfolioRun) return;
+      setPortfolio({ error: messageOf(err), busy: undefined });
+    }
+  });
+  portfolioQueue = next;
+  return next;
 }
 
 export const actions = {
@@ -211,11 +367,52 @@ export const actions = {
   /** Load the pre-computed sample profile (demo fallback, no AI call). */
   async loadSampleProfile() {
     const profile = await api.sampleProfile();
-    set({ profile, threads: [], activeThreadId: null, flipped: false, view: 'graph' });
+    set({ profile, threads: [], activeThreadId: null, flipped: false, view: 'graph', portfolio: emptyPortfolio() });
   },
 
   showGraph() {
     set({ view: 'graph' });
+  },
+
+  /**
+   * Open the owner's portfolio screen for the current profile. Loads the saved portfolio; when there is none
+   * yet (404) it starts building one. Safe to call again while a load is already running.
+   */
+  openPortfolio(): Promise<void> {
+    const profile = state.profile;
+    if (!profile) return Promise.resolve();
+    const { status, doc } = state.portfolio;
+    set({ view: 'portfolio' });
+    if (status === 'loading' || status === 'generating') return portfolioLoad;
+    portfolioLoad = loadPortfolio(profile.id, doc && doc.profileId === profile.id ? doc : null);
+    return portfolioLoad;
+  },
+
+  /** Build a fresh portfolio from the sources, replacing this one (edits included). */
+  regeneratePortfolio(): Promise<void> {
+    const profile = state.profile;
+    if (!profile || state.portfolio.status === 'generating') return Promise.resolve();
+    haltPortfolioWork();
+    const run = portfolioRun;
+    const ctrl = new AbortController();
+    portfolioAbort = ctrl;
+    portfolioLoad = generatePortfolio(profile.id, true, run, ctrl);
+    return portfolioLoad;
+  },
+
+  /** Save an edit. The server's answer (the whole updated portfolio) replaces the local copy. */
+  patchPortfolio(patch: PortfolioPatch): Promise<void> {
+    return queuePortfolioJob(patch.refreshGraph ? 'Updating the graph…' : undefined, (id) => api.patchPortfolio(id, patch));
+  },
+
+  /** Ask for fresh wording for one copy slot. */
+  rewriteSlot(slotId: string): Promise<void> {
+    return queuePortfolioJob('Rewriting this section…', (id) => api.rewritePortfolioSlot(id, slotId));
+  },
+
+  /** Dismiss the notice shown after a failed edit. */
+  clearPortfolioError() {
+    if (state.portfolio.error && state.portfolio.doc) setPortfolio({ error: undefined });
   },
 
   /** Back to onboarding to analyse a different person (keeps nothing). */
@@ -223,7 +420,7 @@ export const actions = {
     analysisAbort?.abort();
     chatAborts.forEach((c) => c.abort());
     chatAborts.clear();
-    set({ view: 'onboarding', profile: null, threads: [], activeThreadId: null, flipped: false, analysis: emptyAnalysis() });
+    set({ view: 'onboarding', profile: null, threads: [], activeThreadId: null, flipped: false, analysis: emptyAnalysis(), portfolio: emptyPortfolio() });
   },
 
   /**

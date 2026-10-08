@@ -15,6 +15,7 @@ from tayyari.decisions.config import DecisionConfigStore, load_defaults
 from tayyari.decisions.packs.service_impl import ALL_PACKS, JevDecisionService, build_registry
 from tayyari.decisions.packs.shadow import REQUIREMENT_HAVE_ID, ROLE_FIT_ID, SKILL_LEVEL_ID
 from tayyari.decisions.service import (
+    CopyClaim,
     DecisionService,
     EvidenceClaim,
     GateInput,
@@ -147,6 +148,8 @@ def one_of_each(profile: Profile, h: PackHarness) -> dict[str, Callable[[], Awai
         "react", "resume", "Led the Stripe migration for 9000 stores", "I used React. " * 40, None, None
     )
 
+    copy_claim = CopyClaim("aboutLede", "Led the Stripe migration.", "I used React for the checkout.")
+
     async def shadow() -> None:
         h.service.shadow_compare(ShadowMaterials(profile, {"resume": {"sub": "x"}}, "resume"), CTX)
         await h.service.drain(2.0)
@@ -155,6 +158,7 @@ def one_of_each(profile: Profile, h: PackHarness) -> dict[str, Callable[[], Awai
         "first_read": lambda: h.service.first_read(resume_input(), CTX),
         "triage": lambda: h.service.triage(page_input("A page of text. " * 60), CTX),
         "check_evidence": lambda: h.service.check_evidence([claim], CTX),
+        "check_copy": lambda: h.service.check_copy([copy_claim], CTX),
         "chat_web_gate": lambda: h.service.chat_web_gate(GateInput("Any open roles?", "free: Chat"), CTX),
         "shadow": shadow,
     }
@@ -169,6 +173,7 @@ async def test_no_method_raises_when_jev_errors(harness: Harness, sample_profile
     assert await calls["first_read"]() is None
     assert await calls["triage"]() == TriageResult()
     assert [v.keep for v in await calls["check_evidence"]()] == [True]
+    assert [v.keep for v in await calls["check_copy"]()] == [True]
     assert (await calls["chat_web_gate"]()).allow_tools is True
     assert await calls["shadow"]() is None
 
@@ -184,6 +189,7 @@ async def test_no_method_raises_when_jev_and_claude_both_fail(
     assert await calls["first_read"]() is None
     assert await calls["triage"]() == TriageResult()
     assert [v.keep for v in await calls["check_evidence"]()] == [True]
+    assert [v.keep for v in await calls["check_copy"]()] == [True]
     assert (await calls["chat_web_gate"]()).allow_tools is True
     assert await calls["shadow"]() is None
 
@@ -194,6 +200,7 @@ async def test_no_method_raises_when_the_spend_guard_trips(harness: Harness, sam
     assert await calls["first_read"]() is None
     assert await calls["triage"]() == TriageResult()
     assert [v.keep for v in await calls["check_evidence"]()] == [True]
+    assert [v.keep for v in await calls["check_copy"]()] == [True]
     assert (await calls["chat_web_gate"]()).allow_tools is True
     assert await calls["shadow"]() is None
     assert h.jev.calls == []
@@ -205,11 +212,13 @@ async def test_no_method_raises_when_jev_is_slow_past_every_budget(
     h = harness({}, slow_jev_s=5.0, with_claude=False)
     s = h.service
     s._first_read_budget_s = s._triage_budget_s = s._gate_budget_s = s._evidence_budget_s = 0.05
+    s._copy_budget_s = 0.05
     calls = one_of_each(sample_profile, h)
 
     assert await calls["first_read"]() is None
     assert await calls["triage"]() == TriageResult()
     assert [v.keep for v in await calls["check_evidence"]()] == [True]
+    assert [v.keep for v in await calls["check_copy"]()] == [True]
     assert (await calls["chat_web_gate"]()).allow_tools is True
 
 
@@ -221,6 +230,7 @@ async def test_a_disabled_jev_without_claude_is_neutral_everywhere(
     assert await calls["first_read"]() is None
     assert await calls["triage"]() == TriageResult()
     assert [v.keep for v in await calls["check_evidence"]()] == [True]
+    assert [v.keep for v in await calls["check_copy"]()] == [True]
     assert (await calls["chat_web_gate"]()).allow_tools is True
     assert await calls["shadow"]() is None
     assert h.jev.calls == []
@@ -236,12 +246,16 @@ async def test_it_matches_the_null_service_when_nothing_can_be_asked(harness: Ha
     assert (await h.service.chat_web_gate(gate, CTX)).allow_tools == (
         await null.chat_web_gate(gate, CTX)
     ).allow_tools
+    copy = [CopyClaim("tagline", "Led the Stripe migration.", "I used React for the checkout.")]
+    assert [v.keep for v in await h.service.check_copy(copy, CTX)] == [
+        v.keep for v in await null.check_copy(copy, CTX)
+    ]
 
 
 # ───────────────────────── cancellation ─────────────────────────
 
 
-@pytest.mark.parametrize("method", ["first_read", "triage", "check_evidence", "chat_web_gate"])
+@pytest.mark.parametrize("method", ["first_read", "triage", "check_evidence", "check_copy", "chat_web_gate"])
 async def test_cancellation_propagates(harness: Harness, sample_profile: Profile, method: str) -> None:
     h = harness({}, slow_jev_s=30.0, with_claude=False)
     task = asyncio.ensure_future(one_of_each(sample_profile, h)[method]())

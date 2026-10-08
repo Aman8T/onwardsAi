@@ -9,6 +9,8 @@ Contract for every implementation:
     (no first read, no skip, keep the evidence, allow tools). Only cancellation propagates.
   - ``shadow_compare`` returns at once; the work runs in a tracked background task and never raises.
   - ``drain`` waits (up to ``timeout_s``) for the background work and flushes the decision log.
+  - ``check_copy`` (portfolio copy) is the one check that asks every sentence and never short-cuts in code; it still
+    fails open: a failed, late or unsure check keeps the sentence.
 """
 
 from __future__ import annotations
@@ -177,6 +179,14 @@ class DecisionService(Protocol):
         """One verdict per claim, in the same order; unfinished or failed checks keep the claim."""
         ...
 
+    async def check_copy(self, claims: Sequence[CopyClaim], ctx: DecisionContext) -> list[CopyVerdict]:
+        """One verdict per generated sentence, in the same order: does its corpus support it?
+
+        A sentence is dropped (``keep=False``) only when the corpus contradicts it, or says nothing about it with
+        confidence >= 0.8. A failed, late or unsure check keeps the sentence.
+        """
+        ...
+
     async def chat_web_gate(self, inp: GateInput, ctx: DecisionContext) -> GateResult:
         """May the coach use web tools for this message? Defaults to yes."""
         ...
@@ -204,6 +214,12 @@ class NullDecisionService:
     ) -> list[EvidenceVerdict]:
         return [
             EvidenceVerdict(c.skill_id, c.source_id, c.text, keep=True, relation=None, reason="decisions off")
+            for c in claims
+        ]
+
+    async def check_copy(self, claims: Sequence[CopyClaim], ctx: DecisionContext) -> list[CopyVerdict]:
+        return [
+            CopyVerdict(c.slot_id, c.sentence, keep=True, relation=None, reason="decisions off")
             for c in claims
         ]
 

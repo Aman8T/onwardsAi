@@ -1,7 +1,7 @@
 /**
  * Graph header (calm theme): the wordmark, a text segmented control Now | Next with one
  * 1px underline that slides between the two, and the right-hand cluster: sources status,
- * the Atmosphere menu, Ask, the New-analysis confirm and a hairline-circle avatar.
+ * the Atmosphere menu, Portfolio, Ask, the New-analysis confirm and a hairline-circle avatar.
  * Sticky, on a solid field tone with a 1px hairline underneath. Styles live in shell.css.
  */
 import { AnimatePresence, motion } from 'motion/react';
@@ -119,6 +119,14 @@ export function GraphHeader({ profile }: { profile: Profile }) {
           {plural(nSources, 'source')} · analysed {Number.isFinite(analysedAt) ? timeAgo(analysedAt, now) : 'recently'}
         </span>
         <Atmosphere className="gv-atmo" />
+        <button
+          type="button"
+          className="btn btn-quiet gv-portfolio"
+          title="Turn this graph into a portfolio page"
+          onClick={() => void actions.openPortfolio()}
+        >
+          Portfolio
+        </button>
         <button type="button" className="btn btn-quiet gv-ask" aria-label="Ask Tayyari" onClick={() => actions.openChat(freeAction().origin, '')}>
           Ask
         </button>

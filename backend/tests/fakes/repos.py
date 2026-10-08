@@ -38,7 +38,15 @@ from tayyari.contract.records import DecisionRecord, JevCallRecord, LlmCallRecor
 from tayyari.contract.stored import StoredContext
 from tayyari.core.clock import Clock, SystemClock
 from tayyari.core.ids import new_session_id
-from tayyari.storage.ports import ChatMessage, ChatSession, SessionConflict, SessionNotFound, ToolEvent
+from tayyari.storage.ports import (
+    ChatMessage,
+    ChatSession,
+    PortfolioConflict,
+    SessionConflict,
+    SessionNotFound,
+    StoredPortfolio,
+    ToolEvent,
+)
 from tayyari.storage.repos import Repositories
 
 TOUCH_INTERVAL = timedelta(hours=1)
@@ -441,8 +449,133 @@ class FakeKvRepo:
             raise ValueError(f"kv key {key!r} does not hold a hex-encoded secret") from None
 
 
+@dataclass
+class _Portfolio:
+    profile_id: str
+    public_id: str
+    doc: dict[str, Any]
+    generated: list[dict[str, Any]]
+    facts_hash: str | None
+    version: int
+    published: bool
+    created_at: datetime
+    updated_at: datetime
+    published_at: datetime | None
+    last_viewed_at: datetime | None
+
+
+class FakePortfolioRepo:
+    def __init__(self, state: _State) -> None:
+        self._s = state
+        self.portfolios: dict[str, _Portfolio] = {}
+
+    async def get(self, profile_id: str) -> StoredPortfolio | None:
+        await _yield()
+        p = self.portfolios.get(profile_id)
+        if p is None:
+            return None
+        return StoredPortfolio(
+            profile_id=p.profile_id,
+            public_id=p.public_id,
+            doc=_roundtrip(p.doc),
+            facts_hash=p.facts_hash,
+            generated=_roundtrip(p.generated),
+            version=p.version,
+            published=p.published,
+            created_at=p.created_at,
+            updated_at=p.updated_at,
+        )
+
+    async def get_published(self, public_id: str) -> StoredPortfolio | None:
+        await _yield()
+        for p in self.portfolios.values():
+            if p.public_id == public_id and p.published:
+                p.last_viewed_at = self._s.clock.now()
+                return StoredPortfolio(
+                    profile_id=p.profile_id,
+                    public_id=p.public_id,
+                    doc=_roundtrip(p.doc),
+                    facts_hash=p.facts_hash,
+                    generated=_roundtrip(p.generated),
+                    version=p.version,
+                    published=p.published,
+                    created_at=p.created_at,
+                    updated_at=p.updated_at,
+                )
+        return None
+
+    async def put(self, rec: StoredPortfolio, *, expected_version: int | None) -> StoredPortfolio:
+        await _yield()
+        existing = self.portfolios.get(rec.profile_id)
+        if expected_version is not None and (existing is None or existing.version != expected_version):
+            raise PortfolioConflict(
+                f"portfolio version conflict for profile {rec.profile_id}: expected {expected_version}"
+            )
+        now = self._s.clock.now()
+        # Determine new version: 1 for new row, existing+1 for updates, expected+1 for optimistic
+        if existing is None:
+            new_version = 1
+        elif expected_version is None:
+            new_version = existing.version + 1
+        else:
+            new_version = expected_version + 1
+        public_id = existing.public_id if existing else rec.public_id
+        created_at = existing.created_at if existing else now
+        published_at = (
+            now
+            if rec.published and not (existing and existing.published)
+            else (existing.published_at if existing else None)
+        )
+        p = _Portfolio(
+            profile_id=rec.profile_id,
+            public_id=public_id,
+            doc=_roundtrip(rec.doc),
+            generated=_roundtrip(rec.generated),
+            facts_hash=rec.facts_hash,
+            version=new_version,
+            published=rec.published,
+            created_at=created_at,
+            updated_at=now,
+            published_at=published_at,
+            last_viewed_at=existing.last_viewed_at if existing else None,
+        )
+        self.portfolios[rec.profile_id] = p
+        return StoredPortfolio(
+            profile_id=p.profile_id,
+            public_id=p.public_id,
+            doc=_roundtrip(p.doc),
+            facts_hash=p.facts_hash,
+            generated=_roundtrip(p.generated),
+            version=p.version,
+            published=p.published,
+            created_at=p.created_at,
+            updated_at=p.updated_at,
+        )
+
+    async def delete(self, profile_id: str) -> bool:
+        await _yield()
+        if profile_id in self.portfolios:
+            del self.portfolios[profile_id]
+            return True
+        return False
+
+    async def purge_orphan_drafts(self, cutoff: datetime) -> int:
+        await _yield()
+        # Collect profile ids that exist (in _State)
+        profile_ids = set(self._s.profiles.keys())
+        # Find portfolios to delete: unpublished, updated before cutoff, profile gone
+        to_delete = [
+            pid
+            for pid, p in self.portfolios.items()
+            if not p.published and p.updated_at < _utc(cutoff) and p.profile_id not in profile_ids
+        ]
+        for pid in to_delete:
+            del self.portfolios[pid]
+        return len(to_delete)
+
+
 class FakeRepositories:
-    """The six fakes over one shared state; ``bundle`` is the `Repositories` services are constructed with."""
+    """The seven fakes over one shared state; ``bundle`` is the `Repositories` services are constructed with."""
 
     def __init__(self, clock: Clock | None = None) -> None:
         self._state = _State(clock=clock or SystemClock())
@@ -452,6 +585,7 @@ class FakeRepositories:
         self.decisions = FakeDecisionLogRepo(self._state)
         self.limits = FakeLimitRepo(self._state)
         self.kv = FakeKvRepo(self._state)
+        self.portfolios = FakePortfolioRepo(self._state)
         self.bundle = Repositories(
             profiles=self.profiles,
             sessions=self.sessions,
@@ -459,6 +593,7 @@ class FakeRepositories:
             decisions=self.decisions,
             limits=self.limits,
             kv=self.kv,
+            portfolios=self.portfolios,
         )
 
 
@@ -467,6 +602,7 @@ __all__ = [
     "FakeKvRepo",
     "FakeLimitRepo",
     "FakeLlmCallRepo",
+    "FakePortfolioRepo",
     "FakeProfileRepo",
     "FakeRepositories",
     "FakeSessionRepo",

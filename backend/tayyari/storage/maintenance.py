@@ -11,6 +11,7 @@ What is purged, with the windows from ``settings.retention``:
                        anyone can chat with the public sample persona, so what they type is user text
 ``sample_runs``        sample profiles (``is_sample``: "Try a sample profile" runs) idle for
                        ``profile_days``, except the ids in ``keep_profile_ids`` (the bundled persona)
+``orphan_drafts``      unpublished portfolios updated > ``profile_days`` whose profile is gone
 ``state_payloads``     ``decision_states.payload`` (the resume text sent to Jev) after ``payload_days``
 ``jev_payloads``       ``jev_calls.questions`` and ``response`` emptied after ``payload_days``,
                        ``payload_purged_at`` set so replays skip them
@@ -224,6 +225,7 @@ async def run_maintenance(
         ("profiles", lambda: repos.profiles.purge_expired(profile_cutoff)),
         ("sample_chats", lambda: _purge_sample_chats(db, profile_cutoff)),
         ("sample_runs", lambda: _purge_sample_runs(db, profile_cutoff, keep)),
+        ("orphan_drafts", lambda: repos.portfolios.purge_orphan_drafts(profile_cutoff)),
         ("state_payloads", lambda: _purge_state_payloads(db, payload_cutoff, keep)),
         ("jev_payloads", lambda: _purge_jev_payloads(db, payload_cutoff, now, keep)),
         ("decision_log", lambda: _delete_decision_log(db, metadata_cutoff, keep)),

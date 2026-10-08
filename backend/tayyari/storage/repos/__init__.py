@@ -7,11 +7,12 @@ from dataclasses import dataclass
 from tayyari.core.clock import Clock
 
 from ..db import Database
-from ..ports import DecisionLogRepo, KvRepo, LimitRepo, LlmCallRepo, ProfileRepo, SessionRepo
+from ..ports import DecisionLogRepo, KvRepo, LimitRepo, LlmCallRepo, PortfolioRepo, ProfileRepo, SessionRepo
 from .decisions import SqlDecisionLogRepo
 from .kv import SqlKvRepo
 from .limits import SqlLimitRepo
 from .llm_calls import SqlLlmCallRepo
+from .portfolios import SqlPortfolioRepo
 from .profiles import SqlProfileRepo
 from .sessions import SqlSessionRepo
 
@@ -26,6 +27,7 @@ class Repositories:
     decisions: DecisionLogRepo
     limits: LimitRepo
     kv: KvRepo
+    portfolios: PortfolioRepo
 
 
 def build_repositories(db: Database, clock: Clock | None = None) -> Repositories:
@@ -37,6 +39,7 @@ def build_repositories(db: Database, clock: Clock | None = None) -> Repositories
         decisions=SqlDecisionLogRepo(db, clock),
         limits=SqlLimitRepo(db),
         kv=SqlKvRepo(db, clock),
+        portfolios=SqlPortfolioRepo(db, clock),
     )
 
 
@@ -46,6 +49,7 @@ __all__ = [
     "SqlKvRepo",
     "SqlLimitRepo",
     "SqlLlmCallRepo",
+    "SqlPortfolioRepo",
     "SqlProfileRepo",
     "SqlSessionRepo",
     "build_repositories",

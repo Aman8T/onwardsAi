@@ -1,0 +1,1049 @@
+/*
+ * Portfolio editor (src/portfolio/editor). Every class is prefixed "pe-".
+ * The chrome follows the app's ambient tokens (tokens.css at :root). Only the swatches, the look
+ * thumbnails (.pe-scope) and the preview inside the pane sit under a .pf-scope and show the portfolio's
+ * own palette. Tokens only: no colour literals, no shadows, 1px borders, motion limited to tone changes.
+ */
+
+/* ───────────── frame ───────────── */
+
+.pe-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: 1.45;
+}
+
+.pe-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+}
+
+.pe-grow {
+  flex: 1 1 0;
+}
+
+.pe-muted {
+  color: var(--text-muted);
+}
+
+.pe-small {
+  font-size: var(--fs-1);
+  line-height: var(--lh-snug);
+}
+
+.pe-plain {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Section label: mono, small caps feel. */
+.pe-lbl {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ───────────── buttons and small parts ───────────── */
+
+.pe-ghost,
+.pe-outline,
+.pe-solid,
+.pe-quiet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  margin: 0;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.pe-ghost {
+  height: 36px;
+  padding: 0 10px 0 8px;
+  border: 0;
+  border-radius: var(--r-s);
+  background: transparent;
+  color: var(--text);
+}
+
+.pe-ghost:hover {
+  background: var(--surface-2);
+}
+
+.pe-outline {
+  height: 34px;
+  padding: 0 14px;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-s);
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.pe-outline:hover {
+  background: var(--surface-2);
+}
+
+.pe-outline[disabled] {
+  background: var(--surface);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.pe-solid {
+  height: 34px;
+  padding: 0 16px;
+  border: var(--hair) solid var(--accent-strong);
+  border-radius: var(--r, var(--r-s));
+  background: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--surface);
+}
+
+.pe-solid:hover {
+  background: var(--text);
+  border-color: var(--text);
+}
+
+.pe-quiet {
+  height: 34px;
+  padding: 0 16px;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r, var(--r-s));
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.pe-quiet:hover {
+  background: var(--surface-2);
+}
+
+.pe-solid[disabled],
+.pe-quiet[disabled] {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.pe-wide {
+  width: 100%;
+}
+
+.pe-gap {
+  margin-top: var(--s3);
+}
+
+.pe-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  height: 24px;
+  padding: 0 10px;
+  border: var(--hair) solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: var(--fs-1);
+  line-height: 1;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.pe-dot {
+  display: block;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-ui);
+}
+
+/* Segmented control. */
+.pe-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+}
+
+.pe-seg button {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-s);
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.pe-seg button:hover {
+  color: var(--text);
+}
+
+.pe-seg button[aria-pressed='true'] {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Switch. */
+.pe-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 4px 0 12px;
+  border: 0;
+  border-radius: var(--r-s);
+  background: transparent;
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.pe-switch:hover {
+  background: var(--surface-2);
+}
+
+.pe-sw-track {
+  position: relative;
+  display: block;
+  width: 36px;
+  height: 20px;
+  border: var(--hair) solid var(--text-muted);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.pe-sw-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform var(--d-fast) var(--ease);
+}
+
+.pe-switch[aria-checked='true'] .pe-sw-track {
+  border-color: var(--accent-ui);
+  background: var(--accent-ui);
+}
+
+.pe-switch[aria-checked='true'] .pe-sw-knob {
+  background: var(--surface);
+  transform: translateX(16px);
+}
+
+/* Icon button (eye, public). */
+.pe-ib {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: var(--hair) solid transparent;
+  border-radius: var(--r-s);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.pe-ib:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.pe-ib[aria-pressed='true'] {
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--accent-strong);
+}
+
+.pe-ib[aria-disabled='true'] {
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.pe-ib[aria-disabled='true']:hover {
+  background: transparent;
+  color: var(--text-faint);
+}
+
+/* Select. */
+.pe-sel {
+  height: 28px;
+  padding: 0 4px 0 6px;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-s);
+  background: var(--surface);
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.pe-sel-wide {
+  width: 140px;
+}
+
+.pe-sel-variant {
+  flex: none;
+  width: 112px;
+}
+
+/* Checkbox rows. */
+.pe-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.pe-check input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent-ui);
+  cursor: pointer;
+}
+
+.pe-check[data-locked] {
+  color: var(--text-muted);
+}
+
+.pe-check[data-locked] input {
+  cursor: not-allowed;
+}
+
+.pe-check-row {
+  justify-content: flex-start;
+}
+
+/* ───────────── top bar ───────────── */
+
+.pe-header {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  min-height: 64px;
+  padding: var(--s2) var(--s5);
+  background: var(--surface);
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.pe-vsep {
+  width: 1px;
+  height: 24px;
+  background: var(--line);
+}
+
+.pe-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.pe-chip-status {
+  margin: 0;
+}
+
+/* ───────────── left panel ───────────── */
+
+.pe-aside {
+  flex: 0 0 360px;
+  overflow-y: auto;
+  padding: var(--s4);
+  background: var(--surface);
+  border-right: var(--hair) solid var(--line);
+}
+
+.pe-sec {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: var(--hair) solid var(--line);
+}
+
+.pe-sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.pe-hint {
+  margin: var(--s1) 0 var(--s1);
+}
+
+.pe-lockable[inert],
+.pe-lockable[inert] > * {
+  opacity: 0.6;
+}
+
+.pe-rowc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  min-height: 36px;
+}
+
+.pe-rowc-flush {
+  min-height: 20px;
+  margin-top: 14px;
+}
+
+.pe-rl {
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* Looks. */
+.pe-looks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s2);
+  margin-top: var(--s2);
+}
+
+.pe-look {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  text-align: left;
+  transition:
+    background-color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.pe-look:hover {
+  background: var(--surface-2);
+}
+
+.pe-look[aria-checked='true'] {
+  border-color: var(--accent-strong);
+  background: var(--surface-2);
+}
+
+.pe-look-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s1);
+  color: var(--accent-strong);
+}
+
+.pe-look-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pe-look-name {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pe-look-sub {
+  font-size: var(--fs-0);
+  line-height: 1.25;
+  color: var(--text-muted);
+}
+
+/* The wrapper that makes its children paint in a portfolio family; it adds no box of its own. */
+.pe-view .pe-scope {
+  display: contents;
+}
+
+.pe-mini {
+  display: block;
+  height: 49px;
+  overflow: hidden;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-s);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(50px 36px at 0% 0%, var(--lobe-1) 0%, transparent 70%),
+    radial-gradient(44px 32px at 100% 20%, var(--lobe-2) 0%, transparent 70%);
+}
+
+.pe-mini-svg {
+  display: block;
+  width: 100%;
+  height: 49px;
+}
+
+.pe-m-d {
+  fill: var(--text);
+  fill-opacity: 0.6;
+}
+
+.pe-m-l {
+  fill: var(--text);
+  fill-opacity: 0.2;
+}
+
+.pe-m-a {
+  fill: var(--accent-strong);
+}
+
+.pe-m-o {
+  fill: none;
+  stroke: var(--text);
+  stroke-opacity: 0.3;
+  stroke-width: 0.5;
+}
+
+.pe-m-t {
+  fill: var(--surface);
+  fill-opacity: 0.7;
+  stroke: var(--text);
+  stroke-opacity: 0.18;
+  stroke-width: 0.5;
+}
+
+.pe-m-r {
+  fill: none;
+  stroke: var(--text);
+  stroke-opacity: 0.25;
+  stroke-width: 0.5;
+}
+
+.pe-m-p {
+  fill: var(--accent-ui);
+  fill-opacity: 0.22;
+  stroke: var(--accent-ui);
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+}
+
+/* Family swatches. */
+.pe-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin: 2px 0 0 -4px;
+}
+
+.pe-swc {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: var(--hair) solid transparent;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.pe-swc[aria-checked='true'] {
+  border-color: var(--text);
+}
+
+.pe-swc-dot {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: var(--hair) solid var(--line);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--lobe-1) 0%, var(--accent-ui) 100%);
+}
+
+/* ───────────── sections list ───────────── */
+
+.pe-rows {
+  margin: var(--s2) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--hair) solid var(--line);
+}
+
+.pe-row {
+  position: relative;
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.pe-row[data-selected] {
+  background: var(--surface-2);
+}
+
+.pe-row[data-selected]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--accent-ui);
+}
+
+.pe-row-main {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  min-height: 48px;
+  padding-left: var(--s1);
+}
+
+.pe-move {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+}
+
+.pe-mv {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-s);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.pe-mv:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.pe-row[data-selected] .pe-mv:hover {
+  background: var(--surface);
+}
+
+.pe-mv[aria-disabled='true'] {
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.pe-mv[aria-disabled='true']:hover {
+  background: transparent;
+  color: var(--text-faint);
+}
+
+.pe-name {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: var(--r-s);
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.pe-row[data-off] .pe-name {
+  color: var(--text-muted);
+}
+
+.pe-tag {
+  margin-left: 6px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.pe-row-note {
+  margin: 0 var(--s2) var(--s2) 28px;
+  font-size: var(--fs-1);
+  line-height: var(--lh-snug);
+  color: var(--text-muted);
+}
+
+.pe-row-note-flush {
+  margin: 0;
+}
+
+.pe-graph-opts {
+  display: grid;
+  gap: var(--s2);
+  padding: 0 var(--s2) var(--s3) 28px;
+}
+
+.pe-areas {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pe-legend {
+  display: flex;
+  gap: var(--s2);
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.pe-legend .numeral {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* ───────────── confirm ───────────── */
+
+.pe-confirm {
+  display: grid;
+  gap: var(--s3);
+  margin-top: var(--s3);
+  padding: var(--s3);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+}
+
+.pe-confirm p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.pe-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s2);
+}
+
+/* ───────────── right: preview ───────────── */
+
+.pe-main {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: 20px var(--s5) var(--s5);
+}
+
+.pe-main-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s4);
+  min-height: 28px;
+}
+
+.pe-main-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s1) var(--s3);
+}
+
+.pe-main-side {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.pe-busy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.pe-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s4);
+  padding: var(--s3) var(--s4);
+  border: var(--hair) solid var(--accent-ui);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.pe-banner p {
+  flex: 1 1 280px;
+  margin: 0;
+  color: var(--text);
+}
+
+.pe-pane {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-l);
+  background: var(--surface);
+}
+
+.pe-pane-scroll {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.pe-pane-inner {
+  min-height: 100%;
+}
+
+/* ───────────── in-place slot editor (inside the preview, so tokens are the portfolio's) ───────────── */
+
+.pe-slot {
+  display: block;
+  box-sizing: border-box;
+  max-width: none;
+  padding: 14px 20px 18px;
+  border: var(--hair) solid var(--accent-ui);
+  border-radius: var(--r, var(--r-m));
+  background: var(--surface);
+  text-wrap: pretty;
+}
+
+.pe-slot-top,
+.pe-slot-note,
+.pe-slot-actions {
+  font-family: var(--font-sans);
+  font-size: var(--fs-1);
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: var(--lh-snug);
+  text-align: left;
+  text-transform: none;
+  color: var(--text-muted);
+}
+
+.pe-slot-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-bottom: 6px;
+}
+
+.pe-slot-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.pe-slot-saving {
+  color: var(--text-muted);
+}
+
+.pe-count {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.pe-count[data-over] {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.pe-slot-area {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-transform: none;
+  text-wrap: inherit;
+  resize: none;
+  overflow: hidden;
+  outline-offset: 6px;
+}
+
+.pe-slot-area[aria-invalid='true'] {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--danger);
+  text-underline-offset: 4px;
+}
+
+.pe-slot-note {
+  display: block;
+  margin-top: 10px;
+}
+
+.pe-slot-strong {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.pe-slot-warn {
+  color: var(--danger);
+}
+
+.pe-slot-hint {
+  display: block;
+  color: var(--text-muted);
+}
+
+.pe-slot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: 14px;
+}
+
+/* ───────────── responsive ───────────── */
+
+/* Not enough width for the panel beside the preview: the panel goes on top and the page scrolls. */
+@media (max-width: 1100px) {
+  .pe-view {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .pe-body {
+    flex-direction: column;
+  }
+
+  /* Two columns: looks and style on the left, the sections list on the right. */
+  .pe-aside {
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    /* The sections list spans all four rows; its extra height goes to the last one, not between the others. */
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: var(--s6);
+    align-items: start;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: var(--hair) solid var(--line);
+  }
+
+  .pe-lockable {
+    display: contents;
+  }
+
+  .pe-col-a {
+    grid-column: 1;
+  }
+
+  .pe-col-b {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .pe-main {
+    padding: var(--s4);
+  }
+
+  .pe-pane {
+    flex: none;
+    height: 80dvh;
+    min-height: 480px;
+  }
+}
+
+@media (max-width: 760px) {
+  .pe-header {
+    padding: var(--s3) var(--s4);
+  }
+
+  .pe-vsep {
+    display: none;
+  }
+
+  .pe-title {
+    font-size: 26px;
+  }
+
+  .pe-grow {
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  .pe-aside {
+    display: block;
+    padding: var(--s4);
+  }
+
+  .pe-lockable {
+    display: block;
+  }
+
+  .pe-col-b {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: var(--hair) solid var(--line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pe-sw-knob,
+  .pe-look,
+  .pe-seg button,
+  .pe-ghost,
+  .pe-outline,
+  .pe-solid,
+  .pe-quiet {
+    transition: none;
+  }
+}

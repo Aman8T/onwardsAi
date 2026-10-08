@@ -5,13 +5,16 @@
         triage=lambda inp: TriageResult(skip=True, skip_reason="login wall") if "login" in inp.text else TriageResult(),
         evidence={("python", "github"): False},          # drop that claim, keep the rest
         gate=GateResult(allow_tools=False, reason="from the profile", p_outside=0.05),
+        copy={"about": False, "A sentence that is dropped.": False},   # portfolio sentences, by slot id or sentence
     )
     ...
     assert decisions.gate_calls[0][0].message == "What is my strongest skill?"
 
 Each result can be a value or a callable of the input (``first_read`` and ``gate`` also of the context). Evidence is a
 mapping of ``(skill_id, source_id)`` to keep (default: keep everything), a callable of the claim returning keep
-or an `EvidenceVerdict`, or None. ``fail("triage", RuntimeError("boom"))`` makes the next call of that method raise
+or an `EvidenceVerdict`, or None. Portfolio copy (``check_copy``) is a mapping of a sentence or a slot id to keep
+(a sentence wins over its slot; default: keep everything), a callable of the `CopyClaim` returning keep or a
+`CopyVerdict`, or None. ``fail("triage", RuntimeError("boom"))`` makes the next call of that method raise
 (``times`` calls), for tests that check the caller survives a broken service. ``shadow_compare`` and ``drain`` are
 recorded too.
 """
@@ -22,6 +25,8 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from tayyari.decisions.service import (
+    CopyClaim,
+    CopyVerdict,
     DecisionContext,
     EvidenceClaim,
     EvidenceVerdict,
@@ -39,7 +44,11 @@ TriageScript = TriageResult | Callable[[TriageInput], TriageResult]
 GateScript = GateResult | Callable[[GateInput, DecisionContext], GateResult]
 EvidenceScript = Mapping[tuple[str, str], bool] | Callable[[EvidenceClaim], bool | EvidenceVerdict] | None
 
-_METHODS = frozenset({"first_read", "triage", "check_evidence", "chat_web_gate", "shadow_compare", "drain"})
+CopyScript = Mapping[str, bool] | Callable[[CopyClaim], bool | CopyVerdict] | None
+
+_METHODS = frozenset(
+    {"first_read", "triage", "check_evidence", "check_copy", "chat_web_gate", "shadow_compare", "drain"}
+)
 
 
 class FakeDecisionService:
@@ -50,10 +59,12 @@ class FakeDecisionService:
         triage: TriageScript | None = None,
         evidence: EvidenceScript = None,
         gate: GateScript | None = None,
+        copy: CopyScript = None,
     ) -> None:
         self.first_read_script: FirstReadScript = first_read
         self.triage_script: TriageScript = triage if triage is not None else TriageResult()
         self.evidence_script: EvidenceScript = evidence
+        self.copy_script: CopyScript = copy
         self.gate_script: GateScript = (
             gate if gate is not None else GateResult(allow_tools=True, reason="fake default")
         )
@@ -61,6 +72,7 @@ class FakeDecisionService:
         self.first_read_calls: list[tuple[FirstReadInput, DecisionContext]] = []
         self.triage_calls: list[tuple[TriageInput, DecisionContext]] = []
         self.evidence_calls: list[tuple[list[EvidenceClaim], DecisionContext]] = []
+        self.copy_calls: list[tuple[list[CopyClaim], DecisionContext]] = []
         self.gate_calls: list[tuple[GateInput, DecisionContext]] = []
         self.shadow_calls: list[tuple[ShadowMaterials, DecisionContext]] = []
         self.drain_calls: list[float] = []
@@ -124,6 +136,34 @@ class FakeDecisionService:
                 )
         return verdicts
 
+    async def check_copy(self, claims: Sequence[CopyClaim], ctx: DecisionContext) -> list[CopyVerdict]:
+        self.copy_calls.append((list(claims), ctx))
+        self._maybe_fail("check_copy")
+        script = self.copy_script
+        verdicts: list[CopyVerdict] = []
+        for claim in claims:
+            outcome: bool | CopyVerdict
+            if script is None:
+                outcome = True
+            elif callable(script):
+                outcome = script(claim)
+            else:
+                outcome = script.get(claim.sentence, script.get(claim.slot_id, True))
+            if isinstance(outcome, CopyVerdict):
+                verdicts.append(outcome)
+            else:
+                verdicts.append(
+                    CopyVerdict(
+                        claim.slot_id,
+                        claim.sentence,
+                        keep=outcome,
+                        relation=None if outcome else "says_nothing",
+                        confidence=None if outcome else 0.95,
+                        reason="fake",
+                    )
+                )
+        return verdicts
+
     async def chat_web_gate(self, inp: GateInput, ctx: DecisionContext) -> GateResult:
         self.gate_calls.append((inp, ctx))
         self._maybe_fail("chat_web_gate")
@@ -147,6 +187,7 @@ class FakeDecisionService:
             "first_read": len(self.first_read_calls),
             "triage": len(self.triage_calls),
             "check_evidence": len(self.evidence_calls),
+            "check_copy": len(self.copy_calls),
             "chat_web_gate": len(self.gate_calls),
             "shadow_compare": len(self.shadow_calls),
             "drain": len(self.drain_calls),
@@ -158,6 +199,7 @@ class FakeDecisionService:
             "first_read": [i for i, _ in self.first_read_calls],
             "triage": [i for i, _ in self.triage_calls],
             "check_evidence": [c for c, _ in self.evidence_calls],
+            "check_copy": [c for c, _ in self.copy_calls],
             "chat_web_gate": [i for i, _ in self.gate_calls],
             "shadow_compare": [m for m, _ in self.shadow_calls],
             "drain": list(self.drain_calls),

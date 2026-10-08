@@ -49,13 +49,14 @@ from tayyari.storage.ports import LimitRepo
 
 log = get_logger(__name__)
 
-Route = Literal["analyze", "chat"]
+Route = Literal["analyze", "chat", "portfolio"]
 WindowName = Literal["min", "hour", "day"]
 
 UNKNOWN_SUBJECT = "unknown"
 """Clients whose address could not be determined share one bucket (the strict choice)."""
 GLOBAL_ANALYZE_BUCKET = "analyze:global:hour"
 GLOBAL_CHAT_BUCKET = "chat:global:hour"
+GLOBAL_PORTFOLIO_BUCKET = "portfolio:global:hour"
 SUBNET_LIMIT_FACTOR = 4
 """An IPv6 /48 may use this many times the per-IP limit (a /64 is one household, a /48 is up to 65,536)."""
 
@@ -127,6 +128,10 @@ _MESSAGES: dict[tuple[str, str], str] = {
     ("chat", "hour"): "You've reached the hourly limit for chat messages. Please try again in {wait}.",
     ("chat", "day"): "You've reached today's limit for chat messages. It resets in {wait}.",
     ("chat", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
+    ("portfolio", "min"): "You're generating portfolios quickly. Please wait {wait} and try again.",
+    ("portfolio", "hour"): "You've reached the hourly limit for portfolios. Please try again in {wait}.",
+    ("portfolio", "day"): "You've reached today's limit for portfolios. It resets in {wait}.",
+    ("portfolio", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
 }
 
 
@@ -170,8 +175,14 @@ class RateLimiter:
         limits: tuple[tuple[WindowName, int], ...]
         if route == "analyze":
             limits = (("min", s.analyze_per_minute), ("hour", s.analyze_per_hour), ("day", s.analyze_per_day))
-        else:
+        elif route == "chat":
             limits = (("min", s.chat_per_minute), ("hour", s.chat_per_hour), ("day", s.chat_per_day))
+        else:  # portfolio
+            limits = (
+                ("min", s.portfolio_per_minute),
+                ("hour", s.portfolio_per_hour),
+                ("day", s.portfolio_per_day),
+            )
         return [_Window(name, _WINDOW_SECONDS[name], limit) for name, limit in limits if limit > 0]
 
     def _limited(
@@ -195,7 +206,10 @@ class RateLimiter:
         """The bucket name and hourly limit of the whole-service backstop for ``route`` (0 = not enforced)."""
         if route == "analyze":
             return GLOBAL_ANALYZE_BUCKET, self._settings.analyze_global_per_hour
-        return GLOBAL_CHAT_BUCKET, self._settings.chat_global_per_hour
+        elif route == "chat":
+            return GLOBAL_CHAT_BUCKET, self._settings.chat_global_per_hour
+        else:  # portfolio
+            return GLOBAL_PORTFOLIO_BUCKET, self._settings.portfolio_global_per_hour
 
     def _take_token(
         self, route: Route, ip_hash: str | None, windows: list[_Window], ip_hash_48: str | None = None
@@ -330,6 +344,7 @@ class RateLimiter:
 __all__ = [
     "GLOBAL_ANALYZE_BUCKET",
     "GLOBAL_CHAT_BUCKET",
+    "GLOBAL_PORTFOLIO_BUCKET",
     "SUBNET_LIMIT_FACTOR",
     "UNKNOWN_SUBJECT",
     "InProcessBucket",
