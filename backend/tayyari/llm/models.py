@@ -52,9 +52,9 @@ class ModelSpec:
     supports_effort: bool  # accepts output_config.effort
     structured_output: bool  # accepts output_config.format json_schema
     web_tools: WebToolsStyle = "dynamic"  # web_search/web_fetch versions it accepts (chat declares them)
-    long_prompt_tokens: int | None = (
-        None  # prompts above this many tokens pay `long_multiplier` x every token price
-    )
+    thinking_can_disable: bool = False  # accepts thinking {"type": "disabled"} (Models API)
+    # Prompts above `long_prompt_tokens` tokens pay `long_multiplier` x every token price (None: flat pricing).
+    long_prompt_tokens: int | None = None
     long_multiplier: float = 1.0
 
 
@@ -94,6 +94,8 @@ MODEL_SPECS: Mapping[str, ModelSpec] = MappingProxyType(
                 cache_read=0.01,
                 min_cache_tokens=512,
                 thinking="adaptive",
+                # Models API: thinking.types.disabled.supported = true (Sonnet 5.5 rejects "disabled").
+                thinking_can_disable=True,
                 supports_effort=True,
                 structured_output=True,
                 # Dynamic filtering is "Claude 4.6 and later" (web search tool docs); Haiku 5.5 has code execution.

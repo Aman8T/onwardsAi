@@ -546,15 +546,24 @@ class AnthropicClaudeClient:
             attempt_tokens = _more_tokens(attempt_tokens)
 
     def _thinking_param(self, spec: ModelSpec, purpose: str, max_tokens: int) -> dict[str, Any] | None:
-        """Extended thinking only for budget-style models, only for readers, and only when switched on.
+        """The ``thinking`` parameter for one request, or None to send none.
 
-        Adaptive models get no thinking parameter at all (a budget is a 400 there); the budget must stay
-        below ``max_tokens``, so a very small ``max_tokens`` means no thinking.
+        Budget-style models (Haiku 4.5) think only as readers and only when ``reader_thinking`` is on; the budget
+        must stay below ``max_tokens``. Adaptive models think by default: those that can switch it off (Haiku 5.5)
+        get ``{"type": "disabled"}`` unless the purpose wants thinking (synthesis and chat, per settings); those that
+        cannot (Sonnet 5.5, where "disabled" is a 400) get no parameter.
         """
-        if spec.thinking == "budget" and purpose == "reader" and self._settings.reader_thinking:
-            budget = min(THINKING_BUDGET_TOKENS, max_tokens - _MIN_THINKING_BUDGET)
-            if budget >= _MIN_THINKING_BUDGET:
-                return {"type": "enabled", "budget_tokens": budget}
+        s = self._settings
+        if spec.thinking == "budget":
+            if purpose == "reader" and s.reader_thinking:
+                budget = min(THINKING_BUDGET_TOKENS, max_tokens - _MIN_THINKING_BUDGET)
+                if budget >= _MIN_THINKING_BUDGET:
+                    return {"type": "enabled", "budget_tokens": budget}
+            return None
+        if spec.thinking == "adaptive" and spec.thinking_can_disable:
+            wants = {"reader": s.reader_thinking, "synth": s.synth_thinking, "chat": s.chat_thinking}
+            if not wants.get(purpose, False):
+                return {"type": "disabled"}
         return None
 
     def _structured_params(
@@ -848,6 +857,9 @@ class AnthropicClaudeClient:
             params["tool_choice"] = {"type": "none"}
         if effort is not None and spec.supports_effort:
             params["output_config"] = {"effort": effort}
+        thinking = self._thinking_param(spec, "chat", max_tokens)
+        if thinking is not None:
+            params["thinking"] = thinking
         if cache_tail and _count_markers([*system_blocks, *convo]) < _MAX_EXPLICIT_BREAKPOINTS:
             if self._auto_cache_ok:
                 params["cache_control"] = _marker(ttl)

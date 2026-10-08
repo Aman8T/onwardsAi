@@ -420,6 +420,50 @@ async def test_thinking_budget_only_for_budget_models_and_readers(
     assert rig.api.requests[0].get("thinking") == expected
 
 
+HAIKU_55 = "claude-haiku-5-5"
+PORTFOLIO_CTX = CallContext(purpose="portfolio")
+
+
+@pytest.mark.parametrize(
+    ("model", "ctx", "overrides", "expected"),
+    [
+        (
+            HAIKU_55,
+            READER_CTX,
+            {},
+            {"type": "disabled"},
+        ),  # readers extract: no thinking on a model that can stop
+        (HAIKU_55, PORTFOLIO_CTX, {}, {"type": "disabled"}),
+        (HAIKU_55, SYNTH_CTX, {}, None),  # synthesis keeps adaptive thinking by default
+        (HAIKU_55, SYNTH_CTX, {"synth_thinking": False}, {"type": "disabled"}),
+        (HAIKU_55, READER_CTX, {"reader_thinking": True}, None),
+        (SONNET, READER_CTX, {}, None),  # Sonnet 5.5 rejects "disabled": it never gets the parameter
+        (SONNET, SYNTH_CTX, {"synth_thinking": False}, None),
+    ],
+)
+async def test_thinking_is_switched_off_where_the_model_allows_and_the_purpose_does_not_need_it(
+    make_rig: Callable[..., Rig],
+    model: str,
+    ctx: CallContext,
+    overrides: dict[str, Any],
+    expected: dict[str, Any] | None,
+) -> None:
+    rig = make_rig(**overrides)
+    rig.api.queue(ok("structured_haiku_ok"))
+    await run_structured(rig, model=model, ctx=ctx, effort=None)
+    assert rig.api.requests[0].get("thinking") == expected
+
+
+@pytest.mark.parametrize(("chat_thinking", "expected"), [(True, None), (False, {"type": "disabled"})])
+async def test_chat_thinking_follows_its_setting_on_haiku_5_5(
+    make_rig: Callable[..., Rig], chat_thinking: bool, expected: dict[str, Any] | None
+) -> None:
+    rig = make_rig(chat_thinking=chat_thinking)
+    rig.api.queue(ok("chat_plain"))
+    await run_chat(rig, model=HAIKU_55)
+    assert rig.api.requests[0].get("thinking") == expected
+
+
 async def test_cache_flags_become_ephemeral_breakpoints_on_system_and_user_blocks(rig: Rig) -> None:
     rig.api.queue(ok("structured_ok"))
     await run_structured(

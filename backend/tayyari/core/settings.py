@@ -197,6 +197,12 @@ class Settings(BaseSettings):
     chat_model: str = "claude-sonnet-5-5"
     reader_thinking: bool = False
     """Extended thinking for the Haiku readers; they extract rather than reason, so it is off."""
+    synth_thinking: bool = True
+    """Adaptive thinking for the synthesis. False sends ``{"type": "disabled"}`` to models that allow it (Haiku 5.5);
+    a model that cannot switch thinking off (Sonnet 5.5) keeps it. Readers, portfolio calls and decision fallbacks
+    never think on such models: they extract or fill short slots, and thinking only adds latency there."""
+    chat_thinking: bool = True
+    """Adaptive thinking for the career chat (same rule as `synth_thinking`)."""
     synth_effort: Effort = "medium"
     chat_effort: Effort = "medium"
     reader_max_tokens: int = Field(default=8000, ge=256)
