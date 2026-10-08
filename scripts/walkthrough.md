@@ -63,5 +63,14 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
 })();
 ```
 
+11. **Home light (fine pointer, full motion):** move the mouse — the light wakes where the
+    pointer is (no sweep across the screen) and stays locked to it at any speed; stop — it keeps
+    morphing, dims after 10 s and is gone by about 51 s; leave the window — it fades in 0.6 s and
+    wakes again where the pointer re-enters; every button and field behaves exactly as before and
+    the form panel stays opaque. With `?light=stats`, run `__light.sweep(10, 1200)` in the console:
+    expect `p95` at or under one frame period, `behind` at most 40 px, `gpu` under 2 ms and
+    `min L` at or above 0.885; once asleep, the step-10 snippet reports `rafs 0`. Mobile preset:
+    no `canvas.light` in the DOM. `?light=reduce` (or the OS setting) and Atmosphere Off: none.
+
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`).

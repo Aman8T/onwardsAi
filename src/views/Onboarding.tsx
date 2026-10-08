@@ -4,7 +4,8 @@
  * reads from, the connect form as one quiet panel (hairline drop zone, link rows, goal, optional
  * context, primary button), the sample link, and three "how it works" steps below.
  *
- * The ambient field is mounted once in index.html; this view paints no background of its own.
+ * The ambient field is mounted once in index.html; this view paints no background of its own. The cursor
+ * light (src/light) is the one thing Home adds behind the page, and only on fine-pointer, full-motion devices.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ClipboardEvent, FormEvent, KeyboardEvent } from 'react';
@@ -12,6 +13,7 @@ import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion/re
 import type { SourceKind } from '../../shared/types';
 import { Brand } from '../components/Brand';
 import { IconArrowRight, IconDoc, IconMinus, IconPlus, IconUpload } from '../components/Icons';
+import { CursorLight } from '../light/CursorLight';
 import * as api from '../lib/api';
 import { EASE, NARROW_QUERY, useMediaQuery } from '../lib/ui';
 import { actions } from '../store';
@@ -456,6 +458,8 @@ export function Onboarding() {
 
   return (
     <div className="ob-root" id="top">
+      {/* the soft light that follows the pointer: Home only, lives behind the page (src/light) */}
+      <CursorLight />
       <div className="wrap ob-wrap">
         <header className="ob-header">
           <span className="ob-brand">

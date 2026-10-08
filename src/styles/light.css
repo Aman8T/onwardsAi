@@ -1,0 +1,44 @@
+/*
+ * The cursor light (src/light/): one fixed WebGL canvas between the ambient field (z -1) and the view (z 1),
+ * mounted by Home only. The one deliberate exception to the no-glow rule — the light itself is drawn by the
+ * shader with no CSS effects; this sheet only places the canvas and fades it with the view.
+ */
+
+.light-host {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  contain: strict;
+  opacity: 1;
+  transition: opacity var(--d-screen) var(--ease);
+}
+
+.light-host.is-leaving {
+  opacity: 0;
+}
+
+/* The engine's own canvas: a half-resolution backing store stretched over the viewport. */
+.light {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Dev readout (`?light=stats`). */
+.light-stats {
+  position: fixed;
+  left: var(--s3);
+  bottom: var(--s3);
+  z-index: 60;
+  margin: 0;
+  padding: var(--s2) var(--s3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  font: 400 var(--fs-0) / var(--lh-snug) var(--font-mono);
+  color: var(--text-muted);
+  white-space: pre;
+  pointer-events: none;
+}

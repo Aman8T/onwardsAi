@@ -12,6 +12,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { LIGHT, MAX_HUE_OFFSET, warmEasing } from '../src/light/palette';
 
 const TOKENS_PATH = resolve(process.cwd(), 'src/theme/tokens.css');
 
@@ -259,6 +260,63 @@ function check(tokens: Token[]): { pairs: PairResult[]; gamut: GamutFailure[]; m
 }
 
 /* ----------------------------------------------------------------------------
+ * The cursor light (src/light/palette.ts): its deepest colour under every text
+ * role that sits on the bare field on Home. The shader reads the same numbers,
+ * so what is proved here is what is drawn.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Foreground roles on the bare field on Home, and the floor each keeps over the light's body.
+ * --line-strong is not among them: on Home it only draws the drop zone's dashed border and the
+ * field underline, both inside the opaque panel the light never shows through.
+ */
+const LIGHT_PAIRS: { fg: string; min: number }[] = [
+  { fg: 'text', min: 4.5 },
+  { fg: 'text-muted', min: 4.5 },
+  // the italic headline line (40–56 px, large text) and the drop-zone icon: the 3:1 floor
+  { fg: 'accent', min: 3 },
+  { fg: 'accent-ui', min: 3 },
+];
+
+/** The body colours the light can take at a base hue: the wander window in 7° steps, then the halo offset. */
+function lightBodies(baseHue: number): Lin[] {
+  const out: Lin[] = [];
+  for (let off = -MAX_HUE_OFFSET; off <= MAX_HUE_OFFSET; off += 7) {
+    const heartHue = mod360(baseHue + off);
+    out.push(oklchToLinear(LIGHT.bodyL, LIGHT.bodyC * warmEasing(heartHue), mod360(heartHue + LIGHT.haloHueOffset)));
+  }
+  return out;
+}
+
+function checkLight(tokens: Token[]): { pairs: PairResult[]; gamut: number[] } {
+  const byName = new Map(tokens.map((t) => [t.name, t]));
+  const results: PairResult[] = LIGHT_PAIRS.filter((p) => byName.has(p.fg)).map((p) => ({
+    fg: p.fg,
+    bg: 'light-body',
+    min: p.min,
+    worst: Infinity,
+    worstHue: -1,
+  }));
+  const gamut: number[] = [];
+  for (let hue = 0; hue < 360; hue++) {
+    const bodies = lightBodies(hue);
+    if (!bodies.every(inGamut)) gamut.push(hue);
+    for (const r of results) {
+      for (const f of variants(byName.get(r.fg)!, hue)) {
+        for (const b of bodies) {
+          const ratio = contrast(f, b);
+          if (ratio < r.worst) {
+            r.worst = ratio;
+            r.worstHue = hue;
+          }
+        }
+      }
+    }
+  }
+  return { pairs: results, gamut };
+}
+
+/* ----------------------------------------------------------------------------
  * Fallback emission
  * ------------------------------------------------------------------------- */
 
@@ -335,6 +393,25 @@ function main(): number {
     }
   } else {
     console.log('\nGamut: every token inside sRGB at every hue.');
+  }
+
+  const light = checkLight(tokens);
+  console.log(`\ncursor light: body L ${LIGHT.bodyL}, C ${LIGHT.bodyC}, hue within ±${MAX_HUE_OFFSET}° of the field (+${LIGHT.haloHueOffset}° halo)\n`);
+  const lightRows = light.pairs.map((r) => {
+    const ok = r.worst >= r.min;
+    failed ||= !ok;
+    return [`${r.fg} / ${r.bg}`, r.worst.toFixed(2), String(r.worstHue), r.min.toFixed(1), ok ? 'pass' : 'FAIL'];
+  });
+  const lightWidths = header.map((h, i) => Math.max(h.length, ...lightRows.map((row) => row[i].length)));
+  const fmtLight = (row: string[]) => row.map((c, i) => c.padEnd(lightWidths[i])).join('  ');
+  console.log(fmtLight(header));
+  console.log(lightWidths.map((w) => '-'.repeat(w)).join('  '));
+  for (const row of lightRows) console.log(fmtLight(row));
+  if (light.gamut.length) {
+    failed = true;
+    console.log(`\nLight body out of sRGB gamut at ${light.gamut.length} hue(s), e.g. ${light.gamut.slice(0, 6).join(', ')}`);
+  } else {
+    console.log('\nLight body inside sRGB at every hue.');
   }
 
   console.log(failed ? '\nFAILED' : '\nOK');

@@ -204,6 +204,10 @@ npm run check           # full typecheck + three checks above
 
 ## Atmosphere
 
+The whole visual system — the rules, every number, the two exceptions, the checks, and how to
+carry it into another application — is in **[design.md](design.md)**; the reasoning and sources
+are in `docs/design-notes.md`.
+
 The background is a soft colour field that drifts through the full hue circle once every
 **42 minutes** (1° every 7 s). One hue number (`--h` on `<html>`) feeds every colour token in
 `src/theme/tokens.css`; lightness and chroma are fixed per role, so contrast never changes while
@@ -219,6 +223,13 @@ the colour travels. The hue is a function of wall-clock time plus a random per-b
 - **Fallbacks:** engines without `oklch()` get a fixed hex palette for hue 250 (regenerate it
   with `npm run emit:fallback` after changing a token); `prefers-contrast: more` removes the
   lobes and darkens the ink; `forced-colors: active` hides the field and uses system colours.
+- **Cursor light (Home only):** a soft field of colour follows the mouse behind the page — one
+  WebGL2 shader in `src/light/`, hue analogous to the field, lightness never below .89 so text
+  keeps its contrast, asleep (zero frames) after 45 s of stillness. Not mounted on touch devices,
+  under reduced motion or slow updates, under forced colours or more contrast, or with the
+  Atmosphere Off. In dev, `?light=stats` shows frame, GPU and follow measurements and exposes
+  `__light.sweep(seconds, pxPerSecond)`; `?light=reduce` and `?light=off` test the fallbacks.
+  Rationale and numbers: `docs/design-notes.md` §7.
 
 ## Notes and limits (POC)
 
