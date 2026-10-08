@@ -562,3 +562,28 @@ async def test_fake_claude_chat_turns_can_be_callables() -> None:
     claude = FakeClaudeClient().script_chat(lambda call: text_turn(f"tools={call.tools}"), repeat=True)
     assert (await _chat(claude, "none"))[-1].text == "tools=none"
     assert (await _chat(claude, "web"))[-1].text == "tools=web"
+
+
+def test_haiku_5_5_is_priced_by_prompt_length() -> None:
+    spec = models.spec_for("claude-haiku-5-5")
+    assert spec.id == "claude-haiku-5-5"
+    assert (spec.supports_effort, spec.thinking, spec.web_tools, spec.min_cache_tokens) == (
+        True,
+        "adaptive",
+        "dynamic",
+        512,
+    )
+    short = models.RawTokens(input_tokens=50_000, output_tokens=10_000)
+    assert models.claude_cost_micro(spec, short) == 10_000  # $0.10/MTok in + $0.50/MTok out
+    cached = models.RawTokens(
+        input_tokens=10_000, output_tokens=2_000, cache_write_tokens=20_000, cache_read_tokens=60_000
+    )
+    assert models.claude_cost_micro(spec, cached) == round(
+        10_000 * 0.10 + 2_000 * 0.50 + 20_000 * 0.125 + 60_000 * 0.01
+    )
+    long = models.RawTokens(input_tokens=150_000, output_tokens=1_000)
+    assert models.claude_cost_micro(spec, long) == round(
+        150_000 * 0.50 + 1_000 * 2.50
+    )  # every rate x5 over 100k
+    edge = models.RawTokens(input_tokens=100_000, output_tokens=0)
+    assert models.claude_cost_micro(spec, edge) == 10_000  # exactly 100k is still the short rate

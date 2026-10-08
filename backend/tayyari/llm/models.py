@@ -26,6 +26,8 @@ from ..core.logging import get_logger
 log = get_logger(__name__)
 
 ThinkingStyle = Literal["adaptive", "budget", "none"]
+WebToolsStyle = Literal["dynamic", "basic"]
+"""Which server web tools a model takes: the ``_20260209`` versions with dynamic filtering, or the basic ones."""
 """``adaptive``: thinking is on by default and steered by ``effort`` (a thinking budget or a disabled
 thinking block is a 400 on the newest models). ``budget``: the older ``thinking={"type": "enabled",
 "budget_tokens": N}`` style. ``none``: send no thinking parameter at all."""
@@ -49,6 +51,11 @@ class ModelSpec:
     thinking: ThinkingStyle
     supports_effort: bool  # accepts output_config.effort
     structured_output: bool  # accepts output_config.format json_schema
+    web_tools: WebToolsStyle = "dynamic"  # web_search/web_fetch versions it accepts (chat declares them)
+    long_prompt_tokens: int | None = (
+        None  # prompts above this many tokens pay `long_multiplier` x every token price
+    )
+    long_multiplier: float = 1.0
 
 
 MODEL_SPECS: Mapping[str, ModelSpec] = MappingProxyType(
@@ -71,6 +78,29 @@ MODEL_SPECS: Mapping[str, ModelSpec] = MappingProxyType(
                 supports_effort=False,
                 # shared/tool-use-concepts.md lists Haiku 4.5 among the models with structured outputs.
                 structured_output=True,
+                # Dynamic filtering (the _20260209 web tools) is Opus/Sonnet 4.6+ and the 5.x family only
+                # (shared/tool-use-concepts.md); Haiku 4.5 takes web_search_20250305 and web_fetch_20250910.
+                web_tools="basic",
+            ),
+            ModelSpec(
+                # Released 2026-10-07. Capabilities from the Models API (effort low..max, adaptive thinking, thinking
+                # can be disabled, structured outputs, web search, code execution; 1M context, 128K output); prices and
+                # the 512-token cache minimum from platform.claude.com/docs pricing + prompt caching (2026-10-08).
+                id="claude-haiku-5-5",
+                price_in=0.10,
+                price_out=0.50,
+                cache_write_5m=0.125,
+                cache_write_1h=0.20,
+                cache_read=0.01,
+                min_cache_tokens=512,
+                thinking="adaptive",
+                supports_effort=True,
+                structured_output=True,
+                # Dynamic filtering is "Claude 4.6 and later" (web search tool docs); Haiku 5.5 has code execution.
+                web_tools="dynamic",
+                # Priced by prompt length: over 100,000 tokens every rate is 5x ($0.50 in / $2.50 out ...).
+                long_prompt_tokens=100_000,
+                long_multiplier=5.0,
             ),
             ModelSpec(
                 id="claude-sonnet-5-5",
@@ -133,6 +163,7 @@ def _worst_case_spec() -> ModelSpec:
         thinking="none",
         supports_effort=False,
         structured_output=True,
+        web_tools="basic",
     )
 
 
@@ -230,18 +261,26 @@ def claude_cost_micro(
     Cache writes are priced at the 5-minute rate unless told otherwise: ``cache_ttl="1h"`` prices them
     all at the 1-hour rate, and ``cache_1h_tokens`` splits a mixed write (the API reports the split in
     ``usage.cache_creation``). Each web search adds `WEB_SEARCH_MICRO_USD`. Negative counters count as 0.
+    A model priced by prompt length (`ModelSpec.long_prompt_tokens`) pays `long_multiplier` x every token rate
+    when the prompt (input + cache writes + cache reads) is over its threshold.
     """
     writes = max(usage.cache_write_tokens, 0)
     if cache_1h_tokens is None:
         writes_1h = writes if cache_ttl == "1h" else 0
     else:
         writes_1h = min(max(cache_1h_tokens, 0), writes)
+    prompt = max(usage.input_tokens, 0) + writes + max(usage.cache_read_tokens, 0)
+    k = (
+        spec.long_multiplier
+        if spec.long_prompt_tokens is not None and prompt > spec.long_prompt_tokens
+        else 1.0
+    )
     total = (
-        _micro(usage.input_tokens, spec.price_in)
-        + _micro(usage.output_tokens, spec.price_out)
-        + _micro(writes - writes_1h, spec.cache_write_5m)
-        + _micro(writes_1h, spec.cache_write_1h)
-        + _micro(usage.cache_read_tokens, spec.cache_read)
+        _micro(usage.input_tokens, spec.price_in * k)
+        + _micro(usage.output_tokens, spec.price_out * k)
+        + _micro(writes - writes_1h, spec.cache_write_5m * k)
+        + _micro(writes_1h, spec.cache_write_1h * k)
+        + _micro(usage.cache_read_tokens, spec.cache_read * k)
         + Decimal(max(usage.web_searches, 0) * WEB_SEARCH_MICRO_USD)
     )
     return _round_micro(total)

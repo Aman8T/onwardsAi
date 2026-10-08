@@ -98,6 +98,23 @@ WEB_TOOLS: Final[tuple[dict[str, Any], ...]] = (
     },
 )
 """Declared on every chat request, even when `tool_choice` is ``none``, so the cached prefix is identical."""
+WEB_TOOLS_BASIC: Final[tuple[dict[str, Any], ...]] = (
+    {"type": "web_search_20250305", "name": "web_search", "max_uses": WEB_SEARCH_MAX_USES},
+    {
+        "type": "web_fetch_20250910",
+        "name": "web_fetch",
+        "max_uses": WEB_FETCH_MAX_USES,
+        "max_content_tokens": WEB_FETCH_MAX_CONTENT_TOKENS,
+    },
+)
+"""The same two tools in the versions without dynamic filtering, for models that do not take ``_20260209``."""
+
+
+def web_tools_for(spec: ModelSpec) -> tuple[dict[str, Any], ...]:
+    """The web tool declarations a model accepts (`ModelSpec.web_tools`)."""
+    return WEB_TOOLS if spec.web_tools == "dynamic" else WEB_TOOLS_BASIC
+
+
 WEB_TOOL_UI_NAMES: Final[dict[str, str]] = {"web_search": "WebSearch", "web_fetch": "WebFetch"}
 """API tool name -> the name the UI renders (the single mapping; other server tools are not shown)."""
 
@@ -822,7 +839,7 @@ class AnthropicClaudeClient:
             "model": model,
             "max_tokens": max_tokens,
             "messages": convo,
-            "tools": [dict(tool) for tool in WEB_TOOLS],
+            "tools": [dict(tool) for tool in web_tools_for(spec)],
         }
         if system_blocks:
             params["system"] = system_blocks
@@ -1008,7 +1025,9 @@ __all__ = [
     "EMIT_TOOL",
     "WEB_FETCH_MAX_CONTENT_TOKENS",
     "WEB_TOOLS",
+    "WEB_TOOLS_BASIC",
     "WEB_TOOL_UI_NAMES",
     "AnthropicClaudeClient",
     "parse_json_object",
+    "web_tools_for",
 ]

@@ -1266,3 +1266,13 @@ def test_the_sdk_client_gets_the_documented_retries_and_timeouts(
 )
 def test_parse_json_object(text: str, expected: dict[str, Any] | None) -> None:
     assert parse_json_object(text) == expected
+
+
+def test_each_model_gets_the_web_tool_versions_it_accepts() -> None:
+    from tayyari.llm.anthropic_client import WEB_TOOLS_BASIC, web_tools_for
+    from tayyari.llm.models import spec_for
+
+    assert web_tools_for(spec_for("claude-haiku-5-5")) == WEB_TOOLS
+    assert web_tools_for(spec_for("claude-sonnet-5-5")) == WEB_TOOLS
+    assert web_tools_for(spec_for("claude-haiku-4-5")) == WEB_TOOLS_BASIC
+    assert [t["type"] for t in WEB_TOOLS_BASIC] == ["web_search_20250305", "web_fetch_20250910"]
