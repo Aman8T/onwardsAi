@@ -256,7 +256,7 @@ export const RIYA: Portfolio = {
       },
       {
         id: 'aboutBody',
-        text: 'Before Kitebird she built fintech dashboards as an intern at Saffron Ledger and freelanced for 3 early-stage clients.',
+        text: 'Before Kitebird: fintech dashboards as an intern at Saffron Ledger, and marketing sites and component kits for 3 early-stage clients.',
         origin: 'model',
         factIds: ['exp-3', 'exp-4'],
       },

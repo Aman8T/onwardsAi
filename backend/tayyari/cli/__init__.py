@@ -6,6 +6,7 @@
     smoke         real calls: Haiku structured, Sonnet chat + prompt cache, Jev, DOCX resume parse (costs a few cents)
     make-sample   regenerate the bundled sample profile with the real pipeline (costs a few cents)
     ingest-check  deterministic ingestion checks; the github and web sections use the network, no AI
+    portfolio-eval  build a portfolio per fixture with the real clients and report grounding, cost and time
     deploy        build the web app, then ``fastapi deploy`` from backend/
 
 This package is the one place that prints to the terminal. Importing it imports nothing heavy: every command

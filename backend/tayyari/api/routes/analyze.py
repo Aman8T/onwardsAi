@@ -28,10 +28,9 @@ from starlette.types import Receive, Scope, Send
 
 from tayyari.api.deps import get_request_context
 from tayyari.api.lifespan import get_container
-from tayyari.api.ndjson import NdjsonResponse
+from tayyari.api.ndjson import NdjsonResponse, StreamEvent
 from tayyari.api.security import subnet_hash
 from tayyari.api.uploads import parse_analyze_form, upload_gate
-from tayyari.contract.events import AnalysisEvent, ChatEvent
 from tayyari.core.errors import RateLimited
 
 router = APIRouter()
@@ -48,7 +47,7 @@ class HeldResponse(NdjsonResponse):
     def __init__(
         self,
         request: Request,
-        events: AsyncIterator[AnalysisEvent | ChatEvent],
+        events: AsyncIterator[StreamEvent],
         tag: str,
         held: AsyncExitStack,
     ) -> None:

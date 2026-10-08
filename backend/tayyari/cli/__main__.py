@@ -105,6 +105,34 @@ def build_parser() -> argparse.ArgumentParser:
         "--out", type=Path, default=None, help="output folder (default: backend/tayyari/sample)"
     )
 
+    portfolio_eval = commands.add_parser(
+        "portfolio-eval",
+        help="build a portfolio for every fixture with the real clients and report grounding",
+        description="Run PortfolioService.build on tests/data/portfolio/*.json (Haiku facts, Sonnet copy, Jev when a "
+        "key is set) and print, per fixture, the facts kept and dropped, slots by origin, re-asks, fallbacks, "
+        "ungrounded slots, cost and seconds. Exits 1 when any slot is ungrounded or a build fails. --offline "
+        "makes no model call (fallback wording only).",
+    )
+    portfolio_eval.add_argument(
+        "--only",
+        default=None,
+        metavar="A,B",
+        help="run only these fixtures (comma separated names, e.g. riya)",
+    )
+    portfolio_eval.add_argument(
+        "--write",
+        action="store_true",
+        help="write each Portfolio as tests/data/portfolio/rendered/<name>.portfolio.json",
+    )
+    portfolio_eval.add_argument(
+        "--offline",
+        action="store_true",
+        help="no model calls: no facts, fallback wording only (needs no keys)",
+    )
+    portfolio_eval.add_argument(
+        "--details", action="store_true", help="also list every fact, field and highlight that was dropped"
+    )
+
     ingest = commands.add_parser(
         "ingest-check",
         help="deterministic ingestion checks (no AI; github and web use the network)",
@@ -297,6 +325,12 @@ def _make_sample(args: argparse.Namespace) -> int:
     return make_sample.run(args.out)
 
 
+def _portfolio_eval(args: argparse.Namespace) -> int:
+    from . import portfolio_eval
+
+    return portfolio_eval.run(args.only, write=args.write, offline=args.offline, details=args.details)
+
+
 def _ingest_check(args: argparse.Namespace) -> int:
     from . import ingest_check
 
@@ -361,6 +395,7 @@ _HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "smoke": _smoke,
     "make-sample": _make_sample,
     "ingest-check": _ingest_check,
+    "portfolio-eval": _portfolio_eval,
     "deploy": _deploy,
     "export": _export,
     "replay": _replay,

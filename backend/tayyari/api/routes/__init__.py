@@ -5,6 +5,8 @@
     chat      POST /api/chat             JSON `ChatRequestBody` -> NDJSON `ChatEvent` stream
     profile   GET  /api/profile/{pid}
     sample    GET  /api/sample-profile
+    portfolio POST /api/portfolio        JSON `PortfolioRequest` -> NDJSON `PortfolioEvent` stream
+              GET, PATCH /api/portfolio/{profile_id}; POST .../rewrite; GET .../public-preview; GET /api/p/{public_id}
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.
@@ -14,10 +16,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from tayyari.api.routes import analyze, chat, health, profile, sample
+from tayyari.api.routes import analyze, chat, health, portfolio, profile, sample
 
 api_router = APIRouter()
-for _module in (health, analyze, chat, profile, sample):
+for _module in (health, analyze, chat, profile, sample, portfolio):
     api_router.include_router(_module.router)
 
 __all__ = ["api_router"]

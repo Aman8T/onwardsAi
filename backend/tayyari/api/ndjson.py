@@ -1,4 +1,4 @@
-"""The NDJSON streaming response behind POST /api/analyze and POST /api/chat.
+"""The NDJSON streaming response behind POST /api/analyze, POST /api/chat and POST /api/portfolio.
 
 `NdjsonResponse(request, events, tag)` writes one `contract.encode_event` line per event as soon as the
 producer yields it, and a blank line (`contract.HEARTBEAT`) after `HEARTBEAT_S` of quiet so an idle proxy does
@@ -36,18 +36,19 @@ from tayyari.contract.events import (
     encode_event,
     ev_error,
 )
+from tayyari.contract.portfolio import PortfolioDoneEvent, PortfolioErrorEvent, PortfolioEvent
 from tayyari.core.limits import DISCONNECT_POLL_S, HEARTBEAT_S
 from tayyari.core.logging import get_logger
 
 log = get_logger(__name__)
 
 MEDIA_TYPE = "application/x-ndjson; charset=utf-8"
-_TERMINAL = (DoneEvent, ErrorEvent, ChatDoneEvent, ChatErrorEvent)
+StreamEvent = AnalysisEvent | ChatEvent | PortfolioEvent
+"""Whatever a route streams: the events of an analysis, a chat turn or a portfolio generation."""
+_TERMINAL = (DoneEvent, ErrorEvent, ChatDoneEvent, ChatErrorEvent, PortfolioDoneEvent, PortfolioErrorEvent)
 
 
-async def _pump(
-    events: AsyncIterator[AnalysisEvent | ChatEvent], queue: asyncio.Queue[bytes | None], tag: str
-) -> None:
+async def _pump(events: AsyncIterator[StreamEvent], queue: asyncio.Queue[bytes | None], tag: str) -> None:
     """Serialise ``events`` into ``queue``; ``None`` marks the end.
 
     A crash becomes a final ``error`` event unless a terminal event (done or error) was already sent.
@@ -66,7 +67,7 @@ async def _pump(
         queue.put_nowait(None)
 
 
-async def _stop(producer: asyncio.Task[None], events: AsyncIterator[AnalysisEvent | ChatEvent]) -> None:
+async def _stop(producer: asyncio.Task[None], events: AsyncIterator[StreamEvent]) -> None:
     """Cancel the producer, wait until it has cleaned up, then close the event iterator if it can be closed."""
     if not producer.done():
         producer.cancel()
@@ -91,7 +92,7 @@ class NdjsonResponse(StreamingResponse):
     def __init__(
         self,
         request: Request,
-        events: AsyncIterator[AnalysisEvent | ChatEvent],
+        events: AsyncIterator[StreamEvent],
         tag: str,
         *,
         heartbeat_s: float = HEARTBEAT_S,
@@ -154,4 +155,4 @@ class NdjsonResponse(StreamingResponse):
             await _stop(producer, self.events)
 
 
-__all__ = ["MEDIA_TYPE", "NdjsonResponse"]
+__all__ = ["MEDIA_TYPE", "NdjsonResponse", "StreamEvent"]

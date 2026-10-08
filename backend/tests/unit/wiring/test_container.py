@@ -28,6 +28,7 @@ from tayyari.llm.errors import SpendCeilingReached
 from tayyari.llm.guarded import GuardedClaudeClient
 from tayyari.llm.jev_http import HttpJevClient
 from tayyari.llm.types import CallContext, TextBlock
+from tayyari.portfolio.service import PortfolioService
 from tayyari.sample.provider import SampleProvider
 from tayyari.storage.db import Database
 from tayyari.storage.maintenance import LAST_RUN_KEY
@@ -622,6 +623,50 @@ async def test_the_real_chat_service_is_built_when_none_is_injected(
     )
     assert isinstance(container.chat, CoachChatService)
     assert isinstance(container.chat, ChatService)
+
+
+async def test_the_real_portfolio_service_is_built_when_none_is_injected(
+    make_settings: MakeSettings, build: Build
+) -> None:
+    container = await build(make_settings(), decisions=FakeDecisionService(), claude=FakeClaudeClient())
+    assert isinstance(container.portfolio, PortfolioService)
+    assert container.portfolio._portfolios is container.repos.portfolios
+    assert container.portfolio._profiles is container.repos.profiles
+    assert container.portfolio._claude is container.claude  # the spend-checking client
+    assert container.portfolio._decisions is container.decisions
+
+
+async def test_an_injected_portfolio_service_is_used_and_left_open(
+    make_settings: MakeSettings, build: Build, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    closed: list[str] = []
+
+    async def record(self: PortfolioService) -> None:
+        closed.append("closed")
+
+    monkeypatch.setattr(PortfolioService, "aclose", record)
+    injected = object()
+    container = await build(make_settings(), portfolio=injected)
+    assert container.portfolio is injected
+    await container.aclose()
+    assert closed == []  # the container closes only what it built
+
+
+async def test_aclose_closes_the_portfolio_service_it_built(
+    make_settings: MakeSettings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    closed: list[str] = []
+
+    async def record(self: PortfolioService) -> None:
+        closed.append("closed")
+
+    monkeypatch.setattr(PortfolioService, "aclose", record)
+    container = await Container.build(
+        make_settings(), overrides=ContainerOverrides(analysis=FakeAnalysis(), chat=FakeChat())
+    )
+    await container.aclose()
+    await container.aclose()
+    assert closed == ["closed"]
 
 
 async def test_the_shipped_decision_defaults_name_only_registered_specs(

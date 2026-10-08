@@ -15,7 +15,7 @@ from tayyari.cli import ingest_check
 from tayyari.core.paths import BACKEND_DIR
 
 ALL_INTERFACES = "0.0.0.0"  # noqa: S104 - an argument the parser is given, never an address a test binds
-COMMANDS = ("dev", "serve", "migrate", "smoke", "make-sample", "ingest-check", "deploy")
+COMMANDS = ("dev", "serve", "migrate", "smoke", "make-sample", "ingest-check", "portfolio-eval", "deploy")
 
 
 def parse(*argv: str) -> Any:
@@ -73,6 +73,13 @@ def test_ingest_check_options() -> None:
     assert (defaults.only, defaults.url) == (None, None)
     chosen = parse("ingest-check", "--only", "classify,terms", "--url", "https://example.com")
     assert (chosen.only, chosen.url) == ("classify,terms", "https://example.com")
+
+
+def test_portfolio_eval_options() -> None:
+    defaults = parse("portfolio-eval")
+    assert (defaults.only, defaults.write, defaults.offline, defaults.details) == (None, False, False, False)
+    chosen = parse("portfolio-eval", "--only", "riya,aarav", "--write", "--offline", "--details")
+    assert (chosen.only, chosen.write, chosen.offline, chosen.details) == ("riya,aarav", True, True, True)
 
 
 def test_deploy_flag() -> None:
@@ -162,6 +169,16 @@ def test_ingest_check_dispatch(monkeypatch: pytest.MonkeyPatch) -> None:
     run = patch_run(monkeypatch, "ingest_check")
     cli.main(["ingest-check", "--only", "terms", "--url", "https://example.com"])
     assert run.calls == [(("terms", "https://example.com"), {})]
+
+
+def test_portfolio_eval_dispatch(monkeypatch: pytest.MonkeyPatch) -> None:
+    run = patch_run(monkeypatch, "portfolio_eval")
+    cli.main(["portfolio-eval"])
+    cli.main(["portfolio-eval", "--only", "riya", "--write", "--offline", "--details"])
+    assert run.calls == [
+        ((None,), {"write": False, "offline": False, "details": False}),
+        (("riya",), {"write": True, "offline": True, "details": True}),
+    ]
 
 
 def test_deploy_dispatch(monkeypatch: pytest.MonkeyPatch) -> None:

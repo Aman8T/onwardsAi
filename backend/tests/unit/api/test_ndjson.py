@@ -25,9 +25,11 @@ from tayyari.contract import (
     ev_tool,
     profile_from_json,
 )
+from tayyari.contract.portfolio import PortfolioDoneEvent, PortfolioErrorEvent, PortfolioProgressEvent
 from tayyari.core.limits import DISCONNECT_POLL_S, HEARTBEAT_S
 from tayyari.llm.errors import BUSY_MESSAGE, SPEND_CEILING_MESSAGE, ClaudeRateLimited, SpendCeilingReached
 from tests.unit.api.helpers import AsgiExchange, RecordingLog, eventually, http_scope
+from tests.unit.portfolio._fixtures_b import make_portfolio
 
 SAMPLE = Path(__file__).resolve().parents[2] / "data" / "sample-profile.json"
 GENERIC = "Something went wrong on the server."
@@ -368,6 +370,41 @@ async def test_no_second_error_event_after_a_terminal_event(
     assert [d["type"] for d in decoded][-1] == terminal.type
     assert decoded.count({"type": "error", "message": GENERIC}) == 0
     assert [e for e in log.events("error")] == ["[analyze] stream failed"]  # logged, just not sent
+
+
+@pytest.mark.parametrize(
+    "terminal",
+    [PortfolioErrorEvent(message="paused"), PortfolioDoneEvent(portfolio=make_portfolio("riya"))],
+    ids=["portfolio error", "portfolio done"],
+)
+async def test_a_portfolio_done_or_error_is_terminal_too(
+    log: RecordingLog, terminal: PortfolioErrorEvent | PortfolioDoneEvent
+) -> None:
+    async def finish_then_crash() -> AsyncIterator[ndjson.StreamEvent]:
+        yield PortfolioProgressEvent(step="facts", label="Reading your resume")
+        yield terminal
+        raise RuntimeError("cleanup failed")
+
+    response, exchange = build(finish_then_crash(), tag="portfolio")
+    await exchange.run(response)
+
+    decoded = [json.loads(p) for p in lines(exchange)]
+    assert [d["type"] for d in decoded] == ["progress", terminal.type]
+    assert decoded[0] == {"type": "progress", "step": "facts", "label": "Reading your resume"}
+    assert lines(exchange)[-1] == encode_event(terminal)
+    assert [e for e in log.events("error")] == ["[portfolio] stream failed"]  # logged, just not sent
+
+
+async def test_a_portfolio_stream_that_crashes_early_ends_with_the_generic_error() -> None:
+    async def crash() -> AsyncIterator[ndjson.StreamEvent]:
+        yield PortfolioProgressEvent(step="facts", label="Reading your resume")
+        raise RuntimeError("boom")
+
+    response, exchange = build(crash(), tag="portfolio")
+    await exchange.run(response)
+    decoded = [json.loads(p) for p in lines(exchange)]
+    assert [d["type"] for d in decoded] == ["progress", "error"]
+    assert decoded[-1]["message"] == GENERIC
 
 
 async def test_a_crash_before_the_first_event_is_still_a_clean_stream() -> None:

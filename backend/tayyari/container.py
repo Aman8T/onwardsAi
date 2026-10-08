@@ -7,7 +7,7 @@
     AnthropicClaudeClient -> GuardedClaudeClient  (every Claude call checks the spend ceiling first)
     HttpJevClient, DecisionRecorder, DecisionRunner -> JevDecisionService (or NullDecisionService)
     SampleProvider                                (the bundled sample persona, also seeded into the database)
-    PipelineAnalysisService, CoachChatService
+    PipelineAnalysisService, CoachChatService, PortfolioService
     maintenance                                   (retention purge, a tracked background task; it keeps
                                                    the bundled sample persona's profile)
 
@@ -19,7 +19,7 @@ Policy: when Jev is switched off (``TAYYARI_JEV__ENABLED=false``) or no ``JEV_AP
 `NullDecisionService` and Jev is skipped entirely (behaviour like the legacy app). Claude fallbacks only cover
 individual low-confidence Jev answers; they never stand in for Jev as a whole.
 
-The three service classes (analysis, chat, decisions) are imported inside `build`, not at module level, so
+The service classes (analysis, chat, portfolio, decisions) are imported inside `build`, not at module level, so
 importing this module (the CLI help, the layering test) stays cheap and cannot fail on a service that is
 mid-rewrite.
 """
@@ -29,6 +29,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable, Collection
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from tayyari.analysis.ports import AnalysisService
 from tayyari.chat.ports import ChatService
@@ -54,6 +55,9 @@ from tayyari.storage.maintenance import MIN_INTERVAL, run_maintenance
 from tayyari.storage.migrate import migrate_to_head
 from tayyari.storage.repos import Repositories, build_repositories
 
+if TYPE_CHECKING:
+    from tayyari.portfolio.service import PortfolioService
+
 log = get_logger(__name__)
 
 IP_HASH_KEY = "ip_hash_key"
@@ -76,7 +80,7 @@ class ContainerOverrides:
       `GuardedClaudeClient`, so the guard stays in play with a fake.
     - ``jev``: a Jev client. Giving one switches decisions on even without a ``JEV_API_KEY`` (the
       ``TAYYARI_JEV__ENABLED`` kill switch still wins).
-    - ``decisions``, ``analysis``, ``chat``: the services themselves.
+    - ``decisions``, ``analysis``, ``chat``, ``portfolio``: the services themselves.
     - ``db``: a ready `Database` (migrated here, idempotent). ``repos``: ready repositories (fakes); without a
       ``db`` the container has no database, so migrations, maintenance and the deep health check are skipped.
     - ``clock``: used by every component.
@@ -90,6 +94,7 @@ class ContainerOverrides:
     clock: Clock | None = None
     analysis: AnalysisService | None = None
     chat: ChatService | None = None
+    portfolio: PortfolioService | None = None
 
 
 def _log_unknown_decision_ids(store: DecisionConfigStore) -> None:
@@ -149,6 +154,7 @@ class Container:
     sample: SampleProvider
     analysis: AnalysisService
     chat: ChatService
+    portfolio: PortfolioService
     rate_limiter: RateLimiter
     spend_guard: SpendGuard
     ip_hash_key: bytes
@@ -184,6 +190,7 @@ class Container:
         from tayyari.analysis.service import PipelineAnalysisService
         from tayyari.chat.service import CoachChatService
         from tayyari.decisions.packs.service_impl import JevDecisionService
+        from tayyari.portfolio.service import PortfolioService
 
         ov = overrides or ContainerOverrides()
         configure_logging(settings)
@@ -292,6 +299,20 @@ class Container:
                     sample=sample,
                     clock=clock,
                 )
+            portfolio: PortfolioService
+            if ov.portfolio is not None:
+                portfolio = ov.portfolio
+            else:
+                portfolio = PortfolioService(
+                    settings=settings,
+                    claude=claude,
+                    decisions=decisions,
+                    portfolios=repos.portfolios,
+                    profiles=repos.profiles,
+                    sample=sample,
+                    clock=clock,
+                )
+                closers.append(("portfolio", portfolio.aclose))
 
             # ── background work: never blocks startup ──
             if db is not None:
@@ -320,6 +341,7 @@ class Container:
             sample=sample,
             analysis=analysis,
             chat=chat,
+            portfolio=portfolio,
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,
             ip_hash_key=ip_hash_key,

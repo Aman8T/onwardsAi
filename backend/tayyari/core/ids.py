@@ -36,6 +36,15 @@ def new_session_id() -> str:
     return secrets.token_hex(16)
 
 
+def new_public_id() -> str:
+    """A portfolio's public id: ``token_hex(12)`` (24 hex chars, 96 random bits), never derived from the profile id.
+
+    The profile id is the owner's capability; a share link carries this one instead, so publishing a page never
+    reveals (or lets anyone guess) the id that edits it.
+    """
+    return secrets.token_hex(12)
+
+
 def is_sample_id(pid: str) -> bool:
     """True for ids minted by `new_profile_id(sample=True)` (and the old ``sample-...`` ids)."""
     return pid.startswith(SAMPLE_PREFIX)
@@ -65,4 +74,12 @@ def uuid7(*, timestamp_ms: int | None = None) -> uuid.UUID:
     return uuid.UUID(int=value)
 
 
-__all__ = ["SAMPLE_PREFIX", "is_sample_id", "is_valid_id", "new_profile_id", "new_session_id", "uuid7"]
+__all__ = [
+    "SAMPLE_PREFIX",
+    "is_sample_id",
+    "is_valid_id",
+    "new_profile_id",
+    "new_public_id",
+    "new_session_id",
+    "uuid7",
+]
