@@ -352,6 +352,67 @@
   color: var(--text-muted);
 }
 
+/* ───────────── portfolio invitation (between the title and the radar) ───────────── */
+
+.now-invite {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  width: 100%;
+  max-width: 620px;
+  box-sizing: border-box;
+  margin: var(--s3) auto var(--s2);
+  padding: var(--s3) var(--s3) var(--s3) var(--s4);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-l);
+  background: var(--accent-soft);
+}
+
+.now-invite-glyph {
+  flex: 0 0 auto;
+}
+
+.now-invite-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.now-invite-kicker {
+  margin: 0;
+  color: var(--accent-strong);
+}
+
+.now-invite-title {
+  margin: 2px 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--fs-4);
+  font-weight: 400;
+  line-height: var(--lh-snug);
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.now-invite-btn {
+  flex: 0 0 auto;
+  gap: var(--s2);
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .now-invite {
+    flex-wrap: wrap;
+    padding: var(--s4);
+  }
+  .now-invite-copy {
+    flex-basis: calc(100% - 36px - var(--s4));
+  }
+  .now-invite-btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
 /* ───────────── sources ───────────── */
 
 .now-sources {

@@ -19,6 +19,7 @@ import type { PopoverBullet, PopoverModel } from '../../components/Popover';
 import { Radar } from '../../components/Radar';
 import type { RadarAxis, RadarHandle, VertexGeom } from '../../components/Radar';
 import { ValueLine } from '../../components/ValueLine';
+import { PortfolioInvite } from './PortfolioInvite';
 import { placePopover, tier, TIER_LABEL } from '../../lib/layout';
 import { domainAction, skillAction, sourceAction, youAction } from '../../lib/prompts';
 import type { NodeAction } from '../../lib/prompts';
@@ -583,6 +584,8 @@ export function NowGraph({ profile }: { profile: Profile }) {
             </h2>
           </motion.header>
         )}
+
+        {!drilled && <PortfolioInvite profile={profile} cinematic={cinematic} />}
 
         <div ref={plotRef} className="now-plot">
           {showList ? (
