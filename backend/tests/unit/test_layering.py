@@ -3,7 +3,7 @@
     core < contract < llm < decisions < analysis / chat < api
 
 A package may import itself and the packages it is allowed to see (`RULES`); nothing may import upwards, and
-the two top-level services (analysis, chat) never import each other. The rest:
+the top-level services (analysis, chat, portfolio) never import each other. The rest:
 
 - ``storage`` depends on ``core`` and ``contract`` only (services see it through the Protocols in ``storage.ports``).
 - ``decisions`` may import ``storage.ports`` (the decision log Protocol), nothing else of storage.
@@ -56,6 +56,7 @@ RULES: dict[str, tuple[str, ...]] = {
     "decisions": ("core", "contract", "llm", "storage.ports"),
     "analysis": _SERVICES,
     "chat": _SERVICES,
+    "portfolio": _SERVICES,
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",
@@ -64,6 +65,7 @@ RULES: dict[str, tuple[str, ...]] = {
         "decisions",
         "analysis",
         "chat",
+        "portfolio",
         "guard",
         "ingest",
         "prompts",

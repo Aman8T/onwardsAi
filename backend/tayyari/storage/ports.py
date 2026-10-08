@@ -184,6 +184,57 @@ class KvRepo(Protocol):
         ...
 
 
+class PortfolioConflict(RuntimeError):
+    """A portfolio save lost an optimistic-concurrency race (someone saved a newer version first)."""
+
+
+@dataclass(frozen=True, slots=True)
+class StoredPortfolio:
+    """One portfolio row. ``doc`` is the `Portfolio` JSON (camelCase, tayyari.contract.portfolio shape)."""
+
+    profile_id: str
+    public_id: str
+    doc: dict[str, Any]
+    facts_hash: str | None
+    """sha256 of the source texts the facts were extracted from (reuse the facts when unchanged)."""
+    generated: list[dict[str, Any]]
+    """The copy slots as last generated (model or fallback wording), so "reset to generated wording" can
+    restore a slot the owner edited. Kept out of the `Portfolio` document the client sees."""
+    version: int
+    published: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class PortfolioRepo(Protocol):
+    """Portfolios live apart from profiles: no foreign key, so the 60-day profile purge never deletes a page."""
+
+    async def get(self, profile_id: str) -> StoredPortfolio | None:
+        """The owner's portfolio (one per profile), or None."""
+        ...
+
+    async def get_published(self, public_id: str) -> StoredPortfolio | None:
+        """A published portfolio by its public id (None when unknown or unpublished); records the view time."""
+        ...
+
+    async def put(self, rec: StoredPortfolio, *, expected_version: int | None) -> StoredPortfolio:
+        """Insert or update; returns the stored row with its new ``version`` and ``updated_at``.
+
+        ``expected_version=None`` creates the row, or replaces it outright when one exists (a regenerate).
+        Otherwise the update applies only when the stored version equals ``expected_version`` and raises
+        `PortfolioConflict` when it does not. ``public_id`` and ``created_at`` of an existing row are kept.
+        """
+        ...
+
+    async def delete(self, profile_id: str) -> bool:
+        """Remove the owner's portfolio; True when a row was deleted."""
+        ...
+
+    async def purge_orphan_drafts(self, cutoff: datetime) -> int:
+        """Delete unpublished portfolios last updated before ``cutoff`` whose profile no longer exists."""
+        ...
+
+
 __all__ = [
     "ChatMessage",
     "ChatSession",
@@ -191,9 +242,12 @@ __all__ = [
     "KvRepo",
     "LimitRepo",
     "LlmCallRepo",
+    "PortfolioConflict",
+    "PortfolioRepo",
     "ProfileRepo",
     "SessionConflict",
     "SessionNotFound",
     "SessionRepo",
+    "StoredPortfolio",
     "ToolEvent",
 ]

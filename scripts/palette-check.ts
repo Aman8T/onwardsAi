@@ -204,6 +204,9 @@ const PAIRS: Pair[] = [
   { fg: 'accent-ui', bg: 'lobe-2', min: 3 },
   { fg: 'accent-ui', bg: 'lobe-3', min: 3 },
   { fg: 'line-strong', bg: 'bg', min: 3 },
+  // The portfolio's Old Newspaper skin (fixed hue): body ink and secondary ink on paper.
+  { fg: 'press-ink', bg: 'press-paper', min: 7 },
+  { fg: 'press-ink-2', bg: 'press-paper', min: 4.5 },
 ];
 
 interface PairResult extends Pair {

@@ -123,6 +123,30 @@ class GateResult:
     """Jev's probability that the message needs outside information, when it answered."""
 
 
+# ───────────────────────── portfolio copy ─────────────────────────
+
+
+@dataclass(frozen=True, slots=True)
+class CopyClaim:
+    """One sentence of generated portfolio copy and the only text it may rest on."""
+
+    slot_id: str
+    sentence: str
+    corpus: str
+    """The verbatim quotes of the facts the slot cites, joined (never the whole resume)."""
+
+
+@dataclass(frozen=True, slots=True)
+class CopyVerdict:
+    slot_id: str
+    sentence: str
+    keep: bool
+    relation: str | None = None
+    """``supports`` / ``contradicts`` / ``says_nothing`` when Jev or Claude answered, else None."""
+    confidence: float | None = None
+    reason: str = ""
+
+
 # ───────────────────────── shadow ─────────────────────────
 
 
@@ -194,6 +218,8 @@ class NullDecisionService:
 
 
 __all__ = [
+    "CopyClaim",
+    "CopyVerdict",
     "DecisionContext",
     "DecisionService",
     "EvidenceClaim",

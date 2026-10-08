@@ -69,7 +69,8 @@
 
 /* (c) The living palette. Only hue varies; L and C are fixed per role. */
 @supports (color: oklch(0 0 0)) {
-  :root {
+  :root,
+  .pf-scope {
     --k: 1;
     --bg: oklch(0.97 calc(0.012 * var(--k) * var(--kw)) var(--h));
     --lobe-1: oklch(0.90 calc(0.044 * var(--k) * var(--kw) * var(--kb)) var(--h2));
@@ -91,6 +92,32 @@
     --selection: oklch(0.88 calc(0.055 * var(--k)) var(--h));
     --danger: oklch(0.48 0.12 25);
   }
+}
+
+/* (c2) The portfolio's Old Newspaper skin: fixed paper and ink, no hue drift (ink on paper ≥ 7:1).
+ * `.pf-scope` (the portfolio wrapper) also recomputes the living palette above from its own --h / --h2 / --h3,
+ * with --k fixed at 1: a portfolio's colours are the person's gradient family, not the app's ambient state. */
+:root {
+  --press-paper: #f6efe3;
+  --press-ink: #1e1a15;
+  --press-ink-2: #48413a;
+  --press-rule: rgba(30, 26, 21, 0.3);
+  --press-grain: rgba(30, 26, 21, 0.04);
+}
+
+@supports (color: oklch(0 0 0)) {
+  :root {
+    --press-paper: oklch(0.955 0.018 85);
+    --press-ink: oklch(0.22 0.012 70);
+    --press-ink-2: oklch(0.38 0.015 70);
+    --press-rule: oklch(0.22 0.012 70 / 0.3);
+    --press-grain: oklch(0.22 0.012 70 / 0.04);
+  }
+}
+
+.pf-scope {
+  --k: 1;
+  --kb: 1;
 }
 
 /* (d) Type, space, shape, motion. */
@@ -185,7 +212,8 @@ body {
   }
   /* Nested so engines without oklch keep the hex palette instead of invalid tokens. */
   @supports (color: oklch(0 0 0)) {
-    :root {
+    :root,
+    .pf-scope {
       --text: oklch(0.15 calc(0.02 * var(--k)) var(--h));
       --text-muted: oklch(0.35 calc(0.03 * var(--k)) var(--h));
       --accent-ui: oklch(0.45 calc(0.09 * var(--k)) var(--h));
@@ -199,7 +227,8 @@ body {
   .ambient {
     display: none;
   }
-  :root {
+  :root,
+  .pf-scope {
     --bg: Canvas;
     --lobe-1: Canvas;
     --lobe-2: Canvas;
@@ -219,6 +248,11 @@ body {
     --line-strong: CanvasText;
     --selection: Highlight;
     --danger: CanvasText;
+    --press-paper: Canvas;
+    --press-ink: CanvasText;
+    --press-ink-2: CanvasText;
+    --press-rule: CanvasText;
+    --press-grain: transparent;
   }
 }
 

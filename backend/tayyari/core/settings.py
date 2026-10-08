@@ -95,6 +95,13 @@ class GuardSettings(BaseModel):
     est_chat_usd: float = Field(default=0.10, ge=0)
     ceiling_grace: float = Field(default=1.25, ge=1.0)
     """A run already past the readers may finish while spend is under ceiling x grace."""
+    portfolio_per_minute: int = Field(default=4, ge=0)
+    portfolio_per_hour: int = Field(default=12, ge=0)
+    portfolio_per_day: int = Field(default=30, ge=0)
+    portfolio_global_per_hour: int = Field(default=120, ge=0)
+    """Portfolio generations and section rewrites (the paid portfolio calls) across all clients per hour."""
+    est_portfolio_usd: float = Field(default=0.08, ge=0)
+    """Spend reserved before a portfolio generation (Haiku facts + Sonnet copy + Jev checks)."""
     chat_global_per_hour: int = Field(default=600, ge=0)
     """Backstop on chat turns per hour across all clients (shared counter)."""
     chat_streams_per_ip: int = Field(default=2, ge=0)
