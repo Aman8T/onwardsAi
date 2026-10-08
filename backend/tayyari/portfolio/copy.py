@@ -1,12 +1,15 @@
-"""Copy: one Sonnet call writes the portfolio's wording from the facts only.
+"""Copy: Sonnet writes the portfolio's wording from the facts only.
 
-The call sees the person, the facts (each with its id) and the slots to fill, and returns
+A call sees the person, the facts (each with its id) and the slots to fill, and returns
 ``{"slots": [{"id", "text", "factIds"}]}``. Everything it writes is untrusted until `ground.verify_slots` has
 checked it: the system prompt below carries the voice and the hard rules, the checker enforces them.
 
 Which slots are filled: the five fixed ones (``tagline``, ``aboutLede``, ``aboutBody``, ``pressHeadline``,
 ``pressDeck``), an ``exp:<id>`` slot for each experience fact that has highlights (at most 6) and a ``proj:<id>``
-slot for each project fact (at most 8). A re-ask passes only the failed slot ids and the checker's ``notes``.
+slot for each project fact (at most 8). `write_copy` is one call for whatever slots it is given; a whole page is
+written as up to THREE concurrent calls (`partition_slots`: the fixed slots, the ``exp:`` slots, the ``proj:``
+slots), each shown only the facts it needs (`facts_for_slots`), so the wall time is that of the longest one. A
+re-ask passes only the failed slot ids and the checker's ``notes``.
 """
 
 from __future__ import annotations
@@ -41,6 +44,30 @@ def slot_ids_to_fill(facts: Sequence[Fact]) -> list[str]:
     ids += [f"exp:{f.id}" for f in facts if f.kind == "experience" and f.highlights][:MAX_EXP_SLOTS]
     ids += [f"proj:{f.id}" for f in facts if f.kind == "project"][:MAX_PROJ_SLOTS]
     return ids
+
+
+def partition_slots(slot_ids: Sequence[str]) -> list[list[str]]:
+    """``slot_ids`` as the groups written by separate, concurrent calls: the fixed slots, the ``exp:`` slots, then the
+    ``proj:`` slots (a slot of any other shape travels with the fixed ones).
+
+    Empty groups are left out, so a page with no roles and no projects is one call. Order inside a group is kept, and
+    a repeated id is asked once.
+    """
+    ids = list(dict.fromkeys(slot_ids))
+    experience = [s for s in ids if s.startswith("exp:")]
+    projects = [s for s in ids if s.startswith("proj:")]
+    fixed = [s for s in ids if not s.startswith(("exp:", "proj:"))]
+    return [group for group in (fixed, experience, projects) if group]
+
+
+def facts_for_slots(facts: Sequence[Fact], slot_ids: Sequence[str]) -> list[Fact]:
+    """The facts a call for ``slot_ids`` needs: all of them when a fixed slot is among them (they summarise the whole
+    page), else only the ones its ``exp:``/``proj:`` slots are about (all of them if none of those exist)."""
+    ids = list(slot_ids)
+    if any(not s.startswith(("exp:", "proj:")) for s in ids):
+        return list(facts)
+    wanted = {s.partition(":")[2] for s in ids}
+    return [f for f in facts if f.id in wanted] or list(facts)
 
 
 # ───────────────────────── schema ─────────────────────────
@@ -313,18 +340,20 @@ async def write_copy(
     notes: Mapping[str, str] | None = None,
     max_tokens: int = COPY_MAX_TOKENS,
 ) -> list[CopySlot]:
-    """One call for ``slot_ids`` (all of them, or just the failed ones with the checker's ``notes``).
+    """One call for ``slot_ids`` (any list: a part of the page, or just the failed ones with the checker's ``notes``).
 
-    The slots come back with origin ``model``, unchecked. An id the model leaves out is simply missing.
+    The call is shown only the facts those slots need (`facts_for_slots`). The slots come back with origin
+    ``model``, unchecked. An id the model leaves out is simply missing.
     """
     ids = list(dict.fromkeys(slot_ids))
     if not ids:
         return []
+    needed = facts_for_slots(facts, ids)
     result = await claude.structured(
         model=model,
         system=[TextBlock(COPY_SYSTEM)],
-        user=[TextBlock(build_copy_prompt(facts, person, graph, ids, notes))],
-        schema=build_copy_schema(ids, [f.id for f in facts if f.kind not in ("link", "contact")]),
+        user=[TextBlock(build_copy_prompt(needed, person, graph, ids, notes))],
+        schema=build_copy_schema(ids, [f.id for f in needed if f.kind not in ("link", "contact")]),
         max_tokens=max_tokens,
         effort="low",
         ctx=call_ctx,
@@ -340,7 +369,9 @@ __all__ = [
     "MAX_PROJ_SLOTS",
     "build_copy_prompt",
     "build_copy_schema",
+    "facts_for_slots",
     "parse_copy",
+    "partition_slots",
     "slot_ids_to_fill",
     "write_copy",
 ]

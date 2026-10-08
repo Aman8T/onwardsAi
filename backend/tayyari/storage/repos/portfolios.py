@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from uuid import uuid4
+from datetime import datetime, timedelta
+from typing import Any
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import case, delete, func, literal, or_, select, update
 
 from tayyari.core.clock import Clock, SystemClock
 from tayyari.core.logging import get_logger
@@ -15,6 +15,23 @@ from ..ports import PortfolioConflict, StoredPortfolio
 from ..tables import PortfolioRow, ProfileRow
 
 log = get_logger(__name__)
+
+VIEW_TOUCH_INTERVAL = timedelta(minutes=10)
+"""`get_published` records the view time at most this often per page: a popular page is not a write per visit."""
+
+
+def _published_at(published: bool, now: datetime) -> Any:
+    """The new ``published_at`` of an UPDATE (or the DO UPDATE of an upsert) that sets ``published``.
+
+    Unpublished: cleared. Published: the time it first went public, kept while it stays public (a
+    regenerate or an edit does not move it), ``now`` when this write is the one that publishes it.
+    """
+    if not published:
+        return None
+    stamp = literal(now, type_=PortfolioRow.published_at.type)
+    return case(
+        (PortfolioRow.published.is_(True), func.coalesce(PortfolioRow.published_at, stamp)), else_=stamp
+    )
 
 
 class SqlPortfolioRepo:
@@ -101,10 +118,9 @@ class SqlPortfolioRepo:
                 # Create or regenerate: new version is 1 for new row, or existing+1 for regenerate
                 new_version = 1 if existing_version is None else existing_version + 1
                 # Create or regenerate: insert outright if it doesn't exist, or replace with the new doc.
-                public_id = rec.public_id or str(uuid4())[:12]
                 insert_stmt = dialect_insert(self._db.dialect, PortfolioRow).values(
                     profile_id=rec.profile_id,
-                    public_id=public_id,
+                    public_id=rec.public_id,
                     doc=rec.doc,
                     generated=rec.generated,
                     facts_hash=rec.facts_hash,
@@ -125,7 +141,7 @@ class SqlPortfolioRepo:
                         "version": PortfolioRow.version + 1,
                         "published": insert_stmt.excluded.published,
                         "updated_at": insert_stmt.excluded.updated_at,
-                        "published_at": insert_stmt.excluded.published_at,
+                        "published_at": _published_at(rec.published, now),
                         "last_viewed_at": insert_stmt.excluded.last_viewed_at,
                     },
                 )
@@ -145,15 +161,13 @@ class SqlPortfolioRepo:
                         version=new_version,
                         published=rec.published,
                         updated_at=now,
-                        published_at=now if rec.published else None,
+                        published_at=_published_at(rec.published, now),
                     )
                 )
                 result = await s.execute(update_stmt)
                 if rowcount(result) == 0:
-                    raise PortfolioConflict(
-                        f"portfolio version conflict for profile {rec.profile_id}: "
-                        f"expected {expected_version}"
-                    )
+                    # no profile id in the message: it reaches the logs, and the id is the owner's key
+                    raise PortfolioConflict(f"portfolio version conflict: expected {expected_version}")
 
             # Re-fetch the row to get the created_at and public_id.
             fetch_stmt = select(
@@ -200,9 +214,20 @@ class SqlPortfolioRepo:
             return rowcount(await s.execute(stmt))
 
     async def _touch_viewed(self, public_id: str) -> None:
-        """Record that the portfolio was viewed."""
+        """Record that the portfolio was viewed, unless it was already recorded in the last `VIEW_TOUCH_INTERVAL`
+        (the condition is part of the UPDATE, so a busy page costs a write every ten minutes, not one per visit)."""
         now = self._clock.now()
-        stmt = update(PortfolioRow).where(PortfolioRow.public_id == public_id).values(last_viewed_at=now)
+        stmt = (
+            update(PortfolioRow)
+            .where(
+                PortfolioRow.public_id == public_id,
+                or_(
+                    PortfolioRow.last_viewed_at.is_(None),
+                    PortfolioRow.last_viewed_at < now - VIEW_TOUCH_INTERVAL,
+                ),
+            )
+            .values(last_viewed_at=now)
+        )
         try:
             async with self._db.session() as s:
                 await s.execute(stmt)

@@ -86,6 +86,25 @@ async def test_each_event_is_one_compact_line_and_the_headers_match_the_legacy_s
     assert log.records == []
 
 
+async def test_the_portfolio_stream_is_never_cached_but_the_others_keep_their_headers() -> None:
+    portfolio_event = PortfolioProgressEvent(step="facts", label="Reading your resume")
+
+    async def one() -> AsyncIterator[ndjson.StreamEvent]:
+        yield portfolio_event
+
+    response, exchange = build(one(), tag="portfolio")
+    await exchange.run(response)
+    # a whole page, private blocks included, travels in this stream: no cache may keep it
+    assert exchange.headers["cache-control"] == "no-store"
+    assert exchange.headers["x-accel-buffering"] == "no"
+    assert exchange.headers["content-type"] == MEDIA_TYPE
+
+    for tag in ("analyze", "chat"):
+        response, exchange = build(emit(ev_log("Jev", "x")), tag=tag)
+        await exchange.run(response)
+        assert exchange.headers["cache-control"] == "no-cache, no-transform", tag
+
+
 async def test_chat_events_use_the_same_encoding() -> None:
     events = [ev_delta("Hel"), ev_tool("WebSearch", "salary data"), ev_delta("lo"), ev_chat_done("abc123")]
     response, exchange = build(emit(*events), tag="chat")

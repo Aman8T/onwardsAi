@@ -100,8 +100,9 @@ class GuardSettings(BaseModel):
     portfolio_per_day: int = Field(default=30, ge=0)
     portfolio_global_per_hour: int = Field(default=120, ge=0)
     """Portfolio generations and section rewrites (the paid portfolio calls) across all clients per hour."""
-    est_portfolio_usd: float = Field(default=0.08, ge=0)
-    """Spend reserved before a portfolio generation (Haiku facts + Sonnet copy + Jev checks)."""
+    est_portfolio_usd: float = Field(default=0.12, ge=0)
+    """Spend reserved before a portfolio generation: Haiku fact reads (one per source), three concurrent Sonnet copy
+    calls (fixed slots, experience, projects), one re-ask and the Jev claim checks."""
     chat_global_per_hour: int = Field(default=600, ge=0)
     """Backstop on chat turns per hour across all clients (shared counter)."""
     chat_streams_per_ip: int = Field(default=2, ge=0)

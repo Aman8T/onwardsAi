@@ -459,3 +459,34 @@ def test_a_failed_patch_leaves_the_input_alone():
     before = p.model_dump()
     reject(p, slots=[SlotEdit(id="tagline", text="fine"), SlotEdit(id="aboutLede", text="<b>no</b>")])
     assert p.model_dump() == before
+
+
+# ───────────────────────── the hero is always on the page ─────────────────────────
+
+
+@pytest.mark.parametrize(("visible", "public"), [(False, True), (True, False), (False, False)])
+def test_the_hero_cannot_be_hidden_or_made_private(visible: bool, public: bool):
+    p = riya()
+    blocks = blocks_of(p)
+    blocks[0] = blocks[0].model_copy(update={"visible": visible, "public": public})
+    msg = reject(p, blocks=blocks)
+    assert "hero always stays on the page" in msg
+    assert all(b.visible and b.public for b in p.spec.blocks if b.kind == "hero")  # nothing was changed
+
+
+def test_the_hero_flags_may_be_sent_back_as_they_are():
+    p = riya()
+    out = apply(p, blocks=blocks_of(p))
+    hero = next(b for b in out.spec.blocks if b.kind == "hero")
+    assert hero.visible and hero.public
+
+
+def test_switching_the_look_never_hides_the_hero_even_on_a_page_that_has_it_hidden():
+    p = riya()
+    legacy = p.model_copy(deep=True)
+    for b in legacy.spec.blocks:
+        if b.kind == "hero":
+            b.visible = b.public = False
+    out = apply(legacy, lookIndex=1)
+    hero = next(b for b in out.spec.blocks if b.kind == "hero")
+    assert hero.visible and hero.public

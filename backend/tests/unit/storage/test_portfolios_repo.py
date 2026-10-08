@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+import dataclasses
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
 import pytest
+from sqlalchemy import select
 
 from tayyari.storage.ports import PortfolioConflict, StoredPortfolio
+from tayyari.storage.tables import PortfolioRow
 
 if TYPE_CHECKING:
     from tests.unit.storage.conftest import Env
@@ -239,6 +242,96 @@ async def test_purge_orphan_drafts_keeps_recent_drafts(env: Env) -> None:
     purged = await env.repos.portfolios.purge_orphan_drafts(cutoff)
     assert purged == 0  # recent draft is kept even though profile is gone
     assert await env.repos.portfolios.get("recent") is not None
+
+
+# ───────────────────────── view time and publish time ─────────────────────────
+
+
+async def internals(env: Env, profile_id: str) -> tuple[datetime | None, datetime | None]:
+    """``(published_at, last_viewed_at)`` of a row: columns the port does not expose."""
+    if env.fakes is not None:
+        row = env.fakes.portfolios.portfolios[profile_id]
+        return row.published_at, row.last_viewed_at
+    assert env.db is not None
+    stmt = select(PortfolioRow.published_at, PortfolioRow.last_viewed_at).where(
+        PortfolioRow.profile_id == profile_id
+    )
+    async with env.db.session() as s:
+        row = (await s.execute(stmt)).one()
+    return row.published_at, row.last_viewed_at
+
+
+async def test_a_view_is_recorded_when_there_is_none_or_it_is_ten_minutes_old(env: Env) -> None:
+    await save_portfolio(env, "p1", published=True)
+    assert (await internals(env, "p1"))[1] is None
+
+    first = env.clock.now()
+    await env.repos.portfolios.get_published("pub_p1")
+    assert (await internals(env, "p1"))[1] == first
+
+    env.clock.advance(timedelta(minutes=9, seconds=59))
+    await env.repos.portfolios.get_published("pub_p1")
+    assert (await internals(env, "p1"))[1] == first  # a busy page is not a write per visit
+
+    env.clock.advance(timedelta(seconds=2))
+    again = env.clock.now()
+    await env.repos.portfolios.get_published("pub_p1")
+    assert (await internals(env, "p1"))[1] == again
+
+
+async def test_an_unpublished_page_is_never_marked_viewed(env: Env) -> None:
+    await save_portfolio(env, "p1", published=False)
+    assert await env.repos.portfolios.get_published("pub_p1") is None
+    assert (await internals(env, "p1"))[1] is None
+
+
+async def test_published_at_stays_put_while_the_page_stays_published(env: Env) -> None:
+    unpublished = await save_portfolio(env, "p1", published=False)
+    assert (await internals(env, "p1"))[0] is None
+
+    env.clock.advance(DAY)
+    went_public = env.clock.now()
+    live = await env.repos.portfolios.put(
+        dataclasses.replace(unpublished, published=True), expected_version=unpublished.version
+    )
+    assert (await internals(env, "p1"))[0] == went_public
+
+    # an edit (optimistic update) and a regenerate (outright replace) of a page that stays public keep the date
+    env.clock.advance(3 * DAY)
+    edited = await env.repos.portfolios.put(live, expected_version=live.version)
+    assert (await internals(env, "p1"))[0] == went_public
+    env.clock.advance(DAY)
+    await env.repos.portfolios.put(edited, expected_version=None)
+    assert (await internals(env, "p1"))[0] == went_public
+
+
+async def test_unpublishing_clears_published_at_and_publishing_again_sets_a_new_one(env: Env) -> None:
+    live = await save_portfolio(env, "p1", published=True)
+    env.clock.advance(DAY)
+    hidden = await env.repos.portfolios.put(
+        dataclasses.replace(live, published=False), expected_version=live.version
+    )
+    assert (await internals(env, "p1"))[0] is None
+
+    env.clock.advance(DAY)
+    again = env.clock.now()
+    await env.repos.portfolios.put(
+        dataclasses.replace(hidden, published=True), expected_version=hidden.version
+    )
+    assert (await internals(env, "p1"))[0] == again
+
+
+async def test_a_conflict_does_not_name_the_profile(env: Env) -> None:
+    saved = await save_portfolio(env, "secret-profile-id-0123456789")
+    with pytest.raises(PortfolioConflict) as caught:
+        await env.repos.portfolios.put(saved, expected_version=saved.version + 5)
+    assert "secret-profile-id" not in str(caught.value)
+
+
+async def test_the_public_id_of_the_record_is_what_is_stored(env: Env) -> None:
+    saved = await save_portfolio(env, "p1", public_id="0123456789abcdef01234567")
+    assert saved.public_id == "0123456789abcdef01234567"
+    assert (await env.repos.portfolios.get("p1")).public_id == "0123456789abcdef01234567"  # type: ignore[union-attr]
 
 
 __all__ = []

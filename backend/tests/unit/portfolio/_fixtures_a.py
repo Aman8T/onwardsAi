@@ -1,9 +1,9 @@
 """Shared helpers for the facts/copy/ground/fallback tests (unit A): fixture loaders and a scripted "good Haiku".
 
 `scripted_facts(ctx)` reads the source texts of a fixture with a few regular expressions and returns the answer a
-careful extraction model would give (facts with a verbatim quote, ISO dates, highlights copied from the bullets).
-It exists so the tests can run the real verification (`verify_facts`) and the real fallback over every fixture
-without a model.
+careful extraction model would give: facts that point at line numbers (`line`, `highlightLines`, `detailLine`) with
+the short fields (title, employer, ISO dates ...) typed out. It exists so the tests can run the real verification
+(`verify_facts`) and the real fallback over every fixture without a model.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from tayyari.contract.portfolio import (
     PortfolioPerson,
 )
 from tayyari.contract.stored import StoredContext
-from tayyari.portfolio.facts import verify_facts
+from tayyari.portfolio.facts import split_lines, verify_facts
 
 FIXTURE_DIR = Path(__file__).resolve().parents[2] / "data" / "portfolio"
 FIXTURE_NAMES = sorted(p.stem for p in FIXTURE_DIR.glob("*.json"))
@@ -475,6 +475,53 @@ def _from_other(sid: str, kind: str, url: str | None, label: str, text: str) -> 
     return facts
 
 
+def _line_containing(lines: list[str], text: str, start: int = 0) -> int | None:
+    """The 1-based number of the first line (from index ``start`` on, then from the top) that holds the start of ``text``."""
+    squashed = _squash(text)
+    for width in (60, 30, 14):
+        key = squashed[:width]
+        if not key:
+            return None
+        for i in [*range(start, len(lines)), *range(start)]:
+            if key in _squash(lines[i]):
+                return i + 1
+    # a sentence that starts at the end of one line and wraps onto the next: find it in the joined text
+    joined, starts = "", []
+    for line in lines:
+        starts.append(len(joined))
+        joined += _squash(line) + " "
+    at = joined.find(squashed[:30])
+    return max(i for i, offset in enumerate(starts) if offset <= at) + 1 if at >= 0 else None
+
+
+def _bullet_starting(lines: list[str], text: str, start: int) -> int | None:
+    """The 1-based number of the bullet line (``- ...``) whose text is the start of the highlight ``text``."""
+    for i in [*range(start, len(lines)), *range(start)]:
+        if not lines[i].startswith("- "):
+            continue
+        first = _squash(lines[i][2:])
+        if len(first) >= 12 and text.startswith(first):
+            return i + 1
+    return None
+
+
+def _to_lines(fact: dict[str, Any], text: str) -> dict[str, Any]:
+    """A scripted fact with its quote, highlights and detail swapped for the numbers of the lines they come from."""
+    lines = list(split_lines(text))
+    out = {k: v for k, v in fact.items() if k not in ("quote", "highlights", "detail")}
+    line = _line_containing(lines, fact["quote"])
+    out["line"] = line if line is not None else 0
+    start = (line or 1) - 1
+    numbers = [n for h in fact.get("highlights", []) if (n := _bullet_starting(lines, h, start))]
+    if numbers:
+        out["highlightLines"] = numbers
+    if fact.get("detail") and fact["kind"] not in ("contact", "link"):
+        detail_line = _line_containing(lines, fact["detail"], start)
+        if detail_line is not None:
+            out["detailLine"] = detail_line
+    return out
+
+
 def scripted_facts(ctx: StoredContext) -> dict[str, Any]:
     """What a careful extraction model would return for ``ctx`` (resume first, then the other sources)."""
     facts: list[dict[str, Any]] = []
@@ -483,7 +530,8 @@ def scripted_facts(ctx: StoredContext) -> dict[str, Any]:
         if not src.content.strip():
             continue
         if src.kind == "resume":
-            facts += _from_resume(src.id, src.content)
+            built = _from_resume(src.id, src.content)
         else:
-            facts += _from_other(src.id, src.kind, src.url, src.label, src.content)
+            built = _from_other(src.id, src.kind, src.url, src.label, src.content)
+        facts += [_to_lines(f, src.content) for f in built]
     return {"facts": facts}

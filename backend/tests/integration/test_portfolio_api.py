@@ -22,6 +22,7 @@ from tayyari.contract.portfolio import (
 from tayyari.core.paths import PKG_DIR
 from tayyari.core.settings import Settings
 from tayyari.llm.errors import SPEND_CEILING_MESSAGE, SpendCeilingReached
+from tayyari.portfolio.facts import usable_sources
 from tayyari.portfolio.service import PAUSED_MESSAGE, PORTFOLIO_NOT_FOUND, PROFILE_NOT_FOUND
 from tayyari.sample.provider import SampleProvider
 from tayyari.storage.tables import LlmCallRow, PortfolioRow, RateLimitHitRow
@@ -32,6 +33,8 @@ from tests.unit.test_layering import scan
 
 MakeSettings = Callable[..., Settings]
 UNKNOWN_ID = "f" * 32
+SOURCES = len(usable_sources(SampleProvider().sample_context))
+"""Facts are read with one Haiku call per source that has text."""
 
 
 def scripted_claude() -> RecordingClaude:
@@ -101,9 +104,10 @@ async def test_post_streams_the_generation_and_the_page_is_saved_and_readable(
     assert row.facts_hash and row.doc["publicId"] == page.publicId
     assert [g["id"] for g in row.generated] == [s.id for s in page.content.slots]
 
-    # one Haiku call for the facts and one Sonnet call for the copy, both recorded for this client
-    assert sorted(r.purpose for r in usage) == ["portfolio", "portfolio"]
-    assert {r.model for r in usage} == {claude.structured_calls[0].model, claude.structured_calls[1].model}
+    # one Haiku call per source with text and three Sonnet calls for the copy, all recorded for this client
+    assert sorted(r.purpose for r in usage) == ["portfolio"] * (SOURCES + 3)
+    assert {r.model for r in usage} == {c.model for c in claude.structured_calls}
+    assert len(claude.structured_calls) == SOURCES + 3
     assert all(r.profile_id == sample_id and r.ip_hash for r in usage)
 
     assert read.status_code == 200 and read.headers["cache-control"] == "no-store"
@@ -123,8 +127,8 @@ async def test_jev_is_asked_about_every_sentence_and_a_contradiction_sends_the_s
     page = done_page(portfolio_events(response))
     assert {s.origin for s in page.content.slots} == {"resume"}  # nothing the model wrote survived
     copy_calls = [c for c in claude.structured_calls if is_copy_call(c)]
-    assert len(copy_calls) == 2  # the page, then ONE re-ask
-    assert "is not supported" in copy_calls[1].user_text
+    assert len(copy_calls) == 4  # the page (three concurrent calls), then ONE re-ask
+    assert "is not supported" in copy_calls[3].user_text
 
 
 async def test_an_existing_page_is_returned_at_once_and_does_not_count_against_the_limit(
@@ -156,8 +160,8 @@ async def test_regenerate_makes_version_two_and_keeps_the_public_id(build_settin
 
     assert (second.version, second.publicId) == (2, first.publicId)
     assert len(rows) == 1 and rows[0].version == 2
-    # the facts were read once: the second run reused them
-    assert len([c for c in claude.structured_calls if not is_copy_call(c)]) == 1
+    # the sources were read once (a call each): the second run reused the facts
+    assert len([c for c in claude.structured_calls if not is_copy_call(c)]) == SOURCES
 
 
 async def test_an_unknown_profile_is_an_error_event_in_the_stream(build_settings: MakeSettings) -> None:
@@ -436,6 +440,132 @@ async def test_a_ceiling_reached_during_the_run_ends_the_stream_with_a_calm_erro
     assert response.status_code == 200 and [e.type for e in events] == ["progress", "error"]
     assert isinstance(events[-1], PortfolioErrorEvent) and events[-1].message == PAUSED_MESSAGE
     assert rows == []
+
+
+# ───────────────────────── privacy and cost holes ─────────────────────────
+
+
+async def test_the_generation_stream_is_never_cached(build_settings: MakeSettings) -> None:
+    async with running(build_settings(), claude=scripted_claude(), jev=jev()) as env:
+        built = await generate(env)
+        again = await generate(env)  # the stored page, handed back at once
+
+    for response in (built, again):
+        assert response.status_code == 200
+        assert response.headers["cache-control"] == "no-store"
+        assert response.headers["x-accel-buffering"] == "no"
+
+
+async def test_delete_removes_the_page_and_its_public_link(build_settings: MakeSettings) -> None:
+    async with running(build_settings(), claude=scripted_claude(), jev=jev()) as env:
+        page = done_page(portfolio_events(await generate(env)))
+        stored = await env.container.repos.portfolios.get(env.sample_id)
+        assert stored is not None
+        await env.container.repos.portfolios.put(
+            dataclasses.replace(stored, published=True), expected_version=stored.version
+        )
+        assert (await env.client.get(f"/api/p/{page.publicId}")).status_code == 200
+
+        gone = await env.client.delete(f"/api/portfolio/{env.sample_id}")
+        read = await env.client.get(f"/api/portfolio/{env.sample_id}")
+        public = await env.client.get(f"/api/p/{page.publicId}")
+        preview = await env.client.get(f"/api/portfolio/{env.sample_id}/public-preview")
+        again = await env.client.delete(f"/api/portfolio/{env.sample_id}")
+        rows = await env.rows(PortfolioRow)
+
+    assert gone.status_code == 204 and gone.content == b"" and gone.headers["cache-control"] == "no-store"
+    for response in (read, public, preview):
+        assert response.status_code == 404 and error_of(response) == PORTFOLIO_NOT_FOUND
+    assert again.status_code == 204  # nothing left to remove is not an error
+    assert rows == []
+
+
+async def test_delete_is_guarded_like_the_other_mutations(build_settings: MakeSettings) -> None:
+    async with running(build_settings(), claude=scripted_claude(), jev=jev()) as env:
+        done_page(portfolio_events(await generate(env)))
+        url = f"/api/portfolio/{env.sample_id}"
+        cross_site = await env.client.delete(url, headers={"Sec-Fetch-Site": "cross-site"})
+        foreign_origin = await env.client.delete(url, headers={"Origin": "https://evil.example"})
+        odd_id = await env.client.delete("/api/portfolio/not%20an%20id")
+        still_there = await env.client.get(url)
+
+    assert cross_site.status_code == foreign_origin.status_code == 403
+    assert odd_id.status_code == 404 and error_of(odd_id) == PORTFOLIO_NOT_FOUND
+    assert still_there.status_code == 200
+
+
+async def test_a_stored_page_that_cannot_be_read_back_is_rebuilt_and_counted(
+    build_settings: MakeSettings,
+) -> None:
+    claude = scripted_claude()
+    async with running(
+        build_settings(guard=roomy_guard(portfolio_per_minute=5)), claude=claude, jev=jev()
+    ) as env:
+        done_page(portfolio_events(await generate(env)))
+        stored = await env.container.repos.portfolios.get(env.sample_id)
+        assert stored is not None
+        await env.container.repos.portfolios.put(
+            dataclasses.replace(stored, doc={"spec": "not a portfolio"}), expected_version=stored.version
+        )
+        calls = len(claude.structured_calls)
+        rebuilt = done_page(
+            portfolio_events(await generate(env))
+        )  # no "regenerate", but nothing to hand back
+        hits = await env.rows(PortfolioRow)
+        counted = [h.count for h in await env.rows(RateLimitHitRow) if h.bucket.startswith("portfolio:min:")]
+
+    assert rebuilt.version == 3 and rebuilt.spec.blocks
+    assert len(claude.structured_calls) > calls  # it was paid for
+    assert counted == [2]  # the first generation and the rebuild: the broken page was not "free"
+    assert len(hits) == 1
+
+
+async def test_a_malformed_id_never_touches_a_limiter_counter(build_settings: MakeSettings) -> None:
+    claude = scripted_claude()
+    async with running(build_settings(), claude=claude, jev=jev()) as env:
+        responses = [
+            await env.client.post("/api/portfolio", json={"profileId": "../etc/passwd", "regenerate": True}),
+            await env.client.post("/api/portfolio/not%20an%20id/rewrite", json={"slotId": "tagline"}),
+            await env.client.patch("/api/portfolio/not%20an%20id", json={}),
+            await env.client.delete("/api/portfolio/not%20an%20id"),
+        ]
+        hits = await env.rows(RateLimitHitRow)
+
+    assert [r.status_code for r in responses] == [404, 404, 404, 404]
+    assert [h for h in hits if h.bucket.startswith("portfolio:")] == []
+    assert claude.calls == []
+
+
+async def test_the_hero_cannot_be_hidden_through_the_api(build_settings: MakeSettings) -> None:
+    async with running(build_settings(), claude=scripted_claude(), jev=jev()) as env:
+        page = done_page(portfolio_events(await generate(env)))
+        blocks = [b.model_dump() for b in page.spec.blocks]
+        blocks[0]["public"] = False
+        refused = await env.client.patch(f"/api/portfolio/{env.sample_id}", json={"blocks": blocks})
+
+    assert refused.status_code == 400 and "hero" in error_of(refused)
+
+
+async def test_viewers_get_skills_and_scores_but_never_the_evidence_lines(
+    build_settings: MakeSettings,
+) -> None:
+    async with running(build_settings(), claude=scripted_claude(), jev=jev()) as env:
+        page = done_page(portfolio_events(await generate(env)))
+        owner = (await env.client.get(f"/api/portfolio/{env.sample_id}")).json()
+        stored = await env.container.repos.portfolios.get(env.sample_id)
+        assert stored is not None
+        await env.container.repos.portfolios.put(
+            dataclasses.replace(stored, published=True), expected_version=stored.version
+        )
+        preview = (await env.client.get(f"/api/portfolio/{env.sample_id}/public-preview")).json()
+        public = (await env.client.get(f"/api/p/{page.publicId}")).json()
+
+    owner_skills = [s for d in owner["graph"]["domains"] for s in d["skills"]]
+    assert any(s.get("evidence") for s in owner_skills)  # the owner sees where each skill came from
+    for body in (preview, public):
+        skills = [s for d in body["graph"]["domains"] for s in d["skills"]]
+        assert skills and all("evidence" not in s and set(s) == {"id", "name", "score"} for s in skills)
+        assert body["graph"]["skillCount"] == len(skills)
 
 
 def test_the_portfolio_package_respects_the_layering_rule() -> None:

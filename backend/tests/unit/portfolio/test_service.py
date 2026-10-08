@@ -7,23 +7,27 @@ import dataclasses
 from typing import Any
 
 import pytest
+import structlog.testing
 
 from tayyari.contract.portfolio import (
+    GraphSpec,
     PortfolioDoneEvent,
     PortfolioDraftEvent,
     PortfolioErrorEvent,
     PortfolioEvent,
     PortfolioPatch,
+    PortfolioPrivacy,
     PortfolioProgressEvent,
     SlotEdit,
     spec_problems,
 )
 from tayyari.core.errors import BadRequest, NotFound, ServiceUnavailable
+from tayyari.core.redact import redact_event_dict
 from tayyari.decisions.service import DecisionContext, FirstReadResult
 from tayyari.llm.errors import ClaudeOverloaded, ClaudeTimeout, SpendCeilingReached
 from tayyari.llm.types import CallContext
 from tayyari.portfolio import service as service_module
-from tayyari.portfolio.facts import verify_facts
+from tayyari.portfolio.facts import usable_sources, verify_facts
 from tayyari.portfolio.ground import SlotCheck
 from tayyari.portfolio.service import (
     PAUSED_MESSAGE,
@@ -39,6 +43,7 @@ from tests.fakes.claude import FakeClaudeClient
 from tests.fakes.decisions import FakeDecisionService
 from tests.unit.portfolio._fixtures_a import scripted_facts
 from tests.unit.portfolio._fixtures_c import (
+    COPY_CALLS_PER_PAGE,
     REAL_STEPS,
     Rig,
     asked_slots,
@@ -121,25 +126,92 @@ async def test_a_generation_streams_four_steps_a_draft_and_the_saved_page(settin
     assert "graphOutdated" not in stored.doc
 
 
-async def test_the_resume_is_read_once_and_the_copy_is_asked_for_every_slot(settings: Any) -> None:
+async def test_each_source_is_read_once_and_the_copy_is_asked_in_three_parts(settings: Any) -> None:
     rig = await make_rig(settings)
     events = await run(rig)
 
     facts_calls = [c for c in rig.claude.structured_calls if is_facts_call(c)]
     copy_calls = [c for c in rig.claude.structured_calls if is_copy_call(c)]
-    assert len(facts_calls) == 1 and len(copy_calls) == 1
-    assert facts_calls[0].model == settings.reader_model and facts_calls[0].effort is None
-    assert copy_calls[0].model == settings.synth_model and copy_calls[0].effort == "low"
+    assert len(facts_calls) == len(usable_sources(rig.ctx)) > 1  # one Haiku call per source with text
+    assert len(copy_calls) == COPY_CALLS_PER_PAGE == 3
+    assert all(c.model == settings.reader_model and c.effort is None for c in facts_calls)
+    assert all(c.model == settings.synth_model and c.effort == "low" for c in copy_calls)
     assert {c.ctx.purpose for c in rig.claude.structured_calls} == {"portfolio"}
     assert {c.ctx.profile_id for c in rig.claude.structured_calls} == {rig.profile_id}
-    assert asked_slots(copy_calls[0])[:5] == [
-        "tagline",
-        "aboutLede",
-        "aboutBody",
-        "pressHeadline",
-        "pressDeck",
-    ]
-    assert len(done_of(events).portfolio.content.facts) == 20
+    fixed, experience, projects = (asked_slots(c) for c in copy_calls)
+    assert fixed == ["tagline", "aboutLede", "aboutBody", "pressHeadline", "pressDeck"]
+    assert experience and all(s.startswith("exp:") for s in experience)
+    assert projects and all(s.startswith("proj:") for s in projects)
+    page = done_of(events).portfolio
+    asked = [*fixed, *experience, *projects]
+    assert [s.id for s in page.content.slots if s.id in set(asked)] == asked
+    assert len(page.content.facts) == 20
+    # each call is shown only the facts it needs: the per-fact calls never see the education or the quotes
+    assert "edu-1" in copy_calls[0].user_text and "quote-1" in copy_calls[0].user_text
+    for call in copy_calls[1:]:
+        assert "edu-1" not in call.user_text and "quote-1" not in call.user_text
+    assert "exp-1" in copy_calls[1].user_text and "proj-1" not in copy_calls[1].user_text
+    assert "proj-1" in copy_calls[2].user_text and "exp-1" not in copy_calls[2].user_text
+
+
+async def test_the_copy_calls_run_at_the_same_time(settings: Any) -> None:
+    claude = FakeClaudeClient()
+    rig = await make_rig(settings, claude=claude, script=False)
+    script_facts(claude, rig.ctx)
+    answer = good_copy("riya")
+    arrived = 0
+    both = asyncio.Event()
+
+    async def copy(call: Any) -> dict[str, Any]:
+        nonlocal arrived
+        arrived += 1
+        if arrived == COPY_CALLS_PER_PAGE:
+            both.set()
+        # one after the other, the first call would wait here for ever (and time out)
+        await asyncio.wait_for(both.wait(), timeout=1)
+        return answer(call)
+
+    script_copy(claude, copy)
+    result = await build(rig)
+
+    assert len([c for c in claude.structured_calls if is_copy_call(c)]) == COPY_CALLS_PER_PAGE
+    assert not result.report.copy_failed and result.report.fallbacks == 0
+    assert result.report.slots_model == len(result.portfolio.content.slots) > 0
+
+
+async def test_one_copy_call_failing_leaves_the_other_part_and_takes_the_fallback_for_its_slots(
+    settings: Any,
+) -> None:
+    claude = FakeClaudeClient()
+    rig = await make_rig(settings, claude=claude, script=False)
+    script_facts(claude, rig.ctx)
+    claude.script_structured(
+        "portfolio", ClaudeOverloaded(), when=lambda c: is_copy_call(c) and "tagline" in asked_slots(c)
+    )
+    script_copy(claude, good_copy("riya"))
+
+    result = await build(rig)
+    report = result.report
+    assert report.copy_failed and report.ungrounded == 0 and report.reasked == 0
+    fixed = {"tagline", "aboutLede", "aboutBody", "pressHeadline", "pressDeck"}
+    origins = {s.id: s.origin for s in result.portfolio.content.slots}
+    assert {origins[i] for i in fixed if i in origins} == {"resume"}  # the part that failed
+    assert {o for i, o in origins.items() if i not in fixed} == {"model"}  # the part that did not
+    assert report.slots_model > 0 and report.fallbacks == len(fixed)
+
+
+async def test_the_spend_ceiling_in_one_copy_call_stops_the_build(settings: Any) -> None:
+    claude = FakeClaudeClient()
+    rig = await make_rig(settings, claude=claude, script=False)
+    script_facts(claude, rig.ctx)
+    claude.script_structured(
+        "portfolio",
+        SpendCeilingReached(3600.0),
+        when=lambda c: is_copy_call(c) and "tagline" in asked_slots(c),
+    )
+    script_copy(claude, good_copy("riya"))
+    with pytest.raises(SpendCeilingReached):
+        await build(rig)
 
 
 async def test_jev_reads_the_resume_while_the_facts_are_extracted(settings: Any) -> None:
@@ -190,7 +262,8 @@ async def test_regenerating_keeps_the_public_id_and_reuses_the_facts(settings: A
     assert page.createdAt == first.createdAt and page.updatedAt != first.updatedAt
     facts_calls = [c for c in rig.claude.structured_calls if is_facts_call(c)]
     copy_calls = [c for c in rig.claude.structured_calls if is_copy_call(c)]
-    assert (len(facts_calls), len(copy_calls)) == (1, 2)  # the facts came from the stored portfolio
+    # the facts came from the stored portfolio: only the first build read the sources
+    assert (len(facts_calls), len(copy_calls)) == (len(usable_sources(rig.ctx)), 2 * COPY_CALLS_PER_PAGE)
     assert page.content.facts == first.content.facts
 
 
@@ -204,7 +277,10 @@ async def test_changed_source_text_means_the_facts_are_extracted_again(settings:
     )
 
     await run(rig, regenerate=True)
-    assert len([c for c in rig.claude.structured_calls if is_facts_call(c)]) == 2
+    # every source is read again (one call each), in both builds
+    assert len([c for c in rig.claude.structured_calls if is_facts_call(c)]) == 2 * len(
+        usable_sources(rig.ctx)
+    )
 
 
 async def test_regenerating_keeps_the_published_state_and_the_row_ids(settings: Any) -> None:
@@ -262,7 +338,10 @@ async def test_a_facts_failure_builds_the_page_from_the_profile_alone(settings: 
 
     events = await run(rig)
     page = done_of(events).portfolio
-    assert page.content.facts == [] and len(claude.structured_calls) == 1  # no facts, so no copy call
+    assert page.content.facts == [] and not any(
+        is_copy_call(c) for c in claude.structured_calls
+    )  # no copy call
+    assert len(claude.structured_calls) == len(usable_sources(rig.ctx))  # one failed call per source
     assert slot(page, "pressHeadline").text == "Riya Kapoor, Frontend Engineer"
     assert page.looks and page.graph.domains
     stored = await rig.repos.portfolios.get(rig.profile_id)
@@ -364,9 +443,11 @@ async def test_a_slot_that_fails_the_check_is_asked_again_with_the_notes(setting
     result = await build(rig)
 
     calls = [c for c in claude.structured_calls if is_copy_call(c)]
-    assert len(calls) == 2 and not is_reask(calls[0]) and is_reask(calls[1])
-    assert asked_slots(calls[1]) == ["tagline"]
-    assert "9000" in calls[1].user_text and "tagline" in calls[1].user_text  # the checker's notes
+    page_calls, again = calls[:COPY_CALLS_PER_PAGE], calls[COPY_CALLS_PER_PAGE:]
+    assert len(calls) == COPY_CALLS_PER_PAGE + 1 and not any(is_reask(c) for c in page_calls)
+    assert len(again) == 1 and is_reask(again[0])
+    assert asked_slots(again[0]) == ["tagline"]  # ONE call, for the failed slot only
+    assert "9000" in again[0].user_text and "tagline" in again[0].user_text  # the checker's notes
     tagline = slot(result.portfolio, "tagline")
     assert tagline.origin == "model" and tagline.text == "I care about motion and design systems."
     report = result.report
@@ -382,7 +463,8 @@ async def test_a_slot_that_fails_twice_takes_the_fallback_wording(settings: Any)
     script_copy(claude, good_copy("riya", {"tagline": "Shipped 9000 projects at Google."}))
 
     result = await build(rig)
-    assert len([c for c in claude.structured_calls if is_copy_call(c)]) == 2  # ONE re-ask, not more
+    # the page (three concurrent calls), then ONE re-ask
+    assert len([c for c in claude.structured_calls if is_copy_call(c)]) == COPY_CALLS_PER_PAGE + 1
     tagline = slot(result.portfolio, "tagline")
     assert tagline.origin == "resume" and tagline.text.startswith("I care about motion")
     assert tagline.factIds == ["quote-1"]
@@ -398,7 +480,7 @@ async def test_the_claim_check_of_jev_sends_a_slot_to_the_re_ask_and_then_the_fa
     result = await build(rig)
     assert slot(result.portfolio, "aboutBody").origin == "resume"
     assert result.report.reasked == 1 and result.report.fallbacks == 1
-    reask = [c for c in rig.claude.structured_calls if is_copy_call(c)][1]
+    reask = [c for c in rig.claude.structured_calls if is_copy_call(c)][COPY_CALLS_PER_PAGE]
     assert is_reask(reask) and "is not supported" in reask.user_text
 
 
@@ -415,7 +497,8 @@ async def test_empty_and_missing_model_slots_are_filled_from_the_fallback(settin
     script_copy(claude, copy)
     result = await build(rig)
 
-    assert [c for c in claude.structured_calls if is_copy_call(c)][1:] == []  # nothing failed: no re-ask
+    # nothing failed: no re-ask
+    assert [c for c in claude.structured_calls if is_copy_call(c)][COPY_CALLS_PER_PAGE:] == []
     assert slot(result.portfolio, "aboutLede").origin == "resume"
     assert slot(result.portfolio, "pressDeck").origin == "resume"
     assert result.report.fallbacks == 2 and result.report.reasked == 0
@@ -456,10 +539,10 @@ async def test_the_report_counts_what_the_checks_dropped(settings: Any) -> None:
         {
             "kind": "experience",
             "sourceId": "resume",
-            "quote": "Chief Wizard at Hogwarts 1999 - 2004",
+            "line": 9999,  # a line the resume does not have
             "title": "Chief Wizard",
             "org": "Hogwarts",
-            "highlights": ["Taught 900 owls to fly"],
+            "highlightLines": [9999],
             "tags": [],
         }
     )
@@ -632,9 +715,8 @@ async def test_rewrite_falls_back_after_one_re_ask(settings: Any) -> None:
 
     page = await rig.service.rewrite(rig.profile_id, "aboutLede", rig.rc)
     assert slot(page, "aboutLede").origin == "resume"
-    assert (
-        len([c for c in claude.structured_calls if is_copy_call(c)]) == 3
-    )  # the page, the rewrite, one re-ask
+    # the page (three calls), the rewrite, one re-ask
+    assert len([c for c in claude.structured_calls if is_copy_call(c)]) == COPY_CALLS_PER_PAGE + 2
 
 
 async def test_rewrite_reports_a_model_failure_as_unavailable(settings: Any) -> None:
@@ -700,3 +782,261 @@ async def test_the_preview_is_the_public_view_of_an_unpublished_page(settings: A
     assert rig.profile_id not in preview.model_dump_json()
     with pytest.raises(NotFound, match=PORTFOLIO_NOT_FOUND):
         await rig.service.public_preview("f" * 32)
+
+
+# ───────────────────────── a regenerate keeps what the owner decided ─────────────────────────
+
+
+async def choose_privately(rig: Rig, page: Any) -> Any:
+    """The owner switches things on and hides things: every choice a rebuild must not undo."""
+    blocks = [b.model_copy() for b in page.spec.blocks]
+    for b in blocks:
+        if b.kind == "projects":
+            b.public = False
+        if b.kind == "education":
+            b.visible = False
+    domain = page.graph.domains[0].id
+    patch = PortfolioPatch(
+        privacy=PortfolioPrivacy(email=True, phone=False, grades=True),
+        blocks=blocks,
+        graph=GraphSpec(hiddenDomainIds=[domain], stats=False),
+        defaultView="press",
+    )
+    return await rig.service.patch(rig.profile_id, patch, rig.rc)
+
+
+def choices(page: Any) -> Any:
+    return (
+        page.spec.privacy,
+        [(b.id, b.visible, b.public) for b in page.spec.blocks],
+        page.spec.graph.hiddenDomainIds,
+        page.publish.defaultView,
+    )
+
+
+async def test_regenerating_keeps_the_owners_privacy_choices(settings: Any) -> None:
+    rig = await make_rig(settings)
+    first = done_of(await run(rig)).portfolio
+    edited = await choose_privately(rig, first)
+    assert edited.spec.privacy.email and edited.spec.graph.hiddenDomainIds
+    assert any(not (b.visible and b.public) for b in edited.spec.blocks)
+
+    again = done_of(await run(rig, regenerate=True)).portfolio
+    assert again.version == edited.version + 1
+    assert choices(again) == choices(edited)
+    # every look carries them, so switching looks cannot undo them either
+    for look in again.looks:
+        assert look.privacy == edited.spec.privacy
+        assert look.graph.hiddenDomainIds == edited.spec.graph.hiddenDomainIds
+        owner = {b.id: (b.visible, b.public) for b in edited.spec.blocks}
+        shared = {b.id: (b.visible, b.public) for b in look.blocks if b.id in owner}
+        assert shared and all(owner[i] == flags for i, flags in shared.items())
+    hero = next(b for b in again.spec.blocks if b.kind == "hero")
+    assert hero.visible and hero.public
+
+
+async def test_the_draft_of_a_regenerate_already_carries_the_choices(settings: Any) -> None:
+    rig = await make_rig(settings)
+    edited = await choose_privately(rig, done_of(await run(rig)).portfolio)
+    events = await run(rig, regenerate=True)
+    draft = next(e for e in events if isinstance(e, PortfolioDraftEvent)).portfolio
+    assert draft.spec.privacy == edited.spec.privacy
+    assert draft.spec.graph.hiddenDomainIds == edited.spec.graph.hiddenDomainIds
+
+
+async def test_graph_areas_that_no_longer_exist_are_forgotten_on_regenerate(settings: Any) -> None:
+    rig = await make_rig(settings)
+    first = done_of(await run(rig)).portfolio
+    edited = await choose_privately(rig, first)
+    stored = await rig.repos.portfolios.get(rig.profile_id)
+    assert stored is not None
+    doc = dict(stored.doc)
+    spec = dict(doc["spec"])
+    spec["graph"] = {**spec["graph"], "hiddenDomainIds": [*edited.spec.graph.hiddenDomainIds, "gone-area"]}
+    doc["spec"] = spec
+    await rig.repos.portfolios.put(dataclasses.replace(stored, doc=doc), expected_version=stored.version)
+
+    again = done_of(await run(rig, regenerate=True)).portfolio
+    assert again.spec.graph.hiddenDomainIds == edited.spec.graph.hiddenDomainIds
+
+
+class Hook:
+    """What the owner does while the model works: runs once, during the next copy call."""
+
+    def __init__(self) -> None:
+        self.action: Any = None
+
+    async def fire(self) -> None:
+        action, self.action = self.action, None
+        if action is not None:
+            await action()
+
+
+async def hooked_rig(settings: Any) -> tuple[Rig, Hook]:
+    claude = FakeClaudeClient()
+    rig = await make_rig(settings, claude=claude, script=False)
+    script_facts(claude, rig.ctx)
+    answer = good_copy("riya")
+    hook = Hook()
+
+    async def copy(call: Any) -> dict[str, Any]:
+        await hook.fire()
+        return answer(call)
+
+    script_copy(claude, copy)
+    return rig, hook
+
+
+async def set_published(rig: Rig, published: bool) -> StoredPortfolio:
+    stored = await rig.repos.portfolios.get(rig.profile_id)
+    assert stored is not None
+    return await rig.repos.portfolios.put(
+        dataclasses.replace(stored, published=published), expected_version=stored.version
+    )
+
+
+async def test_a_page_published_while_it_was_being_rebuilt_stays_published(settings: Any) -> None:
+    rig, hook = await hooked_rig(settings)
+    first = done_of(await run(rig)).portfolio
+
+    hook.action = lambda: set_published(rig, True)
+    events = await run(rig, regenerate=True)
+    page = done_of(events).portfolio
+    stored = await rig.repos.portfolios.get(rig.profile_id)
+    assert stored is not None and stored.published and page.publish.state == "published"
+    assert page.publicId == first.publicId
+    assert await rig.service.public(first.publicId) is not None
+
+
+async def test_a_page_unpublished_while_it_was_being_rebuilt_is_not_published_again(settings: Any) -> None:
+    rig, hook = await hooked_rig(settings)
+    first = done_of(await run(rig)).portfolio
+    await set_published(rig, True)
+
+    hook.action = lambda: set_published(rig, False)
+    events = await run(rig, regenerate=True)
+    page = done_of(events).portfolio
+    stored = await rig.repos.portfolios.get(rig.profile_id)
+    assert (
+        stored is not None and not stored.published
+    )  # the stale "published" read at the start is not written back
+    assert page.publish.state == "draft"
+    assert await rig.service.public(first.publicId) is None
+    assert stored.doc["publish"]["state"] == "draft"
+
+
+async def test_a_privacy_switch_flipped_while_it_was_being_rebuilt_survives(settings: Any) -> None:
+    rig, hook = await hooked_rig(settings)
+    done_of(await run(rig))
+
+    async def owner_edits() -> None:
+        await rig.service.patch(
+            rig.profile_id,
+            PortfolioPatch(privacy=PortfolioPrivacy(email=True, phone=True, grades=False)),
+            rig.rc,
+        )
+
+    hook.action = owner_edits
+    page = done_of(await run(rig, regenerate=True)).portfolio
+    assert page.spec.privacy == PortfolioPrivacy(email=True, phone=True, grades=False)
+
+
+async def test_a_page_deleted_while_it_was_being_rebuilt_is_not_brought_back(settings: Any) -> None:
+    rig, hook = await hooked_rig(settings)
+    done_of(await run(rig))
+
+    hook.action = lambda: rig.service.delete(rig.profile_id)
+    events = await run(rig, regenerate=True)
+    last = events[-1]
+    assert isinstance(last, PortfolioErrorEvent) and last.message == service_module.DELETED_MEANWHILE
+    assert await rig.repos.portfolios.get(rig.profile_id) is None
+
+
+# ───────────────────────── reading, deleting ─────────────────────────
+
+
+async def test_has_readable_is_true_only_for_a_page_that_can_be_read_back(settings: Any) -> None:
+    rig = await make_rig(settings)
+    assert not await rig.service.has_readable(rig.profile_id)
+    done_of(await run(rig))
+    assert await rig.service.has_readable(rig.profile_id)
+
+    stored = await rig.repos.portfolios.get(rig.profile_id)
+    assert stored is not None
+    await rig.repos.portfolios.put(
+        dataclasses.replace(stored, doc={"spec": "not a portfolio"}), expected_version=stored.version
+    )
+    assert not await rig.service.has_readable(rig.profile_id)  # it would be rebuilt, so it is not free
+    assert await rig.service.get(rig.profile_id) is None
+
+
+async def test_delete_removes_the_page_and_the_public_link(settings: Any) -> None:
+    rig = await make_rig(settings)
+    page = done_of(await run(rig)).portfolio
+    await set_published(rig, True)
+    assert await rig.service.public(page.publicId) is not None
+
+    assert await rig.service.delete(rig.profile_id) is True
+    assert await rig.service.get(rig.profile_id) is None
+    assert await rig.service.public(page.publicId) is None
+    assert await rig.repos.portfolios.get(rig.profile_id) is None
+    assert await rig.service.delete(rig.profile_id) is False  # nothing left to remove
+
+
+# ───────────────────────── an incomplete extraction is not cached ─────────────────────────
+
+
+async def test_facts_read_from_only_some_sources_are_not_cached(settings: Any) -> None:
+    claude = FakeClaudeClient()
+    rig = await make_rig(settings, claude=claude, script=False)
+    sources = usable_sources(rig.ctx)
+    lost = next(s.id for s in sources if s.kind != "resume")
+    claude.script_structured(
+        "portfolio",
+        ClaudeOverloaded(),
+        when=lambda c: is_facts_call(c) and f'<source id="{lost}"' in c.user_text,
+        repeat=True,
+    )
+    script_facts(claude, rig.ctx)
+    script_copy(claude, good_copy("riya"))
+
+    result = await build(rig)
+    assert result.report.facts_partial and not result.report.facts_failed
+    assert result.portfolio.content.facts  # the sources that were read still make a page
+    assert result.facts_hash is None
+
+    events = await run(rig)
+    assert done_of(events).portfolio.content.facts
+    stored = await rig.repos.portfolios.get(rig.profile_id)
+    assert stored is not None and stored.facts_hash is None
+
+    # so the next build reads every source again instead of reusing the incomplete result
+    before = len([c for c in claude.structured_calls if is_facts_call(c)])
+    await run(rig, regenerate=True)
+    after = len([c for c in claude.structured_calls if is_facts_call(c)])
+    assert after - before == len(sources)
+
+
+async def test_a_complete_extraction_is_cached(settings: Any) -> None:
+    rig = await make_rig(settings)
+    result = await build(rig)
+    assert not result.report.facts_partial and result.facts_hash is not None
+
+
+# ───────────────────────── logs ─────────────────────────
+
+
+async def test_logs_carry_the_profile_id_only_under_the_key_the_redactor_shortens(settings: Any) -> None:
+    rig = await make_rig(settings)
+    pid = rig.profile_id
+    with structlog.testing.capture_logs() as logs:
+        done_of(await run(rig))
+        await rig.service.patch(pid, PortfolioPatch(defaultView="press"), rig.rc)
+        await rig.service.rewrite(pid, "tagline", rig.rc)
+        await rig.service.delete(pid)
+
+    assert [e["event"] for e in logs if "profile_id" in e]
+    for event in logs:
+        assert all(pid not in str(v) for k, v in event.items() if k != "profile_id"), event
+        shortened = redact_event_dict(None, "info", dict(event))
+        assert pid not in str(shortened), shortened

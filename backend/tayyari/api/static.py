@@ -9,6 +9,8 @@
                         every other path gets index.html with ``Cache-Control: no-cache`` so client-side
                         routes deep-link and a new deploy is picked up at once. When index.html does not
                         exist (no web build deployed) the answer is a JSON 404.
+    /p/<anything>       a published portfolio page (the shell the page renders in): the HTML also carries
+                        ``X-Robots-Tag: noindex``, so a share link is not listed by search engines.
 
 ORDER MATTERS: Starlette matches routes in the order they were registered, and these two match every path.
 Call `mount_spa` after every other route (``include_router``, ``@app.get`` ...) has been added, or it
@@ -27,6 +29,8 @@ from fastapi.responses import FileResponse, Response
 NOT_FOUND_MESSAGE = "Not found"
 INDEX_CACHE_CONTROL = "no-cache"
 ASSET_CACHE_CONTROL = "public, max-age=3600"
+PUBLIC_PAGE_PREFIX = "p/"
+NOINDEX = "noindex"
 _API_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
 
 
@@ -79,13 +83,18 @@ def mount_spa(app: FastAPI, static_dir: Path) -> None:
         if found is None:
             raise HTTPException(404, NOT_FOUND_MESSAGE)
         file, cache_control = found
-        return FileResponse(file, headers={"Cache-Control": cache_control})
+        headers = {"Cache-Control": cache_control}
+        if path.startswith(PUBLIC_PAGE_PREFIX):
+            headers["X-Robots-Tag"] = NOINDEX
+        return FileResponse(file, headers=headers)
 
 
 __all__ = [
     "ASSET_CACHE_CONTROL",
     "INDEX_CACHE_CONTROL",
+    "NOINDEX",
     "NOT_FOUND_MESSAGE",
+    "PUBLIC_PAGE_PREFIX",
     "locate",
     "mount_spa",
     "resolve_static_file",

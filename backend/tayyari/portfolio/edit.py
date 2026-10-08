@@ -6,7 +6,7 @@ says what to fix. What is checked:
     lookIndex   must name one of the stored looks; the look replaces composition, style, block order and variants
                 but keeps the owner's visibility / public flags (where block ids match), privacy and hidden domains
     blocks      the same ids as now, none missing or doubled, no kind change, every variant from the catalog, the
-                hero first, the Skill Graph within the first three
+                hero first and always visible and public, the Skill Graph within the first three
     graph       known domain ids only, and at least min(3, n) domains left on the page
     slots       known slot ids (``exp:`` / ``proj:`` need their fact), within the slot's character limit, plain text
     resetSlots  put the generated wording back (from ``generated``); a slot with none is removed so the fact
@@ -86,6 +86,8 @@ def _switch_look(p: Portfolio, index: int) -> PortfolioSpec:
     for block in look.blocks:
         if (old := owner.get(block.id)) is not None:
             block.visible, block.public = old.visible, old.public
+        if block.kind == "hero":
+            block.visible = block.public = True
     look.privacy = p.spec.privacy.model_copy()
     look.graph = p.spec.graph.model_copy(deep=True)
     return look
@@ -112,6 +114,8 @@ def _check_blocks(current: Sequence[BlockSpec], blocks: Sequence[BlockSpec]) -> 
             raise BadRequest(
                 f"'{b.variant}' is not a style of the {_label(b.kind)} section (choose one of: {', '.join(allowed)})."
             )
+        if b.kind == "hero" and not (b.visible and b.public):
+            raise BadRequest("The hero always stays on the page: it can't be hidden or made private.")
     missing = [i for i in kinds if i not in seen]
     if missing:
         names = ", ".join(_label(kinds[i]) for i in missing)

@@ -83,6 +83,11 @@ def test_nested_defaults_match_the_spec() -> None:
     assert (s.retention.profile_days, s.retention.payload_days, s.retention.metadata_days) == (60, 30, 180)
 
 
+def test_a_portfolio_generation_reserves_enough_for_its_concurrent_calls() -> None:
+    # Haiku fact reads, three concurrent Sonnet copy calls and one re-ask
+    assert build().guard.est_portfolio_usd == 0.12
+
+
 def test_models_property_is_a_small_frozen_object() -> None:
     s = build(reader_model="r", synth_model="s", chat_model="c")
     assert s.models == ModelNames(reader="r", synth="s", chat="c")

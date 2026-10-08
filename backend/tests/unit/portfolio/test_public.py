@@ -328,13 +328,16 @@ def test_skills_under_the_public_minimum_are_never_listed():
     # domain scores are always shown as they are, even the low ones, and the mastery stays
     assert [(d.name, d.score) for d in pub.graph.domains] == [(d.name, d.score) for d in p.graph.domains]
     assert pub.graph.mastery == p.graph.mastery
-    assert pub.graph.skillCount == p.graph.skillCount
+    # the count is the number of skills actually sent, not the size of the owner's graph
+    assert pub.graph.skillCount == sum(len(d.skills) for d in pub.graph.domains) < p.graph.skillCount
 
 
 def test_a_hidden_graph_block_sends_no_graph_data():
-    pub = to_public(set_block(rich(), "graph", visible=False))
-    assert pub.graph.domains == [] and pub.graph.mastery is None
-    assert pub.graph.asOf and pub.graph.sources
+    for hidden in (set_block(rich(), "graph", visible=False), set_block(rich(), "graph", public=False)):
+        pub = to_public(hidden)
+        assert pub.graph.domains == [] and pub.graph.mastery is None
+        assert pub.graph.skillCount == 0
+        assert pub.graph.asOf and pub.graph.sources
 
 
 # ───────────────────────── every fixture ─────────────────────────
@@ -366,3 +369,309 @@ def test_every_persona_with_grades_private_hides_the_grade_text():
         assert all(g not in text for g in grades), name
         shown = dump(with_privacy(p, grades=True))
         assert all(g in shown for g in grades), name
+
+
+# ───────────────────────── skill evidence never ships ─────────────────────────
+
+
+def test_skill_evidence_lines_never_reach_a_viewer():
+    p = rich()
+    evidence = [s.evidence for d in p.graph.domains for s in d.skills if s.evidence]
+    assert evidence, "the fixture's graph has evidence lines to leak"
+    pub = to_public(p)
+    text = pub.model_dump_json()
+    assert all(s.evidence is None for d in pub.graph.domains for s in d.skills)
+    assert all(line not in text for line in evidence)
+    assert [(s.id, s.name, s.score) for d in pub.graph.domains for s in d.skills] == [
+        (s.id, s.name, s.score)
+        for d in p.graph.domains
+        for s in d.skills
+        if s.score >= GRAPH_PUBLIC_MIN_SKILL
+    ]
+    assert any(s.evidence for d in p.graph.domains for s in d.skills)  # the owner's copy keeps them
+
+
+def test_the_skill_count_is_the_number_of_skills_sent():
+    p = rich()
+    p.spec.graph.hiddenDomainIds = ["ai-llm"]
+    pub = to_public(p)
+    sent = sum(len(d.skills) for d in pub.graph.domains)
+    assert pub.graph.skillCount == sent
+    assert sent < p.graph.skillCount
+
+
+# ───────────────────────── grades, however they are written ─────────────────────────
+
+
+def put_slot(p: Portfolio, new: CopySlot) -> None:
+    """Add ``new`` to the portfolio's copy, replacing the slot of the same id."""
+    p.content.slots = [s for s in p.content.slots if s.id != new.id] + [new]
+
+
+def with_edu(**changes) -> Portfolio:
+    p = rich()
+    facts = list(p.content.facts)
+    i = [f.id for f in facts].index("edu-1")
+    facts[i] = facts[i].model_copy(update=changes)
+    p.content = p.content.model_copy(update={"facts": facts})
+    return p
+
+
+@pytest.mark.parametrize(
+    "written",
+    [
+        "Graduated with 8.6 / 10",
+        "Graduated with 8.6/10",
+        "Graduated with 8.60 / 10",
+        "Graduated with CGPA: 8.6/10",
+        "Graduated with a cgpa of 8.6 out of 10",
+        "Graduated with GPA 8.6",
+        "Graduated with 8.6 CGPA",
+        "Graduated with (8.6/10)",
+        "Graduated with 8.6",
+    ],
+)
+def test_a_hidden_grade_is_stripped_however_it_is_written(written: str):
+    p = with_edu(
+        grade="CGPA 8.6 / 10",
+        title="B.Tech, Computer Science",
+        detail=written,
+        highlights=[written, "Scored 8.6 / 10 overall"],
+        tags=["GPA 8.6"],
+        org="Nandi Institute",
+    )
+    put_slot(p, slot("aboutBody", f"{written}. Then Saffron Ledger.", ["edu-1"]))
+    put_slot(p, slot("aboutLede", f"{written}.", ["edu-1"], origin="user"))
+    text = dump(p)
+    for needle in ("8.6", "8.60", "CGPA", "cgpa", "GPA", "/ 10", "/10", "out of 10"):
+        assert needle not in text, (written, needle)
+    edu = next(f for f in to_public(p).content.facts if f.kind == "education")
+    assert edu.grade is None
+    assert edu.detail.startswith("Graduated with") and edu.tags == []
+    body = next(s for s in to_public(p).content.slots if s.id == "aboutBody")
+    assert body.text.endswith("Then Saffron Ledger.")
+
+
+def test_the_grade_words_go_from_every_fact_and_slot_even_where_the_score_is_not_the_grade():
+    other = fact(
+        "proj-9",
+        "project",
+        "Grading tool",
+        detail="Computes CGPA and GPA for a class.",
+        highlights=["GPA calculator for 120 students"],
+    )
+    p = rich()
+    p.content = p.content.model_copy(update={"facts": [*p.content.facts, other]})
+    put_slot(p, slot("proj:proj-9", "A CGPA calculator for 120 students", ["proj-9"]))
+    pub = to_public(p)
+    shown = next(f for f in pub.content.facts if f.id == "proj-9")
+    assert "GPA" not in shown.model_dump_json().upper()
+    assert "120 students" in " ".join(shown.highlights)
+    assert not any("GPA" in s.text.upper() for s in pub.content.slots)
+
+
+def test_a_score_followed_by_a_unit_is_another_quantity_and_stays():
+    p = with_edu(grade="8.6", detail="Latency fell from 8.6s to 2s; the 8.6M rows and 18.6 users stay")
+    edu = next(f for f in to_public(p).content.facts if f.kind == "education")
+    assert edu.detail == "Latency fell from 8.6s to 2s; the 8.6M rows and 18.6 users stay"
+    p2 = with_edu(grade="8.6", detail="Finished with 8.6 overall")
+    assert (
+        next(f for f in to_public(p2).content.facts if f.kind == "education").detail
+        == "Finished with overall"
+    )
+
+
+def test_a_short_grade_is_removed_only_from_its_own_fact():
+    p = with_edu(grade="A", detail="Grade: A", highlights=["Top of the class: A"])
+    p.content = p.content.model_copy(
+        update={"facts": [*p.content.facts, fact("proj-9", "project", "A/B test harness", detail="A tool")]}
+    )
+    pub = to_public(p)
+    edu = next(f for f in pub.content.facts if f.kind == "education")
+    assert edu.detail == "Grade" and edu.highlights == ["Top of the class"]
+    proj = next(f for f in pub.content.facts if f.id == "proj-9")
+    assert (proj.title, proj.detail) == ("A/B test harness", "A tool")
+
+
+def test_the_grade_shows_everywhere_once_the_switch_is_on():
+    p = with_privacy(
+        with_edu(grade="CGPA 8.6 / 10", detail="CGPA 8.6 / 10. Final-year project."), grades=True
+    )
+    put_slot(p, slot("aboutBody", "Graduated with an 8.6 average", ["edu-1"]))
+    pub = to_public(p)
+    edu = next(f for f in pub.content.facts if f.kind == "education")
+    assert edu.grade == "CGPA 8.6 / 10" and edu.detail.startswith("CGPA 8.6 / 10")
+    assert next(s for s in pub.content.slots if s.id == "aboutBody").text == "Graduated with an 8.6 average"
+
+
+# ───────────────────────── contact details inside links ─────────────────────────
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://wa.me/919876543210",
+        "wa.me/919876543210",
+        "https://api.whatsapp.com/send?phone=919876543210",
+        "https://api.whatsapp.com/send/?text=hi",
+        "https://www.whatsapp.com/send?phone=1",
+        "https://t.me/riya_k",
+        "https://telegram.me/riya_k",
+        "https://signal.me/#p/+919876543210",
+        "tel:+919876543210",
+        "TEL:+919876543210",
+        "sms:+919876543210?body=hi",
+        "viber://chat?number=%2B919876543210",
+        "https://example.org/call/+91-98765-43210",
+        "https://example.org/contact?phone=9876543210",
+        "https://example.org/contact?phone=%2B91%2098765%2043210",
+    ],
+)
+def test_phone_and_messenger_links_follow_the_phone_switch(url: str):
+    p = rich()
+    p.content = p.content.model_copy(
+        update={
+            "facts": [*p.content.facts, fact("link-9", "link", "Message me", url=url, quote="Message me")]
+        }
+    )
+    assert not any(f.id == "link-9" for f in to_public(p).content.facts)
+    assert "Message me" not in dump(p)
+    shown = to_public(with_privacy(p, phone=True)).content.facts
+    assert any(f.id == "link-9" and f.url == url for f in shown)
+    # and the e-mail switch does not unlock it
+    assert not any(f.id == "link-9" for f in to_public(with_privacy(p, email=True)).content.facts)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "mailto:riya.kapoor.dev@example.com",
+        "https://calendly.com/riya/intro?email=riya.kapoor.dev@example.com",
+        "https://calendly.com/riya/intro?email=riya.kapoor.dev%40example.com&name=Riya",
+        "https://forms.example.org/hire?contact=riya.kapoor.dev%40example.com",
+    ],
+)
+def test_links_that_carry_an_email_follow_the_email_switch(url: str):
+    p = rich()
+    p.content = p.content.model_copy(
+        update={
+            "facts": [*p.content.facts, fact("link-9", "link", "Book a call", url=url, quote="Book a call")]
+        }
+    )
+    text = dump(p)
+    assert "Book a call" not in text and "kapoor.dev" not in text
+    assert any(f.id == "link-9" for f in to_public(with_privacy(p, email=True)).content.facts)
+    assert not any(f.id == "link-9" for f in to_public(with_privacy(p, phone=True)).content.facts)
+
+
+def test_ordinary_links_and_long_ids_in_links_stay():
+    p = rich()
+    links = [
+        fact("link-5", "link", "GitHub", url="https://github.com/riyakapoor", quote="GitHub"),
+        fact(
+            "link-6",
+            "link",
+            "LinkedIn",
+            url="https://www.linkedin.com/in/riya-kapoor-1a2b3c4d5",
+            quote="LinkedIn",
+        ),
+        fact("link-7", "link", "A post", url="https://x.com/riya/status/1234567890123456789", quote="A post"),
+        fact("link-8", "link", "Telegram docs", url="https://core.telegram.org/api", quote="Telegram docs"),
+    ]
+    p.content = p.content.model_copy(update={"facts": [*p.content.facts, *links]})
+    shown = {f.id for f in to_public(p).content.facts}
+    assert {"link-5", "link-6", "link-7", "link-8"} <= shown
+
+
+def test_a_project_link_that_hides_a_phone_number_loses_its_link_but_not_the_project():
+    p = rich()
+    facts = list(p.content.facts)
+    i = [f.id for f in facts].index("proj-1")
+    facts[i] = facts[i].model_copy(update={"url": "https://example.org/demo?call=%2B919876543210"})
+    p.content = p.content.model_copy(update={"facts": facts})
+    proj = next(f for f in to_public(p).content.facts if f.id == "proj-1")
+    assert proj.url is None
+    assert next(f for f in to_public(with_privacy(p, phone=True)).content.facts if f.id == "proj-1").url
+
+
+# ───────────────────────── the PII scrubber over every string ─────────────────────────
+
+ADDRESS = "Address: 12 Baker Street, Flat 4, Bengaluru 560001"
+
+
+def test_no_email_phone_or_address_line_reaches_a_viewer_in_any_string():
+    p = rich()
+    facts = list(p.content.facts)
+    i = [f.id for f in facts].index("exp-1")
+    facts[i] = facts[i].model_copy(
+        update={
+            "org": f"Kitebird ({EMAIL})",
+            "location": "Bengaluru",
+            "detail": f"D2C commerce. Reach me at {PHONE}.\n{ADDRESS}",
+            "highlights": [ADDRESS, f"Call {PHONE}", "Rebuilt checkout", "Phone 98765 4321"],
+            "tags": ["React", EMAIL],
+        }
+    )
+    p.content = p.content.model_copy(update={"facts": facts})
+    put_slot(
+        p, slot("aboutBody", f"Based at 12 Baker Street, Bengaluru.\nMail {EMAIL} or {PHONE}.", ["exp-1"])
+    )
+    p.content.person.headline = f"Frontend Engineer · {PHONE}"
+    text = dump(p)
+    leaks = (
+        EMAIL,
+        "kapoor.dev",
+        "98765",
+        "Baker Street",
+        "560001",
+        "Address:",
+        "[email]",
+        "[phone]",
+        "[address]",
+    )
+    for leak in leaks:
+        assert leak not in text, leak
+    pub = to_public(p)
+    exp = next(f for f in pub.content.facts if f.id == "exp-1")
+    assert exp.highlights == ["Rebuilt checkout"]
+    assert exp.detail == "D2C commerce. Reach me at."
+    assert exp.tags == ["React"]
+    assert exp.org == "Kitebird"
+    assert next(s for s in pub.content.slots if s.id == "aboutBody").text == "Mail or."
+    assert pub.content.person.headline == "Frontend Engineer"
+
+
+def test_a_shown_email_and_phone_survive_the_scrubber_but_an_address_never_does():
+    p = with_privacy(rich(), email=True, phone=True)
+    facts = list(p.content.facts)
+    i = [f.id for f in facts].index("exp-1")
+    facts[i] = facts[i].model_copy(update={"highlights": [f"Write to {EMAIL} or {PHONE}", ADDRESS]})
+    p.content = p.content.model_copy(update={"facts": facts})
+    exp = next(f for f in to_public(p).content.facts if f.id == "exp-1")
+    assert exp.highlights == [f"Write to {EMAIL} or {PHONE}"]
+    assert dump(p).count(EMAIL) >= 1 and "Baker Street" not in dump(p)
+
+
+def test_a_contact_fact_that_is_really_an_address_is_dropped_even_with_the_switch_on():
+    p = with_privacy(rich(), phone=True)
+    p.content = p.content.model_copy(
+        update={"facts": [*p.content.facts, fact("contact-9", "contact", ADDRESS, quote=ADDRESS)]}
+    )
+    assert not any(f.id == "contact-9" for f in to_public(p).content.facts)
+    assert "Baker Street" not in dump(p)
+
+
+def test_ordinary_numbers_dates_and_scores_survive_the_scrubber():
+    p = rich()
+    facts = list(p.content.facts)
+    i = [f.id for f in facts].index("exp-1")
+    kept = [
+        "Raised conversion 9.4% across 10,000 orders",
+        "Worked 2018 - 2020 - 2022",
+        "Shipped on 2025-07-14",
+        "Cut LCP from 4.1s to 1.9s",
+    ]
+    facts[i] = facts[i].model_copy(update={"highlights": kept})
+    p.content = p.content.model_copy(update={"facts": facts})
+    exp = next(f for f in to_public(p).content.facts if f.id == "exp-1")
+    assert exp.highlights == kept

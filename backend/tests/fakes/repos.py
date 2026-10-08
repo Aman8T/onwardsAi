@@ -490,7 +490,9 @@ class FakePortfolioRepo:
         await _yield()
         for p in self.portfolios.values():
             if p.public_id == public_id and p.published:
-                p.last_viewed_at = self._s.clock.now()
+                now = self._s.clock.now()
+                if p.last_viewed_at is None or p.last_viewed_at < now - timedelta(minutes=10):
+                    p.last_viewed_at = now  # like the SQL repo: at most one write per ten minutes
                 return StoredPortfolio(
                     profile_id=p.profile_id,
                     public_id=p.public_id,
@@ -508,9 +510,7 @@ class FakePortfolioRepo:
         await _yield()
         existing = self.portfolios.get(rec.profile_id)
         if expected_version is not None and (existing is None or existing.version != expected_version):
-            raise PortfolioConflict(
-                f"portfolio version conflict for profile {rec.profile_id}: expected {expected_version}"
-            )
+            raise PortfolioConflict(f"portfolio version conflict: expected {expected_version}")
         now = self._s.clock.now()
         # Determine new version: 1 for new row, existing+1 for updates, expected+1 for optimistic
         if existing is None:
@@ -521,11 +521,13 @@ class FakePortfolioRepo:
             new_version = expected_version + 1
         public_id = existing.public_id if existing else rec.public_id
         created_at = existing.created_at if existing else now
-        published_at = (
-            now
-            if rec.published and not (existing and existing.published)
-            else (existing.published_at if existing else None)
-        )
+        # unpublished: cleared; published: kept while it stays published, now when this write publishes it
+        if not rec.published:
+            published_at = None
+        elif existing is not None and existing.published:
+            published_at = existing.published_at or now
+        else:
+            published_at = now
         p = _Portfolio(
             profile_id=rec.profile_id,
             public_id=public_id,

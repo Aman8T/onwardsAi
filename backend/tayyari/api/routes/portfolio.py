@@ -3,6 +3,7 @@
     POST  /api/portfolio                       JSON `PortfolioRequest` -> NDJSON `PortfolioEvent` stream
     GET   /api/portfolio/{profile_id}          the owner's `Portfolio` (404 until one is generated)
     PATCH /api/portfolio/{profile_id}          JSON `PortfolioPatch` -> the updated `Portfolio` (409 if it moved on)
+    DELETE /api/portfolio/{profile_id}         remove the page and its public link -> 204 (also when there was none)
     POST  /api/portfolio/{profile_id}/rewrite  JSON ``{"slotId": ...}`` -> the `Portfolio` with that slot rewritten
     GET   /api/portfolio/{profile_id}/public-preview   the `PublicPortfolio` a visitor would get
     GET   /api/p/{public_id}                   the `PublicPortfolio` of a published page (404 otherwise)
@@ -12,10 +13,12 @@ exactly like an unknown one (404), and a public id is a separate random id that 
 
 Guards, in the order of `routes/chat.py`, all answered as JSON before a stream starts: ``shed`` (the in-memory
 bucket, before the body is read), the JSON Content-Type (415), the body with its size cap and deadline (413 / 408),
-validation (400), the shared per-IP counters of the ``portfolio`` route (429) and the daily spend ceiling (503, the
-estimate stays reserved until the response is over). Handing back a portfolio that already exists costs nothing, so
-that path skips the counters and the reservation. Reads and edits that call no model only ``shed`` in the ``chat``
-bucket, like `routes/profile.py`; a section rewrite pays like a generation.
+validation (400), the id shape (404, before any counter is touched), the shared per-IP counters of the ``portfolio``
+route (429) and the daily spend ceiling (503, the estimate stays reserved until the response is over). Handing back a
+portfolio that already exists AND can be read back (`PortfolioService.has_readable`) costs nothing, so that path skips
+the counters and the reservation; a stored document that no longer validates is rebuilt, and paid for. Reads, edits and
+the delete call no model and only ``shed`` in the ``chat`` bucket, like `routes/profile.py`; a section rewrite pays like
+a generation. State-changing methods are covered by the cross-site guard (`api.security.CrossSiteGuard`).
 """
 
 from __future__ import annotations
@@ -107,7 +110,7 @@ async def generate(request: Request) -> Response:
 
     held = AsyncExitStack()
     try:
-        has_page = not regenerate and await container.repos.portfolios.get(body.profileId) is not None
+        has_page = not regenerate and await container.portfolio.has_readable(body.profileId)
         if not has_page:
             await limiter.check("portfolio", rc.ip_hash, ip_hash_48=ip48, memory=False)
             await held.enter_async_context(container.spend_guard.reserve(guard.est_portfolio_usd))
@@ -138,6 +141,16 @@ async def patch_portfolio(profile_id: str, request: Request) -> JSONResponse:
     patch = await _read_body(request, container, PortfolioPatch)
     portfolio = await container.portfolio.patch(profile_id, patch, rc)
     return _no_store(portfolio.to_dict())
+
+
+@router.delete("/api/portfolio/{profile_id}")
+async def delete_portfolio(profile_id: str, request: Request) -> Response:
+    container = get_container(request)
+    rc = await get_request_context(request)
+    _shed(container, rc, "chat")
+    _require_id(profile_id, PORTFOLIO_NOT_FOUND)
+    await container.portfolio.delete(profile_id)
+    return Response(status_code=204, headers={"Cache-Control": "no-store"})
 
 
 @router.post("/api/portfolio/{profile_id}/rewrite")

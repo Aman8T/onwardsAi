@@ -90,30 +90,37 @@ export function SectionList({ spec, content, graph, selectedId, onSelect, update
                   ))}
                 </select>
               )}
-              <button
-                type="button"
-                className="pe-ib"
-                aria-label={`Show ${name} on the page`}
-                aria-pressed={b.visible}
-                aria-disabled={cannotShow || undefined}
-                title={cannotShow ? empty : undefined}
-                onClick={() => {
-                  if (cannotShow) return;
-                  // Turning "Open to" on is the opt-in itself, so it goes public with it.
-                  patchBlock(b.id, (x) => ({ ...x, visible: !x.visible, public: x.kind === 'openTo' ? !x.visible : x.public }));
-                }}
-              >
-                <IconEye off={!b.visible} />
-              </button>
-              <button
-                type="button"
-                className="pe-ib"
-                aria-label={`Make ${name} public`}
-                aria-pressed={b.public}
-                onClick={() => patchBlock(b.id, (x) => ({ ...x, public: !x.public }))}
-              >
-                <IconVisibility isPublic={b.public} />
-              </button>
+              {b.kind === 'hero' ? (
+                // The hero is the page's identity: always shown and public (the server enforces it too).
+                <span className="pe-row-note pe-row-note-flush">Always shown</span>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="pe-ib"
+                    aria-label={`Show ${name} on the page`}
+                    aria-pressed={b.visible}
+                    aria-disabled={cannotShow || undefined}
+                    title={cannotShow ? empty : undefined}
+                    onClick={() => {
+                      if (cannotShow) return;
+                      // Turning "Open to" on is the opt-in itself, so it goes public with it.
+                      patchBlock(b.id, (x) => ({ ...x, visible: !x.visible, public: x.kind === 'openTo' ? !x.visible : x.public }));
+                    }}
+                  >
+                    <IconEye off={!b.visible} />
+                  </button>
+                  <button
+                    type="button"
+                    className="pe-ib"
+                    aria-label={`Make ${name} public`}
+                    aria-pressed={b.public}
+                    onClick={() => patchBlock(b.id, (x) => ({ ...x, public: !x.public }))}
+                  >
+                    <IconVisibility isPublic={b.public} />
+                  </button>
+                </>
+              )}
             </div>
             {cannotShow && <p className="pe-row-note">{empty}</p>}
             {b.kind === 'graph' && <GraphOptions spec={spec} content={content} graph={graph} update={update} />}

@@ -688,3 +688,111 @@ async def test_verify_slots_with_the_person_allows_their_name() -> None:
 def test_copy_claim_is_the_decision_services_shape() -> None:
     claim = CopyClaim("tagline", "A sentence.", "A corpus.")
     assert (claim.slot_id, claim.sentence, claim.corpus) == ("tagline", "A sentence.", "A corpus.")
+
+
+# ───────────────────────── numbers carry their unit ─────────────────────────
+
+
+def sized(*highlights: str, grade: str | None = None) -> dict[str, Fact]:
+    one = fact(
+        "exp-9",
+        "experience",
+        "Engineer",
+        "Acme — Engineer",
+        org="Acme",
+        highlights=list(highlights),
+        grade=grade,
+    )
+    return {"exp-9": one}
+
+
+def ok_against(text: str, *highlights: str, grade: str | None = None) -> bool:
+    return check_slot(slot("aboutLede", text, "exp-9"), sized(*highlights, grade=grade)).ok
+
+
+@pytest.mark.parametrize(
+    ("text", "corpus", "ok"),
+    [
+        # a bare number is not the same number with a scale
+        ("Engineer at Acme serving 42M users.", "Served 42 users.", False),
+        ("Engineer at Acme serving 42 million users.", "Served 42 users.", False),
+        ("Engineer at Acme serving 42 users.", "Served 42M users.", False),
+        ("Engineer at Acme serving 42M users.", "Served 42M users.", True),
+        ("Engineer at Acme serving 42 million users.", "Served 42M users.", True),
+        ("Engineer at Acme serving 10K users.", "Served 10,000 users.", True),
+        ("Engineer at Acme serving 10,000 users.", "Served 10K users.", True),
+        ("Engineer at Acme serving 10K users.", "Served 10 users.", False),
+        ("Engineer at Acme with a 2 lakh budget.", "Budget of 2 lakh.", True),
+        ("Engineer at Acme with a 2 crore budget.", "Budget of 2 lakh.", False),
+        # percent and multiplier are different units
+        ("Engineer at Acme: 9.4x faster.", "Conversion rose 9.4%.", False),
+        ("Engineer at Acme: 9.4% faster.", "Conversion rose 9.4x.", False),
+        ("Engineer at Acme: conversion up 9.4 percent.", "Conversion rose 9.4%.", True),
+        ("Engineer at Acme: 10x faster.", "Builds are 10x faster.", True),
+        # money: the amount, the scale and the currency
+        ("Engineer at Acme who raised $2M.", "Raised 2M.", False),
+        ("Engineer at Acme who raised 2M.", "Raised $2M.", True),
+        ("Engineer at Acme who raised $2M.", "Raised $2M.", True),
+        ("Engineer at Acme who raised ₹2M.", "Raised $2M.", False),
+        ("Engineer at Acme who raised $20M.", "Raised $2M.", False),
+        ("Engineer at Acme who raised ₹1,200 crore.", "Raised ₹1,200 crore.", True),
+        ("Engineer at Acme who raised ₹1,200 crore.", "Raised 1,200 crore.", False),
+        ("Engineer at Acme who raised ₹1,200 crore.", "Raised Rs. 1200 crore.", True),
+        ("Engineer at Acme who raised ₹1,200 lakh.", "Raised ₹1,200 crore.", False),
+        # ordinary quantities still compare bare, and so do durations written with an attached unit
+        ("Engineer at Acme with 10+ years.", "Ten-plus: 10+ years.", True),
+        ("Engineer at Acme: LCP from 4.1s to 1.9s.", "LCP fell from 4.1s to 1.9s.", True),
+        ("Engineer at Acme: LCP from 4.1s to 1.9s.", "LCP fell from 4.1 to 1.9.", True),
+    ],
+)
+def test_a_number_is_compared_with_its_unit(text: str, corpus: str, ok: bool) -> None:
+    assert ok_against(text, corpus) is ok
+
+
+@pytest.mark.parametrize(
+    ("text", "corpus", "ok"),
+    [
+        ("Engineer at Acme serving millions of users.", "Served 2 million users.", False),
+        ("Engineer at Acme serving millions of users.", "Served millions of users.", True),
+        ("Engineer at Acme reaching hundreds of thousands of users.", "Reached 300 thousand users.", False),
+        ("Engineer at Acme reaching hundreds of thousands of users.", "Reached hundreds of thousands.", True),
+        ("Engineer at Acme reaching thousands of users.", "Reached hundreds of users.", False),
+        ("Engineer at Acme reaching thousands of users.", "Reached thousands of users.", True),
+        ("Engineer at Acme with billions of events.", "Processed 3 billion events.", False),
+        ("Engineer at Acme with a million users.", "Served 2 million users.", True),
+        ("Engineer at Acme with a million users.", "Served 2 users.", False),
+    ],
+)
+def test_vague_multipliers_must_be_in_the_facts(text: str, corpus: str, ok: bool) -> None:
+    assert ok_against(text, corpus) is ok
+
+
+def test_a_number_inside_a_name_is_not_a_claim() -> None:
+    assert ok_against("Engineer at Acme running k8s clusters.", "Ran k8s clusters.")
+    assert ok_against("Engineer at Acme on React 18 and Vite 5.", "Moved to React 18 and Vite 5.")
+
+
+@pytest.mark.parametrize(
+    ("text", "leaks"),
+    [
+        ("Engineer at Acme with a score of 8.6.", True),
+        ("Engineer at Acme with an 8.60 average.", True),
+        ("Engineer at Acme, 8.6/10 overall.", True),
+        ("Engineer at Acme who led 10 interns.", False),  # the 10 of "8.6 / 10" is the scale, not the score
+        ("Engineer at Acme who led 3 interns.", False),
+    ],
+)
+def test_the_grade_of_a_cited_fact_cannot_be_written_as_a_number(text: str, leaks: bool) -> None:
+    corpus = sized(
+        "Led 10 interns.", "Scored 8.6 on the bench.", "Mentored 3 interns.", grade="CGPA 8.6 / 10"
+    )
+    result = check_slot(slot("aboutLede", text, "exp-9"), corpus)
+    assert any("grade" in x for x in result.problems) is leaks
+
+
+def test_a_grade_number_is_only_private_for_the_facts_the_slot_cites() -> None:
+    edu = fact("edu-1", "education", "B.Tech", "B.Tech — Nandi", org="Nandi", grade="8.6")
+    work = sized("Reduced p95 latency from 8.6s to 2s.")["exp-9"]
+    text = "Engineer at Acme who cut p95 latency from 8.6s to 2s."
+    assert check_slot(slot("aboutLede", text, "exp-9"), {"exp-9": work, "edu-1": edu}).ok
+    assert not check_slot(slot("aboutLede", text, "exp-9", "edu-1"), {"exp-9": work, "edu-1": edu}).ok

@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { PublicPortfolio } from '../../shared/portfolio';
 import type { Profile } from '../../shared/types';
+import { RadarGlyph } from '../components/Radar';
 import { getPublicPreview } from '../lib/api';
 import { EASE } from '../lib/ui';
 import { actions, getState, useApp } from '../store';
@@ -161,6 +162,11 @@ export function PortfolioScreen({ profile }: { profile: Profile }) {
     const label = step ?? (status === 'loading' ? 'Opening your portfolio…' : 'Getting started…');
     return (
       <CalmPage kicker="Your portfolio" title="Building your page" live actions={back}>
+        {/* The Skill Graph is already known: draw it while the resume is read, so the wait has a shape. */}
+        <span style={{ display: 'grid', justifyItems: 'center', gap: 'var(--s2)', marginBottom: 'var(--s4)' }} aria-hidden="true">
+          <RadarGlyph values={profile.domains.map((d) => d.score)} size={168} />
+          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--fs-5)', color: 'var(--text)' }}>{profile.person.name}</span>
+        </span>
         <AnimatePresence mode="wait" initial={false}>
           <motion.span
             key={label}

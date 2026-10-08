@@ -4,6 +4,7 @@
 producer yields it, and a blank line (`contract.HEARTBEAT`) after `HEARTBEAT_S` of quiet so an idle proxy does
 not close a slow stream (the client skips blank lines). Headers are those of the legacy server:
 ``application/x-ndjson; charset=utf-8``, ``Cache-Control: no-cache, no-transform``, ``X-Accel-Buffering: no``.
+The portfolio stream carries a person's whole page (private blocks included), so it is ``Cache-Control: no-store``.
 
 The producer (the analysis pipeline or a chat turn) runs as its own task feeding a queue. It is cancelled as
 soon as the client goes away, however that is noticed: a failed send (`ClientDisconnect` / `OSError`), a
@@ -43,6 +44,9 @@ from tayyari.core.logging import get_logger
 log = get_logger(__name__)
 
 MEDIA_TYPE = "application/x-ndjson; charset=utf-8"
+CACHE_CONTROL = "no-cache, no-transform"
+NO_STORE_TAGS = frozenset({"portfolio"})
+"""Streams whose body is personal data a shared cache must never keep (the owner's whole portfolio)."""
 StreamEvent = AnalysisEvent | ChatEvent | PortfolioEvent
 """Whatever a route streams: the events of an analysis, a chat turn or a portfolio generation."""
 _TERMINAL = (DoneEvent, ErrorEvent, ChatDoneEvent, ChatErrorEvent, PortfolioDoneEvent, PortfolioErrorEvent)
@@ -107,7 +111,10 @@ class NdjsonResponse(StreamingResponse):
         super().__init__(
             self._lines,
             media_type=MEDIA_TYPE,
-            headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
+            headers={
+                "Cache-Control": "no-store" if tag in NO_STORE_TAGS else CACHE_CONTROL,
+                "X-Accel-Buffering": "no",
+            },
         )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
@@ -155,4 +162,4 @@ class NdjsonResponse(StreamingResponse):
             await _stop(producer, self.events)
 
 
-__all__ = ["MEDIA_TYPE", "NdjsonResponse", "StreamEvent"]
+__all__ = ["CACHE_CONTROL", "MEDIA_TYPE", "NO_STORE_TAGS", "NdjsonResponse", "StreamEvent"]

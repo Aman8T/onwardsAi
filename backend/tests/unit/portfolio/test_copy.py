@@ -17,7 +17,9 @@ from tayyari.portfolio.copy import (
     COPY_SYSTEM,
     build_copy_prompt,
     build_copy_schema,
+    facts_for_slots,
     parse_copy,
+    partition_slots,
     slot_ids_to_fill,
     write_copy,
 )
@@ -86,6 +88,54 @@ def test_roles_and_projects_are_capped() -> None:
 
 def test_no_facts_still_asks_for_the_fixed_slots() -> None:
     assert slot_ids_to_fill([]) == list(FIXED_SLOTS)
+
+
+def test_the_slots_are_split_into_the_fixed_ones_the_roles_and_the_projects() -> None:
+    facts, _, _ = riya()
+    ids = slot_ids_to_fill(facts)
+    fixed, experience, projects = partition_slots(ids)
+    assert fixed == list(FIXED_SLOTS)
+    assert experience and all(s.startswith("exp:") for s in experience)
+    assert projects and all(s.startswith("proj:") for s in projects)
+    assert [*fixed, *experience, *projects] == ids  # nothing lost, nothing repeated, the order kept
+
+
+def test_a_group_with_no_slots_is_left_out() -> None:
+    assert partition_slots(list(FIXED_SLOTS)) == [list(FIXED_SLOTS)]
+    assert partition_slots(["exp:exp-1", "exp:exp-2"]) == [["exp:exp-1", "exp:exp-2"]]
+    assert partition_slots(["proj:proj-1"]) == [["proj:proj-1"]]
+    assert partition_slots(["exp:exp-1", "proj:proj-1"]) == [["exp:exp-1"], ["proj:proj-1"]]
+    assert partition_slots([*FIXED_SLOTS, "proj:proj-1"]) == [list(FIXED_SLOTS), ["proj:proj-1"]]
+    assert partition_slots(["tagline", "exp:exp-1", "tagline"]) == [["tagline"], ["exp:exp-1"]]
+    assert partition_slots(["proj:proj-1", "tagline", "exp:exp-1"]) == [
+        ["tagline"],
+        ["exp:exp-1"],
+        ["proj:proj-1"],
+    ]  # fixed, then roles, then projects, whatever the order given
+    assert partition_slots([]) == []
+
+
+def test_a_slot_of_another_shape_travels_with_the_fixed_ones() -> None:
+    assert partition_slots(["hero:x", "exp:exp-1"]) == [["hero:x"], ["exp:exp-1"]]
+    assert len(facts_for_slots(riya()[0], ["hero:x"])) == len(riya()[0])
+
+
+def test_per_fact_slots_need_only_their_own_facts_and_fixed_slots_need_all() -> None:
+    facts, _, _ = riya()
+    ids = slot_ids_to_fill(facts)
+    fixed, experience, projects = partition_slots(ids)
+    assert facts_for_slots(facts, fixed) == facts
+    assert facts_for_slots(facts, [*fixed, experience[0]]) == facts
+    for group in (experience, projects):
+        own = facts_for_slots(facts, group)
+        assert {f.id for f in own} == {s.partition(":")[2] for s in group}
+        assert 0 < len(own) < len(facts)
+    assert {f.kind for f in facts_for_slots(facts, experience)} == {"experience"}
+    assert {f.kind for f in facts_for_slots(facts, projects)} == {"project"}
+    assert [f.id for f in facts_for_slots(facts, ["proj:proj-2"])] == ["proj-2"]
+    assert (
+        facts_for_slots(facts, ["exp:nope"]) == facts
+    )  # nothing matches: the model still gets something to read
 
 
 # ───────────────────────── schema ─────────────────────────
@@ -272,6 +322,25 @@ async def test_write_copy_makes_one_sonnet_call_and_returns_model_slots() -> Non
         (f"exp:{exp1.id}", "model"),
     ]
     assert slots[0].factIds == [quote.id]
+
+
+@pytest.mark.parametrize("group_index", [1, 2], ids=["roles", "projects"])
+async def test_a_call_for_per_fact_slots_is_shown_only_those_facts(group_index: int) -> None:
+    facts, person, graph = riya()
+    group = partition_slots(slot_ids_to_fill(facts))[group_index]
+    claude = FakeClaudeClient().script_structured("portfolio", answer())
+    await write_copy(
+        claude, model=SONNET, facts=facts, person=person, graph=graph, slot_ids=group, call_ctx=CALL_CTX
+    )
+    (call,) = claude.structured_calls
+    cited_enum = call.schema["properties"]["slots"]["items"]["properties"]["factIds"]["items"]["enum"]
+    wanted = {s.partition(":")[2] for s in group}
+    assert set(cited_enum) == wanted
+    assert "edu-1" not in call.user_text and "quote-1" not in call.user_text
+    assert all(f"{fact_id} |" in call.user_text for fact_id in wanted)
+    other = "project" if group_index == 1 else "experience"
+    assert not any(f"{f.id} |" in call.user_text for f in facts if f.kind == other)
+    assert call.system_text == COPY_SYSTEM
 
 
 async def test_write_copy_with_nothing_to_write_makes_no_call() -> None:

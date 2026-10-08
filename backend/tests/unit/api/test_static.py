@@ -102,6 +102,25 @@ async def test_other_paths_fall_back_to_index_html(site: Path, path: str) -> Non
     assert res.headers["cache-control"] == "no-cache"
 
 
+@pytest.mark.parametrize("path", ["/p/0123456789abcdef01234567", "/p/anything/else", "/p/"])
+async def test_public_portfolio_pages_are_not_indexed(site: Path, path: str) -> None:
+    async with client_for(site) as client:
+        res = await client.get(path)
+        head = await client.head(path)
+    assert res.status_code == 200 and res.text == INDEX
+    assert res.headers["x-robots-tag"] == head.headers["x-robots-tag"] == "noindex"
+    assert res.headers["cache-control"] == "no-cache"
+
+
+@pytest.mark.parametrize(
+    "path", ["/", "/profile/abc123", "/pricing", "/assets/app-3f9a.js", "/p", "/people/p/1"]
+)
+async def test_other_pages_and_files_are_left_to_search_engines(site: Path, path: str) -> None:
+    async with client_for(site) as client:
+        res = await client.get(path)
+    assert "x-robots-tag" not in res.headers
+
+
 async def test_head_requests_work(site: Path) -> None:
     async with client_for(site) as client:
         index = await client.head("/")

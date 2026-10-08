@@ -32,6 +32,7 @@ from tayyari.contract.portfolio import (
     GraphSnapshot,
     GraphSpec,
     GraphVariant,
+    Portfolio,
     PortfolioContent,
     PortfolioPrivacy,
     PortfolioSpec,
@@ -39,6 +40,7 @@ from tayyari.contract.portfolio import (
     TypePairing,
 )
 
+from .edit import MIN_GRAPH_DOMAINS
 from .features import Features
 from .kit import (
     COMPOSITION_LABELS,
@@ -392,7 +394,8 @@ def _blocks(
     blocks: list[BlockSpec] = []
     for kind, variants in COMPOSITIONS[composition]:
         variant = graph_variant if kind == "graph" else _block_variant(kind, variants, content, density)
-        shown = kind != "openTo" and block_has_content(kind, content, graph)
+        # the hero is the page's name: always visible and public; "open to" is opt-in
+        shown = kind == "hero" or (kind != "openTo" and block_has_content(kind, content, graph))
         blocks.append(BlockSpec(id=kind, kind=kind, variant=variant, visible=shown, public=shown))
     return blocks
 
@@ -515,6 +518,57 @@ def compose(
     return specs
 
 
+# ───────────────────────── the owner's choices survive a rebuild ─────────────────────────
+
+
+def _carry_spec(
+    spec: PortfolioSpec, previous: PortfolioSpec, content: PortfolioContent, graph: GraphSnapshot
+) -> PortfolioSpec:
+    """``spec`` (a fresh look) with the owner's privacy choices of ``previous`` put back.
+
+    Each block keeps its ``visible`` / ``public`` by block id (a block the new content cannot fill is hidden, and
+    the hero is always shown), the hidden graph areas that still exist stay hidden (never so many that fewer than three
+    remain), and the privacy switches are copied as they are. Style, composition and variants stay the designer's.
+    """
+    old = {b.id: b for b in previous.blocks}
+    blocks: list[BlockSpec] = []
+    for b in spec.blocks:
+        before = old.get(b.id)
+        if b.kind == "hero":
+            blocks.append(b.model_copy(update={"visible": True, "public": True}))
+        elif not block_has_content(b.kind, content, graph):
+            blocks.append(b.model_copy(update={"visible": False, "public": False}))
+        elif before is None or before.kind != b.kind:
+            blocks.append(b.model_copy())
+        else:
+            blocks.append(b.model_copy(update={"visible": before.visible, "public": before.public}))
+    known = {d.id for d in graph.domains}
+    spare = max(0, len(known) - min(MIN_GRAPH_DOMAINS, len(known)))
+    hidden = [h for h in dict.fromkeys(previous.graph.hiddenDomainIds) if h in known][:spare]
+    return spec.model_copy(
+        update={
+            "blocks": blocks,
+            "graph": GraphSpec(hiddenDomainIds=hidden, stats=spec.graph.stats),
+            "privacy": previous.privacy.model_copy(),
+        }
+    )
+
+
+def carry_owner_choices(portfolio: Portfolio, previous: Portfolio) -> Portfolio:
+    """A rebuilt ``portfolio`` that keeps what the owner decided on ``previous``: each block's ``visible`` and
+    ``public`` (by block id), the hidden graph areas still present, the privacy switches and the default view.
+
+    A regenerate must never quietly make private things public. The published state is not carried here: it
+    belongs to the stored row, which the service reads when it saves.
+    """
+    out = portfolio.model_copy(deep=True)
+    out.looks = [_carry_spec(look, previous.spec, out.content, out.graph) for look in out.looks]
+    out.spec = _carry_spec(out.spec, previous.spec, out.content, out.graph)
+    out.publish.defaultView = previous.publish.defaultView
+    out.publish.publishedAt = previous.publish.publishedAt
+    return out
+
+
 # ───────────────────────── the default page ─────────────────────────
 
 
@@ -559,4 +613,4 @@ def default_spec(content: PortfolioContent, graph: GraphSnapshot) -> PortfolioSp
     )
 
 
-__all__ = ["LOOK_COUNT", "compose", "default_spec", "person_seed"]
+__all__ = ["LOOK_COUNT", "carry_owner_choices", "compose", "default_spec", "person_seed"]

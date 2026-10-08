@@ -3,14 +3,16 @@
 `check_slot` is the strict, code-only check (no model). A slot passes when, for the facts it cites and no others:
 
   1. it fits its character limit (`SLOT_LIMITS`), is plain text (no HTML or markdown), and has no private detail
-     (email, grade);
+     (email, grade, or a number that is the grade of a fact it cites);
   2. the corpus is not empty and every cited fact id exists (an empty corpus is a failure: it would let anything
      through, as `code_check`'s ``no_source`` does for a scanned resume);
   3. every checkable token of every sentence is found in the corpus: numbers (``10,000`` equals ``10000``),
      months, identifiers (``motion-kit``, ``Next.js``) and capitalised names. The match is strict and
      word-bounded (``Java`` does not match ``JavaScript``) and case-insensitive; spelled-out numbers (``two`` ...
      ``twenty``) count as numbers; a capitalised word that opens a sentence (or any word of a headline) must be in
-     the corpus, a function word or an ordinary verb;
+     the corpus, a function word or an ordinary verb. A number is compared with its unit: ``42M`` is not ``42``,
+     ``9.4x`` is not ``9.4%``, ``10K`` is ``10,000``, ``$2M`` needs the same amount in the same currency, and a
+     vague multiplier (``millions``, ``hundreds of thousands``) must itself be in the corpus;
   4. seniority verbs (led, headed, founded, managed, directed, spearheaded, owned, architected) appear in the
      corpus in some form, and puffery (passionate, world-class, rockstar ...) does not appear unless the corpus
      itself says it.
@@ -30,6 +32,7 @@ import re
 import unicodedata
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 from typing import Final
 
 from tayyari.contract.portfolio import FACT_SLOT_PREFIXES, CopySlot, Fact, PortfolioPerson, slot_limit
@@ -89,6 +92,131 @@ def number_keys(text: str) -> frozenset[str]:
     return frozenset(m.group().replace(",", "").replace("_", "") for m in _NUMBER.finditer(fold(text)))
 
 
+# ───────────────────────── measures: a number with its unit ─────────────────────────
+
+_SCALES: Final[dict[str, int]] = {
+    "k": 10**3,
+    "thousand": 10**3,
+    "m": 10**6,
+    "mn": 10**6,
+    "million": 10**6,
+    "b": 10**9,
+    "bn": 10**9,
+    "billion": 10**9,
+    "lakh": 10**5,
+    "lakhs": 10**5,
+    "lac": 10**5,
+    "lacs": 10**5,
+    "crore": 10**7,
+    "crores": 10**7,
+    "cr": 10**7,
+    "hundred": 10**2,
+}
+_CURRENCIES: Final[dict[str, str]] = {
+    "$": "usd",
+    "us$": "usd",
+    "usd": "usd",
+    "dollar": "usd",
+    "dollars": "usd",
+    "₹": "inr",
+    "rs": "inr",
+    "inr": "inr",
+    "rupee": "inr",
+    "rupees": "inr",
+    "€": "eur",
+    "eur": "eur",
+    "euro": "eur",
+    "euros": "eur",
+    "£": "gbp",
+    "gbp": "gbp",
+    "¥": "jpy",
+}
+_END_OF_WORD = r"(?![^\W_])"
+_MEASURE = re.compile(
+    r"(?:(?P<pre>us\$|[$₹€£¥]|(?<![^\W\d_])(?:rs|inr|usd|eur|gbp)\.?)[  ]?)?"
+    r"(?P<num>\d+(?:[,_]\d+)*(?:\.\d+)?)"
+    rf"(?:(?P<glued>[kmbx×]){_END_OF_WORD}"
+    rf"|[  ]?(?P<pct>%|percent(?:age)?|per[ ]?cent|pct){_END_OF_WORD}"
+    rf"|[  ]?(?P<word>billion|bn|million|mn|thousand|lakhs?|lacs?|crores?|cr|hundred|times){_END_OF_WORD})?"
+    rf"(?:[  ]?(?P<post>usd|inr|eur|gbp|dollars?|rupees?|euros?){_END_OF_WORD})?",
+    re.IGNORECASE,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class Measure:
+    """A number as it is written, with the unit that goes with it: ``42M``, ``9.4%``, ``9.4x``, ``₹1,200 crore``.
+
+    ``kind`` is ``num`` (a count or amount; ``K``, ``M``, ``B``, ``lakh``, ``crore`` and the spelled-out scale
+    words are folded into ``value``, so ``10K`` and ``10,000`` agree), ``%`` or ``x`` (a multiplier).
+    ``currency`` is the normalised currency (``usd``, ``inr`` ...) or ``""``.
+    """
+
+    text: str
+    key: str
+    kind: str
+    value: Decimal
+    currency: str
+    start: int
+    end: int
+
+
+def measures_of(text: str, *, strict: bool = False) -> list[Measure]:
+    """Every number of ``text`` (already `fold`-ed) with its unit and currency, in reading order.
+
+    ``strict`` leaves out the digits inside a word or a dotted name (``k8s``, ``v2.1.3``), as `extract_anchors` does.
+    """
+    out: list[Measure] = []
+    for m in _MEASURE.finditer(text):
+        start = m.start("num")
+        if (
+            strict
+            and m.group("pre") is None
+            and start > 0
+            and (text[start - 1].isalnum() or text[start - 1] in "._")
+        ):
+            continue
+        key = m.group("num").replace(",", "").replace("_", "")
+        try:
+            value = Decimal(key)
+        except InvalidOperation:
+            continue
+        unit = (m.group("glued") or m.group("word") or "").lower()
+        if m.group("pct"):
+            kind = "%"
+        elif unit in ("x", "×", "times"):
+            kind = "x"
+        else:
+            kind = "num"
+            value *= _SCALES.get(unit, 1)
+        pre = (m.group("pre") or "").lower().rstrip(".")
+        post = (m.group("post") or "").lower()
+        currency = _CURRENCIES.get(pre) or _CURRENCIES.get(post) or ""
+        out.append(Measure(m.group(0).strip(), key, kind, value, currency, m.start(), m.end()))
+    return out
+
+
+_SCALE_OF_SCORE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(?:/|out\s+of)\s*(\d+(?:[.,]\d+)?)", re.IGNORECASE)
+_DECIMAL_NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
+
+
+def grade_scores(grade: str | None) -> list[str]:
+    """The score numbers of a grade text, with ``.`` as the decimal mark: ``["8.6"]`` for ``CGPA 8.6 / 10``.
+
+    The scale after ``/`` or ``out of`` (the 10) is not a score, so a slot may still say "10 engineers".
+    """
+    if not grade:
+        return []
+    text = fold(grade)
+    scales = {m.span(2) for m in _SCALE_OF_SCORE.finditer(text)}
+    return [m.group().replace(",", ".") for m in _DECIMAL_NUMBER.finditer(text) if m.span() not in scales]
+
+
+def grade_numbers(grade: str | None) -> frozenset[Decimal]:
+    """`grade_scores` as numbers (``8.60`` equals ``8.6``)."""
+    return frozenset(Decimal(score) for score in grade_scores(grade))
+
+
 def tidy_text(value: str) -> str:
     """Whitespace collapsed to single spaces."""
     return " ".join(value.split())
@@ -111,10 +239,15 @@ class Corpus:
     joined: str
     numbers: frozenset[str]
     months: frozenset[int]
+    measures: frozenset[tuple[str, Decimal]] = frozenset()
+    """``(kind, value)`` of every number with its unit (see `Measure`): ``42M`` is not ``42``."""
+    priced: frozenset[tuple[str, Decimal, str]] = frozenset()
+    """``(kind, value, currency)`` of every amount written with a currency."""
 
     @classmethod
     def of(cls, text: str) -> Corpus:
         toks = tuple(tokens_of(text))
+        found = measures_of(fold(text))
         return cls(
             text=text,
             tokens=toks,
@@ -123,7 +256,15 @@ class Corpus:
             joined=f" {' '.join(toks)} ",
             numbers=number_keys(text),
             months=frozenset(MONTH_INDEX[t] for t in toks if t in MONTH_INDEX),
+            measures=frozenset((m.kind, m.value) for m in found),
+            priced=frozenset((m.kind, m.value, m.currency) for m in found if m.currency),
         )
+
+    def has_measure(self, measure: Measure) -> bool:
+        """The same number with the same unit (and the same currency when the sentence names one)."""
+        if measure.currency:
+            return (measure.kind, measure.value, measure.currency) in self.priced
+        return (measure.kind, measure.value) in self.measures
 
     def has_word(self, token: str) -> bool:
         """The whole token, allowing a plural on either side (``component`` and ``components``)."""
@@ -305,6 +446,8 @@ _NUMBER_WORDS: Final[dict[str, int]] = {word: n for n, word in enumerate(_UNITS,
     "ninety": 90,
 }
 _MULTIPLIERS: Final = vocabulary("hundred thousand million billion lakh crore")
+_VAGUE_MULTIPLIERS: Final = vocabulary("hundreds thousands millions billions lakhs lacs crores dozens")
+"""Plural scale words ("millions of users", "hundreds of thousands") claim a size without a number: the facts must say them."""
 
 
 def _lint(text: str, *, multiline: bool) -> list[str]:
@@ -466,29 +609,65 @@ def _anchor_found(anchor: Anchor, corpus: Corpus) -> bool:
     return False
 
 
+def _missing_numbers(text: str, anchors: Sequence[Anchor], corpus: Corpus) -> list[Measure]:
+    """The numbers of ``text`` (each with its unit) that ``corpus`` does not state, in reading order.
+
+    ``anchors`` are the number anchors `extract_anchors` found: they decide which digits count (not the ones inside
+    ``k8s`` or ``v2.1``). A number that has no unit-aware reading is still checked bare.
+    """
+    wanted = {a.key for a in anchors if a.kind == "number"}
+    if not wanted:
+        return []
+    found = measures_of(fold(text), strict=True)
+    missing = [m for m in found if m.key in wanted and not corpus.has_measure(m)]
+    seen = {m.key for m in found}
+    stray = [
+        Measure(a.text, a.key, "num", Decimal(0), "", 0, 0)
+        for a in anchors
+        if a.kind == "number" and a.key not in seen and a.key not in corpus.numbers
+    ]
+    return [*missing, *stray]
+
+
 def unsupported_anchors(text: str, corpus: Corpus) -> list[str]:
     """The numbers, identifiers and names of ``text`` that ``corpus`` does not contain (same strict matcher as slots)."""
-    return [a.text for a in extract_anchors(text, limit=ANCHOR_LIMIT) if not _anchor_found(a, corpus)]
+    anchors = extract_anchors(text, limit=ANCHOR_LIMIT)
+    others = [a.text for a in anchors if a.kind != "number" and not _anchor_found(a, corpus)]
+    return [*(m.text for m in _missing_numbers(text, anchors, corpus)), *others]
+
+
+def _without_measures(folded: str) -> str:
+    """``folded`` with every number and its unit blanked out: what is left is words (``42 million`` is not "million")."""
+    chars = list(folded)
+    for m in measures_of(folded):
+        chars[m.start : m.end] = " " * (m.end - m.start)
+    return "".join(chars)
 
 
 def _anchor_problems(sentence: str, corpus: Corpus, *, headline: bool) -> list[str]:
     problems: list[str] = []
     loose: list[tuple[str, int]] = []
-    for anchor in extract_anchors(sentence, limit=ANCHOR_LIMIT):
+    anchors = extract_anchors(sentence, limit=ANCHOR_LIMIT)
+    for anchor in anchors:
+        if anchor.kind == "number":
+            continue  # compared with its unit below
         if anchor.kind == "name" and headline and _is_title_word(anchor.text):
             continue  # every word of a headline is capitalised: handled with the loose words below
         if not _anchor_found(anchor, corpus):
-            what = f"the number {anchor.text}" if anchor.kind == "number" else f'"{anchor.text}"'
-            problems.append(f"{what} is not in the facts this slot cites")
+            problems.append(f'"{anchor.text}" is not in the facts this slot cites')
+    problems += [
+        f"the number {m.text} is not in the facts this slot cites"
+        for m in _missing_numbers(sentence, anchors, corpus)
+    ]
     for name, month in _month_mentions(sentence):
         if month not in corpus.months:
             problems.append(f"the month {name} is not in the facts this slot cites")
-    tokens = tokens_of(sentence)
+    tokens = _TOKEN.findall(_without_measures(fold(sentence)))
     for token in tokens:
         value = _NUMBER_WORDS.get(token)
         if value is not None and not (token in corpus.token_set or str(value) in corpus.numbers):
             problems.append(f'the number "{token}" is not in the facts this slot cites')
-        elif token in _MULTIPLIERS and token not in corpus.token_set:
+        elif (token in _MULTIPLIERS or token in _VAGUE_MULTIPLIERS) and token not in corpus.token_set:
             problems.append(f'the number word "{token}" is not in the facts this slot cites')
     for m in _WORD.finditer(sentence):
         word = m.group()
@@ -549,6 +728,15 @@ class SlotCheck:
     sentences: list[str] = field(default_factory=list)
 
 
+def _grade_problems(text: str, cited: Sequence[Fact]) -> list[str]:
+    """Numbers of ``text`` that are the grade of a cited fact: the grade is private, however the model writes it."""
+    grades: frozenset[Decimal] = frozenset().union(*(grade_numbers(f.grade) for f in cited))
+    if not grades:
+        return []
+    leaked = dict.fromkeys(m.text for m in measures_of(fold(text)) if Decimal(m.key) in grades)
+    return [f"the number {n} is a grade; grades are private" for n in leaked]
+
+
 def check_slot(
     slot: CopySlot, facts_by_id: Mapping[str, Fact], *, person: PortfolioPerson | None = None
 ) -> SlotCheck:
@@ -595,6 +783,7 @@ def check_slot(
         return SlotCheck(slot.id, False, _dedupe(problems), sentences)
     corpus_text = slot_corpus(slot, facts_by_id, person)
     corpus = Corpus.of(corpus_text)
+    problems += _grade_problems(text, [facts_by_id[i] for i in cited_ids if i in facts_by_id])
     headline = slot.id == "pressHeadline"
     for sentence in sentences:
         problems += _anchor_problems(sentence, corpus, headline=headline)
@@ -682,9 +871,13 @@ __all__ = [
     "MONTH_INDEX",
     "MONTH_LONG",
     "Corpus",
+    "Measure",
     "SlotCheck",
     "check_slot",
     "fact_text",
+    "grade_numbers",
+    "grade_scores",
+    "measures_of",
     "number_keys",
     "person_text",
     "short",

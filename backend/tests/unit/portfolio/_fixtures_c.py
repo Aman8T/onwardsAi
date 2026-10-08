@@ -82,10 +82,19 @@ def script_facts(claude: FakeClaudeClient, ctx: StoredContext) -> None:
     claude.script_structured("portfolio", lambda call: scripted_facts(ctx), when=is_facts_call, repeat=True)
 
 
+COPY_CALLS_PER_PAGE = 3
+"""A page is written as three concurrent copy calls: the fixed slots, the ``exp:`` slots and the ``proj:`` slots
+(a page with no roles or no projects makes fewer)."""
+
+
 def script_copy(
     claude: FakeClaudeClient, script: Callable[[StructuredCall], Any], *, repeat: bool = True
 ) -> None:
-    claude.script_structured("portfolio", script, when=is_copy_call, repeat=repeat)
+    """Answer the copy calls with ``script``: every call (``repeat``), or just the calls of one page."""
+    if repeat:
+        claude.script_structured("portfolio", script, when=is_copy_call, repeat=True)
+    else:
+        claude.script_structured("portfolio", *([script] * COPY_CALLS_PER_PAGE), when=is_copy_call)
 
 
 def request_context(clock: FakeClock | None = None, ip_hash: str | None = "h1") -> RequestContext:

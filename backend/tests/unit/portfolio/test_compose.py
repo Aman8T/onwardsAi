@@ -8,8 +8,15 @@ from dataclasses import replace
 
 import pytest
 
-from tayyari.contract.portfolio import BLOCK_VARIANTS, FAMILY_HUES, PortfolioSpec, spec_problems
-from tayyari.portfolio.compose import LOOK_COUNT, compose, default_spec, person_seed
+from tayyari.contract.portfolio import (
+    BLOCK_VARIANTS,
+    FAMILY_HUES,
+    GraphSpec,
+    PortfolioPrivacy,
+    PortfolioSpec,
+    spec_problems,
+)
+from tayyari.portfolio.compose import LOOK_COUNT, carry_owner_choices, compose, default_spec, person_seed
 from tayyari.portfolio.features import STAGES, Features
 from tayyari.portfolio.kit import (
     COMPOSITION_NAMES,
@@ -30,6 +37,7 @@ from tests.unit.portfolio._fixtures_b import (
     features_for,
     load_profile,
     looks_for,
+    make_portfolio,
 )
 
 # composition, graph variant, family, type, field, corners, density: the five canvas boards
@@ -411,3 +419,109 @@ def test_compositions_table_is_what_compose_builds_from():
         spec = compose(Features(), blank_content(), blank_graph(), 1, n=6)
         built = {s.composition: [b.kind for b in s.blocks] for s in spec}
         assert built[name] == [k for k, _ in COMPOSITIONS[name]]
+
+
+# ───────────────────────── the hero, and the owner's choices after a rebuild ─────────────────────────
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_the_hero_is_always_visible_and_public(name):
+    for look in looks_for(name):
+        hero = next(b for b in look.blocks if b.kind == "hero")
+        assert hero.visible and hero.public
+    content, graph = build_content(name), build_graph(name)
+    hero = next(b for b in default_spec(content, graph).blocks if b.kind == "hero")
+    assert hero.visible and hero.public
+
+
+def test_the_hero_is_shown_even_on_an_empty_page():
+    spec = default_spec(blank_content(), blank_graph())
+    hero = next(b for b in spec.blocks if b.kind == "hero")
+    assert hero.visible and hero.public
+
+
+def previous_page(name="riya"):
+    return make_portfolio(name)
+
+
+def rebuilt_page(name="riya", seed_shift=1):
+    """The same person built again: new looks from the same content, as a regenerate makes them."""
+    page = make_portfolio(name)
+    return page.model_copy(deep=True, update={"looks": looks_for(name, seed=seed_shift)})
+
+
+def test_a_rebuild_keeps_each_blocks_visible_and_public_flags_by_id():
+    old = previous_page()
+    for b in old.spec.blocks:
+        if b.kind == "projects":
+            b.public = False
+        if b.kind == "education":
+            b.visible = False
+        if b.kind == "openTo":
+            b.visible = b.public = True
+    new = rebuilt_page()
+    out = carry_owner_choices(new, old)
+    owner = {b.id: (b.visible, b.public) for b in old.spec.blocks}
+    for spec in (out.spec, *out.looks):
+        for b in spec.blocks:
+            if b.id in owner and b.kind not in ("hero",):
+                assert (b.visible, b.public) == owner[b.id], b.id
+        assert spec_problems(spec) == []
+    assert out.spec.privacy == old.spec.privacy
+
+
+def test_a_rebuild_keeps_the_privacy_switches_and_the_default_view():
+    old = previous_page()
+    old.spec.privacy = PortfolioPrivacy(email=True, phone=False, grades=True)
+    old.publish.defaultView = "press"
+    out = carry_owner_choices(rebuilt_page(), old)
+    for spec in (out.spec, *out.looks):
+        assert spec.privacy == PortfolioPrivacy(email=True, phone=False, grades=True)
+    assert out.publish.defaultView == "press"
+
+
+def test_a_rebuild_never_shows_a_block_the_new_content_cannot_fill():
+    old = previous_page()
+    for b in old.spec.blocks:
+        b.visible = b.public = True
+    new = rebuilt_page()
+    new.content = new.content.model_copy(
+        update={"facts": [f for f in new.content.facts if f.kind != "education"]}
+    )
+    out = carry_owner_choices(new, old)
+    education = next(b for b in out.spec.blocks if b.kind == "education")
+    assert not education.visible and not education.public
+
+
+def test_a_hero_the_old_page_had_hidden_is_shown_again():
+    old = previous_page()
+    for b in old.spec.blocks:
+        if b.kind == "hero":
+            b.visible = b.public = False
+    out = carry_owner_choices(rebuilt_page(), old)
+    hero = next(b for b in out.spec.blocks if b.kind == "hero")
+    assert hero.visible and hero.public
+
+
+def test_a_rebuild_keeps_only_the_hidden_graph_areas_that_still_exist_and_leaves_three():
+    old = previous_page()
+    ids = [d.id for d in old.graph.domains]
+    old.spec.graph = GraphSpec(hiddenDomainIds=[*ids[:2], "gone-area"], stats=True)
+    out = carry_owner_choices(rebuilt_page(), old)
+    assert out.spec.graph.hiddenDomainIds == ids[:2]
+
+    crowded = previous_page()
+    crowded.spec.graph = GraphSpec(
+        hiddenDomainIds=ids[:-2], stats=True
+    )  # leaves two: not allowed on a new page
+    out = carry_owner_choices(rebuilt_page(), crowded)
+    assert len(ids) - len(out.spec.graph.hiddenDomainIds) >= 3
+
+
+def test_carrying_choices_leaves_both_pages_untouched_and_is_repeatable():
+    old, new = previous_page(), rebuilt_page()
+    old.spec.privacy = PortfolioPrivacy(email=True, phone=True, grades=False)
+    before_old, before_new = old.model_dump(), new.model_dump()
+    once = carry_owner_choices(new, old)
+    assert old.model_dump() == before_old and new.model_dump() == before_new
+    assert carry_owner_choices(once, old) == once

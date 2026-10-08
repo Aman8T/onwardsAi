@@ -2,24 +2,31 @@
 
 The pure pipeline is `build` (no repository, so the CLI evals can run it on a fixture):
 
-    facts      Haiku turns the stored source texts into structured facts, each kept only when its quote is in the
-               source (`facts`). The facts of an earlier portfolio are reused when the source texts are unchanged.
+    facts      Haiku turns the stored source texts into structured facts: it points at numbered source lines and code
+               copies their text, so every quote and highlight is verbatim (`facts`). The facts of an earlier
+               portfolio are reused when the source texts are unchanged.
                Jev's first read of the resume runs beside it; its answers feed the composer.
     design     the frozen graph snapshot, the person, the proof stats and the deterministic designer (`compose`):
                up to three valid looks. A draft page with verbatim fallback wording is sent here, so the page paints
                before any copy exists.
-    copy       Sonnet writes the slots from the facts only; every slot is checked against the quotes of the facts it
-               cites (code, then Jev); the ones that fail get ONE re-ask with the checker's notes; what still fails,
-               and what the model left out, comes from the deterministic fallback wording (always grounded).
+    copy       Sonnet writes the slots from the facts only, as two concurrent calls (the fixed slots; the per-fact
+               ones), so the wall time is that of the longer one. Every slot is checked against the quotes of the
+               facts it cites (code, then Jev); the ones that fail get ONE re-ask with the checker's notes; what still
+               fails, and what the model left out, comes from the deterministic fallback wording (always grounded).
     check      a last strict pass over every generated slot: `BuildReport.ungrounded` must be 0.
 
 A model failure never fails the page: an error or timeout in the facts or the copy step keeps the fallback wording
 and the page is still complete. Only the daily spend ceiling stops a build (`SpendCeilingReached` propagates).
 
 `generate` is the NDJSON stream behind POST /api/portfolio (progress, a draft, then done or error). `get`,
-`patch`, `rewrite`, `public_preview` and `public` are what the other routes call. The portfolio lives in the
-`portfolios` table as one JSON document, apart from the profile: the row owns the public id, the version, the
-timestamps and the published flag, and `_hydrate` always takes those from the row.
+`has_readable`, `patch`, `rewrite`, `delete`, `public_preview` and `public` are what the other routes call. The
+portfolio lives in the `portfolios` table as one JSON document, apart from the profile: the row owns the public id,
+the version, the timestamps and the published flag, and `_hydrate` always takes those from the row.
+
+A regenerate keeps the owner's choices (`compose.carry_owner_choices`: each block's visible / public flags, the hidden
+graph areas, the privacy switches, the default view). It is saved over the row as it is *when the build ends*, not as
+it was when the build began: a page published, edited or privacy-switched while the model ran keeps that state, and a
+page deleted meanwhile is not brought back.
 """
 
 from __future__ import annotations
@@ -70,8 +77,8 @@ from tayyari.llm.types import CallContext
 from tayyari.sample.provider import SampleProvider
 from tayyari.storage.ports import PortfolioConflict, PortfolioRepo, ProfileRepo, StoredPortfolio
 
-from .compose import compose, default_spec, person_seed
-from .copy import slot_ids_to_fill, write_copy
+from .compose import carry_owner_choices, compose, default_spec, person_seed
+from .copy import partition_slots, slot_ids_to_fill, write_copy
 from .edit import apply_patch
 from .facts import DroppedFact, extract_facts, facts_hash, usable_sources
 from .fallback import fallback_slots
@@ -101,6 +108,7 @@ REWRITE_UNAVAILABLE = "We couldn't rewrite that section just now. Please try aga
 NOTHING_TO_REWRITE_FROM = "There are no resume details to write this section from yet."
 CANNOT_REWRITE = "That section can't be written from your resume details. You can edit it by hand instead."
 GRAPH_GONE = "The analysis behind this page is no longer available, so its graph can't be updated."
+DELETED_MEANWHILE = "This page was deleted while it was being rebuilt, so the new version was not saved."
 
 FACTS_TIMEOUT_S: Final = 120.0
 COPY_TIMEOUT_S: Final = 120.0
@@ -130,6 +138,8 @@ class BuildReport:
     parts_dropped: int = 0
     """Fields and highlights refused inside facts that were kept."""
     facts_reused: bool = False
+    facts_partial: bool = False
+    """Some sources could not be read (their call failed): the facts are incomplete and are not cached."""
     facts_failed: bool = False
     """The extraction call failed: the page was built from the profile alone."""
     slots_model: int = 0
@@ -164,6 +174,18 @@ class _Copy:
     missing: int = 0
     ungrounded: int = 0
     failed: bool = False
+
+
+async def _gather[T](*calls: Awaitable[T]) -> list[T]:
+    """The results of ``calls`` run concurrently, in order; the first error cancels the rest and is raised."""
+    tasks = [asyncio.ensure_future(c) for c in calls]
+    try:
+        return list(await asyncio.gather(*tasks))
+    except BaseException:
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        raise
 
 
 def _iso(moment: datetime) -> str:
@@ -252,7 +274,7 @@ class PortfolioService:
         if not offline:
             first_read_task = asyncio.create_task(self._first_read(ctx, decision_ctx, today))
         try:
-            facts, dropped, reused, facts_failed = await self._facts(
+            facts, dropped, reused, facts_failed, facts_partial = await self._facts(
                 profile, ctx, existing, source_hash, call_ctx, offline=offline
             )
         except BaseException:
@@ -280,9 +302,10 @@ class PortfolioService:
         version = existing.version + 1 if existing is not None else 1
         created_at = existing.created_at if existing is not None else now
         published = existing.published if existing is not None else False
+        previous = self._try_hydrate(existing)
 
         def assemble(body: PortfolioContent) -> Portfolio:
-            return Portfolio(
+            page = Portfolio(
                 profileId=profile_id,
                 publicId=public_id,
                 version=version,
@@ -299,6 +322,7 @@ class PortfolioService:
                 ),
                 graphOutdated=False,
             )
+            return carry_owner_choices(page, previous) if previous is not None else page
 
         self._send(emit, PortfolioDraftEvent(portfolio=assemble(content)))
 
@@ -320,6 +344,7 @@ class PortfolioService:
             facts_dropped=sum(1 for d in dropped if d.part == "fact"),
             parts_dropped=sum(1 for d in dropped if d.part != "fact"),
             facts_reused=reused,
+            facts_partial=facts_partial,
             facts_failed=facts_failed,
             slots_model=sum(1 for s in written.slots if s.origin == "model"),
             slots_resume=sum(1 for s in written.slots if s.origin == "resume"),
@@ -335,7 +360,8 @@ class PortfolioService:
         return BuildResult(
             portfolio=portfolio,
             generated=[s.model_copy(deep=True) for s in written.slots],
-            facts_hash=None if offline or facts_failed else source_hash,
+            # an incomplete extraction is never cached: the next build reads every source again
+            facts_hash=None if offline or facts_failed or facts_partial else source_hash,
             report=report,
         )
 
@@ -377,14 +403,14 @@ class PortfolioService:
         call_ctx: CallContext,
         *,
         offline: bool,
-    ) -> tuple[list[Fact], list[DroppedFact], bool, bool]:
-        """``(facts, dropped, reused, failed)``."""
+    ) -> tuple[list[Fact], list[DroppedFact], bool, bool, bool]:
+        """``(facts, dropped, reused, failed, partial)``: ``partial`` when some sources could not be read."""
         if offline:
-            return [], [], False, False
+            return [], [], False, False, False
         cached = self._cached_facts(existing, source_hash)
         if cached is not None and (cached or not usable_sources(ctx)):
             # an empty cached result is only trusted when there was nothing to read: otherwise try again
-            return cached, [], True, False
+            return cached, [], True, False, False
         result = await self._model(
             "facts",
             lambda: extract_facts(
@@ -397,8 +423,8 @@ class PortfolioService:
             FACTS_TIMEOUT_S,
         )
         if result is None:
-            return [], [], False, True
-        return list(result.facts), list(result.dropped), False, False
+            return [], [], False, True, False
+        return list(result.facts), list(result.dropped), False, False, bool(result.failed_sources)
 
     @staticmethod
     def _cached_facts(existing: StoredPortfolio | None, source_hash: str) -> list[Fact] | None:
@@ -458,6 +484,31 @@ class PortfolioService:
 
     # ── copy ──
 
+    def _writer(
+        self,
+        facts: list[Fact],
+        person: PortfolioPerson,
+        graph: GraphSnapshot,
+        call_ctx: CallContext,
+        ids: list[str],
+        notes: Mapping[str, str] | None = None,
+    ) -> Callable[[], Awaitable[list[CopySlot]]]:
+        """One Sonnet call for ``ids`` (with the checker's ``notes`` on a re-ask), ready to run."""
+
+        async def call() -> list[CopySlot]:
+            return await write_copy(
+                self._claude,
+                model=self._settings.synth_model,
+                facts=facts,
+                person=person,
+                graph=graph,
+                slot_ids=ids,
+                call_ctx=call_ctx,
+                notes=notes,
+            )
+
+        return call
+
     async def _write_slots(
         self,
         facts: list[Fact],
@@ -473,32 +524,31 @@ class PortfolioService:
     ) -> _Copy:
         """The final slots for ``slot_ids``: the model's wording where it grounds, the fallback elsewhere.
 
-        Model, verify, ONE re-ask of the slots that failed (with the checker's notes), verify again; what is still
-        not kept is taken from the fallback; a last strict check leaves off anything that does not ground.
+        Model (the fixed slots and the per-fact slots as two concurrent calls), verify, ONE re-ask of the slots that
+        failed (with the checker's notes), verify again; what is still not kept is taken from the fallback; a last
+        strict check leaves off anything that does not ground. ``failed`` is set when a call of the first round
+        gave nothing (its slots then come from the fallback).
         """
         out = _Copy()
         fallback = {s.id: s for s in fallback_slots(facts, person, graph, slot_ids) if s.text.strip()}
         kept: dict[str, CopySlot] = {}
         asked = bool(facts) and bool(slot_ids) and not offline
         if asked:
-            drafted = await self._model(
-                "copy",
-                lambda: write_copy(
-                    self._claude,
-                    model=self._settings.synth_model,
-                    facts=facts,
-                    person=person,
-                    graph=graph,
-                    slot_ids=slot_ids,
-                    call_ctx=call_ctx,
-                ),
-                COPY_TIMEOUT_S,
-                degrade=degrade,
+            parts = await _gather(
+                *(
+                    self._model(
+                        "copy",
+                        self._writer(facts, person, graph, call_ctx, group),
+                        COPY_TIMEOUT_S,
+                        degrade=degrade,
+                    )
+                    for group in partition_slots(slot_ids)
+                )
             )
+            drafted = [s for part in parts if part is not None for s in part]
+            out.failed = any(part is None for part in parts)
             self._send(emit, PortfolioProgressEvent(step="check", label=STEP_LABELS["check"]))
-            if drafted is None:
-                out.failed = True
-            else:
+            if drafted:
                 good, problems = await verify_slots(
                     drafted, facts, self._decisions, decision_ctx, person=person
                 )
@@ -508,14 +558,12 @@ class PortfolioService:
                     out.reasked = len(retry)
                     again = await self._model(
                         "reask",
-                        lambda: write_copy(
-                            self._claude,
-                            model=self._settings.synth_model,
-                            facts=facts,
-                            person=person,
-                            graph=graph,
-                            slot_ids=retry,
-                            call_ctx=call_ctx,
+                        self._writer(
+                            facts,
+                            person,
+                            graph,
+                            call_ctx,
+                            retry,
                             notes={sid: _note(problems[sid]) for sid in retry},
                         ),
                         COPY_TIMEOUT_S,
@@ -594,14 +642,17 @@ class PortfolioService:
         existing: StoredPortfolio | None,
         now: datetime,
     ) -> StoredPortfolio:
+        published = existing.published if existing is not None else False
+        doc = portfolio.model_copy(deep=True)
+        doc.publish.state = "published" if published else "draft"
         return StoredPortfolio(
             profile_id=portfolio.profileId,
             public_id=existing.public_id if existing is not None else portfolio.publicId,
-            doc=self._doc(portfolio),
+            doc=self._doc(doc),
             facts_hash=facts_hash_,
             generated=[s.model_dump(mode="json", exclude_none=True) for s in generated],
             version=existing.version if existing is not None else 0,
-            published=existing.published if existing is not None else False,
+            published=published,
             created_at=existing.created_at if existing is not None else now,
             updated_at=now,
         )
@@ -723,13 +774,35 @@ class PortfolioService:
             ),
             emit=emit,
         )
-        saved = await self._portfolios.put(
-            self._record(result.portfolio, result.generated, result.facts_hash, stored, self._clock.now()),
-            expected_version=None,
-        )
+        saved = await self._save_generated(profile_id, stored, result)
         final = self._hydrate(saved)
         final.graphOutdated = False
         queue.put_nowait(PortfolioDoneEvent(portfolio=final))
+
+    async def _save_generated(
+        self, profile_id: str, started_from: StoredPortfolio | None, result: BuildResult
+    ) -> StoredPortfolio:
+        """Save a finished build over the row as it is *now* (see the module docstring).
+
+        The row is read again here: the model ran for a while, and in that time the owner may have published the
+        page, switched a privacy flag or deleted it. Its published flag, public id and choices are taken from this
+        read, and the write is checked against its version (one retry when the page moved between the two).
+        """
+        for _ in range(2):
+            current = await self._portfolios.get(profile_id)
+            if current is None and started_from is not None:
+                raise NotFound(DELETED_MEANWHILE)
+            page = result.portfolio
+            if (previous := self._try_hydrate(current)) is not None:
+                page = carry_owner_choices(page, previous)
+            record = self._record(page, result.generated, result.facts_hash, current, self._clock.now())
+            try:
+                return await self._portfolios.put(
+                    record, expected_version=current.version if current is not None else None
+                )
+            except PortfolioConflict:
+                continue
+        raise PortfolioVersionConflict(detail="the page kept changing while it was being rebuilt")
 
     # ───────────────────────── reads and edits ─────────────────────────
 
@@ -739,6 +812,19 @@ class PortfolioService:
         if portfolio is None:
             return None
         return await self._with_outdated(portfolio)
+
+    async def has_readable(self, profile_id: str) -> bool:
+        """Whether a stored portfolio exists *and* can be read back: the one case where POST /api/portfolio costs nothing.
+
+        A row whose document no longer validates is rebuilt (and paid for) like a missing page.
+        """
+        return self._try_hydrate(await self._portfolios.get(profile_id)) is not None
+
+    async def delete(self, profile_id: str) -> bool:
+        """Remove the owner's portfolio (and with it the public page); True when there was one."""
+        removed = await self._portfolios.delete(profile_id)
+        log.info("portfolio_deleted", profile_id=profile_id, removed=removed)
+        return removed
 
     async def patch(self, profile_id: str, patch: PortfolioPatch, rc: RequestContext) -> Portfolio:
         """Apply the owner's edit (validated by `edit.apply_patch`) and save it; 409 if the page moved meanwhile."""
@@ -864,6 +950,7 @@ def _counts(report: BuildReport) -> dict[str, Any]:
         "facts_kept": report.facts_kept,
         "facts_dropped": report.facts_dropped,
         "facts_reused": report.facts_reused,
+        "facts_partial": report.facts_partial,
         "facts_failed": report.facts_failed,
         "slots_model": report.slots_model,
         "slots_resume": report.slots_resume,
