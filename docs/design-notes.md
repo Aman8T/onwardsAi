@@ -71,7 +71,21 @@ Added 2026-10-09, Home only: a soft field of colour follows the pointer (design 
 
 **Boundaries** (canvas board "Where luminous turns tacky"): no ring, no bright core on a darker ground, no outline you can trace, no rhythm, no banding. The form panel stays opaque; the light shows around it like a sheet of paper on a lit table.
 
-## 8. Sources
+## 8. The dragon: a toy that breaks every rule on purpose
+
+Added 2026-10-09, Home only (`src/dragon/`, canvas "Living Dragon"): a flying, fire-breathing dragon that hatches from an egg on the panel's edge, grows with the time spent on the app (egg to elder in nine minutes for the POC), decides for itself where to fly, circles the pointer, perches on the panel, and scorches whatever on the page it fancies for ten seconds.
+
+It is the opposite of §1 — it asks for attention — and that is the point of a POC toy. So it is quarantined rather than reconciled: its own module and stylesheet, mounted by Home alone, a transparent WebGL layer above the page (z 30) and DOM scorch overlays under it (z 20), neither taking clicks; nothing in the tokens, the gradient, the cards or the checks is touched. It is not mounted on phones, under reduced motion (it is nothing but motion), under forced colours or more contrast; it can be put to sleep from its menu; deleting one folder and two lines removes it.
+
+**Built from existing parts.** three.js for the skinned glTF, animation and environment lighting; three.quarks for fire, embers, smoke and shell (JSON-editable presets); Kenney's CC0 sprites; CC BY models by bocdagla (low-poly) and LasquetiSpice (the realistic wyvern), credited in the menu and `public/dragons/CREDITS.md`. A dragon is a model plus a species file (clip names, mouth bone, wingspan, temperament); a third one is a folder and a file.
+
+**The mind** is a utility scorer: every 0.8–3 s it weighs soaring, curiosity (the pointer moved), perching (fatigue) and hunting (hunger, which fills faster as it grows) by the species' temperament and a little randomness, so no two minutes are the same. Steering in world px — wander, seek, arrive, soft bounds — gives banking from the lateral force and pitch from the climb. The hunt approaches a standoff in front of the target, hovers, breathes a cone of particles at it, scorches it 0.4 s in, and rolls away satisfied.
+
+**The scorch** stays readable and usable: a charred canvas mask no darker than 0.72 alpha over at most ~60 % of the box, an SVG filter that desaturates, darkens and curls the element, `pointer-events: none` throughout, never a focused input, at most three at once, healed at ten seconds.
+
+**Cost.** One skinned mesh (1k–20k triangles), one batched particle renderer, at most ~800 live particles, pixel ratio ≤ 1.5. The loop runs only while the creature is awake and the tab is visible; dozing or hidden, zero frames. The dragon is lit by the page's own colour tokens, read through a probe element every 7 s, so it sits in the same atmosphere.
+
+## 9. Sources
 
 Colour and calm: Valdez & Mehrabian 1994 (PubMed 7996122); Wilms & Oberfeld 2018 (PubMed 28612080); Elliot 2015 (PMC4383146); Palmer & Schloss 2010 (PMC2889342); Schloss & Palmer 2011 (PMC3037488); Ottosson, "A perceptual color space for image processing"; Evil Martians, "OKLCH in CSS"; CSS-Tricks, "The gray dead zone of gradients"; Keith J. Grant on neutral gradient endpoints.
 Perception of slow change: Simons, Franconeri & Reimer 2000; Macquarie, "smooth isoluminant color changes"; Abrams & Christ 2003 (PubMed 12930472); Sekulovski, CIC 15; CIC 19 on hue vs chroma sensitivity; PMC7774110 on 10 s light transitions; CSS Color 4 gamut mapping JND; Turrell cycle lengths (Atlas Obscura; Artlink; Rice News); Eno, *Ambient 1*.

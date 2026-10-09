@@ -13,6 +13,8 @@ import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion/re
 import type { SourceKind } from '../../shared/types';
 import { Brand } from '../components/Brand';
 import { IconArrowRight, IconDoc, IconMinus, IconPlus, IconUpload } from '../components/Icons';
+import { DragonLayer } from '../dragon/DragonLayer';
+import { DragonMenu } from '../dragon/DragonMenu';
 import { CursorLight } from '../light/CursorLight';
 import * as api from '../lib/api';
 import { EASE, NARROW_QUERY, useMediaQuery } from '../lib/ui';
@@ -460,6 +462,9 @@ export function Onboarding() {
     <div className="ob-root" id="top">
       {/* the soft light that follows the pointer: Home only, lives behind the page (src/light) */}
       <CursorLight />
+      {/* the dragon: a POC toy above the page, Home only (src/dragon); its chip and menu sit bottom-right */}
+      <DragonLayer />
+      <DragonMenu />
       <div className="wrap ob-wrap">
         <header className="ob-header">
           <span className="ob-brand">
