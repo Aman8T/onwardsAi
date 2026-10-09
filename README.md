@@ -231,24 +231,6 @@ the colour travels. The hue is a function of wall-clock time plus a random per-b
   `__light.sweep(seconds, pxPerSecond)`; `?light=reduce` and `?light=off` test the fallbacks.
   Rationale and numbers: `docs/design-notes.md` §7.
 
-## Dragon (POC toy, Home only)
-
-A living dragon flies above Home: it hatches from an egg on the panel's edge after 20 s, grows with the
-time you spend on the app (egg → hatchling → fledgling → young → adult → elder, about nine minutes), soars,
-circles the pointer, perches on the panel, and breathes fire on things it fancies — the target scorches for
-ten seconds and heals. Its chip bottom-right opens Awake / Asleep, the species, and Start over.
-
-- Built from `three` (glTF, skinning, lighting), `three.quarks` (fire, embers, smoke), Kenney's CC0 sprites
-  and CC BY models; credits in `public/dragons/CREDITS.md` and the menu. A dragon is a folder under
-  `public/dragons/` plus an entry in `src/dragon/species.ts` (clip names, mouth bone, wingspan, temperament).
-- The hero species (LasquetiSpice's wyvern, CC BY 4.0) is downloaded by the project owner from Sketchfab into
-  `public/dragons/wyvern/` as a glTF with external textures; until then the low-poly dragon is the default.
-- Not mounted on phones (< 760 px), under reduced motion, forced colours or more contrast. Scorches never
-  take clicks; a focused input is never a target. Age is kept in `localStorage` `tayyari.dragon`.
-- Dev switches (`?dragon=…`, comma-separated): `stats` (overlay with frame, GPU, draw and mind read-outs),
-  `egg` (a new egg), `age:600` (jump to elder), `hunt` (breathe as soon as it can), `timer` (drive the loop
-  from a timer where the browser throttles `requestAnimationFrame`), `off`.
-
 ## Notes and limits (POC)
 
 - LinkedIn usually blocks automated reading; paste your About section into **Extra context** instead.

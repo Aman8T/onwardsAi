@@ -72,13 +72,5 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     `min L` at or above 0.885; once asleep, the step-10 snippet reports `rafs 0`. Mobile preset:
     no `canvas.light` in the DOM. `?light=reduce` (or the OS setting) and Atmosphere Off: none.
 
-12. **Dragon (≥ 760 px, full motion):** `?dragon=stats,egg` — an egg sits on the panel's top-left
-    edge, rocks, cracks at 17 s and hatches at 20 s; the hatchling takes off and soars inside the
-    viewport; the chip reads "Dragon · hatchling · 0:xx". `?dragon=stats,age:240,hunt` — a young
-    dragon approaches an element, hovers, breathes fire; the target scorches at 0.4 s (soot, ember
-    rim, embers, smoke), the scorched button still clicks, and it heals at 10 s. Move the pointer:
-    it circles and looks at it; leave it: it perches on the panel. Menu: Asleep removes it, Start
-    over lays a new egg. Mobile preset: no `.dragon-layer`; `?dragon=off`: none.
-
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`).
