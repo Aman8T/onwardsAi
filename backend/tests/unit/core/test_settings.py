@@ -119,6 +119,71 @@ def test_posting_match_settings_come_from_the_environment(monkeypatch: pytest.Mo
     assert (s.guard.match_per_hour, s.guard.est_match_usd) == (3, 0.1)
 
 
+def test_anonymous_matching_is_automatic_by_default_and_the_visitors_daily_allowance_is_three() -> None:
+    s = build()
+    assert s.match.allow_anonymous == "auto" and s.guard.anon_match_per_day == 3
+
+
+@pytest.mark.parametrize(
+    ("mode", "providers", "allowed"),
+    [
+        (
+            "auto",
+            (False, False),
+            True,
+        ),  # nothing to sign in with: an account is not something a person can get
+        ("auto", (True, False), False),
+        ("auto", (False, True), False),
+        ("auto", (True, True), False),
+        ("true", (False, False), True),
+        ("true", (True, True), True),
+        ("false", (False, False), False),
+        ("false", (True, True), False),
+    ],
+)
+def test_anonymous_matching_resolves_from_the_setting_and_the_sign_in_methods(
+    mode: str, providers: tuple[bool, bool], allowed: bool
+) -> None:
+    assert MatchSettings(allow_anonymous=mode).anonymous_allowed(providers) is allowed  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("true", "true"),
+        ("FALSE", "false"),
+        (" Auto ", "auto"),
+        (True, "true"),
+        (False, "false"),
+        ("  ", "auto"),
+    ],
+)
+def test_the_anonymous_matching_setting_ignores_case_and_padding_and_blank_means_auto(
+    raw: object, expected: str
+) -> None:
+    assert MatchSettings(allow_anonymous=raw).allow_anonymous == expected  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("bad", ["sometimes", "yes", "1", "on", 2, None])
+def test_anonymous_matching_takes_auto_true_or_false_and_nothing_else(bad: object) -> None:
+    with pytest.raises(ValidationError):
+        MatchSettings(allow_anonymous=bad)  # type: ignore[arg-type]
+
+
+def test_anonymous_matching_comes_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TAYYARI_MATCH__ALLOW_ANONYMOUS", "true")
+    monkeypatch.setenv("TAYYARI_GUARD__ANON_MATCH_PER_DAY", "5")
+    s = build()
+    assert (s.match.allow_anonymous, s.guard.anon_match_per_day) == ("true", 5)
+    monkeypatch.setenv("TAYYARI_MATCH__ALLOW_ANONYMOUS", "")  # an empty value counts as unset
+    assert build().match.allow_anonymous == "auto"
+    monkeypatch.setenv("TAYYARI_MATCH__ALLOW_ANONYMOUS", "False")
+    assert build().match.allow_anonymous == "false"
+    monkeypatch.setenv("TAYYARI_MATCH__ALLOW_ANONYMOUS", "maybe")
+    with pytest.raises((ValidationError, SettingsError)):
+        build()
+
+
 def test_a_posting_longer_than_the_reader_takes_cannot_be_configured() -> None:
     with pytest.raises(ValidationError):
         MatchSettings(max_posting_chars=20_001)

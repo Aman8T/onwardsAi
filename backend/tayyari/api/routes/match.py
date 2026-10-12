@@ -14,17 +14,24 @@ download them.
     GET   /api/match/{id}/cover            {"cover"} (404 until one is written)
     GET   /api/match/{id}/cover.pdf        the file
 
-Every route needs a sign-in (401) and answers for the signed-in account's own profiles and matches only: an id that is
-someone else's is a 404, exactly like one that does not exist.
+Every route needs a sign-in (401), unless anonymous matching is on (`Container.match_anonymous`: the setting
+``TAYYARI_MATCH__ALLOW_ANONYMOUS``, by default on exactly when the server offers no way to sign in). A signed-in
+account answers for its own profiles and matches only: an id that is someone else's is a 404, exactly like one that does
+not exist. With anonymous matching on, a visitor with no sign-in may match against a profile nobody has claimed or the
+sample, and may open a match made that way (``matches.user_id`` NULL) by its id, for as long as its profile stays
+unclaimed or a sample run (`api.matching.open_match`); `GET /api/matches` has no identity to list by and answers an
+empty list. Claiming the profile (`POST /api/me/claim`) gives those matches to the account.
 
 Starting a match is the only thing that costs an entitlement. In the order of `routes/portfolio.py`, all answered as
-JSON before the stream starts: ``shed`` (in-memory, before the body is read) -> sign-in (401) -> body (415 / 413 / 408 /
-400) -> the profile is the account's (404) -> the account's and the client's counters (429 with ``Retry-After``) ->
-the posting's text (400 / 422; a link goes through the SSRF-guarded ingest, LinkedIn and Naukri are refused before any
-fetch) -> the spend reservation (503) -> ``entitlements.consume`` (402). From there a failure gives the entitlement
-back (see `api.matching`). Re-checks after answers, the resume, the cover note and the downloads never consume; the
-resume and the cover note reserve spend because they call a model, and everything else only ``shed``s in the ``chat``
-bucket like the other cheap routes.
+JSON before the stream starts: ``shed`` (in-memory, before the body is read) -> sign-in, or anonymous matching allowed
+(401) -> body (415 / 413 / 408 / 400) -> the profile is the account's, or open to a visitor with no sign-in (404) -> the
+client's counters, and the account's (429 with ``Retry-After``) -> the posting's text (400 / 422; a link goes through
+the SSRF-guarded ingest, LinkedIn and Naukri are refused before any fetch) -> for a visitor with no sign-in, the
+client's daily allowance (``TAYYARI_GUARD__ANON_MATCH_PER_DAY``, 429) -> the spend reservation (503) ->
+``entitlements.consume`` (402; never called without an account). From there a failure gives the entitlement back (see
+`api.matching`). Re-checks after answers, the resume, the cover note and the downloads never consume and are not
+counted; the resume and the cover note reserve spend because they call a model, and everything else only ``shed``s in
+the ``chat`` bucket like the other cheap routes.
 
 Failures before a stream starts are JSON ``{"error": "<sentence>"}``, except the 402 whose body is
 ``{"error": "payment_required", "reason": ...}`` (a code the web app turns into the pricing panel).
@@ -40,7 +47,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.responses import Response
 
-from tayyari.api.deps import get_request_context, require_user
+from tayyari.api.deps import get_request_context, user_or_anonymous
 from tayyari.api.lifespan import get_container
 from tayyari.api.matching import (
     MATCH_NOT_FOUND,
@@ -131,14 +138,14 @@ def _ctx(container: Container, rc: RequestContext, stored: StoredMatch) -> CallC
     return call_context(container, rc.request_id, rc.ip_hash, stored.profile_id)
 
 
-async def _open(request: Request, match_id: str) -> tuple[Container, RequestContext, Workspace, str]:
-    """The cheap routes' common start: shed, sign-in, id shape, the user's own match."""
+async def _open(request: Request, match_id: str) -> tuple[Container, RequestContext, Workspace]:
+    """The cheap routes' common start: shed, sign-in (or anonymous matching), id shape, the match this caller may open."""
     container = get_container(request)
     rc = await get_request_context(request)
     _shed(container, rc)
-    user = await require_user(request)
+    user = await user_or_anonymous(request, anonymous_allowed=container.match_anonymous)
     _require_id(match_id, MATCH_NOT_FOUND)
-    return container, rc, await open_match(container, user.id, match_id), user.id
+    return container, rc, await open_match(container, None if user is None else user.id, match_id)
 
 
 # ───────────────────────── start a match ─────────────────────────
@@ -151,36 +158,56 @@ async def start_match(request: Request) -> Response:
     limiter = container.rate_limiter
     ip48 = subnet_hash(container.ip_hash_key, rc.client_ip)
     limiter.shed("match", rc.ip_hash, ip_hash_48=ip48)
-    user = await require_user(request)
+    user = await user_or_anonymous(request, anonymous_allowed=container.match_anonymous)
     body = await read_model(request, container, MatchRequest, max_bytes=MATCH_BODY_MAX_BYTES)
     _require_id(body.profileId, PROFILE_NOT_FOUND)
-    owned = await container.repos.profiles.get_owned_for_chat(user.id, body.profileId)
-    if owned is None:
-        raise NotFound(PROFILE_NOT_FOUND)
+    if user is not None:
+        owned = await container.repos.profiles.get_owned_for_chat(user.id, body.profileId)
+        if owned is None:
+            raise NotFound(PROFILE_NOT_FOUND)
+        profile_doc, context, shares_facts = owned[0], owned[1], True
+    else:
+        # Nobody has claimed it, or it is a sample run: what a visitor with no sign-in may match against.
+        open_profile = await container.repos.profiles.get_open_for_chat(body.profileId)
+        if open_profile is None:
+            raise NotFound(PROFILE_NOT_FOUND)
+        profile_doc, context, shares_facts = (
+            open_profile.profile,
+            open_profile.context,
+            not open_profile.is_sample,
+        )
     await limiter.check("match", rc.ip_hash, ip_hash_48=ip48, memory=False)
-    await limiter.check("match", f"u:{user.id}", memory=False, globally=False)
+    if user is not None:
+        await limiter.check("match", f"u:{user.id}", memory=False, globally=False)
     text = await posting_text_of(container, body)
     try:
-        profile = Profile.from_dict(owned[0])
+        profile = Profile.from_dict(profile_doc)
     except ValidationError:
         raise NotFound(PROFILE_NOT_FOUND) from None
+    if user is None:
+        # With no account there is nothing to charge: the client's own daily allowance is the meter. It is counted
+        # only now, so a posting that could not be read does not use up one of the few runs.
+        await limiter.check("match_anon", rc.ip_hash, ip_hash_48=ip48, memory=False)
 
     match_id = new_match_id()
-    charge = Charge(container, user.id, match_id)
+    user_id = None if user is None else user.id
+    charge = Charge(container, user_id, match_id)
     held = AsyncExitStack()
     try:
         await held.enter_async_context(container.spend_guard.reserve(container.settings.guard.est_match_usd))
-        await container.entitlements.consume(user.id, match_id)
-        held.push_async_callback(charge.refund)
+        if user_id is not None:
+            await container.entitlements.consume(user_id, match_id)
+            held.push_async_callback(charge.refund)
         events = stream_match(
             container,
-            user_id=user.id,
+            user_id=user_id,
             profile=profile,
-            context=owned[1],
+            context=context,
             text=text,
             match_id=match_id,
             charge=charge,
             call_ctx=call_context(container, rc.request_id, rc.ip_hash, profile.id),
+            shares_facts=shares_facts,
         )
         return HeldResponse(request, events, TAG, held)
     except BaseException:
@@ -196,8 +223,9 @@ async def list_matches(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
     _shed(container, rc)
-    user = await require_user(request)
-    rows = await container.repos.matches.list_for_user(user.id)
+    user = await user_or_anonymous(request, anonymous_allowed=container.match_anonymous)
+    # A visitor with no sign-in has no identity to list by: the web app keeps its own list of the ids it was given.
+    rows = [] if user is None else await container.repos.matches.list_for_user(user.id)
     listing = MatchList(
         matches=[
             MatchListItem(
@@ -215,7 +243,7 @@ async def list_matches(request: Request) -> JSONResponse:
 
 @router.get("/api/match/{match_id}")
 async def get_match(match_id: str, request: Request) -> JSONResponse:
-    _, _, ws, _ = await _open(request, match_id)
+    _, _, ws = await _open(request, match_id)
     return _json(_detail(ws).to_dict())
 
 
@@ -227,10 +255,12 @@ async def post_answers(match_id: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
     _shed(container, rc)
-    user = await require_user(request)
+    user = await user_or_anonymous(request, anonymous_allowed=container.match_anonymous)
     _require_id(match_id, MATCH_NOT_FOUND)
     body = await read_model(request, container, AnswersRequest, max_bytes=SMALL_BODY_MAX_BYTES)
-    ws = await with_profile_facts(container, user.id, await open_match(container, user.id, match_id))
+    ws = await with_profile_facts(
+        container, await open_match(container, None if user is None else user.id, match_id)
+    )
 
     open_questions = {q.id: q for q in ws.result.questions}
     requirements = {r.id: r for r in ws.posting.requirements}
@@ -242,10 +272,16 @@ async def post_answers(match_id: str, request: Request) -> JSONResponse:
     if not given:
         raise BadRequest(NO_OPEN_QUESTIONS)
 
-    for question, text, fact in given:
-        await container.repos.user_facts.add(
-            user.id, ws.stored.profile_id, fact, question=question.text, answer=text, match_id=ws.id
-        )
+    if ws.shares_facts:  # a sample run keeps what was said on its own match only
+        for question, text, fact in given:
+            await container.repos.user_facts.add(
+                ws.stored.user_id,
+                ws.stored.profile_id,
+                fact,
+                question=question.text,
+                answer=text,
+                match_id=ws.id,
+            )
     book = ws.book.with_facts([fact for _, _, fact in given])
     profile_doc = await container.repos.profiles.get_profile(ws.stored.profile_id)
     if profile_doc is None:
@@ -262,7 +298,7 @@ async def post_answers(match_id: str, request: Request) -> JSONResponse:
         )
     saved = await container.repos.matches.save_result(
         ws.id,
-        user.id,
+        ws.stored.user_id,
         expected_version=ws.stored.version,
         facts=book_json(book),
         result=result.to_dict(),
@@ -273,7 +309,7 @@ async def post_answers(match_id: str, request: Request) -> JSONResponse:
     )
     if not saved:
         raise Conflict(MATCH_CHANGED, code="match_changed")
-    return _json(_detail(Workspace(ws.stored, ws.posting, result, book)).to_dict())
+    return _json(_detail(Workspace(ws.stored, ws.posting, result, book, ws.shares_facts)).to_dict())
 
 
 # ───────────────────────── resume ─────────────────────────
@@ -281,15 +317,15 @@ async def post_answers(match_id: str, request: Request) -> JSONResponse:
 
 @router.post("/api/match/{match_id}/resume")
 async def build_resume(match_id: str, request: Request) -> Response:
-    container, rc, ws, user_id = await _open(request, match_id)
-    ws = await with_profile_facts(container, user_id, ws)
+    container, rc, ws = await _open(request, match_id)
+    ws = await with_profile_facts(container, ws)
     call_ctx = _ctx(container, rc, ws.stored)
     if await container.repos.matches.get_variant(ws.id, "resume") is not None:
-        return NdjsonResponse(request, stream_resume(container, user_id, ws, call_ctx), TAG)
+        return NdjsonResponse(request, stream_resume(container, ws, call_ctx), TAG)
     held = AsyncExitStack()
     try:
         await held.enter_async_context(container.spend_guard.reserve(container.settings.guard.est_match_usd))
-        return HeldResponse(request, stream_resume(container, user_id, ws, call_ctx), TAG, held)
+        return HeldResponse(request, stream_resume(container, ws, call_ctx), TAG, held)
     except BaseException:
         await held.aclose()
         raise
@@ -297,7 +333,7 @@ async def build_resume(match_id: str, request: Request) -> Response:
 
 @router.get("/api/match/{match_id}/resume")
 async def get_resume(match_id: str, request: Request) -> JSONResponse:
-    container, _, ws, _ = await _open(request, match_id)
+    container, _, ws = await _open(request, match_id)
     stored = await container.repos.matches.get_variant(ws.id, "resume")
     if stored is None:
         raise NotFound(NO_RESUME)
@@ -309,10 +345,12 @@ async def settle_resume(match_id: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
     _shed(container, rc)
-    user = await require_user(request)
+    user = await user_or_anonymous(request, anonymous_allowed=container.match_anonymous)
     _require_id(match_id, MATCH_NOT_FOUND)
     body = await read_model(request, container, DecisionsRequest, max_bytes=SMALL_BODY_MAX_BYTES)
-    ws = await with_profile_facts(container, user.id, await open_match(container, user.id, match_id))
+    ws = await with_profile_facts(
+        container, await open_match(container, None if user is None else user.id, match_id)
+    )
     stored = await container.repos.matches.get_variant(ws.id, "resume")
     if stored is None:
         raise NotFound(NO_RESUME)
@@ -322,7 +360,7 @@ async def settle_resume(match_id: str, request: Request) -> JSONResponse:
     if outcome.refused:
         # Nothing is applied when any answer does not fit: the person fixes it and sends it again.
         raise AppError(_sentence(outcome.refused[0]), status=422, code="decision_refused")
-    await remember_new_facts(container, user.id, ws, outcome.book, question=FIGURE_QUESTION)
+    await remember_new_facts(container, ws, outcome.book, question=FIGURE_QUESTION)
     variant = await with_checks(container, outcome.variant, outcome.book)
     await container.repos.matches.put_variant(
         ws.id, "resume", spec=variant.to_dict(), status=variant_status(variant), now=container.clock.now()
@@ -349,7 +387,7 @@ def _file(content: bytes, media_type: str, name: str) -> Response:
 
 
 async def _download_resume(request: Request, match_id: str, extension: str) -> Response:
-    container, _, ws, _ = await _open(
+    container, _, ws = await _open(
         request, match_id
     )  # a download only reads: the stored book is what it checks
     stored = await container.repos.matches.get_variant(ws.id, "resume")
@@ -390,14 +428,14 @@ async def resume_docx(match_id: str, request: Request) -> Response:
 
 @router.post("/api/match/{match_id}/cover")
 async def write_cover(match_id: str, request: Request) -> JSONResponse:
-    container, rc, ws, user_id = await _open(request, match_id)
+    container, rc, ws = await _open(request, match_id)
     existing = await container.repos.matches.get_variant(ws.id, "cover")
     if existing is not None:
         try:
             return _json(CoverResponse(cover=CoverNote.model_validate(existing.spec)).to_dict())
         except ValidationError:
             pass  # stored in a shape this build cannot read: write it again
-    ws = await with_profile_facts(container, user_id, ws)
+    ws = await with_profile_facts(container, ws)
     async with container.spend_guard.reserve(container.settings.guard.est_match_usd):
         with model_errors():
             written = await container.match.compose_cover(
@@ -412,7 +450,7 @@ async def write_cover(match_id: str, request: Request) -> JSONResponse:
 
 @router.get("/api/match/{match_id}/cover")
 async def get_cover(match_id: str, request: Request) -> JSONResponse:
-    container, _, ws, _ = await _open(request, match_id)
+    container, _, ws = await _open(request, match_id)
     stored = await container.repos.matches.get_variant(ws.id, "cover")
     if stored is None:
         raise NotFound(NO_COVER)
@@ -421,7 +459,7 @@ async def get_cover(match_id: str, request: Request) -> JSONResponse:
 
 @router.get("/api/match/{match_id}/cover.pdf")
 async def cover_pdf(match_id: str, request: Request) -> Response:
-    container, _, ws, _ = await _open(request, match_id)
+    container, _, ws = await _open(request, match_id)
     stored = await container.repos.matches.get_variant(ws.id, "cover")
     if stored is None:
         raise NotFound(NO_COVER)

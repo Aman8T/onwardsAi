@@ -1,6 +1,7 @@
 /**
  * Who is signed in. `useMe()` loads `/api/me` once (the first component to ask starts it) and exposes the `user`,
- * the account's `profiles`, the `entitlements`, the sign-in `providers` and `refresh()`.
+ * the account's `profiles`, the `entitlements`, the sign-in `providers`, whether the server matches postings without
+ * an account (`anonymousMatch`, summed up as `matchAccess`) and `refresh()`.
  *
  * The state lives in this module, like the app store, so the account menu, the sign-in sheet and the invitation all
  * read the same answer. `useAutoClaim()` (mounted once, in App) attaches the profile on screen to the account as soon
@@ -54,6 +55,28 @@ export function refresh(): Promise<void> {
   return inflight;
 }
 
+/**
+ * How the posting match treats the person on this server, from what `/api/me` last said:
+ *   account    signed in
+ *   anonymous  signed out, and the server matches without an account: nobody is ever asked to sign in
+ *   sign-in    signed out, an account is needed, and there is a way to sign in (Google or an emailed link)
+ *   stuck      signed out, an account is needed, and this server has no way to sign in: the sheet has nothing to offer
+ *   unknown    `/api/me` has not answered (or failed): try the server and let its answer decide
+ * A server that does not send `anonymousMatch` is read as "false", so an older one behaves as it always did.
+ */
+export type MatchAccess = 'account' | 'anonymous' | 'sign-in' | 'stuck' | 'unknown';
+
+function accessOf(s: MeState): MatchAccess {
+  const me = s.me;
+  if (!me) return 'unknown';
+  if (me.user) return 'account';
+  if (me.anonymousMatch === true) return 'anonymous';
+  return me.providers.google || me.providers.magic ? 'sign-in' : 'stuck';
+}
+
+/** The same answer for code that is not a component (the match store). */
+export const matchAccess = (): MatchAccess => accessOf(state);
+
 /** Sample runs belong to nobody: they are never saved to an account. */
 export const isSampleProfile = (id: string) => id.startsWith('sample-');
 
@@ -80,6 +103,10 @@ export interface MeView {
   profiles: MeProfile[];
   entitlements: MeEntitlements;
   providers: MeProviders;
+  /** The server matches postings without an account (it said so; false when it said nothing). */
+  anonymousMatch: boolean;
+  /** What the match flow does for this person: see `MatchAccess`. */
+  matchAccess: MatchAccess;
   /** True once the server has answered, whether or not anyone is signed in. */
   loaded: boolean;
   refresh: () => Promise<void>;
@@ -99,6 +126,8 @@ export function useMe(): MeView {
     profiles: me?.profiles ?? [],
     entitlements: me?.entitlements ?? NO_ENTITLEMENTS,
     providers: me?.providers ?? NO_PROVIDERS,
+    anonymousMatch: me?.anonymousMatch === true,
+    matchAccess: accessOf(snap),
     loaded: status === 'ready',
     refresh,
     signOut,

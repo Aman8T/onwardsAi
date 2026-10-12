@@ -13,6 +13,8 @@
                                                    Stripe for USD, each only when its secrets are set)
     MatchService                                  (the posting match: the guarded, recording Claude client, the
                                                    match models, and the stored postings and extracted facts)
+    match_anonymous                               (may a visitor with no sign-in match a posting: the setting
+                                                   resolved against the sign-in methods this server offers)
     maintenance                                   (retention purge, a tracked background task; it keeps
                                                    the bundled sample persona's profile)
 
@@ -189,6 +191,9 @@ class Container:
     billing: BillingService
     match: MatchService
     """The posting match pipeline. Routes pay for a match with ``entitlements.consume`` before they run it."""
+    match_anonymous: bool
+    """Whether a visitor with no sign-in may match a posting: ``settings.match.allow_anonymous`` resolved against the
+    sign-in methods this server offers (``auto`` is true exactly when it offers none). Decided once, at startup."""
     rate_limiter: RateLimiter
     spend_guard: SpendGuard
     ip_hash_key: bytes
@@ -434,6 +439,15 @@ class Container:
                     call_timeout_s=settings.match.call_timeout_s,
                 )
 
+            match_anonymous = settings.match.anonymous_allowed(auth.providers)
+            log.info(
+                "match_anonymous",
+                allowed=match_anonymous,
+                setting=settings.match.allow_anonymous,
+                google=auth.providers[0],
+                magic=auth.providers[1],
+            )
+
             # ── background work: never blocks startup ──
             if db is not None:
                 # The bundled sample persona is the one sample profile the purge must never delete.
@@ -466,6 +480,7 @@ class Container:
             entitlements=entitlements,
             billing=billing,
             match=match,
+            match_anonymous=match_anonymous,
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,
             ip_hash_key=ip_hash_key,

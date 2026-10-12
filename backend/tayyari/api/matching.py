@@ -13,6 +13,10 @@ Anything that goes wrong after the charge (the posting has no requirements, a mo
 row cannot be written) gives the charge back with ``entitlements.refund(user, match_id)``, which is idempotent: the
 stream does it, and the response does it once more when it ends, in case the stream never got to run. A refund is
 awaited under `asyncio.shield`, so a client that has gone away cannot cut it short.
+
+A visitor with no sign-in (anonymous matching, `Container.match_anonymous`) has no entitlement to take or give back:
+the route never calls ``consume``, and a `Charge` with no account does nothing when asked to refund. Such a match is
+stored with ``user_id`` NULL; `open_match` says who may open it again.
 """
 
 from __future__ import annotations
@@ -157,6 +161,9 @@ class Workspace:
     posting: Posting
     result: MatchResult
     book: FactBook
+    shares_facts: bool = True
+    """False when the match is on a sample run, which everyone who holds its id shares: what a visitor says there stays
+    on their own match (its book) and is not kept for the profile's other matches, where it would reach other people."""
 
     @property
     def id(self) -> str:
@@ -168,11 +175,39 @@ def book_json(book: FactBook) -> dict[str, object]:
     return book.model_dump(mode="json", exclude_none=True)
 
 
-async def open_match(container: Container, user_id: str, match_id: str) -> Workspace:
-    """The user's match with its posting, result and facts, or `NotFound` (also for another account's match)."""
-    stored = await container.repos.matches.get(match_id, user_id)
-    if stored is None:
+async def _find_match(
+    container: Container, user_id: str | None, match_id: str
+) -> tuple[StoredMatch, bool] | None:
+    """The stored match a request from ``user_id`` (None: no sign-in) may open, and whether its profile's facts are
+    shared between its matches, or None.
+
+    An account's own match is open to that account. A match made without an account (``user_id`` NULL) is open to
+    whoever holds its id, signed in or not, while anonymous matching is on and its profile is still unclaimed or a
+    sample run: the id is 128 random bits, like a profile's, and is the only thing that protects it. Claiming the profile
+    gives such a match to the account (`UserRepo.claim_profile`); one that slipped through is served to nobody else.
+    Another account's match is not found, exactly like an id that does not exist."""
+    if user_id is not None:
+        own = await container.repos.matches.get(match_id, user_id)
+        if own is not None:
+            return own, True
+    if not container.match_anonymous:
+        return None
+    anonymous = await container.repos.matches.get(match_id, None)
+    if anonymous is None:
+        return None
+    access = await container.repos.profiles.get_access(anonymous.profile_id)
+    if access is None or not (access.is_sample or access.user_id is None):
+        return None
+    return anonymous, not access.is_sample
+
+
+async def open_match(container: Container, user_id: str | None, match_id: str) -> Workspace:
+    """The match with its posting, result and facts as a request from ``user_id`` (None: no sign-in) may open it, or
+    `NotFound` (also for another account's match). See `_find_match` for who may."""
+    found = await _find_match(container, user_id, match_id)
+    if found is None:
         raise NotFound(MATCH_NOT_FOUND)
+    stored, shares_facts = found
     posting = await container.repos.postings.get(stored.posting_hash)
     if posting is None:
         log.error("match_posting_missing", match_id=match_id)
@@ -183,6 +218,7 @@ async def open_match(container: Container, user_id: str, match_id: str) -> Works
             posting=posting,
             result=MatchResult.model_validate(stored.result),
             book=FactBook.model_validate(stored.facts),
+            shares_facts=shares_facts,
         )
     except ValidationError:
         # A match stored in a shape this build cannot read (the contract moved on): it is not served half-understood.
@@ -190,31 +226,42 @@ async def open_match(container: Container, user_id: str, match_id: str) -> Works
         raise NotFound(MATCH_NOT_FOUND) from None
 
 
-async def with_profile_facts(container: Container, user_id: str, ws: Workspace) -> Workspace:
+async def with_profile_facts(container: Container, ws: Workspace) -> Workspace:
     """``ws`` with the facts the person has given for this profile since (in answers to other matches) added to its
-    book. When there are any, the stored book is updated too, so what the app shows is what the checks used."""
+    book. When there are any, the stored book is updated too, so what the app shows is what the checks used. A sample
+    run shares nothing between its matches (see `Workspace.shares_facts`)."""
+    if not ws.shares_facts:
+        return ws
     extra = await container.repos.user_facts.list_for_profile(ws.stored.profile_id)
     merged = ws.book.with_facts(extra)
     if len(merged.facts) == len(ws.book.facts):
         return ws
-    await container.repos.matches.save_facts(ws.id, user_id, book_json(merged), container.clock.now())
-    return Workspace(stored=ws.stored, posting=ws.posting, result=ws.result, book=merged)
+    await container.repos.matches.save_facts(
+        ws.id, ws.stored.user_id, book_json(merged), container.clock.now()
+    )
+    return Workspace(
+        stored=ws.stored, posting=ws.posting, result=ws.result, book=merged, shares_facts=ws.shares_facts
+    )
 
 
-async def remember_new_facts(
-    container: Container, user_id: str, ws: Workspace, book: FactBook, *, question: str
-) -> None:
+async def remember_new_facts(container: Container, ws: Workspace, book: FactBook, *, question: str) -> None:
     """Store the user facts in ``book`` that ``ws.book`` did not have (a figure given for a resume line) and keep the
-    book on the match."""
-    have = {f.id for f in ws.book.facts}
-    for fact in book.facts:
-        if fact.id in have or not all(r.source == "user" for r in fact.refs):
-            continue
-        answer = fact.refs[0].quote if fact.refs else fact.text
-        await container.repos.user_facts.add(
-            user_id, ws.stored.profile_id, fact, question=question, answer=answer, match_id=ws.id
-        )
-    await container.repos.matches.save_facts(ws.id, user_id, book_json(book), container.clock.now())
+    book on the match. The facts are the match's owner's: an account's, or nobody's yet for an anonymous match."""
+    if ws.shares_facts:
+        have = {f.id for f in ws.book.facts}
+        for fact in book.facts:
+            if fact.id in have or not all(r.source == "user" for r in fact.refs):
+                continue
+            answer = fact.refs[0].quote if fact.refs else fact.text
+            await container.repos.user_facts.add(
+                ws.stored.user_id,
+                ws.stored.profile_id,
+                fact,
+                question=question,
+                answer=answer,
+                match_id=ws.id,
+            )
+    await container.repos.matches.save_facts(ws.id, ws.stored.user_id, book_json(book), container.clock.now())
 
 
 def call_context(
@@ -250,7 +297,7 @@ async def with_checks(container: Container, variant: ResumeVariant, book: FactBo
 
 
 async def stream_resume(
-    container: Container, user_id: str, ws: Workspace, call_ctx: CallContext
+    container: Container, ws: Workspace, call_ctx: CallContext
 ) -> AsyncIterator[MatchStreamEvent]:
     """The resume of a match as ``variant`` then ``done``: the stored one when there is one, else composed now (from
     the cited facts, no entitlement involved) and stored."""
@@ -379,9 +426,10 @@ def to_wire(event: MatchEvent) -> MatchStreamEvent:
 
 
 class Charge:
-    """One entitlement taken for a match, and the way back. ``keep()`` once the match is stored."""
+    """One entitlement taken for a match, and the way back. ``keep()`` once the match is stored. With no account
+    (``user_id`` None: an anonymous match) nothing was taken, so there is nothing to give back."""
 
-    def __init__(self, container: Container, user_id: str, match_id: str) -> None:
+    def __init__(self, container: Container, user_id: str | None, match_id: str) -> None:
         self._container = container
         self._user_id = user_id
         self._match_id = match_id
@@ -392,7 +440,7 @@ class Charge:
 
     async def refund(self) -> None:
         """Give the charge back unless it was kept. Safe to call again and from a cancelled task."""
-        if self._kept:
+        if self._kept or self._user_id is None:
             return
         task = asyncio.ensure_future(self._give_back())
         _refunds.add(task)
@@ -404,6 +452,8 @@ class Charge:
             pass
 
     async def _give_back(self) -> bool:
+        if self._user_id is None:  # pragma: no cover - refund() returns before it gets here
+            return False
         try:
             given = await self._container.entitlements.refund(self._user_id, self._match_id)
         except Exception:
@@ -416,20 +466,22 @@ class Charge:
 async def stream_match(
     container: Container,
     *,
-    user_id: str,
+    user_id: str | None,
     profile: Profile,
     context: StoredContext,
     text: str,
     match_id: str,
     charge: Charge,
     call_ctx: CallContext,
+    shares_facts: bool = True,
 ) -> AsyncIterator[MatchStreamEvent]:
-    """Run the analysis of ``text`` for ``profile`` and stream it; store the match; give the charge back on any
-    failure. See the module docstring."""
+    """Run the analysis of ``text`` for ``profile`` and stream it; store the match (for ``user_id``, or for nobody
+    when it is None); give the charge back on any failure. See the module docstring. ``shares_facts`` False (a
+    sample run) leaves out what other visitors said about the same profile."""
     queue: asyncio.Queue[MatchEvent | None] = asyncio.Queue()
     task: asyncio.Task[MatchOutcome] | None = None
     try:
-        user_facts = await container.repos.user_facts.list_for_profile(profile.id)
+        user_facts = await container.repos.user_facts.list_for_profile(profile.id) if shares_facts else []
 
         async def analyse() -> MatchOutcome:
             try:

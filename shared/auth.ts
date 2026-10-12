@@ -7,6 +7,9 @@
  *
  * An anonymous visitor's `/api/me` has no `user`: absent, not null. `entitlements` is part of the shape from
  * the start so the screens can render it; until payments exist every value is the empty one.
+ * `anonymousMatch` is true when a visitor with no sign-in may match a posting on this server (always for everyone,
+ * signed in or not): the setting `TAYYARI_MATCH__ALLOW_ANONYMOUS`, which by default is on exactly when the server
+ * offers no way to sign in.
  */
 
 export type Currency = 'INR' | 'USD';
@@ -49,6 +52,8 @@ export interface MeResponse {
   profiles: MeProfile[];
   entitlements: MeEntitlements;
   providers: MeProviders;
+  /** May a visitor with no sign-in use `/api/match*`? True by default only when `providers` are both false. */
+  anonymousMatch: boolean;
 }
 
 /** `POST /api/auth/magic`. */

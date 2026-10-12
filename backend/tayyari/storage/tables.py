@@ -502,12 +502,14 @@ class PostingRow(Base):
 class MatchRow(Base):
     """One posting matched against one profile. ``facts`` is the person's `FactBook` as it stood (the facts the
     result's ``factIds`` cite, and the structure the resume is composed from); ``result`` is the `MatchResult`;
-    ``band`` and ``blocked`` repeat two of its fields for listing. Follows its account and its profile."""
+    ``band`` and ``blocked`` repeat two of its fields for listing. Follows its account and its profile.
+    ``user_id`` is NULL for a match made without an account (anonymous matching, migration 0006); claiming its profile
+    gives it the account's id."""
 
     __tablename__ = "matches"
 
     id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
-    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
     profile_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"))
     posting_hash: Mapped[str] = mapped_column(String(HASH_LEN), ForeignKey("postings.hash"))
     facts: Mapped[dict[str, Any]] = mapped_column(JSONType)
@@ -527,12 +529,14 @@ class MatchRow(Base):
 class UserFactRow(Base):
     """Something a person said in their own words (an answer to a question, a figure for a resume line): the `Fact`
     JSON with the question it answered. Facts belong to the profile, so a later match can use them; ``id`` is a hash
-    of ``(profile_id, fact id)``, so saying the same thing twice is one row. ``match_id`` is where it was said."""
+    of ``(profile_id, fact id)``, so saying the same thing twice is one row. ``match_id`` is where it was said.
+    ``user_id`` is NULL for something said without an account (migration 0006); claiming the profile gives it the
+    account's id."""
 
     __tablename__ = "user_facts"
 
     id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
-    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
     profile_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"))
     match_id: Mapped[str | None] = mapped_column(
         String(ID_LEN), ForeignKey("matches.id", ondelete="SET NULL")

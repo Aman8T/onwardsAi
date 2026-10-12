@@ -6,7 +6,10 @@ the match models); postings, user facts and extracted facts are typed with the c
 reads them through the Protocols in `match.ports` that these classes satisfy.
 
 Every match read and write carries ``user_id``, so another account's match id is answered exactly like an unknown
-one. Writes start the transaction with the write (an UPDATE that says whether it hit a row), as in `repos.users`.
+one. ``user_id=None`` means "made without an account": it selects the rows whose ``user_id`` is NULL (anonymous matching,
+migration 0006), which the routes open only while the match's profile is unclaimed or a sample run; claiming the profile
+gives those rows the account's id (`repos.users.claim_profile`). Writes start the transaction with the write (an UPDATE
+that says whether it hit a row), as in `repos.users`.
 """
 
 from __future__ import annotations
@@ -17,7 +20,7 @@ from datetime import datetime
 from typing import Any, cast
 
 from pydantic import ValidationError
-from sqlalchemy import select, update
+from sqlalchemy import ColumnElement, select, update
 from sqlalchemy.exc import IntegrityError
 
 from tayyari.contract.match import Fact, Posting
@@ -58,6 +61,11 @@ _VARIANT_COLUMNS = (
 
 def _new_id() -> str:
     return secrets.token_hex(16)
+
+
+def _owned_by(user_id: str | None) -> ColumnElement[bool]:
+    """The condition "this match belongs to ``user_id``"; ``None`` is the matches made without an account."""
+    return MatchRow.user_id.is_(None) if user_id is None else MatchRow.user_id == user_id
 
 
 def _match(row: Any) -> StoredMatch:
@@ -191,7 +199,14 @@ class SqlUserFactRepo:
         return facts
 
     async def add(
-        self, user_id: str, profile_id: str, fact: Fact, *, question: str, answer: str, match_id: str | None
+        self,
+        user_id: str | None,
+        profile_id: str,
+        fact: Fact,
+        *,
+        question: str,
+        answer: str,
+        match_id: str | None,
     ) -> bool:
         stmt = (
             dialect_insert(self._db.dialect, UserFactRow)
@@ -221,7 +236,7 @@ class SqlMatchRepo:
         self,
         *,
         match_id: str,
-        user_id: str,
+        user_id: str | None,
         profile_id: str,
         posting_hash: str,
         facts: dict[str, Any],
@@ -248,8 +263,8 @@ class SqlMatchRepo:
             s.add(row)
         return _match(row)
 
-    async def get(self, match_id: str, user_id: str) -> StoredMatch | None:
-        stmt = select(*_MATCH_COLUMNS).where(MatchRow.id == match_id, MatchRow.user_id == user_id)
+    async def get(self, match_id: str, user_id: str | None) -> StoredMatch | None:
+        stmt = select(*_MATCH_COLUMNS).where(MatchRow.id == match_id, _owned_by(user_id))
         async with self._db.session() as s:
             row = (await s.execute(stmt)).one_or_none()
         return None if row is None else _match(row)
@@ -273,7 +288,7 @@ class SqlMatchRepo:
     async def save_result(
         self,
         match_id: str,
-        user_id: str,
+        user_id: str | None,
         *,
         expected_version: int,
         facts: dict[str, Any],
@@ -285,17 +300,19 @@ class SqlMatchRepo:
     ) -> bool:
         stmt = (
             update(MatchRow)
-            .where(MatchRow.id == match_id, MatchRow.user_id == user_id, MatchRow.version == expected_version)
+            .where(MatchRow.id == match_id, _owned_by(user_id), MatchRow.version == expected_version)
             .values(facts=facts, result=result, band=band, blocked=blocked, version=version, updated_at=now)
             .returning(MatchRow.id)
         )
         async with self._db.session() as s:
             return (await s.execute(stmt)).scalar_one_or_none() is not None
 
-    async def save_facts(self, match_id: str, user_id: str, facts: dict[str, Any], now: datetime) -> bool:
+    async def save_facts(
+        self, match_id: str, user_id: str | None, facts: dict[str, Any], now: datetime
+    ) -> bool:
         stmt = (
             update(MatchRow)
-            .where(MatchRow.id == match_id, MatchRow.user_id == user_id)
+            .where(MatchRow.id == match_id, _owned_by(user_id))
             .values(facts=facts, updated_at=now)
             .returning(MatchRow.id)
         )

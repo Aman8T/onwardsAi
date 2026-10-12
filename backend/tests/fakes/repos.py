@@ -61,6 +61,7 @@ from tayyari.storage.ports import (
     ConsumeOutcome,
     ConsumeSource,
     MatchListing,
+    OpenProfile,
     OwnedProfile,
     PortfolioConflict,
     ProfileAccess,
@@ -125,7 +126,7 @@ class _Profile:
 
 @dataclass
 class _UserFact:
-    user_id: str
+    user_id: str | None
     profile_id: str
     match_id: str | None
     question: str
@@ -166,12 +167,14 @@ class _State:
     def drop_match_data(self, *, user_id: str, profile_ids: set[str]) -> None:
         """What deleting an account removes: its matches (with their variants), the facts it gave, the facts cache
         of its profiles. Postings stay."""
-        gone = {mid for mid, m in self.matches.items() if m.user_id == user_id}
+        gone = {mid for mid, m in self.matches.items() if m.user_id == user_id or m.profile_id in profile_ids}
         for mid in gone:
             del self.matches[mid]
         for key in [k for k in self.variants if k[0] in gone]:
             del self.variants[key]
-        for key in [k for k, f in self.user_facts.items() if f.user_id == user_id]:
+        for key in [
+            k for k, f in self.user_facts.items() if f.user_id == user_id or f.profile_id in profile_ids
+        ]:
             del self.user_facts[key]
         for pid in profile_ids:
             self.profile_facts.pop(pid, None)
@@ -244,6 +247,18 @@ class FakeProfileRepo:
             return None
         self._touch(record)
         return _roundtrip(record.profile), StoredContext.model_validate(_roundtrip(record.context))
+
+    async def get_open_for_chat(self, pid: str) -> OpenProfile | None:
+        await _yield()
+        record = self._s.profiles.get(pid)
+        if record is None or not (record.user_id is None or record.is_sample):
+            return None
+        self._touch(record)
+        return OpenProfile(
+            profile=_roundtrip(record.profile),
+            context=StoredContext.model_validate(_roundtrip(record.context)),
+            is_sample=record.is_sample,
+        )
 
     async def get_access(self, pid: str) -> ProfileAccess | None:
         await _yield()
@@ -859,6 +874,12 @@ class FakeUserRepo:
         page = self._portfolios.portfolios.get(profile_id)
         if page is not None and page.user_id is None:
             page.user_id = user_id
+        for match_id, match in list(self._s.matches.items()):
+            if match.profile_id == profile_id and match.user_id is None:
+                self._s.matches[match_id] = dataclasses.replace(match, user_id=user_id)
+        for fact in self._s.user_facts.values():
+            if fact.profile_id == profile_id and fact.user_id is None:
+                fact.user_id = user_id
 
     async def purge_expired(self, now: datetime) -> int:
         await _yield()
@@ -931,7 +952,14 @@ class FakeUserFactRepo:
         return [Fact.model_validate(_roundtrip(f.fact)) for f in mine]
 
     async def add(
-        self, user_id: str, profile_id: str, fact: Fact, *, question: str, answer: str, match_id: str | None
+        self,
+        user_id: str | None,
+        profile_id: str,
+        fact: Fact,
+        *,
+        question: str,
+        answer: str,
+        match_id: str | None,
     ) -> bool:
         await _yield()
         key = (profile_id, fact.id)
@@ -961,7 +989,7 @@ class FakeMatchRepo:
         self,
         *,
         match_id: str,
-        user_id: str,
+        user_id: str | None,
         profile_id: str,
         posting_hash: str,
         facts: dict[str, Any],
@@ -992,7 +1020,7 @@ class FakeMatchRepo:
         self._s.matches[match_id] = record
         return record
 
-    async def get(self, match_id: str, user_id: str) -> StoredMatch | None:
+    async def get(self, match_id: str, user_id: str | None) -> StoredMatch | None:
         await _yield()
         found = self._s.matches.get(match_id)
         if found is None or found.user_id != user_id:
@@ -1014,7 +1042,7 @@ class FakeMatchRepo:
     async def save_result(
         self,
         match_id: str,
-        user_id: str,
+        user_id: str | None,
         *,
         expected_version: int,
         facts: dict[str, Any],
@@ -1039,7 +1067,9 @@ class FakeMatchRepo:
         )
         return True
 
-    async def save_facts(self, match_id: str, user_id: str, facts: dict[str, Any], now: datetime) -> bool:
+    async def save_facts(
+        self, match_id: str, user_id: str | None, facts: dict[str, Any], now: datetime
+    ) -> bool:
         await _yield()
         found = self._s.matches.get(match_id)
         if found is None or found.user_id != user_id:

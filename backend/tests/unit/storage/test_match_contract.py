@@ -15,6 +15,7 @@ from tayyari.contract.match import Fact, Posting
 from tayyari.contract.portfolio import Fact as PortfolioFact
 from tayyari.contract.portfolio import SourceRef
 from tayyari.contract.stored import StoredContext
+from tayyari.storage.ports import ProfileNotClaimable
 from tayyari.storage.tables import (
     MatchRow,
     PostingRow,
@@ -63,9 +64,22 @@ async def an_account(env: Env, email: str = "ana@example.com", pid: str = "p1") 
     return user.id
 
 
+async def an_open_profile(env: Env, pid: str = "open1", *, sample: bool = False) -> str:
+    """A profile nobody has claimed (or a sample run): what a match without an account is made on."""
+    await env.repos.profiles.save(
+        pid,
+        {"person": {"name": "Riya Kapoor"}},
+        StoredContext(),
+        goal=None,
+        owner_hash=None,
+        is_sample=sample,
+    )
+    return pid
+
+
 async def a_match(
     env: Env,
-    user_id: str,
+    user_id: str | None,
     *,
     match_id: str = "m1",
     pid: str = "p1",
@@ -353,6 +367,158 @@ async def test_deleting_an_account_removes_its_matches_resumes_and_facts_but_not
     assert len(await env.repos.user_facts.list_for_profile("p2")) == 1
     assert await env.repos.profile_facts.get("p2", "h") is not None
     assert await env.repos.postings.get(meera_posting().hash) is not None
+
+
+# ───────────────────────── without an account ─────────────────────────
+
+
+async def test_a_match_made_without_an_account_has_no_owner_and_only_none_reads_it(env: Env) -> None:
+    ana = await an_account(env)
+    pid = await an_open_profile(env)
+    await a_match(env, None, match_id="anon", pid=pid)
+    await a_match(env, ana, match_id="mine")
+
+    found = await env.repos.matches.get("anon", None)
+    assert found is not None and found.user_id is None and found.profile_id == pid
+    assert await env.repos.matches.get("anon", ana) is None  # an account's id does not open it ...
+    assert await env.repos.matches.get("mine", None) is None  # ... and none does not open an account's match
+    assert await env.repos.matches.get("nope", None) is None
+    assert [m.id for m in await env.repos.matches.list_for_user(ana)] == ["mine"]  # a list is by account only
+
+
+async def test_a_match_without_an_account_is_saved_and_its_facts_replaced_under_none(env: Env) -> None:
+    ana = await an_account(env)
+    pid = await an_open_profile(env)
+    await a_match(env, None, match_id="anon", pid=pid)
+    env.clock.advance(HOUR)
+    book = {"name": "Riya Kapoor", "facts": [{"id": "user-1"}], "entries": []}
+    assert await env.repos.matches.save_facts("anon", None, book, env.clock.now())
+    assert not await env.repos.matches.save_facts("anon", ana, book, env.clock.now())
+
+    update: dict[str, Any] = {
+        "facts": book,
+        "result": {"band": "strong", "version": 2},
+        "band": "strong",
+        "blocked": False,
+        "version": 2,
+        "now": env.clock.now(),
+    }
+    assert not await env.repos.matches.save_result("anon", ana, expected_version=1, **update)
+    assert await env.repos.matches.save_result("anon", None, expected_version=1, **update)
+    saved = await env.repos.matches.get("anon", None)
+    assert saved is not None and (saved.band, saved.version, saved.user_id) == ("strong", 2, None)
+    assert saved.facts == book
+    # its resume and cover note hang on the match, whoever it belongs to
+    await env.repos.matches.put_variant("anon", "resume", spec={"n": 1}, status="ready", now=env.clock.now())
+    assert (await env.repos.matches.get_variant("anon", "resume")) is not None
+
+
+async def test_something_said_without_an_account_is_kept_for_the_profile_like_any_other_fact(
+    env: Env,
+) -> None:
+    pid = await an_open_profile(env)
+    facts = env.repos.user_facts
+    assert await facts.add(None, pid, a_fact(), question="Are you authorised?", answer="Yes.", match_id=None)
+    assert not await facts.add(None, pid, a_fact(), question="Again?", answer="Yes!", match_id=None)
+    assert await facts.list_for_profile(pid) == [a_fact()]
+    if env.db is not None:
+        async with env.db.session() as s:
+            assert (await s.execute(select(UserFactRow.user_id))).scalar_one() is None
+
+
+async def test_claiming_a_profile_gives_its_matches_and_answers_made_without_an_account_to_the_account(
+    env: Env,
+) -> None:
+    ana = (await env.repos.users.sign_in_email(email="ana@example.com", now=env.clock.now())).id
+    mine, other = await an_open_profile(env, "mine"), await an_open_profile(env, "other")
+    await a_match(env, None, match_id="m-mine", pid=mine)
+    await a_match(env, None, match_id="m-other", pid=other)
+    await env.repos.matches.put_variant("m-mine", "cover", spec={}, status="ready", now=env.clock.now())
+    await env.repos.user_facts.add(None, mine, a_fact("user-a"), question="q", answer="a", match_id="m-mine")
+    await env.repos.user_facts.add(
+        None, other, a_fact("user-b"), question="q", answer="b", match_id="m-other"
+    )
+
+    await env.repos.users.claim_profile(ana, mine)
+
+    claimed = await env.repos.matches.get("m-mine", ana)
+    assert claimed is not None and claimed.user_id == ana
+    assert await env.repos.matches.get("m-mine", None) is None  # no longer anyone's to open
+    assert [m.id for m in await env.repos.matches.list_for_user(ana)] == ["m-mine"]
+    assert (await env.repos.matches.get_variant("m-mine", "cover")) is not None  # the match came whole
+    # another profile's match and answer stay as they were
+    assert await env.repos.matches.get("m-other", None) is not None
+    if env.db is not None:
+        async with env.db.session() as s:
+            owners = {r.profile_id: r.user_id for r in (await s.execute(select(UserFactRow))).scalars()}
+        assert owners == {mine: ana, other: None}
+    # saying it again changes nothing
+    await env.repos.users.claim_profile(ana, mine)
+    assert [m.id for m in await env.repos.matches.list_for_user(ana)] == ["m-mine"]
+
+
+async def test_a_claim_leaves_the_matches_of_another_account_alone(env: Env) -> None:
+    ana = await an_account(env)  # owns p1 and has a match on it
+    raj = (await env.repos.users.sign_in_email(email="raj@example.com", now=env.clock.now())).id
+    await a_match(env, ana, match_id="a1")
+    pid = await an_open_profile(env)
+    await env.repos.users.claim_profile(raj, pid)
+    assert await env.repos.matches.get("a1", ana) is not None
+    assert await env.repos.matches.list_for_user(raj) == []
+
+
+async def test_a_claim_that_is_refused_attaches_nothing(env: Env) -> None:
+    ana = (await env.repos.users.sign_in_email(email="ana@example.com", now=env.clock.now())).id
+    sample = await an_open_profile(env, "sample-1", sample=True)
+    await a_match(env, None, match_id="on-sample", pid=sample)
+    with pytest.raises(ProfileNotClaimable):
+        await env.repos.users.claim_profile(ana, sample)  # a sample run is nobody's to claim
+    assert await env.repos.matches.get("on-sample", None) is not None
+    assert await env.repos.matches.list_for_user(ana) == []
+
+
+async def test_deleting_an_account_removes_the_matches_made_on_its_profiles_without_an_account_too(
+    env: Env,
+) -> None:
+    """One that was still running when the profile was claimed is not reached by the claim; it must not outlive its
+    profile's owner."""
+    ana = await an_account(env)  # owns p1
+    await a_match(env, None, match_id="stray", pid="p1")
+    await env.repos.matches.put_variant("stray", "resume", spec={}, status="ready", now=env.clock.now())
+    await env.repos.user_facts.add(None, "p1", a_fact(), question="q", answer="a", match_id="stray")
+    stays = await an_open_profile(env)
+    await a_match(env, None, match_id="elsewhere", pid=stays)
+
+    assert await env.repos.users.delete(ana)
+
+    assert await env.repos.matches.get("stray", None) is None
+    assert await env.repos.matches.get_variant("stray", "resume") is None
+    assert await env.repos.user_facts.list_for_profile("p1") == []
+    assert await env.repos.matches.get("elsewhere", None) is not None  # nobody else's data is touched
+
+
+# ───────────────────────── a profile anyone may match against ─────────────────────────
+
+
+async def test_only_a_profile_nobody_has_claimed_or_a_sample_run_is_open_to_a_visitor_with_no_account(
+    env: Env,
+) -> None:
+    ana = await an_account(env)  # owns p1
+    open_one, sample = (
+        await an_open_profile(env, "open1"),
+        await an_open_profile(env, "sample-1", sample=True),
+    )
+    profiles = env.repos.profiles
+
+    unclaimed = await profiles.get_open_for_chat(open_one)
+    assert unclaimed is not None and not unclaimed.is_sample
+    assert unclaimed.profile["person"]["name"] == "Riya Kapoor"
+    shared = await profiles.get_open_for_chat(sample)
+    assert shared is not None and shared.is_sample
+    assert await profiles.get_open_for_chat("p1") is None  # an account's
+    assert await profiles.get_open_for_chat("nope") is None
+    await env.repos.users.claim_profile(ana, open_one)
+    assert await profiles.get_open_for_chat(open_one) is None  # claimed since: no longer open
 
 
 # ───────────────────────── the real database ─────────────────────────

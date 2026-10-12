@@ -62,12 +62,31 @@ def test_an_anonymous_me_has_no_user_key_at_all() -> None:
         profiles=[],
         entitlements=auth.MeEntitlements(credits=0, freeMatchAvailable=False),
         providers=auth.MeProviders(google=True, magic=False),
+        anonymousMatch=False,
     ).to_dict()
     assert body == {
         "profiles": [],
         "entitlements": {"credits": 0, "freeMatchAvailable": False},
         "providers": {"google": True, "magic": False},
+        "anonymousMatch": False,
     }
+
+
+def test_anonymous_match_is_a_required_boolean_on_both_sides() -> None:
+    """``anonymousMatch: boolean`` (not optional) in shared/auth.ts, a required ``bool`` in the model: the web app
+    reads it without a fallback, so a response that left it out would be a bug on the server."""
+    _, fields = _ts().interface("MeResponse")
+    assert fields["anonymousMatch"] == (False, ("bool",))  # (optional?, shape): not optional, a boolean
+    assert auth.MeResponse.model_fields["anonymousMatch"].is_required()
+    assert auth.MeResponse.model_fields["anonymousMatch"].annotation is bool
+    with pytest.raises(ValidationError):
+        auth.MeResponse.model_validate(
+            {
+                "profiles": [],
+                "entitlements": {"credits": 0, "freeMatchAvailable": False},
+                "providers": {"google": False, "magic": False},
+            }
+        )
 
 
 # ───────────────────────── request models ─────────────────────────

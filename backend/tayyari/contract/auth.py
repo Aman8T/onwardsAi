@@ -6,7 +6,8 @@ Same rules as `tayyari.contract.models`: camelCase field names that are the JSON
 the JSON (``to_dict``), so an anonymous visitor's ``/api/me`` has no ``user`` key at all.
 
 ``entitlements`` is part of the shape from the start so the web app can render it; until payments exist
-(wave F2) every value is the empty one.
+(wave F2) every value is the empty one. ``anonymousMatch`` says whether a visitor with no sign-in may match a posting
+on this server (`MatchSettings.anonymous_allowed`), so the web app knows whether to ask for an account first.
 """
 
 # ruff: noqa: N815  (the field names are camelCase on purpose: they are the JSON keys of shared/auth.ts)
@@ -81,6 +82,7 @@ class MeResponse(_Model):
     profiles: list[MeProfile]
     entitlements: MeEntitlements
     providers: MeProviders
+    anonymousMatch: bool
 
 
 class MagicLinkRequest(_Model):

@@ -4,7 +4,8 @@
  * person's recent matches.
  *
  * A refused request lands back here, with the posting still in the box: a 422 shows the server's sentence, a 402 the
- * calm "you've used your free posting" panel with a link to /pricing, a 401 opens the sign-in sheet (see useMatch).
+ * calm "you've used your free posting" panel with a link to /pricing, a 401 opens the sign-in sheet (see useMatch) or,
+ * on a server that matches without an account, says that it needs one.
  */
 import { useId, useRef } from 'react';
 import type { FormEvent } from 'react';
@@ -30,6 +31,11 @@ export interface PasteViewProps {
   blockerAction?: { label: string; run: () => void };
   /** Say that the first posting is free (a visitor, or a signed-in person with the free one still available). */
   showFree: boolean;
+  /**
+   * The server matches without an account and nobody is signed in: say it is free while Tayyari is in preview and that
+   * no account is needed, instead of the first-posting line (there is no allowance to count here).
+   */
+  noAccount?: boolean;
   recent: readonly MatchSummary[];
   /** The titles of the person's closest next roles, if a graph is on screen. */
   roles: readonly { id: string; title: string }[];
@@ -44,8 +50,12 @@ const STEPS: [string, string][] = [
   ['A resume and cover note for this role', 'Built only from facts with a source. Gaps are stated, never hidden.'],
 ];
 
+/** The line beside the button: what it costs, then how long it takes. */
+const costLine = (noAccount: boolean, showFree: boolean) =>
+  `${noAccount ? 'Free while Tayyari is in preview. No account needed. ' : showFree ? 'Your first posting is free. ' : ''}Takes about 20 seconds.`;
+
 export function PasteView(props: PasteViewProps) {
-  const { draft, onDraft, onSubmit, busy, notice, paywall, onDismissPaywall, blocker, blockerAction, showFree, recent, roles, onPickRole, onNavigate } = props;
+  const { draft, onDraft, onSubmit, busy, notice, paywall, onDismissPaywall, blocker, blockerAction, showFree, noAccount = false, recent, roles, onPickRole, onNavigate } = props;
   const textId = useId();
   const textRef = useRef<HTMLTextAreaElement>(null);
   const urlId = useId();
@@ -175,7 +185,7 @@ export function PasteView(props: PasteViewProps) {
             <button type="submit" className="btn btn-primary mt-btn" aria-disabled={!ready || busy}>
               {busy ? 'Reading the posting…' : 'Match this posting'}
             </button>
-            <span className="mt-muted">{showFree ? 'Your first posting is free. Takes about 20 seconds.' : 'Takes about 20 seconds.'}</span>
+            <span className="mt-muted">{costLine(noAccount, showFree)}</span>
           </div>
 
           {blocker && (

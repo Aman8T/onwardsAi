@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from tayyari.contract.stored import StoredContext
@@ -14,7 +14,7 @@ from tayyari.core.hashing import canonical_json
 from tayyari.core.logging import get_logger
 
 from ..db import Database, dialect_insert, rowcount
-from ..ports import ProfileAccess
+from ..ports import OpenProfile, ProfileAccess
 from ..tables import ProfileContextRow, ProfileRow, as_utc
 
 log = get_logger(__name__)
@@ -110,6 +110,28 @@ class SqlProfileRepo:
             return None
         await self._touch(pid, row.last_accessed_at)
         return row.profile, StoredContext.model_validate(row.context or {})
+
+    async def get_open_for_chat(self, pid: str) -> OpenProfile | None:
+        stmt = (
+            select(
+                ProfileRow.profile,
+                ProfileRow.is_sample,
+                ProfileRow.last_accessed_at,
+                ProfileContextRow.context,
+            )
+            .outerjoin(ProfileContextRow, ProfileContextRow.profile_id == ProfileRow.id)
+            .where(ProfileRow.id == pid, or_(ProfileRow.user_id.is_(None), ProfileRow.is_sample.is_(True)))
+        )
+        async with self._db.session() as s:
+            row = (await s.execute(stmt)).one_or_none()
+        if row is None:
+            return None
+        await self._touch(pid, row.last_accessed_at)
+        return OpenProfile(
+            profile=row.profile,
+            context=StoredContext.model_validate(row.context or {}),
+            is_sample=bool(row.is_sample),
+        )
 
     async def get_access(self, pid: str) -> ProfileAccess | None:
         stmt = select(ProfileRow.user_id, ProfileRow.is_sample).where(ProfileRow.id == pid)

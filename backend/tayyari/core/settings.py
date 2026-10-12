@@ -36,6 +36,7 @@ Effort = Literal["low", "medium", "high", "xhigh", "max"]
 SynthCache = Literal["off", "system", "system+data"]
 CacheTtl = Literal["5m", "1h"]
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
+AnonymousMatch = Literal["auto", "true", "false"]
 
 _CLOUD_MARKERS = ("FASTAPICLOUD_DEPLOYMENT_ID", "FASTAPI_PUBLIC_URL")
 
@@ -113,6 +114,10 @@ class GuardSettings(BaseModel):
     est_match_usd: float = Field(default=0.06, ge=0)
     """Spend reserved before a posting match (and before a resume or cover note is written): the posting read,
     the facts, the gates, two coverage batches, and the phrasing calls, on Haiku."""
+    anon_match_per_day: int = Field(default=3, ge=0)
+    """Posting matches one client address may start per day without an account (0 = not enforced). Counted for
+    `POST /api/match` only, and only for a visitor with no sign-in; the per-address windows above apply as well. With
+    no account there is nothing to charge, so this is the only meter on an anonymous run."""
     chat_global_per_hour: int = Field(default=600, ge=0)
     """Backstop on chat turns per hour across all clients (shared counter)."""
     chat_streams_per_ip: int = Field(default=2, ge=0)
@@ -248,6 +253,10 @@ class MatchSettings(BaseModel):
     call_timeout_s: float = Field(default=90.0, gt=0)
     """The longest one classification call may take before its stage settles for the honest default (unknown,
     uncertain, the fact's own wording)."""
+    allow_anonymous: AnonymousMatch = "auto"
+    """Whether a visitor with no sign-in may match a posting. ``auto``: exactly when this server offers no way to
+    sign in (neither Google nor an emailed link), because then an account is not something a person can get. ``true``:
+    always. ``false``: never (every `/api/match*` route answers 401 without a session). `anonymous_allowed` resolves it."""
 
     @field_validator("model", "writer_model", mode="before")
     @classmethod
@@ -255,6 +264,25 @@ class MatchSettings(BaseModel):
         if isinstance(v, str):
             return v.strip() or None
         return v
+
+    @field_validator("allow_anonymous", mode="before")
+    @classmethod
+    def _tidy_allow_anonymous(cls, v: object) -> object:
+        """Blank keeps the default; case and padding do not matter; a real boolean means ``true`` / ``false``."""
+        if isinstance(v, bool):
+            return "true" if v else "false"
+        if isinstance(v, str):
+            if not v.strip():
+                raise PydanticUseDefault()
+            return v.strip().lower()
+        return v
+
+    def anonymous_allowed(self, providers: tuple[bool, bool]) -> bool:
+        """The setting resolved for a server whose sign-in methods are ``providers`` (``(google, magic)``, as
+        `AuthService.providers` reports them): ``auto`` is true exactly when neither is available."""
+        if self.allow_anonymous == "auto":
+            return providers == (False, False)
+        return self.allow_anonymous == "true"
 
 
 _SECRET_FIELDS = (

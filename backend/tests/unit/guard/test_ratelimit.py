@@ -864,6 +864,50 @@ async def test_the_match_global_backstop_caps_postings_across_all_clients() -> N
     await limiter.check("match", "someone-else-0000")
 
 
+async def test_a_visitor_with_no_account_has_a_daily_allowance_of_its_own() -> None:
+    limiter, spy, clock = make(anon_match_per_day=3, match_global_per_hour=60)
+    for _ in range(3):
+        await limiter.check("match_anon", H, memory=False)
+    err = await refused(limiter, "match_anon")
+    assert err.user_message.startswith(
+        "That's today's limit for postings without an account. It resets in about "
+    )
+    assert err.retry_after_s is not None and 0 < err.retry_after_s <= 86_400
+    assert "match_anon:day" in (err.detail or "")
+    await limiter.check("match_anon", H2)  # another address has its own three
+    await limiter.check("match", H)  # and the ordinary match counters are a separate thing
+    day = NOON.replace(hour=0)
+    assert spy.inner.hits[(f"match_anon:day:{H}", day)] == 4  # the refused fourth was counted too
+    assert not any(bucket.startswith("match_anon:global") for bucket, _ in spy.inner.hits)
+    clock.advance(86_400)
+    await limiter.check("match_anon", H)  # the next day starts again
+
+
+async def test_the_visitors_allowance_has_no_minute_or_hour_window_and_no_whole_service_counter() -> None:
+    limiter, spy, _ = make(anon_match_per_day=2, match_global_per_hour=1)
+    for _ in range(2):
+        await limiter.check("match_anon", H, memory=False)
+    buckets = {bucket for bucket, _ in spy.inner.hits}
+    assert buckets == {f"match_anon:day:{H}"}  # one counter: no minute, no hour, no global bucket
+
+
+async def test_a_visitors_allowance_of_zero_is_not_enforced() -> None:
+    limiter, spy, _ = make(anon_match_per_day=0)
+    for _ in range(50):
+        await limiter.check("match_anon", H, memory=False)
+    assert spy.hit_calls == 0  # nothing to count
+
+
+async def test_the_visitors_allowance_counts_an_ipv6_neighbourhood_at_four_times_the_address() -> None:
+    limiter, _, _ = make(anon_match_per_day=1)
+    await limiter.check("match_anon", H, "net48", memory=False)
+    for i in range(SUBNET_LIMIT_FACTOR - 1):  # three more households in the same /48
+        await limiter.check("match_anon", f"household{i:07d}", "net48", memory=False)
+    with pytest.raises(RateLimited) as info:
+        await limiter.check("match_anon", "household-last-0", "net48", memory=False)
+    assert "match_anon:day:48" in (info.value.detail or "")
+
+
 async def test_an_account_subject_counts_beside_the_address_without_counting_the_whole_service_twice() -> (
     None
 ):

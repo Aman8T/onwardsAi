@@ -2,8 +2,9 @@
 
     GET    /api/me             JSON `MeResponse`: the user (absent when anonymous), the profiles it owns, its
                                entitlements (`billing.EntitlementService.summary`; empty for an anonymous visitor)
-                               and which sign-in methods work here
-    POST   /api/me/claim       {"profileId"} -> `MeResponse`; attaches an unowned profile (and its page) to the account
+                               which sign-in methods work here, and whether a visitor with no sign-in may match a posting (`anonymousMatch`)
+    POST   /api/me/claim       {"profileId"} -> `MeResponse`; attaches an unowned profile (and its page, and the
+                               posting matches and answers made on it without an account) to the account
     PATCH  /api/me             {"currency"?, "name"?} -> `MeResponse`
     DELETE /api/me             deletes the account with its profiles, pages and sign-ins (204, cookie cleared)
 
@@ -82,6 +83,7 @@ async def me_response(container: Container, user: User | None) -> MeResponse:
             freeMatchAvailable=summary.free_match_available,
         ),
         providers=MeProviders(google=google, magic=magic),
+        anonymousMatch=container.match_anonymous,
     )
 
 

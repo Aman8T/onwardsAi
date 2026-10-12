@@ -146,6 +146,7 @@ Each wave ends with: `npm run check:all` green, new tests for every new unit, a 
 - Resume and cover note are idempotent: a stored one is returned as it is, without reserving spend or calling a model.
 - Pasted boards: a link to LinkedIn (`linkedin.com` and `lnkd.in`), Naukri, Indeed, Glassdoor, foundit or Shine is refused with 422 `posting_link_blocked` before anything is fetched; the person pastes the text instead.
 - Refund rule: the entitlement taken for a match is given back when the match fails before it is stored, or the client leaves first; once the match is stored the charge is kept. Re-checks, resumes, cover notes and downloads never consume an entitlement.
+- Anonymous matching (2026-10-12, uncommitted): `TAYYARI_MATCH__ALLOW_ANONYMOUS` (`auto`: on exactly when the server offers no way to sign in), migration 0006 (`matches.user_id` and `user_facts.user_id` nullable), `anonymousMatch` on `GET /api/me`. A visitor with no sign-in matches a profile nobody has claimed or a sample run, opens the match by its id, and consumes no entitlement; claiming the profile gives the matches to the account. The rules are in `docs/backend.md` (Posting match).
 
 ---
 
@@ -169,6 +170,8 @@ Each wave ends with: `npm run check:all` green, new tests for every new unit, a 
 ## Follow-ups
 
 Found while writing the documentation wave (2026-10-11). None blocks the landed waves; each is a change for a later wave.
+
+- **Per-IP is the only meter for anonymous runs.** With no account there is no entitlement to charge, so a visitor's matches are limited by the client address alone (`TAYYARI_GUARD__ANON_MATCH_PER_DAY`, 3, on top of the ordinary per-address windows), and their answers, resumes and cover notes are only shed. An address that changes (a mobile network, a VPN) gets a fresh allowance; the daily spend ceiling and the global match cap are the backstop.
 
 - **Resume and cover are not rebuilt after answers.** A stored resume or cover note stays as it was when it was written; there is no rebuild control yet.
 - **Postings are never purged.** `postings` has no retention step (`storage/maintenance.py`).

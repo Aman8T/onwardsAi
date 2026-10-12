@@ -109,14 +109,16 @@ const toPaste = (
 
 function PasteScreen() {
   const m = useMatch();
-  const { user, loaded, profiles, entitlements } = useMe();
+  const { user, loaded, profiles, entitlements, matchAccess } = useMe();
   const profile = useApp((s) => s.profile);
   const shownId = profile?.id;
   const profileId = pickProfileId(shownId, profiles) ?? (shownId && !isSampleId(shownId) ? shownId : undefined);
+  const userId = user?.id;
 
+  // the side list: the account's matches, or what this device remembers when nobody is signed in
   useEffect(() => {
-    if (user) void matchActions.loadRecent();
-  }, [user]);
+    if (loaded) void matchActions.loadRecent(userId);
+  }, [loaded, userId]);
 
   const roles = useMemo(
     () => (profile ? [...profile.roles].sort((a, b) => b.alignment - a.alignment).slice(0, 3).map((r) => ({ id: r.id, title: r.title })) : []),
@@ -142,6 +144,7 @@ function PasteScreen() {
       blocker={blocker}
       blockerAction={!profileId ? { label: 'Analyse my resume', run: () => actions.goto('onboarding') } : undefined}
       showFree={!loaded || !user || entitlements.freeMatchAvailable}
+      noAccount={matchAccess === 'anonymous'}
       recent={m.recent ?? []}
       roles={roles}
       onPickRole={() => {

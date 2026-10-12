@@ -10,7 +10,10 @@
  * the posting, the facts the rows cite, and the band, counts and confidence code computed.
  *
  * Errors are mapped once, here:
- *   401 → the sign-in sheet opens and the request is kept to resume afterwards (see pending.ts)
+ *   401 → the sign-in sheet opens and the request is kept to resume afterwards (see pending.ts), but only where the
+ *         server has a sign-in to offer. When it matches without an account (`anonymousMatch` on `/api/me`) nobody is
+ *         ever asked to sign in: a 401 that still arrives is a sentence ("This server needs an account…"). Where it
+ *         has no way to sign in at all, the sheet is not reachable from here either (see `MatchAccess`).
  *   402 → `paywall`: the calm "you've used your free posting" panel with a link to /pricing
  *   422 → the paste screen with the server's sentence ("We couldn't find any requirements…")
  *   409 on a download → the open decisions are re-read from the server and shown
@@ -18,7 +21,7 @@
  */
 import { useSyncExternalStore } from 'react';
 import type { Coverage, CoverNote, DecisionChoice, GateAnswer, MatchResult, Posting, Question, Radar, ResumeVariant } from '../../shared/match';
-import { refresh as refreshMe, signInSheet } from '../auth/useMe';
+import { matchAccess, refresh as refreshMe, signInSheet } from '../auth/useMe';
 import { plural } from '../lib/ui';
 import { actions, getState } from '../store';
 import * as api from './api';
@@ -26,6 +29,7 @@ import { MatchApiError } from './api';
 import { changedRows } from './model';
 import { rememberPending } from './pending';
 import type { RecheckState } from './Questions';
+import { forgetRecent, readRecent, rememberRecent } from './recent';
 import type { AnswerInput, MatchDetail, MatchEvent, MatchFact, MatchSummary, SubmitInput } from './types';
 
 export type Phase = 'idle' | 'reading' | 'done';
@@ -168,18 +172,58 @@ const messageOf = (err: unknown) => (err instanceof Error ? err.message : 'Somet
 const statusOf = (err: unknown) => (err instanceof MatchApiError ? err.status : 0);
 
 const SIGN_IN_NOTICE = 'Sign in to match a posting. Your first posting is free.';
+const NEEDS_ACCOUNT = 'This server needs an account for matching.';
+const NEEDS_ACCOUNT_NO_SIGN_IN = 'This server needs an account for matching, and signing in is not set up on it yet.';
+/** "This server needs an account to open this match." */
+const accountTo = (what: string) => `This server needs an account to ${what}.`;
+
 /**
- * Ask the person to sign in. The server just said they are not (a session that ended, say), so the account state is
- * read again first: otherwise the sheet would see a user it still believes in and close itself at once.
+ * Whether a sign-in sheet can be offered from the match flow: not when the server matches without an account
+ * (nobody is asked to sign in), and not when it has no way to sign in (the sheet would have nothing to show).
+ * Until `/api/me` has answered the sheet is assumed possible, as it always was.
  */
-const openSignIn = (notice = SIGN_IN_NOTICE) => {
-  void refreshMe().finally(() => signInSheet.open('account', notice));
+const sheetOffered = () => {
+  const access = matchAccess();
+  return access !== 'anonymous' && access !== 'stuck';
 };
+
+/** Why a match was refused for want of an account, when there is no sheet to ask with. */
+const noAccountNotice = () => (matchAccess() === 'stuck' ? NEEDS_ACCOUNT_NO_SIGN_IN : NEEDS_ACCOUNT);
+
+/**
+ * Ask the person to sign in, where the server has a sign-in to offer. The server just said they are not signed in (a
+ * session that ended, say), so the account state is read again first: otherwise the sheet would see a user it still
+ * believes in and close itself at once, and a server that has since started to match without an account (or lost
+ * its sign-in) is noticed. Resolves false, opening nothing, when the sheet is not offered; the caller then says why.
+ */
+async function askToSignIn(notice = SIGN_IN_NOTICE): Promise<boolean> {
+  await refreshMe();
+  const access = matchAccess();
+  if (access !== 'sign-in' && access !== 'unknown') return false;
+  signInSheet.open('account', notice);
+  return true;
+}
+
+/**
+ * A request was refused with `status`. On a 401 the sign-in sheet opens (`sheetNotice` above its form) where the
+ * server can offer one and `message` is returned as it was; where it cannot, nothing opens and `plain` is returned.
+ * Any other status returns `message` untouched.
+ */
+function refused(status: number, message: string, sheetNotice: string, plain: string): string {
+  if (status !== 401) return message;
+  if (!sheetOffered()) return plain;
+  void askToSignIn(sheetNotice);
+  return message;
+}
 
 /* ───────────────────────── the run ───────────────────────── */
 
 let runAbort: AbortController | null = null;
 let loading: string | null = null;
+/** Whose side list `state.recent` holds ('' = nobody signed in). */
+let recentFor: string | null = null;
+/** Matches shown in the paste screen's side list. */
+const RECENT_SHOWN = 5;
 /** Decisions are sent one at a time, so their answers can never arrive out of order. */
 let decisionQueue: Promise<void> = Promise.resolve();
 
@@ -248,22 +292,43 @@ async function finish(done: Extract<MatchEvent, { type: 'done' }>): Promise<void
     if (done.result && state.posting) {
       detail = { id: done.matchId, createdAt: done.createdAt, posting: state.posting, facts: state.facts, result: done.result };
     } else {
-      set({ phase: 'idle', notice: statusOf(err) === 401 ? SIGN_IN_NOTICE : messageOf(err) });
+      set({ phase: 'idle', notice: statusOf(err) === 401 ? (sheetOffered() ? SIGN_IN_NOTICE : noAccountNotice()) : messageOf(err) });
       return;
     }
   }
   set({ ...applyDetail(detail), phase: 'done', live: true, step: undefined, notice: undefined, paywall: false, draft: { text: '', url: '' }, recent: null });
   writeDraft({ text: '', url: '' });
+  // nobody signed in: the server's list will not hold this match, so this device keeps a line for it
+  if (matchAccess() !== 'account') {
+    rememberRecent({
+      id: detail.id,
+      title: detail.posting.title || 'Posting',
+      company: detail.posting.company,
+      band: detail.result.band,
+      createdAt: detail.createdAt ?? new Date().toISOString(),
+    });
+  }
   void refreshMe(); // the posting used the free allowance or a credit: the chip in the header should say so
   if (getState().view === 'match' && getState().matchRoute.screen === 'paste') actions.openMatch({ screen: 'match', id: done.matchId }, { replace: true });
+}
+
+/**
+ * A match needs an account: open the sign-in sheet and keep the posting for after, or, where the server offers no
+ * sheet, say why on the paste screen (the posting stays in the box either way). `otherwise` is shown when the sheet
+ * was not opened for a reason that is not about accounts (the person turned out to be signed in).
+ */
+function needAccount(request: Pick<SubmitInput, 'text' | 'url'>, otherwise: string) {
+  void askToSignIn().then((opened) => {
+    if (opened) rememberPending({ text: request.text, url: request.url });
+    else if (state.phase === 'idle') set({ notice: matchAccess() === 'account' ? otherwise : noAccountNotice() });
+  });
 }
 
 function failRun(err: unknown, request: SubmitInput) {
   const status = statusOf(err);
   if (status === 401) {
-    rememberPending({ text: request.text, url: request.url });
     set({ phase: 'idle', notice: undefined });
-    openSignIn();
+    needAccount(request, messageOf(err));
     return;
   }
   if (status === 402) {
@@ -286,8 +351,10 @@ export const matchActions = {
   },
 
   /**
-   * Start a match. `signedIn: false` skips the request: the sign-in sheet opens and the posting is kept to resume
-   * (`null` = unknown, try the server and let a 401 decide).
+   * Start a match. `signedIn: false` skips the request when the server needs an account: the sign-in sheet opens and
+   * the posting is kept to resume (or, with no sheet to offer, a sentence says why). When the server matches without
+   * an account the request goes straight out, signed in or not. `signedIn: null` = unknown, try the server and let a
+   * 401 decide.
    */
   async submit(input: SubmitInput, opts: { signedIn: boolean | null }): Promise<void> {
     if (state.phase === 'reading') return;
@@ -296,10 +363,10 @@ export const matchActions = {
     if (!text && !url) return;
     const request: SubmitInput = text ? { profileId: input.profileId, text } : { profileId: input.profileId, url };
 
-    if (opts.signedIn === false) {
-      rememberPending({ text, url });
+    if (opts.signedIn === false && matchAccess() !== 'anonymous') {
       set({ notice: undefined, paywall: false });
-      openSignIn();
+      if (matchAccess() === 'stuck') set({ notice: NEEDS_ACCOUNT_NO_SIGN_IN });
+      else needAccount({ text, url }, SIGN_IN_NOTICE);
       return;
     }
 
@@ -349,14 +416,22 @@ export const matchActions = {
       }));
     } catch (err) {
       const status = statusOf(err);
-      if (status === 401) openSignIn('Sign in to open your matches.');
-      set({
-        loadingId: undefined,
-        loadError: {
-          id,
-          message: status === 401 ? 'Sign in to open this match.' : status === 404 ? "We couldn't find that match. It may belong to another account." : messageOf(err),
-        },
-      });
+      // the server no longer has it: it leaves this device's list of recent matches too
+      if (status === 404) {
+        forgetRecent(id);
+        set((s) => (s.recent ? { recent: s.recent.filter((m) => m.id !== id) } : {}));
+      }
+      const message = refused(
+        status,
+        status === 401
+          ? 'Sign in to open this match.'
+          : status === 404
+            ? `We couldn't find that match.${matchAccess() === 'anonymous' ? '' : ' It may belong to another account.'}`
+            : messageOf(err),
+        'Sign in to open your matches.',
+        accountTo('open this match'),
+      );
+      set({ loadingId: undefined, loadError: { id, message } });
     } finally {
       loading = null;
     }
@@ -382,8 +457,14 @@ export const matchActions = {
         },
       });
     } catch (err) {
-      if (statusOf(err) === 401) openSignIn('Sign in again to save your answers.');
-      set({ recheck: { status: 'error', message: statusOf(err) === 401 ? 'Sign in again to save your answers. What you typed is still here.' : messageOf(err) } });
+      const status = statusOf(err);
+      const message = refused(
+        status,
+        status === 401 ? 'Sign in again to save your answers. What you typed is still here.' : messageOf(err),
+        'Sign in again to save your answers.',
+        `${accountTo('save your answers')} What you typed is still here.`,
+      );
+      set({ recheck: { status: 'error', message } });
     }
   },
 
@@ -411,8 +492,8 @@ export const matchActions = {
       if (live()) setResume({ status: 'ready', variant, error: undefined });
     } catch (err) {
       if (!live()) return;
-      if (statusOf(err) === 401) openSignIn('Sign in to build your resume.');
-      setResume({ status: state.resume.variant ? 'ready' : 'error', error: messageOf(err) });
+      const error = refused(statusOf(err), messageOf(err), 'Sign in to build your resume.', accountTo('build a resume'));
+      setResume({ status: state.resume.variant ? 'ready' : 'error', error });
     }
   },
 
@@ -424,8 +505,8 @@ export const matchActions = {
         const variant = await api.patchResume(id, [choice]);
         if (state.resume.matchId === id) setResume({ variant });
       } catch (err) {
-        if (statusOf(err) === 401) openSignIn('Sign in again to save your decision.');
-        if (state.resume.matchId === id) setResume({ error: messageOf(err) });
+        const error = refused(statusOf(err), messageOf(err), 'Sign in again to save your decision.', accountTo('save your decision'));
+        if (state.resume.matchId === id) setResume({ error });
       } finally {
         const saving = new Set(state.resume.saving);
         saving.delete(choice.bulletId);
@@ -451,8 +532,7 @@ export const matchActions = {
       setResume({ downloading: undefined, ...(variant ? { variant } : {}), error: 'A few lines still need a decision before the files can be made. They are listed on the right.' });
       return;
     }
-    if (res.status === 401) openSignIn('Sign in again to download.');
-    setResume({ downloading: undefined, error: res.message });
+    setResume({ downloading: undefined, error: refused(res.status, res.message, 'Sign in again to download.', accountTo('download this')) });
   },
 
   async ensureCover(id: string, retry = false): Promise<void> {
@@ -470,8 +550,7 @@ export const matchActions = {
       if (live()) setCover({ status: 'ready', note, error: undefined });
     } catch (err) {
       if (!live()) return;
-      if (statusOf(err) === 401) openSignIn('Sign in to write your cover note.');
-      setCover({ status: 'error', error: messageOf(err) });
+      setCover({ status: 'error', error: refused(statusOf(err), messageOf(err), 'Sign in to write your cover note.', accountTo('write a cover note')) });
     }
   },
 
@@ -479,19 +558,27 @@ export const matchActions = {
     if (state.cover.downloading) return;
     setCover({ downloading: true, error: undefined });
     const res = await api.downloadFile(api.coverFileUrl(id), 'cover-note.pdf');
-    if (!res.ok && res.status === 401) openSignIn('Sign in again to download.');
-    setCover({ downloading: false, ...(res.ok ? {} : { status: state.cover.note ? 'ready' : 'error', error: res.message }) });
+    const error = res.ok ? undefined : refused(res.status, res.message, 'Sign in again to download.', accountTo('download this'));
+    setCover({ downloading: false, ...(res.ok ? {} : { status: state.cover.note ? 'ready' : 'error', error }) });
   },
 
-  /** The person's recent matches for the paste screen's side list. Signed-out visitors simply have none. */
-  async loadRecent(): Promise<void> {
-    if (state.recent !== null) return;
-    set({ recent: [] });
+  /**
+   * The paste screen's side list. A signed-in person gets their account's matches. Nobody signed in gets what this
+   * device remembers (`recent.ts`), replaced by the server's list if it has one; the server's list is empty for a
+   * visitor, so this is usually the local one. `userId` is who is asking (absent: nobody), so a sign-in or sign-out
+   * reads the list again instead of showing the other person's.
+   */
+  async loadRecent(userId?: string): Promise<void> {
+    const key = userId ?? '';
+    if (state.recent !== null && recentFor === key) return;
+    recentFor = key;
+    set({ recent: userId ? [] : readRecent().slice(0, RECENT_SHOWN) });
     try {
-      const recent = await api.listMatches();
-      set({ recent: recent.slice(0, 5) });
+      const server = await api.listMatches();
+      if (recentFor !== key) return; // someone else asked meanwhile
+      if (server.length > 0) set({ recent: server.slice(0, RECENT_SHOWN) });
     } catch {
-      /* not signed in, or the list is unavailable: the side list stays empty */
+      /* not signed in, or the list is unavailable: the side list stays as it is */
     }
   },
 };

@@ -64,6 +64,16 @@ class ProfileAccess:
     is_sample: bool
 
 
+@dataclass(frozen=True, slots=True)
+class OpenProfile:
+    """A profile anyone holding its id may use: nobody has claimed it, or it is a sample run. ``is_sample`` tells the
+    two apart (a sample run is shared by everyone who holds its id; an unclaimed profile is one person's)."""
+
+    profile: dict[str, Any]
+    context: StoredContext
+    is_sample: bool
+
+
 class ProfileRepo(Protocol):
     async def save(
         self,
@@ -91,6 +101,12 @@ class ProfileRepo(Protocol):
         """Profile and context like `get_for_chat`, but only when the profile belongs to ``user_id``. None for an
         unknown id, an anonymous profile, a sample run and another account's profile alike (so a caller cannot tell
         which one it was)."""
+        ...
+
+    async def get_open_for_chat(self, pid: str) -> OpenProfile | None:
+        """Profile and context like `get_for_chat`, but only when nobody has claimed the profile (``user_id`` NULL) or it
+        is a sample run. None for an unknown id and for a profile an account owns, alike. This is what a visitor with
+        no sign-in may match a posting against."""
         ...
 
     async def get_access(self, pid: str) -> ProfileAccess | None:
@@ -364,7 +380,8 @@ class UserRepo(Protocol):
 
     async def delete(self, user_id: str) -> bool:
         """Delete the account with everything it owns: its profiles (and their chats), portfolios, matches (with
-        their resumes and cover notes), the facts it gave in its own words, sign-ins and pending links. Postings
+        their resumes and cover notes, including any made on those profiles without an account), the facts it gave in
+        its own words, sign-ins and pending links. Postings
         are shared by everyone who pasted the same text and stay. True when the account existed."""
         ...
 
@@ -398,8 +415,9 @@ class UserRepo(Protocol):
         ...
 
     async def claim_profile(self, user_id: str, profile_id: str) -> None:
-        """Make an unowned profile (and its portfolio, if any) the user's. Claiming one's own profile again is a
-        no-op. Raises `ProfileNotClaimable` (unknown id, or a sample run) and `ProfileOwnedByAnother`."""
+        """Make an unowned profile the user's, with its portfolio, the posting matches made on it without an account
+        and the answers given there (all of those get the user's id). Claiming one's own profile again is a no-op.
+        Raises `ProfileNotClaimable` (unknown id, or a sample run) and `ProfileOwnedByAnother`."""
         ...
 
     async def purge_expired(self, now: datetime) -> int:
@@ -543,7 +561,8 @@ class StoredMatch:
     both opaque: the API layer validates them."""
 
     id: str
-    user_id: str
+    user_id: str | None
+    """The account the match belongs to; None for a match made without one (until its profile is claimed)."""
     profile_id: str
     posting_hash: str
     facts: dict[str, Any]
@@ -613,22 +632,30 @@ class UserFactRepo(Protocol):
         ...
 
     async def add(
-        self, user_id: str, profile_id: str, fact: Fact, *, question: str, answer: str, match_id: str | None
+        self,
+        user_id: str | None,
+        profile_id: str,
+        fact: Fact,
+        *,
+        question: str,
+        answer: str,
+        match_id: str | None,
     ) -> bool:
-        """Store one fact with the question it answered. Idempotent on ``(profile_id, fact.id)``: False, and
-        nothing changes, when it is already stored."""
+        """Store one fact with the question it answered; ``user_id`` None for something said without an account.
+        Idempotent on ``(profile_id, fact.id)``: False, and nothing changes, when it is already stored."""
         ...
 
 
 class MatchRepo(Protocol):
     """Matches and their variants. Every match read and write is scoped by ``user_id``: another account's id is
-    answered exactly like an unknown one."""
+    answered exactly like an unknown one. ``user_id=None`` scopes to the matches made without an account (their
+    ``user_id`` is NULL), which the routes open only while their profile is still unclaimed or a sample run."""
 
     async def create(
         self,
         *,
         match_id: str,
-        user_id: str,
+        user_id: str | None,
         profile_id: str,
         posting_hash: str,
         facts: dict[str, Any],
@@ -641,8 +668,8 @@ class MatchRepo(Protocol):
         """Insert a match (the posting must already be stored)."""
         ...
 
-    async def get(self, match_id: str, user_id: str) -> StoredMatch | None:
-        """The user's match, or None."""
+    async def get(self, match_id: str, user_id: str | None) -> StoredMatch | None:
+        """The user's match (``user_id=None``: the anonymous match with this id), or None."""
         ...
 
     async def list_for_user(self, user_id: str, limit: int = 50) -> list[MatchListing]:
@@ -652,7 +679,7 @@ class MatchRepo(Protocol):
     async def save_result(
         self,
         match_id: str,
-        user_id: str,
+        user_id: str | None,
         *,
         expected_version: int,
         facts: dict[str, Any],
@@ -666,7 +693,9 @@ class MatchRepo(Protocol):
         False when the match is not the user's, or moved on in the meantime."""
         ...
 
-    async def save_facts(self, match_id: str, user_id: str, facts: dict[str, Any], now: datetime) -> bool:
+    async def save_facts(
+        self, match_id: str, user_id: str | None, facts: dict[str, Any], now: datetime
+    ) -> bool:
         """Replace the facts alone (a figure the person gave while settling a resume); False when not the user's."""
         ...
 
@@ -693,6 +722,7 @@ __all__ = [
     "LlmCallRepo",
     "MatchListing",
     "MatchRepo",
+    "OpenProfile",
     "OwnedProfile",
     "PortfolioConflict",
     "PortfolioRepo",

@@ -235,13 +235,23 @@ class SqlUserRepo:
                     or_(PortfolioRow.user_id == user_id, PortfolioRow.profile_id.in_(owned))
                 )
             )
-            # Matches, what the person said in their own words, and the resumes and cover notes built for them.
-            # (They also follow the account and its profiles by ON DELETE CASCADE; postings are shared and stay.)
-            their_matches = select(MatchRow.id).where(MatchRow.user_id == user_id)
+            # Matches, what the person said in their own words, and the resumes and cover notes built for them: the
+            # account's own, and any made on its profiles without an account that the claim did not reach (one that
+            # was still running when the profile was claimed). They also follow the account and its profiles by
+            # ON DELETE CASCADE; postings are shared and stay.
+            their_matches = select(MatchRow.id).where(
+                or_(MatchRow.user_id == user_id, MatchRow.profile_id.in_(owned))
+            )
             await s.execute(delete(VariantRow).where(VariantRow.match_id.in_(their_matches)))
-            await s.execute(delete(UserFactRow).where(UserFactRow.user_id == user_id))
+            await s.execute(
+                delete(UserFactRow).where(
+                    or_(UserFactRow.user_id == user_id, UserFactRow.profile_id.in_(owned))
+                )
+            )
             await s.execute(delete(ProfileFactsRow).where(ProfileFactsRow.profile_id.in_(owned)))
-            await s.execute(delete(MatchRow).where(MatchRow.user_id == user_id))
+            await s.execute(
+                delete(MatchRow).where(or_(MatchRow.user_id == user_id, MatchRow.profile_id.in_(owned)))
+            )
             # Contexts and chats follow their profile (ON DELETE CASCADE).
             await s.execute(delete(ProfileRow).where(ProfileRow.user_id == user_id))
             email = (await s.execute(select(UserRow.email).where(UserRow.id == user_id))).scalar_one_or_none()
@@ -390,6 +400,18 @@ class SqlUserRepo:
             await s.execute(
                 update(PortfolioRow)
                 .where(PortfolioRow.profile_id == profile_id, PortfolioRow.user_id.is_(None))
+                .values(user_id=user_id)
+            )
+            # So do the posting matches and the answers made on it without an account (anonymous matching): one UPDATE
+            # each. They are the account's from here on, and its history lists them.
+            await s.execute(
+                update(MatchRow)
+                .where(MatchRow.profile_id == profile_id, MatchRow.user_id.is_(None))
+                .values(user_id=user_id)
+            )
+            await s.execute(
+                update(UserFactRow)
+                .where(UserFactRow.profile_id == profile_id, UserFactRow.user_id.is_(None))
                 .values(user_id=user_id)
             )
 

@@ -174,6 +174,7 @@ async def test_an_anonymous_visitor_gets_the_shape_without_a_user(start: Any) ->
         "profiles": [],
         "entitlements": {"credits": 0, "freeMatchAvailable": False},
         "providers": {"google": True, "magic": True},
+        "anonymousMatch": False,  # a way to sign in exists, so a posting match asks for one
     }
     assert "set-cookie" not in response.headers
 
@@ -193,6 +194,49 @@ async def test_providers_report_what_this_server_can_do(
 ) -> None:
     async with start(google=google, mailer=mailer, **settings) as rig:
         assert (await rig.client.get("/api/me")).json()["providers"] == expected
+
+
+@pytest.mark.parametrize(
+    ("google", "mailer", "settings", "mode", "expected"),
+    [
+        # auto: a posting may be matched with no account exactly when there is no way to get one
+        (False, False, {}, "auto", True),
+        (True, False, {}, "auto", False),
+        (False, True, {}, "auto", False),
+        (True, True, {}, "auto", False),
+        (False, False, {"env": "local"}, "auto", False),  # the dev link is a way to sign in
+        # the setting is auto when left out, and a blank value counts as unset
+        (False, False, {}, None, True),
+        (True, True, {}, None, False),
+        (True, True, {}, " ", False),
+        # an explicit value wins over the providers, in both directions
+        (True, True, {}, "true", True),
+        (False, False, {}, "false", False),
+        (True, True, {}, " TRUE ", True),
+    ],
+)
+async def test_anonymous_match_is_decided_by_the_setting_and_the_sign_in_methods(
+    start: Any, google: bool, mailer: bool, settings: dict[str, Any], mode: str | None, expected: bool
+) -> None:
+    match = {} if mode is None else {"allow_anonymous": mode}
+    async with start(google=google, mailer=mailer, match=match, **settings) as rig:
+        body = (await rig.client.get("/api/me")).json()
+        signed_in = await sign_in_by_link(rig) if mailer else None
+        container_says = rig.env.container.match_anonymous
+        known = (
+            None
+            if signed_in is None
+            else (await rig.client.get("/api/me", headers=as_user(signed_in))).json()["anonymousMatch"]
+        )
+    assert body["anonymousMatch"] is expected and container_says is expected
+    assert known in (None, expected)  # the same answer for a signed-in person
+
+
+def test_a_setting_that_is_not_auto_true_or_false_stops_the_server_from_starting(
+    build_settings: MakeSettings,
+) -> None:
+    with pytest.raises(ValueError, match="allow_anonymous"):
+        build_settings(match={"allow_anonymous": "sometimes"})
 
 
 async def test_a_garbage_cookie_is_just_an_anonymous_visitor(start: Any) -> None:

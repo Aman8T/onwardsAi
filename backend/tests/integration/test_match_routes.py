@@ -152,7 +152,11 @@ def rescript(claude: RecordingClaude, purpose: str, answer: Any) -> None:
 
 @pytest.fixture
 def start(build_settings: MakeSettings):  # type: ignore[no-untyped-def]
-    """``async with start(**settings) as rig``: the app with Meera's persona and a scripted model behind it."""
+    """``async with start(**settings) as rig``: the app with Meera's persona and a scripted model behind it.
+
+    Anonymous matching is off unless a test says otherwise (``match={"allow_anonymous": "auto"}``): the tests here are
+    about accounts, and with no sign-in method configured the default would let visitors in. `test_match_anonymous`
+    covers the other way."""
 
     @asynccontextmanager
     async def run(
@@ -163,7 +167,8 @@ def start(build_settings: MakeSettings):  # type: ignore[no-untyped-def]
     ) -> AsyncIterator[Rig]:
         persona = meera()
         model = claude or scripted(persona, phrase=phrase)
-        values: dict[str, Any] = {"auth": {"public_url": "https://tayyari.example"}}
+        match = {"allow_anonymous": "false", **overrides.pop("match", {})}
+        values: dict[str, Any] = {"auth": {"public_url": "https://tayyari.example"}, "match": match}
         values.update(overrides)
         async with running(build_settings(**values), claude=model) as env:
             yield Rig(env, model, persona)

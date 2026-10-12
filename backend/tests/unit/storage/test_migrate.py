@@ -17,7 +17,7 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from sqlalchemy import inspect, text
 from sqlalchemy.engine import Connection
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from tayyari.core.dburl import DbConfig, normalise_database_url
 from tayyari.storage import migrate
@@ -335,6 +335,123 @@ async def test_schema_diff_catches_a_missing_column(any_real_db: Database) -> No
     async with any_real_db.engine.connect() as conn:
         diff = await conn.run_sync(autogenerate_diff)
     assert any(item[0] == "remove_column" and item[3].name == "stray" for item in diff)
+
+
+# ───────────────────────────── 0006: an owner is optional ─────────────────────────────
+
+STAMP = "2026-10-12 09:00:00.000000"
+
+
+async def run_sql(conn: Any, *statements: str) -> None:
+    """Statements with the one timestamp every row uses as ``:ts``."""
+    for sql in statements:
+        await conn.execute(text(sql), {"ts": STAMP})
+
+
+MATCH_WITHOUT_OWNER = (
+    "INSERT INTO matches (id, user_id, profile_id, posting_hash, facts, result, band, blocked, version, "
+    "created_at, updated_at) VALUES ('m2', NULL, 'p1', 'h1', '{}', '{}', 'good', 0, 1, :ts, :ts)"
+)
+FACT_WITHOUT_OWNER = (
+    "INSERT INTO user_facts (id, user_id, profile_id, match_id, question, answer, fact, created_at) "
+    "VALUES ('f2', NULL, 'p1', 'm2', 'q', 'a', '{}', :ts)"
+)
+
+
+async def fill_0005(conn: Any) -> None:
+    """A database at revision 0005 with an account, its profile, a match with a resume, and something it said."""
+    await run_sql(
+        conn,
+        "INSERT INTO users (id, email, created_at, last_login_at) VALUES ('u1', 'ana@example.com', :ts, :ts)",
+        "INSERT INTO profiles (id, created_at, last_accessed_at, is_sample, schema_version, profile, user_id) "
+        "VALUES ('p1', :ts, :ts, 0, 1, '{}', 'u1')",
+        "INSERT INTO postings (hash, text, parsed, created_at) VALUES ('h1', 't', '{}', :ts)",
+        "INSERT INTO matches (id, user_id, profile_id, posting_hash, facts, result, band, blocked, version, "
+        "created_at, updated_at) VALUES ('m1', 'u1', 'p1', 'h1', '{}', '{}', 'good', 0, 1, :ts, :ts)",
+        "INSERT INTO variants (id, match_id, kind, spec, status, version, created_at, updated_at) "
+        "VALUES ('v1', 'm1', 'resume', '{}', 'ready', 1, :ts, :ts)",
+        "INSERT INTO user_facts (id, user_id, profile_id, match_id, question, answer, fact, created_at) "
+        "VALUES ('f1', 'u1', 'p1', 'm1', 'q', 'a', '{}', :ts)",
+    )
+
+
+async def not_null(conn: Any, table: str) -> bool:
+    rows = (await conn.execute(text(f"PRAGMA table_info({table})"))).all()
+    return bool(next(r for r in rows if r.name == "user_id").notnull)
+
+
+async def test_0006_makes_the_owner_optional_without_touching_a_single_row_or_what_hangs_on_it(
+    tmp_path: Path,
+) -> None:
+    """SQLite cannot drop a NOT NULL in place; a table rebuild would drop `matches` with foreign keys on and delete every
+    stored resume. 0006 edits the table's SQL instead, so the resume (and the answer) of a match must survive it."""
+    db = Database(sqlite_config(tmp_path / "keep.sqlite3"))
+    try:
+        async with db.engine.begin() as conn:
+            await conn.run_sync(migrate._upgrade, "0005")
+            await fill_0005(conn)
+            assert await not_null(conn, "matches") and await not_null(conn, "user_facts")
+        async with db.engine.begin() as conn:
+            await conn.run_sync(migrate._upgrade, "0006")
+
+        async with db.engine.connect() as conn:
+            assert not await not_null(conn, "matches") and not await not_null(conn, "user_facts")
+            assert (await conn.execute(text("SELECT id, user_id FROM matches"))).all() == [("m1", "u1")]
+            assert (await conn.execute(text("SELECT id, match_id FROM variants"))).all() == [("v1", "m1")]
+            assert (await conn.execute(text("SELECT id, match_id FROM user_facts"))).all() == [("f1", "m1")]
+            assert (await conn.execute(text("PRAGMA foreign_key_check"))).all() == []
+            assert (await conn.execute(text("PRAGMA integrity_check"))).scalar_one() == "ok"
+        assert await revision(db) == "0006"
+
+        async with db.engine.begin() as conn:  # a match and an answer with no owner are now storable ...
+            await run_sql(conn, MATCH_WITHOUT_OWNER, FACT_WITHOUT_OWNER)
+        # ... but a made-up owner is still refused: the foreign key stayed
+        with pytest.raises(IntegrityError):
+            async with db.engine.begin() as conn:
+                await conn.execute(text("UPDATE matches SET user_id = 'nobody' WHERE id = 'm2'"))
+        async with db.engine.connect() as conn:  # and the foreign keys keep their ON DELETE actions
+            for table in ("matches", "user_facts"):
+                keys = (await conn.execute(text(f"PRAGMA foreign_key_list({table})"))).all()
+                actions = {(k.table, k._mapping["from"], k.on_delete) for k in keys}
+                assert ("users", "user_id", "CASCADE") in actions
+    finally:
+        await db.dispose()
+
+
+async def test_0006_can_be_undone_on_a_development_database(tmp_path: Path) -> None:
+    def downgrade(connection: Connection) -> None:
+        config = migrate.alembic_config()
+        config.attributes["connection"] = connection
+        command.downgrade(config, "0005")
+
+    db = Database(sqlite_config(tmp_path / "undo.sqlite3"))
+    try:
+        await migrate_to_head(db)
+        async with db.engine.begin() as conn:
+            await fill_0005(conn)
+            await run_sql(
+                conn,
+                MATCH_WITHOUT_OWNER,
+                "INSERT INTO variants (id, match_id, kind, spec, status, version, created_at, updated_at) "
+                "VALUES ('v2', 'm2', 'cover', '{}', 'ready', 1, :ts, :ts)",
+                FACT_WITHOUT_OWNER,
+            )
+        async with db.engine.begin() as conn:
+            await conn.run_sync(downgrade)
+        async with db.engine.connect() as conn:
+            assert (await conn.execute(text("SELECT id FROM matches"))).scalars().all() == ["m1"]
+            assert (await conn.execute(text("SELECT id FROM variants"))).scalars().all() == ["v1"]
+            assert (await conn.execute(text("SELECT id FROM user_facts"))).scalars().all() == ["f1"]
+        assert await revision(db) == "0005"
+        assert await migrate_to_head(db) == head_revision()  # and it goes forward again
+    finally:
+        await db.dispose()
+
+
+def test_0006_is_an_additive_relaxation_the_lint_has_no_reason_to_flag() -> None:
+    source = (MIGRATIONS_DIR / "versions" / "0006_match_anonymous.py").read_text(encoding="utf-8")
+    assert "# contract-phase" not in source  # it is not a contract phase: it only widens what is accepted
+    assert "NOT NULL" in source and "relaxation" in source.lower()
 
 
 # ───────────────────────────── connection retry ─────────────────────────────

@@ -28,6 +28,9 @@ Who is signed in, for routes that need an account:
     get_current_user(request)   the signed-in account (`StoredUser`), or None for an anonymous visitor
     require_user(request)       the signed-in account, or a 401 `Unauthorized` that the web app turns into the
                                 sign-in sheet
+    user_or_anonymous(request, anonymous_allowed=...)
+                                the signed-in account, or None for a visitor with no sign-in when the route may
+                                be used without one (`Container.match_anonymous`), else the same 401
 
 Analysis and chat stay open to anonymous visitors and do not call these; routes that persist for a person do.
 
@@ -219,6 +222,15 @@ async def require_user(request: Request) -> User:
     return user
 
 
+async def user_or_anonymous(request: Request, *, anonymous_allowed: bool) -> User | None:
+    """The signed-in account; None for a visitor with no sign-in when ``anonymous_allowed``, else a 401 like
+    `require_user`. A cookie that names no live sign-in (garbage, expired) is a visitor with no sign-in."""
+    user = await get_current_user(request)
+    if user is None and not anonymous_allowed:
+        raise Unauthorized()
+    return user
+
+
 def owner_required(access: ProfileAccess | None) -> str | None:
     """The id of the only account that may open a profile with this ``access``, or None when anyone holding the
     profile id may: a profile nobody has claimed, a sample run, or one the database does not have."""
@@ -261,4 +273,5 @@ __all__ = [
     "require_profile_access",
     "require_user",
     "sanitize_request_id",
+    "user_or_anonymous",
 ]

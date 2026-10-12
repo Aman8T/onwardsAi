@@ -23,6 +23,8 @@ How a request is judged (`RateLimiter.check`):
 
 The ``match`` route is also counted per signed-in account: the route calls `check` once with the client's hash and
 once with an account subject (``u:<user id>``, ``globally=False`` so the whole-service counter is hit once, not twice).
+A visitor with no account is counted once more, under the route ``match_anon``: a single daily window per client
+(`GuardSettings.anon_match_per_day`), no in-memory bucket and no whole-service counter (``match`` has those).
 
 `shed(route, ip_hash, ip_hash_48)` runs step 1 alone, synchronously, so a route can turn hammering away before it
 reads the request body; it then calls ``check(..., memory=False)`` after validating, so one request takes one
@@ -52,7 +54,7 @@ from tayyari.storage.ports import LimitRepo
 
 log = get_logger(__name__)
 
-Route = Literal["analyze", "chat", "portfolio", "match"]
+Route = Literal["analyze", "chat", "portfolio", "match", "match_anon"]
 WindowName = Literal["min", "hour", "day"]
 
 UNKNOWN_SUBJECT = "unknown"
@@ -140,6 +142,7 @@ _MESSAGES: dict[tuple[str, str], str] = {
     ("match", "hour"): "You've reached the hourly limit for postings. Please try again in {wait}.",
     ("match", "day"): "You've reached today's limit for postings. It resets in {wait}.",
     ("match", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
+    ("match_anon", "day"): "That's today's limit for postings without an account. It resets in {wait}.",
 }
 
 
@@ -187,6 +190,8 @@ class RateLimiter:
             limits = (("min", s.chat_per_minute), ("hour", s.chat_per_hour), ("day", s.chat_per_day))
         elif route == "match":
             limits = (("min", s.match_per_minute), ("hour", s.match_per_hour), ("day", s.match_per_day))
+        elif route == "match_anon":
+            limits = (("day", s.anon_match_per_day),)
         else:  # portfolio
             limits = (
                 ("min", s.portfolio_per_minute),
@@ -220,6 +225,7 @@ class RateLimiter:
             "chat": (GLOBAL_CHAT_BUCKET, s.chat_global_per_hour),
             "portfolio": (GLOBAL_PORTFOLIO_BUCKET, s.portfolio_global_per_hour),
             "match": (GLOBAL_MATCH_BUCKET, s.match_global_per_hour),
+            "match_anon": (GLOBAL_MATCH_BUCKET, 0),  # the whole service is capped by ``match`` already
         }
         return rules[route]
 
