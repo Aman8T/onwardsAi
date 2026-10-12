@@ -14,6 +14,7 @@ from tayyari.core.hashing import canonical_json
 from tayyari.core.logging import get_logger
 
 from ..db import Database, dialect_insert, rowcount
+from ..ports import ProfileAccess
 from ..tables import ProfileContextRow, ProfileRow, as_utc
 
 log = get_logger(__name__)
@@ -97,8 +98,31 @@ class SqlProfileRepo:
         await self._touch(pid, row.last_accessed_at)
         return row.profile, StoredContext.model_validate(row.context or {})
 
+    async def get_owned_for_chat(self, user_id: str, pid: str) -> tuple[dict[str, Any], StoredContext] | None:
+        stmt = (
+            select(ProfileRow.profile, ProfileRow.last_accessed_at, ProfileContextRow.context)
+            .outerjoin(ProfileContextRow, ProfileContextRow.profile_id == ProfileRow.id)
+            .where(ProfileRow.id == pid, ProfileRow.user_id == user_id, ProfileRow.is_sample.is_(False))
+        )
+        async with self._db.session() as s:
+            row = (await s.execute(stmt)).one_or_none()
+        if row is None:
+            return None
+        await self._touch(pid, row.last_accessed_at)
+        return row.profile, StoredContext.model_validate(row.context or {})
+
+    async def get_access(self, pid: str) -> ProfileAccess | None:
+        stmt = select(ProfileRow.user_id, ProfileRow.is_sample).where(ProfileRow.id == pid)
+        async with self._db.session() as s:
+            row = (await s.execute(stmt)).one_or_none()
+        return None if row is None else ProfileAccess(user_id=row.user_id, is_sample=bool(row.is_sample))
+
     async def purge_expired(self, cutoff: datetime) -> int:
-        stmt = delete(ProfileRow).where(ProfileRow.last_accessed_at < cutoff, ProfileRow.is_sample.is_(False))
+        stmt = delete(ProfileRow).where(
+            ProfileRow.last_accessed_at < cutoff,
+            ProfileRow.is_sample.is_(False),
+            ProfileRow.user_id.is_(None),  # a profile saved to an account is kept
+        )
         async with self._db.session() as s:
             return rowcount(await s.execute(stmt))
 

@@ -8,6 +8,11 @@
     HttpJevClient, DecisionRecorder, DecisionRunner -> JevDecisionService (or NullDecisionService)
     SampleProvider                                (the bundled sample persona, also seeded into the database)
     PipelineAnalysisService, CoachChatService, PortfolioService
+    AuthService                                   (sign-in, sessions and emailed links; its own small HTTP client)
+    EntitlementService, BillingService            (what an account may use, and how it pays: Razorpay for INR,
+                                                   Stripe for USD, each only when its secrets are set)
+    MatchService                                  (the posting match: the guarded, recording Claude client, the
+                                                   match models, and the stored postings and extracted facts)
     maintenance                                   (retention purge, a tracked background task; it keeps
                                                    the bundled sample persona's profile)
 
@@ -30,6 +35,8 @@ import asyncio
 from collections.abc import Awaitable, Callable, Collection
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
+
+import httpx2
 
 from tayyari.analysis.ports import AnalysisService
 from tayyari.chat.ports import ChatService
@@ -56,6 +63,13 @@ from tayyari.storage.migrate import migrate_to_head
 from tayyari.storage.repos import Repositories, build_repositories
 
 if TYPE_CHECKING:
+    import stripe
+
+    from tayyari.auth.email import EmailSender
+    from tayyari.auth.service import AuthService
+    from tayyari.billing.entitlements import EntitlementService
+    from tayyari.billing.service import BillingService
+    from tayyari.match.service import MatchService
     from tayyari.portfolio.service import PortfolioService
 
 log = get_logger(__name__)
@@ -80,7 +94,13 @@ class ContainerOverrides:
       `GuardedClaudeClient`, so the guard stays in play with a fake.
     - ``jev``: a Jev client. Giving one switches decisions on even without a ``JEV_API_KEY`` (the
       ``TAYYARI_JEV__ENABLED`` kill switch still wins).
-    - ``decisions``, ``analysis``, ``chat``, ``portfolio``: the services themselves.
+    - ``decisions``, ``analysis``, ``chat``, ``portfolio``, ``auth``: the services themselves.
+    - ``mailer``: the sender of sign-in emails (otherwise Resend when ``RESEND_API_KEY`` is set, else none).
+    - ``auth_transport``: an ``httpx2`` transport for every outgoing sign-in call (Google's token endpoint and keys,
+      the email provider); tests hand in an ``httpx2.MockTransport`` so the flow runs without a network.
+    - ``entitlements``, ``billing``, ``match``: the services themselves.
+    - ``billing_transport``: an ``httpx2`` transport for Razorpay's API; tests hand in an ``httpx2.MockTransport``.
+    - ``stripe_http``: a ``stripe.HTTPClient`` for the Stripe SDK's requests; tests hand in one that answers from memory.
     - ``db``: a ready `Database` (migrated here, idempotent). ``repos``: ready repositories (fakes); without a
       ``db`` the container has no database, so migrations, maintenance and the deep health check are skipped.
     - ``clock``: used by every component.
@@ -95,6 +115,14 @@ class ContainerOverrides:
     analysis: AnalysisService | None = None
     chat: ChatService | None = None
     portfolio: PortfolioService | None = None
+    auth: AuthService | None = None
+    mailer: EmailSender | None = None
+    auth_transport: httpx2.AsyncBaseTransport | None = None
+    entitlements: EntitlementService | None = None
+    billing: BillingService | None = None
+    match: MatchService | None = None
+    billing_transport: httpx2.AsyncBaseTransport | None = None
+    stripe_http: stripe.HTTPClient | None = None
 
 
 def _log_unknown_decision_ids(store: DecisionConfigStore) -> None:
@@ -155,6 +183,12 @@ class Container:
     analysis: AnalysisService
     chat: ChatService
     portfolio: PortfolioService
+    auth: AuthService
+    entitlements: EntitlementService
+    """What an account may use. The posting-match routes call ``entitlements.consume(user_id, match_id)``."""
+    billing: BillingService
+    match: MatchService
+    """The posting match pipeline. Routes pay for a match with ``entitlements.consume`` before they run it."""
     rate_limiter: RateLimiter
     spend_guard: SpendGuard
     ip_hash_key: bytes
@@ -188,8 +222,16 @@ class Container:
         not start half-wired); anything built before the failure is closed again."""
         # Imported here, not at module level: see the module docstring.
         from tayyari.analysis.service import PipelineAnalysisService
+        from tayyari.auth.email import ResendEmailSender
+        from tayyari.auth.google import STATE_KEY_NAME
+        from tayyari.auth.service import AuthService
+        from tayyari.billing.entitlements import EntitlementService
+        from tayyari.billing.razorpay import RazorpayGateway
+        from tayyari.billing.service import BillingService
+        from tayyari.billing.stripe_gw import StripeGateway
         from tayyari.chat.service import CoachChatService
         from tayyari.decisions.packs.service_impl import JevDecisionService
+        from tayyari.match.service import MatchService
         from tayyari.portfolio.service import PortfolioService
 
         ov = overrides or ContainerOverrides()
@@ -215,6 +257,7 @@ class Container:
                 log.info("storage_ready", kind=db.kind, revision=revision)
             repos = ov.repos if ov.repos is not None else build_repositories(_require(db), clock)
             ip_hash_key = await repos.kv.get_or_create_secret(IP_HASH_KEY)
+            auth_state_key = await repos.kv.get_or_create_secret(STATE_KEY_NAME)
 
             # ── guard and model clients ──
             spend_guard = SpendGuard(repos.limits, settings.guard, clock)
@@ -313,6 +356,83 @@ class Container:
                     clock=clock,
                 )
                 closers.append(("portfolio", portfolio.aclose))
+            auth: AuthService
+            if ov.auth is not None:
+                auth = ov.auth
+            else:
+                auth_http = httpx2.AsyncClient(timeout=httpx2.Timeout(10.0), transport=ov.auth_transport)
+                closers.append(("auth_http", auth_http.aclose))
+                mailer = ov.mailer
+                if mailer is None and settings.resend_api_key is not None:
+                    mailer = ResendEmailSender(
+                        api_key=settings.resend_api_key.get_secret_value(),
+                        sender=settings.resend_from,
+                        client=auth_http,
+                    )
+                auth = AuthService(
+                    settings=settings,
+                    users=repos.users,
+                    limits=repos.limits,
+                    clock=clock,
+                    state_key=auth_state_key,
+                    mailer=mailer,
+                    http=auth_http,
+                    transport=ov.auth_transport,
+                )
+
+            entitlements: EntitlementService
+            if ov.entitlements is not None:
+                entitlements = ov.entitlements
+            else:
+                entitlements = EntitlementService(repos.billing, settings.billing, clock)
+            billing: BillingService
+            if ov.billing is not None:
+                billing = ov.billing
+            else:
+                razorpay: RazorpayGateway | None = None
+                if (
+                    settings.razorpay_key_id is not None
+                    and settings.razorpay_key_secret is not None
+                    and settings.razorpay_webhook_secret is not None
+                ):
+                    billing_http = httpx2.AsyncClient(
+                        timeout=httpx2.Timeout(10.0), transport=ov.billing_transport
+                    )
+                    closers.append(("billing_http", billing_http.aclose))
+                    razorpay = RazorpayGateway(
+                        key_id=settings.razorpay_key_id.get_secret_value(),
+                        key_secret=settings.razorpay_key_secret.get_secret_value(),
+                        webhook_secret=settings.razorpay_webhook_secret.get_secret_value(),
+                        client=billing_http,
+                    )
+                stripe_gateway: StripeGateway | None = None
+                if settings.stripe_secret_key is not None and settings.stripe_webhook_secret is not None:
+                    stripe_gateway = StripeGateway(
+                        secret_key=settings.stripe_secret_key.get_secret_value(),
+                        webhook_secret=settings.stripe_webhook_secret.get_secret_value(),
+                        http_client=ov.stripe_http,
+                    )
+                billing = BillingService(
+                    settings=settings,
+                    repo=repos.billing,
+                    entitlements=entitlements,
+                    clock=clock,
+                    razorpay=razorpay,
+                    stripe=stripe_gateway,
+                )
+
+            match: MatchService
+            if ov.match is not None:
+                match = ov.match
+            else:
+                match = MatchService(
+                    claude=claude,
+                    model=settings.match_model,
+                    writer_model=settings.match_writer_model,
+                    postings=repos.postings,
+                    facts_cache=repos.profile_facts,
+                    call_timeout_s=settings.match.call_timeout_s,
+                )
 
             # ── background work: never blocks startup ──
             if db is not None:
@@ -342,6 +462,10 @@ class Container:
             analysis=analysis,
             chat=chat,
             portfolio=portfolio,
+            auth=auth,
+            entitlements=entitlements,
+            billing=billing,
+            match=match,
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,
             ip_hash_key=ip_hash_key,

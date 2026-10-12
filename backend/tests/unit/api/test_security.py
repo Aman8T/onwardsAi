@@ -23,6 +23,8 @@ from tayyari.api.security import (
     API_CSP,
     CROSS_SITE_MESSAGE,
     HSTS,
+    RAZORPAY_CHECKOUT,
+    WEBHOOK_PREFIX,
     CrossSiteGuard,
     PageCsp,
     SecurityHeadersMiddleware,
@@ -37,6 +39,9 @@ from tayyari.core.paths import STATIC_DIR
 from tests.unit.api.helpers import AsgiExchange, http_scope
 
 SCRIPT = "window.boot = 1;\nwindow.more = 2;\n"
+
+
+RZP = RAZORPAY_CHECKOUT
 
 
 def sha(text: str) -> str:
@@ -219,6 +224,26 @@ async def test_only_the_api_is_guarded() -> None:
     assert (root.status_code, deep.status_code) == (403, 403)
 
 
+@pytest.mark.parametrize("provider", ["razorpay", "stripe"])
+async def test_the_payment_webhooks_are_exempt_because_the_provider_is_not_a_browser(provider: str) -> None:
+    inner, client = guarded()
+    path = f"{WEBHOOK_PREFIX}{provider}"
+    async with client:
+        for headers in ({}, {"origin": "https://evil.example"}, {"sec-fetch-site": "cross-site"}):
+            res = await client.post(path, headers=headers)
+            assert res.status_code == 200  # the route checks the signature; the guard has nothing to add
+    assert inner.calls == [("POST", path)] * 3
+
+
+async def test_only_the_webhooks_are_exempt_not_the_rest_of_billing() -> None:
+    inner, client = guarded()
+    async with client:
+        for path in ("/api/billing/checkout", "/api/billing/verify", "/api/billing/webhooks", "/api/billing"):
+            res = await client.post(path, headers={"origin": "https://evil.example"})
+            assert res.status_code == 403, path
+    assert inner.calls == []
+
+
 async def test_the_guard_does_not_touch_other_scopes() -> None:
     seen: list[str] = []
 
@@ -288,11 +313,12 @@ def test_the_page_policy_has_every_directive() -> None:
     csp = page_csp((sha("x"),))
     assert csp == (
         "default-src 'self'; "
-        f"script-src 'self' {sha('x')}; "
+        f"script-src 'self' {RZP} {sha('x')}; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com data:; "
         "img-src 'self' data:; "
-        "connect-src 'self'; "
+        "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com; "
+        f"frame-src 'self' {RZP} https://api.razorpay.com; "
         "object-src 'none'; "
         "base-uri 'none'; "
         "form-action 'self'; "
@@ -302,25 +328,41 @@ def test_the_page_policy_has_every_directive() -> None:
     assert "unsafe-eval" not in csp
 
 
+def test_razorpay_is_the_only_third_party_that_may_run_script_or_be_framed() -> None:
+    csp = page_csp((sha("x"),))
+    directives = {d.split(" ", 1)[0]: d.split(" ")[1:] for d in csp.split("; ")}
+    hosts = {
+        name: [source for source in sources if source.startswith("https://")]
+        for name, sources in directives.items()
+    }
+    assert hosts["script-src"] == [RZP]
+    assert hosts["frame-src"] == [RZP, "https://api.razorpay.com"]
+    assert hosts["connect-src"] == ["https://api.razorpay.com", "https://lumberjack.razorpay.com"]
+    assert hosts["style-src"] == ["https://fonts.googleapis.com"]  # everything else is as it was
+    assert hosts["img-src"] == [] and hosts["form-action"] == [] and hosts["default-src"] == []
+
+
 def test_a_page_policy_without_hashes_is_self_only() -> None:
-    assert "script-src 'self';" in page_csp()
+    assert f"script-src 'self' {RZP};" in page_csp()
 
 
 def test_the_policy_follows_the_index_html_file(tmp_path: Path) -> None:
     index = tmp_path / "index.html"
     index.write_text(f"<script>{SCRIPT}</script>", encoding="utf-8")
     csp = PageCsp(index, recheck_s=0)
-    assert f"script-src 'self' {sha(SCRIPT)};" in csp.policy
+    assert f"script-src 'self' {RZP} {sha(SCRIPT)};" in csp.policy
     index.write_text("<script>other();</script>", encoding="utf-8")
-    assert f"script-src 'self' {sha('other();')};" in csp.policy  # a rebuilt page is followed, no restart
+    assert (
+        f"script-src 'self' {RZP} {sha('other();')};" in csp.policy
+    )  # a rebuilt page is followed, no restart
     assert sha(SCRIPT) not in csp.policy
     index.unlink()
-    assert "script-src 'self';" in csp.policy
+    assert f"script-src 'self' {RZP};" in csp.policy
 
 
 def test_a_missing_index_html_means_self_only(tmp_path: Path) -> None:
-    assert "script-src 'self';" in PageCsp(tmp_path / "nope.html").policy
-    assert "script-src 'self';" in PageCsp(None).policy
+    assert f"script-src 'self' {RZP};" in PageCsp(tmp_path / "nope.html").policy
+    assert f"script-src 'self' {RZP};" in PageCsp(None).policy
 
 
 def test_the_file_is_only_looked_at_every_recheck_interval(tmp_path: Path) -> None:
@@ -334,7 +376,7 @@ def test_the_file_is_only_looked_at_every_recheck_interval(tmp_path: Path) -> No
 def test_an_unreadable_index_html_means_self_only(tmp_path: Path) -> None:
     folder = tmp_path / "index.html"
     folder.mkdir()  # exists, but cannot be read as a file
-    assert "script-src 'self';" in PageCsp(folder).policy
+    assert f"script-src 'self' {RZP};" in PageCsp(folder).policy
 
 
 # ───────────────────────────── the headers as middleware ─────────────────────────────
@@ -414,7 +456,7 @@ async def test_html_without_an_index_file_gets_script_src_self_only() -> None:
     client, _ = secured(Response("<p>hi</p>", media_type="text/html; charset=utf-8"))
     async with client:
         res = await client.get("/")
-    assert "script-src 'self';" in res.headers["content-security-policy"]
+    assert f"script-src 'self' {RZP};" in res.headers["content-security-policy"]
 
 
 async def test_a_header_the_route_already_set_is_kept() -> None:

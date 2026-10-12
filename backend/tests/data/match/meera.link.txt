@@ -1,0 +1,13 @@
+Meera Nair · Growth notes
+https://meeranair.example/growth-notes
+
+> Hi, I'm Meera. I write about experiments that changed a decision.
+
+- "How a geo holdout told us our best channel was our worst" — Growth notes, 2025
+- "Building a weekly growth dashboard in Looker Studio that finance trusts" — Growth notes, 2024
+
+Case study: the weekly growth dashboard
+In 2024 I built the weekly growth dashboard in Looker Studio for Brightwell Foods, pulling spend from Meta Ads and Google Ads and orders from the store export into one view for the leadership team. The Monday review now starts from this single page instead of five decks.
+
+Case study: the geo holdout
+We switched off Meta prospecting in four cities for three weeks and compared orders against matched cities. The holdout showed that 70% of the channel's last-click revenue would have happened anyway, and we moved the budget to search and lifecycle.

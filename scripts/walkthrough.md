@@ -71,6 +71,37 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     expect `p95` at or under one frame period, `behind` at most 40 px, `gpu` under 2 ms and
     `min L` at or above 0.885; once asleep, the step-10 snippet reports `rafs 0`. Mobile preset:
     no `canvas.light` in the DOM. `?light=reduce` (or the OS setting) and Atmosphere Off: none.
+12. **Accounts:** after an analysis of your own resume (not the sample), and only when the server has a sign-in
+    method set up, the "Save this to your account" card appears under the graph header once the radar has drawn; "Not now" hides it for this profile on this device.
+    Choose "Save to my account" and, in local development with no Resend key, enter an email and choose "Email me a
+    link". The sheet says "Check your inbox" and, because the server is local, shows the link under "open it" (the
+    `devLink` of `POST /api/auth/magic`). Follow it: you land on `/` signed in, the graph is claimed by the account and
+    the card is gone. The account control (the initials in the header) shows your name, your email, "Your profiles"
+    (the graph is listed there) and the balance line, for example "1 free this month". "Sign out" clears a graph the
+    account owns from this device; an unsaved graph stays. A link opened a second time says it has expired or was
+    already used.
+13. **Posting match:** needs a profile the account owns: the one from step 12 will do, since an analysis run while
+    signed in is claimed too. Open "Match a posting" (the card beside the graph, or "Match" in the header), paste the
+    text of `backend/tests/data/match/meera.posting.txt` and choose "Match this posting". The stream reads the posting,
+    fills the requirement rows batch by batch, then the gates, the radar and the questions; the band appears in words
+    when it is done, with its evidence confidence. Choose "Close the gaps", answer a question and choose "Save answers
+    and re-check": the page says the answer becomes a fact marked "From you", and the rows it touches are checked again.
+    Choose "Build my resume for this role". The preview lists each line that needs a decision (Keep, Soften, Drop, a
+    figure for a number, or a term to confirm). While one is open, "Download PDF" and "Download DOCX" are disabled and
+    the page says downloads open once the decisions are settled. Settle every line, then download both files. Open
+    "Cover note": each paragraph sits beside the posting line it answers and the facts behind it, and a paragraph that
+    rests on your answer carries "From you". "Download PDF" gives the cover note. Last, start a second match (each one
+    calls the model): once the free posting of the month is used, the page shows "You've used your free posting this
+    month." with "See plans" and "Not now", and the posting stays in the box. On the phone preset (390×844) the
+    requirement table is cards and every popover opens as a bottom sheet.
+14. **Pricing:** open `/pricing` from the header's "Pricing" link or the "See plans" link of the paywall, signed out:
+    the plans read, and the plan buttons ("Buy three postings", "Get 30 days") open the sign-in sheet ("Sign in to
+    buy"). A plan with no price on the server, or whose provider has no secrets set, shows "Coming soon" with no number
+    and a disabled button. Choose "₹ India" or
+    "$ Everywhere else": the prices change at once, and signed in the choice is saved, so a reload keeps it. A purchase
+    needs the provider's test keys: Razorpay's window opens over the page, while Stripe takes you to its hosted page and
+    back to `/pricing?checkout=success` or `cancelled`, where the page says the payment is confirmed in the background
+    and shows the plan when the webhook arrives.
 
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`).

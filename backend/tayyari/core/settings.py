@@ -7,7 +7,7 @@ or build ``Settings(...)`` yourself, and call ``get_settings.cache_clear()`` aft
 
 Variable names:
     third-party names, no prefix      ANTHROPIC_API_KEY, JEV_API_KEY (or TYPESAFE_API_KEY), GITHUB_TOKEN,
-                                      DATABASE_URL, LOGFIRE_TOKEN
+                                      DATABASE_URL, LOGFIRE_TOKEN, RAZORPAY_*, STRIPE_*
     our own, prefix ``TAYYARI_``      TAYYARI_SYNTH_MODEL, TAYYARI_API_PORT, TAYYARI_READER_THINKING ...
     nested groups, ``__`` delimiter   TAYYARI_GUARD__DAILY_CEILING_USD, TAYYARI_JEV__ENABLED ...
     JSON                              TAYYARI_DECISION_OVERRIDES='{"evidence.support":{"mode":"shadow"}}'
@@ -103,6 +103,16 @@ class GuardSettings(BaseModel):
     est_portfolio_usd: float = Field(default=0.12, ge=0)
     """Spend reserved before a portfolio generation: Haiku fact reads (one per source), three concurrent Sonnet copy
     calls (fixed slots, experience, projects), one re-ask and the Jev claim checks."""
+    match_per_minute: int = Field(default=0, ge=0)
+    match_per_hour: int = Field(default=10, ge=0)
+    match_per_day: int = Field(default=30, ge=0)
+    """Posting matches one signed-in account may start, and (separately) one client address, per window
+    (0 = the window is not enforced). Re-checks, resumes and cover notes are not matches and do not count."""
+    match_global_per_hour: int = Field(default=120, ge=0)
+    """Backstop on posting matches per hour across all accounts (shared counter)."""
+    est_match_usd: float = Field(default=0.06, ge=0)
+    """Spend reserved before a posting match (and before a resume or cover note is written): the posting read,
+    the facts, the gates, two coverage batches, and the phrasing calls, on Haiku."""
     chat_global_per_hour: int = Field(default=600, ge=0)
     """Backstop on chat turns per hour across all clients (shared counter)."""
     chat_streams_per_ip: int = Field(default=2, ge=0)
@@ -156,7 +166,111 @@ class RetentionSettings(BaseModel):
     """Decision and call metadata (no text) is kept this long."""
 
 
-_SECRET_FIELDS = ("anthropic_api_key", "jev_api_key", "github_token", "logfire_token")
+def _origin(raw: str) -> str:
+    """``raw`` as an origin without a trailing slash; a missing scheme means https."""
+    raw = raw.strip()
+    return (raw if "://" in raw else f"https://{raw}").rstrip("/")
+
+
+def _default_public_url() -> str:
+    """The app's public origin: ``FASTAPI_PUBLIC_URL`` on FastAPI Cloud, else the Vite dev server, which proxies
+    ``/api`` to this process."""
+    raw = os.environ.get("FASTAPI_PUBLIC_URL", "").strip()
+    return _origin(raw) if raw else "http://localhost:5173"
+
+
+class AuthSettings(BaseModel):
+    """Accounts and sign-in: `TAYYARI_AUTH__*`. The Google and Resend credentials are top-level secrets below."""
+
+    session_days: int = Field(default=30, ge=1)
+    """Lifetime of a sign-in; sliding (each use, at most hourly, pushes it out again)."""
+    magic_link_minutes: int = Field(default=15, ge=1)
+    """How long an emailed sign-in link works (it also works once)."""
+    magic_per_email: int = Field(default=3, ge=0)
+    magic_per_ip: int = Field(default=3, ge=0)
+    """Sign-in links one email address, and one client, may ask for per 15 minutes (0 = not enforced)."""
+    cookie_name: str = "tayyari_session"
+    public_url: str = Field(default_factory=_default_public_url)
+    """Where the app is reached from outside: the base of the emailed link and of Google's callback URL
+    (``<public_url>/api/auth/google/callback``). Default: ``FASTAPI_PUBLIC_URL``, else ``http://localhost:5173``."""
+
+    @field_validator("public_url", mode="before")
+    @classmethod
+    def _tidy_public_url(cls, v: object) -> object:
+        """Blank keeps the default; a missing scheme means https; a trailing slash is dropped."""
+        if isinstance(v, str):
+            if not v.strip():
+                raise PydanticUseDefault()
+            return _origin(v)
+        return v
+
+
+class BillingSettings(BaseModel):
+    """Prices and allowances: `TAYYARI_BILLING__*`. The payment providers' keys are top-level secrets below.
+
+    Prices are integers in the currency's minor unit (paise, cents); 0 means "not set", and a product with no price
+    is not offered: the pricing page shows it as coming soon and checkout answers 409. Two further things must
+    hold for a product to be on sale in a currency: the provider for that currency (INR: Razorpay, USD: Stripe) has
+    all of its secrets set.
+    """
+
+    pack3_inr: int = Field(default=0, ge=0)
+    """Three posting matches, no expiry, in paise (49900 = INR 499)."""
+    pass30_inr: int = Field(default=0, ge=0)
+    """Unlimited postings for 30 days from purchase, in paise."""
+    pack3_usd: int = Field(default=0, ge=0)
+    """Three posting matches, no expiry, in cents (900 = $9)."""
+    pass30_usd: int = Field(default=0, ge=0)
+    """Unlimited postings for 30 days from purchase, in cents."""
+    free_matches_per_month: int = Field(default=1, ge=0)
+    """Posting matches every account gets free each calendar month (UTC)."""
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def _blank_keeps_the_default(cls, v: object) -> object:
+        """A blank value counts as unset (like every other variable), so a price line left empty means "not on sale"."""
+        if isinstance(v, str) and not v.strip():
+            raise PydanticUseDefault()
+        return v
+
+
+class MatchSettings(BaseModel):
+    """Posting match: `TAYYARI_MATCH__*`. Which models read and write, and how long one model call may take."""
+
+    model: str | None = None
+    """The model that reads the posting and classifies (posting, facts, gates, coverage, relevance). Unset: the
+    reader model (`TAYYARI_READER_MODEL`)."""
+    writer_model: str | None = None
+    """The model that phrases resume sentences and writes the cover note. Unset: the same as ``model``."""
+    max_posting_chars: int = Field(default=20_000, ge=200, le=20_000)
+    """The longest posting text accepted (pasted or fetched). The reader itself never takes more than 20,000
+    characters, so a larger value would change nothing."""
+    call_timeout_s: float = Field(default=90.0, gt=0)
+    """The longest one classification call may take before its stage settles for the honest default (unknown,
+    uncertain, the fact's own wording)."""
+
+    @field_validator("model", "writer_model", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, v: object) -> object:
+        if isinstance(v, str):
+            return v.strip() or None
+        return v
+
+
+_SECRET_FIELDS = (
+    "anthropic_api_key",
+    "jev_api_key",
+    "github_token",
+    "logfire_token",
+    "google_client_id",
+    "google_client_secret",
+    "resend_api_key",
+    "razorpay_key_id",
+    "razorpay_key_secret",
+    "razorpay_webhook_secret",
+    "stripe_secret_key",
+    "stripe_webhook_secret",
+)
 
 
 class Settings(BaseSettings):
@@ -186,6 +300,28 @@ class Settings(BaseSettings):
     )
     github_token: SecretStr | None = Field(default=None, validation_alias=AliasChoices("GITHUB_TOKEN"))
     logfire_token: SecretStr | None = Field(default=None, validation_alias=AliasChoices("LOGFIRE_TOKEN"))
+    google_client_id: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("GOOGLE_CLIENT_ID")
+    )
+    google_client_secret: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("GOOGLE_CLIENT_SECRET")
+    )
+    resend_api_key: SecretStr | None = Field(default=None, validation_alias=AliasChoices("RESEND_API_KEY"))
+    resend_from: str | None = Field(default=None, validation_alias=AliasChoices("RESEND_FROM"))
+    """The sender of sign-in emails, e.g. ``Tayyari <login@example.com>``. Not a secret."""
+    razorpay_key_id: SecretStr | None = Field(default=None, validation_alias=AliasChoices("RAZORPAY_KEY_ID"))
+    razorpay_key_secret: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("RAZORPAY_KEY_SECRET")
+    )
+    razorpay_webhook_secret: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("RAZORPAY_WEBHOOK_SECRET")
+    )
+    stripe_secret_key: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("STRIPE_SECRET_KEY")
+    )
+    stripe_webhook_secret: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("STRIPE_WEBHOOK_SECRET")
+    )
     database_url: str | None = Field(
         default=None, validation_alias=AliasChoices("DATABASE_URL"), repr=False, exclude=True
     )
@@ -217,6 +353,9 @@ class Settings(BaseSettings):
     guard: GuardSettings = Field(default_factory=GuardSettings)
     concurrency: ConcurrencySettings = Field(default_factory=ConcurrencySettings)
     retention: RetentionSettings = Field(default_factory=RetentionSettings)
+    auth: AuthSettings = Field(default_factory=AuthSettings)
+    billing: BillingSettings = Field(default_factory=BillingSettings)
+    match: MatchSettings = Field(default_factory=MatchSettings)
 
     synth_hints: bool = False
     """Feed the first-read results to the synthesizer as hints (off: they are stored for comparison only)."""
@@ -230,7 +369,7 @@ class Settings(BaseSettings):
     data_dir: Path = Field(default_factory=_default_data_dir)
     """Where local files (the SQLite database) live. Created lazily by whoever writes there."""
 
-    @field_validator(*_SECRET_FIELDS, "database_url", mode="before")
+    @field_validator(*_SECRET_FIELDS, "database_url", "resend_from", mode="before")
     @classmethod
     def _blank_is_none(cls, v: object) -> object:
         """Empty and whitespace-only values count as unset; surrounding whitespace is dropped."""
@@ -242,6 +381,16 @@ class Settings(BaseSettings):
         return v
 
     @property
+    def match_model(self) -> str:
+        """The model that reads and classifies for a posting match (``match.model``, else the reader model)."""
+        return self.match.model or self.reader_model
+
+    @property
+    def match_writer_model(self) -> str:
+        """The model that phrases and writes for a posting match (``match.writer_model``, else `match_model`)."""
+        return self.match.writer_model or self.match_model
+
+    @property
     def models(self) -> ModelNames:
         """The model ids as one small frozen object (the `models` field of /api/health and of every Profile)."""
         return ModelNames(reader=self.reader_model, synth=self.synth_model, chat=self.chat_model)
@@ -249,6 +398,25 @@ class Settings(BaseSettings):
     @property
     def is_prod(self) -> bool:
         return self.env == "prod"
+
+    @property
+    def google_enabled(self) -> bool:
+        """True when both halves of the Google OAuth client are set (the sign-in button shows only then)."""
+        return self.google_client_id is not None and self.google_client_secret is not None
+
+    @property
+    def razorpay_enabled(self) -> bool:
+        """True when Razorpay can take and reconcile payments: both API keys and the webhook secret are set."""
+        return (
+            self.razorpay_key_id is not None
+            and self.razorpay_key_secret is not None
+            and self.razorpay_webhook_secret is not None
+        )
+
+    @property
+    def stripe_enabled(self) -> bool:
+        """True when Stripe can take and reconcile payments: the secret key and the webhook secret are set."""
+        return self.stripe_secret_key is not None and self.stripe_webhook_secret is not None
 
     @cached_property
     def db(self) -> DbConfig:
@@ -265,6 +433,10 @@ class Settings(BaseSettings):
             "jev_enabled": self.jev.enabled and self.jev_api_key is not None,
             "jev_model": self.jev.model,
             "github_token": self.github_token is not None,
+            "google_oauth": self.google_enabled,
+            "resend_key": self.resend_api_key is not None,
+            "razorpay": self.razorpay_enabled,
+            "stripe": self.stripe_enabled,
             "database": self.db.safe_url,
             "storage": "ephemeral" if self.db.ephemeral else self.db.kind,
             "daily_ceiling_usd": self.guard.daily_ceiling_usd if self.guard.enabled else None,
@@ -279,6 +451,8 @@ def get_settings() -> Settings:
 
 
 __all__ = [
+    "AuthSettings",
+    "BillingSettings",
     "CacheTtl",
     "ConcurrencySettings",
     "Effort",
@@ -286,6 +460,7 @@ __all__ = [
     "GuardSettings",
     "JevSettings",
     "LogLevel",
+    "MatchSettings",
     "ModelNames",
     "RetentionSettings",
     "Settings",

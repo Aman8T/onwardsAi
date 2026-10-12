@@ -21,8 +21,12 @@ The package is importable as `backend/tayyari/`, laid out in layers with import 
 | `api` | create_app, routes | FastAPI app factory, request dependencies, NDJSON streaming, file uploads, error handling |
 | `cli` | commands | Entry point: `dev`, `serve`, `migrate`, `smoke`, `make-sample`, `ingest-check`, `deploy`, `export`, `replay`, `eval` |
 | `sample` | sample_profile, SampleLoader | Bundled Riya Kapoor persona; fixtures for testing and offline mode |
+| `portfolio` | PortfolioService | Resume → Portfolio: line-cited facts, closed kit, sentence grounding, the public page |
+| `auth` | AuthService, GoogleOAuth, MagicLinks, SessionService, EmailSender | Google sign-in (PKCE, ID-token checks), emailed sign-in links, server-side sessions, Resend email |
+| `billing` | BillingService, EntitlementService, RazorpayGateway, StripeGateway | Products and prices, the consume order, orders, webhooks for INR (Razorpay) and USD (Stripe) |
+| `match` | MatchService and its stages | Posting match: reading a posting, facts, gates, coverage, radar, questions, resume, cover note, export and lint |
 
-**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat` < `api`. `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
+**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth` and `billing` depend only on `core`, `contract` and `storage.ports`. `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
 
 ## Request flows
 
@@ -78,6 +82,88 @@ email/phone/grades unless opted in, PII scrubbed. `/p/*` pages send `X-Robots-Ta
 Check it with `uv run python -m tayyari.cli portfolio-eval [--only riya] [--write] [--details]` (needs the API key;
 `--write` refreshes `tests/data/portfolio/rendered/*.portfolio.json`, which the dev gallery `/dev/portfolios` and
 `npm run check:portfolio` read).
+
+### Sign-in (`/api/auth/*`, `/api/me`)
+
+Analysis stays open to anonymous visitors, whose profiles are kept for as long as the retention window allows (see Retention). Keeping a profile with an account, the posting match and purchases need a sign-in. Both sign-in paths end in `AuthService`: find or create the account, start a session, and hand back the cookie token and the path to send the browser to.
+
+1. **Google.** `GET /api/auth/google/start?next=/` puts a random state, a PKCE verifier and a nonce into a signed cookie (`tayyari_oauth`, valid ten minutes, scoped to the callback path) and redirects to Google with S256 and the nonce. `GET /api/auth/google/callback` checks the state against the cookie, exchanges the code and verifies the ID token (signature against Google's keys, issuer, audience, expiry, nonce). It finds the account by Google subject, then by email (attaching the Google identity to an account made from a link), and creates one if neither exists. `next` must be a path on this site. A declined or failed sign-in returns to `/?auth=<code>` (`google_denied`, `google_failed`, `google_unavailable`), which the sign-in sheet explains.
+2. **Emailed link.** `POST /api/auth/magic` `{"email"}` always answers 202, so nothing reveals whether an address has an account. A link carries a random 32-byte token; only its sha256 is stored (`magic_links`). It works once (the spend is one conditional update) and for `TAYYARI_AUTH__MAGIC_LINK_MINUTES` (15). `TAYYARI_AUTH__MAGIC_PER_EMAIL` and `TAYYARI_AUTH__MAGIC_PER_IP` (3 each) limit requests per 15 minutes, counted in `rate_limit_hits`; the email is counted by HMAC, never as a plain hash. The link is sent through Resend's HTTP API (`RESEND_API_KEY`, `RESEND_FROM`); a send failure is logged and answered the same. A local server with no Resend key sends nothing: it logs the link and returns it as `devLink` in the 202 body. That shortcut needs `TAYYARI_ENV=local` and no key, so a server with a key never hands a link to whoever asked. `GET /api/auth/magic/verify?token=` spends the link, signs in and redirects to `/`; an unknown, used or expired link redirects to `/?auth=link_invalid`.
+
+**Session.** The cookie `tayyari_session` (`TAYYARI_AUTH__COOKIE_NAME`) holds 32 random bytes; the table keeps only their sha256 (`auth_sessions.id`). It is `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` in production or when the public URL is https, and lasts `TAYYARI_AUTH__SESSION_DAYS` (30). The lifetime slides: a use more than an hour after the last refresh moves `last_seen_at` and the expiry forward. `GET /api/me` re-issues the cookie when a refresh has just run. An expired session is deleted when it is next seen. `POST /api/auth/logout` deletes the session and clears the cookie (204). The auth routes are shed by the in-memory bucket before they read anything; `CrossSiteGuard` covers the state-changing ones.
+
+**Routes.**
+- `GET /api/me` → `MeResponse`: `user` (absent for an anonymous visitor), `profiles` (the account's profiles: id, createdAt, goal, personName), `entitlements` (`credits`, `passUntil`, `freeMatchAvailable`) and `providers` (`google`, `magic`: which sign-in methods work on this server). Anonymous visitors get the same shape without a user.
+- `POST /api/me/claim` `{profileId}`: attaches an unowned profile, and its unowned portfolio, to the account. A profile id is 128 random bits and is the only protection an unclaimed profile has, so the claim itself follows the capability model: whoever presents the id of an unclaimed profile gets it. From then on the id is no longer enough (see below). A sample run or an unknown id is 404; a profile that belongs to another account is 409 `profile_taken`; claiming your own profile again changes nothing.
+- `PATCH /api/me` `{currency?, name?}`: currency is `INR` or `USD`.
+- `DELETE /api/me`: deletes the account with its profiles (and their contexts and chats), matches, resumes and cover notes, what the person said in their own words, profile facts, portfolios and sessions, then clears the cookie (204). Orders are kept (see Storage).
+
+**Who may open a profile.** One rule, `api.deps.require_profile_access`, runs in every route that takes a profile id: `GET /api/profile/{pid}`, `POST /api/chat`, and `POST /api/portfolio` with `GET`, `PATCH`, `DELETE`, `POST …/rewrite` and `GET …/public-preview` of `/api/portfolio/{profileId}` (the match routes do the same through `get_owned_for_chat`). A profile nobody has claimed (`profiles.user_id` NULL) and a sample run stay open to whoever holds the id, as before. A claimed profile is served only to the session of the account that claimed it; anyone else, signed in or not, gets the 404 and the sentence the route gives an unknown id (`Profile not found`, `Portfolio not found`, the chat's `Profile not found — run the analysis again`), never a 403. The check runs right after the id shape, before the body is read and before any rate-limit counter, model call or spend reservation, so a refused request costs nothing and changes nothing; the session is looked up only for a claimed profile. Chat sessions are keyed by profile, so a conversation started before the claim is the owner's afterwards and no one else can resume it. The public page `GET /api/p/{publicId}` is separate: it answers once the owner has published it. A portfolio written for a claimed profile carries the owner's id in `portfolios.user_id` (`PortfolioService` reads it from the profile when it saves a build); a page that existed before the claim gets it from the claim.
+
+### Payments (`/api/billing/*`)
+
+**Products and prices** (`billing/products.py`). `pack3` is three posting matches with no expiry. `pass30` is unlimited postings for 30 days from purchase; a purchase made while a pass runs extends it from the end of that pass. Nothing renews by itself. Prices are integers in minor units: `TAYYARI_BILLING__PACK3_INR` and `PASS30_INR` in paise, `PACK3_USD` and `PASS30_USD` in cents; 0 means not set. A product is on sale in a currency only when its price is set and that currency's provider has all its secrets: INR goes to Razorpay, USD to Stripe.
+
+**Currency.** The account's saved currency wins. Otherwise INR for an Indian time zone (`Asia/Kolkata` or `Asia/Calcutta`) or an Indian locale in `Accept-Language` (any `-IN` region, or Hindi), and USD for everyone else. `GET /api/billing/entitlements` is open to everyone (zeros when anonymous) and returns the balance, the currency to show first and the prices on sale; a product that is not on sale has no key.
+
+**Checkout.** `POST /api/billing/checkout` `{product, currency?, timezone?}` needs a sign-in and answers 409 `not_offered` when the product is not on sale in that currency. The server writes its own order (random id, status `created`) and the provider's: for INR a Razorpay order over REST, answered with `orderId`, `amount`, `currency` and `keyId` for Checkout.js; for USD a Stripe Checkout Session, answered with its `url`, returning to `/pricing?checkout=success` or `cancelled`. A provider failure is 503 `payment_provider_unavailable`.
+
+**Settling.** Two webhooks are the source of truth, and both settle through the same code. Razorpay posts to `/api/billing/webhooks/razorpay` (`X-Razorpay-Signature`, checked over the raw body); Stripe posts to `/api/billing/webhooks/stripe` (`Stripe-Signature`, checked with `construct_event`). The raw body is read first (at most 512 KB) and its signature is checked before anything is parsed.
+- Paid: Razorpay `order.paid` and `payment.captured`; Stripe `checkout.session.completed` (when the session is paid) and `checkout.session.async_payment_succeeded`.
+- Failed: Razorpay `payment.failed`; Stripe `checkout.session.async_payment_failed` and `checkout.session.expired`. A failed event marks a `created` order `failed`.
+- Anything else is acknowledged and ignored.
+
+A paid event moves the order from `created` (or `failed`) to `paid` in one conditional update, which also checks the amount and currency when the provider sends them, and then grants three credits or 30 days of pass. An order that is already paid answers `already_paid` and grants nothing again, so a retried, replayed or duplicated webhook grants once. A good signature always gets 200 `{"ok": true}`, even for an order we do not know. A bad signature is 400. A provider with no secrets here is 503.
+
+**Browser hand-off.** After Checkout.js, `POST /api/billing/verify` `{razorpay_order_id, razorpay_payment_id, razorpay_signature}` checks the HMAC of `order_id|payment_id` with the key secret, requires the order to belong to this account, settles it the same way and returns the new balance with `ok` (true once the order is granted or was already paid). It only lets the page update at once; the webhook is still what grants when the browser never comes back.
+
+**Consume order** (`billing/entitlements.py`; the balance is in `entitlements`, its history in `credit_ledger`). Every change starts by locking the account's entitlement row (a row lock on Postgres, the write lock on SQLite), so two requests cannot spend the same credit. Starting a posting match takes one use, in this order:
+1. A use already recorded for the same match id: the same answer, nothing more taken.
+2. A pass still running: a `match` row with delta 0.
+3. This UTC calendar month's free posting (`TAYYARI_BILLING__FREE_MATCHES_PER_MONTH`, default 1), if not yet used: a `free_monthly` row with delta 0.
+4. A credit: `credits` down by one, a `match` row with delta -1.
+5. Otherwise `PaymentRequired`: 402 `{"error": "payment_required", "reason": "no_credits"}`.
+
+Re-checks after answers, resume and cover writes, and downloads never call `consume`. A posting is paid for once, when it is first read.
+
+**Refund on failure.** `entitlements.refund` gives back the use recorded for a match id. The posting-match stream calls it when reading fails, or when the client goes away, before the match is stored; once the match row exists the charge is kept. A credit is restored, and a `refund` row (ref `refund:<id of the use>`) takes the use out of the idempotency check and the month's free count. The ledger is append-only: a refund never edits or deletes a row.
+
+**Webhooks and the cross-site guard.** The webhook routes are exempt from `CrossSiteGuard`: they carry no cookie, and the signature is their credential. The Content-Security-Policy allows Razorpay's Checkout.js and its frame and API hosts on every page; only the pricing page loads the script.
+
+### Posting match (`/api/match`)
+
+Every route needs a sign-in and answers only for the account's own profiles and matches. Someone else's id gets the same 404 as an unknown one.
+
+**Starting a match.** `POST /api/match` `{profileId, text?, url?}`; pasted text wins when both are given. The checks run in this order, and everything before the stream starts is answered as JSON:
+1. Shed: the in-memory `match` bucket, before the body is read.
+2. Sign-in: 401 `unauthorized`.
+3. Body: 415 for the wrong content type, 413 above 128 KB, 408 for a stalled body, 400 for an invalid one.
+4. Profile: one of the account's own profiles, else 404 `Profile not found`.
+5. Counters: per client address and per account, with `TAYYARI_GUARD__MATCH_PER_MINUTE` (0 = off), `_PER_HOUR` (10) and `_PER_DAY` (30), plus the global `TAYYARI_GUARD__MATCH_GLOBAL_PER_HOUR` (120), counted once per request. Over a limit: 429 with `Retry-After`.
+6. Posting text: the pasted text, else the link. Neither is 400; text longer than `TAYYARI_MATCH__MAX_POSTING_CHARS` (20,000) is 400; a link that is not a web link is 400. A job board whose terms forbid automated reading (LinkedIn, `lnkd.in`, Naukri, Indeed, Glassdoor, foundit, Shine) is refused with 422 `posting_link_blocked` before anything is fetched. Any other link goes through the SSRF-guarded ingest (public pages only); a page that cannot be read, or has no text, is 422 `posting_link_unreadable`. Links inside a posting are never opened.
+7. Spend: `TAYYARI_GUARD__EST_MATCH_USD` (0.06) reserved; 503 when the daily ceiling is reached.
+8. Entitlement: `consume` (402 `payment_required` when nothing is left).
+9. The stream starts.
+
+**The stream** (NDJSON, one JSON object per line; shapes in `contract/match_api.py`), in this order:
+- `posting` `{posting, facts}`: the posting as read (requirements, gates, anomalies, hash) and the person's facts, so the citations can show as rows arrive.
+- `coverage` `{coverage}`: one line per batch of at most ten requirements, as each batch finishes. Batches are checked concurrently.
+- `gates` `{gates, blocked}`: once gates and coverage are both done, so it arrives after the coverage lines.
+- `radar` `{radar}`, then `questions` `{questions}` (at most three).
+- `done` `{matchId, createdAt}`: the match is stored and the charge is kept.
+- `error` `{message, code}` at any point after the stream started. `code` is `payment_required`, `no_requirements`, `export_blocked`, `rate_limited`, `unauthorized` or `failed`. An error refunds the charge before it is sent.
+
+The posting is stored once per normalised text (`postings`), so a text read before is not read again, by anyone. The person's facts come from the portfolio extractor, cached per profile (`profile_facts`, keyed by the hash of the sources). The match keeps its facts (`matches.facts`, the FactBook) and its result.
+
+**After the stream.**
+- `GET /api/match/{id}` → `MatchDetail`: the posting with its text, the facts its rows cite, and the result (band, counts, confidence, coverage, gates, radar, questions). `GET /api/matches` → `MatchList`, newest first.
+- `POST /api/match/{id}/answers` `{answers: [{questionId, text}]}`: up to three answers of at most 1,500 characters. Each becomes a fact in the person's own words (`user_facts`, with its question) that later matches of the same profile can cite. Only the rows and gates the answered questions name are checked again; the result's version goes up; the response is the new `MatchDetail`. An answer to an unknown or closed question is ignored, and with no usable answer the route is 400. A save from a stale tab is 409 `match_changed`. Answers never consume.
+- **Resume.** `POST /api/match/{id}/resume` streams `variant` `{variant}` then `done`. A resume already built for the match is returned without reserving anything. Otherwise the spend is reserved, the resume is composed from cited facts (relevance scores, code selection, phrasing, verification) and stored with status `needs_user` while any line waits for the person, else `ready`. `GET /api/match/{id}/resume` → `{variant}`, or 404 until one is built. `PATCH /api/match/{id}/resume` `{decisions: [...]}` (up to 40) applies each choice: keep, soften, drop, a figure for a line (`fill`, which becomes a user fact), or the posting's own term (`use_posting_term`). Nothing is applied unless every decision fits; otherwise 422 `decision_refused`. The variant is re-verified, stored and returned.
+- **Downloads.** `GET /api/match/{id}/resume.pdf` and `.docx` answer 409 `export_blocked` while any line still needs the person. Otherwise they return the file with `Content-Disposition: attachment`, `X-Robots-Tag: noindex` and a name like `<person>-resume.pdf`. The checklist stored with the variant is refreshed when it changes.
+- **Cover note.** `POST /api/match/{id}/cover` (no body) returns the stored note without reserving anything; otherwise it reserves the spend, writes the note from (requirement, fact) pairs with a plain sentence for each gap, 250 to 400 words, no generic openers, and stores it. It is 422 `cover_unavailable` when no covered requirement has facts to write from. `GET /api/match/{id}/cover` → `{cover}`, or 404 until one is written; `GET /api/match/{id}/cover.pdf` → the file.
+- **Built once.** A stored resume or cover note is returned as it is, so answers given later do not change it. There is no rebuild control yet.
+
+**Cost.** About half a cent per match on Haiku 5.5, as measured. The reservation for a match, and for a resume or cover note that is written, is `TAYYARI_GUARD__EST_MATCH_USD` (0.06).
 
 ## Jev decisions framework
 
@@ -140,7 +226,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 
 | Table | Key | Columns | Indexes / notes |
 |-------|-----|---------|-----------------|
-| `profiles` | `id` PK | `created_at`, `last_accessed_at`, `owner_hash` (HMAC, nullable), `is_sample`, `schema_version`, `goal`, `profile` JSON | `(last_accessed_at)` for retention; `(owner_hash, created_at)` for owner queries |
+| `profiles` | `id` PK | `created_at`, `last_accessed_at`, `owner_hash` (HMAC, nullable), `is_sample`, `schema_version`, `goal`, `profile` JSON, `user_id` (FK users, nullable; set when claimed) | `(last_accessed_at)` for retention; `(owner_hash, created_at)` for owner queries; `(user_id, created_at)` for an account's profiles |
 | `profile_contexts` | `profile_id` PK/FK | `context` JSON (sources + reader outputs), `bytes` | split from profiles so `/api/profile` never reads source text |
 | `chat_sessions` | `id` PK | `profile_id` FK cascade, `origin` JSON, `created_at`, `updated_at`, `turn_count`, `ip_hash` | `(profile_id)`, `(updated_at)` for old-session cleanup |
 | `chat_messages` | PK `(session_id, seq)` | `role`, `content` text, `tools` JSON null, `llm_call_id` FK null, `created_at` | optimistic append guard |
@@ -151,13 +237,28 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 | `rate_limit_hits` | PK `(bucket, window_start)` | `count` | `(window_start)` for cleanup; purged after 2 days |
 | `spend_daily` | PK `(day, scope)` (scope: total/anthropic/jev) | `micro_usd`, `calls` | `cli spend --reconcile` sums calls per day to flag drift |
 | `kv` | `key` PK | `value` JSON, `updated_at` | maintenance bookkeeping (last purge, IP hash key) |
+| `portfolios` | `profile_id` PK | `public_id` (unique), `doc` JSON, `generated` JSON, `facts_hash`, `version`, `published`, `created_at`, `updated_at`, `published_at`, `last_viewed_at`, `user_id` (copied from the profile when it is claimed; no foreign key, like `profile_id`) | `(public_id)`, `(updated_at)`, `(user_id)` |
+| `users` | `id` PK (32 hex characters) | `email` (lower-cased, unique), `name`, `picture_url`, `google_sub` (unique), `created_at`, `last_login_at`, `locale`, `currency` (`INR` or `USD`) | Migration 0003. Removed by `DELETE /api/me`, which removes the account's children first |
+| `auth_sessions` | `id` PK (sha256 of the cookie token) | `user_id` FK cascade, `created_at`, `expires_at`, `last_seen_at`, `ip_hash`, `user_agent` (at most 200 characters) | `(user_id)`, `(expires_at)`; purged once expired |
+| `magic_links` | `token_hash` PK (sha256 of the token) | `email`, `created_at`, `expires_at`, `used_at` (null until spent), `ip_hash` | `(expires_at)`; purged once expired |
+| `orders` | `id` PK; `provider_order_id` unique | `user_id` FK, set to NULL when the account is deleted; `provider` (`razorpay` or `stripe`), `product`, `currency`, `amount_minor`, `status` (`created`, `paid`, `failed`), `created_at`, `paid_at`, `raw` JSON (provider ids only) | Migration 0004. `(user_id)`; never purged, so a payment record outlives its account |
+| `entitlements` | `user_id` PK, FK cascade | `credits`, `pass_until` (null), `updated_at` | Migration 0004. The row is the lock for every change to one account's balance |
+| `credit_ledger` | `id` PK | `user_id` FK cascade, `delta`, `reason` (`purchase`, `match`, `free_monthly`, `refund`; `admin` is reserved, nothing writes it yet), `ref`, `created_at` | Migration 0004. `(user_id, created_at)`; append-only, so the balance is the sum of the deltas |
+| `postings` | `hash` PK (sha256 of the normalised text) | `text`, `parsed` JSON (the Posting without its text), `created_at` | Migration 0005. No account: shared by everyone who pasted the same text; never purged |
+| `matches` | `id` PK | `user_id` FK cascade, `profile_id` FK cascade, `posting_hash` FK (no action), `facts` JSON (the FactBook), `result` JSON, `band`, `blocked`, `version`, `created_at`, `updated_at` | Migration 0005. `(user_id, created_at)`, `(profile_id)` |
+| `user_facts` | `id` PK (hash of profile id and fact id) | `user_id` FK cascade, `profile_id` FK cascade, `match_id` FK (set to NULL when the match goes), `question`, `answer`, `fact` JSON, `created_at` | Migration 0005. `(profile_id, created_at)`, `(user_id)`; a fact outlives the match it was said in |
+| `variants` | `id` PK | `match_id` FK cascade, `kind` (`resume` or `cover`), `spec` JSON, `status` (`needs_user` or `ready`), `version`, `created_at`, `updated_at` | Migration 0005. Unique `(match_id, kind)` |
+| `profile_facts` | `profile_id` PK, FK cascade | `facts_hash`, `facts` JSON, `created_at` | Migration 0005. One row per profile; a new hash replaces it |
 
-### Retention (run at most every 6 hours, from lifespan under `pg_advisory_xact_lock`)
+### Retention (run at most every 6 hours, from the lifespan; replicas claim each run through a `kv` row, under a Postgres try-lock)
 
-- **Profiles**: deleted when `last_accessed_at` is older than 60 days (sample rows kept forever).
+- **Profiles**: anonymous profiles (no `user_id`) not opened for 60 days are deleted, with their contexts and chats. A profile saved to an account (`user_id` set) is kept until the account is deleted.
+- **Sample runs** ("Try a sample profile"): deleted once idle for 60 days, except the bundled Riya Kapoor persona. Chats of sample profiles, the persona's included, are deleted on the same window, because what visitors type to them is user text.
+- **Sample corpus**: decision and Jev rows flagged `is_sample` that belong to no profile (CLI and eval runs) or to the kept persona, the states they reference, and the model-call rows of the kept persona are exempt from the payload and metadata steps. Visitor text is not exempt: chat-gate decisions and chat calls follow the normal windows, even for the persona.
 - **Jev payloads** (states + raw JSON): purged after 30 days. Metadata (`decision_log` rows) kept for 180 days.
 - **Rate limit hits**: deleted after 2 days.
-- **Sample rows** (`is_sample=true`): kept permanently as an eval corpus.
+- **Sign-ins and emailed links** (`auth_sessions`, `magic_links`): deleted once their expiry has passed. A used link that has not expired yet stays until it does.
+- **Postings** are never purged yet. Matches, resumes, cover notes, the answers a person gave and profile facts are removed only with their account (`DELETE /api/me`) or their profile. Orders are kept when an account is deleted, with `user_id` cleared.
 
 ### Migrations (Alembic)
 
@@ -173,6 +274,8 @@ Migrations live in `storage/migrations/` inside the package. No external `alembi
 
 If migration fails, the transaction rolls back and startup crashes. Readiness checks fail, so the load balancer keeps the old version running.
 
+Revisions 0003 (accounts, and the owner columns on `profiles` and `portfolios`), 0004 (payments) and 0005 (posting match) follow this rule.
+
 **Additive-only rule**: migrations add tables or nullable columns only. No drops, renames, or constraint tightening after revision 0001 (unless a file carries a `# contract-phase` marker).
 
 ## Cost guard
@@ -187,8 +290,16 @@ Each IP has atomic counters (one `INSERT … ON CONFLICT … RETURNING count` pe
 | | 1 hour | 6 | 60 per hour (cross-IP) |
 | | 1 day | 15 | — |
 | `/api/chat` | 1 min | 20 | — |
-| | 1 hour | 120 | — |
+| | 1 hour | 120 | 600 per hour (all clients) |
 | | 1 day | 400 | — |
+| `/api/portfolio` | 1 min | 4 | — |
+| | 1 hour | 12 | 120 per hour (all clients) |
+| | 1 day | 30 | — |
+| `/api/match` | 1 min | 0 (off by default) | — |
+| | 1 hour | 10 per client, 10 per account | 120 per hour (all clients) |
+| | 1 day | 30 per client, 30 per account | — |
+
+Limits are set by `TAYYARI_GUARD__*_PER_{MINUTE,HOUR,DAY}` and the `*_GLOBAL_PER_HOUR` settings; 0 turns a window off. A posting match is counted for its client address and, separately, for its account (`u:<user id>`); re-checks, answers and downloads are not matches and are not counted. For IPv6 clients the same windows apply again to the client's /48 at four times the limit. Magic-link requests are limited per email and per client address (3 per 15 minutes, `TAYYARI_AUTH__MAGIC_PER_EMAIL` and `TAYYARI_AUTH__MAGIC_PER_IP`) through the same `rate_limit_hits` table, not through these windows.
 
 **In-memory bucket** (per replica): rejects hammering before it reaches the DB. If the DB errors, fail open to the in-memory bucket and log.
 
@@ -198,13 +309,13 @@ Each IP has atomic counters (one `INSERT … ON CONFLICT … RETURNING count` pe
 
 Daily ledger: `spend_daily` row per UTC day (scope: total/anthropic/jev). Incremented atomically with every `llm_calls` and `jev_calls` write. Read with 5 s cache.
 
-Default ceiling: **$20/day UTC**. Reaching it returns 503 JSON before the stream starts. Mid-analysis, the run may finish up to 125% of the ceiling (in-flight grace), then emit an error event. Spend guard fails closed if DB is down (because profiles can't be saved anyway).
+Default ceiling: **$20/day UTC**. Reaching it returns 503 JSON before the stream starts. Mid-analysis, the run may finish up to 125% of the ceiling (in-flight grace), then emit an error event. Spend guard fails closed if DB is down (because profiles can't be saved anyway). A posting match reserves `TAYYARI_GUARD__EST_MATCH_USD` (0.06) before its posting is read, and a resume or cover note reserves it before it is written.
 
 Also set a **spend limit on the Anthropic workspace** as a hard backstop outside our code.
 
 ### Client IP identification
 
-`X-Forwarded-For` header (configurable via `TAYYARI_GUARD__TRUSTED_PROXY_HOPS`, default 1 hop from the right). HMAC-SHA256 of the IP (salt generated at first startup, stored in `kv` table). Never store the raw IP.
+The header named by `TAYYARI_GUARD__CLIENT_IP_HEADER` is read first when present (default `cf-connecting-ip`, which Cloudflare sets in front of FastAPI Cloud and overwrites any value the client sent). Otherwise `X-Forwarded-For` is read, counting `TAYYARI_GUARD__TRUSTED_PROXY_HOPS` entries from the right (default 3, the number measured on FastAPI Cloud); then the socket peer. IPv6 clients are counted per /64 network. HMAC-SHA256 of the IP (salt generated at first startup, stored in `kv` table). Never store the raw IP.
 
 ## Testing layout
 
@@ -217,6 +328,8 @@ Tests use **pytest** with **respx** (mocking HTTP) and **asgi-lifespan** (FastAP
 | `tests/golden` | Regression on Sonnet + readers | Captured NDJSON baselines; compared after a rebuild |
 | `tests/fakes` | Fake implementations | dict-backed repos, scripted Claude/Jev clients |
 | `tests/data` | Fixtures | sample resumes, links, reader outputs |
+
+Postgres-only tests (`tests/unit/storage`) run only when `TEST_DATABASE_URL` is set: a direct, non-pooler URL of a throwaway database. Without it they are skipped.
 
 **Sample corpus**: `tayyari/sample/` (Riya Kapoor persona) is the source of truth. `cli make-sample` regenerates it with a live run. Golden baseline captures it and compares on any rebuild.
 
@@ -254,5 +367,15 @@ See **[backend/.env.example](backend/.env.example)** for the complete list and d
 - `JEV_API_KEY` (optional; enables Jev decisions)
 - `DATABASE_URL` (Neon on cloud; SQLite locally if unset)
 - `TAYYARI_*` (models, efforts, limits, Jev, guard settings)
+
+Accounts, payments and the posting match (names only; the values are never written in docs or code):
+- **Sign-in secrets:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (Google sign-in shows only when both are set), `RESEND_API_KEY` (email links). `RESEND_FROM` is the sender and is not a secret.
+- **Payment secrets:** `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` (all three for INR), `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (both for USD).
+- **`TAYYARI_AUTH__*`:** `SESSION_DAYS` (30), `MAGIC_LINK_MINUTES` (15), `MAGIC_PER_EMAIL` and `MAGIC_PER_IP` (3), `COOKIE_NAME` (`tayyari_session`), `PUBLIC_URL` (default `FASTAPI_PUBLIC_URL`, else `http://localhost:5173`).
+- **`TAYYARI_BILLING__*`:** `PACK3_INR`, `PASS30_INR`, `PACK3_USD`, `PASS30_USD` in minor units (paise, cents); 0 or unset means not on sale. `FREE_MATCHES_PER_MONTH` (1).
+- **`TAYYARI_MATCH__*`:** `MODEL` (unset: the reader model), `WRITER_MODEL` (unset: the same as `MODEL`), `MAX_POSTING_CHARS` (20000), `CALL_TIMEOUT_S` (90).
+- **Posting-match guard:** `TAYYARI_GUARD__MATCH_PER_MINUTE` (0), `MATCH_PER_HOUR` (10), `MATCH_PER_DAY` (30), `MATCH_GLOBAL_PER_HOUR` (120), `EST_MATCH_USD` (0.06).
+
+`backend/.env.example` lists each of these with its default or an empty value.
 
 For deployment to FastAPI Cloud, also see **[backend/DEPLOY.md](backend/DEPLOY.md)** (linking here per task rules).

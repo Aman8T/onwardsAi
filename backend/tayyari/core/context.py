@@ -1,5 +1,7 @@
 """Per-request context variables, merged into every log line by `core.logging`.
 
+`user_id` is the signed-in account's id (never the email); `api.deps.get_current_user` sets it.
+
 Use `bind` around a unit of work (a request, an analysis, a chat turn); the previous values are restored
 on exit, so nested and concurrent tasks never see each other's ids::
 
@@ -21,6 +23,7 @@ analysis_id: ContextVar[str | None] = ContextVar("tayyari_analysis_id", default=
 profile_id: ContextVar[str | None] = ContextVar("tayyari_profile_id", default=None)
 session_id: ContextVar[str | None] = ContextVar("tayyari_session_id", default=None)
 ip_hash: ContextVar[str | None] = ContextVar("tayyari_ip_hash", default=None)
+user_id: ContextVar[str | None] = ContextVar("tayyari_user_id", default=None)
 
 _VARS: dict[str, ContextVar[str | None]] = {
     "request_id": request_id,
@@ -28,6 +31,7 @@ _VARS: dict[str, ContextVar[str | None]] = {
     "profile_id": profile_id,
     "session_id": session_id,
     "ip_hash": ip_hash,
+    "user_id": user_id,
 }
 
 KEYS: tuple[str, ...] = tuple(_VARS)
@@ -74,4 +78,5 @@ __all__ = [
     "profile_id",
     "request_id",
     "session_id",
+    "user_id",
 ]

@@ -25,7 +25,8 @@
     "check:restraint": "tsx scripts/restraint-check.ts",
     "check:build": "vite build && tsx scripts/build-check.ts",
     "check:portfolio": "tsx scripts/portfolio-parity.tsx",
-    "check": "npm run typecheck && npm run check:palette && npm run check:restraint && npm run check:build && npm run check:portfolio",
+    "check:match": "tsx scripts/match-parity.tsx",
+    "check": "npm run typecheck && npm run check:palette && npm run check:restraint && npm run check:build && npm run check:portfolio && npm run check:match",
     "check:all": "npm run check && npm run lint:py && npm run typecheck:py && npm run test:py"
   },
   "dependencies": {

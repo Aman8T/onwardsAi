@@ -7,10 +7,13 @@ from tayyari.core.errors import (
     AppError,
     BadRequest,
     ClientClosed,
+    Conflict,
     NotFound,
     PayloadTooLarge,
+    PaymentRequired,
     RateLimited,
     ServiceUnavailable,
+    Unauthorized,
 )
 
 SUBCLASSES = [
@@ -20,6 +23,8 @@ SUBCLASSES = [
     (RateLimited, 429, "rate_limited"),
     (ServiceUnavailable, 503, "service_unavailable"),
     (ClientClosed, 499, "client_closed"),
+    (Unauthorized, 401, "unauthorized"),
+    (Conflict, 409, "conflict"),
 ]
 
 
@@ -33,6 +38,25 @@ def test_subclass_defaults(cls: type[AppError], status: int, code: str) -> None:
     assert err.retry_after_s is None
     assert str(err) == err.user_message
     assert err.to_body() == {"error": err.user_message}
+
+
+def test_payment_required_is_a_402_whose_body_is_a_code_and_a_reason() -> None:
+    err = PaymentRequired()
+    assert isinstance(err, AppError) and (err.status, err.code, err.reason) == (
+        402,
+        "payment_required",
+        "no_credits",
+    )
+    assert err.to_body() == {"error": "payment_required", "reason": "no_credits"}
+    assert (
+        err.user_message and "free posting" in err.user_message
+    )  # the sentence a stream's error event shows
+    assert str(err) == err.user_message and err.retry_after_s is None
+    assert PaymentRequired("pass_expired").to_body() == {
+        "error": "payment_required",
+        "reason": "pass_expired",
+    }
+    assert PaymentRequired("x", user_message="Pay up.", detail="why").user_message == "Pay up."
 
 
 def test_base_class_is_a_500() -> None:

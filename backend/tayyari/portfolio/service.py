@@ -21,7 +21,9 @@ and the page is still complete. Only the daily spend ceiling stops a build (`Spe
 `generate` is the NDJSON stream behind POST /api/portfolio (progress, a draft, then done or error). `get`,
 `has_readable`, `patch`, `rewrite`, `delete`, `public_preview` and `public` are what the other routes call. The
 portfolio lives in the `portfolios` table as one JSON document, apart from the profile: the row owns the public id,
-the version, the timestamps and the published flag, and `_hydrate` always takes those from the row.
+the version, the timestamps and the published flag, and `_hydrate` always takes those from the row. A page written for
+a profile that an account has claimed carries that account's id (`portfolios.user_id`, read from the profile when the
+build is saved); who may *open* the page is decided before the service is called, by `api.deps.require_profile_access`.
 
 A regenerate keeps the owner's choices (`compose.carry_owner_choices`: each block's visible / public flags, the hidden
 graph areas, the privacy switches, the default view). It is saved over the row as it is *when the build ends*, not as
@@ -641,6 +643,7 @@ class PortfolioService:
         facts_hash_: str | None,
         existing: StoredPortfolio | None,
         now: datetime,
+        owner: str | None = None,
     ) -> StoredPortfolio:
         published = existing.published if existing is not None else False
         doc = portfolio.model_copy(deep=True)
@@ -655,7 +658,14 @@ class PortfolioService:
             published=published,
             created_at=existing.created_at if existing is not None else now,
             updated_at=now,
+            user_id=owner or (existing.user_id if existing is not None else None),
         )
+
+    async def _owner_of(self, profile_id: str) -> str | None:
+        """The account that has claimed the profile, or None (nobody has, or no stored profile): the owner a page
+        written for it carries."""
+        access = await self._profiles.get_access(profile_id)
+        return None if access is None else access.user_id
 
     async def _load(self, profile_id: str) -> tuple[Profile, StoredContext] | None:
         """The profile and its source texts; the bundled sample persona is served from its files when it is not stored."""
@@ -788,6 +798,8 @@ class PortfolioService:
         page, switched a privacy flag or deleted it. Its published flag, public id and choices are taken from this
         read, and the write is checked against its version (one retry when the page moved between the two).
         """
+        # The owner is asked now rather than when the build started: the person may have claimed the profile since.
+        owner = await self._owner_of(profile_id)
         for _ in range(2):
             current = await self._portfolios.get(profile_id)
             if current is None and started_from is not None:
@@ -795,7 +807,9 @@ class PortfolioService:
             page = result.portfolio
             if (previous := self._try_hydrate(current)) is not None:
                 page = carry_owner_choices(page, previous)
-            record = self._record(page, result.generated, result.facts_hash, current, self._clock.now())
+            record = self._record(
+                page, result.generated, result.facts_hash, current, self._clock.now(), owner=owner
+            )
             try:
                 return await self._portfolios.put(
                     record, expected_version=current.version if current is not None else None

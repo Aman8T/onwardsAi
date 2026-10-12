@@ -9,6 +9,10 @@ route into a stream of database queries. `RateLimiter` has a bucket for ``analyz
 profile read is a light chat-side action (you open a profile to talk about it), so it takes a token from the
 caller's ``chat`` bucket. That bucket holds twice the per-minute chat limit and refills at that rate, so
 opening profiles at human speed never gets in the way of chatting.
+
+A profile that an account has claimed is read only by that account's session; anyone else, signed in or not, gets the
+same 404 as for an unknown id (`api.deps.require_profile_access`). Unclaimed profiles and sample runs are open to
+whoever holds the id, as before.
 """
 
 from __future__ import annotations
@@ -16,7 +20,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from tayyari.api.deps import get_request_context
+from tayyari.api.deps import get_request_context, require_profile_access
 from tayyari.api.lifespan import get_container
 from tayyari.api.security import subnet_hash
 from tayyari.core.errors import NotFound
@@ -36,6 +40,7 @@ async def get_profile(pid: str, request: Request) -> JSONResponse:
     )
     if not is_valid_id(pid):
         raise NotFound(PROFILE_NOT_FOUND)
+    await require_profile_access(request, pid, not_found=PROFILE_NOT_FOUND)
     found = await container.repos.profiles.get_profile(pid)
     if found is None and container.sample.is_sample_profile(pid):
         sample = container.sample.sample_profile

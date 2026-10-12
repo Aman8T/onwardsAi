@@ -38,6 +38,17 @@ EXPECTED_TABLES = {
     "spend_daily",
     "kv",
     "portfolios",
+    "users",
+    "auth_sessions",
+    "magic_links",
+    "orders",
+    "entitlements",
+    "credit_ledger",
+    "postings",
+    "matches",
+    "user_facts",
+    "variants",
+    "profile_facts",
 }
 
 
@@ -430,17 +441,17 @@ def test_the_revision_template_renders_a_valid_additive_migration(tmp_path: Path
     shutil.copytree(MIGRATIONS_DIR, scripts, ignore=shutil.ignore_patterns("__pycache__"))
     config = migrate.alembic_config()
     config.set_main_option("script_location", str(scripts))
-    command.revision(config, message="add a column", rev_id="0003")
+    command.revision(config, message="add a column", rev_id="9999")
 
-    (generated,) = scripts.glob("versions/0003_*.py")
+    (generated,) = scripts.glob("versions/9999_*.py")
     tree = ast.parse(generated.read_text(encoding="utf-8"))
     assigned = {
         n.target.id: ast.literal_eval(n.value)
         for n in ast.walk(tree)
         if isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name) and n.value is not None
     }
-    assert assigned["revision"] == "0003"
-    assert assigned["down_revision"] == "0002"
+    assert assigned["revision"] == "9999"
+    assert assigned["down_revision"] == head_revision()  # chained onto whatever the newest real migration is
     assert {n.name for n in tree.body if isinstance(n, ast.FunctionDef)} == {"upgrade", "downgrade"}
 
 

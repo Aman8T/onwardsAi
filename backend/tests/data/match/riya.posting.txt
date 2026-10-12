@@ -1,0 +1,30 @@
+Senior Frontend Engineer, Design Systems
+Northwind Commerce · Remote (India or EU time zones) · Full time
+
+Northwind Commerce builds checkout and storefront software for mid-sized retailers. Our design system is used by four product teams and ships every week.
+
+What you will do
+- Own the Northwind design system: components, tokens and the Storybook documentation.
+- Raise the bar on accessibility and performance across the checkout.
+- Partner with designers on Figma-to-code handoffs and review pull requests for the web team.
+
+Requirements
+- Must have 5+ years building production web applications with React and TypeScript.
+- Deep experience owning a component library or design system used by several teams.
+- Practical accessibility experience: WCAG 2.1 AA audits and fixes.
+- Experience with automated testing: unit tests with Vitest or Jest and end-to-end tests with Playwright.
+- Strong command of web performance: Core Web Vitals, LCP and bundle budgets.
+- Experience with GraphQL APIs, ideally Apollo Federation.
+
+Preferred
+- Experience mentoring engineers and leading code review.
+- Experience with Next.js and React server components.
+
+Nice to have
+- Rust or WebAssembly experience.
+- Open-source maintenance.
+
+Eligibility
+- Must be legally able to work in India or the EU without visa sponsorship from us.
+
+Apply at https://jobs.northwind-commerce.example/frontend-design-systems

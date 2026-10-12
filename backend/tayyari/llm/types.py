@@ -10,7 +10,23 @@ from dataclasses import dataclass
 from typing import Any, Literal
 from uuid import UUID
 
-Purpose = Literal["reader", "synth", "chat", "portfolio", "decision_fallback", "smoke", "eval", "label"]
+Purpose = Literal[
+    "reader",
+    "synth",
+    "chat",
+    "portfolio",
+    "decision_fallback",
+    "smoke",
+    "eval",
+    "label",
+    "match.facts",
+    "match.posting",
+    "match.gates",
+    "match.coverage",
+    "match.relevance",
+    "match.phrase",
+    "match.cover",
+]
 """Why a Claude call is made. Stored on every `llm_calls` row and used to script fakes."""
 
 Effort = Literal["low", "medium", "high", "xhigh", "max"]

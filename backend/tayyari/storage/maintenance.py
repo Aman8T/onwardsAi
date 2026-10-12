@@ -6,7 +6,8 @@ one replica does the work per interval; the rest see the claim and return at onc
 What is purged, with the windows from ``settings.retention``:
 
 =====================  ===========================================================================
-``profiles``           profiles idle for ``profile_days`` (contexts, chats and messages cascade)
+``profiles``           anonymous profiles idle for ``profile_days`` (contexts, chats and messages cascade);
+                       a profile saved to an account (``user_id`` set) is kept
 ``sample_chats``       chat sessions of sample profiles idle for ``profile_days`` (messages cascade):
                        anyone can chat with the public sample persona, so what they type is user text
 ``sample_runs``        sample profiles (``is_sample``: "Try a sample profile" runs) idle for
@@ -20,6 +21,7 @@ What is purged, with the windows from ``settings.retention``:
 ``llm_calls``          rows older than ``metadata_days``
 ``decision_states``    unreferenced states untouched for ``metadata_days``
 ``rate_limit_hits``    counters older than two days
+``auth``               sign-ins (``auth_sessions``) and emailed links (``magic_links``) past their expiry
 =====================  ===========================================================================
 
 The permanent sample corpus is exempt from the payload and metadata steps: decision and Jev rows flagged
@@ -233,6 +235,7 @@ async def run_maintenance(
         ("llm_calls", lambda: _delete_llm_calls(db, metadata_cutoff, keep)),
         ("decision_states", lambda: _delete_unreferenced_states(db, metadata_cutoff)),
         ("rate_limit_hits", lambda: repos.limits.purge_hits(now - HITS_RETENTION)),
+        ("auth", lambda: repos.users.purge_expired(now)),
     ]
     counts: dict[str, int] = {}
     errors = 0

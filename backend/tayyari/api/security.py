@@ -15,6 +15,10 @@
     The host is compared with ``Host`` and with ``X-Forwarded-Host`` (a page cannot set that header
     without a CORS preflight, which the app never answers). Default ports (80, 443) are ignored.
 
+    The payment webhooks (``/api/billing/webhooks/``) are exempt: they are called by Razorpay's and Stripe's servers,
+    carry no cookie, and authenticate with a signature over the raw body that the route checks first. A browser
+    that posts there from another site gets nothing but a refused signature.
+
 `SecurityHeadersMiddleware`
     Adds the standard hardening headers to every response (``X-Content-Type-Options``, ``Referrer-Policy``,
     ``X-Frame-Options``, ``Permissions-Policy``, and ``Strict-Transport-Security`` when the request came in
@@ -22,7 +26,8 @@
 
     - HTML pages get the full policy: same-origin everything, Google Fonts for CSS and fonts, no plugins,
       no framing, and ``script-src 'self'`` plus a ``'sha256-...'`` source for every inline ``<script>`` of
-      ``static/index.html`` (read when the app starts, and again if the file changes). The chat view renders
+      ``static/index.html`` (read when the app starts, and again if the file changes). Razorpay's Checkout.js is the
+      one third-party script (see `RAZORPAY_CHECKOUT`); the pricing page is the only page that loads it. The chat view renders
       model-written Markdown, so ``img-src`` and ``connect-src`` are what keep an injected image or link from
       sending a conversation to another site.
     - Every other response (the JSON and NDJSON answers, assets) gets ``default-src 'none'; frame-ancestors
@@ -58,6 +63,8 @@ log = get_logger(__name__)
 
 CROSS_SITE_MESSAGE = "Cross-site requests are not allowed."
 UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+WEBHOOK_PREFIX = "/api/billing/webhooks/"
+"""Server-to-server callbacks of the payment providers: signed, cookie-less, never from a browser page."""
 _DEFAULT_PORTS = frozenset({80, 443})
 
 # ───────────────────────── the client's network, for the limiter ─────────────────────────
@@ -135,7 +142,12 @@ class CrossSiteGuard:
         self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] == "http" and scope["method"] in UNSAFE_METHODS and _is_api_path(scope["path"]):
+        if (
+            scope["type"] == "http"
+            and scope["method"] in UNSAFE_METHODS
+            and _is_api_path(scope["path"])
+            and not scope["path"].startswith(WEBHOOK_PREFIX)
+        ):
             reason = cross_site_reason(Headers(scope=scope))
             if reason is not None:
                 log.info("cross_site_refused", reason=reason, method=scope["method"], path=scope["path"])
@@ -146,13 +158,22 @@ class CrossSiteGuard:
 
 # ───────────────────────── security headers ─────────────────────────
 
+RAZORPAY_CHECKOUT = "https://checkout.razorpay.com"
+"""Razorpay's Checkout.js and the modal frame it opens. Allowed for scripts and frames on every page because the
+policy is one string for the whole app; only the pricing page ever loads the script (it inserts the tag on mount and
+removes it on unmount). The modal also talks to Razorpay's API and its event collector, hence the two connect hosts."""
+RAZORPAY_CONNECT = "https://api.razorpay.com https://lumberjack.razorpay.com"
+RAZORPAY_FRAME = "https://checkout.razorpay.com https://api.razorpay.com"
+"""Frames: Checkout.js opens its modal as an iframe served from api.razorpay.com (documented by Razorpay next to
+checkout.razorpay.com), so the page needs both."""
 PAGE_CSP_TEMPLATE = (
     "default-src 'self'; "
     "script-src {script_src}; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "font-src 'self' https://fonts.gstatic.com data:; "
     "img-src 'self' data:; "
-    "connect-src 'self'; "
+    "connect-src 'self' {razorpay_connect}; "
+    "frame-src 'self' {razorpay_frame}; "
     "object-src 'none'; "
     "base-uri 'none'; "
     "form-action 'self'; "
@@ -210,7 +231,11 @@ def inline_script_hashes(html: str) -> tuple[str, ...]:
 
 def page_csp(script_hashes: tuple[str, ...] = ()) -> str:
     """The Content-Security-Policy for HTML pages, allowing the given inline-script hashes."""
-    return PAGE_CSP_TEMPLATE.format(script_src=" ".join(("'self'", *script_hashes)))
+    return PAGE_CSP_TEMPLATE.format(
+        script_src=" ".join(("'self'", RAZORPAY_CHECKOUT, *script_hashes)),
+        razorpay_connect=RAZORPAY_CONNECT,
+        razorpay_frame=RAZORPAY_FRAME,
+    )
 
 
 class PageCsp:
@@ -303,7 +328,11 @@ __all__ = [
     "API_CSP",
     "CROSS_SITE_MESSAGE",
     "HSTS",
+    "RAZORPAY_CHECKOUT",
+    "RAZORPAY_CONNECT",
+    "RAZORPAY_FRAME",
     "UNSAFE_METHODS",
+    "WEBHOOK_PREFIX",
     "CrossSiteGuard",
     "PageCsp",
     "SecurityHeadersMiddleware",

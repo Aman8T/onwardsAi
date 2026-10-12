@@ -65,6 +65,41 @@ class NotFound(AppError):
     user_message = "Not found"
 
 
+class Unauthorized(AppError):
+    """No valid sign-in: the person has to sign in (or sign in again) to do this."""
+
+    status = 401
+    code = "unauthorized"
+    user_message = "Sign in to continue."
+
+
+class PaymentRequired(AppError):
+    """The person has nothing left to spend on this: no pass, no free posting this month, no credits.
+
+    The JSON body is ``{"error": "payment_required", "reason": ...}`` (the web app reads ``error`` as a code and
+    sends the person to the pricing page); ``user_message`` is the sentence a stream's ``error`` event shows.
+    """
+
+    status = 402
+    code = "payment_required"
+    user_message = "You have used this month's free posting. Choose a plan to continue."
+
+    def __init__(self, reason: str = "no_credits", **kwargs: object) -> None:
+        super().__init__(**kwargs)  # type: ignore[arg-type]
+        self.reason = reason
+
+    def to_body(self) -> dict[str, str]:
+        return {"error": self.code, "reason": self.reason}
+
+
+class Conflict(AppError):
+    """The request clashes with the current state (a profile that already belongs to someone else, say)."""
+
+    status = 409
+    code = "conflict"
+    user_message = "That conflicts with what is already saved."
+
+
 class PayloadTooLarge(AppError):
     status = 413
     code = "payload_too_large"
@@ -95,8 +130,11 @@ __all__ = [
     "AppError",
     "BadRequest",
     "ClientClosed",
+    "Conflict",
     "NotFound",
     "PayloadTooLarge",
+    "PaymentRequired",
     "RateLimited",
     "ServiceUnavailable",
+    "Unauthorized",
 ]

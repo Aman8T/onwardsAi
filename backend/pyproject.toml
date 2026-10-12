@@ -18,6 +18,9 @@ dependencies = [
     "pypdf>=5",
     "python-docx>=1.1",
     "httpx2>=2.13.1",
+    "authlib>=1.8.0",
+    "reportlab>=5.0.1",
+    "stripe>=16.0.0",
 ]
 
 # Deliberately no [build-system]: FastAPI Cloud installs the locked dependencies from uv.lock and

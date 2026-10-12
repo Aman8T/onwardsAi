@@ -1,0 +1,359 @@
+{
+  "id": "meera-nair-fixture",
+  "createdAt": "2026-10-10T08:00:00Z",
+  "goal": "Senior growth marketing roles in consumer retail",
+  "person": {
+    "name": "Meera Nair",
+    "headline": "Growth Marketing Manager · 6 yrs · Pune",
+    "currentRole": "Growth Marketing Manager",
+    "location": "Pune, India",
+    "yearsExperience": 6.0,
+    "summary": "Growth marketer who leads lifecycle and paid programmes at Brightwell Foods, with measured repeat-purchase and CAC gains. No CDP or attribution-modelling work shows yet."
+  },
+  "mastery": {
+    "score": 72,
+    "insight": "Strong measured paid and lifecycle work; team size, CDP and attribution modelling are what's missing."
+  },
+  "sources": [
+    {
+      "id": "resume",
+      "kind": "resume",
+      "label": "Resume",
+      "sub": "3 roles · 18 skills",
+      "summary": "Growth Marketing Manager at Brightwell Foods with lifecycle and paid results.",
+      "notes": [
+        "Add the Looker Studio dashboard from your growth notes to the resume"
+      ],
+      "ok": true
+    },
+    {
+      "id": "link-1",
+      "kind": "link",
+      "label": "Growth notes",
+      "url": "https://meeranair.example/growth-notes",
+      "sub": "Blog · 2 posts",
+      "summary": "Two write-ups: a geo holdout and a Looker Studio growth dashboard.",
+      "notes": [
+        "Link the notes from your resume"
+      ],
+      "ok": true
+    }
+  ],
+  "domains": [
+    {
+      "id": "paid",
+      "name": "Paid Acquisition",
+      "short": "Paid",
+      "score": 78,
+      "summary": "Owns a Rs 3.2 crore Meta and Google budget with a measured CAC cut."
+    },
+    {
+      "id": "lifecycle",
+      "name": "Lifecycle & CRM",
+      "short": "Lifecycle",
+      "score": 80,
+      "summary": "Runs email and WhatsApp for 400,000 subscribers with a repeat-purchase lift."
+    },
+    {
+      "id": "experimentation",
+      "name": "Experimentation & Analytics",
+      "short": "Experiments",
+      "score": 74,
+      "summary": "38 A/B tests and a geo holdout; dashboards live on a public page."
+    },
+    {
+      "id": "team",
+      "name": "Team & Stakeholders",
+      "short": "Team",
+      "score": 60,
+      "summary": "Manages 3 marketers and 2 freelancers; runs the weekly growth review."
+    },
+    {
+      "id": "content",
+      "name": "Content & SEO",
+      "short": "Content",
+      "score": 58,
+      "summary": "An SEO brief process for 6 writers with 48% organic growth."
+    }
+  ],
+  "skills": [
+    {
+      "id": "meta-ads",
+      "name": "Meta Ads",
+      "domainId": "paid",
+      "score": 80,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "Own the paid budget across Meta Ads and Google Ads"
+        },
+        {
+          "sourceId": "link-1",
+          "text": "Geo holdout on Meta prospecting in four cities"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "google-ads",
+      "name": "Google Ads",
+      "domainId": "paid",
+      "score": 78,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "Managed Google Ads and Meta Ads campaigns at Pinecrest Media"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "budget-ownership",
+      "name": "Paid budget ownership",
+      "domainId": "paid",
+      "score": 74,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "Rs 3.2 crore a year, blended CAC cut from 610 to 455"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "email-marketing",
+      "name": "Email marketing",
+      "domainId": "lifecycle",
+      "score": 82,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "Lifecycle email programme for 400,000 subscribers"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "whatsapp-marketing",
+      "name": "WhatsApp marketing",
+      "domainId": "lifecycle",
+      "score": 70,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "WhatsApp programme at Brightwell Foods"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "clevertap",
+      "name": "CleverTap",
+      "domainId": "lifecycle",
+      "score": 74,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "Lifecycle programme run on CleverTap"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "ab-testing",
+      "name": "A/B testing",
+      "domainId": "experimentation",
+      "score": 84,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "Ran 38 A/B tests; five winners shipped"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "geo-holdout",
+      "name": "Geo holdout testing",
+      "domainId": "experimentation",
+      "score": 72,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "CAC cut after a geo holdout test"
+        },
+        {
+          "sourceId": "link-1",
+          "text": "Switched off Meta prospecting in four cities for three weeks"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "looker-studio",
+      "name": "Looker Studio",
+      "domainId": "experimentation",
+      "score": 62,
+      "evidence": [
+        {
+          "sourceId": "link-1",
+          "text": "Built the weekly growth dashboard in Looker Studio"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "google-analytics",
+      "name": "Google Analytics",
+      "domainId": "experimentation",
+      "score": 66,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "Google Analytics listed among tools"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "cohort-analysis",
+      "name": "Cohort analysis",
+      "domainId": "experimentation",
+      "score": 52,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "Cohort analysis listed among methods"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "team-leadership",
+      "name": "Team leadership",
+      "domainId": "team",
+      "score": 66,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "Manages 3 marketers and 2 freelancers"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "stakeholder-management",
+      "name": "Stakeholder management",
+      "domainId": "team",
+      "score": 62,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "Runs the Monday growth review with finance and product"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "seo",
+      "name": "SEO",
+      "domainId": "content",
+      "score": 70,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "SEO brief process for 6 writers; organic sessions up 48%"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "cdp",
+      "name": "Customer data platforms",
+      "domainId": "experimentation",
+      "score": 28,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "No customer data platform appears anywhere"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "mmm",
+      "name": "Marketing mix modelling",
+      "domainId": "experimentation",
+      "score": 24,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "No attribution modelling beyond a geo holdout"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "shopify-plus",
+      "name": "Shopify Plus",
+      "domainId": "content",
+      "score": 18,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "No Shopify Plus work"
+        }
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "sql",
+      "name": "SQL",
+      "domainId": "experimentation",
+      "score": 34,
+      "evidence": [
+        {
+          "sourceId": "resume",
+          "text": "No SQL mentioned"
+        }
+      ],
+      "unlocks": []
+    }
+  ],
+  "roles": [
+    {
+      "id": "senior-growth",
+      "title": "Senior Growth Marketing Manager",
+      "alignment": 68,
+      "eta": "~4 months",
+      "why": "Measured paid and lifecycle wins; needs a larger team and data-platform work.",
+      "requirements": [
+        {
+          "name": "Lifecycle marketing",
+          "skillId": "email-marketing",
+          "have": true,
+          "current": 82,
+          "target": 80
+        },
+        {
+          "name": "Paid media",
+          "skillId": "meta-ads",
+          "have": true,
+          "current": 80,
+          "target": 80
+        },
+        {
+          "name": "Customer data platforms",
+          "skillId": "cdp",
+          "have": false,
+          "current": 28,
+          "target": 60
+        }
+      ]
+    }
+  ],
+  "models": {
+    "reader": "claude-haiku-4-5",
+    "synth": "claude-sonnet-5-5"
+  }
+}

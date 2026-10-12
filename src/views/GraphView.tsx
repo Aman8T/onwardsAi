@@ -8,6 +8,7 @@
 import { useReducedMotion } from 'motion/react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Profile } from '../../shared/types';
+import { SaveInvite } from '../auth/SaveInvite';
 import { actions, getState, useApp } from '../store';
 import { GraphHeader } from './graph/GraphHeader';
 import { NextGraph } from './graph/NextGraph';
@@ -107,6 +108,9 @@ export function GraphView({ profile }: { profile: Profile }) {
   return (
     <div className="gv-view">
       <GraphHeader profile={profile} />
+
+      {/* anonymous visitors: the quiet "Save this to your account" card (renders nothing for everyone else) */}
+      <SaveInvite profile={profile} />
 
       {/* Says which face is in front for screen readers; the header toggle only announces when it has focus. */}
       <p className="sr-only" aria-live="polite">

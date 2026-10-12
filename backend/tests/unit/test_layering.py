@@ -57,6 +57,12 @@ RULES: dict[str, tuple[str, ...]] = {
     "analysis": _SERVICES,
     "chat": _SERVICES,
     "portfolio": _SERVICES,
+    # accounts: Google and email sign-in, sessions; reaches storage only through its Protocols.
+    "auth": ("core", "contract", "storage.ports"),
+    # payments and entitlements: Razorpay, Stripe, the ledger rules; reaches storage only through its Protocols.
+    "billing": ("core", "contract", "storage.ports"),
+    # posting match reuses the portfolio's line-cited fact extractor and its sentence anchors (no fork).
+    "match": (*_SERVICES, "portfolio"),
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",
@@ -66,6 +72,9 @@ RULES: dict[str, tuple[str, ...]] = {
         "analysis",
         "chat",
         "portfolio",
+        "auth",
+        "billing",
+        "match",
         "guard",
         "ingest",
         "prompts",

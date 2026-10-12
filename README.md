@@ -5,6 +5,10 @@ interactive **skill graph of your current role**, flips it to a **map of the rol
 next**, and turns every node into a conversation: *"Help me prepare for this topic"*, *"Help me improve
 my GitHub"*, *"How do I prepare for this role?"*
 
+Paste a job posting and every requirement in it is checked against your own evidence. A resume and a cover note are then built only from facts you can defend.
+
+Product soul: [project-soul.md](project-soul.md) · Build plan: [docs/roadmap.md](docs/roadmap.md)
+
 Design canvas (all screens, both explored directions): https://claude.ai/artifact/HLxXL14nAUeNHhLFNhozp9
 
 ## Requirements
@@ -40,6 +44,14 @@ Design canvas (all screens, both explored directions): https://claude.ai/artifac
    ```
 
    Never commit `.env`.
+
+   Accounts and payments are optional. Without them the analysis still runs for anonymous visitors. Sign-in, the posting match and purchases need the settings below (names only; values go in `.env`, and on FastAPI Cloud through `fastapi cloud env set --secret NAME`):
+
+   - **Google sign-in:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. The button stays hidden until both are set.
+   - **Email sign-in links (Resend):** `RESEND_API_KEY`, `RESEND_FROM`. Without a key, a local server returns the link on the page so the flow can be tried; any other server hides email sign-in. Unset `RESEND_FROM` uses Resend's shared test sender, which only delivers to your own Resend account.
+   - **Razorpay (INR):** `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`. INR plans are not offered until all three are set.
+   - **Stripe (USD):** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. USD plans are not offered until both are set.
+   - **Prices** in minor units (paise and cents; unset or 0 means not on sale): `TAYYARI_BILLING__PACK3_INR`, `TAYYARI_BILLING__PASS30_INR`, `TAYYARI_BILLING__PACK3_USD`, `TAYYARI_BILLING__PASS30_USD`. `TAYYARI_BILLING__FREE_MATCHES_PER_MONTH` (default 1) is the free posting each account gets per calendar month.
 
 3. **Optional: generate the sample profile**
 
@@ -111,6 +123,14 @@ Haiku extracts line-cited facts, Jev reads the career shape, code composes the p
 7 Skill Graph variants, 8 gradient families), Sonnet writes the copy and every sentence is checked against the cited
 facts. The same content renders as an "Old Newspaper" front page. Details: `docs/backend.md` → Portfolio.
 
+**Posting match.** Paste a job posting (or give a public link) and Tayyari reads it first, on its own, with no profile in view, into its requirements and how strongly each one is asked. Every requirement is then checked against the person's evidence (resume facts, links, and what they have said in their own words) and lands as covered, partial, synonym only, "you have it but your resume doesn't say", gap, or can't tell. Gate questions decide whether the match is blocked, and a resume and a cover note are then composed from cited facts only. Each file is checked against applicant-system rules before download, and answers to gap questions become facts marked "from you".
+
+Evidence rules: every requirement and gate quotes the posting, and a quote that is not in the posting is dropped. A requirement the posting only implies can never be a must or required. Every fact quotes its source line, and every sentence in the resume and the cover note cites the facts it rests on. A number that no cited fact contains becomes a `[x]` placeholder, which blocks the download until the person settles it. A row without a cited fact is "can't tell", never a gap, and a gate answered "uncertain" never blocks a match. The band and the confidence are computed in code. Instructions inside a posting are reported as anomalies and not followed, and links inside a posting are never opened.
+
+Cost: about half a cent per match on Haiku 5.5, as measured. A match needs an account. The first one each calendar month is free; after that a pack of three or a 30-day pass is bought. Re-checks after answers, resumes, cover notes and downloads never use up a posting.
+
+Routes: `POST /api/match` (NDJSON), `GET /api/match/{id}`, `GET /api/matches`, `POST /api/match/{id}/answers`, `POST|GET|PATCH /api/match/{id}/resume`, `GET /api/match/{id}/resume.pdf|.docx`, `POST|GET /api/match/{id}/cover`, `GET /api/match/{id}/cover.pdf`. Details: `docs/backend.md` → Posting match.
+
 ## Key backend paths
 
 | Path | Module | Purpose |
@@ -130,6 +150,9 @@ facts. The same content renders as an "Old Newspaper" front page. Details: `docs
 | `backend/tayyari/api/` | HTTP routes | FastAPI app, request deps, NDJSON streaming, file uploads, error handling |
 | `backend/tayyari/cli/` | commands | Python entry point: `dev`, `serve`, `migrate`, `smoke`, `make-sample`, `ingest-check`, `deploy` |
 | `backend/tayyari/sample/` | fixtures | Bundled sample profile (Riya Kapoor); data source of truth for offline testing |
+| `backend/tayyari/auth/` | accounts | Google sign-in (PKCE, ID-token checks), emailed sign-in links, server-side sessions, Resend email |
+| `backend/tayyari/billing/` | payments | Products and prices, entitlements (pass, free monthly posting, credits), Razorpay and Stripe gateways, webhooks |
+| `backend/tayyari/match/` | posting match | Reading a posting, facts, gates, coverage, radar, questions, resume and cover note, export and lint (pure services) |
 | `backend/tests/` | tests | Unit, integration, fakes, golden baselines |
 
 ## Configuration (TAYYARI_* settings)
@@ -184,6 +207,7 @@ From the repository root:
 | `npm run test:py` | All Python tests pass (unit, integration, golden, fakes) |
 | `npm run lint:py` | Code meets Ruff style and is auto-formatted |
 | `npm run typecheck:py` | mypy strict type checking on new code passes |
+| `npm run check:match` | The posting-match screens show every requirement row, citation and cover paragraph of the stored match, for both persona fixtures (also run by `npm run check`) |
 
 Individual test areas:
 
@@ -199,7 +223,8 @@ Frontend checks (unchanged):
 npm run check:palette   # WCAG contrast at all hues
 npm run check:restraint # no shadows, filters, infinite animations
 npm run check:build     # bundle still has @property --h, tokens, SPA
-npm run check           # full typecheck + three checks above
+npm run check:match     # posting-match screens against the stored match fixtures
+npm run check           # typecheck and every check above, plus portfolio parity
 ```
 
 ## Atmosphere
@@ -235,4 +260,4 @@ the colour travels. The hue is a function of wall-clock time plus a random per-b
 
 - LinkedIn usually blocks automated reading; paste your About section into **Extra context** instead.
 - Lovable *editor* links need a login; share the published `*.lovable.app` URL.
-- Profiles and chat context are stored in the database (Postgres on FastAPI Cloud, SQLite locally, encrypted on disk). There is no frontend auth — run it locally or set rate limits in the cloud.
+- Profiles and chat context are stored in the database (Postgres on FastAPI Cloud, SQLite locally, encrypted on disk). Analysis, chat and portfolios stay open to anonymous visitors and are rate-limited by IP. Keeping a graph with an account, the posting match and purchases need a sign-in; the profile on screen is claimed by the account automatically after a sign-in.

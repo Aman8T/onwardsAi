@@ -1,0 +1,1477 @@
+{
+  "posting": {
+    "hash": "789b95bc0090f13f7468fadb748c3dd52779a2a4a253396c96a449956cfa93fb",
+    "title": "Senior Growth Marketing Manager",
+    "company": "Lumen Retail",
+    "location": "Mumbai, India",
+    "workMode": "hybrid",
+    "rawText": "Senior Growth Marketing Manager\nLumen Retail · Mumbai, India · Hybrid (3 days a week in the office)\n\nAbout Lumen Retail\nLumen Retail runs 140 home-lighting stores and a fast-growing online shop. We are building a growth team that treats every channel as an experiment.\n\nWhat you will do\n- Own acquisition and retention across paid, lifecycle and owned channels for the online shop.\n- Run a disciplined experimentation programme: hypotheses, holdouts and readouts.\n- Build the weekly performance view for the leadership team.\n- Lead a team of marketers and agency partners.\n\nWhat you need\n- Must have 5+ years of growth, performance or lifecycle marketing experience at a consumer brand.\n- Must have hands-on ownership of a paid media budget above ₹1 crore a year across Meta Ads and Google Ads.\n- Required: strong command of lifecycle marketing on email and WhatsApp, using an ESP such as Klaviyo, CleverTap or MoEngage.\n- Required: a proven A/B testing and experimentation practice.\n- Required: experience leading a team of at least 5 people.\n- Required: fluent in English and Hindi.\n- Must have worked with a customer data platform such as Segment or mParticle.\n\nNice to have\n- Experience building dashboards in Looker Studio or Power BI.\n- Marketing mix modelling or multi-touch attribution.\n- Shopify Plus experience.\n- MBA or postgraduate degree in marketing.\n- Familiarity with SQL.\n\nEligibility\n- Must be authorised to work in India and able to be in the Mumbai office three days a week.\n- Candidates must hold a bachelor's degree.\n\nHow to apply\nApply at https://careers.lumenretail.example/jobs/sgmm-2291 or read more at https://www.lumenretail.example/about.",
+    "requirements": [
+      {
+        "id": "r1",
+        "text": "5+ years of growth, performance or lifecycle marketing experience at a consumer brand",
+        "quote": "Must have 5+ years of growth, performance or lifecycle marketing experience at a consumer brand.",
+        "tier": "must",
+        "kind": "years",
+        "provenance": "stated",
+        "domainHint": "Growth marketing",
+        "terms": []
+      },
+      {
+        "id": "r2",
+        "text": "Owns a paid media budget above Rs 1 crore a year across Meta Ads and Google Ads",
+        "quote": "Must have hands-on ownership of a paid media budget above ₹1 crore a year across Meta Ads and Google Ads.",
+        "tier": "must",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Paid media",
+        "terms": [
+          "Meta Ads",
+          "Google Ads"
+        ]
+      },
+      {
+        "id": "r3",
+        "text": "Lifecycle marketing on email and WhatsApp with an ESP",
+        "quote": "Required: strong command of lifecycle marketing on email and WhatsApp, using an ESP such as Klaviyo, CleverTap or MoEngage.",
+        "tier": "required",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Lifecycle marketing",
+        "terms": [
+          "email",
+          "WhatsApp",
+          "Klaviyo",
+          "CleverTap",
+          "MoEngage"
+        ]
+      },
+      {
+        "id": "r4",
+        "text": "A proven A/B testing and experimentation practice",
+        "quote": "Required: a proven A/B testing and experimentation practice.",
+        "tier": "required",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Experimentation",
+        "terms": [
+          "A/B testing"
+        ]
+      },
+      {
+        "id": "r5",
+        "text": "Experience leading a team of at least 5 people",
+        "quote": "Required: experience leading a team of at least 5 people.",
+        "tier": "required",
+        "kind": "years",
+        "provenance": "stated",
+        "domainHint": "Team leadership",
+        "terms": []
+      },
+      {
+        "id": "r6",
+        "text": "Fluent in English and Hindi",
+        "quote": "Required: fluent in English and Hindi.",
+        "tier": "required",
+        "kind": "language",
+        "provenance": "stated",
+        "domainHint": "Languages",
+        "terms": [
+          "English",
+          "Hindi"
+        ]
+      },
+      {
+        "id": "r7",
+        "text": "Has worked with a customer data platform",
+        "quote": "Must have worked with a customer data platform such as Segment or mParticle.",
+        "tier": "must",
+        "kind": "tool",
+        "provenance": "stated",
+        "domainHint": "Data and analytics",
+        "terms": [
+          "customer data platform",
+          "Segment",
+          "mParticle"
+        ]
+      },
+      {
+        "id": "r8",
+        "text": "Builds dashboards in Looker Studio or Power BI",
+        "quote": "Experience building dashboards in Looker Studio or Power BI.",
+        "tier": "nice",
+        "kind": "tool",
+        "provenance": "stated",
+        "domainHint": "Analytics",
+        "terms": [
+          "Looker Studio",
+          "Power BI"
+        ]
+      },
+      {
+        "id": "r9",
+        "text": "Marketing mix modelling or multi-touch attribution",
+        "quote": "Marketing mix modelling or multi-touch attribution.",
+        "tier": "nice",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Analytics",
+        "terms": [
+          "Marketing mix modelling",
+          "multi-touch attribution"
+        ]
+      },
+      {
+        "id": "r10",
+        "text": "Shopify Plus experience",
+        "quote": "Shopify Plus experience.",
+        "tier": "nice",
+        "kind": "tool",
+        "provenance": "stated",
+        "domainHint": "E-commerce",
+        "terms": [
+          "Shopify Plus"
+        ]
+      },
+      {
+        "id": "r11",
+        "text": "MBA or postgraduate degree in marketing",
+        "quote": "MBA or postgraduate degree in marketing.",
+        "tier": "nice",
+        "kind": "degree",
+        "provenance": "stated",
+        "domainHint": "Education",
+        "terms": []
+      },
+      {
+        "id": "r12",
+        "text": "Familiarity with SQL",
+        "quote": "Familiarity with SQL.",
+        "tier": "nice",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Data and analytics",
+        "terms": [
+          "SQL"
+        ]
+      },
+      {
+        "id": "r13",
+        "text": "Owns acquisition and retention across paid, lifecycle and owned channels",
+        "quote": "Own acquisition and retention across paid, lifecycle and owned channels for the online shop.",
+        "tier": "required",
+        "kind": "domain",
+        "provenance": "structural",
+        "domainHint": "Growth marketing",
+        "terms": []
+      },
+      {
+        "id": "r14",
+        "text": "Runs a disciplined experimentation programme",
+        "quote": "Run a disciplined experimentation programme: hypotheses, holdouts and readouts.",
+        "tier": "preferred",
+        "kind": "domain",
+        "provenance": "structural",
+        "domainHint": "Experimentation",
+        "terms": []
+      },
+      {
+        "id": "r15",
+        "text": "Builds the weekly performance view for leadership",
+        "quote": "Build the weekly performance view for the leadership team.",
+        "tier": "preferred",
+        "kind": "skill",
+        "provenance": "inferred",
+        "domainHint": "Analytics",
+        "terms": []
+      }
+    ],
+    "gates": [
+      {
+        "id": "g1",
+        "question": "Are you authorised to work in India?",
+        "quote": "Must be authorised to work in India",
+        "severity": 9
+      },
+      {
+        "id": "g2",
+        "question": "Can you be in the Mumbai office three days a week?",
+        "quote": "able to be in the Mumbai office three days a week",
+        "severity": 7
+      },
+      {
+        "id": "g3",
+        "question": "Do you hold a bachelor's degree?",
+        "quote": "Candidates must hold a bachelor's degree.",
+        "severity": 6
+      }
+    ],
+    "anomalies": [],
+    "links": [
+      "https://careers.lumenretail.example/jobs/sgmm-2291",
+      "https://www.lumenretail.example/about"
+    ]
+  },
+  "facts": [
+    {
+      "id": "quote-1",
+      "text": "I run lifecycle and paid acquisition for consumer brands, and I like finding the one experiment that moves a number.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            7,
+            7
+          ],
+          "quote": "I run lifecycle and paid acquisition for consumer brands, and I like finding the one experiment that moves a number."
+        }
+      ]
+    },
+    {
+      "id": "exp-1",
+      "text": "Growth Marketing Manager at Brightwell Foods, Pune (Mar 2023 - Present)",
+      "kind": "experience",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            12,
+            12
+          ],
+          "quote": "Brightwell Foods — Growth Marketing Manager Pune · Mar 2023 – Present"
+        }
+      ]
+    },
+    {
+      "id": "exp-1.1",
+      "text": "Led the lifecycle email and WhatsApp programme for 400,000 subscribers on CleverTap; repeat purchase rate rose from 22% to 31% in two quarters.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            14,
+            14
+          ],
+          "quote": "Led the lifecycle email and WhatsApp programme for 400,000 subscribers on CleverTap; repeat purchase rate rose from 22% to 31% in two quarters."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-1.2",
+      "text": "Own the paid acquisition budget across Meta Ads and Google Ads (₹3.2 crore a year) and cut blended CAC from ₹610 to ₹455 after a geo holdout test.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            15,
+            15
+          ],
+          "quote": "Own the paid acquisition budget across Meta Ads and Google Ads (₹3.2 crore a year) and cut blended CAC from ₹610 to ₹455 after a geo holdout test."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-1.3",
+      "text": "Ran 38 A/B tests on landing pages and checkout nudges; five winners shipped and added 6.4% to site conversion.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            16,
+            16
+          ],
+          "quote": "Ran 38 A/B tests on landing pages and checkout nudges; five winners shipped and added 6.4% to site conversion."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-1.4",
+      "text": "Manage a team of 3 marketers and 2 freelancers, and run the Monday growth review with finance and product.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            17,
+            17
+          ],
+          "quote": "Manage a team of 3 marketers and 2 freelancers, and run the Monday growth review with finance and product."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-1.5",
+      "text": "Mentored 2 associates into channel owner roles within a year.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            18,
+            18
+          ],
+          "quote": "Mentored 2 associates into channel owner roles within a year."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-2",
+      "text": "Performance Marketing Specialist at Pinecrest Media, Mumbai (Jun 2020 - Feb 2023)",
+      "kind": "experience",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            20,
+            20
+          ],
+          "quote": "Pinecrest Media — Performance Marketing Specialist Mumbai · Jun 2020 – Feb 2023"
+        }
+      ]
+    },
+    {
+      "id": "exp-2.1",
+      "text": "Managed Google Ads and Meta Ads campaigns for the subscription app, growing paid installs from 9,000 to 21,000 a month.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            22,
+            22
+          ],
+          "quote": "Managed Google Ads and Meta Ads campaigns for the subscription app, growing paid installs from 9,000 to 21,000 a month."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-2.2",
+      "text": "Built the weekly acquisition report for the founders in Google Sheets.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            23,
+            23
+          ],
+          "quote": "Built the weekly acquisition report for the founders in Google Sheets."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-2.3",
+      "text": "Wrote the SEO brief process for 6 writers; organic sessions grew 48% in a year.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            24,
+            24
+          ],
+          "quote": "Wrote the SEO brief process for 6 writers; organic sessions grew 48% in a year."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-3",
+      "text": "Marketing Associate at Kitchen Table Co, Pune (Jul 2018 - May 2020)",
+      "kind": "experience",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            26,
+            26
+          ],
+          "quote": "Kitchen Table Co — Marketing Associate Pune · Jul 2018 – May 2020"
+        }
+      ]
+    },
+    {
+      "id": "exp-3.1",
+      "text": "Ran social media and email newsletters for the brand.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            28,
+            28
+          ],
+          "quote": "Ran social media and email newsletters for the brand."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-3.2",
+      "text": "Planned and ran 12 Instagram giveaways that added 15,000 followers.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            29,
+            29
+          ],
+          "quote": "Planned and ran 12 Instagram giveaways that added 15,000 followers."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "edu-1",
+      "text": "B.Com, Savitribai Phule Pune University (2015 - 2018)",
+      "kind": "education",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            32,
+            32
+          ],
+          "quote": "B.Com — Savitribai Phule Pune University 2015 – 2018"
+        }
+      ]
+    },
+    {
+      "id": "ach-1",
+      "text": "Brightwell Foods \"Growth Star\" award, FY24, for the repeat-purchase programme.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            35,
+            35
+          ],
+          "quote": "Brightwell Foods \"Growth Star\" award, FY24, for the repeat-purchase programme."
+        }
+      ]
+    },
+    {
+      "id": "clip-1",
+      "text": "“How a geo holdout told us our best channel was our worst”, Growth notes (2025)",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "link",
+          "docId": "link-1",
+          "lines": [
+            6,
+            6
+          ],
+          "quote": "\"How a geo holdout told us our best channel was our worst\" — Growth notes, 2025"
+        }
+      ]
+    },
+    {
+      "id": "clip-2",
+      "text": "“Building a weekly growth dashboard in Looker Studio that finance trusts”, Growth notes (2024)",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "link",
+          "docId": "link-1",
+          "lines": [
+            7,
+            7
+          ],
+          "quote": "\"Building a weekly growth dashboard in Looker Studio that finance trusts\" — Growth notes, 2024"
+        }
+      ]
+    },
+    {
+      "id": "quote-2",
+      "text": "I write about experiments that changed a decision.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "link",
+          "docId": "link-1",
+          "lines": [
+            4,
+            4
+          ],
+          "quote": "I write about experiments that changed a decision."
+        }
+      ]
+    },
+    {
+      "id": "skill-a-b-testing",
+      "text": "A/B testing",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            16,
+            16
+          ],
+          "quote": "Ran 38 A/B tests on landing pages and checkout nudges; five winners shipped and added 6.4% to site conversion."
+        },
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            40,
+            40
+          ],
+          "quote": "Methods: A/B testing, geo holdout tests, cohort analysis, lifecycle marketing"
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-email-marketing",
+      "text": "Email marketing",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            14,
+            14
+          ],
+          "quote": "Led the lifecycle email and WhatsApp programme for 400,000 subscribers on CleverTap; repeat purchase rate rose from 22% to 31% in two quarters."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-meta-ads",
+      "text": "Meta Ads",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            15,
+            15
+          ],
+          "quote": "Own the paid acquisition budget across Meta Ads and Google Ads (₹3.2 crore a year) and cut blended CAC from ₹610 to ₹455 after a geo holdout test."
+        },
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            22,
+            22
+          ],
+          "quote": "Managed Google Ads and Meta Ads campaigns for the subscription app, growing paid installs from 9,000 to 21,000 a month."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-google-ads",
+      "text": "Google Ads",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            15,
+            15
+          ],
+          "quote": "Own the paid acquisition budget across Meta Ads and Google Ads (₹3.2 crore a year) and cut blended CAC from ₹610 to ₹455 after a geo holdout test."
+        },
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            22,
+            22
+          ],
+          "quote": "Managed Google Ads and Meta Ads campaigns for the subscription app, growing paid installs from 9,000 to 21,000 a month."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-paid-budget-ownership",
+      "text": "Paid budget ownership",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            15,
+            15
+          ],
+          "quote": "Own the paid acquisition budget across Meta Ads and Google Ads (₹3.2 crore a year) and cut blended CAC from ₹610 to ₹455 after a geo holdout test."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-clevertap",
+      "text": "CleverTap",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            14,
+            14
+          ],
+          "quote": "Led the lifecycle email and WhatsApp programme for 400,000 subscribers on CleverTap; repeat purchase rate rose from 22% to 31% in two quarters."
+        },
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            39,
+            39
+          ],
+          "quote": "Tools: CleverTap, Google Analytics, Google Sheets, Canva"
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-geo-holdout-testing",
+      "text": "Geo holdout testing",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            15,
+            15
+          ],
+          "quote": "Own the paid acquisition budget across Meta Ads and Google Ads (₹3.2 crore a year) and cut blended CAC from ₹610 to ₹455 after a geo holdout test."
+        },
+        {
+          "source": "link",
+          "docId": "link-1",
+          "lines": [
+            13,
+            13
+          ],
+          "quote": "We switched off Meta prospecting in four cities for three weeks and compared orders against matched cities. The holdout showed that 70% of the channel's last-click revenue would have happened anyway, and we moved the budget to search and lifecycle."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-whatsapp-marketing",
+      "text": "WhatsApp marketing",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            14,
+            14
+          ],
+          "quote": "Led the lifecycle email and WhatsApp programme for 400,000 subscribers on CleverTap; repeat purchase rate rose from 22% to 31% in two quarters."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-seo",
+      "text": "SEO",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            24,
+            24
+          ],
+          "quote": "Wrote the SEO brief process for 6 writers; organic sessions grew 48% in a year."
+        },
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            38,
+            38
+          ],
+          "quote": "Channels: Meta Ads, Google Ads, email, WhatsApp, SEO"
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-google-analytics",
+      "text": "Google Analytics",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            39,
+            39
+          ],
+          "quote": "Tools: CleverTap, Google Analytics, Google Sheets, Canva"
+        }
+      ],
+      "evidenceTier": "listed"
+    },
+    {
+      "id": "skill-team-leadership",
+      "text": "Team leadership",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            17,
+            17
+          ],
+          "quote": "Manage a team of 3 marketers and 2 freelancers, and run the Monday growth review with finance and product."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-looker-studio",
+      "text": "Looker Studio",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "link",
+          "docId": "link-1",
+          "lines": [
+            7,
+            7
+          ],
+          "quote": "\"Building a weekly growth dashboard in Looker Studio that finance trusts\" — Growth notes, 2024"
+        },
+        {
+          "source": "link",
+          "docId": "link-1",
+          "lines": [
+            10,
+            10
+          ],
+          "quote": "In 2024 I built the weekly growth dashboard in Looker Studio for Brightwell Foods, pulling spend from Meta Ads and Google Ads and orders from the store export into one view for the leadership team. The Monday review now starts from this single page instead of five decks."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-cohort-analysis",
+      "text": "Cohort analysis",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            40,
+            40
+          ],
+          "quote": "Methods: A/B testing, geo holdout tests, cohort analysis, lifecycle marketing"
+        }
+      ],
+      "evidenceTier": "listed"
+    }
+  ],
+  "result": {
+    "postingHash": "789b95bc0090f13f7468fadb748c3dd52779a2a4a253396c96a449956cfa93fb",
+    "band": "good",
+    "counts": {
+      "covered": 7,
+      "partial": 1,
+      "synonym_only": 0,
+      "missing_have_it": 1,
+      "missing_gap": 5,
+      "unknown": 1
+    },
+    "confidence": "low",
+    "confidenceNote": "2 hard conditions aren't evidenced yet. Answering the questions firms this up.",
+    "gates": [
+      {
+        "gateId": "g1",
+        "factIds": [],
+        "verdict": "uncertain",
+        "note": "Scripted."
+      },
+      {
+        "gateId": "g2",
+        "factIds": [
+          "exp-1"
+        ],
+        "verdict": "uncertain",
+        "note": "Scripted."
+      },
+      {
+        "gateId": "g3",
+        "factIds": [
+          "edu-1"
+        ],
+        "verdict": "pass",
+        "note": "Scripted."
+      }
+    ],
+    "blocked": false,
+    "coverage": [
+      {
+        "requirementId": "r1",
+        "factIds": [
+          "exp-1",
+          "exp-2",
+          "exp-3"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r2",
+        "factIds": [
+          "exp-1.2",
+          "skill-meta-ads",
+          "skill-paid-budget-ownership"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r3",
+        "factIds": [
+          "exp-1.1",
+          "skill-clevertap",
+          "skill-whatsapp-marketing"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r4",
+        "factIds": [
+          "exp-1.3",
+          "skill-a-b-testing"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r5",
+        "factIds": [
+          "exp-1.4",
+          "skill-team-leadership"
+        ],
+        "status": "partial",
+        "level": 3,
+        "note": "Scripted: partial.",
+        "interviewRisk": "They will ask for a concrete example.",
+        "mitigation": "Build one small, honest example."
+      },
+      {
+        "requirementId": "r6",
+        "factIds": [],
+        "status": "unknown",
+        "level": 0,
+        "note": "Scripted: unknown."
+      },
+      {
+        "requirementId": "r7",
+        "factIds": [],
+        "status": "missing_gap",
+        "level": 0,
+        "note": "Scripted: missing_gap.",
+        "interviewRisk": "They will ask for a concrete example.",
+        "mitigation": "Build one small, honest example."
+      },
+      {
+        "requirementId": "r8",
+        "factIds": [
+          "skill-looker-studio",
+          "clip-2"
+        ],
+        "status": "missing_have_it",
+        "level": 3,
+        "note": "Scripted: missing_have_it."
+      },
+      {
+        "requirementId": "r9",
+        "factIds": [],
+        "status": "missing_gap",
+        "level": 0,
+        "note": "Scripted: missing_gap."
+      },
+      {
+        "requirementId": "r10",
+        "factIds": [],
+        "status": "missing_gap",
+        "level": 0,
+        "note": "Scripted: missing_gap."
+      },
+      {
+        "requirementId": "r11",
+        "factIds": [],
+        "status": "missing_gap",
+        "level": 0,
+        "note": "Scripted: missing_gap."
+      },
+      {
+        "requirementId": "r12",
+        "factIds": [],
+        "status": "missing_gap",
+        "level": 0,
+        "note": "Scripted: missing_gap."
+      },
+      {
+        "requirementId": "r13",
+        "factIds": [
+          "exp-1.1",
+          "exp-1.2"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r14",
+        "factIds": [
+          "exp-1.3",
+          "skill-geo-holdout-testing"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r15",
+        "factIds": [
+          "exp-2.2"
+        ],
+        "status": "covered",
+        "level": 3,
+        "note": "Scripted: covered."
+      }
+    ],
+    "radar": {
+      "axes": [
+        {
+          "domain": "Paid",
+          "you": 78,
+          "role": 79
+        },
+        {
+          "domain": "Lifecycle",
+          "you": 80,
+          "role": 23
+        },
+        {
+          "domain": "Experiments",
+          "you": 74,
+          "role": 100
+        },
+        {
+          "domain": "Team",
+          "you": 60,
+          "role": 23
+        },
+        {
+          "domain": "Content",
+          "you": 58,
+          "role": 7
+        },
+        {
+          "domain": "Other",
+          "you": 0,
+          "role": 30
+        }
+      ]
+    },
+    "questions": [
+      {
+        "id": "q-g1",
+        "gateId": "g1",
+        "text": "Are you authorised to work in India? Answer in your own words; we keep it as something you said.",
+        "why": "A hard condition in the posting. Nothing in your documents settles it, and it decides whether the role is open to you."
+      },
+      {
+        "id": "q-g2",
+        "gateId": "g2",
+        "text": "Can you be in the Mumbai office three days a week? Answer in your own words; we keep it as something you said.",
+        "why": "A hard condition in the posting. Nothing in your documents settles it, and it decides whether the role is open to you."
+      },
+      {
+        "id": "q-r7",
+        "requirementId": "r7",
+        "text": "The posting asks for Has worked with a customer data platform. Is there any work of yours, in a job or outside one, that shows it?",
+        "why": "We can't find it in your resume or links (must). If you have it, it becomes evidence; if not, it stays an honest gap."
+      }
+    ],
+    "version": 1
+  },
+  "variant": {
+    "header": {
+      "name": "Meera Nair",
+      "headline": "Growth Marketing Manager · 6 yrs · Pune",
+      "contact": [
+        "meera.nair.growth@example.com",
+        "+91 90000 45678"
+      ]
+    },
+    "summary": {
+      "id": "summary",
+      "text": "Led the lifecycle email and WhatsApp programme for 400,000 subscribers on CleverTap; repeat purchase rate rose from 22% to 31% in two quarters.",
+      "factIds": [
+        "exp-1.1"
+      ],
+      "verdict": "exact",
+      "placeholders": [],
+      "status": "verified"
+    },
+    "skills": [
+      {
+        "group": "Tools",
+        "items": [
+          {
+            "name": "Looker Studio",
+            "factIds": [
+              "skill-looker-studio"
+            ],
+            "evidenceTier": "used"
+          }
+        ]
+      },
+      {
+        "group": "Skills",
+        "items": [
+          {
+            "name": "Meta Ads",
+            "factIds": [
+              "skill-meta-ads"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "Paid budget ownership",
+            "factIds": [
+              "skill-paid-budget-ownership"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "CleverTap",
+            "factIds": [
+              "skill-clevertap"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "WhatsApp marketing",
+            "factIds": [
+              "skill-whatsapp-marketing"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "A/B testing",
+            "factIds": [
+              "skill-a-b-testing"
+            ],
+            "evidenceTier": "used"
+          }
+        ]
+      },
+      {
+        "group": "Domain",
+        "items": [
+          {
+            "name": "Geo holdout testing",
+            "factIds": [
+              "skill-geo-holdout-testing"
+            ],
+            "evidenceTier": "used"
+          }
+        ]
+      },
+      {
+        "group": "Other skills",
+        "items": [
+          {
+            "name": "Team leadership",
+            "factIds": [
+              "skill-team-leadership"
+            ],
+            "evidenceTier": "used"
+          }
+        ]
+      }
+    ],
+    "experience": [
+      {
+        "entryFactId": "exp-1",
+        "title": "Growth Marketing Manager",
+        "org": "Brightwell Foods",
+        "dates": "Mar 2023 - Present",
+        "bullets": [
+          {
+            "id": "b-exp-1.1",
+            "text": "Led the lifecycle email and WhatsApp programme for 400,000 subscribers on CleverTap; repeat purchase rate rose from 22% to 31% in two quarters.",
+            "factIds": [
+              "exp-1.1"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-1.2",
+            "text": "Own the paid acquisition budget across Meta Ads and Google Ads (₹3.2 crore a year) and cut blended CAC from ₹610 to ₹455 after a geo holdout test.",
+            "factIds": [
+              "exp-1.2"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-1.3",
+            "text": "Ran 38 A/B tests on landing pages and checkout nudges; five winners shipped and added 6.4% to site conversion.",
+            "factIds": [
+              "exp-1.3"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-1.4",
+            "text": "Manage a team of 3 marketers and 2 freelancers, and run the Monday growth review with finance and product.",
+            "factIds": [
+              "exp-1.4"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-1.5",
+            "text": "Mentored 2 associates into channel owner roles within a year.",
+            "factIds": [
+              "exp-1.5"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      },
+      {
+        "entryFactId": "exp-2",
+        "title": "Performance Marketing Specialist",
+        "org": "Pinecrest Media",
+        "dates": "Jun 2020 - Feb 2023",
+        "bullets": [
+          {
+            "id": "b-exp-2.2",
+            "text": "Built the weekly acquisition report for the founders in Google Sheets.",
+            "factIds": [
+              "exp-2.2"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-2.1",
+            "text": "Managed Google Ads and Meta Ads campaigns for the subscription app, growing paid installs from 9,000 to 21,000 a month.",
+            "factIds": [
+              "exp-2.1"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-2.3",
+            "text": "Wrote the SEO brief process for 6 writers; organic sessions grew 48% in a year.",
+            "factIds": [
+              "exp-2.3"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      },
+      {
+        "entryFactId": "exp-3",
+        "title": "Marketing Associate",
+        "org": "Kitchen Table Co",
+        "dates": "Jul 2018 - May 2020",
+        "bullets": [
+          {
+            "id": "b-exp-3.1",
+            "text": "Ran social media and email newsletters for the brand.",
+            "factIds": [
+              "exp-3.1"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-3.2",
+            "text": "Planned and ran 12 Instagram giveaways that added 15,000 followers.",
+            "factIds": [
+              "exp-3.2"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      }
+    ],
+    "projects": [],
+    "education": [
+      {
+        "factId": "edu-1",
+        "title": "B.Com",
+        "org": "Savitribai Phule Pune University",
+        "dates": "2015 - 2018"
+      }
+    ],
+    "decisions": [],
+    "changes": [
+      {
+        "kind": "surfaced",
+        "text": "Added Looker Studio from your public page; your resume did not say it.",
+        "factIds": [
+          "skill-looker-studio"
+        ]
+      },
+      {
+        "kind": "reordered",
+        "text": "Moved the lines of Performance Marketing Specialist that match the posting to the top.",
+        "factIds": [
+          "exp-2.2",
+          "exp-2.1",
+          "exp-2.3"
+        ]
+      }
+    ],
+    "lint": {
+      "items": [
+        {
+          "id": "cites_fact",
+          "ok": true,
+          "label": "Every sentence cites a fact",
+          "detail": "Every sentence cites facts, and the files hold nothing else."
+        },
+        {
+          "id": "numbers_cited",
+          "ok": true,
+          "label": "Every number comes from a cited fact",
+          "detail": "Every number is in a fact the resume cites."
+        },
+        {
+          "id": "text_layer",
+          "ok": true,
+          "label": "The file has a real text layer",
+          "detail": "Both files carry real text."
+        },
+        {
+          "id": "single_column",
+          "ok": true,
+          "label": "One column, no tables or text boxes",
+          "detail": "One column of plain paragraphs."
+        },
+        {
+          "id": "standard_headings",
+          "ok": true,
+          "label": "Standard section headings",
+          "detail": "Headings: SUMMARY, EXPERIENCE, SKILLS, EDUCATION."
+        },
+        {
+          "id": "contact_text",
+          "ok": true,
+          "label": "Contact details are plain text",
+          "detail": "Email and phone are plain text in the body."
+        },
+        {
+          "id": "header_footer",
+          "ok": true,
+          "label": "No contact details in headers or footers",
+          "detail": "Contact details appear once, in the body."
+        },
+        {
+          "id": "date_ranges",
+          "ok": true,
+          "label": "Dates are plain ranges with both ends",
+          "detail": "Every date range reads like Jan 2021 - Present."
+        },
+        {
+          "id": "page_count",
+          "ok": true,
+          "label": "Page count",
+          "detail": "1 page"
+        },
+        {
+          "id": "round_trip",
+          "ok": true,
+          "label": "The text survives extraction",
+          "detail": "All 11 sentences read back exactly."
+        }
+      ]
+    }
+  },
+  "cover": {
+    "paragraphs": [
+      {
+        "text": "I am a Growth Marketing Manager at Brightwell Foods, and before that I was a Performance Marketing Specialist at Pinecrest Media. The Senior Growth Marketing Manager role at Lumen Retail asks for growth, performance and lifecycle marketing at a consumer brand, and that is the work I have done in both places. Both jobs were about turning spend and messaging into growth that someone could measure, and I like that kind of accountability.",
+        "requirementIds": [
+          "r1"
+        ],
+        "factIds": [
+          "exp-1",
+          "exp-2"
+        ],
+        "kind": "match"
+      },
+      {
+        "text": "At Brightwell Foods I led the lifecycle email and WhatsApp programme for 400,000 subscribers on CleverTap. Repeat purchase rate rose from 22% to 31% in two quarters. Your posting asks for strong lifecycle marketing on email and WhatsApp, and this programme is the clearest example I have of that work. It is also the programme I know best, from the first message plan to the results review.",
+        "requirementIds": [
+          "r3"
+        ],
+        "factIds": [
+          "exp-1",
+          "exp-1.1",
+          "skill-clevertap"
+        ],
+        "kind": "match"
+      },
+      {
+        "text": "I also own the paid acquisition budget across Meta Ads and Google Ads, which is ₹3.2 crore a year. After a geo holdout test I cut blended CAC from ₹610 to ₹455. That test is how I decide where paid spend goes, and it is the habit I would bring to Lumen Retail. Paid media is a place where it is easy to trust a dashboard and be wrong, so I prefer to hold a region back and compare.",
+        "requirementIds": [
+          "r2"
+        ],
+        "factIds": [
+          "exp-1",
+          "exp-1.2",
+          "skill-meta-ads"
+        ],
+        "kind": "match"
+      },
+      {
+        "text": "On experimentation, I ran 38 A/B tests on landing pages and checkout nudges. Five winners shipped and added 6.4% to site conversion. I treat each test as a decision that has to be defended with numbers, and I would run the growth programme at Lumen Retail the same way. I would also share every readout with the wider team, whatever it showed.",
+        "requirementIds": [
+          "r4"
+        ],
+        "factIds": [
+          "exp-1",
+          "exp-1.3",
+          "skill-a-b-testing"
+        ],
+        "kind": "match"
+      },
+      {
+        "text": "I have not yet worked with a customer data platform such as Segment or mParticle.",
+        "requirementIds": [
+          "r7"
+        ],
+        "factIds": [],
+        "kind": "gap"
+      },
+      {
+        "text": "Thank you for your time. I would welcome a conversation about the role.",
+        "requirementIds": [],
+        "factIds": [],
+        "kind": "close"
+      }
+    ],
+    "wordCount": 313,
+    "lint": {
+      "items": [
+        {
+          "id": "cites_fact",
+          "ok": true,
+          "label": "Every sentence cites a fact",
+          "detail": "Every claim cites facts."
+        },
+        {
+          "id": "numbers_cited",
+          "ok": true,
+          "label": "Every number comes from a cited fact",
+          "detail": "Every number is in a fact the note cites."
+        },
+        {
+          "id": "length",
+          "ok": true,
+          "label": "Length is 250 to 400 words",
+          "detail": "313 words."
+        },
+        {
+          "id": "openers",
+          "ok": true,
+          "label": "No generic opener or puffery",
+          "detail": "No generic opener or puffery."
+        },
+        {
+          "id": "text_layer",
+          "ok": true,
+          "label": "The file has a real text layer",
+          "detail": "Both files carry real text."
+        },
+        {
+          "id": "single_column",
+          "ok": true,
+          "label": "One column, no tables or text boxes",
+          "detail": "One column of plain paragraphs."
+        },
+        {
+          "id": "round_trip",
+          "ok": true,
+          "label": "The text survives extraction",
+          "detail": "All 6 paragraphs read back exactly."
+        }
+      ]
+    }
+  }
+}

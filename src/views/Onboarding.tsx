@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ClipboardEvent, FormEvent, KeyboardEvent } from 'react';
 import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion/react';
 import type { SourceKind } from '../../shared/types';
+import { AccountMenu } from '../auth/AccountMenu';
 import { Brand } from '../components/Brand';
 import { IconArrowRight, IconDoc, IconMinus, IconPlus, IconUpload } from '../components/Icons';
 import { CursorLight } from '../light/CursorLight';
@@ -479,6 +480,7 @@ export function Onboarding() {
             <button type="button" className="btn" onClick={() => void actions.startAnalysis({ sample: true, links: [] })}>
               Try a sample profile
             </button>
+            <AccountMenu />
           </nav>
         </header>
 

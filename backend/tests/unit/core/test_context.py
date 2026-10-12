@@ -37,9 +37,16 @@ def test_binding_none_clears_a_value_inside_the_block() -> None:
 
 
 def test_current_lists_variables_in_the_documented_order() -> None:
-    with bind(ip_hash="i", session_id="s", profile_id="p", analysis_id="a", request_id="r"):
-        assert list(current()) == ["request_id", "analysis_id", "profile_id", "session_id", "ip_hash"]
-    assert context.KEYS == ("request_id", "analysis_id", "profile_id", "session_id", "ip_hash")
+    with bind(user_id="u", ip_hash="i", session_id="s", profile_id="p", analysis_id="a", request_id="r"):
+        assert list(current()) == [
+            "request_id",
+            "analysis_id",
+            "profile_id",
+            "session_id",
+            "ip_hash",
+            "user_id",
+        ]
+    assert context.KEYS == ("request_id", "analysis_id", "profile_id", "session_id", "ip_hash", "user_id")
 
 
 def test_uuid_values_are_stored_as_strings() -> None:

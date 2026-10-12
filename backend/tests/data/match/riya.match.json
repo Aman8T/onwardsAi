@@ -1,0 +1,1786 @@
+{
+  "posting": {
+    "hash": "bde541a95ceffe6c7880463f777017ff86665ad0d102cbf8f9aa757a46efdd7d",
+    "title": "Senior Frontend Engineer, Design Systems",
+    "company": "Northwind Commerce",
+    "location": "Remote (India or EU time zones)",
+    "workMode": "remote",
+    "rawText": "Senior Frontend Engineer, Design Systems\nNorthwind Commerce · Remote (India or EU time zones) · Full time\n\nNorthwind Commerce builds checkout and storefront software for mid-sized retailers. Our design system is used by four product teams and ships every week.\n\nWhat you will do\n- Own the Northwind design system: components, tokens and the Storybook documentation.\n- Raise the bar on accessibility and performance across the checkout.\n- Partner with designers on Figma-to-code handoffs and review pull requests for the web team.\n\nRequirements\n- Must have 5+ years building production web applications with React and TypeScript.\n- Deep experience owning a component library or design system used by several teams.\n- Practical accessibility experience: WCAG 2.1 AA audits and fixes.\n- Experience with automated testing: unit tests with Vitest or Jest and end-to-end tests with Playwright.\n- Strong command of web performance: Core Web Vitals, LCP and bundle budgets.\n- Experience with GraphQL APIs, ideally Apollo Federation.\n\nPreferred\n- Experience mentoring engineers and leading code review.\n- Experience with Next.js and React server components.\n\nNice to have\n- Rust or WebAssembly experience.\n- Open-source maintenance.\n\nEligibility\n- Must be legally able to work in India or the EU without visa sponsorship from us.\n\nApply at https://jobs.northwind-commerce.example/frontend-design-systems",
+    "requirements": [
+      {
+        "id": "r1",
+        "text": "5+ years building production web applications with React and TypeScript",
+        "quote": "Must have 5+ years building production web applications with React and TypeScript.",
+        "tier": "must",
+        "kind": "years",
+        "provenance": "stated",
+        "domainHint": "Frontend",
+        "terms": [
+          "React",
+          "TypeScript"
+        ]
+      },
+      {
+        "id": "r2",
+        "text": "Owns a component library or design system used by several teams",
+        "quote": "Deep experience owning a component library or design system used by several teams.",
+        "tier": "required",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Design systems",
+        "terms": [
+          "component library",
+          "design system"
+        ]
+      },
+      {
+        "id": "r3",
+        "text": "WCAG 2.1 AA accessibility audits and fixes",
+        "quote": "Practical accessibility experience: WCAG 2.1 AA audits and fixes.",
+        "tier": "required",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Accessibility",
+        "terms": [
+          "WCAG 2.1 AA"
+        ]
+      },
+      {
+        "id": "r4",
+        "text": "Automated testing with Vitest or Jest and Playwright",
+        "quote": "Experience with automated testing: unit tests with Vitest or Jest and end-to-end tests with Playwright.",
+        "tier": "required",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Testing",
+        "terms": [
+          "Vitest",
+          "Jest",
+          "Playwright"
+        ]
+      },
+      {
+        "id": "r5",
+        "text": "Web performance: Core Web Vitals, LCP and bundle budgets",
+        "quote": "Strong command of web performance: Core Web Vitals, LCP and bundle budgets.",
+        "tier": "required",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Frontend",
+        "terms": [
+          "Core Web Vitals",
+          "LCP"
+        ]
+      },
+      {
+        "id": "r6",
+        "text": "GraphQL APIs, ideally Apollo Federation",
+        "quote": "Experience with GraphQL APIs, ideally Apollo Federation.",
+        "tier": "required",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Backend and APIs",
+        "terms": [
+          "GraphQL",
+          "Apollo Federation"
+        ]
+      },
+      {
+        "id": "r7",
+        "text": "Mentoring engineers and leading code review",
+        "quote": "Experience mentoring engineers and leading code review.",
+        "tier": "preferred",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Collaboration",
+        "terms": []
+      },
+      {
+        "id": "r8",
+        "text": "Next.js and React server components",
+        "quote": "Experience with Next.js and React server components.",
+        "tier": "preferred",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Frontend",
+        "terms": [
+          "Next.js",
+          "React server components"
+        ]
+      },
+      {
+        "id": "r9",
+        "text": "Rust or WebAssembly experience",
+        "quote": "Rust or WebAssembly experience.",
+        "tier": "nice",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Systems",
+        "terms": [
+          "Rust",
+          "WebAssembly"
+        ]
+      },
+      {
+        "id": "r10",
+        "text": "Open-source maintenance",
+        "quote": "Open-source maintenance.",
+        "tier": "nice",
+        "kind": "skill",
+        "provenance": "stated",
+        "domainHint": "Open source",
+        "terms": []
+      },
+      {
+        "id": "r11",
+        "text": "Owns the design system: components, tokens and Storybook documentation",
+        "quote": "Own the Northwind design system: components, tokens and the Storybook documentation.",
+        "tier": "required",
+        "kind": "domain",
+        "provenance": "structural",
+        "domainHint": "Design systems",
+        "terms": [
+          "Storybook"
+        ]
+      },
+      {
+        "id": "r12",
+        "text": "Partners with designers on Figma-to-code handoffs",
+        "quote": "Partner with designers on Figma-to-code handoffs and review pull requests for the web team.",
+        "tier": "preferred",
+        "kind": "skill",
+        "provenance": "structural",
+        "domainHint": "Design systems",
+        "terms": [
+          "Figma"
+        ]
+      }
+    ],
+    "gates": [
+      {
+        "id": "g1",
+        "question": "Are you legally able to work in India or the EU without visa sponsorship?",
+        "quote": "Must be legally able to work in India or the EU without visa sponsorship from us.",
+        "severity": 9
+      }
+    ],
+    "anomalies": [],
+    "links": [
+      "https://jobs.northwind-commerce.example/frontend-design-systems"
+    ]
+  },
+  "facts": [
+    {
+      "id": "quote-1",
+      "text": "I care about motion, design systems and the details that make a product feel finished.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            7,
+            7
+          ],
+          "quote": "I care about motion, design systems and the details that make a product feel finished."
+        }
+      ]
+    },
+    {
+      "id": "exp-1",
+      "text": "Frontend Engineer II at Kitebird, Bengaluru (Jul 2025 - Present) Tools: React, TypeScript, Storybook, Figma, Vite.",
+      "kind": "experience",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            12,
+            12
+          ],
+          "quote": "Kitebird — Frontend Engineer II Bengaluru · Jul 2025 – Present"
+        }
+      ]
+    },
+    {
+      "id": "exp-1.1",
+      "text": "Rebuilt the three-step checkout as a single-page flow in React and TypeScript with optimistic cart updates; checkout conversion rose 9.4% in the A/B test and LCP on the payment step dropped from 4.1s to 1.9s.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            14,
+            15
+          ],
+          "quote": "Rebuilt the three-step checkout as a single-page flow in React and TypeScript with optimistic cart updates; checkout conversion rose 9.4% in the A/B test and LCP on the payment step dropped from 4.1s to 1.9s."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-1.2",
+      "text": "Own Kite UI, the shared React component library (42 components, typed tokens, Storybook docs) used by 3 product squads.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            16,
+            16
+          ],
+          "quote": "Own Kite UI, the shared React component library (42 components, typed tokens, Storybook docs) used by 3 product squads."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-1.3",
+      "text": "Led the storefront migration to React 18 and Vite, removing the legacy CRA build and cutting local build times.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            17,
+            17
+          ],
+          "quote": "Led the storefront migration to React 18 and Vite, removing the legacy CRA build and cutting local build times."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-1.4",
+      "text": "Ran a WCAG 2.1 AA accessibility audit of checkout with design and fixed the critical issues (focus order, labels, colour contrast, screen-reader announcements for cart updates).",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            18,
+            19
+          ],
+          "quote": "Ran a WCAG 2.1 AA accessibility audit of checkout with design and fixed the critical issues (focus order, labels, colour contrast, screen-reader announcements for cart updates)."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-1.5",
+      "text": "Review pull requests for the 4-person web team and pair with designers on Figma-to-code handoffs.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            20,
+            20
+          ],
+          "quote": "Review pull requests for the 4-person web team and pair with designers on Figma-to-code handoffs."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-1.6",
+      "text": "Mentored 2 frontend interns through their 6-month internships; both received full-time offers.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            21,
+            21
+          ],
+          "quote": "Mentored 2 frontend interns through their 6-month internships; both received full-time offers."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-2",
+      "text": "Frontend Engineer at Kitebird, Bengaluru (May 2024 - Jun 2025) Tools: Node.js, GraphQL, REST, Express, GitHub Actions, Vercel.",
+      "kind": "experience",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            23,
+            23
+          ],
+          "quote": "Kitebird — Frontend Engineer Bengaluru · May 2024 – Jun 2025"
+        }
+      ]
+    },
+    {
+      "id": "exp-2.1",
+      "text": "Built the backend-for-frontend (Node.js, Express) for the mobile web app, aggregating catalog, pricing and inventory APIs into one typed endpoint per screen.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            24,
+            25
+          ],
+          "quote": "Built the backend-for-frontend (Node.js, Express) for the mobile web app, aggregating catalog, pricing and inventory APIs into one typed endpoint per screen."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-2.2",
+      "text": "Owned API contracts with 2 backend teams (REST and a GraphQL catalog service) and wrote the client-side data layer.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            26,
+            26
+          ],
+          "quote": "Owned API contracts with 2 backend teams (REST and a GraphQL catalog service) and wrote the client-side data layer."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-2.3",
+      "text": "Set up preview deployments for every pull request with GitHub Actions and Vercel.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            27,
+            27
+          ],
+          "quote": "Set up preview deployments for every pull request with GitHub Actions and Vercel."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-2.4",
+      "text": "Shipped the product-detail page redesign, including image galleries, variant pickers and delivery-date estimates.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            28,
+            28
+          ],
+          "quote": "Shipped the product-detail page redesign, including image galleries, variant pickers and delivery-date estimates."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-2.5",
+      "text": "Partnered with the PM and design lead on checkout research; joined 6 usability sessions and turned findings into tickets.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            29,
+            29
+          ],
+          "quote": "Partnered with the PM and design lead on checkout research; joined 6 usability sessions and turned findings into tickets."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-2.6",
+      "text": "Wrote internal docs on motion guidelines and component usage for the web team.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            30,
+            30
+          ],
+          "quote": "Wrote internal docs on motion guidelines and component usage for the web team."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-3",
+      "text": "Frontend Engineering Intern at Saffron Ledger, Bengaluru (Jan 2024 - Apr 2024) Tools: React, TypeScript, Figma, Recharts.",
+      "kind": "experience",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            32,
+            32
+          ],
+          "quote": "Saffron Ledger — Frontend Engineering Intern Bengaluru · Jan 2024 – Apr 2024"
+        }
+      ]
+    },
+    {
+      "id": "exp-3.1",
+      "text": "Built dashboard widgets (cash-flow charts, invoice tables) in React with TypeScript and Recharts.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            34,
+            34
+          ],
+          "quote": "Built dashboard widgets (cash-flow charts, invoice tables) in React with TypeScript and Recharts."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-3.2",
+      "text": "Created a small Figma-backed component kit for the dashboard, later adopted for the whole web app.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            35,
+            35
+          ],
+          "quote": "Created a small Figma-backed component kit for the dashboard, later adopted for the whole web app."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-3.3",
+      "text": "Fixed table rendering performance for accounts with 10,000+ invoices using virtualised lists.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            36,
+            36
+          ],
+          "quote": "Fixed table rendering performance for accounts with 10,000+ invoices using virtualised lists."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-4",
+      "text": "UI Developer at Freelance, Remote (Jun 2023 - Dec 2023) Tools: Next.js, Tailwind CSS, Figma.",
+      "kind": "experience",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            38,
+            38
+          ],
+          "quote": "Freelance — UI Developer Remote · Jun 2023 – Dec 2023"
+        }
+      ]
+    },
+    {
+      "id": "exp-4.1",
+      "text": "Designed and built marketing sites and a component kit for 3 early-stage clients (Next.js, Tailwind CSS, Figma).",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            39,
+            39
+          ],
+          "quote": "Designed and built marketing sites and a component kit for 3 early-stage clients (Next.js, Tailwind CSS, Figma)."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-4.2",
+      "text": "Delivered responsive, animated landing pages and handed over a reusable design system to each client.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            40,
+            40
+          ],
+          "quote": "Delivered responsive, animated landing pages and handed over a reusable design system to each client."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-5",
+      "text": "Web Lead at Google Developer Student Club, Nandi Institute of Technology, Bengaluru (2022 - 2023) Tools: React.",
+      "kind": "experience",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            42,
+            42
+          ],
+          "quote": "Google Developer Student Club, Nandi Institute of Technology — Web Lead Bengaluru · 2022 – 2023"
+        }
+      ]
+    },
+    {
+      "id": "exp-5.1",
+      "text": "Ran weekly React workshops for 60+ students and organised a 24-hour campus hackathon.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            43,
+            43
+          ],
+          "quote": "Ran weekly React workshops for 60+ students and organised a 24-hour campus hackathon."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "exp-6",
+      "text": "Maintainer, motion-kit at Open source (2023 - Present) Tools: React.",
+      "kind": "experience",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            45,
+            45
+          ],
+          "quote": "Open source — Maintainer, motion-kit 2023 – Present"
+        }
+      ]
+    },
+    {
+      "id": "exp-6.1",
+      "text": "Maintain motion-kit, a spring-physics animation library for React (212 GitHub stars), and review community PRs.",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            46,
+            46
+          ],
+          "quote": "Maintain motion-kit, a spring-physics animation library for React (212 GitHub stars), and review community PRs."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "proj-1",
+      "text": "motion-kit: Spring-physics animation primitives for React with gesture support and reduced-motion handling. TypeScript, Vitest, GitHub Actions. Tools: React, TypeScript, Vitest, GitHub Actions.",
+      "kind": "project",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            49,
+            49
+          ],
+          "quote": "motion-kit — Spring-physics animation primitives for React with gesture support and reduced-motion handling."
+        },
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            30,
+            30
+          ],
+          "quote": "Description: Spring-physics animation primitives for React: useSpring, usePresence, gesture handoff. 4.2 KB gzipped."
+        }
+      ],
+      "evidenceTier": "artifact"
+    },
+    {
+      "id": "proj-2",
+      "text": "checkout-lab: Experiments in checkout UX: optimistic updates, address autocomplete, skeleton states. Next.js. Tools: Next.js, TypeScript.",
+      "kind": "project",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            51,
+            51
+          ],
+          "quote": "checkout-lab — Experiments in checkout UX: optimistic updates, address autocomplete, skeleton states. Next.js."
+        },
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            75,
+            75
+          ],
+          "quote": "Description: Experiments in checkout UX: optimistic cart updates, address autocomplete, skeleton states, error recovery."
+        }
+      ],
+      "evidenceTier": "artifact"
+    },
+    {
+      "id": "proj-3",
+      "text": "design-tokens: A Style Dictionary pipeline that turns Figma variables into CSS, TypeScript and Tailwind tokens. Tools: TypeScript, Figma, CSS, Style Dictionary.",
+      "kind": "project",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            52,
+            52
+          ],
+          "quote": "design-tokens — A Style Dictionary pipeline that turns Figma variables into CSS, TypeScript and Tailwind tokens."
+        },
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            50,
+            50
+          ],
+          "quote": "Description: Figma variables → CSS custom properties, TypeScript constants and a Tailwind preset (Style Dictionary)."
+        }
+      ],
+      "evidenceTier": "artifact"
+    },
+    {
+      "id": "proj-4",
+      "text": "Kite UI docs: Public Storybook for Kitebird's component library (internal repo, public docs site). Tools: Storybook.",
+      "kind": "project",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            53,
+            53
+          ],
+          "quote": "Kite UI docs — Public Storybook for Kitebird's component library (internal repo, public docs site)."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "edu-1",
+      "text": "B.Tech, Computer Science and Engineering, Nandi Institute of Technology (2020 - 2024)",
+      "kind": "education",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            64,
+            64
+          ],
+          "quote": "B.Tech, Computer Science and Engineering — Nandi Institute of Technology, Bengaluru 2020 – 2024"
+        }
+      ]
+    },
+    {
+      "id": "ach-1",
+      "text": "Kitebird \"Ship It\" award, H1 2025, for the checkout rebuild. (2025)",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            68,
+            68
+          ],
+          "quote": "Kitebird \"Ship It\" award, H1 2025, for the checkout rebuild."
+        }
+      ]
+    },
+    {
+      "id": "ach-2",
+      "text": "Speaker, ReactFoo Bengaluru community meetup (2025): \"Springs, not durations — motion that feels physical\". (2025)",
+      "kind": "accomplishment",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            69,
+            69
+          ],
+          "quote": "Speaker, ReactFoo Bengaluru community meetup (2025): \"Springs, not durations — motion that feels physical\"."
+        }
+      ]
+    },
+    {
+      "id": "proj-5",
+      "text": "notes-ai: Ask questions about your markdown notes. OpenAI embeddings + a local vector index + GPT answers. Tools: TypeScript.",
+      "kind": "project",
+      "refs": [
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            62,
+            62
+          ],
+          "quote": "Description: Ask questions about your markdown notes. OpenAI embeddings + a local vector index + GPT answers."
+        }
+      ],
+      "evidenceTier": "artifact"
+    },
+    {
+      "id": "quote-2",
+      "text": "I build interfaces that feel physical: springs, not durations.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            23,
+            23
+          ],
+          "quote": "I build interfaces that feel physical: springs, not durations."
+        },
+        {
+          "source": "link",
+          "docId": "portfolio-1",
+          "lines": [
+            8,
+            8
+          ],
+          "quote": "I build interfaces that feel physical — springs, not durations."
+        }
+      ]
+    },
+    {
+      "id": "skill-motion-animation",
+      "text": "Motion & animation",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            124,
+            124
+          ],
+          "quote": "spring-sandbox [JavaScript], 4 stars, pushed 2025-03-11: Spring physics vs cubic-bezier easing demos; the prototype that became motion-kit"
+        },
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            46,
+            46
+          ],
+          "quote": "Maintain motion-kit, a spring-physics animation library for React (212 GitHub stars), and review community PRs."
+        }
+      ],
+      "evidenceTier": "artifact"
+    },
+    {
+      "id": "skill-react",
+      "text": "React",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            19,
+            19
+          ],
+          "quote": "Common topics: react (6), nextjs (4), animation (2), design-tokens, figma, openai, embeddings, supabase, lovable, ecommerce, accessibility"
+        },
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            30,
+            30
+          ],
+          "quote": "Description: Spring-physics animation primitives for React: useSpring, usePresence, gesture handoff. 4.2 KB gzipped."
+        }
+      ],
+      "evidenceTier": "artifact"
+    },
+    {
+      "id": "skill-design-systems",
+      "text": "Design systems",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            7,
+            7
+          ],
+          "quote": "I care about motion, design systems and the details that make a product feel finished. Currently on the storefront"
+        },
+        {
+          "source": "link",
+          "docId": "portfolio-1",
+          "lines": [
+            4,
+            4
+          ],
+          "quote": "Description: Frontend engineer in Bengaluru. Design systems, motion and the last 10% of polish."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-typescript",
+      "text": "TypeScript",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            17,
+            17
+          ],
+          "quote": "Languages by number of original repos: TypeScript (17), JavaScript (6), CSS (3), MDX (2), Python (2), Go (1), Shell (1), Lua (1), HTML (1)"
+        },
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            31,
+            31
+          ],
+          "quote": "Language: TypeScript, stars: 212, forks: 19, license: MIT"
+        }
+      ],
+      "evidenceTier": "artifact"
+    },
+    {
+      "id": "skill-accessibility-wcag",
+      "text": "Accessibility (WCAG)",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "link",
+          "docId": "portfolio-1",
+          "lines": [
+            26,
+            26
+          ],
+          "quote": "Audited checkout against WCAG 2.1 AA with the design lead: 37 issues logged, 21 fixed in two sprints"
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-figma-to-code",
+      "text": "Figma-to-code",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            20,
+            20
+          ],
+          "quote": "Review pull requests for the 4-person web team and pair with designers on Figma-to-code handoffs."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-mentoring-review",
+      "text": "Mentoring & review",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            20,
+            20
+          ],
+          "quote": "Review pull requests for the 4-person web team and pair with designers on Figma-to-code handoffs."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-next-js",
+      "text": "Next.js",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            19,
+            19
+          ],
+          "quote": "Common topics: react (6), nextjs (4), animation (2), design-tokens, figma, openai, embeddings, supabase, lovable, ecommerce, accessibility"
+        },
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            64,
+            64
+          ],
+          "quote": "Topics: openai, embeddings, nextjs, notes"
+        }
+      ],
+      "evidenceTier": "artifact"
+    },
+    {
+      "id": "skill-node-js-bff",
+      "text": "Node.js / BFF",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            24,
+            24
+          ],
+          "quote": "Built the backend-for-frontend (Node.js, Express) for the mobile web app, aggregating catalog, pricing and"
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-rest-graphql-apis",
+      "text": "REST & GraphQL APIs",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            26,
+            26
+          ],
+          "quote": "Owned API contracts with 2 backend teams (REST and a GraphQL catalog service) and wrote the client-side data layer."
+        }
+      ],
+      "evidenceTier": "used"
+    },
+    {
+      "id": "skill-ci-cd-tooling",
+      "text": "CI/CD & tooling",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            59,
+            59
+          ],
+          "quote": "Tooling: Vite, Vitest, Jest, GitHub Actions, Vercel, Git"
+        }
+      ],
+      "evidenceTier": "listed"
+    },
+    {
+      "id": "skill-llm-api-integration",
+      "text": "LLM API integration",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "lovable",
+          "docId": "lovable-1",
+          "lines": [
+            14,
+            14
+          ],
+          "quote": "OpenAI API (chat completions) called from a Supabase Edge Function `generate-recipes`"
+        }
+      ],
+      "evidenceTier": "artifact"
+    },
+    {
+      "id": "skill-postgres-prisma",
+      "text": "Postgres & Prisma",
+      "kind": "skill",
+      "refs": [
+        {
+          "source": "github",
+          "docId": "github",
+          "lines": [
+            102,
+            102
+          ],
+          "quote": "Description: Express + tRPC + Prisma + PostgreSQL starter with auth and typed API clients."
+        },
+        {
+          "source": "lovable",
+          "docId": "lovable-1",
+          "lines": [
+            13,
+            13
+          ],
+          "quote": "Supabase JS client: email magic-link auth, Postgres tables via REST (recipes, pantry_items, favourites)"
+        }
+      ],
+      "evidenceTier": "artifact"
+    }
+  ],
+  "result": {
+    "postingHash": "bde541a95ceffe6c7880463f777017ff86665ad0d102cbf8f9aa757a46efdd7d",
+    "band": "good",
+    "counts": {
+      "covered": 7,
+      "partial": 4,
+      "synonym_only": 0,
+      "missing_have_it": 0,
+      "missing_gap": 1,
+      "unknown": 0
+    },
+    "confidence": "low",
+    "confidenceNote": "1 hard condition aren't evidenced yet. Answering the questions firms this up.",
+    "gates": [
+      {
+        "gateId": "g1",
+        "factIds": [],
+        "verdict": "uncertain",
+        "note": "Scripted."
+      }
+    ],
+    "blocked": false,
+    "coverage": [
+      {
+        "requirementId": "r1",
+        "factIds": [
+          "exp-1",
+          "exp-2",
+          "skill-react"
+        ],
+        "status": "partial",
+        "level": 2,
+        "note": "Scripted: partial.",
+        "interviewRisk": "They will ask for a concrete example.",
+        "mitigation": "Build one small, honest example."
+      },
+      {
+        "requirementId": "r2",
+        "factIds": [
+          "exp-1.2",
+          "proj-4"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r3",
+        "factIds": [
+          "exp-1.4",
+          "skill-accessibility-wcag"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r4",
+        "factIds": [
+          "proj-1"
+        ],
+        "status": "partial",
+        "level": 2,
+        "note": "Scripted: partial.",
+        "interviewRisk": "They will ask for a concrete example.",
+        "mitigation": "Build one small, honest example."
+      },
+      {
+        "requirementId": "r5",
+        "factIds": [
+          "exp-1.1",
+          "exp-3.3"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r6",
+        "factIds": [
+          "exp-2.2",
+          "skill-rest-graphql-apis"
+        ],
+        "status": "partial",
+        "level": 2,
+        "note": "Scripted: partial.",
+        "interviewRisk": "They will ask for a concrete example.",
+        "mitigation": "Build one small, honest example."
+      },
+      {
+        "requirementId": "r7",
+        "factIds": [
+          "exp-1.6",
+          "skill-mentoring-review"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r8",
+        "factIds": [
+          "skill-next-js",
+          "exp-4.1"
+        ],
+        "status": "partial",
+        "level": 3,
+        "note": "Scripted: partial."
+      },
+      {
+        "requirementId": "r9",
+        "factIds": [],
+        "status": "missing_gap",
+        "level": 0,
+        "note": "Scripted: missing_gap."
+      },
+      {
+        "requirementId": "r10",
+        "factIds": [
+          "exp-6.1",
+          "proj-1"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r11",
+        "factIds": [
+          "exp-1.2"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      },
+      {
+        "requirementId": "r12",
+        "factIds": [
+          "exp-1.5",
+          "skill-figma-to-code"
+        ],
+        "status": "covered",
+        "level": 4,
+        "note": "Scripted: covered."
+      }
+    ],
+    "radar": {
+      "axes": [
+        {
+          "domain": "Frontend",
+          "you": 81,
+          "role": 98
+        },
+        {
+          "domain": "Design & Motion",
+          "you": 85,
+          "role": 100
+        },
+        {
+          "domain": "Backend & APIs",
+          "you": 58,
+          "role": 34
+        },
+        {
+          "domain": "AI & LLM",
+          "you": 36,
+          "role": 0
+        },
+        {
+          "domain": "Eng Practice",
+          "you": 55,
+          "role": 34
+        },
+        {
+          "domain": "Product & Collab",
+          "you": 55,
+          "role": 21
+        },
+        {
+          "domain": "Other",
+          "you": 100,
+          "role": 45
+        }
+      ]
+    },
+    "questions": [
+      {
+        "id": "q-g1",
+        "gateId": "g1",
+        "text": "Are you legally able to work in India or the EU without visa sponsorship? Answer in your own words; we keep it as something you said.",
+        "why": "A hard condition in the posting. Nothing in your documents settles it, and it decides whether the role is open to you."
+      },
+      {
+        "id": "q-r1",
+        "requirementId": "r1",
+        "text": "The posting asks for 5+ years building production web applications with React and TypeScript. Your evidence shows part of it: what else have you done here?",
+        "why": "Your evidence covers this only partly (must); a specific example would firm it up."
+      },
+      {
+        "id": "q-r4",
+        "requirementId": "r4",
+        "text": "The posting asks for Automated testing with Vitest or Jest and Playwright. Your evidence shows part of it: what else have you done here?",
+        "why": "Your evidence covers this only partly (required); a specific example would firm it up."
+      }
+    ],
+    "version": 1
+  },
+  "variant": {
+    "header": {
+      "name": "Riya Kapoor",
+      "headline": "Frontend Engineer · 2.4 yrs · Bengaluru",
+      "contact": [
+        "riya.kapoor.dev@example.com"
+      ]
+    },
+    "summary": {
+      "id": "summary",
+      "text": "Rebuilt the three-step checkout as a single-page flow in React and TypeScript with optimistic cart updates; checkout conversion rose 9.4% in the A/B test and LCP on the payment step dropped from 4.1s to 1.9s.",
+      "factIds": [
+        "exp-1.1"
+      ],
+      "verdict": "exact",
+      "placeholders": [],
+      "status": "verified"
+    },
+    "skills": [
+      {
+        "group": "Skills",
+        "items": [
+          {
+            "name": "Accessibility (WCAG)",
+            "factIds": [
+              "skill-accessibility-wcag"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "REST & GraphQL APIs",
+            "factIds": [
+              "skill-rest-graphql-apis"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "Mentoring & review",
+            "factIds": [
+              "skill-mentoring-review"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "Next.js",
+            "factIds": [
+              "skill-next-js"
+            ],
+            "evidenceTier": "artifact"
+          },
+          {
+            "name": "Figma-to-code",
+            "factIds": [
+              "skill-figma-to-code"
+            ],
+            "evidenceTier": "used"
+          }
+        ]
+      },
+      {
+        "group": "Other skills",
+        "items": [
+          {
+            "name": "React",
+            "factIds": [
+              "skill-react"
+            ],
+            "evidenceTier": "artifact"
+          }
+        ]
+      }
+    ],
+    "experience": [
+      {
+        "entryFactId": "exp-1",
+        "title": "Frontend Engineer II",
+        "org": "Kitebird",
+        "dates": "Jul 2025 - Present",
+        "bullets": [
+          {
+            "id": "b-exp-1.1",
+            "text": "Rebuilt the three-step checkout as a single-page flow in React and TypeScript with optimistic cart updates; checkout conversion rose 9.4% in the A/B test and LCP on the payment step dropped from 4.1s to 1.9s.",
+            "factIds": [
+              "exp-1.1"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-1.2",
+            "text": "Own Kite UI, the shared React component library (42 components, typed tokens, Storybook docs) used by 3 product squads.",
+            "factIds": [
+              "exp-1.2"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-1.4",
+            "text": "Ran a WCAG 2.1 AA accessibility audit of checkout with design and fixed the critical issues (focus order, labels, colour contrast, screen-reader announcements for cart updates).",
+            "factIds": [
+              "exp-1.4"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-1.5",
+            "text": "Review pull requests for the 4-person web team and pair with designers on Figma-to-code handoffs.",
+            "factIds": [
+              "exp-1.5"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-1.6",
+            "text": "Mentored 2 frontend interns through their 6-month internships; both received full-time offers.",
+            "factIds": [
+              "exp-1.6"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      },
+      {
+        "entryFactId": "exp-6",
+        "title": "Maintainer, motion-kit",
+        "org": "Open source",
+        "dates": "2023 - Present",
+        "bullets": [
+          {
+            "id": "b-exp-6.1",
+            "text": "Maintain motion-kit, a spring-physics animation library for React (212 GitHub stars), and review community PRs.",
+            "factIds": [
+              "exp-6.1"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      },
+      {
+        "entryFactId": "exp-2",
+        "title": "Frontend Engineer",
+        "org": "Kitebird",
+        "dates": "May 2024 - Jun 2025",
+        "bullets": [
+          {
+            "id": "b-exp-2.2",
+            "text": "Owned API contracts with 2 backend teams (REST and a GraphQL catalog service) and wrote the client-side data layer.",
+            "factIds": [
+              "exp-2.2"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-2.1",
+            "text": "Built the backend-for-frontend (Node.js, Express) for the mobile web app, aggregating catalog, pricing and inventory APIs into one typed endpoint per screen.",
+            "factIds": [
+              "exp-2.1"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-2.3",
+            "text": "Set up preview deployments for every pull request with GitHub Actions and Vercel.",
+            "factIds": [
+              "exp-2.3"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      },
+      {
+        "entryFactId": "exp-3",
+        "title": "Frontend Engineering Intern",
+        "org": "Saffron Ledger",
+        "dates": "Jan 2024 - Apr 2024",
+        "bullets": [
+          {
+            "id": "b-exp-3.3",
+            "text": "Fixed table rendering performance for accounts with 10,000+ invoices using virtualised lists.",
+            "factIds": [
+              "exp-3.3"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-3.1",
+            "text": "Built dashboard widgets (cash-flow charts, invoice tables) in React with TypeScript and Recharts.",
+            "factIds": [
+              "exp-3.1"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-3.2",
+            "text": "Created a small Figma-backed component kit for the dashboard, later adopted for the whole web app.",
+            "factIds": [
+              "exp-3.2"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      },
+      {
+        "entryFactId": "exp-4",
+        "title": "UI Developer",
+        "org": "Freelance",
+        "dates": "Jun 2023 - Dec 2023",
+        "bullets": [
+          {
+            "id": "b-exp-4.1",
+            "text": "Designed and built marketing sites and a component kit for 3 early-stage clients (Next.js, Tailwind CSS, Figma).",
+            "factIds": [
+              "exp-4.1"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          },
+          {
+            "id": "b-exp-4.2",
+            "text": "Delivered responsive, animated landing pages and handed over a reusable design system to each client.",
+            "factIds": [
+              "exp-4.2"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      }
+    ],
+    "projects": [
+      {
+        "entryFactId": "proj-1",
+        "title": "motion-kit",
+        "bullets": [
+          {
+            "id": "b-proj-1",
+            "text": "motion-kit: Spring-physics animation primitives for React with gesture support and reduced-motion handling. TypeScript, Vitest, GitHub Actions. Tools: React, TypeScript, Vitest, GitHub Actions.",
+            "factIds": [
+              "proj-1"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      },
+      {
+        "entryFactId": "proj-4",
+        "title": "Kite UI docs",
+        "bullets": [
+          {
+            "id": "b-proj-4",
+            "text": "Kite UI docs: Public Storybook for Kitebird's component library (internal repo, public docs site). Tools: Storybook.",
+            "factIds": [
+              "proj-4"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      },
+      {
+        "entryFactId": "proj-2",
+        "title": "checkout-lab",
+        "bullets": [
+          {
+            "id": "b-proj-2",
+            "text": "checkout-lab: Experiments in checkout UX: optimistic updates, address autocomplete, skeleton states. Next.js. Tools: Next.js, TypeScript.",
+            "factIds": [
+              "proj-2"
+            ],
+            "verdict": "exact",
+            "placeholders": [],
+            "status": "verified"
+          }
+        ]
+      }
+    ],
+    "education": [
+      {
+        "factId": "edu-1",
+        "title": "B.Tech, Computer Science and Engineering",
+        "org": "Nandi Institute of Technology",
+        "dates": "2020 - 2024"
+      }
+    ],
+    "decisions": [],
+    "changes": [
+      {
+        "kind": "reordered",
+        "text": "Moved the lines of Frontend Engineer that match the posting to the top.",
+        "factIds": [
+          "exp-2.2",
+          "exp-2.1",
+          "exp-2.3"
+        ]
+      },
+      {
+        "kind": "reordered",
+        "text": "Moved the lines of Frontend Engineering Intern that match the posting to the top.",
+        "factIds": [
+          "exp-3.3",
+          "exp-3.1",
+          "exp-3.2"
+        ]
+      },
+      {
+        "kind": "left_out",
+        "text": "Left out 4 lower-relevance lines to keep it short.",
+        "factIds": [
+          "exp-1.3",
+          "exp-2.4",
+          "exp-2.5",
+          "exp-2.6"
+        ]
+      },
+      {
+        "kind": "left_out",
+        "text": "Left out older or less relevant roles: Web Lead.",
+        "factIds": [
+          "exp-5"
+        ]
+      }
+    ],
+    "lint": {
+      "items": [
+        {
+          "id": "cites_fact",
+          "ok": true,
+          "label": "Every sentence cites a fact",
+          "detail": "Every sentence cites facts, and the files hold nothing else."
+        },
+        {
+          "id": "numbers_cited",
+          "ok": true,
+          "label": "Every number comes from a cited fact",
+          "detail": "Every number is in a fact the resume cites."
+        },
+        {
+          "id": "text_layer",
+          "ok": true,
+          "label": "The file has a real text layer",
+          "detail": "Both files carry real text."
+        },
+        {
+          "id": "single_column",
+          "ok": true,
+          "label": "One column, no tables or text boxes",
+          "detail": "One column of plain paragraphs."
+        },
+        {
+          "id": "standard_headings",
+          "ok": true,
+          "label": "Standard section headings",
+          "detail": "Headings: SUMMARY, EXPERIENCE, PROJECTS, SKILLS, EDUCATION."
+        },
+        {
+          "id": "contact_text",
+          "ok": true,
+          "label": "Contact details are plain text",
+          "detail": "Email and phone are plain text in the body."
+        },
+        {
+          "id": "header_footer",
+          "ok": true,
+          "label": "No contact details in headers or footers",
+          "detail": "Contact details appear once, in the body."
+        },
+        {
+          "id": "date_ranges",
+          "ok": true,
+          "label": "Dates are plain ranges with both ends",
+          "detail": "Every date range reads like Jan 2021 - Present."
+        },
+        {
+          "id": "page_count",
+          "ok": true,
+          "label": "Page count",
+          "detail": "1 page"
+        },
+        {
+          "id": "round_trip",
+          "ok": true,
+          "label": "The text survives extraction",
+          "detail": "All 18 sentences read back exactly."
+        }
+      ]
+    }
+  },
+  "cover": {
+    "paragraphs": [
+      {
+        "text": "I am a Frontend Engineer II at Kitebird, where I own Kite UI, the shared React component library with 42 components, typed tokens and Storybook docs, used by 3 product squads. I also keep the public Storybook for the library. The Northwind design system role is about owning a library that several teams rely on, and that is the job I do today. I enjoy the unglamorous parts of it most: naming, documentation and keeping a change small enough to review. It is shared work, so I write for the people who will use the library as much as for the people who review it.",
+        "requirementIds": [
+          "r2",
+          "r11"
+        ],
+        "factIds": [
+          "exp-1",
+          "exp-1.2",
+          "proj-4"
+        ],
+        "kind": "match"
+      },
+      {
+        "text": "On accessibility, I ran a WCAG 2.1 AA audit of checkout with design and fixed the critical issues: focus order, labels, colour contrast and screen-reader announcements for cart updates. Your posting asks for practical accessibility experience, and this audit is that work from start to finish. I would bring the same approach to the checkout at Northwind Commerce: audit with the designers, fix the worst problems first and then keep the fixes from regressing.",
+        "requirementIds": [
+          "r3"
+        ],
+        "factIds": [
+          "exp-1",
+          "exp-1.4",
+          "skill-accessibility-wcag"
+        ],
+        "kind": "match"
+      },
+      {
+        "text": "On performance, I rebuilt the three-step checkout as a single-page flow in React and TypeScript with optimistic cart updates. Checkout conversion rose 9.4% in the A/B test and LCP on the payment step dropped from 4.1s to 1.9s. Earlier, at Saffron Ledger, I fixed table rendering performance for accounts with 10,000+ invoices using virtualised lists. In both places I started from a measurement and ended with one.",
+        "requirementIds": [
+          "r5"
+        ],
+        "factIds": [
+          "exp-1",
+          "exp-1.1",
+          "exp-3",
+          "exp-3.3"
+        ],
+        "kind": "match"
+      },
+      {
+        "text": "Thank you for your time. I would welcome a conversation about the role.",
+        "requirementIds": [],
+        "factIds": [],
+        "kind": "close"
+      }
+    ],
+    "wordCount": 265,
+    "lint": {
+      "items": [
+        {
+          "id": "cites_fact",
+          "ok": true,
+          "label": "Every sentence cites a fact",
+          "detail": "Every claim cites facts."
+        },
+        {
+          "id": "numbers_cited",
+          "ok": true,
+          "label": "Every number comes from a cited fact",
+          "detail": "Every number is in a fact the note cites."
+        },
+        {
+          "id": "length",
+          "ok": true,
+          "label": "Length is 250 to 400 words",
+          "detail": "265 words."
+        },
+        {
+          "id": "openers",
+          "ok": true,
+          "label": "No generic opener or puffery",
+          "detail": "No generic opener or puffery."
+        },
+        {
+          "id": "text_layer",
+          "ok": true,
+          "label": "The file has a real text layer",
+          "detail": "Both files carry real text."
+        },
+        {
+          "id": "single_column",
+          "ok": true,
+          "label": "One column, no tables or text boxes",
+          "detail": "One column of plain paragraphs."
+        },
+        {
+          "id": "round_trip",
+          "ok": true,
+          "label": "The text survives extraction",
+          "detail": "All 4 paragraphs read back exactly."
+        }
+      ]
+    }
+  }
+}

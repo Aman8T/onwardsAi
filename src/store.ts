@@ -7,8 +7,11 @@ import { useSyncExternalStore } from 'react';
 import type { Portfolio, PortfolioPatch } from '../shared/portfolio';
 import type { AnalysisEvent, ChatOrigin, Profile, ReaderState, SourceKind } from '../shared/types';
 import * as api from './lib/api';
+import { PASTE_ROUTE, matchPath, parseMatchPath } from './match/route';
+import type { MatchRoute } from './match/route';
+import { PRICING_PATH, isPricingPath } from './billing/route';
 
-export type View = 'onboarding' | 'analysis' | 'graph' | 'chat' | 'portfolio';
+export type View = 'onboarding' | 'analysis' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing';
 
 export interface Signal {
   id: number;
@@ -87,6 +90,8 @@ export interface AppState {
   threads: Thread[];
   activeThreadId: string | null;
   portfolio: PortfolioState;
+  /** Which posting-match screen is showing while `view` is 'match'; mirrored in the address (/match/…). */
+  matchRoute: MatchRoute;
 }
 
 const STORAGE_KEY = 'tayyari.v1';
@@ -114,6 +119,7 @@ function load(): AppState {
     threads: [],
     activeThreadId: null,
     portfolio: emptyPortfolio(),
+    matchRoute: PASTE_ROUTE,
   };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -133,7 +139,19 @@ function load(): AppState {
   }
 }
 
-let state: AppState = load();
+/** A match address (/match/…) opens the match screens, with or without a saved profile (a second device has none). */
+function fromAddress(s: AppState): AppState {
+  try {
+    // the pricing page is a real address too (payment providers send people back to it), and needs no profile
+    if (isPricingPath(window.location.pathname)) return { ...s, view: 'pricing' };
+    const route = parseMatchPath(window.location.pathname);
+    return route ? { ...s, view: 'match', matchRoute: route } : s;
+  } catch {
+    return s;
+  }
+}
+
+let state: AppState = fromAddress(load());
 const listeners = new Set<() => void>();
 
 function persist() {
@@ -156,9 +174,44 @@ function set(patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) {
     haltPortfolioWork();
   }
   state = { ...state, ...next };
+  leaveMatchAddress();
+  leavePricingAddress();
   listeners.forEach((l) => l());
   clearTimeout(persistTimer);
   persistTimer = setTimeout(persist, 250);
+}
+
+/** The address reads /match/… only while the match screens are showing. */
+function leaveMatchAddress() {
+  try {
+    if (state.view !== 'match' && parseMatchPath(window.location.pathname)) window.history.replaceState(null, '', '/');
+  } catch {
+    /* no address bar to update */
+  }
+}
+
+/** The address reads /pricing only while the pricing page is showing. */
+function leavePricingAddress() {
+  try {
+    if (state.view !== 'pricing' && isPricingPath(window.location.pathname)) window.history.replaceState(null, '', '/');
+  } catch {
+    /* no address bar to update */
+  }
+}
+
+// Back and Forward move between match screens and the pricing page (and out of them, to where the person came from).
+try {
+  window.addEventListener('popstate', () => {
+    if (isPricingPath(window.location.pathname)) {
+      set({ view: 'pricing' });
+      return;
+    }
+    const route = parseMatchPath(window.location.pathname);
+    if (route) set({ view: 'match', matchRoute: route });
+    else if (state.view === 'match' || state.view === 'pricing') set({ view: state.profile ? 'graph' : 'onboarding' });
+  });
+} catch {
+  /* not in a browser */
 }
 
 export function getState() {
@@ -374,6 +427,32 @@ export const actions = {
     set({ view: 'graph' });
   },
 
+  /** Open a posting-match screen (the paste screen by default) and move the address to match it. */
+  openMatch(route: MatchRoute = PASTE_ROUTE, opts: { replace?: boolean } = {}) {
+    set({ view: 'match', matchRoute: route });
+    try {
+      const path = matchPath(route);
+      if (window.location.pathname !== path) window.history[opts.replace ? 'replaceState' : 'pushState'](null, '', path);
+    } catch {
+      /* no address bar to update */
+    }
+  },
+
+  /** Open the pricing page (anyone may read it) and move the address to /pricing so Back returns to where they were. */
+  openPricing() {
+    try {
+      if (!isPricingPath(window.location.pathname)) window.history.pushState(null, '', PRICING_PATH);
+    } catch {
+      /* no address bar to update */
+    }
+    set({ view: 'pricing' });
+  },
+
+  /** Leave the pricing page for the graph (or Home, without a profile); the address goes back to / with it. */
+  closePricing() {
+    set({ view: state.profile ? 'graph' : 'onboarding' });
+  },
+
   /**
    * Open the owner's portfolio screen for the current profile. Loads the saved portfolio; when there is none
    * yet (404) it starts building one. Safe to call again while a load is already running.
@@ -413,6 +492,20 @@ export const actions = {
   /** Dismiss the notice shown after a failed edit. */
   clearPortfolioError() {
     if (state.portfolio.error && state.portfolio.doc) setPortfolio({ error: undefined });
+  },
+
+  /**
+   * Open a profile the account owns (from the account menu): fetch it and show its graph. Resolves false when it
+   * cannot be loaded, so the menu can say so.
+   */
+  async openProfile(profileId: string): Promise<boolean> {
+    const profile = await api.fetchProfile(profileId).catch(() => null);
+    if (!profile) return false;
+    analysisAbort?.abort();
+    chatAborts.forEach((c) => c.abort());
+    chatAborts.clear();
+    set({ profile, threads: [], activeThreadId: null, flipped: false, view: 'graph', analysis: emptyAnalysis(), portfolio: emptyPortfolio() });
+    return true;
   },
 
   /** Back to onboarding to analyse a different person (keeps nothing). */

@@ -1,0 +1,65 @@
+{
+  "paragraphs": [
+    {
+      "factIds": [
+        "exp-1",
+        "exp-2"
+      ],
+      "requirementIds": [
+        "r1"
+      ],
+      "kind": "match",
+      "text": "I am a Growth Marketing Manager at Brightwell Foods, and before that I was a Performance Marketing Specialist at Pinecrest Media. The Senior Growth Marketing Manager role at Lumen Retail asks for growth, performance and lifecycle marketing at a consumer brand, and that is the work I have done in both places. Both jobs were about turning spend and messaging into growth that someone could measure, and I like that kind of accountability."
+    },
+    {
+      "factIds": [
+        "exp-1",
+        "exp-1.1",
+        "skill-clevertap"
+      ],
+      "requirementIds": [
+        "r3"
+      ],
+      "kind": "match",
+      "text": "At Brightwell Foods I led the lifecycle email and WhatsApp programme for 400,000 subscribers on CleverTap. Repeat purchase rate rose from 22% to 31% in two quarters. Your posting asks for strong lifecycle marketing on email and WhatsApp, and this programme is the clearest example I have of that work. It is also the programme I know best, from the first message plan to the results review."
+    },
+    {
+      "factIds": [
+        "exp-1",
+        "exp-1.2",
+        "skill-meta-ads"
+      ],
+      "requirementIds": [
+        "r2"
+      ],
+      "kind": "match",
+      "text": "I also own the paid acquisition budget across Meta Ads and Google Ads, which is ₹3.2 crore a year. After a geo holdout test I cut blended CAC from ₹610 to ₹455. That test is how I decide where paid spend goes, and it is the habit I would bring to Lumen Retail. Paid media is a place where it is easy to trust a dashboard and be wrong, so I prefer to hold a region back and compare."
+    },
+    {
+      "factIds": [
+        "exp-1",
+        "exp-1.3",
+        "skill-a-b-testing"
+      ],
+      "requirementIds": [
+        "r4"
+      ],
+      "kind": "match",
+      "text": "On experimentation, I ran 38 A/B tests on landing pages and checkout nudges. Five winners shipped and added 6.4% to site conversion. I treat each test as a decision that has to be defended with numbers, and I would run the growth programme at Lumen Retail the same way. I would also share every readout with the wider team, whatever it showed."
+    },
+    {
+      "factIds": [],
+      "requirementIds": [
+        "r7"
+      ],
+      "kind": "gap",
+      "text": "I have not yet worked with a customer data platform such as Segment or mParticle."
+    },
+    {
+      "factIds": [],
+      "requirementIds": [],
+      "kind": "close",
+      "text": "Thank you for your time. I would welcome a conversation about the role."
+    }
+  ]
+}

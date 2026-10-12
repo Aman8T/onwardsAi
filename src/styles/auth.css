@@ -1,0 +1,408 @@
+/*
+ * Accounts: the sign-in sheet, the account menu and the "Save this to your account" invitation.
+ * Every class is prefixed "auth-". Tokens only (src/theme/tokens.css); depth comes from tone and a 1px hairline,
+ * never a shadow; motion is opacity and transform. Wide screens get a centred dialog and a dropdown, narrow ones
+ * (<= 760px) a bottom sheet, the same rule every popover in the app follows.
+ */
+
+/* ───────────── overlay (Sheet.tsx) ───────────── */
+
+.auth-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s4);
+}
+
+/* A hint that the page behind is out of reach: ink at low opacity (Sheet.tsx animates it). */
+.auth-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--text);
+  opacity: 0.14;
+}
+
+.auth-sheet {
+  position: relative;
+  width: min(420px, 100%);
+  max-height: min(88vh, 680px);
+  max-height: min(88dvh, 680px);
+  padding: var(--s6);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.auth-sheet:focus-visible {
+  outline: none;
+}
+
+/* ───────────── the sign-in form ───────────── */
+
+.auth-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.auth-close {
+  position: absolute;
+  top: calc(var(--s3) * -1);
+  right: calc(var(--s3) * -1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.auth-close:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.auth-title {
+  margin: 0;
+  padding-right: var(--s6);
+  font-size: var(--fs-5);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--track-tight);
+  text-wrap: balance;
+}
+
+.auth-text {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.auth-notice {
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-m);
+  background: var(--accent-soft);
+  font-size: var(--fs-2);
+  color: var(--text);
+}
+
+.auth-google {
+  justify-content: center;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+/* "or" between two hairlines */
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.auth-or::before,
+.auth-or::after {
+  content: '';
+  flex: 1 1 auto;
+  border-top: var(--hair) solid var(--line);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.auth-form .field {
+  min-height: 44px;
+}
+
+.auth-hint {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+/* An empty live region is kept in the page so a message that appears is announced. */
+.auth-error {
+  font-size: var(--fs-1);
+  color: var(--danger);
+}
+
+.auth-error:empty {
+  display: none;
+}
+
+.auth-submit {
+  justify-content: center;
+  min-height: 44px;
+}
+
+.auth-sent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+}
+
+.auth-sent:focus-visible {
+  outline: none;
+}
+
+.auth-sent-title {
+  font-size: var(--fs-4);
+  font-weight: 500;
+}
+
+/* ───────────── the account control and its menu (AccountMenu.tsx) ───────────── */
+
+.auth-account {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.auth-signin {
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+.auth-avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: 6px;
+  border: var(--hair) solid var(--line);
+  border-radius: 50%;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.auth-avatar:hover,
+.auth-avatar[aria-expanded='true'] {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+/* An opaque surface with a hairline, like the Atmosphere menu. */
+.auth-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  width: min(300px, calc(100vw - 2 * var(--s4)));
+  padding: var(--s3);
+  background: var(--surface);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+}
+
+.auth-menu-name {
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: var(--fs-3);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-menu-email {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.auth-menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: var(--hair) solid var(--line);
+}
+
+.auth-menu-head {
+  margin-bottom: var(--s1);
+}
+
+.auth-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--r-s);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  text-align: left;
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.auth-item:hover,
+.auth-item:focus-visible {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.auth-item[aria-current='true'] {
+  color: var(--text);
+}
+
+.auth-item[disabled] {
+  color: var(--text-faint);
+  background: transparent;
+  cursor: default;
+}
+
+.auth-item-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-item-sub {
+  flex: none;
+  font-size: var(--fs-0);
+  color: var(--text-muted);
+}
+
+.auth-item-out {
+  margin-top: var(--s2);
+}
+
+/* ───────────── the invitation (SaveInvite.tsx) ───────────── */
+
+.auth-invite {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  box-sizing: border-box;
+  width: min(620px, calc(100% - 2 * var(--gv-gutter, var(--s5))));
+  margin: var(--s3) auto 0;
+  padding: var(--s3) var(--s3) var(--s3) var(--s4);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-l);
+  background: var(--accent-soft);
+}
+
+.auth-invite-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.auth-invite-kicker {
+  margin: 0;
+  color: var(--accent-strong);
+}
+
+.auth-invite-title {
+  margin: 2px 0 0;
+  font-size: var(--fs-3);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  color: var(--text);
+}
+
+.auth-invite-text {
+  margin: 2px 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.auth-invite-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--s1);
+}
+
+.auth-invite-actions .btn {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+/* ───────────── narrow screens: bottom sheets ───────────── */
+
+@media (max-width: 760px) {
+  .auth-layer {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .auth-sheet {
+    width: 100%;
+    max-height: 86vh;
+    max-height: 86dvh;
+    padding: var(--s5);
+    padding-bottom: calc(var(--s5) + env(safe-area-inset-bottom, 0px));
+    border-bottom-width: 0;
+    border-radius: var(--r-l) var(--r-l) 0 0;
+  }
+
+  .auth-close {
+    top: calc(var(--s2) * -1);
+    right: calc(var(--s2) * -1);
+  }
+
+  /* 16px keeps iOS from zooming the page when a field is focused */
+  .auth-form .field {
+    font-size: 16px;
+  }
+
+  .auth-avatar {
+    width: 44px;
+    height: 44px;
+  }
+
+  .auth-signin {
+    min-height: 44px;
+  }
+
+  .auth-sheet .auth-item {
+    min-height: 44px;
+    align-items: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-invite {
+    flex-wrap: wrap;
+    padding: var(--s4);
+  }
+
+  .auth-invite-copy {
+    flex-basis: 100%;
+  }
+
+  .auth-invite-actions {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .auth-invite-actions .btn-primary {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}

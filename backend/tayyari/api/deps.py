@@ -19,6 +19,28 @@ fills in:
 
 Only the hash of the IP is ever logged or stored. IPv6 addresses are hashed as their /64 network (see
 `guard.client_ip.ip_subject`).
+
+Who is signed in, for routes that need an account:
+
+    get_auth_context(request)   the live sign-in behind the ``tayyari_session`` cookie (`auth.SessionContext`), or
+                                None. Looked up once per request; binds ``user_id`` (never the email) into the log
+                                context. A route that wants the sliding cookie refreshed reads ``.refreshed``.
+    get_current_user(request)   the signed-in account (`StoredUser`), or None for an anonymous visitor
+    require_user(request)       the signed-in account, or a 401 `Unauthorized` that the web app turns into the
+                                sign-in sheet
+
+Analysis and chat stay open to anonymous visitors and do not call these; routes that persist for a person do.
+
+Whose profile it is, for every route that takes a profile id:
+
+    require_profile_access(request, profile_id, not_found=...)
+                                a profile nobody has claimed (``profiles.user_id`` NULL) is served to whoever holds its
+                                id, as before; so is a sample run. A claimed profile is served only to the session of the
+                                account that claimed it, and to anyone else (anonymous, or another account) the answer
+                                is the 404 the route gives an unknown id: same status, same body, never a 403. An id
+                                that no stored profile has (the bundled sample persona before it is seeded, or a
+                                profile that does not exist) passes through to the route's own handling of it.
+    owner_required(access)      the rule itself, without the request: the one account id allowed in, or None for anyone
 """
 
 from __future__ import annotations
@@ -26,26 +48,35 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Final
 
 from starlette.datastructures import Headers, MutableHeaders
 from starlette.requests import HTTPConnection, Request
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from tayyari.api.lifespan import get_container
+from tayyari.auth.sessions import SessionContext
 from tayyari.contract.requests import RequestContext
 from tayyari.core import context
 from tayyari.core.clock import Clock
+from tayyari.core.errors import NotFound, Unauthorized
 from tayyari.core.hashing import hmac_hex
 from tayyari.core.logging import get_logger
 from tayyari.core.settings import Settings, get_settings
 from tayyari.guard.client_ip import client_ip, ip_subject
+from tayyari.storage.ports import ProfileAccess
+from tayyari.storage.ports import StoredUser as User
 
 log = get_logger(__name__)
 
+PROFILE_NOT_FOUND: Final = "Profile not found"
+"""The sentence of the 404 for a profile the caller may not open, unless the route passes the one it uses."""
 REQUEST_ID_HEADER = "X-Request-ID"
 REQUEST_ID_MAX_CHARS = 64
 _REQUEST_ID_UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
 _CONTEXT_KEY = "request_context"
+_AUTH_KEY = "auth_context"
+_UNSET: Any = object()
 _KEY_CACHE_ATTR = "_ip_hash_key_resolved"
 _WARNED_ATTR = "_ip_hash_key_warned"
 
@@ -97,7 +128,7 @@ class RequestIdMiddleware:
             await send(message)
 
         # ip_hash is cleared here so that whatever get_request_context binds later is dropped with the request.
-        with context.bind(request_id=rid, ip_hash=None):
+        with context.bind(request_id=rid, ip_hash=None, user_id=None):
             await self.app(scope, receive, send_with_id)
 
 
@@ -158,12 +189,76 @@ async def get_request_context(request: Request) -> RequestContext:
     return rc
 
 
+async def get_auth_context(request: Request) -> SessionContext | None:
+    """The live sign-in behind the session cookie, or None (no cookie, unknown, expired). Resolved once per request."""
+    state = _state(request.scope)
+    cached = state.get(_AUTH_KEY, _UNSET)
+    if cached is not _UNSET:
+        found: SessionContext | None = cached
+        return found
+    container = get_container(request)
+    token = request.cookies.get(container.settings.auth.cookie_name)
+    resolved = await container.auth.sessions.resolve(token)
+    state[_AUTH_KEY] = resolved
+    if resolved is not None:
+        context.user_id.set(resolved.user.id)
+    return resolved
+
+
+async def get_current_user(request: Request) -> User | None:
+    """The signed-in account, or None for an anonymous visitor."""
+    resolved = await get_auth_context(request)
+    return None if resolved is None else resolved.user
+
+
+async def require_user(request: Request) -> User:
+    """The signed-in account; a 401 (`Unauthorized`) when there is none."""
+    user = await get_current_user(request)
+    if user is None:
+        raise Unauthorized()
+    return user
+
+
+def owner_required(access: ProfileAccess | None) -> str | None:
+    """The id of the only account that may open a profile with this ``access``, or None when anyone holding the
+    profile id may: a profile nobody has claimed, a sample run, or one the database does not have."""
+    if access is None or access.is_sample:
+        return None
+    return access.user_id
+
+
+async def require_profile_access(
+    request: Request, profile_id: str, *, not_found: str = PROFILE_NOT_FOUND
+) -> None:
+    """Let the request through when it may open ``profile_id``; otherwise raise `NotFound` (``not_found`` is the
+    sentence the route gives an unknown id, so the two cannot be told apart). See `owner_required` for the rule.
+
+    The session is looked up only for a claimed profile, so anonymous use of the open ones costs one indexed
+    lookup of two columns and nothing more. Call it right after the id shape is checked, before the body is read
+    and before any rate-limit counter or spend reservation is touched.
+    """
+    access = await get_container(request).repos.profiles.get_access(profile_id)
+    required = owner_required(access)
+    if required is None:
+        return
+    user = await get_current_user(request)
+    if user is None or user.id != required:
+        raise NotFound(not_found)
+
+
 __all__ = [
+    "PROFILE_NOT_FOUND",
     "REQUEST_ID_HEADER",
     "REQUEST_ID_MAX_CHARS",
     "RequestIdMiddleware",
+    "User",
     "build_request_context",
+    "get_auth_context",
+    "get_current_user",
     "get_request_context",
     "new_request_id",
+    "owner_required",
+    "require_profile_access",
+    "require_user",
     "sanitize_request_id",
 ]

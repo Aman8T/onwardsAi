@@ -19,6 +19,7 @@ import type { PopoverBullet, PopoverModel } from '../../components/Popover';
 import { Radar } from '../../components/Radar';
 import type { RadarAxis, RadarHandle, VertexGeom } from '../../components/Radar';
 import { ValueLine } from '../../components/ValueLine';
+import { MatchInvite } from '../../match/MatchInvite';
 import { PortfolioInvite } from './PortfolioInvite';
 import { placePopover, tier, TIER_LABEL } from '../../lib/layout';
 import { domainAction, skillAction, sourceAction, youAction } from '../../lib/prompts';
@@ -531,6 +532,9 @@ export function NowGraph({ profile }: { profile: Profile }) {
         <p className="kicker now-legend" aria-label="Legend">
           {TIER_LABEL.expert} 80+ · {TIER_LABEL.pro} 60–79 · {TIER_LABEL.dev} 40–59 · {TIER_LABEL.gap} under 40
         </p>
+
+        {/* a quiet way into posting match, beside the graph (the Portfolio and save invitations sit above it) */}
+        <MatchInvite cinematic={cinematic} />
       </aside>
 
       {/* ─────────── chart column ─────────── */}

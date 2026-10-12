@@ -1,0 +1,152 @@
+{
+  "title": "Senior Frontend Engineer, Design Systems",
+  "company": "Northwind Commerce",
+  "location": "Remote (India or EU time zones)",
+  "workMode": "remote",
+  "requirements": [
+    {
+      "quote": "Must have 5+ years building production web applications with React and TypeScript.",
+      "text": "5+ years building production web applications with React and TypeScript",
+      "tier": "must",
+      "kind": "years",
+      "provenance": "stated",
+      "terms": [
+        "React",
+        "TypeScript"
+      ],
+      "domainHint": "Frontend"
+    },
+    {
+      "quote": "Deep experience owning a component library or design system used by several teams.",
+      "text": "Owns a component library or design system used by several teams",
+      "tier": "required",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "component library",
+        "design system"
+      ],
+      "domainHint": "Design systems"
+    },
+    {
+      "quote": "Practical accessibility experience: WCAG 2.1 AA audits and fixes.",
+      "text": "WCAG 2.1 AA accessibility audits and fixes",
+      "tier": "required",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "WCAG 2.1 AA"
+      ],
+      "domainHint": "Accessibility"
+    },
+    {
+      "quote": "Experience with automated testing: unit tests with Vitest or Jest and end-to-end tests with Playwright.",
+      "text": "Automated testing with Vitest or Jest and Playwright",
+      "tier": "required",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "Vitest",
+        "Jest",
+        "Playwright"
+      ],
+      "domainHint": "Testing"
+    },
+    {
+      "quote": "Strong command of web performance: Core Web Vitals, LCP and bundle budgets.",
+      "text": "Web performance: Core Web Vitals, LCP and bundle budgets",
+      "tier": "required",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "Core Web Vitals",
+        "LCP"
+      ],
+      "domainHint": "Frontend"
+    },
+    {
+      "quote": "Experience with GraphQL APIs, ideally Apollo Federation.",
+      "text": "GraphQL APIs, ideally Apollo Federation",
+      "tier": "required",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "GraphQL",
+        "Apollo Federation"
+      ],
+      "domainHint": "Backend and APIs"
+    },
+    {
+      "quote": "Experience mentoring engineers and leading code review.",
+      "text": "Mentoring engineers and leading code review",
+      "tier": "preferred",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [],
+      "domainHint": "Collaboration"
+    },
+    {
+      "quote": "Experience with Next.js and React server components.",
+      "text": "Next.js and React server components",
+      "tier": "preferred",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "Next.js",
+        "React server components"
+      ],
+      "domainHint": "Frontend"
+    },
+    {
+      "quote": "Rust or WebAssembly experience.",
+      "text": "Rust or WebAssembly experience",
+      "tier": "nice",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "Rust",
+        "WebAssembly"
+      ],
+      "domainHint": "Systems"
+    },
+    {
+      "quote": "Open-source maintenance.",
+      "text": "Open-source maintenance",
+      "tier": "nice",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [],
+      "domainHint": "Open source"
+    },
+    {
+      "quote": "Own the Northwind design system: components, tokens and the Storybook documentation.",
+      "text": "Owns the design system: components, tokens and Storybook documentation",
+      "tier": "required",
+      "kind": "domain",
+      "provenance": "structural",
+      "terms": [
+        "Storybook"
+      ],
+      "domainHint": "Design systems"
+    },
+    {
+      "quote": "Partner with designers on Figma-to-code handoffs and review pull requests for the web team.",
+      "text": "Partners with designers on Figma-to-code handoffs",
+      "tier": "preferred",
+      "kind": "skill",
+      "provenance": "structural",
+      "terms": [
+        "Figma"
+      ],
+      "domainHint": "Design systems"
+    }
+  ],
+  "gates": [
+    {
+      "quote": "Must be legally able to work in India or the EU without visa sponsorship from us.",
+      "question": "Are you legally able to work in India or the EU without visa sponsorship?",
+      "severity": 9
+    }
+  ],
+  "anomalies": []
+}

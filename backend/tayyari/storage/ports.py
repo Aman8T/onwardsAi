@@ -12,9 +12,11 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 from uuid import UUID
 
+from tayyari.contract.match import Fact, Posting
+from tayyari.contract.portfolio import Fact as PortfolioFact
 from tayyari.contract.records import DecisionRecord, JevCallRecord, LlmCallRecord, StateBlob
 from tayyari.contract.stored import StoredContext
 
@@ -53,6 +55,15 @@ class ChatSession:
     """Oldest first; at most the last ``limit`` messages."""
 
 
+@dataclass(frozen=True, slots=True)
+class ProfileAccess:
+    """Who a profile belongs to: ``user_id`` is the account that claimed it (None while it is anonymous), and
+    ``is_sample`` marks a "Try a sample profile" run, which is public whatever its ``user_id`` says."""
+
+    user_id: str | None
+    is_sample: bool
+
+
 class ProfileRepo(Protocol):
     async def save(
         self,
@@ -76,8 +87,20 @@ class ProfileRepo(Protocol):
         """Profile and context in one round trip (also touches ``last_accessed_at``), or None."""
         ...
 
+    async def get_owned_for_chat(self, user_id: str, pid: str) -> tuple[dict[str, Any], StoredContext] | None:
+        """Profile and context like `get_for_chat`, but only when the profile belongs to ``user_id``. None for an
+        unknown id, an anonymous profile, a sample run and another account's profile alike (so a caller cannot tell
+        which one it was)."""
+        ...
+
+    async def get_access(self, pid: str) -> ProfileAccess | None:
+        """The owner and sample flag of a profile, or None when no such row exists. A single-column lookup: it does
+        not read the document and does not touch ``last_accessed_at``."""
+        ...
+
     async def purge_expired(self, cutoff: datetime) -> int:
-        """Delete non-sample profiles last accessed before ``cutoff`` (their chats go too); returns the count."""
+        """Delete anonymous, non-sample profiles last accessed before ``cutoff`` (their chats go too); returns the
+        count. A profile that belongs to an account (``user_id`` set) is kept: saving it was the point."""
         ...
 
 
@@ -204,6 +227,9 @@ class StoredPortfolio:
     published: bool
     created_at: datetime
     updated_at: datetime
+    user_id: str | None = None
+    """The account that owns the page: the owner of its profile when the page was written. A write that carries None
+    keeps the owner the row already has (a claim sets it on a page that existed before)."""
 
 
 class PortfolioRepo(Protocol):
@@ -222,7 +248,8 @@ class PortfolioRepo(Protocol):
 
         ``expected_version=None`` creates the row, or replaces it outright when one exists (a regenerate).
         Otherwise the update applies only when the stored version equals ``expected_version`` and raises
-        `PortfolioConflict` when it does not. ``public_id`` and ``created_at`` of an existing row are kept.
+        `PortfolioConflict` when it does not. ``public_id`` and ``created_at`` of an existing row are kept, and so is
+        its ``user_id`` unless ``rec.user_id`` names an owner.
         """
         ...
 
@@ -235,19 +262,461 @@ class PortfolioRepo(Protocol):
         ...
 
 
+# ───────────────────────────── accounts ─────────────────────────────
+
+
+class ProfileNotClaimable(LookupError):
+    """`UserRepo.claim_profile` was asked for a profile that does not exist or may not be owned (a sample run)."""
+
+
+class ProfileOwnedByAnother(RuntimeError):
+    """`UserRepo.claim_profile` was asked for a profile that already belongs to a different account."""
+
+
+@dataclass(frozen=True, slots=True)
+class StoredUser:
+    """One account. ``email`` is lower-cased; ``currency`` is ``INR``, ``USD`` or None (not chosen yet)."""
+
+    id: str
+    email: str
+    name: str | None
+    picture_url: str | None
+    google_sub: str | None
+    created_at: datetime
+    last_login_at: datetime
+    locale: str | None
+    currency: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class StoredAuthSession:
+    """One sign-in. ``id`` is the sha256 hex of the cookie token (the token itself is never stored)."""
+
+    id: str
+    user_id: str
+    created_at: datetime
+    expires_at: datetime
+    last_seen_at: datetime
+    ip_hash: str | None
+    user_agent: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class StoredMagicLink:
+    """An emailed sign-in link, keyed by the sha256 hex of its token."""
+
+    token_hash: str
+    email: str
+    created_at: datetime
+    expires_at: datetime
+    used_at: datetime | None
+    ip_hash: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class OwnedProfile:
+    """What the account page lists about a profile the user owns."""
+
+    id: str
+    created_at: datetime
+    goal: str | None
+    person_name: str | None
+
+
+class UserRepo(Protocol):
+    """Accounts, their sign-ins and sign-in links, and which profiles an account owns."""
+
+    async def get(self, user_id: str) -> StoredUser | None:
+        """The account, or None."""
+        ...
+
+    async def get_by_email(self, email: str) -> StoredUser | None:
+        """The account with this (lower-cased) email, or None."""
+        ...
+
+    async def sign_in_google(
+        self,
+        *,
+        sub: str,
+        email: str,
+        name: str | None,
+        picture_url: str | None,
+        locale: str | None,
+        now: datetime,
+    ) -> StoredUser:
+        """Find the account for a verified Google identity and record the login; create it when there is none.
+
+        Looked up by ``google_sub``, then by ``email`` (which links the Google identity to an account that
+        was made by emailed link); a new account is made otherwise. The name is only filled in when the
+        account has none (the person may have changed it), the picture is always refreshed.
+        """
+        ...
+
+    async def sign_in_email(self, *, email: str, now: datetime) -> StoredUser:
+        """Find the account for an email address whose owner just proved it, or create it; records the login."""
+        ...
+
+    async def update(
+        self, user_id: str, *, name: str | None = None, currency: str | None = None
+    ) -> StoredUser | None:
+        """Change the name and/or currency (None leaves a field as it is); the account, or None when unknown."""
+        ...
+
+    async def delete(self, user_id: str) -> bool:
+        """Delete the account with everything it owns: its profiles (and their chats), portfolios, matches (with
+        their resumes and cover notes), the facts it gave in its own words, sign-ins and pending links. Postings
+        are shared by everyone who pasted the same text and stay. True when the account existed."""
+        ...
+
+    async def create_session(self, rec: StoredAuthSession) -> None:
+        """Store a new sign-in."""
+        ...
+
+    async def get_session(self, session_id: str) -> tuple[StoredAuthSession, StoredUser] | None:
+        """The sign-in and its account in one round trip (expiry is the caller's decision), or None."""
+        ...
+
+    async def touch_session(self, session_id: str, *, last_seen_at: datetime, expires_at: datetime) -> None:
+        """Record use of a sign-in and push its expiry out (sliding)."""
+        ...
+
+    async def delete_session(self, session_id: str) -> bool:
+        """End a sign-in; True when it existed."""
+        ...
+
+    async def add_magic_link(self, rec: StoredMagicLink) -> None:
+        """Store a freshly issued link."""
+        ...
+
+    async def consume_magic_link(self, token_hash: str, now: datetime) -> StoredMagicLink | None:
+        """Spend a link: atomically mark it used and return it, or None when it is unknown, already used or
+        expired. Two concurrent calls for the same link never both succeed."""
+        ...
+
+    async def list_profiles(self, user_id: str, limit: int = 20) -> list[OwnedProfile]:
+        """The user's profiles, newest first."""
+        ...
+
+    async def claim_profile(self, user_id: str, profile_id: str) -> None:
+        """Make an unowned profile (and its portfolio, if any) the user's. Claiming one's own profile again is a
+        no-op. Raises `ProfileNotClaimable` (unknown id, or a sample run) and `ProfileOwnedByAnother`."""
+        ...
+
+    async def purge_expired(self, now: datetime) -> int:
+        """Delete sign-ins and links whose expiry has passed; returns the number of rows removed."""
+        ...
+
+
+# ───────────────────────────── payments and entitlements ─────────────────────────────
+
+ConsumeSource = Literal["pass", "free_monthly", "credit"]
+"""What paid for one use: an active pass, the month's free allowance, or one posting credit."""
+SettleStatus = Literal["granted", "already_paid", "unknown_order", "mismatch", "orphaned"]
+"""``granted``: this call marked the order paid and applied the grant. ``already_paid``: an earlier call did.
+``unknown_order``: no such order. ``mismatch``: the amount or currency paid is not what the order asked for (nothing
+is granted, the order is left as it was). ``orphaned``: the account is gone (nothing to grant to)."""
+
+
+@dataclass(frozen=True, slots=True)
+class StoredOrder:
+    """One purchase attempt. ``status``: ``created``, ``paid``, ``failed`` or ``refunded``. ``raw`` holds provider
+    ids only (never an email address or a card detail)."""
+
+    id: str
+    user_id: str | None
+    provider: str
+    provider_order_id: str
+    product: str
+    currency: str
+    amount_minor: int
+    status: str
+    created_at: datetime
+    paid_at: datetime | None = None
+    raw: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SettleResult:
+    """The outcome of `BillingRepo.settle_order`; ``order`` is the row as it was before this call (None if unknown)."""
+
+    status: SettleStatus
+    order: StoredOrder | None
+
+
+@dataclass(frozen=True, slots=True)
+class StoredEntitlements:
+    """An account's balance. ``free_used`` counts the free monthly postings used since ``month_start`` and not given
+    back; a ``pass_until`` in the past means no pass."""
+
+    user_id: str
+    credits: int
+    pass_until: datetime | None
+    free_used: int
+
+
+@dataclass(frozen=True, slots=True)
+class ConsumeOutcome:
+    """One use of an entitlement. ``credits`` and ``pass_until`` are the balance afterwards; ``replayed`` is True when
+    the same ``ref`` had already been paid for (nothing more was taken)."""
+
+    source: ConsumeSource
+    credits: int
+    pass_until: datetime | None
+    replayed: bool = False
+
+
+class BillingRepo(Protocol):
+    """Orders, balances and the ledger. Every method that changes a balance runs in one transaction and takes the
+    account's ``entitlements`` row as a lock first, so concurrent calls for one account are serialised (a row lock on
+    Postgres, the write lock on SQLite) and the balance always equals the sum of the ledger's deltas."""
+
+    async def add_order(self, rec: StoredOrder) -> None:
+        """Store a new order (``provider_order_id`` is unique)."""
+        ...
+
+    async def get_order(self, order_id: str) -> StoredOrder | None:
+        """The order with this internal id, or None."""
+        ...
+
+    async def get_order_by_provider_id(self, provider_order_id: str) -> StoredOrder | None:
+        """The order the provider knows as ``provider_order_id``, or None."""
+        ...
+
+    async def settle_order(
+        self,
+        provider_order_id: str,
+        *,
+        now: datetime,
+        credits: int,
+        pass_days: int,
+        raw: dict[str, Any] | None,
+        amount_minor: int | None = None,
+        currency: str | None = None,
+    ) -> SettleResult:
+        """Mark the order paid and apply its grant (``credits`` and/or ``pass_days``) in one transaction.
+
+        Idempotent on the order: a second call (a replayed webhook, the browser hand-off after the webhook) changes
+        nothing and says ``already_paid``. When ``amount_minor`` / ``currency`` are given they must equal the
+        order's, else nothing happens (``mismatch``). A failed order can still be settled: a customer may retry a
+        payment on the same Razorpay order.
+        """
+        ...
+
+    async def fail_order(self, provider_order_id: str) -> bool:
+        """``created`` -> ``failed``; True when a row changed. A paid order is never touched."""
+        ...
+
+    async def entitlements(self, user_id: str, *, month_start: datetime) -> StoredEntitlements:
+        """The balance (zeros when the account has none yet) and the free postings used since ``month_start``."""
+        ...
+
+    async def grant(self, user_id: str, *, credits: int, pass_days: int, ref: str, now: datetime) -> bool:
+        """Add ``credits`` and/or extend the pass by ``pass_days`` (from the later of now and its current end),
+        with a ``purchase`` ledger row keyed by ``ref``. Idempotent on ``(user_id, ref)``: False, and nothing
+        changes, when ``ref`` was already granted."""
+        ...
+
+    async def consume(
+        self, user_id: str, ref: str, *, now: datetime, month_start: datetime, free_allowance: int
+    ) -> ConsumeOutcome | None:
+        """Pay for one use: an active pass, else a free monthly posting (fewer than ``free_allowance`` used since
+        ``month_start``), else one credit; None when there is nothing left. Idempotent on ``(user_id, ref)``: a
+        ``ref`` already paid for (and not given back) is returned as ``replayed`` without taking anything more."""
+        ...
+
+    async def release(self, user_id: str, ref: str, *, now: datetime) -> bool:
+        """Give back what ``consume`` took for ``ref`` (the credit returns, a free posting counts as unused again).
+        True when something was given back; False when ``ref`` was never paid for or was already given back."""
+        ...
+
+
+# ───────────────────────────── posting match ─────────────────────────────
+
+VariantKind = Literal["resume", "cover"]
+"""What a stored variant of a match is: the resume built for the posting, or its cover note."""
+
+
+@dataclass(frozen=True, slots=True)
+class StoredMatch:
+    """One posting matched against one profile. ``facts`` is the `match.models.FactBook` as JSON (the facts the
+    result cites and the structure the resume is built from); ``result`` is the `MatchResult` as JSON. Storage keeps
+    both opaque: the API layer validates them."""
+
+    id: str
+    user_id: str
+    profile_id: str
+    posting_hash: str
+    facts: dict[str, Any]
+    result: dict[str, Any]
+    band: str
+    blocked: bool
+    version: int
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class MatchListing:
+    """A row of the person's list of matches: the posting's title and company, the band and when it was made."""
+
+    id: str
+    title: str
+    company: str | None
+    band: str
+    created_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class StoredVariant:
+    """The resume or cover note of a match as JSON (`ResumeVariant` / `CoverNote`). ``status`` is ``needs_user``
+    while a resume still has open questions, else ``ready``; ``version`` counts the saves."""
+
+    id: str
+    match_id: str
+    kind: VariantKind
+    spec: dict[str, Any]
+    status: str
+    version: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class PostingRepo(Protocol):
+    """Read postings, shared by everyone who pasted the same text (`match.ports.PostingCache` is this)."""
+
+    async def get(self, posting_hash: str) -> Posting | None:
+        """The stored reading of the posting with this hash, or None."""
+        ...
+
+    async def put(self, posting: Posting) -> None:
+        """Remember a reading (idempotent on ``posting.hash``; the first one stays)."""
+        ...
+
+
+class ProfileFactsRepo(Protocol):
+    """The portfolio fact extractor's output per profile (`match.ports.FactsCache` is this)."""
+
+    async def get(self, profile_id: str, facts_hash: str) -> list[PortfolioFact] | None:
+        """The facts extracted from the profile's sources when they hashed to ``facts_hash``, else None."""
+        ...
+
+    async def put(self, profile_id: str, facts_hash: str, facts: list[PortfolioFact]) -> None:
+        """Remember an extraction, replacing an earlier one for the profile."""
+        ...
+
+
+class UserFactRepo(Protocol):
+    """What a person said in their own words, kept per profile (`match.ports.UserFactStore` plus the owner)."""
+
+    async def list_for_profile(self, profile_id: str) -> list[Fact]:
+        """Every user fact for the profile, oldest first."""
+        ...
+
+    async def add(
+        self, user_id: str, profile_id: str, fact: Fact, *, question: str, answer: str, match_id: str | None
+    ) -> bool:
+        """Store one fact with the question it answered. Idempotent on ``(profile_id, fact.id)``: False, and
+        nothing changes, when it is already stored."""
+        ...
+
+
+class MatchRepo(Protocol):
+    """Matches and their variants. Every match read and write is scoped by ``user_id``: another account's id is
+    answered exactly like an unknown one."""
+
+    async def create(
+        self,
+        *,
+        match_id: str,
+        user_id: str,
+        profile_id: str,
+        posting_hash: str,
+        facts: dict[str, Any],
+        result: dict[str, Any],
+        band: str,
+        blocked: bool,
+        version: int,
+        now: datetime,
+    ) -> StoredMatch:
+        """Insert a match (the posting must already be stored)."""
+        ...
+
+    async def get(self, match_id: str, user_id: str) -> StoredMatch | None:
+        """The user's match, or None."""
+        ...
+
+    async def list_for_user(self, user_id: str, limit: int = 50) -> list[MatchListing]:
+        """The user's matches, newest first."""
+        ...
+
+    async def save_result(
+        self,
+        match_id: str,
+        user_id: str,
+        *,
+        expected_version: int,
+        facts: dict[str, Any],
+        result: dict[str, Any],
+        band: str,
+        blocked: bool,
+        version: int,
+        now: datetime,
+    ) -> bool:
+        """Replace the result (and the facts it cites) when the stored version is still ``expected_version``.
+        False when the match is not the user's, or moved on in the meantime."""
+        ...
+
+    async def save_facts(self, match_id: str, user_id: str, facts: dict[str, Any], now: datetime) -> bool:
+        """Replace the facts alone (a figure the person gave while settling a resume); False when not the user's."""
+        ...
+
+    async def get_variant(self, match_id: str, kind: VariantKind) -> StoredVariant | None:
+        """The stored resume or cover note of a match, or None. The caller has read the match with `get` first."""
+        ...
+
+    async def put_variant(
+        self, match_id: str, kind: VariantKind, *, spec: dict[str, Any], status: str, now: datetime
+    ) -> StoredVariant:
+        """Insert the variant, or replace it and count one more version."""
+        ...
+
+
 __all__ = [
+    "BillingRepo",
     "ChatMessage",
     "ChatSession",
+    "ConsumeOutcome",
+    "ConsumeSource",
     "DecisionLogRepo",
     "KvRepo",
     "LimitRepo",
     "LlmCallRepo",
+    "MatchListing",
+    "MatchRepo",
+    "OwnedProfile",
     "PortfolioConflict",
     "PortfolioRepo",
+    "PostingRepo",
+    "ProfileAccess",
+    "ProfileFactsRepo",
+    "ProfileNotClaimable",
+    "ProfileOwnedByAnother",
     "ProfileRepo",
     "SessionConflict",
     "SessionNotFound",
     "SessionRepo",
+    "SettleResult",
+    "SettleStatus",
+    "StoredAuthSession",
+    "StoredEntitlements",
+    "StoredMagicLink",
+    "StoredMatch",
+    "StoredOrder",
     "StoredPortfolio",
+    "StoredUser",
+    "StoredVariant",
     "ToolEvent",
+    "UserFactRepo",
+    "UserRepo",
+    "VariantKind",
 ]

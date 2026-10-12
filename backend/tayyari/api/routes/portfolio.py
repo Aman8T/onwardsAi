@@ -8,8 +8,12 @@
     GET   /api/portfolio/{profile_id}/public-preview   the `PublicPortfolio` a visitor would get
     GET   /api/p/{public_id}                   the `PublicPortfolio` of a published page (404 otherwise)
 
-Ids are random hex and the only thing protecting a page, so an id that does not have the id shape is answered
-exactly like an unknown one (404), and a public id is a separate random id that never reveals the profile id.
+Ids are random hex and the only thing protecting an anonymous page, so an id that does not have the id shape is
+answered exactly like an unknown one (404), and a public id is a separate random id that never reveals the profile id.
+Once an account has claimed the profile, every route above except the public page also needs that account's session:
+anyone else (anonymous, or signed in as another account) gets the 404 an unknown id gets
+(`api.deps.require_profile_access`, called right after the id shape, before the body is read and before any counter or
+reservation is touched).
 
 Guards, in the order of `routes/chat.py`, all answered as JSON before a stream starts: ``shed`` (the in-memory
 bucket, before the body is read), the JSON Content-Type (415), the body with its size cap and deadline (413 / 408),
@@ -30,7 +34,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from starlette.responses import Response
 
-from tayyari.api.deps import get_request_context
+from tayyari.api.deps import get_request_context, require_profile_access
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes.analyze import HeldResponse
 from tayyari.api.security import subnet_hash
@@ -106,6 +110,7 @@ async def generate(request: Request) -> Response:
     limiter.shed("portfolio", rc.ip_hash, ip_hash_48=ip48)
     body = await _read_body(request, container, PortfolioRequest)
     _require_id(body.profileId, PROFILE_NOT_FOUND)
+    await require_profile_access(request, body.profileId, not_found=PROFILE_NOT_FOUND)
     regenerate = bool(body.regenerate)
 
     held = AsyncExitStack()
@@ -126,6 +131,7 @@ async def get_portfolio(profile_id: str, request: Request) -> JSONResponse:
     rc = await get_request_context(request)
     _shed(container, rc, "chat")
     _require_id(profile_id, PORTFOLIO_NOT_FOUND)
+    await require_profile_access(request, profile_id, not_found=PORTFOLIO_NOT_FOUND)
     portfolio = await container.portfolio.get(profile_id)
     if portfolio is None:
         raise NotFound(PORTFOLIO_NOT_FOUND)
@@ -138,6 +144,7 @@ async def patch_portfolio(profile_id: str, request: Request) -> JSONResponse:
     rc = await get_request_context(request)
     _shed(container, rc, "chat")
     _require_id(profile_id, PORTFOLIO_NOT_FOUND)
+    await require_profile_access(request, profile_id, not_found=PORTFOLIO_NOT_FOUND)
     patch = await _read_body(request, container, PortfolioPatch)
     portfolio = await container.portfolio.patch(profile_id, patch, rc)
     return _no_store(portfolio.to_dict())
@@ -149,6 +156,7 @@ async def delete_portfolio(profile_id: str, request: Request) -> Response:
     rc = await get_request_context(request)
     _shed(container, rc, "chat")
     _require_id(profile_id, PORTFOLIO_NOT_FOUND)
+    await require_profile_access(request, profile_id, not_found=PORTFOLIO_NOT_FOUND)
     await container.portfolio.delete(profile_id)
     return Response(status_code=204, headers={"Cache-Control": "no-store"})
 
@@ -160,6 +168,7 @@ async def rewrite_slot(profile_id: str, request: Request) -> JSONResponse:
     ip48 = subnet_hash(container.ip_hash_key, rc.client_ip)
     container.rate_limiter.shed("portfolio", rc.ip_hash, ip_hash_48=ip48)
     _require_id(profile_id, PORTFOLIO_NOT_FOUND)
+    await require_profile_access(request, profile_id, not_found=PORTFOLIO_NOT_FOUND)
     body = await _read_body(request, container, RewriteRequest)
     await container.rate_limiter.check("portfolio", rc.ip_hash, ip_hash_48=ip48, memory=False)
     async with container.spend_guard.reserve(container.settings.guard.est_portfolio_usd):
@@ -173,6 +182,7 @@ async def public_preview(profile_id: str, request: Request) -> JSONResponse:
     rc = await get_request_context(request)
     _shed(container, rc, "chat")
     _require_id(profile_id, PORTFOLIO_NOT_FOUND)
+    await require_profile_access(request, profile_id, not_found=PORTFOLIO_NOT_FOUND)
     preview = await container.portfolio.public_preview(profile_id)
     return _no_store(preview.to_dict())
 

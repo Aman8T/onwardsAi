@@ -13,6 +13,7 @@ from tayyari.core.dburl import DbConfig
 from tayyari.core.settings import (
     GuardSettings,
     JevSettings,
+    MatchSettings,
     ModelNames,
     Settings,
     detect_env,
@@ -86,6 +87,43 @@ def test_nested_defaults_match_the_spec() -> None:
 def test_a_portfolio_generation_reserves_enough_for_its_concurrent_calls() -> None:
     # Haiku fact reads, three concurrent Sonnet copy calls and one re-ask
     assert build().guard.est_portfolio_usd == 0.12
+
+
+def test_posting_match_defaults_and_the_models_it_falls_back_to() -> None:
+    s = build()
+    assert s.match == MatchSettings(
+        model=None, writer_model=None, max_posting_chars=20_000, call_timeout_s=90.0
+    )
+    assert (s.guard.match_per_minute, s.guard.match_per_hour, s.guard.match_per_day) == (0, 10, 30)
+    assert (s.guard.match_global_per_hour, s.guard.est_match_usd) == (120, 0.06)
+    # unset: the reader model reads and the same model writes
+    assert (s.match_model, s.match_writer_model) == ("claude-haiku-4-5", "claude-haiku-4-5")
+    assert build(reader_model="r").match_model == "r"
+    own = build(reader_model="r", match=MatchSettings(model="m"))
+    assert (own.match_model, own.match_writer_model) == ("m", "m")
+    split = build(reader_model="r", match=MatchSettings(writer_model="w"))
+    assert (split.match_model, split.match_writer_model) == ("r", "w")
+    assert MatchSettings(model="  ", writer_model="").model is None  # blank counts as unset
+
+
+def test_posting_match_settings_come_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TAYYARI_MATCH__MODEL", "claude-haiku-5-5")
+    monkeypatch.setenv("TAYYARI_MATCH__WRITER_MODEL", "claude-sonnet-5-5")
+    monkeypatch.setenv("TAYYARI_MATCH__MAX_POSTING_CHARS", "12000")
+    monkeypatch.setenv("TAYYARI_MATCH__CALL_TIMEOUT_S", "45")
+    monkeypatch.setenv("TAYYARI_GUARD__MATCH_PER_HOUR", "3")
+    monkeypatch.setenv("TAYYARI_GUARD__EST_MATCH_USD", "0.1")
+    s = build()
+    assert (s.match.model, s.match.writer_model) == ("claude-haiku-5-5", "claude-sonnet-5-5")
+    assert (s.match.max_posting_chars, s.match.call_timeout_s) == (12_000, 45.0)
+    assert (s.guard.match_per_hour, s.guard.est_match_usd) == (3, 0.1)
+
+
+def test_a_posting_longer_than_the_reader_takes_cannot_be_configured() -> None:
+    with pytest.raises(ValidationError):
+        MatchSettings(max_posting_chars=20_001)
+    with pytest.raises(ValidationError):
+        MatchSettings(call_timeout_s=0)
 
 
 def test_models_property_is_a_small_frozen_object() -> None:

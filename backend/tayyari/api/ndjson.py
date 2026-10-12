@@ -1,4 +1,5 @@
-"""The NDJSON streaming response behind POST /api/analyze, POST /api/chat and POST /api/portfolio.
+"""The NDJSON streaming response behind POST /api/analyze, POST /api/chat, POST /api/portfolio, POST /api/match and
+POST /api/match/{id}/resume.
 
 `NdjsonResponse(request, events, tag)` writes one `contract.encode_event` line per event as soon as the
 producer yields it, and a blank line (`contract.HEARTBEAT`) after `HEARTBEAT_S` of quiet so an idle proxy does
@@ -37,6 +38,7 @@ from tayyari.contract.events import (
     encode_event,
     ev_error,
 )
+from tayyari.contract.match_api import MATCH_TERMINAL, MatchStreamEvent
 from tayyari.contract.portfolio import PortfolioDoneEvent, PortfolioErrorEvent, PortfolioEvent
 from tayyari.core.limits import DISCONNECT_POLL_S, HEARTBEAT_S
 from tayyari.core.logging import get_logger
@@ -45,11 +47,20 @@ log = get_logger(__name__)
 
 MEDIA_TYPE = "application/x-ndjson; charset=utf-8"
 CACHE_CONTROL = "no-cache, no-transform"
-NO_STORE_TAGS = frozenset({"portfolio"})
-"""Streams whose body is personal data a shared cache must never keep (the owner's whole portfolio)."""
-StreamEvent = AnalysisEvent | ChatEvent | PortfolioEvent
-"""Whatever a route streams: the events of an analysis, a chat turn or a portfolio generation."""
-_TERMINAL = (DoneEvent, ErrorEvent, ChatDoneEvent, ChatErrorEvent, PortfolioDoneEvent, PortfolioErrorEvent)
+NO_STORE_TAGS = frozenset({"portfolio", "match"})
+"""Streams whose body is personal data a shared cache must never keep (the owner's whole portfolio, a match with
+the person's evidence in it)."""
+StreamEvent = AnalysisEvent | ChatEvent | PortfolioEvent | MatchStreamEvent
+"""Whatever a route streams: the events of an analysis, a chat turn, a portfolio generation or a posting match."""
+_TERMINAL = (
+    DoneEvent,
+    ErrorEvent,
+    ChatDoneEvent,
+    ChatErrorEvent,
+    PortfolioDoneEvent,
+    PortfolioErrorEvent,
+    *MATCH_TERMINAL,
+)
 
 
 async def _pump(events: AsyncIterator[StreamEvent], queue: asyncio.Queue[bytes | None], tag: str) -> None:

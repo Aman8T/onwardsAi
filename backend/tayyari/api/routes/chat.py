@@ -3,8 +3,10 @@
 Guards in order, all answered as JSON before the stream starts: ``shed`` (in-memory bucket, before the body is
 read), the Content-Type (415 unless ``application/json``: a cross-site page can send ``text/plain`` without
 a CORS preflight, JSON it cannot), the body read with its size cap and a deadline (413 / 408), validation
-(400 with the legacy text), a stream slot (429: a few conversations per client and per process at a time, a
-chat answer streams for many seconds), the shared per-IP counters (429) and the daily spend ceiling (503).
+(400 with the legacy text), the profile's owner (404: a profile an account has claimed is chatted about only by that
+account's session, and anyone else gets the sentence an unknown id gets, see `api.deps.require_profile_access`), a
+stream slot (429: a few conversations per client and per process at a time, a chat answer streams for many seconds),
+the shared per-IP counters (429) and the daily spend ceiling (503).
 
 The stream slot and the spend reservation (the estimate counts against the ceiling for everyone else while the
 turn runs) are held until the response is over, however it ends.
@@ -18,11 +20,12 @@ from fastapi import APIRouter, Request
 from pydantic import ValidationError
 from starlette.responses import Response
 
-from tayyari.api.deps import get_request_context
+from tayyari.api.deps import get_request_context, require_profile_access
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes.analyze import HeldResponse
 from tayyari.api.security import subnet_hash
 from tayyari.api.uploads import read_json_body, require_json_content_type
+from tayyari.chat.service import PROFILE_NOT_FOUND_MESSAGE
 from tayyari.container import Container
 from tayyari.contract.requests import ChatRequestBody
 from tayyari.core.errors import BadRequest
@@ -74,6 +77,7 @@ async def chat(request: Request) -> Response:
         body = ChatRequestBody.model_validate(raw)
     except ValidationError as err:
         raise BadRequest(describe_chat_error(err)) from None
+    await require_profile_access(request, body.profileId, not_found=PROFILE_NOT_FOUND_MESSAGE)
 
     held = AsyncExitStack()
     try:

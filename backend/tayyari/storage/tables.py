@@ -36,6 +36,7 @@ from sqlalchemy import (
     MetaData,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -54,6 +55,12 @@ ID_LEN = 96
 """Profile and session ids (stored ids are at most 81 characters: the legacy shape; new ones are 32 or 39)."""
 HASH_LEN = 64
 """IP hashes (16 hex characters today) and sha256 state hashes (64)."""
+EMAIL_LEN = 320
+"""The longest possible email address (RFC 5321: 64 + 1 + 255)."""
+USER_AGENT_LEN = 200
+"""Sign-in records keep at most this much of the User-Agent."""
+PROVIDER_ID_LEN = 128
+"""Provider order ids and ledger references (Razorpay ``order_`` ids are 20 characters, Stripe session ids ~66)."""
 
 
 def as_utc(value: datetime) -> datetime:
@@ -106,10 +113,13 @@ class ProfileRow(Base):
     schema_version: Mapped[int] = mapped_column(Integer)
     goal: Mapped[str | None] = mapped_column(Text)
     profile: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id"))
+    """The account that owns this profile (set by `UserRepo.claim_profile`); None while it is anonymous."""
 
     __table_args__ = (
         Index("ix_profiles_last_accessed_at", "last_accessed_at"),
         Index("ix_profiles_owner_hash_created_at", "owner_hash", "created_at"),
+        Index("ix_profiles_user_id_created_at", "user_id", "created_at"),
     )
 
 
@@ -335,32 +345,276 @@ class PortfolioRow(Base):
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
     published_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
     last_viewed_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN))
+    """The owning account, copied from the profile when it is claimed (no foreign key, like ``profile_id``)."""
 
     __table_args__ = (
         Index("ix_portfolios_public_id", "public_id"),
         Index("ix_portfolios_updated_at", "updated_at"),
+        Index("ix_portfolios_user_id", "user_id"),
     )
 
 
+# ───────────────────────────── accounts ─────────────────────────────
+
+
+class UserRow(Base):
+    """A person with an account. ``email`` is stored lower-cased, so its unique constraint is case-insensitive."""
+
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    email: Mapped[str] = mapped_column(String(EMAIL_LEN))
+    name: Mapped[str | None] = mapped_column(Text)
+    picture_url: Mapped[str | None] = mapped_column(Text)
+    google_sub: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    last_login_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    locale: Mapped[str | None] = mapped_column(String(35))
+    currency: Mapped[str | None] = mapped_column(String(3))
+
+    __table_args__ = (
+        UniqueConstraint("email", name="uq_users_email"),
+        UniqueConstraint("google_sub", name="uq_users_google_sub"),
+    )
+
+
+class AuthSessionRow(Base):
+    """One sign-in. ``id`` is the sha256 of the random cookie token, so a database leak cannot be replayed."""
+
+    __tablename__ = "auth_sessions"
+
+    id: Mapped[str] = mapped_column(String(HASH_LEN), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    last_seen_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    ip_hash: Mapped[str | None] = mapped_column(String(HASH_LEN))
+    user_agent: Mapped[str | None] = mapped_column(String(USER_AGENT_LEN))
+
+    __table_args__ = (
+        Index("ix_auth_sessions_user_id", "user_id"),
+        Index("ix_auth_sessions_expires_at", "expires_at"),
+    )
+
+
+class MagicLinkRow(Base):
+    """An emailed sign-in link, keyed by the sha256 of its token. Single use: ``used_at`` is set when it is spent."""
+
+    __tablename__ = "magic_links"
+
+    token_hash: Mapped[str] = mapped_column(String(HASH_LEN), primary_key=True)
+    email: Mapped[str] = mapped_column(String(EMAIL_LEN))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    used_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    ip_hash: Mapped[str | None] = mapped_column(String(HASH_LEN))
+
+    __table_args__ = (Index("ix_magic_links_expires_at", "expires_at"),)
+
+
+# ───────────────────────────── payments and entitlements ─────────────────────────────
+
+
+class OrderRow(Base):
+    """One purchase attempt. ``provider_order_id`` is the provider's own id (Razorpay ``order_...``, Stripe Checkout
+    Session ``cs_...``); the webhook and the browser hand-off both find the row by it, and it is unique, so a
+    replayed event can only ever settle the order once.
+
+    ``user_id`` is cleared (not the row deleted) when the account is deleted: the payment record outlives the
+    account, and nothing is granted to an account that is gone. ``raw`` keeps a few provider ids, never an email
+    address or a card detail.
+    """
+
+    __tablename__ = "orders"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="SET NULL"))
+    provider: Mapped[str] = mapped_column(String(16))
+    provider_order_id: Mapped[str] = mapped_column(String(PROVIDER_ID_LEN))
+    product: Mapped[str] = mapped_column(String(16))
+    currency: Mapped[str] = mapped_column(String(3))
+    amount_minor: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    paid_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    raw: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+
+    __table_args__ = (
+        UniqueConstraint("provider_order_id", name="uq_orders_provider_order_id"),
+        Index("ix_orders_user_id", "user_id"),
+    )
+
+
+class EntitlementRow(Base):
+    """What an account may use right now: posting credits and the end of its pass. The row is also the lock that
+    serialises every change to one account's balance (``UPDATE`` first, then read and write)."""
+
+    __tablename__ = "entitlements"
+
+    user_id: Mapped[str] = mapped_column(
+        String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    credits: Mapped[int] = mapped_column(Integer)
+    pass_until: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+
+class CreditLedgerRow(Base):
+    """Append-only: every change to ``entitlements.credits`` is a row with its ``delta`` (so the balance is always
+    the sum of the deltas), and the free monthly postings and pass uses are rows with a delta of 0.
+
+    ``reason``: ``purchase`` (``ref`` is the order id), ``match`` (``ref`` is the match id; -1 for a credit, 0 for a
+    pass), ``free_monthly`` (0), ``refund`` (``ref`` is ``refund:<id of the row it reverses>``), ``admin``.
+    """
+
+    __tablename__ = "credit_ledger"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    delta: Mapped[int] = mapped_column(Integer)
+    reason: Mapped[str] = mapped_column(String(16))
+    ref: Mapped[str | None] = mapped_column(String(PROVIDER_ID_LEN))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (Index("ix_credit_ledger_user_id_created_at", "user_id", "created_at"),)
+
+
+# ───────────────────────────── posting match ─────────────────────────────
+
+BAND_LEN = 16
+"""``strong`` / ``good`` / ``stretch`` / ``weak`` (and room to grow)."""
+
+
+class PostingRow(Base):
+    """A job posting as read, shared by everyone who pasted the same text: ``hash`` is the sha256 of its normalised
+    text (`match.text.posting_hash`). The reading holds no one's data (the reader never sees a person), so rows are
+    not deleted with an account. ``parsed`` is the `Posting` JSON without ``rawText``, which lives in ``text``."""
+
+    __tablename__ = "postings"
+
+    hash: Mapped[str] = mapped_column(String(HASH_LEN), primary_key=True)
+    text: Mapped[str] = mapped_column(Text)
+    parsed: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+
+class MatchRow(Base):
+    """One posting matched against one profile. ``facts`` is the person's `FactBook` as it stood (the facts the
+    result's ``factIds`` cite, and the structure the resume is composed from); ``result`` is the `MatchResult`;
+    ``band`` and ``blocked`` repeat two of its fields for listing. Follows its account and its profile."""
+
+    __tablename__ = "matches"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"))
+    posting_hash: Mapped[str] = mapped_column(String(HASH_LEN), ForeignKey("postings.hash"))
+    facts: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    result: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    band: Mapped[str] = mapped_column(String(BAND_LEN))
+    blocked: Mapped[bool] = mapped_column(Boolean)
+    version: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        Index("ix_matches_user_id_created_at", "user_id", "created_at"),
+        Index("ix_matches_profile_id", "profile_id"),
+    )
+
+
+class UserFactRow(Base):
+    """Something a person said in their own words (an answer to a question, a figure for a resume line): the `Fact`
+    JSON with the question it answered. Facts belong to the profile, so a later match can use them; ``id`` is a hash
+    of ``(profile_id, fact id)``, so saying the same thing twice is one row. ``match_id`` is where it was said."""
+
+    __tablename__ = "user_facts"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"))
+    match_id: Mapped[str | None] = mapped_column(
+        String(ID_LEN), ForeignKey("matches.id", ondelete="SET NULL")
+    )
+    question: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str] = mapped_column(Text)
+    fact: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        Index("ix_user_facts_profile_id_created_at", "profile_id", "created_at"),
+        Index("ix_user_facts_user_id", "user_id"),
+    )
+
+
+class VariantRow(Base):
+    """The resume or the cover note built for a match (one of each: ``kind``). ``spec`` is the `ResumeVariant` or
+    `CoverNote` JSON; ``status`` is ``needs_user`` while a resume has open questions, else ``ready``."""
+
+    __tablename__ = "variants"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    match_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("matches.id", ondelete="CASCADE"))
+    kind: Mapped[str] = mapped_column(String(8))
+    spec: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    status: Mapped[str] = mapped_column(String(16))
+    version: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (UniqueConstraint("match_id", "kind", name="uq_variants_match_id_kind"),)
+
+
+class ProfileFactsRow(Base):
+    """The portfolio fact extractor's output for a profile, kept so a second match does not read the sources again.
+    ``facts_hash`` is `portfolio.facts.facts_hash` of the sources it was read from; a profile whose sources changed
+    simply gets a new row in place of this one."""
+
+    __tablename__ = "profile_facts"
+
+    profile_id: Mapped[str] = mapped_column(
+        String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True
+    )
+    facts_hash: Mapped[str] = mapped_column(String(HASH_LEN))
+    facts: Mapped[list[dict[str, Any]]] = mapped_column(JSONType)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+
 __all__ = [
+    "BAND_LEN",
+    "EMAIL_LEN",
     "HASH_LEN",
     "ID_LEN",
     "NAMING_CONVENTION",
+    "PROVIDER_ID_LEN",
+    "USER_AGENT_LEN",
+    "AuthSessionRow",
     "Base",
     "ChatMessageRow",
     "ChatSessionRow",
+    "CreditLedgerRow",
     "DecisionLogRow",
     "DecisionStateRow",
+    "EntitlementRow",
     "JSONType",
     "JevCallRow",
     "KvRow",
     "LlmCallRow",
+    "MagicLinkRow",
+    "MatchRow",
+    "OrderRow",
     "PortfolioRow",
+    "PostingRow",
     "ProfileContextRow",
+    "ProfileFactsRow",
     "ProfileRow",
     "RateLimitHitRow",
     "SpendDailyRow",
+    "UserFactRow",
+    "UserRow",
     "UtcDateTime",
+    "VariantRow",
     "as_utc",
     "metadata",
 ]

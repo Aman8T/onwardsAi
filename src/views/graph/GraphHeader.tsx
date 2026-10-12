@@ -1,15 +1,17 @@
 /**
  * Graph header (calm theme): the wordmark, a text segmented control Now | Next with one
  * 1px underline that slides between the two, and the right-hand cluster: sources status,
- * the Atmosphere menu, Portfolio, Ask, the New-analysis confirm and a hairline-circle avatar.
+ * the Atmosphere menu, Portfolio, Ask, the New-analysis confirm and the account control
+ * (a "Sign in" button, or the signed-in person's hairline-circle avatar and menu).
  * Sticky, on a solid field tone with a 1px hairline underneath. Styles live in shell.css.
  */
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { Profile } from '../../../shared/types';
+import { AccountMenu } from '../../auth/AccountMenu';
 import { Atmosphere } from '../../components/Atmosphere';
 import { Brand } from '../../components/Brand';
-import { EASE, cssVars, initials, plural, timeAgo, useNow } from '../../lib/ui';
+import { EASE, cssVars, plural, timeAgo, useNow } from '../../lib/ui';
 import { freeAction } from '../../lib/prompts';
 import { actions, useApp } from '../../store';
 
@@ -127,13 +129,19 @@ export function GraphHeader({ profile }: { profile: Profile }) {
         >
           Portfolio
         </button>
+        <button
+          type="button"
+          className="btn btn-quiet gv-portfolio"
+          title="Paste a job posting and see what it asks for against what you can prove"
+          onClick={() => actions.openMatch()}
+        >
+          Match
+        </button>
         <button type="button" className="btn btn-quiet gv-ask" aria-label="Ask Tayyari" onClick={() => actions.openChat(freeAction().origin, '')}>
           Ask
         </button>
         <NewAnalysis name={name} />
-        <span className="numeral gv-avatar" role="img" aria-label={`Profile of ${name}`} title={name}>
-          {initials(name)}
-        </span>
+        <AccountMenu />
       </div>
     </header>
   );

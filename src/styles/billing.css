@@ -1,0 +1,322 @@
+/*
+ * Payments: the pricing page (PricingView.tsx), its notices and the entitlement chip.
+ * Every class is prefixed "bl-". Tokens only (src/theme/tokens.css); depth comes from tone and a 1px hairline, never a
+ * shadow; the one serif line on the page is the title (the prices reuse the serif at a smaller size, as the board does).
+ * Three columns on wide screens, one under 760px (the same breakpoint every sheet in the app follows).
+ */
+
+/* ───────────── page ───────────── */
+
+.bl-root {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.bl-wrap {
+  max-width: 980px;
+  padding-bottom: var(--s8);
+}
+
+.bl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: 76px;
+}
+
+.bl-header-end {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s2);
+}
+
+.bl-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  padding-top: var(--s5);
+}
+
+/* ───────────── title and currency switch ───────────── */
+
+.bl-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s4);
+}
+
+.bl-intro-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  max-width: 640px;
+}
+
+.bl-title {
+  margin: 0;
+  font-size: var(--fs-7);
+  text-wrap: balance;
+}
+
+.bl-title:focus-visible {
+  outline: none;
+}
+
+.bl-lede {
+  max-width: var(--measure);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+/* A pill with two options; the chosen one is a soft fill. */
+.bl-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: var(--hair) solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.bl-seg-btn {
+  min-height: 44px;
+  padding: 0 var(--s4);
+  border-radius: 999px;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-muted);
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.bl-seg-btn:hover {
+  color: var(--text);
+}
+
+.bl-seg-btn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+/* ───────────── the three plans ───────────── */
+
+.bl-plans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s5);
+  align-items: stretch;
+}
+
+.bl-plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s5);
+}
+
+/* The suggested plan carries the accent hairline; nothing else about it is louder. */
+.bl-plan.is-featured {
+  border-color: var(--accent-ui);
+}
+
+.bl-plan-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.bl-price {
+  margin: 0;
+  font-size: 34px;
+}
+
+.bl-price.is-soon {
+  color: var(--text-muted);
+}
+
+.bl-unit {
+  font-family: var(--font-sans);
+  font-size: var(--fs-3);
+  letter-spacing: normal;
+  color: var(--text-muted);
+}
+
+.bl-sub {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.bl-alt {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.bl-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bl-list li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 4px 0;
+  font-size: var(--fs-2);
+}
+
+.bl-tick {
+  color: var(--accent-ui);
+}
+
+/* What is planned but not built yet says so, quietly. */
+.bl-soon {
+  margin-left: var(--s2);
+  font-size: var(--fs-0);
+  letter-spacing: var(--track-open);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.bl-plan-foot {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+}
+
+.bl-plan-foot .btn {
+  justify-content: center;
+  min-height: 44px;
+}
+
+/* ───────────── notes ───────────── */
+
+.bl-notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s5);
+}
+
+.bl-note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: var(--s4) var(--s4);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.bl-note p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* ───────────── where the payment is ───────────── */
+
+/* An empty live region stays in the page so a message that appears is announced. */
+.bl-notice {
+  margin: 0;
+}
+
+.bl-notice:empty {
+  display: none;
+}
+
+.bl-notice:not(:empty) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--accent-soft);
+  font-size: var(--fs-2);
+  color: var(--text);
+}
+
+.bl-notice p {
+  margin: 0;
+  min-width: 0;
+  text-wrap: pretty;
+}
+
+.bl-notice.is-problem {
+  background: var(--surface);
+  color: var(--danger);
+}
+
+.bl-notice-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+}
+
+/* ───────────── the entitlement chip ───────────── */
+
+.bl-chip {
+  white-space: nowrap;
+}
+
+/* The account menu's "Pricing" line and the signed-out header link (AccountMenu.tsx). */
+.bl-menu-pricing {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: var(--hair) solid var(--line);
+}
+
+.bl-header-link {
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+/* ───────────── narrow screens ───────────── */
+
+@media (max-width: 760px) {
+  .bl-plans,
+  .bl-notes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s4);
+  }
+
+  .bl-header {
+    min-height: 64px;
+  }
+
+  .bl-seg {
+    width: 100%;
+  }
+
+  .bl-seg-btn {
+    flex: 1 1 0;
+    padding: 0 var(--s3);
+  }
+
+  /* touch targets: the small buttons in the notices and the header reach 44px */
+  .bl-notice .btn,
+  .bl-header-end > .btn {
+    min-height: 44px;
+  }
+
+  /* the signed-out header link makes room for the account control */
+  .bl-header-link {
+    display: none;
+  }
+}

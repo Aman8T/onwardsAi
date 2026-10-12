@@ -1,0 +1,189 @@
+{
+  "title": "Senior Growth Marketing Manager",
+  "company": "Lumen Retail",
+  "location": "Mumbai, India",
+  "workMode": "hybrid",
+  "requirements": [
+    {
+      "quote": "Must have 5+ years of growth, performance or lifecycle marketing experience at a consumer brand.",
+      "text": "5+ years of growth, performance or lifecycle marketing experience at a consumer brand",
+      "tier": "must",
+      "kind": "years",
+      "provenance": "stated",
+      "terms": [],
+      "domainHint": "Growth marketing"
+    },
+    {
+      "quote": "Must have hands-on ownership of a paid media budget above ₹1 crore a year across Meta Ads and Google Ads.",
+      "text": "Owns a paid media budget above Rs 1 crore a year across Meta Ads and Google Ads",
+      "tier": "must",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "Meta Ads",
+        "Google Ads"
+      ],
+      "domainHint": "Paid media"
+    },
+    {
+      "quote": "Required: strong command of lifecycle marketing on email and WhatsApp, using an ESP such as Klaviyo, CleverTap or MoEngage.",
+      "text": "Lifecycle marketing on email and WhatsApp with an ESP",
+      "tier": "required",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "email",
+        "WhatsApp",
+        "Klaviyo",
+        "CleverTap",
+        "MoEngage"
+      ],
+      "domainHint": "Lifecycle marketing"
+    },
+    {
+      "quote": "Required: a proven A/B testing and experimentation practice.",
+      "text": "A proven A/B testing and experimentation practice",
+      "tier": "required",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "A/B testing"
+      ],
+      "domainHint": "Experimentation"
+    },
+    {
+      "quote": "Required: experience leading a team of at least 5 people.",
+      "text": "Experience leading a team of at least 5 people",
+      "tier": "required",
+      "kind": "years",
+      "provenance": "stated",
+      "terms": [],
+      "domainHint": "Team leadership"
+    },
+    {
+      "quote": "Required: fluent in English and Hindi.",
+      "text": "Fluent in English and Hindi",
+      "tier": "required",
+      "kind": "language",
+      "provenance": "stated",
+      "terms": [
+        "English",
+        "Hindi"
+      ],
+      "domainHint": "Languages"
+    },
+    {
+      "quote": "Must have worked with a customer data platform such as Segment or mParticle.",
+      "text": "Has worked with a customer data platform",
+      "tier": "must",
+      "kind": "tool",
+      "provenance": "stated",
+      "terms": [
+        "customer data platform",
+        "Segment",
+        "mParticle"
+      ],
+      "domainHint": "Data and analytics"
+    },
+    {
+      "quote": "Experience building dashboards in Looker Studio or Power BI.",
+      "text": "Builds dashboards in Looker Studio or Power BI",
+      "tier": "nice",
+      "kind": "tool",
+      "provenance": "stated",
+      "terms": [
+        "Looker Studio",
+        "Power BI"
+      ],
+      "domainHint": "Analytics"
+    },
+    {
+      "quote": "Marketing mix modelling or multi-touch attribution.",
+      "text": "Marketing mix modelling or multi-touch attribution",
+      "tier": "nice",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "Marketing mix modelling",
+        "multi-touch attribution"
+      ],
+      "domainHint": "Analytics"
+    },
+    {
+      "quote": "Shopify Plus experience.",
+      "text": "Shopify Plus experience",
+      "tier": "nice",
+      "kind": "tool",
+      "provenance": "stated",
+      "terms": [
+        "Shopify Plus"
+      ],
+      "domainHint": "E-commerce"
+    },
+    {
+      "quote": "MBA or postgraduate degree in marketing.",
+      "text": "MBA or postgraduate degree in marketing",
+      "tier": "nice",
+      "kind": "degree",
+      "provenance": "stated",
+      "terms": [],
+      "domainHint": "Education"
+    },
+    {
+      "quote": "Familiarity with SQL.",
+      "text": "Familiarity with SQL",
+      "tier": "nice",
+      "kind": "skill",
+      "provenance": "stated",
+      "terms": [
+        "SQL"
+      ],
+      "domainHint": "Data and analytics"
+    },
+    {
+      "quote": "Own acquisition and retention across paid, lifecycle and owned channels for the online shop.",
+      "text": "Owns acquisition and retention across paid, lifecycle and owned channels",
+      "tier": "required",
+      "kind": "domain",
+      "provenance": "structural",
+      "terms": [],
+      "domainHint": "Growth marketing"
+    },
+    {
+      "quote": "Run a disciplined experimentation programme: hypotheses, holdouts and readouts.",
+      "text": "Runs a disciplined experimentation programme",
+      "tier": "preferred",
+      "kind": "domain",
+      "provenance": "structural",
+      "terms": [],
+      "domainHint": "Experimentation"
+    },
+    {
+      "quote": "Build the weekly performance view for the leadership team.",
+      "text": "Builds the weekly performance view for leadership",
+      "tier": "required",
+      "kind": "skill",
+      "provenance": "inferred",
+      "terms": [],
+      "domainHint": "Analytics"
+    }
+  ],
+  "gates": [
+    {
+      "quote": "Must be authorised to work in India",
+      "question": "Are you authorised to work in India?",
+      "severity": 9
+    },
+    {
+      "quote": "able to be in the Mumbai office three days a week",
+      "question": "Can you be in the Mumbai office three days a week?",
+      "severity": 7
+    },
+    {
+      "quote": "Candidates must hold a bachelor's degree.",
+      "question": "Do you hold a bachelor's degree?",
+      "severity": 6
+    }
+  ],
+  "anomalies": []
+}

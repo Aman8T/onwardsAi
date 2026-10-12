@@ -93,6 +93,10 @@ async def test_the_wrong_method_on_health_is_a_405_json(make_settings: MakeSetti
 class CountingProfiles:
     def __init__(self) -> None:
         self.calls = 0
+        self.owner_checks = 0
+
+    async def get_access(self, profile_id: str) -> None:
+        self.owner_checks += 1
 
     async def get_profile(self, profile_id: str) -> None:
         self.calls += 1
@@ -106,15 +110,16 @@ async def test_profile_reads_are_shed_before_they_reach_the_database(make_settin
         pid = "0" * 32
         statuses = [(await h.client.get(f"/api/profile/{pid}")).status_code for _ in range(2)]
         limited = await h.client.get(f"/api/profile/{pid}")
-        queried = profiles.calls
+        queried, checked = profiles.calls, profiles.owner_checks
         other = await h.client.get(f"/api/profile/{pid}", headers=OTHER_CLIENT)
     assert statuses == [404, 404]
     assert limited.status_code == 429
     assert int(limited.headers["retry-after"]) >= 1
     assert "error" in limited.json()
     assert queried == 2  # the shed request never queried
+    assert checked == 2  # ... not even for the owner check that comes before the read
     assert other.status_code == 404  # the bucket is per client
-    assert profiles.calls == 3
+    assert (profiles.calls, profiles.owner_checks) == (3, 3)
 
 
 async def test_a_profile_read_takes_a_token_from_the_chat_bucket(make_settings: MakeSettings) -> None:
@@ -330,7 +335,7 @@ async def test_the_page_carries_the_csp_with_the_hash_of_its_inline_script(
     expected = page_csp(inline_script_hashes(f"<script>{script}</script>"))
     assert index.headers["content-security-policy"] == expected
     assert deep_link.headers["content-security-policy"] == expected
-    assert "script-src 'self' 'sha256-" in expected
+    assert "script-src 'self' https://checkout.razorpay.com 'sha256-" in expected
     assert asset.headers["content-security-policy"] == API_CSP
     for res in (index, deep_link, asset):
         assert res.headers["x-content-type-options"] == "nosniff"

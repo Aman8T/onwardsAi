@@ -17,6 +17,20 @@ another profile is invisible, ``hit`` counts per fixed window, a call recorded t
 spend reaches ``total`` plus the call's own scope. Every method yields to the event loop once on entry, so
 concurrently running tasks interleave as they would against a database (each method body is then atomic).
 
+`FakeUserRepo` mirrors `SqlUserRepo`: lower-cased unique emails, a Google identity found by ``sub`` and then by
+email, a link that can be spent once, claims that refuse sample runs and other people's profiles, and an account
+delete that takes its profiles (with their chats) and portfolios along. A claimed profile survives `purge_expired`.
+
+`FakeMatchRepo` and its three companions mirror `repos.match`: postings shared by hash (the first reading stays),
+facts per profile replaced when the sources change, user facts that are one row per ``(profile, fact id)``, and
+matches that only their owner can read or change, with at most one resume and one cover note each. Deleting an
+account takes its matches, variants and user facts along (postings stay).
+
+`FakeBillingRepo` mirrors `SqlBillingRepo`: orders found by the provider's id and settled once, a balance that only
+moves with a ledger row (so ``credits == sum(delta)``), uses idempotent per ``ref``, the free allowance counted per
+calendar month, and a give-back that reverses exactly one use. Unlike the database it has no foreign keys, so deleting
+an account does not clear its orders or balance.
+
 Fake-only knobs: `FakeSessionRepo.conflicts` makes the next appends lose their ``(session_id, seq)`` race.
 Deliberate differences: no foreign keys (a session may be created for an unknown profile) and no
 persistence between instances.
@@ -25,6 +39,7 @@ persistence between instances.
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import json
 import secrets
 import zlib
@@ -34,6 +49,8 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
+from tayyari.contract.match import Fact, Posting
+from tayyari.contract.portfolio import Fact as PortfolioFact
 from tayyari.contract.records import DecisionRecord, JevCallRecord, LlmCallRecord, StateBlob
 from tayyari.contract.stored import StoredContext
 from tayyari.core.clock import Clock, SystemClock
@@ -41,13 +58,30 @@ from tayyari.core.ids import new_session_id
 from tayyari.storage.ports import (
     ChatMessage,
     ChatSession,
+    ConsumeOutcome,
+    ConsumeSource,
+    MatchListing,
+    OwnedProfile,
     PortfolioConflict,
+    ProfileAccess,
+    ProfileNotClaimable,
+    ProfileOwnedByAnother,
     SessionConflict,
     SessionNotFound,
+    SettleResult,
+    StoredAuthSession,
+    StoredEntitlements,
+    StoredMagicLink,
+    StoredMatch,
+    StoredOrder,
     StoredPortfolio,
+    StoredUser,
+    StoredVariant,
     ToolEvent,
+    VariantKind,
 )
 from tayyari.storage.repos import Repositories
+from tayyari.storage.repos.match import posting_listing_fields
 
 TOUCH_INTERVAL = timedelta(hours=1)
 TOTAL = "total"
@@ -86,6 +120,18 @@ class _Profile:
     is_sample: bool
     schema_version: int
     goal: str | None
+    user_id: str | None = None
+
+
+@dataclass
+class _UserFact:
+    user_id: str
+    profile_id: str
+    match_id: str | None
+    question: str
+    answer: str
+    fact: dict[str, Any]
+    created_at: datetime
 
 
 @dataclass
@@ -107,6 +153,28 @@ class _State:
     profiles: dict[str, _Profile] = field(default_factory=dict)
     sessions: dict[str, _Session] = field(default_factory=dict)
     spend: dict[tuple[date, str], tuple[int, int]] = field(default_factory=dict)
+    postings: dict[str, tuple[str, dict[str, Any], datetime]] = field(default_factory=dict)
+    """hash -> (text, parsed JSON without rawText, created_at). Shared by every account; never deleted with one."""
+    profile_facts: dict[str, tuple[str, list[dict[str, Any]]]] = field(default_factory=dict)
+    """profile id -> (facts_hash, facts JSON)."""
+    user_facts: dict[tuple[str, str], _UserFact] = field(default_factory=dict)
+    """(profile id, fact id) -> the fact with the question it answered."""
+    matches: dict[str, StoredMatch] = field(default_factory=dict)
+    variants: dict[tuple[str, str], StoredVariant] = field(default_factory=dict)
+    """(match id, kind) -> variant."""
+
+    def drop_match_data(self, *, user_id: str, profile_ids: set[str]) -> None:
+        """What deleting an account removes: its matches (with their variants), the facts it gave, the facts cache
+        of its profiles. Postings stay."""
+        gone = {mid for mid, m in self.matches.items() if m.user_id == user_id}
+        for mid in gone:
+            del self.matches[mid]
+        for key in [k for k in self.variants if k[0] in gone]:
+            del self.variants[key]
+        for key in [k for k, f in self.user_facts.items() if f.user_id == user_id]:
+            del self.user_facts[key]
+        for pid in profile_ids:
+            self.profile_facts.pop(pid, None)
 
     def add_spend(self, created_at: datetime, cost: int, scopes: tuple[str, ...]) -> None:
         day = _utc(created_at).date()
@@ -145,6 +213,7 @@ class FakeProfileRepo:
             is_sample=is_sample,
             schema_version=schema_version,
             goal=goal,
+            user_id=existing.user_id if existing else None,
         )
 
     def _touch(self, record: _Profile) -> None:
@@ -168,12 +237,25 @@ class FakeProfileRepo:
         self._touch(record)
         return _roundtrip(record.profile), StoredContext.model_validate(_roundtrip(record.context))
 
+    async def get_owned_for_chat(self, user_id: str, pid: str) -> tuple[dict[str, Any], StoredContext] | None:
+        await _yield()
+        record = self._s.profiles.get(pid)
+        if record is None or record.user_id != user_id or record.is_sample:
+            return None
+        self._touch(record)
+        return _roundtrip(record.profile), StoredContext.model_validate(_roundtrip(record.context))
+
+    async def get_access(self, pid: str) -> ProfileAccess | None:
+        await _yield()
+        record = self._s.profiles.get(pid)
+        return None if record is None else ProfileAccess(user_id=record.user_id, is_sample=record.is_sample)
+
     async def purge_expired(self, cutoff: datetime) -> int:
         await _yield()
         expired = [
             pid
             for pid, p in self._s.profiles.items()
-            if not p.is_sample and p.last_accessed_at < _utc(cutoff)
+            if not p.is_sample and p.user_id is None and p.last_accessed_at < _utc(cutoff)
         ]
         for pid in expired:
             del self._s.profiles[pid]
@@ -462,6 +544,7 @@ class _Portfolio:
     updated_at: datetime
     published_at: datetime | None
     last_viewed_at: datetime | None
+    user_id: str | None = None
 
 
 class FakePortfolioRepo:
@@ -484,6 +567,7 @@ class FakePortfolioRepo:
             published=p.published,
             created_at=p.created_at,
             updated_at=p.updated_at,
+            user_id=p.user_id,
         )
 
     async def get_published(self, public_id: str) -> StoredPortfolio | None:
@@ -503,6 +587,7 @@ class FakePortfolioRepo:
                     published=p.published,
                     created_at=p.created_at,
                     updated_at=p.updated_at,
+                    user_id=p.user_id,
                 )
         return None
 
@@ -540,6 +625,8 @@ class FakePortfolioRepo:
             updated_at=now,
             published_at=published_at,
             last_viewed_at=existing.last_viewed_at if existing else None,
+            # a write that does not name an owner keeps the one the page has
+            user_id=rec.user_id if rec.user_id is not None else (existing.user_id if existing else None),
         )
         self.portfolios[rec.profile_id] = p
         return StoredPortfolio(
@@ -552,6 +639,7 @@ class FakePortfolioRepo:
             published=p.published,
             created_at=p.created_at,
             updated_at=p.updated_at,
+            user_id=p.user_id,
         )
 
     async def delete(self, profile_id: str) -> bool:
@@ -576,8 +664,577 @@ class FakePortfolioRepo:
         return len(to_delete)
 
 
+@dataclass
+class _User:
+    id: str
+    email: str
+    name: str | None
+    picture_url: str | None
+    google_sub: str | None
+    created_at: datetime
+    last_login_at: datetime
+    locale: str | None
+    currency: str | None
+
+    def view(self) -> StoredUser:
+        return StoredUser(
+            id=self.id,
+            email=self.email,
+            name=self.name,
+            picture_url=self.picture_url,
+            google_sub=self.google_sub,
+            created_at=self.created_at,
+            last_login_at=self.last_login_at,
+            locale=self.locale,
+            currency=self.currency,
+        )
+
+
+class FakeUserRepo:
+    def __init__(self, state: _State, portfolios: FakePortfolioRepo) -> None:
+        self._s = state
+        self._portfolios = portfolios
+        self.users: dict[str, _User] = {}
+        self.sessions: dict[str, StoredAuthSession] = {}
+        self.links: dict[str, StoredMagicLink] = {}
+
+    def _by_email(self, email: str) -> _User | None:
+        return next((u for u in self.users.values() if u.email == email), None)
+
+    def _create(self, *, email: str, now: datetime, **fields: Any) -> _User:
+        user = _User(
+            id=secrets.token_hex(16),
+            email=email,
+            name=fields.get("name"),
+            picture_url=fields.get("picture_url"),
+            google_sub=fields.get("google_sub"),
+            created_at=now,
+            last_login_at=now,
+            locale=fields.get("locale"),
+            currency=None,
+        )
+        self.users[user.id] = user
+        return user
+
+    async def get(self, user_id: str) -> StoredUser | None:
+        await _yield()
+        user = self.users.get(user_id)
+        return None if user is None else user.view()
+
+    async def get_by_email(self, email: str) -> StoredUser | None:
+        await _yield()
+        user = self._by_email(email)
+        return None if user is None else user.view()
+
+    async def sign_in_google(
+        self,
+        *,
+        sub: str,
+        email: str,
+        name: str | None,
+        picture_url: str | None,
+        locale: str | None,
+        now: datetime,
+    ) -> StoredUser:
+        await _yield()
+        user = next((u for u in self.users.values() if u.google_sub == sub), None) or self._by_email(email)
+        if user is None:
+            return self._create(
+                email=email, now=now, name=name, picture_url=picture_url, google_sub=sub, locale=locale
+            ).view()
+        user.google_sub = user.google_sub or sub
+        user.last_login_at = now
+        user.picture_url = picture_url
+        user.name = user.name or name
+        user.locale = user.locale or locale
+        return user.view()
+
+    async def sign_in_email(self, *, email: str, now: datetime) -> StoredUser:
+        await _yield()
+        user = self._by_email(email)
+        if user is None:
+            return self._create(email=email, now=now).view()
+        user.last_login_at = now
+        return user.view()
+
+    async def update(
+        self, user_id: str, *, name: str | None = None, currency: str | None = None
+    ) -> StoredUser | None:
+        await _yield()
+        user = self.users.get(user_id)
+        if user is None:
+            return None
+        if name is not None:
+            user.name = name
+        if currency is not None:
+            user.currency = currency
+        return user.view()
+
+    async def delete(self, user_id: str) -> bool:
+        await _yield()
+        user = self.users.pop(user_id, None)
+        if user is None:
+            return False
+        owned = [pid for pid, p in self._s.profiles.items() if p.user_id == user_id]
+        self._s.drop_match_data(user_id=user_id, profile_ids=set(owned))
+        for pid in owned:
+            del self._s.profiles[pid]
+            for sid in [sid for sid, sess in self._s.sessions.items() if sess.profile_id == pid]:
+                del self._s.sessions[sid]
+        for pid in [
+            pid for pid, p in self._portfolios.portfolios.items() if p.user_id == user_id or pid in owned
+        ]:
+            del self._portfolios.portfolios[pid]
+        self.sessions = {k: v for k, v in self.sessions.items() if v.user_id != user_id}
+        self.links = {k: v for k, v in self.links.items() if v.email != user.email}
+        return True
+
+    async def create_session(self, rec: StoredAuthSession) -> None:
+        await _yield()
+        self.sessions[rec.id] = rec
+
+    async def get_session(self, session_id: str) -> tuple[StoredAuthSession, StoredUser] | None:
+        await _yield()
+        session = self.sessions.get(session_id)
+        user = self.users.get(session.user_id) if session is not None else None
+        if session is None or user is None:
+            return None
+        return session, user.view()
+
+    async def touch_session(self, session_id: str, *, last_seen_at: datetime, expires_at: datetime) -> None:
+        await _yield()
+        session = self.sessions.get(session_id)
+        if session is not None:
+            self.sessions[session_id] = dataclasses.replace(
+                session, last_seen_at=last_seen_at, expires_at=expires_at
+            )
+
+    async def delete_session(self, session_id: str) -> bool:
+        await _yield()
+        return self.sessions.pop(session_id, None) is not None
+
+    async def add_magic_link(self, rec: StoredMagicLink) -> None:
+        await _yield()
+        if rec.token_hash in self.links:
+            raise ValueError("duplicate magic link")
+        self.links[rec.token_hash] = rec
+
+    async def consume_magic_link(self, token_hash: str, now: datetime) -> StoredMagicLink | None:
+        await _yield()
+        link = self.links.get(token_hash)
+        if link is None or link.used_at is not None or not _utc(link.expires_at) > _utc(now):
+            return None
+        spent = dataclasses.replace(link, used_at=now)
+        self.links[token_hash] = spent
+        return spent
+
+    async def list_profiles(self, user_id: str, limit: int = 20) -> list[OwnedProfile]:
+        await _yield()
+        mine = sorted(
+            ((pid, p) for pid, p in self._s.profiles.items() if p.user_id == user_id),
+            key=lambda item: (-_utc(item[1].created_at).timestamp(), item[0]),
+        )
+        out: list[OwnedProfile] = []
+        for pid, p in mine[:limit]:
+            person = p.profile.get("person")
+            name = person.get("name") if isinstance(person, dict) else None
+            out.append(
+                OwnedProfile(
+                    id=pid,
+                    created_at=p.created_at,
+                    goal=p.goal,
+                    person_name=name if isinstance(name, str) and name.strip() else None,
+                )
+            )
+        return out
+
+    async def claim_profile(self, user_id: str, profile_id: str) -> None:
+        await _yield()
+        p = self._s.profiles.get(profile_id)
+        if p is None or p.is_sample:
+            raise ProfileNotClaimable(profile_id)
+        if p.user_id is not None and p.user_id != user_id:
+            raise ProfileOwnedByAnother(profile_id)
+        p.user_id = user_id
+        page = self._portfolios.portfolios.get(profile_id)
+        if page is not None and page.user_id is None:
+            page.user_id = user_id
+
+    async def purge_expired(self, now: datetime) -> int:
+        await _yield()
+        old_sessions = [k for k, v in self.sessions.items() if _utc(v.expires_at) < _utc(now)]
+        old_links = [k for k, v in self.links.items() if _utc(v.expires_at) < _utc(now)]
+        for k in old_sessions:
+            del self.sessions[k]
+        for k in old_links:
+            del self.links[k]
+        return len(old_sessions) + len(old_links)
+
+    # inspection helpers (not part of the port)
+    def profile_owner(self, profile_id: str) -> str | None:
+        return self._s.profiles[profile_id].user_id
+
+    def portfolio_owner(self, profile_id: str) -> str | None:
+        return self._portfolios.portfolios[profile_id].user_id
+
+
+class FakePostingRepo:
+    def __init__(self, state: _State) -> None:
+        self._s = state
+
+    async def get(self, posting_hash: str) -> Posting | None:
+        await _yield()
+        found = self._s.postings.get(posting_hash)
+        if found is None:
+            return None
+        text, parsed, _ = found
+        return Posting.model_validate({**_roundtrip(parsed), "rawText": text})
+
+    async def put(self, posting: Posting) -> None:
+        await _yield()
+        self._s.postings.setdefault(
+            posting.hash,
+            (
+                posting.rawText,
+                _roundtrip(posting.model_dump(mode="json", exclude={"rawText"}, exclude_none=True)),
+                self._s.clock.now(),
+            ),
+        )
+
+
+class FakeProfileFactsRepo:
+    def __init__(self, state: _State) -> None:
+        self._s = state
+
+    async def get(self, profile_id: str, facts_hash: str) -> list[PortfolioFact] | None:
+        await _yield()
+        found = self._s.profile_facts.get(profile_id)
+        if found is None or found[0] != facts_hash:
+            return None
+        return [PortfolioFact.model_validate(f) for f in _roundtrip(found[1])]
+
+    async def put(self, profile_id: str, facts_hash: str, facts: list[PortfolioFact]) -> None:
+        await _yield()
+        self._s.profile_facts[profile_id] = (facts_hash, _roundtrip([f.to_dict() for f in facts]))
+
+
+class FakeUserFactRepo:
+    def __init__(self, state: _State) -> None:
+        self._s = state
+
+    async def list_for_profile(self, profile_id: str) -> list[Fact]:
+        await _yield()
+        mine = sorted(
+            (f for (pid, _), f in self._s.user_facts.items() if pid == profile_id),
+            key=lambda f: f.created_at,
+        )
+        return [Fact.model_validate(_roundtrip(f.fact)) for f in mine]
+
+    async def add(
+        self, user_id: str, profile_id: str, fact: Fact, *, question: str, answer: str, match_id: str | None
+    ) -> bool:
+        await _yield()
+        key = (profile_id, fact.id)
+        if key in self._s.user_facts:
+            return False
+        self._s.user_facts[key] = _UserFact(
+            user_id=user_id,
+            profile_id=profile_id,
+            match_id=match_id,
+            question=question,
+            answer=answer,
+            fact=_roundtrip(fact.model_dump(mode="json", exclude_none=True)),
+            created_at=self._s.clock.now(),
+        )
+        return True
+
+    # inspection helper (not part of the port)
+    def rows(self) -> list[_UserFact]:
+        return list(self._s.user_facts.values())
+
+
+class FakeMatchRepo:
+    def __init__(self, state: _State) -> None:
+        self._s = state
+
+    async def create(
+        self,
+        *,
+        match_id: str,
+        user_id: str,
+        profile_id: str,
+        posting_hash: str,
+        facts: dict[str, Any],
+        result: dict[str, Any],
+        band: str,
+        blocked: bool,
+        version: int,
+        now: datetime,
+    ) -> StoredMatch:
+        await _yield()
+        if match_id in self._s.matches:
+            raise ValueError("duplicate match id")
+        if posting_hash not in self._s.postings:
+            raise ValueError("the posting must be stored first")
+        record = StoredMatch(
+            id=match_id,
+            user_id=user_id,
+            profile_id=profile_id,
+            posting_hash=posting_hash,
+            facts=_roundtrip(facts),
+            result=_roundtrip(result),
+            band=band,
+            blocked=blocked,
+            version=version,
+            created_at=now,
+            updated_at=now,
+        )
+        self._s.matches[match_id] = record
+        return record
+
+    async def get(self, match_id: str, user_id: str) -> StoredMatch | None:
+        await _yield()
+        found = self._s.matches.get(match_id)
+        if found is None or found.user_id != user_id:
+            return None
+        return dataclasses.replace(found, facts=_roundtrip(found.facts), result=_roundtrip(found.result))
+
+    async def list_for_user(self, user_id: str, limit: int = 50) -> list[MatchListing]:
+        await _yield()
+        mine = sorted(
+            (m for m in self._s.matches.values() if m.user_id == user_id),
+            key=lambda m: (-_utc(m.created_at).timestamp(), m.id),
+        )
+        out: list[MatchListing] = []
+        for m in mine[:limit]:
+            title, company = posting_listing_fields(self._s.postings[m.posting_hash][1])
+            out.append(MatchListing(m.id, title, company, m.band, m.created_at))
+        return out
+
+    async def save_result(
+        self,
+        match_id: str,
+        user_id: str,
+        *,
+        expected_version: int,
+        facts: dict[str, Any],
+        result: dict[str, Any],
+        band: str,
+        blocked: bool,
+        version: int,
+        now: datetime,
+    ) -> bool:
+        await _yield()
+        found = self._s.matches.get(match_id)
+        if found is None or found.user_id != user_id or found.version != expected_version:
+            return False
+        self._s.matches[match_id] = dataclasses.replace(
+            found,
+            facts=_roundtrip(facts),
+            result=_roundtrip(result),
+            band=band,
+            blocked=blocked,
+            version=version,
+            updated_at=now,
+        )
+        return True
+
+    async def save_facts(self, match_id: str, user_id: str, facts: dict[str, Any], now: datetime) -> bool:
+        await _yield()
+        found = self._s.matches.get(match_id)
+        if found is None or found.user_id != user_id:
+            return False
+        self._s.matches[match_id] = dataclasses.replace(found, facts=_roundtrip(facts), updated_at=now)
+        return True
+
+    async def get_variant(self, match_id: str, kind: VariantKind) -> StoredVariant | None:
+        await _yield()
+        found = self._s.variants.get((match_id, kind))
+        return None if found is None else dataclasses.replace(found, spec=_roundtrip(found.spec))
+
+    async def put_variant(
+        self, match_id: str, kind: VariantKind, *, spec: dict[str, Any], status: str, now: datetime
+    ) -> StoredVariant:
+        await _yield()
+        if match_id not in self._s.matches:
+            raise ValueError("no such match")
+        existing = self._s.variants.get((match_id, kind))
+        record = StoredVariant(
+            id=existing.id if existing else secrets.token_hex(16),
+            match_id=match_id,
+            kind=kind,
+            spec=_roundtrip(spec),
+            status=status,
+            version=existing.version + 1 if existing else 1,
+            created_at=existing.created_at if existing else now,
+            updated_at=now,
+        )
+        self._s.variants[(match_id, kind)] = record
+        return record
+
+
+@dataclass
+class _Balance:
+    credits: int = 0
+    pass_until: datetime | None = None
+
+
+@dataclass(frozen=True)
+class _LedgerRow:
+    id: str
+    user_id: str
+    delta: int
+    reason: str
+    ref: str | None
+    created_at: datetime
+
+
+class FakeBillingRepo:
+    def __init__(self) -> None:
+        self.orders: dict[str, StoredOrder] = {}
+        self.balances: dict[str, _Balance] = {}
+        self.ledger: list[_LedgerRow] = []
+
+    # inspection helpers (not part of the port)
+    def ledger_of(self, user_id: str) -> list[_LedgerRow]:
+        return [row for row in self.ledger if row.user_id == user_id]
+
+    def ledger_sum(self, user_id: str) -> int:
+        return sum(row.delta for row in self.ledger_of(user_id))
+
+    def _by_provider(self, provider_order_id: str) -> StoredOrder | None:
+        return next((o for o in self.orders.values() if o.provider_order_id == provider_order_id), None)
+
+    def _add(self, user_id: str, delta: int, reason: str, ref: str | None, now: datetime) -> _LedgerRow:
+        row = _LedgerRow(secrets.token_hex(16), user_id, delta, reason, ref, _utc(now))
+        self.ledger.append(row)
+        return row
+
+    def _live_uses(
+        self, user_id: str, *, reasons: tuple[str, ...], ref: str | None = None, since: datetime | None = None
+    ) -> list[_LedgerRow]:
+        refunded = {row.ref for row in self.ledger_of(user_id) if row.reason == "refund"}
+        found = [
+            row
+            for row in self.ledger_of(user_id)
+            if row.reason in reasons
+            and (ref is None or row.ref == ref)
+            and (since is None or row.created_at >= _utc(since))
+            and f"refund:{row.id}" not in refunded
+        ]
+        return sorted(found, key=lambda row: row.created_at, reverse=True)
+
+    # orders
+    async def add_order(self, rec: StoredOrder) -> None:
+        await _yield()
+        if self._by_provider(rec.provider_order_id) is not None or rec.id in self.orders:
+            raise ValueError("duplicate order")
+        self.orders[rec.id] = rec
+
+    async def get_order(self, order_id: str) -> StoredOrder | None:
+        await _yield()
+        return self.orders.get(order_id)
+
+    async def get_order_by_provider_id(self, provider_order_id: str) -> StoredOrder | None:
+        await _yield()
+        return self._by_provider(provider_order_id)
+
+    async def settle_order(
+        self,
+        provider_order_id: str,
+        *,
+        now: datetime,
+        credits: int,
+        pass_days: int,
+        raw: dict[str, Any] | None,
+        amount_minor: int | None = None,
+        currency: str | None = None,
+    ) -> SettleResult:
+        await _yield()
+        order = self._by_provider(provider_order_id)
+        if order is None:
+            return SettleResult("unknown_order", None)
+        if order.status in ("paid", "refunded"):
+            return SettleResult("already_paid", order)
+        if (amount_minor is not None and amount_minor != order.amount_minor) or (
+            currency is not None and currency != order.currency
+        ):
+            return SettleResult("mismatch", order)
+        paid = dataclasses.replace(order, status="paid", paid_at=_utc(now), raw=raw)
+        self.orders[order.id] = paid
+        if paid.user_id is None:
+            return SettleResult("orphaned", paid)
+        self._grant(paid.user_id, credits=credits, pass_days=pass_days, ref=paid.id, now=now)
+        return SettleResult("granted", paid)
+
+    async def fail_order(self, provider_order_id: str) -> bool:
+        await _yield()
+        order = self._by_provider(provider_order_id)
+        if order is None or order.status != "created":
+            return False
+        self.orders[order.id] = dataclasses.replace(order, status="failed")
+        return True
+
+    # balances
+    async def entitlements(self, user_id: str, *, month_start: datetime) -> StoredEntitlements:
+        await _yield()
+        balance = self.balances.get(user_id, _Balance())
+        used = self._live_uses(user_id, reasons=("free_monthly",), since=month_start)
+        return StoredEntitlements(user_id, balance.credits, balance.pass_until, len(used))
+
+    def _grant(self, user_id: str, *, credits: int, pass_days: int, ref: str, now: datetime) -> bool:
+        balance = self.balances.setdefault(user_id, _Balance())
+        if any(r.reason == "purchase" and r.ref == ref for r in self.ledger_of(user_id)):
+            return False
+        balance.credits += credits
+        if pass_days:
+            start = max(_utc(now), balance.pass_until) if balance.pass_until is not None else _utc(now)
+            balance.pass_until = start + timedelta(days=pass_days)
+        self._add(user_id, credits, "purchase", ref, now)
+        return True
+
+    async def grant(self, user_id: str, *, credits: int, pass_days: int, ref: str, now: datetime) -> bool:
+        await _yield()
+        return self._grant(user_id, credits=credits, pass_days=pass_days, ref=ref, now=now)
+
+    async def consume(
+        self, user_id: str, ref: str, *, now: datetime, month_start: datetime, free_allowance: int
+    ) -> ConsumeOutcome | None:
+        await _yield()
+        balance = self.balances.setdefault(user_id, _Balance())
+        earlier = self._live_uses(user_id, reasons=("match", "free_monthly"), ref=ref)
+        if earlier:
+            use = earlier[0]
+            source: ConsumeSource = (
+                "free_monthly" if use.reason == "free_monthly" else ("credit" if use.delta < 0 else "pass")
+            )
+            return ConsumeOutcome(source, balance.credits, balance.pass_until, replayed=True)
+        if balance.pass_until is not None and balance.pass_until > _utc(now):
+            self._add(user_id, 0, "match", ref, now)
+            return ConsumeOutcome("pass", balance.credits, balance.pass_until)
+        if len(self._live_uses(user_id, reasons=("free_monthly",), since=month_start)) < free_allowance:
+            self._add(user_id, 0, "free_monthly", ref, now)
+            return ConsumeOutcome("free_monthly", balance.credits, balance.pass_until)
+        if balance.credits > 0:
+            balance.credits -= 1
+            self._add(user_id, -1, "match", ref, now)
+            return ConsumeOutcome("credit", balance.credits, balance.pass_until)
+        return None
+
+    async def release(self, user_id: str, ref: str, *, now: datetime) -> bool:
+        await _yield()
+        balance = self.balances.setdefault(user_id, _Balance())
+        earlier = self._live_uses(user_id, reasons=("match", "free_monthly"), ref=ref)
+        if not earlier:
+            return False
+        use = earlier[0]
+        balance.credits -= use.delta
+        self._add(user_id, -use.delta, "refund", f"refund:{use.id}", now)
+        return True
+
+
 class FakeRepositories:
-    """The seven fakes over one shared state; ``bundle`` is the `Repositories` services are constructed with."""
+    """The thirteen fakes over one shared state; ``bundle`` is the `Repositories` services are constructed with."""
 
     def __init__(self, clock: Clock | None = None) -> None:
         self._state = _State(clock=clock or SystemClock())
@@ -588,6 +1245,12 @@ class FakeRepositories:
         self.limits = FakeLimitRepo(self._state)
         self.kv = FakeKvRepo(self._state)
         self.portfolios = FakePortfolioRepo(self._state)
+        self.users = FakeUserRepo(self._state, self.portfolios)
+        self.billing = FakeBillingRepo()
+        self.postings = FakePostingRepo(self._state)
+        self.profile_facts = FakeProfileFactsRepo(self._state)
+        self.user_facts = FakeUserFactRepo(self._state)
+        self.matches = FakeMatchRepo(self._state)
         self.bundle = Repositories(
             profiles=self.profiles,
             sessions=self.sessions,
@@ -596,17 +1259,29 @@ class FakeRepositories:
             limits=self.limits,
             kv=self.kv,
             portfolios=self.portfolios,
+            users=self.users,
+            billing=self.billing,
+            postings=self.postings,
+            profile_facts=self.profile_facts,
+            user_facts=self.user_facts,
+            matches=self.matches,
         )
 
 
 __all__ = [
+    "FakeBillingRepo",
     "FakeDecisionLogRepo",
     "FakeKvRepo",
     "FakeLimitRepo",
     "FakeLlmCallRepo",
+    "FakeMatchRepo",
     "FakePortfolioRepo",
+    "FakePostingRepo",
+    "FakeProfileFactsRepo",
     "FakeProfileRepo",
     "FakeRepositories",
     "FakeSessionRepo",
+    "FakeUserFactRepo",
+    "FakeUserRepo",
     "window_start",
 ]

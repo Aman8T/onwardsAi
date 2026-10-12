@@ -1,0 +1,48 @@
+{
+  "paragraphs": [
+    {
+      "factIds": [
+        "exp-1",
+        "exp-1.2",
+        "proj-4"
+      ],
+      "requirementIds": [
+        "r2",
+        "r11"
+      ],
+      "kind": "match",
+      "text": "I am a Frontend Engineer II at Kitebird, where I own Kite UI, the shared React component library with 42 components, typed tokens and Storybook docs, used by 3 product squads. I also keep the public Storybook for the library. The Northwind design system role is about owning a library that several teams rely on, and that is the job I do today. I enjoy the unglamorous parts of it most: naming, documentation and keeping a change small enough to review. It is shared work, so I write for the people who will use the library as much as for the people who review it."
+    },
+    {
+      "factIds": [
+        "exp-1",
+        "exp-1.4",
+        "skill-accessibility-wcag"
+      ],
+      "requirementIds": [
+        "r3"
+      ],
+      "kind": "match",
+      "text": "On accessibility, I ran a WCAG 2.1 AA audit of checkout with design and fixed the critical issues: focus order, labels, colour contrast and screen-reader announcements for cart updates. Your posting asks for practical accessibility experience, and this audit is that work from start to finish. I would bring the same approach to the checkout at Northwind Commerce: audit with the designers, fix the worst problems first and then keep the fixes from regressing."
+    },
+    {
+      "factIds": [
+        "exp-1",
+        "exp-1.1",
+        "exp-3",
+        "exp-3.3"
+      ],
+      "requirementIds": [
+        "r5"
+      ],
+      "kind": "match",
+      "text": "On performance, I rebuilt the three-step checkout as a single-page flow in React and TypeScript with optimistic cart updates. Checkout conversion rose 9.4% in the A/B test and LCP on the payment step dropped from 4.1s to 1.9s. Earlier, at Saffron Ledger, I fixed table rendering performance for accounts with 10,000+ invoices using virtualised lists. In both places I started from a measurement and ended with one."
+    },
+    {
+      "factIds": [],
+      "requirementIds": [],
+      "kind": "close",
+      "text": "Thank you for your time. I would welcome a conversation about the role."
+    }
+  ]
+}

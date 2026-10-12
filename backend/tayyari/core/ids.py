@@ -36,6 +36,12 @@ def new_session_id() -> str:
     return secrets.token_hex(16)
 
 
+def new_match_id() -> str:
+    """A posting match's id: ``token_hex(16)``. Like a profile id it is a capability, so it is not guessable (and a
+    match is only ever read together with the signed-in account that owns it)."""
+    return secrets.token_hex(16)
+
+
 def new_public_id() -> str:
     """A portfolio's public id: ``token_hex(12)`` (24 hex chars, 96 random bits), never derived from the profile id.
 
@@ -78,6 +84,7 @@ __all__ = [
     "SAMPLE_PREFIX",
     "is_sample_id",
     "is_valid_id",
+    "new_match_id",
     "new_profile_id",
     "new_public_id",
     "new_session_id",

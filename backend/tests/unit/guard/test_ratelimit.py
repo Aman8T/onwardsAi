@@ -11,6 +11,7 @@ from tayyari.guard import ratelimit
 from tayyari.guard.ratelimit import (
     GLOBAL_ANALYZE_BUCKET,
     GLOBAL_CHAT_BUCKET,
+    GLOBAL_MATCH_BUCKET,
     GLOBAL_PORTFOLIO_BUCKET,
     SUBNET_LIMIT_FACTOR,
     InProcessBucket,
@@ -821,3 +822,59 @@ def test_seconds_to_window_end() -> None:
     assert seconds_to_window_end(NOON.replace(minute=59, second=59), 3600) == 1
     assert seconds_to_window_end(NOON, 86_400) == 12 * 3600
     assert seconds_to_window_end(NOON.replace(hour=23, minute=59, second=59), 86_400) == 1
+
+
+# ───────────────────────────── match route ─────────────────────────────
+
+
+async def test_match_has_its_own_hourly_and_daily_rules_and_texts() -> None:
+    limiter, _, clock = make(match_per_hour=2, match_per_day=3)
+    for _ in range(2):
+        await limiter.check("match", H)
+    err = await refused(limiter, "match")
+    assert (
+        err.user_message == "You've reached the hourly limit for postings. Please try again in about an hour."
+    )
+    assert err.retry_after_s is not None and 0 < err.retry_after_s <= 3600
+    await limiter.check("analyze", H)  # the other routes count on their own
+    clock.advance(3600)
+    await limiter.check("match", H)  # the third of the day
+    clock.advance(3600)
+    err = await refused(limiter, "match")
+    assert err.user_message.startswith("You've reached today's limit for postings. It resets in about ")
+
+
+async def test_the_match_minute_window_is_off_unless_set() -> None:
+    limiter, _, _ = make(match_per_hour=0, match_per_day=0, match_global_per_hour=0)
+    for _ in range(30):
+        await limiter.check("match", H)
+    limiter, _, _ = make(match_per_minute=1, match_per_hour=0, match_per_day=0, match_global_per_hour=0)
+    await limiter.check("match", H)
+    err = await refused(limiter, "match")
+    assert err.user_message == "You're matching postings quickly. Please wait about a minute and try again."
+
+
+async def test_the_match_global_backstop_caps_postings_across_all_clients() -> None:
+    limiter, _, clock = make(match_global_per_hour=2)
+    for i in range(2):
+        await limiter.check("match", f"client{i:011d}")
+    err = await refused(limiter, "match", "someone-else-0000")
+    assert err.user_message == "Tayyari is very busy right now. Please try again in about an hour."
+    clock.advance(3600)
+    await limiter.check("match", "someone-else-0000")
+
+
+async def test_an_account_subject_counts_beside_the_address_without_counting_the_whole_service_twice() -> (
+    None
+):
+    limiter, spy, _ = make(match_per_hour=2, match_per_day=0, match_global_per_hour=60)
+    for _ in range(2):
+        await limiter.check("match", H, memory=False)
+        await limiter.check("match", "u:abc", memory=False, globally=False)
+    hour = NOON.replace(minute=0)
+    assert spy.inner.hits[(GLOBAL_MATCH_BUCKET, hour)] == 2  # one per request, not one per subject
+    assert spy.inner.hits[(f"match:hour:{H}", hour)] == 2
+    assert spy.inner.hits[("match:hour:u:abc", hour)] == 2
+    with pytest.raises(RateLimited):
+        await limiter.check("match", "u:abc", memory=False, globally=False)  # the account alone is over
+    await limiter.check("match", "u:someone-else", memory=False, globally=False)

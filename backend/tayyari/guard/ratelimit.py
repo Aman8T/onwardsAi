@@ -18,8 +18,11 @@ How a request is judged (`RateLimiter.check`):
    rules accepted, so one noisy /64 cannot use up its neighbours' share. The in-memory token bucket has the same
    second bucket (4x capacity and refill).
 4. A global hourly counter per route caps the whole service (the cost backstop for a distributed crowd that no
-   single address gives away): ``analyze:global:hour`` (`GuardSettings.analyze_global_per_hour`) and
-   ``chat:global:hour`` (`chat_global_per_hour`).
+   single address gives away): ``analyze:global:hour`` (`GuardSettings.analyze_global_per_hour`),
+   ``chat:global:hour`` (`chat_global_per_hour`), ``portfolio:global:hour`` and ``match:global:hour``.
+
+The ``match`` route is also counted per signed-in account: the route calls `check` once with the client's hash and
+once with an account subject (``u:<user id>``, ``globally=False`` so the whole-service counter is hit once, not twice).
 
 `shed(route, ip_hash, ip_hash_48)` runs step 1 alone, synchronously, so a route can turn hammering away before it
 reads the request body; it then calls ``check(..., memory=False)`` after validating, so one request takes one
@@ -49,7 +52,7 @@ from tayyari.storage.ports import LimitRepo
 
 log = get_logger(__name__)
 
-Route = Literal["analyze", "chat", "portfolio"]
+Route = Literal["analyze", "chat", "portfolio", "match"]
 WindowName = Literal["min", "hour", "day"]
 
 UNKNOWN_SUBJECT = "unknown"
@@ -57,6 +60,7 @@ UNKNOWN_SUBJECT = "unknown"
 GLOBAL_ANALYZE_BUCKET = "analyze:global:hour"
 GLOBAL_CHAT_BUCKET = "chat:global:hour"
 GLOBAL_PORTFOLIO_BUCKET = "portfolio:global:hour"
+GLOBAL_MATCH_BUCKET = "match:global:hour"
 SUBNET_LIMIT_FACTOR = 4
 """An IPv6 /48 may use this many times the per-IP limit (a /64 is one household, a /48 is up to 65,536)."""
 
@@ -132,6 +136,10 @@ _MESSAGES: dict[tuple[str, str], str] = {
     ("portfolio", "hour"): "You've reached the hourly limit for portfolios. Please try again in {wait}.",
     ("portfolio", "day"): "You've reached today's limit for portfolios. It resets in {wait}.",
     ("portfolio", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
+    ("match", "min"): "You're matching postings quickly. Please wait {wait} and try again.",
+    ("match", "hour"): "You've reached the hourly limit for postings. Please try again in {wait}.",
+    ("match", "day"): "You've reached today's limit for postings. It resets in {wait}.",
+    ("match", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
 }
 
 
@@ -177,6 +185,8 @@ class RateLimiter:
             limits = (("min", s.analyze_per_minute), ("hour", s.analyze_per_hour), ("day", s.analyze_per_day))
         elif route == "chat":
             limits = (("min", s.chat_per_minute), ("hour", s.chat_per_hour), ("day", s.chat_per_day))
+        elif route == "match":
+            limits = (("min", s.match_per_minute), ("hour", s.match_per_hour), ("day", s.match_per_day))
         else:  # portfolio
             limits = (
                 ("min", s.portfolio_per_minute),
@@ -204,12 +214,14 @@ class RateLimiter:
 
     def _global_rule(self, route: Route) -> tuple[str, int]:
         """The bucket name and hourly limit of the whole-service backstop for ``route`` (0 = not enforced)."""
-        if route == "analyze":
-            return GLOBAL_ANALYZE_BUCKET, self._settings.analyze_global_per_hour
-        elif route == "chat":
-            return GLOBAL_CHAT_BUCKET, self._settings.chat_global_per_hour
-        else:  # portfolio
-            return GLOBAL_PORTFOLIO_BUCKET, self._settings.portfolio_global_per_hour
+        s = self._settings
+        rules: dict[Route, tuple[str, int]] = {
+            "analyze": (GLOBAL_ANALYZE_BUCKET, s.analyze_global_per_hour),
+            "chat": (GLOBAL_CHAT_BUCKET, s.chat_global_per_hour),
+            "portfolio": (GLOBAL_PORTFOLIO_BUCKET, s.portfolio_global_per_hour),
+            "match": (GLOBAL_MATCH_BUCKET, s.match_global_per_hour),
+        }
+        return rules[route]
 
     def _take_token(
         self, route: Route, ip_hash: str | None, windows: list[_Window], ip_hash_48: str | None = None
@@ -258,13 +270,21 @@ class RateLimiter:
             self._take_token(route, ip_hash, self._windows(route), ip_hash_48)
 
     async def check(
-        self, route: Route, ip_hash: str | None, ip_hash_48: str | None = None, *, memory: bool = True
+        self,
+        route: Route,
+        ip_hash: str | None,
+        ip_hash_48: str | None = None,
+        *,
+        memory: bool = True,
+        globally: bool = True,
     ) -> None:
         """Count this request against every rule, or raise `RateLimited`. Never raises anything else.
 
         ``memory=False`` skips the in-memory bucket (see `shed`) and applies only the shared counters.
         ``ip_hash_48`` is the keyed hash of an IPv6 client's /48 network; when given, the /48 is counted too
         at `SUBNET_LIMIT_FACTOR` times the per-IP limits. Leave it out for IPv4 and unknown clients.
+        ``globally=False`` leaves the whole-service counter alone (a second call for the same request, with another
+        subject such as an account, must not count the request twice).
         """
         settings = self._settings
         if not settings.enabled:
@@ -293,7 +313,7 @@ class RateLimiter:
                     if count > limit:
                         self._reject(route, window, now, count, limit, ip_hash, subnet="48")
             bucket, global_limit = self._global_rule(route)
-            if global_limit > 0:
+            if globally and global_limit > 0:
                 count = await self._hit(bucket, 3600, now)
                 if count > global_limit:
                     retry = seconds_to_window_end(now, 3600)
@@ -344,6 +364,7 @@ class RateLimiter:
 __all__ = [
     "GLOBAL_ANALYZE_BUCKET",
     "GLOBAL_CHAT_BUCKET",
+    "GLOBAL_MATCH_BUCKET",
     "GLOBAL_PORTFOLIO_BUCKET",
     "SUBNET_LIMIT_FACTOR",
     "UNKNOWN_SUBJECT",

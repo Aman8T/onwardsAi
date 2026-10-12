@@ -20,6 +20,35 @@ VIEW_TOUCH_INTERVAL = timedelta(minutes=10)
 """`get_published` records the view time at most this often per page: a popular page is not a write per visit."""
 
 
+_COLUMNS = (
+    PortfolioRow.profile_id,
+    PortfolioRow.public_id,
+    PortfolioRow.doc,
+    PortfolioRow.facts_hash,
+    PortfolioRow.generated,
+    PortfolioRow.version,
+    PortfolioRow.published,
+    PortfolioRow.created_at,
+    PortfolioRow.updated_at,
+    PortfolioRow.user_id,
+)
+
+
+def _stored(row: Any) -> StoredPortfolio:
+    return StoredPortfolio(
+        profile_id=row.profile_id,
+        public_id=row.public_id,
+        doc=row.doc,
+        facts_hash=row.facts_hash,
+        generated=row.generated,
+        version=row.version,
+        published=row.published,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+        user_id=row.user_id,
+    )
+
+
 def _published_at(published: bool, now: datetime) -> Any:
     """The new ``published_at`` of an UPDATE (or the DO UPDATE of an upsert) that sets ``published``.
 
@@ -41,63 +70,23 @@ class SqlPortfolioRepo:
 
     async def get(self, profile_id: str) -> StoredPortfolio | None:
         """The owner's portfolio (one per profile), or None."""
-        stmt = select(
-            PortfolioRow.profile_id,
-            PortfolioRow.public_id,
-            PortfolioRow.doc,
-            PortfolioRow.facts_hash,
-            PortfolioRow.generated,
-            PortfolioRow.version,
-            PortfolioRow.published,
-            PortfolioRow.created_at,
-            PortfolioRow.updated_at,
-        ).where(PortfolioRow.profile_id == profile_id)
+        stmt = select(*_COLUMNS).where(PortfolioRow.profile_id == profile_id)
         async with self._db.session() as s:
             row = (await s.execute(stmt)).one_or_none()
         if row is None:
             return None
-        return StoredPortfolio(
-            profile_id=row.profile_id,
-            public_id=row.public_id,
-            doc=row.doc,
-            facts_hash=row.facts_hash,
-            generated=row.generated,
-            version=row.version,
-            published=row.published,
-            created_at=row.created_at,
-            updated_at=row.updated_at,
-        )
+        return _stored(row)
 
     async def get_published(self, public_id: str) -> StoredPortfolio | None:
         """A published portfolio by its public id (None when unknown or unpublished);
         records the view time."""
-        stmt = select(
-            PortfolioRow.profile_id,
-            PortfolioRow.public_id,
-            PortfolioRow.doc,
-            PortfolioRow.facts_hash,
-            PortfolioRow.generated,
-            PortfolioRow.version,
-            PortfolioRow.published,
-            PortfolioRow.created_at,
-            PortfolioRow.updated_at,
-        ).where(PortfolioRow.public_id == public_id, PortfolioRow.published.is_(True))
+        stmt = select(*_COLUMNS).where(PortfolioRow.public_id == public_id, PortfolioRow.published.is_(True))
         async with self._db.session() as s:
             row = (await s.execute(stmt)).one_or_none()
         if row is None:
             return None
         await self._touch_viewed(public_id)
-        return StoredPortfolio(
-            profile_id=row.profile_id,
-            public_id=row.public_id,
-            doc=row.doc,
-            facts_hash=row.facts_hash,
-            generated=row.generated,
-            version=row.version,
-            published=row.published,
-            created_at=row.created_at,
-            updated_at=row.updated_at,
-        )
+        return _stored(row)
 
     async def put(self, rec: StoredPortfolio, *, expected_version: int | None) -> StoredPortfolio:
         """Insert or update; returns the stored row with its new ``version`` and ``updated_at``.
@@ -130,6 +119,7 @@ class SqlPortfolioRepo:
                     updated_at=now,
                     published_at=now if rec.published else None,
                     last_viewed_at=None,
+                    user_id=rec.user_id,
                 )
                 upsert_stmt = insert_stmt.on_conflict_do_update(
                     index_elements=[PortfolioRow.profile_id],
@@ -143,26 +133,31 @@ class SqlPortfolioRepo:
                         "updated_at": insert_stmt.excluded.updated_at,
                         "published_at": _published_at(rec.published, now),
                         "last_viewed_at": insert_stmt.excluded.last_viewed_at,
+                        # a write that does not name an owner keeps the one the page has
+                        "user_id": func.coalesce(insert_stmt.excluded.user_id, PortfolioRow.user_id),
                     },
                 )
                 await s.execute(upsert_stmt)
             else:
                 # Optimistic update: only update if version matches, else raise PortfolioConflict.
                 new_version = expected_version + 1
+                changes: dict[str, Any] = {
+                    "doc": rec.doc,
+                    "generated": rec.generated,
+                    "facts_hash": rec.facts_hash,
+                    "version": new_version,
+                    "published": rec.published,
+                    "updated_at": now,
+                    "published_at": _published_at(rec.published, now),
+                }
+                if rec.user_id is not None:  # otherwise the owner the page has stays
+                    changes["user_id"] = rec.user_id
                 update_stmt = (
                     update(PortfolioRow)
                     .where(
                         PortfolioRow.profile_id == rec.profile_id, PortfolioRow.version == expected_version
                     )
-                    .values(
-                        doc=rec.doc,
-                        generated=rec.generated,
-                        facts_hash=rec.facts_hash,
-                        version=new_version,
-                        published=rec.published,
-                        updated_at=now,
-                        published_at=_published_at(rec.published, now),
-                    )
+                    .values(**changes)
                 )
                 result = await s.execute(update_stmt)
                 if rowcount(result) == 0:
@@ -170,30 +165,10 @@ class SqlPortfolioRepo:
                     raise PortfolioConflict(f"portfolio version conflict: expected {expected_version}")
 
             # Re-fetch the row to get the created_at and public_id.
-            fetch_stmt = select(
-                PortfolioRow.profile_id,
-                PortfolioRow.public_id,
-                PortfolioRow.doc,
-                PortfolioRow.facts_hash,
-                PortfolioRow.generated,
-                PortfolioRow.version,
-                PortfolioRow.published,
-                PortfolioRow.created_at,
-                PortfolioRow.updated_at,
-            ).where(PortfolioRow.profile_id == rec.profile_id)
+            fetch_stmt = select(*_COLUMNS).where(PortfolioRow.profile_id == rec.profile_id)
             row = (await s.execute(fetch_stmt)).one()
 
-        return StoredPortfolio(
-            profile_id=row.profile_id,
-            public_id=row.public_id,
-            doc=row.doc,
-            facts_hash=row.facts_hash,
-            generated=row.generated,
-            version=row.version,
-            published=row.published,
-            created_at=row.created_at,
-            updated_at=row.updated_at,
-        )
+        return _stored(row)
 
     async def delete(self, profile_id: str) -> bool:
         """Remove the owner's portfolio; True when a row was deleted."""
