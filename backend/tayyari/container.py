@@ -9,8 +9,8 @@
     SampleProvider                                (the bundled sample persona, also seeded into the database)
     PipelineAnalysisService, CoachChatService, PortfolioService
     AuthService                                   (sign-in, sessions and emailed links; its own small HTTP client)
-    EntitlementService, BillingService            (what an account may use, and how it pays: Razorpay for INR,
-                                                   Stripe for USD, each only when its secrets are set)
+    EntitlementService, BillingService            (what an account may use, and how it pays: Razorpay for INR on
+                                                   its key pair, Stripe for USD on its two secrets)
     MatchService                                  (the posting match: the guarded, recording Claude client, the
                                                    match models, and the stored postings and extracted facts)
     match_anonymous                               (may a visitor with no sign-in match a posting: the setting
@@ -65,6 +65,7 @@ from tayyari.storage.migrate import migrate_to_head
 from tayyari.storage.repos import Repositories, build_repositories
 
 if TYPE_CHECKING:
+    import requests
     import stripe
 
     from tayyari.auth.email import EmailSender
@@ -101,7 +102,8 @@ class ContainerOverrides:
     - ``auth_transport``: an ``httpx2`` transport for every outgoing sign-in call (Google's token endpoint and keys,
       the email provider); tests hand in an ``httpx2.MockTransport`` so the flow runs without a network.
     - ``entitlements``, ``billing``, ``match``: the services themselves.
-    - ``billing_transport``: an ``httpx2`` transport for Razorpay's API; tests hand in an ``httpx2.MockTransport``.
+    - ``razorpay_session``: the ``requests.Session`` the Razorpay SDK sends through; tests hand in one that answers
+      from memory.
     - ``stripe_http``: a ``stripe.HTTPClient`` for the Stripe SDK's requests; tests hand in one that answers from memory.
     - ``db``: a ready `Database` (migrated here, idempotent). ``repos``: ready repositories (fakes); without a
       ``db`` the container has no database, so migrations, maintenance and the deep health check are skipped.
@@ -123,7 +125,7 @@ class ContainerOverrides:
     entitlements: EntitlementService | None = None
     billing: BillingService | None = None
     match: MatchService | None = None
-    billing_transport: httpx2.AsyncBaseTransport | None = None
+    razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
 
 
@@ -231,6 +233,7 @@ class Container:
         from tayyari.auth.google import STATE_KEY_NAME
         from tayyari.auth.service import AuthService
         from tayyari.billing.entitlements import EntitlementService
+        from tayyari.billing.products import below_floor
         from tayyari.billing.razorpay import RazorpayGateway
         from tayyari.billing.service import BillingService
         from tayyari.billing.stripe_gw import StripeGateway
@@ -395,21 +398,19 @@ class Container:
                 billing = ov.billing
             else:
                 razorpay: RazorpayGateway | None = None
-                if (
-                    settings.razorpay_key_id is not None
-                    and settings.razorpay_key_secret is not None
-                    and settings.razorpay_webhook_secret is not None
-                ):
-                    billing_http = httpx2.AsyncClient(
-                        timeout=httpx2.Timeout(10.0), transport=ov.billing_transport
-                    )
-                    closers.append(("billing_http", billing_http.aclose))
+                if settings.razorpay_key_id is not None and settings.razorpay_key_secret is not None:
+                    webhook_secret = settings.razorpay_webhook_secret
                     razorpay = RazorpayGateway(
                         key_id=settings.razorpay_key_id.get_secret_value(),
                         key_secret=settings.razorpay_key_secret.get_secret_value(),
-                        webhook_secret=settings.razorpay_webhook_secret.get_secret_value(),
-                        client=billing_http,
+                        webhook_secret=None if webhook_secret is None else webhook_secret.get_secret_value(),
+                        session=ov.razorpay_session,
                     )
+                    if not settings.razorpay_webhooks_enabled:
+                        log.warning(
+                            "razorpay_webhooks_off",
+                            hint="hand-off only: a payment whose browser never returns is not granted until a webhook is configured",
+                        )
                 stripe_gateway: StripeGateway | None = None
                 if settings.stripe_secret_key is not None and settings.stripe_webhook_secret is not None:
                     stripe_gateway = StripeGateway(
@@ -425,6 +426,14 @@ class Container:
                     razorpay=razorpay,
                     stripe=stripe_gateway,
                 )
+                for item in below_floor(settings):
+                    log.warning(
+                        "price_below_provider_minimum",
+                        product=item.product,
+                        currency=item.currency,
+                        price_minor=item.price_minor,
+                        minimum_minor=item.minimum_minor,
+                    )
 
             match: MatchService
             if ov.match is not None:

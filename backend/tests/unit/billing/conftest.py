@@ -1,5 +1,6 @@
 """Fixtures for the payment tests: a manual clock, fake repositories, prices, and the services over them. Nothing
-here can reach Razorpay or Stripe: the gateways get a `MockTransport` / an in-memory `stripe.HTTPClient`."""
+here can reach Razorpay or Stripe: the gateways get a `requests.Session` / an in-memory `stripe.HTTPClient` that
+answer from memory."""
 
 from __future__ import annotations
 

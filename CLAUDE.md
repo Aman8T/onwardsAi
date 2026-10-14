@@ -92,7 +92,8 @@ In the in-app browser pane, `.claude/launch.json` defines `tayyari-api` and `tay
 - `.gitignore` has `/data/` (root only); `backend/tests/data` is tracked.
 - No `gh` CLI on the dev machine; the anonymous GitHub API allows 10 searches a minute and 60 core calls an hour.
 - Design canvases: never put `<sc-for>` inside `<table>`; the parser foster-parents it.
+- The `razorpay` SDK is synchronous (`requests`): call it through `asyncio.to_thread`, never directly in a route or service coroutine.
 
-## Status (2026-10-11)
+## Status (2026-10-14)
 
-Done and deployed: analysis → skill graph → next roles → chat; Resume → Portfolio with the Old Newspaper skin; calm visual layer; cursor light on Home. Parked: the Home dragon (branch `dragon`). Landed on 2026-10-11, uncommitted: the five build waves of the paid-user build in `docs/roadmap.md` (accounts F1, payments F2, posting match M1, M2, M3), with their tests and docs. Awaiting the user's commit, and the secrets and prices (sign-in, email, payments) before the live app can use them. Next: the radar card (R1), the grounded mock interview (I1), then the skills table (X1).
+Done and deployed: analysis → skill graph → next roles → chat; Resume → Portfolio with the Old Newspaper skin; calm visual layer; cursor light on Home; accounts (F1), payments (F2), posting match (M1, M2, M3) and their docs, committed 03988c7 and deployed 2026-10-12; posting match without an account while no sign-in provider is configured (aa02483). Razorpay works locally with a test key pair (the hand-off settles; the webhook secret is optional); the live app sells only once a sign-in provider, the Razorpay secrets and the prices are set on FastAPI Cloud. Parked: the Home dragon (branch `dragon`). Next: the radar card (R1), the grounded mock interview (I1), then the skills table (X1).

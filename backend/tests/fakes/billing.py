@@ -1,6 +1,7 @@
 """Fakes for the payment tests: the two providers' network edges and the signed webhooks they send.
 
-FakeRazorpay        Razorpay's order API behind an ``httpx2.MockTransport`` (records requests, answers from ``reply``)
+FakeRazorpay        Razorpay's order API for the SDK: a ``requests.Session`` with no socket (records requests, answers
+                    from ``reply``)
 FakeStripeHttp      the ``stripe.HTTPClient`` the SDK sends its requests through, answering from memory
 razorpay_event      a Razorpay webhook body; ``sign_razorpay`` signs raw bytes the way Razorpay does
 stripe_event        a Stripe webhook body; ``sign_stripe`` makes the ``Stripe-Signature`` header for raw bytes
@@ -11,16 +12,23 @@ Every value here is made up (they are not credentials of any account); nothing c
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
+from dataclasses import dataclass
 from typing import Any
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, urlsplit
 
-import httpx2
+import pytest
+import requests
 import stripe
+import structlog
+import structlog.testing
+from requests.adapters import BaseAdapter
 
 RZP_KEY_ID = "rzp_test_keyid"
 RZP_KEY_SECRET = "rzp-key-secret"
@@ -35,6 +43,8 @@ ALL_SECRETS = {
     "stripe_secret_key": STRIPE_KEY,
     "stripe_webhook_secret": STRIPE_WEBHOOK_SECRET,
 }
+RAZORPAY_KEYS = {k: v for k, v in ALL_SECRETS.items() if k in ("razorpay_key_id", "razorpay_key_secret")}
+"""Only the key pair: enough for Razorpay to take payments (the hand-off is verified with the key secret)."""
 PRICES = {"pack3_inr": 49_900, "pass30_inr": 99_900, "pack3_usd": 900, "pass30_usd": 1_900}
 
 
@@ -42,40 +52,121 @@ def hmac_hex(secret: str, message: bytes) -> str:
     return hmac.new(secret.encode(), message, hashlib.sha256).hexdigest()
 
 
+@contextmanager
+def captured_events(monkeypatch: pytest.MonkeyPatch, module: str) -> Iterator[list[dict[str, Any]]]:
+    """The structured log events that ``module`` logs inside the block (``module.log`` is swapped for a fresh logger).
+
+    A bare ``structlog.testing.capture_logs()`` misses a module whose logger an earlier test of the same process
+    already bound and cached (a ``prod`` set-up does that), so the test would pass alone and fail in the suite.
+    """
+    monkeypatch.setattr(f"{module}.log", structlog.get_logger(module))
+    with structlog.testing.capture_logs() as logs:
+        yield logs
+
+
 # ───────────────────────── Razorpay ─────────────────────────
 
 
-class FakeRazorpay:
-    """Razorpay's ``POST /v1/orders``. By default it creates ``order_<n>`` with the amount and currency it was asked for."""
+@dataclass(frozen=True, slots=True)
+class Answer:
+    """What the fake Razorpay answers: a status and either a JSON body or raw text (an HTML error page, say)."""
 
-    def __init__(self, reply: Callable[[httpx2.Request], httpx2.Response | Exception] | None = None) -> None:
-        self.requests: list[httpx2.Request] = []
-        self.created = 0
-        self.reply = reply or self._create
-        self.transport = httpx2.MockTransport(self._handle)
+    status: int = 200
+    json: Any = None
+    text: str | None = None
 
-    def _create(self, request: httpx2.Request) -> httpx2.Response:
-        self.created += 1
-        body = json.loads(request.content)
-        return httpx2.Response(
-            200,
-            json={
-                "id": f"order_Rzp{self.created:04d}",
-                "amount": body["amount"],
-                "currency": body["currency"],
-            },
+
+@dataclass(frozen=True, slots=True)
+class RecordedRequest:
+    """One request the SDK sent, as it reached the network edge (after ``requests`` prepared it)."""
+
+    method: str
+    url: str
+    headers: Mapping[str, str]
+    body: bytes
+    timeout: Any
+    """The ``timeout`` ``requests`` handed to the adapter: what the SDK was told to wait."""
+
+    @property
+    def json(self) -> Any:
+        return json.loads(self.body)
+
+    @property
+    def basic_auth(self) -> str | None:
+        """``key id:key secret`` decoded from the Authorization header, or None when there is no Basic header."""
+        scheme, _, token = self.headers.get("Authorization", "").partition(" ")
+        return base64.b64decode(token).decode() if scheme == "Basic" and token else None
+
+
+class _RazorpayAdapter(BaseAdapter):
+    """Where ``requests`` would open a socket: records the request and answers from the fake's ``reply``."""
+
+    def __init__(self, fake: FakeRazorpay) -> None:
+        super().__init__()
+        self._fake = fake
+
+    def send(  # type: ignore[override]
+        self, request: requests.PreparedRequest, stream: bool = False, timeout: Any = None, **_: Any
+    ) -> requests.Response:
+        body = request.body or b""
+        recorded = RecordedRequest(
+            method=str(request.method),
+            url=str(request.url),
+            headers=dict(request.headers),
+            body=body.encode() if isinstance(body, str) else bytes(body),
+            timeout=timeout,
         )
-
-    def _handle(self, request: httpx2.Request) -> httpx2.Response:
-        self.requests.append(request)
-        result = self.reply(request)
+        self._fake.requests.append(recorded)
+        if (recorded.method, urlsplit(recorded.url).path) != ("POST", "/v1/orders"):
+            raise AssertionError(f"nobody mocked {recorded.method} {recorded.url}")
+        result = self._fake.reply(recorded)
         if isinstance(result, Exception):
             raise result
-        return result
+        response = requests.Response()
+        response.status_code = result.status
+        response.url = recorded.url
+        response.request = request
+        response.encoding = "utf-8"
+        response._content = (result.text if result.text is not None else json.dumps(result.json)).encode()
+        return response
+
+    def close(self) -> None:
+        return None
+
+
+class FakeRazorpay(requests.Session):
+    """Razorpay's ``POST /v1/orders`` for the SDK: a real ``requests.Session`` whose network edge is this object.
+
+    Everything above the socket is the real stack (basic auth, headers, the timeout handed down), so a test sees
+    what Razorpay would have received. By default it creates ``order_Rzp<n>`` with the amount and currency asked
+    for. ``reply`` may return an `Answer` or an exception to raise (``requests.ConnectionError``...); any other
+    request fails the test, and nothing leaves the process.
+    """
+
+    def __init__(self, reply: Callable[[RecordedRequest], Answer | Exception] | None = None) -> None:
+        super().__init__()
+        self.requests: list[RecordedRequest] = []
+        self.created = 0
+        self.reply = reply or self._create
+        self.mount("https://", _RazorpayAdapter(self))
+        self.mount("http://", _RazorpayAdapter(self))
+
+    def _create(self, request: RecordedRequest) -> Answer:
+        self.created += 1
+        body = request.json
+        return Answer(
+            200,
+            {"id": f"order_Rzp{self.created:04d}", "amount": body["amount"], "currency": body["currency"]},
+        )
 
     @property
     def last_order_id(self) -> str:
         return f"order_Rzp{self.created:04d}"
+
+
+def error_answer(status: int, code: str, description: str) -> Answer:
+    """Razorpay's error body: ``{"error": {"code": ..., "description": ...}}``."""
+    return Answer(status, {"error": {"code": code, "description": description}})
 
 
 def razorpay_payment(**fields: Any) -> dict[str, Any]:
@@ -204,13 +295,18 @@ def sign_stripe(raw: bytes, *, secret: str = STRIPE_WEBHOOK_SECRET, at: float | 
 __all__ = [
     "ALL_SECRETS",
     "PRICES",
+    "RAZORPAY_KEYS",
     "RZP_KEY_ID",
     "RZP_KEY_SECRET",
     "RZP_WEBHOOK_SECRET",
     "STRIPE_KEY",
     "STRIPE_WEBHOOK_SECRET",
+    "Answer",
     "FakeRazorpay",
     "FakeStripeHttp",
+    "RecordedRequest",
+    "captured_events",
+    "error_answer",
     "hmac_hex",
     "razorpay_event",
     "razorpay_handoff",

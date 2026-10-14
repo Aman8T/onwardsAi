@@ -6,9 +6,9 @@ Two one-time products, no subscription and no auto-renew (a renewal is a new pur
     pass30  unlimited postings for 30 days from purchase
 
 Prices are settings in minor units (`core.settings.BillingSettings`); 0 means unset. A product is *on sale* in a
-currency only when its price is set and the payment provider for that currency (INR: Razorpay, USD: Stripe) is
-configured. Everything that offers or sells a product asks `on_sale`, so the web app, the checkout route and the
-entitlements endpoint can never disagree.
+currency only when its price is set, is at least the provider's minimum (`MIN_MINOR`) and the payment provider for
+that currency (INR: Razorpay, USD: Stripe) is configured. Everything that offers or sells a product asks `on_sale`, so
+the web app, the checkout route and the entitlements endpoint can never disagree.
 """
 
 from __future__ import annotations
@@ -41,6 +41,10 @@ PRODUCTS: Final[Mapping[Product, ProductDef]] = {
 }
 CURRENCIES: Final[tuple[Currency, ...]] = get_args(Currency)
 PROVIDER_FOR: Final[Mapping[Currency, Provider]] = {"INR": "razorpay", "USD": "stripe"}
+MIN_MINOR: Final[Mapping[Currency, int]] = {"INR": 100, "USD": 50}
+"""The smallest price each provider accepts, in minor units: Razorpay rejects an order under 100 paise (INR 1) and
+Stripe a Checkout Session under 50 cents (USD 0.50). A price below it would only end as a 503 at checkout, so the
+product is not put on sale."""
 
 
 def product_def(name: str) -> ProductDef | None:
@@ -63,9 +67,33 @@ def provider_ready(settings: Settings, currency: Currency) -> bool:
 
 
 def on_sale(settings: Settings, product: Product, currency: Currency) -> int | None:
-    """The price in minor units when ``product`` can be bought in ``currency`` now, else None."""
+    """The price in minor units when ``product`` can be bought in ``currency`` now, else None.
+
+    Not on sale: no price set, a price under the provider's minimum (`MIN_MINOR`), or a provider without its secrets.
+    """
     price = price_minor(settings.billing, product, currency)
-    return price if price > 0 and provider_ready(settings, currency) else None
+    return price if price >= MIN_MINOR[currency] and provider_ready(settings, currency) else None
+
+
+@dataclass(frozen=True, slots=True)
+class PriceBelowFloor:
+    """A configured price the provider would refuse; `below_floor` lists them so startup can say so."""
+
+    product: Product
+    currency: Currency
+    price_minor: int
+    minimum_minor: int
+
+
+def below_floor(settings: Settings) -> list[PriceBelowFloor]:
+    """Every configured price (above 0) that is under the provider's minimum: those products are not on sale."""
+    found: list[PriceBelowFloor] = []
+    for product in PRODUCTS:
+        for currency in CURRENCIES:
+            price = price_minor(settings.billing, product, currency)
+            if 0 < price < MIN_MINOR[currency]:
+                found.append(PriceBelowFloor(product, currency, price, MIN_MINOR[currency]))
+    return found
 
 
 def price_book(settings: Settings) -> PriceBook:
@@ -134,10 +162,13 @@ def default_currency(*, saved: str | None, accept_language: str | None, timezone
 
 __all__ = [
     "CURRENCIES",
+    "MIN_MINOR",
     "PASS_DAYS",
     "PRODUCTS",
     "PROVIDER_FOR",
+    "PriceBelowFloor",
     "ProductDef",
+    "below_floor",
     "default_currency",
     "is_indian_locale",
     "is_indian_timezone",

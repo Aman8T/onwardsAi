@@ -12,17 +12,17 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 
 | Wave | What | Depends on | Owner model | Status |
 |---|---|---|---|---|
-| F1 | Accounts and per-user persistence | — | Sonnet | landed 2026-10-11 (uncommitted) |
-| M1 | Posting-match core (pure services, contracts, prompts, tests with fakes; no routes, no tables) | — (parallel with F1) | Sonnet | landed 2026-10-11 (uncommitted) |
-| F2 | Payments and entitlements (Razorpay INR, Stripe USD) | F1 | Sonnet | landed 2026-10-11 (uncommitted) |
-| M2 | Posting-match persistence and routes, guard, entitlement checks | F1, M1 | Sonnet | landed 2026-10-11 (uncommitted) |
-| M3 | Posting-match frontend (Paste, Match, Resume, Cover, Pricing, sign-in) | M1 contract (mock data), then M2 | Sonnet | landed 2026-10-11 (uncommitted) |
-| T | Tests, docs, walkthrough steps, `.env.example`, README | each wave | Haiku | in progress (2026-10-11, uncommitted) |
+| F1 | Accounts and per-user persistence | — | Sonnet | committed 03988c7, deployed 2026-10-12 |
+| M1 | Posting-match core (pure services, contracts, prompts, tests with fakes; no routes, no tables) | — (parallel with F1) | Sonnet | committed 03988c7, deployed 2026-10-12 |
+| F2 | Payments and entitlements (Razorpay INR, Stripe USD) | F1 | Sonnet | committed 03988c7, deployed 2026-10-12 |
+| M2 | Posting-match persistence and routes, guard, entitlement checks | F1, M1 | Sonnet | committed 03988c7, deployed 2026-10-12 |
+| M3 | Posting-match frontend (Paste, Match, Resume, Cover, Pricing, sign-in) | M1 contract (mock data), then M2 | Sonnet | committed 03988c7, deployed 2026-10-12 |
+| T | Tests, docs, walkthrough steps, `.env.example`, README | each wave | Haiku | committed 03988c7, deployed 2026-10-12 |
 | R1 | Shareable radar card (SVG + OG PNG) | F1 | later | not started |
 | I1 | Evidence-grounded mock interview | M2 | later | not started |
 | X1 | ESCO + O*NET skill table, canonical skill ids | M2 | later | not started |
 
-Shared files are edited by one wave at a time, in this order: F1 → M2 → F2 for `storage/tables.py`, `storage/ports.py`, `core/settings.py`, `container.py`, `api/routes/__init__.py`, `api/security.py`, `backend/.env.example`. M1 touches none of them. Dependencies were added by the orchestrator (`authlib`, `reportlab`, `stripe`; `pypdf` and `python-docx` were already present): no wave edits `pyproject.toml`.
+Shared files are edited by one wave at a time, in this order: F1 → M2 → F2 for `storage/tables.py`, `storage/ports.py`, `core/settings.py`, `container.py`, `api/routes/__init__.py`, `api/security.py`, `backend/.env.example`. M1 touches none of them. Dependencies were added by the orchestrator (`authlib`, `reportlab`, `stripe`, `razorpay`; `pypdf` and `python-docx` were already present): no wave edits `pyproject.toml`.
 
 Each wave ends with: `npm run check:all` green, new tests for every new unit, a report listing what was verified and what was not. No commits, deploys or secrets.
 
@@ -86,6 +86,8 @@ Each wave ends with: `npm run check:all` green, new tests for every new unit, a 
 
 **Tests.** Webhook signature pass/fail; idempotent replay; ledger arithmetic; consume order (pass → free monthly → credits → 402); checkout 409 without prices; currency default rules.
 
+**Built beyond this spec (2026-10-14).** The Razorpay calls use the official `razorpay` SDK in place of the REST calls, run in a worker thread because the SDK is synchronous. Razorpay is offered once the key id and key secret are set; the browser hand-off settles the order at once, and the webhook (when its secret is set) is the backstop for a browser that never came back. A configured price below the provider's minimum (100 paise, 50 cents) counts as not on sale and is logged at start. The pricing page handles Razorpay's `payment.failed` event: it says "The payment did not go through." while the modal stays open, and "The payment did not go through. Nothing was charged." after it is closed. A refused hand-off shows as an error with the payment id, not as a "confirmed in the background" line.
+
 ---
 
 ## M1 · Posting match core
@@ -139,14 +141,14 @@ Each wave ends with: `npm run check:all` green, new tests for every new unit, a 
 
 **Guard.** Per-IP and per-user limits (`match_per_hour=10`, `match_per_day=30`, global `match_global_per_hour=120`), `est_match_usd=0.06` reserved before the stream; export and answers are cheap and unreserved. Posting text capped at 20k characters; URLs fetched with the ingest limits.
 
-**Built beyond this spec** (landed 2026-10-11, uncommitted):
+**Built beyond this spec** (committed 03988c7, deployed 2026-10-12):
 - `matches.facts` holds the person's `FactBook` as it stood when the match was made: the facts its rows cite, and what the resume is composed from. Facts said later go to `user_facts` and are merged in whenever the match is opened.
 - The `profile_facts` table caches the portfolio fact extractor's output per profile, keyed by the hash of the sources, so a second match on the same profile does not read the sources again. An extraction that partly failed is not cached.
 - The exact shapes are in `backend/tayyari/contract/match_api.py`. The `POST /api/match` stream is `posting` (with the facts), then `coverage` (one line per batch of rows), `gates`, `radar`, `questions`, and `done` `{matchId, createdAt}`, or `error` `{message, code}`. The resume stream is `variant`, then `done`. Answers take up to three `{questionId, text}` items of at most 1,500 characters; resume decisions take up to 40.
 - Resume and cover note are idempotent: a stored one is returned as it is, without reserving spend or calling a model.
 - Pasted boards: a link to LinkedIn (`linkedin.com` and `lnkd.in`), Naukri, Indeed, Glassdoor, foundit or Shine is refused with 422 `posting_link_blocked` before anything is fetched; the person pastes the text instead.
 - Refund rule: the entitlement taken for a match is given back when the match fails before it is stored, or the client leaves first; once the match is stored the charge is kept. Re-checks, resumes, cover notes and downloads never consume an entitlement.
-- Anonymous matching (2026-10-12, uncommitted): `TAYYARI_MATCH__ALLOW_ANONYMOUS` (`auto`: on exactly when the server offers no way to sign in), migration 0006 (`matches.user_id` and `user_facts.user_id` nullable), `anonymousMatch` on `GET /api/me`. A visitor with no sign-in matches a profile nobody has claimed or a sample run, opens the match by its id, and consumes no entitlement; claiming the profile gives the matches to the account. The rules are in `docs/backend.md` (Posting match).
+- Anonymous matching (committed aa02483, deployed 2026-10-12): `TAYYARI_MATCH__ALLOW_ANONYMOUS` (`auto`: on exactly when the server offers no way to sign in), migration 0006 (`matches.user_id` and `user_facts.user_id` nullable), `anonymousMatch` on `GET /api/me`. A visitor with no sign-in matches a profile nobody has claimed or a sample run, opens the match by its id, and consumes no entitlement; claiming the profile gives the matches to the account. The rules are in `docs/backend.md` (Posting match).
 
 ---
 
@@ -182,9 +184,11 @@ Found while writing the documentation wave (2026-10-11). None blocks the landed 
 - **Postgres-only tests need `TEST_DATABASE_URL`**, a direct (non-pooler) URL of a throwaway database. Without it they are skipped.
 - **The per-match cost is not recorded.** The README and `docs/backend.md` quote about half a cent per match on Haiku 5.5, as measured, but the repository holds no recorded measurement; record it, with its method, before it is quoted again.
 - **Account deletion has no screen.** `DELETE /api/me` exists; the account menu does not offer it yet.
+- **Hand-off only without a webhook.** With `RAZORPAY_WEBHOOK_SECRET` unset, an order whose browser never returns after paying stays `created` and nothing is granted; set the secret and add the webhook on the cloud, or reconcile such orders by hand.
 
 ## Open items (the user decides)
 
 - Prices for `pack3` and `pass30` in INR and USD.
 - Whether `pass30` should auto-renew later (v1: no).
 - The sender address for emails and the Google OAuth app (the user creates both and sets the secrets).
+- Regenerate the Razorpay test key pair after local testing (the secret was shared in a chat), and create the live pair only when going live.

@@ -6,8 +6,10 @@
     webhook             a provider's webhook: signature checked first, then settled (or marked failed)
 
 Both providers end in `_settle`, which is idempotent on the provider's order id: the webhook, its retries and the
-browser hand-off can arrive in any order and any number of times, and the order is paid (and granted) exactly once. The
-webhook is the source of truth; the hand-off only lets the page show the new balance at once.
+browser hand-off can arrive in any order and any number of times, and the order is paid (and granted) exactly once. For
+Razorpay the hand-off is Razorpay's own signed proof under the key secret, so it settles the order at once; the webhook,
+when its secret is set, covers the browser that never came back. Stripe's hosted page has no hand-off, so its webhook
+is the only way a Stripe payment is settled.
 
 Nothing here logs an email address, a key, a signature or a response body; the log context carries the account id only.
 """
@@ -50,6 +52,9 @@ BRAND = "Tayyari"
 class RazorpayPort(Protocol):
     @property
     def key_id(self) -> str: ...
+
+    @property
+    def webhooks_enabled(self) -> bool: ...
 
     async def create_order(
         self, *, amount_minor: int, currency: str, receipt: str, notes: Mapping[str, str]
@@ -206,7 +211,8 @@ class BillingService:
     async def verify_razorpay(
         self, user: StoredUser, *, order_id: str, payment_id: str, signature: str
     ) -> VerifyResponse:
-        """Checkout.js's hand-off: the signature must be Razorpay's, and the order must be this account's."""
+        """Checkout.js's hand-off: the signature must be Razorpay's (made with the key secret) and the order must be
+        this account's; then the order is settled and the new balance returned. The webhook covers the rest."""
         gateway = self._razorpay
         if gateway is None:
             raise Conflict(NOT_OFFERED, code="not_offered", detail="razorpay is not configured")
@@ -225,14 +231,17 @@ class BillingService:
     async def webhook(self, provider: Provider, raw: bytes, signature: str | None) -> str:
         """Handle a provider's webhook; returns what happened (for the log and the tests).
 
-        The signature is checked before anything else, including parsing. Raises 503 when the provider is not
-        configured here and 400 for a signature that does not check out; every other outcome is a normal return,
-        so the provider stops retrying.
+        The signature is checked before anything else, including parsing. Raises 503 when the provider (or, for
+        Razorpay, its webhook secret) is not configured here and 400 for a signature that does not check out; every
+        other outcome is a normal return, so the provider stops retrying.
         """
         gateway: RazorpayPort | StripePort | None = self._razorpay if provider == "razorpay" else self._stripe
         if gateway is None:
             log.warning("webhook_for_unconfigured_provider", provider=provider)
             raise ServiceUnavailable("Payments are not set up here.", code="payments_not_configured")
+        if provider == "razorpay" and self._razorpay is not None and not self._razorpay.webhooks_enabled:
+            log.warning("webhook_without_secret", provider=provider)
+            raise ServiceUnavailable("Webhooks are not set up here.", code="webhooks_not_configured")
         try:
             event = gateway.parse_webhook(raw, signature)
         except InvalidSignature:

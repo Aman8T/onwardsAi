@@ -26,7 +26,7 @@ def test_nothing_is_priced_and_one_posting_a_month_is_free_by_default() -> None:
         pack3_inr=0, pass30_inr=0, pack3_usd=0, pass30_usd=0, free_matches_per_month=1
     )
     assert [getattr(s, name.lower()) for name in SECRET_NAMES] == [None] * 5
-    assert (s.razorpay_enabled, s.stripe_enabled) == (False, False)
+    assert (s.razorpay_enabled, s.razorpay_webhooks_enabled, s.stripe_enabled) == (False, False, False)
 
 
 def test_the_prices_come_from_the_nested_variables(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -65,7 +65,7 @@ def test_the_secrets_come_from_their_third_party_names(monkeypatch: pytest.Monke
     for name in SECRET_NAMES:
         got = getattr(s, name.lower())
         assert isinstance(got, SecretStr) and got.get_secret_value() == f"value-of-{name}"
-    assert (s.razorpay_enabled, s.stripe_enabled) == (True, True)
+    assert (s.razorpay_enabled, s.razorpay_webhooks_enabled, s.stripe_enabled) == (True, True, True)
 
 
 def test_blank_secrets_count_as_unset(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -73,20 +73,30 @@ def test_blank_secrets_count_as_unset(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(name, "   ")
     s = build()
     assert [getattr(s, name.lower()) for name in SECRET_NAMES] == [None] * 5
-    assert (s.razorpay_enabled, s.stripe_enabled) == (False, False)
+    assert (s.razorpay_enabled, s.razorpay_webhooks_enabled, s.stripe_enabled) == (False, False, False)
 
 
-def test_a_provider_needs_every_one_of_its_secrets() -> None:
-    razorpay = {"razorpay_key_id": "a", "razorpay_key_secret": "b", "razorpay_webhook_secret": "c"}
-    for missing in razorpay:
-        assert build(**{k: v for k, v in razorpay.items() if k != missing}).razorpay_enabled is False
-    assert build(**razorpay).razorpay_enabled is True
+def test_razorpay_needs_its_key_pair_and_only_the_key_pair() -> None:
+    """The hand-off is verified with the key secret; the webhook secret only switches the webhooks on."""
+    keys = {"razorpay_key_id": "a", "razorpay_key_secret": "b"}
+    for missing in keys:
+        broken = build(**{k: v for k, v in keys.items() if k != missing}, razorpay_webhook_secret="c")
+        assert (broken.razorpay_enabled, broken.razorpay_webhooks_enabled) == (False, False)
+    only_keys = build(**keys)
+    assert (only_keys.razorpay_enabled, only_keys.razorpay_webhooks_enabled) == (True, False)
+    everything = build(**keys, razorpay_webhook_secret="c")
+    assert (everything.razorpay_enabled, everything.razorpay_webhooks_enabled) == (True, True)
+    alone = build(razorpay_webhook_secret="c")  # a webhook secret with no key pair enables nothing
+    assert (alone.razorpay_enabled, alone.razorpay_webhooks_enabled) == (False, False)
 
+
+def test_stripe_needs_both_of_its_secrets() -> None:
     stripe = {"stripe_secret_key": "a", "stripe_webhook_secret": "b"}
     for missing in stripe:
         assert build(**{k: v for k, v in stripe.items() if k != missing}).stripe_enabled is False
     assert build(**stripe).stripe_enabled is True
     assert build(**stripe).razorpay_enabled is False  # one provider's secrets never switch on the other
+    assert build(razorpay_key_id="a", razorpay_key_secret="b").stripe_enabled is False
 
 
 def test_no_secret_is_printed_by_repr_str_dump_or_the_startup_summary() -> None:
@@ -100,5 +110,9 @@ def test_no_secret_is_printed_by_repr_str_dump_or_the_startup_summary() -> None:
     text = repr(s) + str(s) + repr(s.summary()) + repr(s.model_dump())
     for secret in ("rzp-id-SECRET", "rzp-key-SECRET", "rzp-hook-SECRET", "sk-SECRET", "whsec-SECRET"):
         assert secret not in text
-    assert (s.summary()["razorpay"], s.summary()["stripe"]) == (True, True)
-    assert (build().summary()["razorpay"], build().summary()["stripe"]) == (False, False)
+    summary = s.summary()
+    assert (summary["razorpay"], summary["razorpay_webhooks"], summary["stripe"]) == (True, True, True)
+    bare = build().summary()
+    assert (bare["razorpay"], bare["razorpay_webhooks"], bare["stripe"]) == (False, False, False)
+    keys_only = build(razorpay_key_id="a", razorpay_key_secret="b").summary()
+    assert (keys_only["razorpay"], keys_only["razorpay_webhooks"]) == (True, False)

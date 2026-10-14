@@ -1,14 +1,15 @@
 """Payments in the composition root and the app: the container builds the entitlement and billing services, a gateway
-exists only for a provider whose secrets are all set, what is injected is used as given, shutdown closes what the
-container opened, and the billing routes are registered ahead of the web app's catch-all."""
+exists only for a provider whose secrets are set (Razorpay: its key pair, the webhook secret is optional; Stripe: both),
+what is injected is used as given, the start-up warnings say what is half-configured, and the billing routes are
+registered ahead of the web app's catch-all."""
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import Any
 
-import httpx2
 import pytest
+import requests
 import stripe
 
 from tayyari.api.app import create_app
@@ -18,7 +19,14 @@ from tayyari.billing.service import BillingService
 from tayyari.billing.stripe_gw import StripeGateway
 from tayyari.container import Container, ContainerOverrides
 from tayyari.core.settings import Settings
-from tests.fakes.billing import ALL_SECRETS, PRICES, FakeRazorpay, FakeStripeHttp
+from tests.fakes.billing import (
+    ALL_SECRETS,
+    PRICES,
+    RAZORPAY_KEYS,
+    FakeRazorpay,
+    FakeStripeHttp,
+    captured_events,
+)
 from tests.fakes.repos import FakeRepositories
 from tests.unit.wiring.support import FakeAnalysis, FakeChat
 
@@ -43,20 +51,24 @@ async def test_the_container_builds_both_services_with_no_gateway_when_nothing_i
         await container.aclose()
 
 
-async def test_each_provider_is_built_only_when_all_of_its_secrets_are_set(
+async def test_each_provider_is_built_only_when_its_secrets_are_set(
     make_settings: MakeSettings,
 ) -> None:
     razorpay_only = {k: v for k, v in ALL_SECRETS.items() if k.startswith("razorpay")}
     stripe_only = {k: v for k, v in ALL_SECRETS.items() if k.startswith("stripe")}
-    half = {
+    keys_and_stripe_key = {
         k: v for k, v in ALL_SECRETS.items() if k not in ("razorpay_webhook_secret", "stripe_webhook_secret")
+    }
+    razorpay_half = {
+        k: v for k, v in ALL_SECRETS.items() if k in ("razorpay_key_id", "razorpay_webhook_secret")
     }
     built: dict[str, Container] = {}
     for name, secrets in {
         "razorpay": razorpay_only,
         "stripe": stripe_only,
         "both": ALL_SECRETS,
-        "half": half,
+        "keys only": keys_and_stripe_key,
+        "razorpay half": razorpay_half,
     }.items():
         built[name] = await build(make_settings(**secrets))
     try:
@@ -71,8 +83,17 @@ async def test_each_provider_is_built_only_when_all_of_its_secrets_are_set(
             "razorpay": (True, False),
             "stripe": (False, True),
             "both": (True, True),
-            "half": (False, False),  # keys without the webhook secret: payments that could not be reconciled
+            # Razorpay's key pair is enough (the hand-off is verified with the key secret); Stripe's hosted page has
+            # no hand-off, so its webhook secret is mandatory.
+            "keys only": (True, False),
+            "razorpay half": (False, False),  # a key id and a webhook secret, but no key secret
         }
+        webhooks = {
+            name: c.billing._razorpay.webhooks_enabled  # type: ignore[union-attr]
+            for name, c in built.items()
+            if c.billing._razorpay is not None
+        }
+        assert webhooks == {"razorpay": True, "both": True, "keys only": False}
     finally:
         for container in built.values():
             await container.aclose()
@@ -89,13 +110,13 @@ async def test_the_entitlement_service_reads_the_prices_and_allowance_from_the_s
         await container.aclose()
 
 
-async def test_the_container_uses_the_injected_transports_for_the_two_providers(
+async def test_the_container_uses_the_injected_sessions_for_the_two_providers(
     make_settings: MakeSettings,
 ) -> None:
     rzp, stripe_http = FakeRazorpay(), FakeStripeHttp()
     container = await build(
         make_settings(billing=dict(PRICES), auth={"public_url": "https://tayyari.example"}, **ALL_SECRETS),
-        billing_transport=rzp.transport,
+        razorpay_session=rzp,
         stripe_http=stripe_http,
     )
     try:
@@ -103,6 +124,21 @@ async def test_the_container_uses_the_injected_transports_for_the_two_providers(
         await container.billing.checkout(user, "pack3", "INR")
         await container.billing.checkout(user, "pack3", "USD")
         assert len(rzp.requests) == 1 and len(stripe_http.requests) == 1
+    finally:
+        await container.aclose()
+
+
+async def test_the_key_pair_alone_sells_through_the_container(make_settings: MakeSettings) -> None:
+    rzp = FakeRazorpay()
+    container = await build(make_settings(billing=dict(PRICES), **RAZORPAY_KEYS), razorpay_session=rzp)
+    try:
+        user = await container.repos.users.sign_in_email(email="ana@example.com", now=container.clock.now())
+        answer = await container.billing.checkout(user, "pack3", "INR")
+        assert (answer.provider, answer.orderId) == ("razorpay", "order_Rzp0001")
+        assert container.billing.prices().model_dump(exclude_none=True)["INR"] == {
+            "pack3": 49_900,
+            "pass30": 99_900,
+        }
     finally:
         await container.aclose()
 
@@ -139,28 +175,91 @@ async def test_posting_match_can_call_the_entitlement_api_on_the_container(
         await container.aclose()
 
 
-async def test_the_http_client_it_opened_for_razorpay_is_closed_with_the_container(
+async def test_the_session_handed_in_for_razorpay_is_the_one_the_sdk_sends_through_and_stays_open(
     make_settings: MakeSettings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    opened: list[httpx2.AsyncClient] = []
-    closed: list[httpx2.AsyncClient] = []
-    original_init, original_close = httpx2.AsyncClient.__init__, httpx2.AsyncClient.aclose
-
-    def init(self: httpx2.AsyncClient, *args: Any, **kwargs: Any) -> None:
-        original_init(self, *args, **kwargs)
-        opened.append(self)
-
-    async def close(self: httpx2.AsyncClient) -> None:
-        closed.append(self)
-        await original_close(self)
-
-    monkeypatch.setattr(httpx2.AsyncClient, "__init__", init)
-    monkeypatch.setattr(httpx2.AsyncClient, "aclose", close)
-    container = await build(make_settings(**ALL_SECRETS))
-    razorpay_client = container.billing._razorpay._client  # type: ignore[union-attr]
-    assert razorpay_client in opened
+    rzp = FakeRazorpay()
+    closed: list[requests.Session] = []
+    monkeypatch.setattr(rzp, "close", lambda: closed.append(rzp))
+    container = await build(make_settings(**RAZORPAY_KEYS), razorpay_session=rzp)
+    assert container.billing._razorpay._client.session is rzp  # type: ignore[union-attr]
     await container.aclose()
-    assert razorpay_client in closed
+    assert closed == []  # the container closes only what it built itself
+
+
+async def test_without_an_injected_session_the_sdk_builds_its_own(make_settings: MakeSettings) -> None:
+    container = await build(make_settings(**RAZORPAY_KEYS))
+    try:
+        session = container.billing._razorpay._client.session  # type: ignore[union-attr]
+        assert isinstance(session, requests.Session) and not isinstance(session, FakeRazorpay)
+    finally:
+        await container.aclose()
+
+
+# ───────────────────────── what the container says at start-up ─────────────────────────
+
+
+@pytest.fixture
+def captured_logs(monkeypatch: pytest.MonkeyPatch) -> Iterator[list[dict[str, Any]]]:
+    """The structured log events of everything built inside the test. The container's own logging set-up is
+    replaced, or it would reconfigure structlog and drop the capture."""
+    monkeypatch.setattr("tayyari.container.configure_logging", lambda _settings: None)
+    with captured_events(monkeypatch, "tayyari.container") as logs:
+        yield logs
+
+
+def events(logs: list[dict[str, Any]], name: str) -> list[dict[str, Any]]:
+    return [entry for entry in logs if entry["event"] == name]
+
+
+async def test_the_container_warns_once_that_razorpay_has_no_webhook_secret(
+    make_settings: MakeSettings, captured_logs: list[dict[str, Any]]
+) -> None:
+    container = await build(make_settings(**RAZORPAY_KEYS))
+    await container.aclose()
+    (warning,) = events(captured_logs, "razorpay_webhooks_off")
+    assert warning["log_level"] == "warning" and "hand-off only" in warning["hint"]
+    assert all(value not in str(captured_logs) for value in RAZORPAY_KEYS.values())  # no key reaches the log
+
+
+async def test_the_container_is_quiet_about_webhooks_when_razorpay_is_complete_or_absent(
+    make_settings: MakeSettings, captured_logs: list[dict[str, Any]]
+) -> None:
+    for settings in (
+        make_settings(**ALL_SECRETS),
+        make_settings(),
+        make_settings(razorpay_webhook_secret="only-the-webhook-secret"),
+    ):
+        await (await build(settings)).aclose()
+    assert events(captured_logs, "razorpay_webhooks_off") == []
+
+
+async def test_the_container_warns_about_each_price_under_a_providers_minimum(
+    make_settings: MakeSettings, captured_logs: list[dict[str, Any]]
+) -> None:
+    prices = {**PRICES, "pack3_inr": 99, "pass30_usd": 49}
+    container = await build(make_settings(billing=prices, **ALL_SECRETS))
+    try:
+        warned = events(captured_logs, "price_below_provider_minimum")
+        assert {(e["product"], e["currency"], e["price_minor"], e["minimum_minor"]) for e in warned} == {
+            ("pack3", "INR", 99, 100),
+            ("pass30", "USD", 49, 50),
+        }
+        assert len(warned) == 2 and all(e["log_level"] == "warning" for e in warned)
+        assert container.billing.prices().model_dump(exclude_none=True) == {
+            "INR": {"pass30": 99_900},
+            "USD": {"pack3": 900},
+        }
+    finally:
+        await container.aclose()
+
+
+async def test_the_container_is_quiet_about_prices_that_are_fine_or_unset(
+    make_settings: MakeSettings, captured_logs: list[dict[str, Any]]
+) -> None:
+    for settings in (make_settings(billing=dict(PRICES), **ALL_SECRETS), make_settings()):
+        await (await build(settings)).aclose()
+    assert events(captured_logs, "price_below_provider_minimum") == []
 
 
 def test_the_stripe_package_is_the_one_the_gateway_expects() -> None:

@@ -21,6 +21,8 @@ dependencies = [
     "authlib>=1.8.0",
     "reportlab>=5.0.1",
     "stripe>=16.0.0",
+    "razorpay>=2.0.1",
+    "requests>=2.34.2",
 ]
 
 # Deliberately no [build-system]: FastAPI Cloud installs the locked dependencies from uv.lock and
@@ -36,6 +38,7 @@ dev = [
     "asgi-lifespan>=2.1",
     "ruff>=0.7",
     "mypy>=1.13",
+    "types-requests>=2.33.0.20261006",
 ]
 
 # Names the app explicitly for `fastapi dev`, `fastapi run` and FastAPI Cloud (needs
@@ -116,9 +119,10 @@ disallow_untyped_calls = false
 warn_return_any = false
 check_untyped_defs = false
 
-# asyncpg ships no type information; logfire is an optional extra that is never installed by default.
+# asyncpg and razorpay ship no type information (no py.typed); logfire is an optional extra that is never installed
+# by default.
 [[tool.mypy.overrides]]
-module = ["asyncpg", "asyncpg.*", "logfire", "logfire.*"]
+module = ["asyncpg", "asyncpg.*", "logfire", "logfire.*", "razorpay", "razorpay.*"]
 ignore_missing_imports = true
 
 # ───────────────────────────── pytest ─────────────────────────────

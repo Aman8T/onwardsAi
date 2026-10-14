@@ -7,7 +7,10 @@ from collections.abc import Callable
 import pytest
 
 from tayyari.billing.products import (
+    MIN_MINOR,
     PRODUCTS,
+    PriceBelowFloor,
+    below_floor,
     default_currency,
     is_indian_locale,
     is_indian_timezone,
@@ -17,7 +20,7 @@ from tayyari.billing.products import (
     product_def,
 )
 from tayyari.core.settings import Settings
-from tests.fakes.billing import ALL_SECRETS
+from tests.fakes.billing import ALL_SECRETS, RAZORPAY_KEYS
 
 MakeBilling = Callable[..., Settings]
 
@@ -61,13 +64,76 @@ def test_a_provider_without_all_its_secrets_offers_nothing(make_billing_settings
         "INR": {},
         "USD": {"pack3": 900, "pass30": 1_900},
     }
-    no_webhook_secret = make_billing_settings(
-        secrets={k: v for k, v in ALL_SECRETS.items() if k != "razorpay_webhook_secret"}
-    )
-    assert on_sale(no_webhook_secret, "pack3", "INR") is None  # payments it could not reconcile are not taken
-    assert on_sale(no_webhook_secret, "pack3", "USD") == 900
+    for missing in ("razorpay_key_id", "razorpay_key_secret"):
+        broken = make_billing_settings(secrets={k: v for k, v in ALL_SECRETS.items() if k != missing})
+        assert on_sale(broken, "pack3", "INR") is None  # Razorpay needs both halves of its key
+        assert on_sale(broken, "pack3", "USD") == 900
+    for missing in ("stripe_secret_key", "stripe_webhook_secret"):
+        broken = make_billing_settings(secrets={k: v for k, v in ALL_SECRETS.items() if k != missing})
+        assert (
+            on_sale(broken, "pack3", "USD") is None
+        )  # Stripe's hosted page has no hand-off: webhook mandatory
+        assert on_sale(broken, "pack3", "INR") == 49_900
     nothing = make_billing_settings(secrets=False)
     assert price_book(nothing).model_dump(exclude_none=True) == {"INR": {}, "USD": {}}
+
+
+def test_razorpay_is_on_sale_on_the_key_pair_alone(make_billing_settings: MakeBilling) -> None:
+    keys_only = make_billing_settings(secrets=RAZORPAY_KEYS)
+    assert on_sale(keys_only, "pack3", "INR") == 49_900  # the hand-off is verified with the key secret
+    assert on_sale(keys_only, "pass30", "INR") == 99_900
+    assert on_sale(keys_only, "pack3", "USD") is None
+
+
+# ───────────────────────── the providers' minimum prices ─────────────────────────
+
+
+def test_the_minimums_are_what_the_providers_accept() -> None:
+    assert dict(MIN_MINOR) == {"INR": 100, "USD": 50}  # Razorpay: 100 paise. Stripe: 50 cents.
+
+
+@pytest.mark.parametrize(("currency", "below", "floor"), [("INR", 99, 100), ("USD", 49, 50)])
+def test_a_price_under_the_providers_minimum_is_not_on_sale(
+    make_billing_settings: MakeBilling, currency: str, below: int, floor: int
+) -> None:
+    suffix = currency.lower()
+    settings = make_billing_settings(**{f"pack3_{suffix}": below, f"pass30_{suffix}": floor})
+
+    assert on_sale(settings, "pack3", currency) is None  # type: ignore[arg-type]
+    assert on_sale(settings, "pass30", currency) == floor  # type: ignore[arg-type]
+    prices = price_book(settings).model_dump(exclude_none=True)[currency]
+    assert prices == {"pass30": floor}  # absent, not zero
+    assert below_floor(settings) == [PriceBelowFloor("pack3", currency, below, floor)]  # type: ignore[arg-type]
+
+
+def test_below_floor_lists_every_configured_price_under_a_minimum(make_billing_settings: MakeBilling) -> None:
+    settings = make_billing_settings(pack3_inr=1, pass30_inr=99, pack3_usd=49, pass30_usd=0)
+    assert below_floor(settings) == [
+        PriceBelowFloor("pack3", "INR", 1, 100),
+        PriceBelowFloor("pack3", "USD", 49, 50),
+        PriceBelowFloor("pass30", "INR", 99, 100),
+    ]
+    assert price_book(settings).model_dump(exclude_none=True) == {"INR": {}, "USD": {}}
+
+
+def test_below_floor_ignores_unset_prices_and_prices_at_or_over_the_floor(
+    make_billing_settings: MakeBilling, make_settings: MakeBilling
+) -> None:
+    assert below_floor(make_settings()) == []  # nothing priced: not "below"
+    assert below_floor(make_billing_settings()) == []
+    exact = make_billing_settings(pack3_inr=100, pass30_inr=100, pack3_usd=50, pass30_usd=50)
+    assert below_floor(exact) == []
+    assert price_book(exact).model_dump(exclude_none=True) == {
+        "INR": {"pack3": 100, "pass30": 100},
+        "USD": {"pack3": 50, "pass30": 50},
+    }
+
+
+def test_below_floor_reports_prices_even_when_the_provider_is_not_configured(
+    make_billing_settings: MakeBilling,
+) -> None:
+    settings = make_billing_settings(secrets=False, pack3_inr=99)
+    assert below_floor(settings) == [PriceBelowFloor("pack3", "INR", 99, 100)]
 
 
 # ───────────────────────── the currency to show first ─────────────────────────

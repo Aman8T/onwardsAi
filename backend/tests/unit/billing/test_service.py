@@ -8,7 +8,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-import httpx2
 import pytest
 
 from tayyari.billing.entitlements import EntitlementService
@@ -20,13 +19,16 @@ from tayyari.core.settings import Settings
 from tayyari.storage.ports import StoredUser
 from tests.fakes.billing import (
     ALL_SECRETS,
+    RAZORPAY_KEYS,
     RZP_KEY_ID,
     RZP_KEY_SECRET,
     RZP_WEBHOOK_SECRET,
     STRIPE_KEY,
     STRIPE_WEBHOOK_SECRET,
+    Answer,
     FakeRazorpay,
     FakeStripeHttp,
+    captured_events,
     hmac_hex,
     razorpay_event,
     razorpay_handoff,
@@ -75,8 +77,8 @@ async def make_rig(settings: Settings, fakes: FakeRepositories, clock: FakeClock
         RazorpayGateway(
             key_id=RZP_KEY_ID,
             key_secret=RZP_KEY_SECRET,
-            webhook_secret=RZP_WEBHOOK_SECRET,
-            client=httpx2.AsyncClient(transport=rzp.transport),
+            webhook_secret=RZP_WEBHOOK_SECRET if settings.razorpay_webhooks_enabled else None,
+            session=rzp,
         )
         if settings.razorpay_enabled
         else None
@@ -123,10 +125,10 @@ async def test_an_inr_checkout_creates_a_razorpay_order_and_ours(rig: Rig) -> No
     )
     assert (order.amount_minor, order.status, order.paid_at) == (49_900, "created", None)
 
-    sent = json.loads(rig.rzp.requests[0].content)
+    sent = rig.rzp.requests[0].json
     assert (sent["amount"], sent["currency"], sent["receipt"]) == (49_900, "INR", order.id)
     assert sent["notes"] == {"order": order.id, "user": rig.user.id, "product": "pack3"}
-    assert "ana@example.com" not in rig.rzp.requests[0].content.decode()  # the address stays with us
+    assert "ana@example.com" not in rig.rzp.requests[0].body.decode()  # the address stays with us
 
 
 async def test_a_usd_checkout_creates_a_stripe_session_that_returns_to_the_pricing_page(rig: Rig) -> None:
@@ -180,7 +182,7 @@ async def test_a_plan_with_no_price_is_a_409_and_nothing_is_created(
     [
         ("INR", ["razorpay_key_id"]),
         ("INR", ["razorpay_key_secret"]),
-        ("INR", ["razorpay_webhook_secret"]),
+        ("INR", ["razorpay_key_id", "razorpay_key_secret", "razorpay_webhook_secret"]),
         ("USD", ["stripe_secret_key"]),
         ("USD", ["stripe_webhook_secret"]),
     ],
@@ -200,6 +202,54 @@ async def test_a_provider_with_a_secret_missing_is_a_409_and_nothing_is_created(
     assert not rig.rzp.requests and not rig.stripe_http.requests and not fakes.billing.orders
 
 
+async def test_razorpay_sells_on_the_key_pair_alone(
+    make_billing_settings: MakeSettings, fakes: FakeRepositories, clock: FakeClock
+) -> None:
+    """No webhook secret (a laptop: nothing can reach it anyway): INR plans are on sale and checkout works."""
+    rig = await make_rig(make_billing_settings(secrets=RAZORPAY_KEYS), fakes, clock)
+    answer = await rig.service.checkout(rig.user, "pack3", "INR")
+    assert (answer.provider, answer.orderId, answer.amount, answer.keyId) == (
+        "razorpay",
+        "order_Rzp0001",
+        49_900,
+        RZP_KEY_ID,
+    )
+    assert (await rig.stored("order_Rzp0001")).status == "created"
+    view = await rig.service.entitlements_view(None)
+    assert view.prices.model_dump(exclude_none=True) == {
+        "INR": {"pack3": 49_900, "pass30": 99_900},
+        "USD": {},
+    }
+
+
+@pytest.mark.parametrize(
+    ("currency", "price_field", "below", "at_floor"),
+    [("INR", "pack3_inr", 99, 100), ("USD", "pack3_usd", 49, 50)],
+)
+async def test_a_price_under_the_providers_minimum_is_a_409_not_a_503_from_the_provider(
+    make_billing_settings: MakeSettings,
+    fakes: FakeRepositories,
+    clock: FakeClock,
+    currency: str,
+    price_field: str,
+    below: int,
+    at_floor: int,
+) -> None:
+    rig = await make_rig(make_billing_settings(**{price_field: below}), fakes, clock)
+    with pytest.raises(Conflict) as refused:
+        await rig.service.checkout(rig.user, "pack3", currency)  # type: ignore[arg-type]
+    assert refused.value.code == "not_offered"
+    assert not rig.rzp.requests and not rig.stripe_http.requests and not fakes.billing.orders
+    assert (
+        "pack3"
+        not in (await rig.service.entitlements_view(None)).prices.model_dump(exclude_none=True)[currency]
+    )
+
+    rig = await make_rig(make_billing_settings(**{price_field: at_floor}), fakes, clock)
+    answer = await rig.service.checkout(rig.user, "pack3", currency)  # type: ignore[arg-type]
+    assert answer.provider == ("razorpay" if currency == "INR" else "stripe")
+
+
 async def test_nothing_is_on_sale_by_default(
     make_settings: MakeSettings, fakes: FakeRepositories, clock: FakeClock
 ) -> None:
@@ -215,12 +265,32 @@ async def test_a_provider_that_fails_is_a_503_and_leaves_no_order(
     make_billing_settings: MakeSettings, fakes: FakeRepositories, clock: FakeClock
 ) -> None:
     rig = await make_rig(make_billing_settings(), fakes, clock)
-    rig.rzp.reply = lambda _request: httpx2.Response(500, json={"error": {"code": "SERVER_ERROR"}})
+    rig.rzp.reply = lambda _request: Answer(500, {"error": {"code": "SERVER_ERROR", "description": "boom"}})
     rig.stripe_http.reply = lambda _url, _form: (500, {"error": {"message": "boom"}})
     for currency in ("INR", "USD"):
         with pytest.raises(ServiceUnavailable) as failed:
             await rig.service.checkout(rig.user, "pack3", currency)  # type: ignore[arg-type]
         assert failed.value.status == 503 and "boom" not in failed.value.user_message
+    assert not fakes.billing.orders
+
+
+async def test_a_rejected_key_is_a_503_for_the_customer_and_a_hint_in_the_log(
+    make_billing_settings: MakeSettings,
+    fakes: FakeRepositories,
+    clock: FakeClock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rig = await make_rig(make_billing_settings(secrets=RAZORPAY_KEYS), fakes, clock)
+    rig.rzp.reply = lambda _request: Answer(
+        401, {"error": {"code": "BAD_REQUEST_ERROR", "description": "Authentication failed"}}
+    )
+    with captured_events(monkeypatch, "tayyari.billing.service") as logs:
+        with pytest.raises(ServiceUnavailable) as failed:
+            await rig.service.checkout(rig.user, "pack3", "INR")
+    assert failed.value.status == 503 and "Authentication" not in failed.value.user_message
+    (entry,) = [e for e in logs if e["event"] == "checkout_provider_failed"]
+    assert "the API key was rejected" in entry["reason"]
+    assert "Authentication failed" not in entry["reason"] and RZP_KEY_SECRET not in str(logs)
     assert not fakes.billing.orders
 
 
@@ -395,6 +465,38 @@ async def test_a_webhook_for_a_provider_that_is_not_configured_is_a_503(
     assert refused.value.status == 503
 
 
+async def test_a_razorpay_webhook_without_a_webhook_secret_is_a_503_and_changes_nothing(
+    make_billing_settings: MakeSettings,
+    fakes: FakeRepositories,
+    clock: FakeClock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The key pair sells and settles through the hand-off; a webhook has nothing to be checked against."""
+    rig = await make_rig(make_billing_settings(secrets=RAZORPAY_KEYS), fakes, clock)
+    order_id = await razorpay_order(rig)
+    raw, signature = sign_razorpay(razorpay_paid(order_id))  # signed with the secret the server does not have
+    with captured_events(monkeypatch, "tayyari.billing.service") as logs:
+        for header in (signature, None, "", "0" * 64):
+            with pytest.raises(ServiceUnavailable) as refused:
+                await rig.service.webhook("razorpay", raw, header)
+            assert (refused.value.status, refused.value.code) == (503, "webhooks_not_configured")
+    assert {e["event"] for e in logs} == {"webhook_without_secret"}
+    assert await rig.credits() == 0 and (await rig.stored(order_id)).status == "created"
+
+
+async def test_with_the_webhook_secret_set_a_bad_signature_is_a_400_and_a_good_one_settles(
+    make_billing_settings: MakeSettings, fakes: FakeRepositories, clock: FakeClock
+) -> None:
+    rig = await make_rig(make_billing_settings(), fakes, clock)
+    order_id = await razorpay_order(rig)
+    raw, signature = sign_razorpay(razorpay_paid(order_id))
+    with pytest.raises(BadRequest) as refused:
+        await rig.service.webhook("razorpay", raw, "0" * 64)
+    assert (refused.value.status, refused.value.code) == (400, "invalid_signature")
+    assert await rig.service.webhook("razorpay", raw, signature) == "granted"
+    assert await rig.credits() == 3
+
+
 # ───────────────────────── the browser hand-off ─────────────────────────
 
 
@@ -465,10 +567,51 @@ async def test_a_signed_handoff_for_an_order_we_never_made_is_a_404(rig: Rig) ->
         )
 
 
-async def test_the_handoff_needs_razorpay_to_be_configured(
-    make_settings: MakeSettings, fakes: FakeRepositories, clock: FakeClock
+async def test_the_handoff_grants_with_the_key_pair_alone(
+    make_billing_settings: MakeSettings, fakes: FakeRepositories, clock: FakeClock
 ) -> None:
-    rig = await make_rig(make_settings(), fakes, clock)
+    """Razorpay's signature under the key secret is the proof; no webhook is needed for the balance to appear."""
+    rig = await make_rig(make_billing_settings(secrets=RAZORPAY_KEYS), fakes, clock)
+    order_id = await razorpay_order(rig, "pass30")
+    answer = await rig.service.verify_razorpay(
+        rig.user,
+        order_id=order_id,
+        payment_id="pay_9",
+        signature=razorpay_handoff(order_id)["razorpay_signature"],
+    )
+    assert answer.ok is True and answer.passUntil is not None
+    order = await rig.stored(order_id)
+    assert (order.status, order.raw["paid"]) == ("paid", {"payment_id": "pay_9", "event": "checkout.handoff"})
+    again = await rig.service.verify_razorpay(
+        rig.user,
+        order_id=order_id,
+        payment_id="pay_9",
+        signature=razorpay_handoff(order_id)["razorpay_signature"],
+    )
+    assert again.ok is True  # a reload or a double click changes nothing
+    assert await rig.credits() == 0 and rig.fakes.billing.ledger_sum(rig.user.id) == 0
+
+
+async def test_a_handoff_signed_with_the_webhook_secret_is_refused_on_the_key_pair_alone(
+    make_billing_settings: MakeSettings, fakes: FakeRepositories, clock: FakeClock
+) -> None:
+    rig = await make_rig(make_billing_settings(secrets=RAZORPAY_KEYS), fakes, clock)
+    order_id = await razorpay_order(rig)
+    forged = hmac_hex(RZP_WEBHOOK_SECRET, f"{order_id}|pay_9".encode())
+    with pytest.raises(BadRequest):
+        await rig.service.verify_razorpay(rig.user, order_id=order_id, payment_id="pay_9", signature=forged)
+    assert await rig.credits() == 0
+
+
+@pytest.mark.parametrize("missing", [["razorpay_key_id"], ["razorpay_key_secret"], list(ALL_SECRETS)])
+async def test_the_handoff_needs_razorpay_to_be_configured(
+    make_billing_settings: MakeSettings,
+    fakes: FakeRepositories,
+    clock: FakeClock,
+    missing: list[str],
+) -> None:
+    secrets = {k: v for k, v in ALL_SECRETS.items() if k not in missing}
+    rig = await make_rig(make_billing_settings(secrets=secrets), fakes, clock)
     with pytest.raises(Conflict):
         await rig.service.verify_razorpay(rig.user, order_id="o", payment_id="p", signature="s")
 

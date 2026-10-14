@@ -215,8 +215,9 @@ class BillingSettings(BaseModel):
 
     Prices are integers in the currency's minor unit (paise, cents); 0 means "not set", and a product with no price
     is not offered: the pricing page shows it as coming soon and checkout answers 409. Two further things must
-    hold for a product to be on sale in a currency: the provider for that currency (INR: Razorpay, USD: Stripe) has
-    all of its secrets set.
+    hold for a product to be on sale in a currency: the provider for that currency (INR: Razorpay with its key pair,
+    USD: Stripe with its secret key and webhook secret) has its secrets set, and the price is at least the provider's
+    minimum (`billing.products.MIN_MINOR`: 100 paise, 50 cents). A price under it is logged at startup and not offered.
     """
 
     pack3_inr: int = Field(default=0, ge=0)
@@ -434,12 +435,15 @@ class Settings(BaseSettings):
 
     @property
     def razorpay_enabled(self) -> bool:
-        """True when Razorpay can take and reconcile payments: both API keys and the webhook secret are set."""
-        return (
-            self.razorpay_key_id is not None
-            and self.razorpay_key_secret is not None
-            and self.razorpay_webhook_secret is not None
-        )
+        """True when Razorpay can take payments: both API keys are set. The Checkout.js hand-off is verified with the
+        key secret, so the webhook secret is optional (see `razorpay_webhooks_enabled`)."""
+        return self.razorpay_key_id is not None and self.razorpay_key_secret is not None
+
+    @property
+    def razorpay_webhooks_enabled(self) -> bool:
+        """True when Razorpay's webhooks are accepted too: it is enabled and the webhook secret is set. The webhook
+        covers a customer whose browser never came back after paying; without it only the hand-off settles."""
+        return self.razorpay_enabled and self.razorpay_webhook_secret is not None
 
     @property
     def stripe_enabled(self) -> bool:
@@ -464,6 +468,7 @@ class Settings(BaseSettings):
             "google_oauth": self.google_enabled,
             "resend_key": self.resend_api_key is not None,
             "razorpay": self.razorpay_enabled,
+            "razorpay_webhooks": self.razorpay_webhooks_enabled,
             "stripe": self.stripe_enabled,
             "database": self.db.safe_url,
             "storage": "ephemeral" if self.db.ephemeral else self.db.kind,

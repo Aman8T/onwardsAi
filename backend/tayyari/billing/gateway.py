@@ -14,8 +14,8 @@ PaymentEventKind = Literal["paid", "failed", "ignored"]
 
 
 class PaymentProviderError(RuntimeError):
-    """The provider refused a request or did not answer. The message carries a status and the provider's error code
-    only: never a key, an address or the response body."""
+    """The provider refused a request or did not answer. The message carries the name of the exception class (and,
+    for a rejected key, a hint) only: never a key, an address, the provider's description or the response body."""
 
 
 class InvalidSignature(ValueError):

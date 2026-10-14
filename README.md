@@ -49,7 +49,7 @@ Design canvas (all screens, both explored directions): https://claude.ai/artifac
 
    - **Google sign-in:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. The button stays hidden until both are set.
    - **Email sign-in links (Resend):** `RESEND_API_KEY`, `RESEND_FROM`. Without a key, a local server returns the link on the page so the flow can be tried; any other server hides email sign-in. Unset `RESEND_FROM` uses Resend's shared test sender, which only delivers to your own Resend account.
-   - **Razorpay (INR):** `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`. INR plans are not offered until all three are set.
+   - **Razorpay (INR):** `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`. INR plans are offered once the key id and key secret are set; `RAZORPAY_WEBHOOK_SECRET` is optional and enables the webhook.
    - **Stripe (USD):** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. USD plans are not offered until both are set.
    - **Prices** in minor units (paise and cents; unset or 0 means not on sale): `TAYYARI_BILLING__PACK3_INR`, `TAYYARI_BILLING__PASS30_INR`, `TAYYARI_BILLING__PACK3_USD`, `TAYYARI_BILLING__PASS30_USD`. `TAYYARI_BILLING__FREE_MATCHES_PER_MONTH` (default 1) is the free posting each account gets per calendar month.
 
@@ -127,7 +127,7 @@ facts. The same content renders as an "Old Newspaper" front page. Details: `docs
 
 Evidence rules: every requirement and gate quotes the posting, and a quote that is not in the posting is dropped. A requirement the posting only implies can never be a must or required. Every fact quotes its source line, and every sentence in the resume and the cover note cites the facts it rests on. A number that no cited fact contains becomes a `[x]` placeholder, which blocks the download until the person settles it. A row without a cited fact is "can't tell", never a gap, and a gate answered "uncertain" never blocks a match. The band and the confidence are computed in code. Instructions inside a posting are reported as anomalies and not followed, and links inside a posting are never opened.
 
-Cost: about half a cent per match on Haiku 5.5, as measured. A match needs an account. The first one each calendar month is free; after that a pack of three or a 30-day pass is bought. Re-checks after answers, resumes, cover notes and downloads never use up a posting.
+Cost: about half a cent per match on Haiku 5.5, as measured. A match needs no account while no sign-in provider is configured: anonymous matching (`TAYYARI_MATCH__ALLOW_ANONYMOUS`, `auto` by default) lets each client address make 3 a day. With an account, the first match each calendar month is free; after that a pack of three or a 30-day pass is bought. Re-checks after answers, resumes, cover notes and downloads never use up a posting.
 
 Routes: `POST /api/match` (NDJSON), `GET /api/match/{id}`, `GET /api/matches`, `POST /api/match/{id}/answers`, `POST|GET|PATCH /api/match/{id}/resume`, `GET /api/match/{id}/resume.pdf|.docx`, `POST|GET /api/match/{id}/cover`, `GET /api/match/{id}/cover.pdf`. Details: `docs/backend.md` → Posting match.
 
@@ -260,4 +260,4 @@ the colour travels. The hue is a function of wall-clock time plus a random per-b
 
 - LinkedIn usually blocks automated reading; paste your About section into **Extra context** instead.
 - Lovable *editor* links need a login; share the published `*.lovable.app` URL.
-- Profiles and chat context are stored in the database (Postgres on FastAPI Cloud, SQLite locally, encrypted on disk). Analysis, chat and portfolios stay open to anonymous visitors and are rate-limited by IP. Keeping a graph with an account, the posting match and purchases need a sign-in; the profile on screen is claimed by the account automatically after a sign-in.
+- Profiles and chat context are stored in the database (Postgres on FastAPI Cloud, SQLite locally, encrypted on disk). Analysis, chat and portfolios stay open to anonymous visitors and are rate-limited by IP. Keeping a graph with an account and purchases need a sign-in. The posting match needs one wherever a sign-in provider is configured; where none is, a visitor can match anonymously (see Posting match above). The profile on screen is claimed by the account automatically after a sign-in.

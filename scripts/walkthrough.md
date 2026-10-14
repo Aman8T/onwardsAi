@@ -101,7 +101,14 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     "$ Everywhere else": the prices change at once, and signed in the choice is saved, so a reload keeps it. A purchase
     needs the provider's test keys: Razorpay's window opens over the page, while Stripe takes you to its hosted page and
     back to `/pricing?checkout=success` or `cancelled`, where the page says the payment is confirmed in the background
-    and shows the plan when the webhook arrives.
+    and shows the plan when the webhook arrives. In Razorpay's test mode, pay by UPI with the id `success@razorpay` (it
+    succeeds) or `failure@razorpay` (it fails), or by card `4111 1111 1111 1111` with any future expiry and any CVV (it
+    succeeds). After a successful test payment the notice reads "Payment received." with "Match a posting", and the
+    balance chip says "3 postings left". A failed attempt shows "The payment did not go through." under the paying line
+    while the window stays open for another try; close it then and the notice reads "The payment did not go through.
+    Nothing was charged." Close the window without paying and it reads "Checkout closed. Nothing was charged." If the
+    server refuses the hand-off (a signature that does not verify, or an order that is not this account's), the notice
+    shows the server's sentence followed by "Keep this payment id if you need help" and the payment id.
 
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`).

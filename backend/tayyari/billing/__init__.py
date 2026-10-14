@@ -4,7 +4,7 @@
     entitlements  `EntitlementService`: `consume` / `refund` / `grant` / `summary`, the single place that decides
                   whether a posting match is paid for (pass, then the month's free posting, then a credit)
     service       `BillingService`: checkout, the browser hand-off, webhooks; both providers settle one way
-    razorpay      Razorpay over plain HTTPS (orders, Checkout.js hand-off signature, webhook signature)
+    razorpay      Razorpay through the ``razorpay`` SDK (orders, Checkout.js hand-off signature, webhook signature)
     stripe_gw     Stripe through the ``stripe`` package (Checkout Session, ``construct_event``)
     gateway       the shared `PaymentEvent` and errors
 

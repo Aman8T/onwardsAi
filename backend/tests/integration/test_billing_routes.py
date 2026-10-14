@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import httpx
-import httpx2
 import pytest
+import requests
 from sqlalchemy import func, select
 
 from tayyari.core.errors import PaymentRequired
@@ -23,6 +23,8 @@ from tayyari.storage.tables import CreditLedgerRow, EntitlementRow, OrderRow
 from tests.fakes.billing import (
     ALL_SECRETS,
     PRICES,
+    RAZORPAY_KEYS,
+    Answer,
     FakeRazorpay,
     FakeStripeHttp,
     razorpay_event,
@@ -89,9 +91,7 @@ def start(build_settings: MakeSettings):  # type: ignore[no-untyped-def]
             values.update(secrets)
         values.update(overrides)
         rzp, stripe_http = FakeRazorpay(), FakeStripeHttp()
-        async with running(
-            build_settings(**values), billing_transport=rzp.transport, stripe_http=stripe_http
-        ) as env:
+        async with running(build_settings(**values), razorpay_session=rzp, stripe_http=stripe_http) as env:
             yield Rig(env, rzp, stripe_http)
 
     return run
@@ -125,6 +125,42 @@ async def test_prices_that_are_not_set_or_cannot_be_taken_are_left_out(start: An
         partly = (await rig.client.get("/api/billing/entitlements")).json()["prices"]
     assert unset == {"INR": {}, "USD": {}}
     assert partly == {"INR": {}, "USD": {"pack3": 900}}  # INR is priced but Razorpay has no secrets
+
+
+async def test_razorpay_prices_are_offered_on_the_key_pair_alone(start: Any) -> None:
+    async with start(secrets=RAZORPAY_KEYS) as rig:
+        prices = (await rig.client.get("/api/billing/entitlements")).json()["prices"]
+    assert prices == {"INR": {"pack3": 49_900, "pass30": 99_900}, "USD": {}}
+
+
+@pytest.mark.parametrize("missing", ["razorpay_key_id", "razorpay_key_secret"])
+async def test_razorpay_prices_are_left_out_when_one_half_of_the_key_is_missing(
+    start: Any, missing: str
+) -> None:
+    async with start(secrets={k: v for k, v in ALL_SECRETS.items() if k != missing}) as rig:
+        prices = (await rig.client.get("/api/billing/entitlements")).json()["prices"]
+    assert prices["INR"] == {} and prices["USD"] == {"pack3": 900, "pass30": 1_900}
+
+
+async def test_a_price_under_the_providers_minimum_is_left_out_not_offered_and_failing(start: Any) -> None:
+    low = {"pack3_inr": 99, "pass30_inr": 100, "pack3_usd": 49, "pass30_usd": 50}
+    async with start(billing=low) as rig:
+        prices = (await rig.client.get("/api/billing/entitlements")).json()["prices"]
+        _, headers = await rig.user()
+        refused = [
+            await rig.checkout(headers, product="pack3", currency="INR"),
+            await rig.checkout(headers, product="pack3", currency="USD"),
+        ]
+        offered = [
+            await rig.checkout(headers, product="pass30", currency="INR"),
+            await rig.checkout(headers, product="pass30", currency="USD"),
+        ]
+        orders = await rig.rows(OrderRow)
+    assert prices == {"INR": {"pass30": 100}, "USD": {"pass30": 50}}
+    assert [r.status_code for r in refused] == [409, 409]  # not a 503 from the provider
+    assert [r.status_code for r in offered] == [200, 200]
+    assert [(o.product, o.amount_minor) for o in orders] == [("pass30", 100), ("pass30", 50)]
+    assert [request.json["amount"] for request in rig.rzp.requests] == [100]  # the 99 was never sent
 
 
 @pytest.mark.parametrize(
@@ -254,7 +290,7 @@ async def test_the_price_comes_from_the_server_never_from_the_request(start: Any
             headers, product="pack3", currency="INR", amount=1, price=1, amount_minor=1
         )
     assert response.json()["amount"] == 49_900
-    assert json.loads(rig.rzp.requests[0].content)["amount"] == 49_900
+    assert rig.rzp.requests[0].json["amount"] == 49_900
 
 
 async def test_checkout_is_a_409_for_a_plan_without_a_price(start: Any) -> None:
@@ -283,6 +319,28 @@ async def test_checkout_is_a_409_for_a_provider_without_its_secrets(
         response = await rig.checkout(headers, product="pack3", currency=blocked)
     assert response.status_code == 409
     assert not rig.rzp.requests and not rig.stripe_http.requests
+
+
+@pytest.mark.parametrize("missing", ["razorpay_key_id", "razorpay_key_secret"])
+async def test_checkout_is_a_409_when_razorpay_has_only_half_of_its_key(start: Any, missing: str) -> None:
+    async with start(secrets={k: v for k, v in ALL_SECRETS.items() if k != missing}) as rig:
+        _, headers = await rig.user()
+        response = await rig.checkout(headers, product="pack3", currency="INR")
+    assert response.status_code == 409 and not rig.rzp.requests
+
+
+async def test_checkout_works_on_the_razorpay_key_pair_alone_and_the_secret_stays_private(start: Any) -> None:
+    async with start(secrets=RAZORPAY_KEYS) as rig:
+        _, headers = await rig.user()
+        response = await rig.checkout(headers, product="pack3", currency="INR")
+        stripe_response = await rig.checkout(headers, product="pack3", currency="USD")
+    assert response.status_code == 200 and response.json()["orderId"] == "order_Rzp0001"
+    assert response.json()["keyId"] == ALL_SECRETS["razorpay_key_id"]
+    assert ALL_SECRETS["razorpay_key_secret"] not in response.text
+    assert stripe_response.status_code == 409  # Stripe still wants both of its secrets
+    (request,) = rig.rzp.requests
+    assert request.basic_auth == f"{ALL_SECRETS['razorpay_key_id']}:{ALL_SECRETS['razorpay_key_secret']}"
+    assert request.timeout == 10.0
 
 
 @pytest.mark.parametrize(
@@ -315,10 +373,23 @@ async def test_checkout_needs_a_json_body(start: Any) -> None:
 async def test_a_provider_outage_is_a_503_and_leaves_no_order(start: Any) -> None:
     async with start() as rig:
         _, headers = await rig.user()
-        rig.rzp.reply = lambda _request: httpx2.ConnectError("down")  # type: ignore[assignment,return-value]
+        rig.rzp.reply = lambda _request: requests.ConnectionError("down")
         response = await rig.checkout(headers, product="pack3", currency="INR")
         orders = await rig.rows(OrderRow)
     assert response.status_code == 503 and not orders
+    assert "down" not in response.text and len(rig.rzp.requests) == 1  # not retried
+
+
+async def test_a_rejected_razorpay_key_is_a_503_that_does_not_echo_razorpay(start: Any) -> None:
+    async with start(secrets=RAZORPAY_KEYS) as rig:
+        _, headers = await rig.user()
+        rig.rzp.reply = lambda _request: Answer(
+            401, {"error": {"code": "BAD_REQUEST_ERROR", "description": "Authentication failed"}}
+        )
+        response = await rig.checkout(headers, product="pack3", currency="INR")
+        orders = await rig.rows(OrderRow)
+    assert response.status_code == 503 and not orders
+    assert "Authentication" not in response.text
 
 
 async def test_checkout_refuses_a_cross_site_request(start: Any) -> None:
@@ -477,6 +548,52 @@ async def test_a_webhook_for_a_provider_that_is_not_configured_is_a_503(start: A
     assert (response.status_code, stripe_response.status_code) == (503, 503)
 
 
+@pytest.mark.parametrize("signature", [None, "", "0" * 64, "signed-with-a-secret-we-do-not-have"])
+async def test_a_razorpay_webhook_is_a_503_when_only_the_key_pair_is_set(
+    start: Any, signature: str | None
+) -> None:
+    """Nothing to check a signature against: not a 400 (Razorpay would read that as ours to fix), and no grant."""
+    async with start(secrets=RAZORPAY_KEYS) as rig:
+        _, headers = await rig.user()
+        order_id = await razorpay_checkout(rig, headers)
+        raw, good = sign_razorpay(razorpay_paid(order_id))
+        refused = await post_razorpay(rig, raw, good if signature is None else signature)
+        mine = await rig.me(headers)
+        (order,) = await rig.rows(OrderRow)
+    assert refused.status_code == 503 and "Webhooks are not set up" in refused.text
+    assert mine["credits"] == 0 and order.status == "created"
+
+
+async def test_the_webhook_secret_switches_the_razorpay_webhook_from_503_to_a_signature_check(
+    start: Any,
+) -> None:
+    async with start(secrets=RAZORPAY_KEYS) as without:
+        off = await post_razorpay(without, b"{}", "0" * 64)
+    async with start() as with_secret:
+        _, headers = await with_secret.user()
+        order_id = await razorpay_checkout(with_secret, headers)
+        raw, signature = sign_razorpay(razorpay_paid(order_id))
+        bad = await post_razorpay(with_secret, raw, "0" * 64)
+        good = await post_razorpay(with_secret, raw, signature)
+        credits = (await with_secret.me(headers))["credits"]
+    assert (off.status_code, bad.status_code, good.status_code) == (503, 400, 200)
+    assert credits == 3
+
+
+@pytest.mark.parametrize("body", [b"\xff\xfe not utf-8", "café ☕".encode()])
+async def test_a_razorpay_webhook_body_with_odd_bytes_is_a_clean_400_without_a_good_signature(
+    start: Any, body: bytes
+) -> None:
+    async with start() as rig:
+        refused = await post_razorpay(rig, body, "0" * 64)
+        non_ascii_signature = (
+            await rig.client.post(  # a header byte above 0x7f, read as latin-1 by the server
+                RAZORPAY_HOOK, content=body, headers={"x-razorpay-signature": "café".encode("latin-1")}
+            )
+        )
+    assert (refused.status_code, non_ascii_signature.status_code) == (400, 400)
+
+
 # ───────────────────────── Razorpay: the browser hand-off ─────────────────────────
 
 
@@ -493,6 +610,49 @@ async def test_the_handoff_grants_at_once_and_the_webhook_afterwards_changes_not
     assert handoff.status_code == 200 and handoff.headers["cache-control"] == "no-store"
     assert handoff.json() == {"ok": True, "credits": 3, "freeMatchAvailable": True}
     assert webhook.status_code == 200 and mine["credits"] == 3
+
+
+async def test_the_handoff_grants_at_once_on_the_key_pair_alone(start: Any) -> None:
+    """A laptop with no webhook: the hand-off is the proof, and the balance appears when the customer returns."""
+    async with start(secrets=RAZORPAY_KEYS) as rig:
+        user, headers = await rig.user()
+        order_id = await razorpay_checkout(rig, headers)
+        handoff = await rig.client.post(
+            "/api/billing/verify", json=razorpay_handoff(order_id), headers=headers
+        )
+        again = await rig.client.post("/api/billing/verify", json=razorpay_handoff(order_id), headers=headers)
+        mine = await rig.me(headers)
+        (order,) = await rig.rows(OrderRow)
+        ledger = await rig.rows(CreditLedgerRow, CreditLedgerRow.user_id == user.id)
+    assert handoff.status_code == 200 and handoff.json() == {
+        "ok": True,
+        "credits": 3,
+        "freeMatchAvailable": True,
+    }
+    assert again.status_code == 200 and again.json()["credits"] == 3  # a reload does not pay twice
+    assert mine["credits"] == 3
+    assert (order.status, order.raw["paid"]) == ("paid", {"payment_id": "pay_9", "event": "checkout.handoff"})
+    assert [(row.reason, row.delta) for row in ledger] == [("purchase", 3)]
+
+
+async def test_a_handoff_signed_with_anything_but_the_key_secret_is_a_400_on_the_key_pair_alone(
+    start: Any,
+) -> None:
+    async with start(secrets=RAZORPAY_KEYS) as rig:
+        _, headers = await rig.user()
+        order_id = await razorpay_checkout(rig, headers)
+        forged = {
+            **razorpay_handoff(order_id),
+            "razorpay_signature": sign_razorpay(f"{order_id}|pay_9".encode())[1],  # the webhook secret's HMAC
+        }
+        refused = await rig.client.post("/api/billing/verify", json=forged, headers=headers)
+        odd = await rig.client.post(
+            "/api/billing/verify",
+            json={**razorpay_handoff(order_id), "razorpay_signature": "café"},
+            headers=headers,
+        )
+        mine = await rig.me(headers)
+    assert (refused.status_code, odd.status_code) == (400, 400) and mine["credits"] == 0
 
 
 async def test_a_tampered_handoff_is_a_400(start: Any) -> None:

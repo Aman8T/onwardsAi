@@ -2,9 +2,11 @@
  * Taking a payment. Two providers, one flow for the page:
  *
  *   INR  -> Razorpay: the server creates an order, Checkout.js opens its modal over the page, and when the customer
- *           has paid it hands the page three values that go to `POST /api/billing/verify`. The server checks the
- *           signature and settles the order; the signed webhook does the same and is the source of truth, so a failed
- *           hand-off only means "wait a moment" (phase `pending`).
+ *           has paid it hands the page three values that go to `POST /api/billing/verify`. The server verifies the
+ *           hand-off signature and settles the order at once. The signed webhook, when it is configured, settles a
+ *           payment whose browser never came back. A hand-off the server refuses (a 4xx) shows its sentence as an
+ *           error (phase `failed`); a network failure or a 5xx waits for the webhook (phase `pending`). A failed
+ *           attempt inside the window (`payment.failed`) is shown under the paying line while the window stays open.
  *   USD  -> Stripe: the server creates a Checkout Session and the browser goes to its hosted page; Stripe sends the
  *           person back to `/pricing?checkout=success|cancelled` (see `route.ts`) and the webhook grants.
  *
@@ -42,8 +44,20 @@ interface RazorpayOptions {
   handler: (response: RazorpayResponse) => void;
   modal?: { ondismiss?: () => void };
 }
+/** What Checkout.js emits on `payment.failed`. Third-party text: render it as text only. */
+interface RazorpayFailure {
+  error?: {
+    code?: string;
+    description?: string;
+    source?: string;
+    step?: string;
+    reason?: string;
+    metadata?: { order_id?: string; payment_id?: string };
+  };
+}
 interface RazorpayCheckout {
   open: () => void;
+  on: (event: 'payment.failed', cb: (response: RazorpayFailure) => void) => void;
 }
 declare global {
   interface Window {
@@ -90,6 +104,18 @@ export interface CheckoutState {
 /** True while a purchase is in progress and the buttons should wait. */
 export const isBusy = (phase: CheckoutPhase) => phase === 'starting' || phase === 'paying' || phase === 'verifying' || phase === 'redirecting';
 
+const FAILED_ATTEMPT = 'The payment did not go through.';
+const DESCRIPTION_MAX = 140;
+
+/** Razorpay's own words for why an attempt failed, cut short; empty when it gave none. */
+function failureDescription(response: RazorpayFailure): string {
+  const text = response.error?.description;
+  if (typeof text !== 'string') return '';
+  const cut = text.trim().slice(0, DESCRIPTION_MAX);
+  // Razorpay's descriptions carry no final stop; one is added so the next sentence can follow
+  return cut && !/[.!?]$/.test(cut) ? `${cut}.` : cut;
+}
+
 function timeZone(): string | undefined {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
@@ -133,6 +159,9 @@ export function useCheckout({ onSettled, onSignInNeeded }: UseCheckout) {
           setState({ phase: 'failed', product, message: NO_WINDOW });
           return;
         }
+        // an attempt that failed inside the window (the window stays open for a retry); cleared once one succeeds
+        let failed = false;
+        let reason = '';
         const checkout = new Razorpay({
           key: order.keyId,
           amount: order.amount,
@@ -142,6 +171,7 @@ export function useCheckout({ onSettled, onSignInNeeded }: UseCheckout) {
           description: order.description,
           prefill: order.prefillEmail ? { email: order.prefillEmail } : undefined,
           handler: (response) => {
+            failed = false;
             setState({ phase: 'verifying', product });
             api
               .verifyPayment({
@@ -149,14 +179,37 @@ export function useCheckout({ onSettled, onSignInNeeded }: UseCheckout) {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
               })
-              .then(() => setState({ phase: 'paid', product }))
-              // paid at Razorpay, not yet confirmed here: the webhook will, so wait for it instead of alarming the person
-              .catch(() => setState({ phase: 'pending', product }))
+              // ok false: the order is not settled (unknown or inconsistent), but the webhook may still settle it
+              .then((res) => setState({ phase: res.ok ? 'paid' : 'pending', product }))
+              .catch((err: unknown) => {
+                // the server refused the hand-off (bad signature, not this account's order, ...): say so
+                if (err instanceof api.ApiError && err.status >= 400 && err.status < 500) {
+                  setState({
+                    phase: 'failed',
+                    product,
+                    message: `${err.message} Keep this payment id if you need help: ${response.razorpay_payment_id}.`,
+                  });
+                  return;
+                }
+                // paid at Razorpay, not yet confirmed here (network, 5xx): the webhook will, so wait for it
+                setState({ phase: 'pending', product });
+              })
               .finally(() => void settled.current());
           },
           modal: {
-            ondismiss: () => setState((s) => (s.phase === 'paying' ? { phase: 'cancelled', product } : s)),
+            ondismiss: () =>
+              setState((s) => {
+                if (s.phase !== 'paying') return s;
+                return failed
+                  ? { phase: 'failed', product, message: `${FAILED_ATTEMPT} Nothing was charged.${reason ? ` ${reason}` : ''}` }
+                  : { phase: 'cancelled', product };
+              }),
           },
+        });
+        checkout.on('payment.failed', (response) => {
+          failed = true;
+          reason = failureDescription(response);
+          setState({ phase: 'paying', product, message: reason ? `${FAILED_ATTEMPT} ${reason}` : FAILED_ATTEMPT });
         });
         setState({ phase: 'paying', product });
         checkout.open();
@@ -223,7 +276,8 @@ export function CheckoutNotice({ state, entitlements, onDismiss, onContinue }: N
 
   const text: Record<Exclude<CheckoutPhase, 'idle' | 'failed'>, string> = {
     starting: 'Opening checkout…',
-    paying: 'Finish the payment in the checkout window.',
+    // a failed attempt keeps the window open: say what happened, then what to do
+    paying: message ? `${message} Try again in the checkout window, or close it.` : 'Finish the payment in the checkout window.',
     verifying: 'Confirming your payment…',
     redirecting: 'Taking you to Stripe…',
     pending: 'Thank you. The payment is confirmed in the background, and your plan appears on this page as soon as it arrives.',
