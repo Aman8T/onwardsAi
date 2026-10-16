@@ -30,6 +30,11 @@ The Why column uses four labels. **Permission** means someone must say yes. **Le
 | Contest route for ranked orders | A way to contest an ordering under GDPR Article 22 | Legal | Counsel defines what the route must do. Engineering builds it | §6, §8.12 |
 | Model reading postings at ingest | Richer skill reading than the code-only quick fit | Data | Cost and evaluation, not permission. Measure the quick fit first, and price a model only if the quick fit proves too coarse | §5.1, §5.2 |
 | LinkedIn | Nothing | Legal | Never. CLAUDE.md rule 4 bans scraping it. Listed so nobody adds it | §2.1 |
+| Search with AI: Ashby boards | The pool where the Opus baseline found 4 of its 6 roles (remote-India startups) | Permission | Ashby's written OK (as above); then `harvest.py` accepts `jobs.ashbyhq.com` and a board reader for its posting API | `docs/research/jobsearch-baseline.md` |
+| Search with AI: "worldwide" remote roles | Roles like Canonical's "home-based worldwide", open to India | Data | A rule in `discover/parse.py` for remote roles that say worldwide, anywhere or global, checked against real postings for hidden limits (time zones, payroll countries) | `docs/research/jobsearch-baseline.md` |
+| Search with AI: keep the employers it finds | A registry that grows from what the scouts find | Infrastructure | A table of found boards (token, name, first found, roles in India), reviewed before Discover reads them on its own schedule | `docs/research/jobsearch-baseline.md` |
+| Search with AI: evergreen postings | Postings first published over a year ago ranked lower, or labelled | Data | Measure how many such postings still hire; then a rule in `narrow.py` | `docs/research/jobsearch-baseline.md` |
+| Search with AI: a replay eval | Tuning the narrowing without paying for searches | Infrastructure | Store a few runs' search results and board reads as fixtures, and score the narrowing against the baseline's picks | `docs/research/jobsearch-baseline.md` |
 
 ## Order we'd suggest
 

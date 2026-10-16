@@ -26,8 +26,9 @@ The package is importable as `backend/tayyari/`, laid out in layers with import 
 | `billing` | BillingService, EntitlementService, RazorpayGateway, StripeGateway | Products and prices, the consume order, orders, webhooks for INR (Razorpay) and USD (Stripe) |
 | `match` | MatchService and its stages | Posting match: reading a posting, facts, gates, coverage, radar, questions, resume, cover note, export and lint |
 | `discover` | DiscoverService, the refresher, the registry, the quick fit | Discover: employers' own job boards read into listings, grouped and ordered for one person; a separate service (own tables, settings and worker) |
+| `jobsearch` | JobSearchService, the brief, the harvest, the board reader, the narrowing, the checks | Search with AI: Haiku 5.5 scouts find employers' boards on the web, code reads them and narrows, Haiku reads the shortlist, code checks every quote; reuses `discover`'s pure parts |
 
-**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
+**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `jobsearch` sits with the model-calling services and may also import `discover` (never the other way round). `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
 
 ## Request flows
 
@@ -232,6 +233,45 @@ Errors: 400 `bad_request` for a city, locality or other city we do not know (or 
 **Web app.** `/discover` (view `discover`, lazy-loaded in `src/App.tsx`), with its files in `src/discover/` and `src/styles/discover.css`. The lens lives in the address. The area is kept in this browser (`tayyari.discover.area.<profileId>`), and so are saved roles (`tayyari.discover.tracker.<profileId>`, labelled "Kept in this browser"). A match started from a listing keeps its origin in sessionStorage (`tayyari.match.origin`), which shows the way back on the match screen. The sample profile is not offered Discover in the browser, although the API answers it.
 
 **Tests.** `tests/unit/discover/` runs on fakes and `httpx2.MockTransport`, so nothing calls the network. The repo contract is in `tests/unit/storage/test_discover_contract.py`, the routes in `tests/integration/test_discover_routes.py`, and the mirror in `tests/unit/contract/test_discover_parity.py`.
+
+### Search with AI (`POST /api/jobsearch`)
+
+`backend/tayyari/jobsearch/`, built 2026-10-16 from two baseline runs (`docs/research/jobsearch-baseline.md`). It runs on Claude Haiku 5.5 only (`TAYYARI_JOBSEARCH__MODEL`). The full spec is in `docs/roadmap.md` (D2). The flow:
+
+1. **Brief, in code** (`brief.py`). It holds:
+   - the role, the next roles, the years and the city;
+   - the strongest skills;
+   - the evidence lines `E1…`, copied from the profile's own evidence;
+   - up to three angles.
+2. **Scouts** (`jobsearch.scout`). One `ClaudeClient.search_web` call per angle, all at once.
+   - Each call declares only the basic `web_search_20250305` tool, with `allowed_domains` set to Greenhouse and Lever and `user_location` set to the city, and makes up to 3 searches.
+   - A scout never sees the name or the resume text.
+3. **Harvest, in code** (`harvest.py`). Board tokens come from the tool's result URLs; recruiter boards are skipped.
+4. **Boards** (`boards.py`). Up to 30 boards are read through `discover.refresh.fetch_board` and `discover.parse.parse_board`, with a one-hour in-process cache.
+   - Registry employers are read from Discover's store instead, together with every other stored listing.
+5. **Narrow, in code** (`narrow.py`). Place, then kind, then level, then rank. At most 3 per employer and 12 in total go on.
+6. **Reads** (`jobsearch.judge`). Structured output, 4 postings per call, all at once.
+7. **Checks, in code** (`judge.py`). The rules are in its module docstring.
+
+Each batch's jobs are streamed as soon as the batch is checked. The trail sentences are written in code.
+
+Findings from building on the API:
+- **Server tools and structured output.** With `output_config.format` set alongside a server tool, Haiku 5.5 answered at once without searching. So the scouts run in plain mode and only the reads are structured.
+- **Results.** The basic search tool returns its results as `web_search_tool_result` blocks, which `anthropic_client.searches_of` reads one query at a time.
+- **Cost.** One search costs $0.01. A run is about $0.11, mostly nine searches.
+
+**Guards.** The profile is opened the way Discover opens it (`require_profile_access`). The checks run in this order:
+1. `shed`, then off (503), then the body.
+2. The profile (404), then the city (400).
+3. The `jobsearch` windows per address and per account (1/min, 4/h, 8/day). Without an account, `jobsearch_anon` allows 3 a day. The service-wide cap is 40 an hour.
+4. The spend reservation (`EST_JOBSEARCH_USD`, $0.20).
+
+No credit is charged. The stream is `no-store`. Errors before the stream starts are JSON `{"error": ...}`.
+
+**Tests.**
+- `tests/unit/jobsearch/` holds fakes, `FakeBoards`, the scripted `FakeClaudeClient.script_search` and known-bad reads for every check.
+- `tests/unit/llm/test_search_web.py` uses SSE fixtures.
+- Also `tests/integration/test_jobsearch_routes.py` and `tests/unit/contract/test_jobsearch_parity.py`.
 
 ## Jev decisions framework
 
@@ -447,6 +487,7 @@ Accounts, payments and the posting match (names only; the values are never writt
 - **`TAYYARI_BILLING__*`:** `PACK3_INR`, `PASS30_INR`, `PACK3_USD`, `PASS30_USD` in minor units (paise, cents); 0 or unset means not on sale, and so does a price below the provider's minimum (100 paise, 50 cents). `FREE_MATCHES_PER_MONTH` (1).
 - **`TAYYARI_MATCH__*`:** `MODEL` (unset: the reader model), `WRITER_MODEL` (unset: the same as `MODEL`), `MAX_POSTING_CHARS` (20000), `CALL_TIMEOUT_S` (90), `ALLOW_ANONYMOUS` (`auto`, `true` or `false`; `auto` allows a posting match without a sign-in exactly when the server offers no way to sign in).
 - **Posting-match guard:** `TAYYARI_GUARD__MATCH_PER_MINUTE` (0), `MATCH_PER_HOUR` (10), `MATCH_PER_DAY` (30), `MATCH_GLOBAL_PER_HOUR` (120), `EST_MATCH_USD` (0.06), `ANON_MATCH_PER_DAY` (3: matches per client address per day without a sign-in, 0 = off).
+- **`TAYYARI_JOBSEARCH__*`** (no secrets of its own; it uses the Anthropic key): `ENABLED` (true), `MODEL` (claude-haiku-5-5), `SCOUTS` (3), `SEARCHES_PER_SCOUT` (3), `MAX_BOARDS` (30), `FETCH_CONCURRENCY` (8), `MAX_JUDGED` (12), `JUDGE_BATCH` (4), `PER_EMPLOYER` (3), `POSTING_CHARS` (6000), `BOARD_CACHE_MINUTES` (60), `REQUEST_TIMEOUT_S` (12). Its limits are guard settings: `JOBSEARCH_PER_MINUTE` 1, `_PER_HOUR` 4, `_PER_DAY` 8, `JOBSEARCH_GLOBAL_PER_HOUR` 40, `ANON_JOBSEARCH_PER_DAY` 3, `EST_JOBSEARCH_USD` 0.20.
 - **`TAYYARI_DISCOVER__*`** (no secrets; the boards are public): `ENABLED` (true; false answers 503 `discover_disabled` and fetches nothing), `REFRESH_HOURS` (6, how old the last good run may get before a request starts one), `FETCH_CONCURRENCY` (4), `REQUEST_TIMEOUT_S` (15), `MAX_LISTINGS_PER_EMPLOYER` (300: India listings kept per employer, known cities first, then remote, then the rest, newest first within each), `REGISTRY_PATH` (unset: the registry shipped in `discover/data/employers.json`).
 
 `backend/.env.example` lists each of these with its default or an empty value.

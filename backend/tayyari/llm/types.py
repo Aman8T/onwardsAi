@@ -26,6 +26,8 @@ Purpose = Literal[
     "match.relevance",
     "match.phrase",
     "match.cover",
+    "jobsearch.scout",
+    "jobsearch.judge",
 ]
 """Why a Claude call is made. Stored on every `llm_calls` row and used to script fakes."""
 
@@ -137,12 +139,45 @@ class TurnEnd:
 ChatStreamEvent = TextDelta | ToolUse | TurnEnd
 
 
+@dataclass(frozen=True, slots=True)
+class SearchHit:
+    """One result of a web search, as the search tool returned it (never the model's retelling of it)."""
+
+    url: str
+    title: str
+    page_age: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SearchCall:
+    """One search the model ran: its query and the results, or the tool's error code when it failed."""
+
+    query: str
+    hits: tuple[SearchHit, ...] = ()
+    error: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class WebSearchRun:
+    """What one model turn with only the web search tool did: every search, in order, with its results.
+
+    ``text`` is the model's own closing words; callers that must not show a model's claims ignore it.
+    """
+
+    searches: tuple[SearchCall, ...]
+    usage: Usage
+    stop_reason: str = "end_turn"
+    text: str = ""
+
+
 __all__ = [
     "CallContext",
     "ChatStreamEvent",
     "Effort",
     "MessageParam",
     "Purpose",
+    "SearchCall",
+    "SearchHit",
     "StructuredResult",
     "TextBlock",
     "TextDelta",
@@ -150,4 +185,5 @@ __all__ = [
     "ToolUse",
     "TurnEnd",
     "Usage",
+    "WebSearchRun",
 ]

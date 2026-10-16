@@ -18,6 +18,8 @@ Structured entries: a `StructuredResult`, a dict (wrapped in one with a made-up 
 model table), an exception (raised), or a callable taking the `StructuredCall` and returning one of those.
 Chat entries: a list of events and exceptions (an exception is raised at that point of the stream, after
 the events before it), or a callable returning such a list. `text_turn` builds a complete list.
+Search entries (`script_search`): a `WebSearchRun`, an exception, or a callable taking the `SearchWebCall`; `search_run`
+builds a run from ``{query: [(url, title), ...]}``.
 """
 
 from __future__ import annotations
@@ -36,6 +38,8 @@ from tayyari.llm.types import (
     Effort,
     MessageParam,
     Purpose,
+    SearchCall,
+    SearchHit,
     StructuredResult,
     TextBlock,
     TextDelta,
@@ -43,6 +47,7 @@ from tayyari.llm.types import (
     ToolUse,
     TurnEnd,
     Usage,
+    WebSearchRun,
 )
 
 
@@ -94,6 +99,29 @@ def text_turn(
     return events
 
 
+def search_run(
+    results: Mapping[str, Sequence[tuple[str, str]]],
+    *,
+    model: str = "claude-haiku-5-5",
+    errors: Mapping[str, str] | None = None,
+    stop_reason: str = "end_turn",
+    text: str = "DONE",
+) -> WebSearchRun:
+    """A finished search turn: one search per key of ``results`` (``[(url, title), ...]``), then one per key of
+    ``errors`` (``{query: error_code}``), with a usage that pays for every search."""
+    searches = [
+        SearchCall(query=query, hits=tuple(SearchHit(url=url, title=title) for url, title in hits))
+        for query, hits in results.items()
+    ]
+    searches.extend(SearchCall(query=query, error=code) for query, code in (errors or {}).items())
+    return WebSearchRun(
+        searches=tuple(searches),
+        usage=fake_usage(model, input_tokens=8_000, output_tokens=60, web_searches=len(searches)),
+        stop_reason=stop_reason,
+        text=text,
+    )
+
+
 @dataclass(frozen=True)
 class StructuredCall:
     """The arguments of one `structured()` call."""
@@ -139,6 +167,30 @@ class ChatCall:
         return "\n\n".join(b.text for b in self.system)
 
 
+@dataclass(frozen=True)
+class SearchWebCall:
+    """The arguments of one `search_web()` call."""
+
+    model: str
+    system: tuple[TextBlock, ...]
+    user: tuple[TextBlock, ...]
+    max_searches: int
+    allowed_domains: tuple[str, ...]
+    blocked_domains: tuple[str, ...]
+    user_location: Mapping[str, str] | None
+    max_tokens: int
+    effort: Effort | None
+    ctx: CallContext
+
+    @property
+    def system_text(self) -> str:
+        return "\n\n".join(b.text for b in self.system)
+
+    @property
+    def user_text(self) -> str:
+        return "\n\n".join(b.text for b in self.user)
+
+
 StructuredItem = StructuredResult | Mapping[str, Any] | BaseException
 StructuredScript = StructuredItem | Callable[[StructuredCall], Any]
 ChatItem = ChatStreamEvent | BaseException
@@ -156,6 +208,7 @@ class _Entry[CallT]:
 class _Queues:
     structured: dict[str, list[_Entry[StructuredCall]]] = field(default_factory=dict)
     chat: list[_Entry[ChatCall]] = field(default_factory=list)
+    search: list[_Entry[SearchWebCall]] = field(default_factory=list)
 
 
 def _take[CallT](entries: list[_Entry[CallT]], call: CallT) -> _Entry[CallT] | None:
@@ -176,7 +229,8 @@ class FakeClaudeClient:
         self._queues = _Queues()
         self.structured_calls: list[StructuredCall] = []
         self.chat_calls: list[ChatCall] = []
-        self.calls: list[StructuredCall | ChatCall] = []
+        self.search_calls: list[SearchWebCall] = []
+        self.calls: list[StructuredCall | ChatCall | SearchWebCall] = []
         """Both kinds, in the order they arrived."""
 
     # ── scripting ──
@@ -205,10 +259,22 @@ class FakeClaudeClient:
             self._queues.chat.append(_Entry(turn, when, repeat and index == len(turns) - 1))
         return self
 
+    def script_search(
+        self,
+        *runs: WebSearchRun | BaseException | Callable[[SearchWebCall], Any],
+        when: Callable[[SearchWebCall], bool] | None = None,
+        repeat: bool = False,
+    ) -> FakeClaudeClient:
+        """Queue search turns (a `WebSearchRun`, an exception, or a callable taking the call)."""
+        for index, run in enumerate(runs):
+            self._queues.search.append(_Entry(run, when, repeat and index == len(runs) - 1))
+        return self
+
     def pending(self) -> int:
         """Scripted entries that have not been used and are not ``repeat`` entries."""
         structured = sum(1 for q in self._queues.structured.values() for e in q if not e.repeat)
-        return structured + sum(1 for e in self._queues.chat if not e.repeat)
+        searches = sum(1 for e in self._queues.search if not e.repeat)
+        return structured + searches + sum(1 for e in self._queues.chat if not e.repeat)
 
     def calls_for(self, purpose: Purpose) -> list[StructuredCall]:
         return [c for c in self.structured_calls if c.ctx.purpose == purpose]
@@ -279,6 +345,49 @@ class FakeClaudeClient:
             raise AssertionError("FakeClaudeClient: no chat turn scripted")
         return self._play(entry.item, call)
 
+    async def search_web(
+        self,
+        *,
+        model: str,
+        system: Sequence[TextBlock],
+        user: Sequence[TextBlock],
+        max_searches: int,
+        allowed_domains: Sequence[str] = (),
+        blocked_domains: Sequence[str] = (),
+        user_location: Mapping[str, str] | None = None,
+        max_tokens: int,
+        effort: Effort | None,
+        ctx: CallContext,
+    ) -> WebSearchRun:
+        call = SearchWebCall(
+            model,
+            tuple(system),
+            tuple(user),
+            max_searches,
+            tuple(allowed_domains),
+            tuple(blocked_domains),
+            user_location,
+            max_tokens,
+            effort,
+            ctx,
+        )
+        self.search_calls.append(call)
+        self.calls.append(call)
+        entry = _take(self._queues.search, call)
+        if entry is None:
+            raise AssertionError("FakeClaudeClient: no search turn scripted")
+        if self._latency_s and self._clock is not None:
+            await self._clock.sleep(self._latency_s)
+        item: Any = entry.item
+        if callable(item):
+            item = item(call)
+            if inspect.isawaitable(item):
+                item = await item
+        if isinstance(item, BaseException):
+            raise item
+        assert isinstance(item, WebSearchRun), item
+        return item
+
     async def _play(self, script: Any, call: ChatCall) -> AsyncIterator[ChatStreamEvent]:
         if self._latency_s and self._clock is not None:
             await self._clock.sleep(self._latency_s)
@@ -296,7 +405,9 @@ class FakeClaudeClient:
 __all__ = [
     "ChatCall",
     "FakeClaudeClient",
+    "SearchWebCall",
     "StructuredCall",
     "fake_usage",
+    "search_run",
     "text_turn",
 ]

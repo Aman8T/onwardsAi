@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Profile } from '../../shared/types';
 import type { ListingCard } from '../../shared/discover';
+import type { AiJob } from '../../shared/jobsearch';
 import { useMe } from '../auth/useMe';
 import { isSampleId, pickProfileId } from '../match/model';
 import { matchActions, useMatch } from '../match/useMatch';
@@ -22,11 +23,15 @@ import type { StoredArea } from './area';
 import type { AreaChoice } from './ContextBar';
 import { DiscoverHeader } from './DiscoverHeader';
 import { DiscoverScreen } from './DiscoverScreen';
+import { checkedWord } from './model';
 import { writeOrigin } from './origin';
 import { discoverPath } from './route';
 import type { DiscoverQuery } from './route';
 import { useCities, useDiscover } from './useDiscover';
 import '../styles/discover.css';
+
+/** The sample has nothing of the visitor's to match, so a full match explains instead of starting. */
+const NEEDS_ANALYSIS = 'A match compares a posting with your evidence, so your resume needs to be analysed first.';
 
 export function DiscoverRoot({ profile }: { profile: Profile }) {
   const route = useApp((s) => s.discoverRoute);
@@ -76,7 +81,7 @@ export function DiscoverRoot({ profile }: { profile: Profile }) {
   // the match screen refuses the sample (there is nothing of the visitor's to match), so the card explains instead
   const matchProfileId = pickProfileId(profile.id, profiles) ?? (!sample ? profile.id : undefined);
   const seeMatch = async (card: ListingCard): Promise<string | undefined> => {
-    if (!matchProfileId) return 'A match compares a posting with your evidence, so your resume needs to be analysed first.';
+    if (!matchProfileId) return NEEDS_ANALYSIS;
     let detail;
     try {
       detail = await getListing(card.id, profile.id);
@@ -98,6 +103,26 @@ export function DiscoverRoot({ profile }: { profile: Profile }) {
     matchActions.setDraft({ text: detail.postingText, url: '' });
     actions.openMatch({ screen: 'paste' });
     void matchActions.submit({ profileId: matchProfileId, text: detail.postingText }, { signedIn: loaded ? !!user : null });
+    return undefined;
+  };
+
+  // the same, for a role "Search with AI" found: the posting's address goes to the match flow, which reads the page
+  // itself, so there is no listing text to hand over. A refused match leaves the address in the paste box.
+  const seeMatchUrl = async (job: AiJob): Promise<string | undefined> => {
+    if (!matchProfileId) return NEEDS_ANALYSIS;
+    writeOrigin({
+      listingId: job.id,
+      title: job.title,
+      employer: job.employer,
+      applyUrl: job.applyUrl,
+      applyHost: job.applyHost,
+      sourceLabel: `Employer's own listing, checked ${checkedWord(job.checkedAt)}`,
+      discoverHref: discoverPath(query),
+      profileId: profile.id,
+    });
+    matchActions.setDraft({ text: '', url: job.applyUrl });
+    actions.openMatch({ screen: 'paste' });
+    void matchActions.submit({ profileId: matchProfileId, url: job.applyUrl }, { signedIn: loaded ? !!user : null });
     return undefined;
   };
 
@@ -127,6 +152,7 @@ export function DiscoverRoot({ profile }: { profile: Profile }) {
         onPaste={() => actions.openMatch()}
         onAddProject={() => actions.goto('onboarding')}
         onSeeMatch={seeMatch}
+        onSeeMatchUrl={seeMatchUrl}
         matchLocked={matchPhase === 'reading'}
         onOpenMatch={(id) => actions.openMatch({ screen: 'match', id })}
         check={check}

@@ -20,6 +20,7 @@ from typing import Annotated, Any, Final, Literal
 from pydantic import Field, TypeAdapter
 from pydantic_core import PydanticSerializationError
 
+from tayyari.contract.jobsearch import JobSearchEvent
 from tayyari.contract.match_api import MatchStreamEvent
 from tayyari.contract.models import Phase, Profile, ReaderState, SourceKind, _Model
 from tayyari.contract.portfolio import PortfolioEvent
@@ -127,7 +128,7 @@ ChatEventAdapter: TypeAdapter[ChatEvent] = TypeAdapter(ChatEvent)
 _LINE_BREAKS: Final[dict[int, str]] = {code: f"\\u{code:04x}" for code in (0x85, 0x2028, 0x2029)}
 
 
-def encode_event(ev: AnalysisEvent | ChatEvent | PortfolioEvent | MatchStreamEvent) -> bytes:
+def encode_event(ev: AnalysisEvent | ChatEvent | PortfolioEvent | MatchStreamEvent | JobSearchEvent) -> bytes:
     """One compact JSON line (UTF-8, not ASCII-escaped, ``None`` fields omitted) ending in ``"\\n"``.
 
     It also encodes the portfolio stream's events (`contract.portfolio.PortfolioEvent`) and the posting match's

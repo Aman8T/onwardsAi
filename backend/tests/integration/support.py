@@ -49,7 +49,7 @@ from tayyari.core.ids import uuid7
 from tayyari.core.paths import SAMPLE_DIR
 from tayyari.core.settings import GuardSettings, Settings
 from tayyari.ingest import SourceDoc
-from tayyari.llm.types import CallContext, StructuredResult, TurnEnd, Usage
+from tayyari.llm.types import CallContext, StructuredResult, TurnEnd, Usage, WebSearchRun
 from tayyari.storage.ports import LlmCallRepo
 from tayyari.storage.tables import SpendDailyRow
 from tests.fakes.claude import FakeClaudeClient, StructuredCall
@@ -76,6 +76,11 @@ def roomy_guard(**overrides: Any) -> GuardSettings:
         "chat_global_per_hour": 0,
         "chat_streams_per_ip": 0,
         "chat_streams_per_process": 0,
+        "jobsearch_per_minute": 1000,
+        "jobsearch_per_hour": 1000,
+        "jobsearch_per_day": 1000,
+        "jobsearch_global_per_hour": 0,
+        "anon_jobsearch_per_day": 1000,
         "daily_ceiling_usd": 1000.0,
     }
     values.update(overrides)
@@ -250,6 +255,11 @@ class RecordingClaude(FakeClaudeClient):
         result = await super().structured(**kwargs)
         await self._record(kwargs["ctx"], result.usage, result.stop_reason)
         return result
+
+    async def search_web(self, **kwargs: Any) -> WebSearchRun:
+        run = await super().search_web(**kwargs)
+        await self._record(kwargs["ctx"], run.usage, run.stop_reason)
+        return run
 
     def stream_chat(self, **kwargs: Any) -> AsyncIterator[Any]:
         inner = super().stream_chat(**kwargs)

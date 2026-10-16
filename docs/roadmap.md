@@ -223,6 +223,44 @@ Each wave ends with: `npm run check:all` green, new tests for every new unit, a 
 
 Research: `docs/research/job-discovery.md` (sources, geography, matching, regulation, open questions).
 
+## D2 · Search with AI
+
+**Built 2026-10-16** (not committed or deployed yet). A "Search with AI" panel in Discover. Claude Haiku 5.5 scouts search employers' own job sites for the person's kind of role, code reads the boards they lead to and narrows the open roles, and Haiku reads the shortlist against the person's evidence. The trail of how it narrowed things down and the roles stream in as they come. **Haiku 5.5 only**, by the user's decision. The design follows two baseline runs by Opus and Sonnet on the sample resume (`docs/research/jobsearch-baseline.md`): search finds employers, not open jobs (about two in three job links from search were closed), so code decides what is open, near and within reach, and the model only searches and reads. Not on a design canvas: it reuses Discover's approved card language (the memory rule asks for a canvas first; a board can be added).
+
+**How a run goes** (`backend/tayyari/jobsearch/`, ~20 s, ~$0.11):
+1. **plan** (`brief.py`, code): the role, the next roles, the years, the city (Discover's, else the resume's), the strongest skills, and evidence lines `E1…` taken word for word from the profile's evidence (skills at 45 and over). Up to three angles: the role here, the next role here, the role remote in India.
+2. **search** (`jobsearch.scout`, one Haiku call per angle, at once): only the basic web search tool (`web_search_20250305`), `allowed_domains` = Greenhouse and Lever, `user_location` the city, up to 3 searches each. A scout sees a title, a place, a rough level and skill names; never the name or the resume's text. Its words are not used: `harvest.py` takes board tokens from the tool's result URLs and skips recruiter boards.
+3. **boards** (`boards.py`): up to 30 boards found on the web, ranked by how well their result titles read as the person's kind of role, read through Discover's fetcher and parser (`fetch_board`, `parse_board`: India listings only, the same politeness), cached for an hour in process. Boards Discover already reads come from its store, with every other stored listing.
+4. **narrow** (`narrow.py`, code): place (the city or remote in India), then kind (distinctive title words of the person's role titles, or a strongest skill named in the title; seniority words never count; a word of another field such as tester, designer or IC design excludes a title unless the person's own titles use it), then level (Staff, Principal, Lead or Head need 6 years; Senior needs 2; an internship or a "0-1 years" role is out from 2 years; at most 2 years over the person's). Ranked by title fit, quick fit, then freshness; at most 3 per employer; 12 to the read.
+5. **read** (`jobsearch.judge`, Haiku with structured output, 4 postings a call, at once): per posting, up to six requirements (quote, evidence ids, then status), the level quote then the level, the kind, and any text aimed at an AI, quoted.
+6. **checks** (`judge.py`, code):
+   - a quote must be in the posting word for word (after folding case, spaces, quote marks and dashes);
+   - a met requirement must cite a real evidence id;
+   - a years requirement is the level's, never evidence;
+   - the level comes from the years code read (Senior with no years is a step up under 4 years), else from the reader's level with a checked quote;
+   - left out: another field, far above, nothing met, or text aimed at an AI (a checked quote or a phrase code knows);
+   - the word is worked out in code: strong, good or a stretch. Never a number.
+
+**Contract.** `shared/jobsearch.ts` ⇄ `contract/jobsearch.py`, parity-tested with discover.ts. `POST /api/jobsearch` `{profileId, city?}` streams NDJSON: `step` (trail lines written in code, with the scouts' queries), `job` (`AiJob`: the role, the apply link to the employer's posting, found via the web or Tayyari's employers, the fit word, the level word and quote, up to three asks met with the evidence line, up to three gaps, Discover's quick fit, the salary only when stated), then `done` (the funnel).
+
+**Guards.** The profile is opened the way Discover does. The order is: shed, then off (503), then body, then profile (404), then city (400), then per-address and per-account windows (`TAYYARI_GUARD__JOBSEARCH_*`: 1 a minute, 4 an hour, 8 a day). Without an account, 3 a day (`ANON_JOBSEARCH_PER_DAY`). Then 40 an hour across the service, then a spend reservation of $0.20 (`EST_JOBSEARCH_USD`). No credit is charged.
+
+**Settings** `TAYYARI_JOBSEARCH__*`: `ENABLED`, `MODEL` (claude-haiku-5-5), `SCOUTS` 3, `SEARCHES_PER_SCOUT` 3, `MAX_BOARDS` 30, `FETCH_CONCURRENCY` 8, `MAX_JUDGED` 12, `JUDGE_BATCH` 4, `PER_EMPLOYER` 3, `POSTING_CHARS` 6000, `BOARD_CACHE_MINUTES` 60, `REQUEST_TIMEOUT_S` 12.
+
+**Layering.** `jobsearch` sees what the other model-calling services see, plus `discover`'s pure parts (like `match` reuses `portfolio`). `discover` never imports it. The client gained `ClaudeClient.search_web` (one turn with only the search tool, read back query by query, `pause_turn` continued, one usage row per request with its $0.01 searches).
+
+**Web app.** `src/discover/jobsearch/` (panel, trail, card, stream reader with defensive validation). Mounted above Discover's groups. "See full match" posts the posting's address to the match flow. Dev gallery states `?state=ai…`.
+
+**Tests.** `tests/unit/jobsearch/` (harvest, brief, narrowing, the checks with known-bad reads, the run over fake boards and scripted Haiku), `tests/unit/llm/test_search_web.py` (SSE fixtures), `tests/integration/test_jobsearch_routes.py`, `tests/unit/contract/test_jobsearch_parity.py`.
+
+**Later** (in `docs/discover-later.md`):
+- Ashby (4 of Opus's 6 finds were there);
+- "worldwide" remote roles read as open to India;
+- keeping the employers the scouts find;
+- evergreen postings ranked lower;
+- a replay eval from stored search results;
+- a canvas board for the panel.
+
 ---
 
 ## Follow-ups

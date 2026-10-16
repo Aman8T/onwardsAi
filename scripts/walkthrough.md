@@ -122,6 +122,23 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     "← Discover" returns to the same lens. Save a role with its bookmark button: it appears under "Your applications · N",
     where its status can be changed, and the page says "Kept in this browser". Open "Why this order": it lists what the
     ranking used and what it never uses, and "Show in posted order" switches to newest first and back.
+16. **Search with AI** (costs about $0.11 a run; 3 a day per address without an account): on Discover, the "Search
+    further" panel sits above the groups with "Search with AI". Press it. The trail fills in about 20 seconds:
+    - a plan line;
+    - three search lines, each with its short queries;
+    - the boards read;
+    - one narrowing line;
+    - "Claude Haiku is reading the N closest postings against your evidence".
+    Roles arrive best first, and Stop keeps what has arrived. Each card shows:
+    - the title, employer and place;
+    - a fit word ("Good fit", "A stretch"; never a number) and a level word, with the posting's own words about years;
+    - "Asks: … / You: …" pairs whose two quotes are word for word from the posting and from the profile;
+    - "Not on your resume: …";
+    - "Found on the web · Search: …" or "From Tayyari's employers", and "Listed on the employer's board today";
+    - "Apply on {host} ↗", opening the employer's own posting in a new tab.
+    The done state shows the funnel (open roles on the boards read → in the city or remote → your kind → within reach →
+    read → fit). Without a server, `/dev/discover?state=ai` plays a scripted run, and the other `ai-` states hold
+    running, done, nothing fitted, error, limit and paused.
 
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`).

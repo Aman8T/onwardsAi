@@ -12,11 +12,20 @@ stream is first iterated (before any request is made), so a tripped ceiling surf
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping, Sequence
 from typing import Any
 
 from .claude import ClaudeClient
-from .types import CallContext, ChatStreamEvent, Effort, MessageParam, StructuredResult, TextBlock, ToolMode
+from .types import (
+    CallContext,
+    ChatStreamEvent,
+    Effort,
+    MessageParam,
+    StructuredResult,
+    TextBlock,
+    ToolMode,
+    WebSearchRun,
+)
 
 SpendGate = Callable[[str], Awaitable[None]]
 """Called with the call's purpose before it is made; raises `SpendCeilingReached` to stop it."""
@@ -87,6 +96,34 @@ class GuardedClaudeClient(ClaudeClient):
             aclose = getattr(events, "aclose", None)
             if aclose is not None:
                 await aclose()
+
+    async def search_web(
+        self,
+        *,
+        model: str,
+        system: Sequence[TextBlock],
+        user: Sequence[TextBlock],
+        max_searches: int,
+        allowed_domains: Sequence[str] = (),
+        blocked_domains: Sequence[str] = (),
+        user_location: Mapping[str, str] | None = None,
+        max_tokens: int,
+        effort: Effort | None,
+        ctx: CallContext,
+    ) -> WebSearchRun:
+        await self._gate(ctx.purpose)
+        return await self._inner.search_web(
+            model=model,
+            system=system,
+            user=user,
+            max_searches=max_searches,
+            allowed_domains=allowed_domains,
+            blocked_domains=blocked_domains,
+            user_location=user_location,
+            max_tokens=max_tokens,
+            effort=effort,
+            ctx=ctx,
+        )
 
     async def aclose(self) -> None:
         """Close the wrapped client when it has something to close."""

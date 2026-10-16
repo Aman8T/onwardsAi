@@ -12,10 +12,19 @@ Contract:
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Callable, Sequence
+from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from typing import Any, Protocol
 
-from .types import CallContext, ChatStreamEvent, Effort, MessageParam, StructuredResult, TextBlock, ToolMode
+from .types import (
+    CallContext,
+    ChatStreamEvent,
+    Effort,
+    MessageParam,
+    StructuredResult,
+    TextBlock,
+    ToolMode,
+    WebSearchRun,
+)
 
 
 class ClaudeClient(Protocol):
@@ -60,6 +69,30 @@ class ClaudeClient(Protocol):
         ``tool_choice={"type": "none"}`` so the cached prefix is unchanged. ``cache_tail`` puts an automatic
         cache breakpoint on the last message block. ``TurnEnd.stop_reason`` can be ``max_tokens`` (the
         caller adds a "cut off" note); a refusal raises `ClaudeRefusal`.
+        """
+        ...
+
+    async def search_web(
+        self,
+        *,
+        model: str,
+        system: Sequence[TextBlock],
+        user: Sequence[TextBlock],
+        max_searches: int,
+        allowed_domains: Sequence[str] = (),
+        blocked_domains: Sequence[str] = (),
+        user_location: Mapping[str, str] | None = None,
+        max_tokens: int,
+        effort: Effort | None,
+        ctx: CallContext,
+    ) -> WebSearchRun:
+        """One turn in which the model may run up to ``max_searches`` web searches and nothing else.
+
+        Only the web search tool is declared (no fetch), restricted to ``allowed_domains`` or away from
+        ``blocked_domains`` (the API takes one of the two, never both). The result is what the tool returned, query by
+        query, read from the response blocks, so a caller can use the links without trusting the model's words. A
+        ``pause_turn`` is continued a bounded number of times; a ``max_tokens`` stop keeps the searches already run.
+        A refusal raises `ClaudeRefusal`.
         """
         ...
 

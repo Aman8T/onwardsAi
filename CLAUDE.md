@@ -28,16 +28,16 @@ design.md                  the visual system, portable; docs/design-notes.md has
 docs/backend.md            backend architecture, request flows, storage, guard, testing, config
 docs/roadmap.md            build plan: waves, file ownership, feature specs
 docs/research/             market and open-source research
-shared/types.ts, portfolio.ts, auth.ts, billing.ts, match.ts, discover.ts   TS contracts; mirrored by backend/tayyari/contract/*.py
+shared/types.ts, portfolio.ts, auth.ts, billing.ts, match.ts, discover.ts, jobsearch.ts   TS contracts; mirrored by backend/tayyari/contract/*.py
 src/                       frontend: views/ (Onboarding, Analysis, GraphView, ChatView), portfolio/, auth/, billing/, match/, discover/, light/,
                            components/ (Radar, Popover, Ring...), theme/ (tokens, hue), styles/, store.ts, lib/api.ts
 backend/tayyari/           core · contract · llm · decisions · analysis · chat · portfolio · prompts · ingest ·
-                           guard · storage (tables, repos, migrations) · api (app, routes, deps, security) · auth · billing · match · discover · cli · sample
+                           guard · storage (tables, repos, migrations) · api (app, routes, deps, security) · auth · billing · match · discover · jobsearch · cli · sample
 backend/tests/             unit · integration · golden · fakes · data
 scripts/                   palette-check, restraint-check, build-check, portfolio-parity, match-parity, walkthrough.md
 ```
 
-Layering (enforced by a test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `storage` depends only on `core` and `contract`. Services depend on Protocols (`storage/ports.py`, `llm` clients) so every unit runs with the fakes in `backend/tests/fakes`.
+Layering (enforced by a test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `jobsearch` sits with the model-calling services and may import `discover`'s pure parts. `storage` depends only on `core` and `contract`. Services depend on Protocols (`storage/ports.py`, `llm` clients) so every unit runs with the fakes in `backend/tests/fakes`.
 
 ## Run and verify
 
@@ -94,7 +94,8 @@ In the in-app browser pane, `.claude/launch.json` defines `tayyari-api` and `tay
 - Design canvases: never put `<sc-for>` inside `<table>`; the parser foster-parents it.
 - The `razorpay` SDK is synchronous (`requests`): call it through `asyncio.to_thread`, never directly in a route or service coroutine.
 - Discover never calls a model; its quick fit is code over a skill vocabulary (`discover/vocab.py`); recalibrate against real listings before changing thresholds.
+- Haiku 5.5 with a server tool and `output_config.format` together skips the tool and answers at once; Search with AI's scouts run unstructured (`ClaudeClient.search_web`) and only its reads are structured. Each web search is $0.01, the main cost of a search with AI.
 
 ## Status (2026-10-14)
 
-Done and deployed: analysis → skill graph → next roles → chat; Resume → Portfolio with the Old Newspaper skin; calm visual layer; cursor light on Home; accounts (F1), payments (F2), posting match (M1, M2, M3) and their docs, committed 03988c7 and deployed 2026-10-12; posting match without an account while no sign-in provider is configured (aa02483). Discover v1, a separate service, built 2026-10-16 from employers' own Greenhouse and Lever boards; deferred items in `docs/discover-later.md`. Razorpay works locally with a test key pair (the hand-off settles; the webhook secret is optional); the live app sells only once a sign-in provider, the Razorpay secrets and the prices are set on FastAPI Cloud. Parked: the Home dragon (branch `dragon`). Next: the radar card (R1), the grounded mock interview (I1), then the skills table (X1).
+Done and deployed: analysis → skill graph → next roles → chat; Resume → Portfolio with the Old Newspaper skin; calm visual layer; cursor light on Home; accounts (F1), payments (F2), posting match (M1, M2, M3) and their docs, committed 03988c7 and deployed 2026-10-12; posting match without an account while no sign-in provider is configured (aa02483). Discover v1, a separate service, built 2026-10-16 from employers' own Greenhouse and Lever boards; deferred items in `docs/discover-later.md`. Razorpay works locally with a test key pair (the hand-off settles; the webhook secret is optional); the live app sells only once a sign-in provider, the Razorpay secrets and the prices are set on FastAPI Cloud. Parked: the Home dragon (branch `dragon`). Search with AI (D2) built 2026-10-16 from Opus and Sonnet baseline runs, on Haiku 5.5 only: scouts, board reads, code narrowing, checked reads (`docs/research/jobsearch-baseline.md`); not committed or deployed yet. Next: the radar card (R1), the grounded mock interview (I1), then the skills table (X1).

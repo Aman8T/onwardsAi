@@ -1327,3 +1327,329 @@
     height: 44px;
   }
 }
+
+/* ═════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * Search with AI (src/discover/jobsearch). Every class is prefixed "dc-js-".
+ *
+ * One quiet panel at the top of the list (a .panel: surface, hairline, 16px radius), the trail as hairline-separated
+ * lines, and each role found as a .panel card under it. Tokens only; no shadows, no borders over 1px, no looping
+ * animation: the running state is a line of text and a live trail. A new trail line and a new card enter with
+ * opacity and a short rise (motion, in the components), and under reduced motion they do not move at all.
+ * The fit chip is Discover's own (.dc-fit-*), told apart by fill and outline as well as hue.
+ * ═════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.dc-js {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+.dc-js-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s5) var(--s6);
+}
+
+.dc-js-lede {
+  max-width: var(--measure);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.dc-js-title {
+  max-width: 62ch;
+  font-size: var(--fs-4);
+  font-weight: 500;
+  line-height: 1.4;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.dc-js-title:focus-visible {
+  outline: none;
+}
+
+.dc-js-note {
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+
+/* running */
+
+.dc-js-runhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s4);
+}
+
+.dc-js-status {
+  flex: 1 1 260px;
+  min-width: 0;
+  text-wrap: pretty;
+}
+
+/* the trail */
+
+.dc-js-trail {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dc-js-step {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  gap: 2px var(--s4);
+  padding: 10px 0;
+  border-top: var(--hair) solid var(--line);
+}
+
+.dc-js-stage {
+  font-size: var(--fs-1);
+  line-height: 1.6;
+  color: var(--text-muted);
+  letter-spacing: var(--track-open);
+}
+
+.dc-js-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dc-js-step-text {
+  margin: 0;
+  font-size: var(--fs-2);
+  line-height: 1.5;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.dc-js-count {
+  color: var(--text-muted);
+}
+
+/* the searches a scout ran: quiet monospace lines behind a hairline */
+.dc-js-queries {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0 0 0 var(--s3);
+  list-style: none;
+  border-left: var(--hair) solid var(--line);
+}
+
+.dc-js-query {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  line-height: 1.5;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* done: what was said on the left, the funnel on the right */
+
+.dc-js-done {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 1fr);
+  gap: var(--s4) var(--s7);
+  align-items: start;
+}
+
+.dc-js-done-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+.dc-js-details {
+  align-self: stretch;
+}
+
+.dc-js-summary {
+  min-height: 44px;
+  padding-block: 11px;
+  color: var(--accent);
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+.dc-js-details[open] > .dc-js-summary {
+  margin-bottom: var(--s1);
+}
+
+.dc-js-funnel-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.dc-js-funnel {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dc-js-funnel li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: 7px 0;
+  border-top: var(--hair) solid var(--line);
+  font-size: var(--fs-2);
+  line-height: 1.4;
+}
+
+.dc-js-funnel li:last-child {
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.dc-js-funnel-n {
+  flex: none;
+  font-weight: 500;
+}
+
+/* the roles */
+
+.dc-js-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dc-js-job {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+}
+
+.dc-js-job-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dc-js-job-title {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.dc-js-job-title .dc-emp {
+  font-weight: 400;
+}
+
+.dc-js-line {
+  max-width: 72ch;
+  margin: 0;
+  font-size: var(--fs-2);
+  line-height: 1.5;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.dc-js-lbl,
+.dc-js-levelquote {
+  color: var(--text-muted);
+}
+
+/* what the posting asks, beside the line of the person's evidence that meets it */
+.dc-js-met {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dc-js-met > li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: var(--s3);
+  border-left: var(--hair) solid var(--line-strong);
+}
+
+.dc-js-src,
+.dc-js-partly {
+  margin-left: var(--s2);
+}
+
+.dc-js-gaps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dc-js-gaplbl {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.dc-js-prov {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dc-js-prov p {
+  margin: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.dc-js-by {
+  font-family: var(--font-mono);
+}
+
+.dc-js-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+@media (max-width: 760px) {
+  .dc-js-panel,
+  .dc-js-job {
+    padding: var(--s4);
+  }
+
+  .dc-js-step {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .dc-js-done {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s5);
+  }
+
+  .dc-js-actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .dc-js-actions > .btn-primary {
+    flex: 1 1 100%;
+  }
+}

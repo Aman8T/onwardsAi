@@ -15,6 +15,7 @@ Guarantees:
                       one retry of a failure that may pass (a timeout, a 429 or a 5xx), and a cap on the size of an answer
 
 The transport is injectable, so tests run on ``httpx2.MockTransport`` with hand-written Greenhouse and Lever answers.
+`board_client` and `fetch_board` are the same politeness for one board at a time, for callers outside the refresh.
 """
 
 from __future__ import annotations
@@ -65,9 +66,71 @@ class RefreshReport:
     note: str | None = None
 
 
+def board_url_for(ats: str, board: str) -> str:
+    """The public API address of a board (``ats`` is ``greenhouse`` or ``lever``; the token is URL-quoted)."""
+    template = GREENHOUSE_URL if ats == "greenhouse" else LEVER_URL
+    return template.format(board=quote(board, safe=""))
+
+
 def board_url(employer: Employer) -> str:
-    template = GREENHOUSE_URL if employer.ats == "greenhouse" else LEVER_URL
-    return template.format(board=quote(employer.board, safe=""))
+    return board_url_for(employer.ats, employer.board)
+
+
+def board_client(
+    *, timeout_s: float, transport: httpx2.AsyncBaseTransport | None = None
+) -> httpx2.AsyncClient:
+    """An HTTP client for reading boards: says who we are, asks for JSON, follows no redirect."""
+    return httpx2.AsyncClient(
+        transport=transport,
+        timeout=httpx2.Timeout(timeout_s),
+        headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+        follow_redirects=False,
+    )
+
+
+async def fetch_board(client: httpx2.AsyncClient, url: str, clock: Clock) -> Any:
+    """The parsed JSON at ``url``, with one retry after `RETRY_AFTER_S` of a failure that may pass (a timeout, a 429 or a
+    5xx). Raises `BoardError` with a short sentence (never a response body)."""
+    last = BoardError("the board could not be read")
+    for attempt in (1, 2):
+        try:
+            return await _get_json(client, url)
+        except _Transient as exc:
+            last = BoardError(str(exc))
+            if attempt == 1:
+                await clock.sleep(RETRY_AFTER_S)
+    raise last
+
+
+async def _get_json(client: httpx2.AsyncClient, url: str) -> Any:
+    try:
+        async with client.stream("GET", url) as response:
+            status = response.status_code
+            if status in RETRIABLE_STATUS:
+                raise _Transient(f"the board answered {status}")
+            if status == 404:
+                raise BoardError("the board was not found")
+            if status >= 400:
+                raise BoardError(f"the board answered {status}")
+            body = bytearray()
+            async for chunk in response.aiter_bytes():
+                body.extend(chunk)
+                if len(body) > MAX_BODY_BYTES:
+                    raise BoardError("the board's answer is too large")
+    except httpx2.TimeoutException:
+        raise _Transient("the board timed out") from None
+    except httpx2.TransportError as exc:
+        raise _Transient(f"the board could not be reached ({type(exc).__name__})") from None
+    except httpx2.HTTPError as exc:
+        raise BoardError(f"the board could not be read ({type(exc).__name__})") from None
+    try:
+        return json.loads(bytes(body))
+    except ValueError:
+        raise BoardError("the board did not answer with JSON") from None
+
+
+class _Transient(BoardError):
+    """A failure that may pass on a second try."""
 
 
 class Refresher:
@@ -155,18 +218,14 @@ class Refresher:
         self, registry: Registry, counts: dict[str, int], failures: dict[str, str]
     ) -> None:
         gate = asyncio.Semaphore(self._settings.fetch_concurrency)
-        timeout = httpx2.Timeout(self._settings.request_timeout_s)
-        async with httpx2.AsyncClient(
-            transport=self._transport,
-            timeout=timeout,
-            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
-            follow_redirects=False,
+        async with board_client(
+            timeout_s=self._settings.request_timeout_s, transport=self._transport
         ) as client:
 
             async def one(employer: Employer) -> None:
                 async with gate:
                     try:
-                        payload = await self._fetch(client, employer)
+                        payload = await fetch_board(client, board_url(employer), self._clock)
                         now = self._clock.now()
                         parsed = await asyncio.to_thread(
                             parse_board,
@@ -208,48 +267,6 @@ class Refresher:
 
             await asyncio.gather(*(one(employer) for employer in registry.employers))
 
-    async def _fetch(self, client: httpx2.AsyncClient, employer: Employer) -> Any:
-        url = board_url(employer)
-        last = BoardError("the board could not be read")
-        for attempt in (1, 2):
-            try:
-                return await self._get_json(client, url)
-            except _Transient as exc:
-                last = BoardError(str(exc))
-                if attempt == 1:
-                    await self._clock.sleep(RETRY_AFTER_S)
-        raise last
-
-    async def _get_json(self, client: httpx2.AsyncClient, url: str) -> Any:
-        try:
-            async with client.stream("GET", url) as response:
-                status = response.status_code
-                if status in RETRIABLE_STATUS:
-                    raise _Transient(f"the board answered {status}")
-                if status == 404:
-                    raise BoardError("the board was not found")
-                if status >= 400:
-                    raise BoardError(f"the board answered {status}")
-                body = bytearray()
-                async for chunk in response.aiter_bytes():
-                    body.extend(chunk)
-                    if len(body) > MAX_BODY_BYTES:
-                        raise BoardError("the board's answer is too large")
-        except httpx2.TimeoutException:
-            raise _Transient("the board timed out") from None
-        except httpx2.TransportError as exc:
-            raise _Transient(f"the board could not be reached ({type(exc).__name__})") from None
-        except httpx2.HTTPError as exc:
-            raise BoardError(f"the board could not be read ({type(exc).__name__})") from None
-        try:
-            return json.loads(bytes(body))
-        except ValueError:
-            raise BoardError("the board did not answer with JSON") from None
-
-
-class _Transient(BoardError):
-    """A failure that may pass on a second try."""
-
 
 __all__ = [
     "GREENHOUSE_URL",
@@ -259,5 +276,8 @@ __all__ = [
     "USER_AGENT",
     "RefreshReport",
     "Refresher",
+    "board_client",
     "board_url",
+    "board_url_for",
+    "fetch_board",
 ]

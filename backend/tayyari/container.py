@@ -16,6 +16,9 @@
     DiscoverService                               (job discovery over employers' own public boards; no model, its own
                                                    HTTP client; a refresh runs in the background when the data is old and
                                                    is cancelled at shutdown)
+    JobSearchService                              (search with AI: Haiku scouts over employers' job sites, the boards
+                                                   read through Discover's fetcher, a checked Haiku read; the guarded
+                                                   Claude client)
     match_anonymous                               (may a visitor with no sign-in match a posting: the setting
                                                    resolved against the sign-in methods this server offers)
     maintenance                                   (retention purge, a tracked background task; it keeps
@@ -76,6 +79,7 @@ if TYPE_CHECKING:
     from tayyari.billing.entitlements import EntitlementService
     from tayyari.billing.service import BillingService
     from tayyari.discover.service import DiscoverService
+    from tayyari.jobsearch.service import JobSearchService
     from tayyari.match.service import MatchService
     from tayyari.portfolio.service import PortfolioService
 
@@ -106,8 +110,9 @@ class ContainerOverrides:
     - ``auth_transport``: an ``httpx2`` transport for every outgoing sign-in call (Google's token endpoint and keys,
       the email provider); tests hand in an ``httpx2.MockTransport`` so the flow runs without a network.
     - ``entitlements``, ``billing``, ``match``, ``discover``: the services themselves.
-    - ``discover_transport``: an ``httpx2`` transport for Discover's reads of employers' boards; tests hand in an
-      ``httpx2.MockTransport`` so a refresh runs without a network.
+    - ``discover_transport``: an ``httpx2`` transport for Discover's reads of employers' boards (and the job search's);
+      tests hand in an ``httpx2.MockTransport`` so a refresh runs without a network.
+    - ``jobsearch``: the job search service itself.
     - ``razorpay_session``: the ``requests.Session`` the Razorpay SDK sends through; tests hand in one that answers
       from memory.
     - ``stripe_http``: a ``stripe.HTTPClient`` for the Stripe SDK's requests; tests hand in one that answers from memory.
@@ -133,6 +138,7 @@ class ContainerOverrides:
     match: MatchService | None = None
     discover: DiscoverService | None = None
     discover_transport: httpx2.AsyncBaseTransport | None = None
+    jobsearch: JobSearchService | None = None
     razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
 
@@ -207,6 +213,8 @@ class Container:
     discover: DiscoverService
     """Job discovery. It starts a refresh of the employers' boards in the background when its data is old; the container
     cancels that task at shutdown."""
+    jobsearch: JobSearchService
+    """Search with AI. The route reserves spend and counts the run; every Claude call goes through the guarded client."""
     rate_limiter: RateLimiter
     spend_guard: SpendGuard
     ip_hash_key: bytes
@@ -251,6 +259,8 @@ class Container:
         from tayyari.chat.service import CoachChatService
         from tayyari.decisions.packs.service_impl import JevDecisionService
         from tayyari.discover.service import DiscoverService
+        from tayyari.jobsearch.boards import BoardReader
+        from tayyari.jobsearch.service import JobSearchService
         from tayyari.match.service import MatchService
         from tayyari.portfolio.service import PortfolioService
 
@@ -478,6 +488,35 @@ class Container:
                     refresh_hours=settings.discover.refresh_hours,
                 )
 
+            jobsearch: JobSearchService
+            if ov.jobsearch is not None:
+                jobsearch = ov.jobsearch
+            else:
+                found_by = discover
+                jobsearch = JobSearchService(
+                    claude=claude,
+                    settings=settings.jobsearch,
+                    repo=repos.discover,
+                    registry=lambda: found_by.registry,
+                    reader=BoardReader(
+                        clock=clock,
+                        timeout_s=settings.jobsearch.request_timeout_s,
+                        concurrency=settings.jobsearch.fetch_concurrency,
+                        cache_minutes=settings.jobsearch.board_cache_minutes,
+                        listing_cap=settings.discover.max_listings_per_employer,
+                        transport=ov.discover_transport,
+                    ),
+                    clock=clock,
+                    discover_enabled=lambda: found_by.enabled,
+                )
+                log.info(
+                    "jobsearch_ready",
+                    enabled=settings.jobsearch.enabled,
+                    model=settings.jobsearch.model,
+                    scouts=settings.jobsearch.scouts,
+                    searches_per_scout=settings.jobsearch.searches_per_scout,
+                )
+
             match_anonymous = settings.match.anonymous_allowed(auth.providers)
             log.info(
                 "match_anonymous",
@@ -521,6 +560,7 @@ class Container:
             match=match,
             match_anonymous=match_anonymous,
             discover=discover,
+            jobsearch=jobsearch,
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,
             ip_hash_key=ip_hash_key,

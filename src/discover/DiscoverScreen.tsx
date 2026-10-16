@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { DiscoverCity, DiscoverReach, ListingCard } from '../../shared/discover';
+import type { AiJob } from '../../shared/jobsearch';
 import { Applications } from './Applications';
 import type { ListingCheck } from './Applications';
 import { CompaniesLane } from './Companies';
@@ -19,6 +20,8 @@ import { ContextBar, LocalityPrompt, NoCity } from './ContextBar';
 import type { AreaChoice } from './ContextBar';
 import { GroupList } from './GroupList';
 import { BreadthLens, LaneTabs, ReachLens } from './Lenses';
+import { JobSearchPanel } from './jobsearch/JobSearchPanel';
+import type { JobSearchOptions } from './jobsearch/useJobSearch';
 import { CardHost } from './ListingCard';
 import { FLAT_BELOW, headline, isAllWeak, isFirstRefresh, isThin, widenAction } from './model';
 import { CoverageNote, EmptyState, ErrorState, FirstRefresh, Footer, LoadingRows, ThinBanner, WeakBanner } from './States';
@@ -44,6 +47,10 @@ export interface DiscoverScreenProps {
   onAddProject: () => void;
   /** Start a full match from a listing; resolves with a sentence when it could not start, nothing when it did. */
   onSeeMatch: (card: ListingCard) => Promise<string | undefined>;
+  /** Start a full match from a role "Search with AI" found, by the address of its posting; same answer as `onSeeMatch`. */
+  onSeeMatchUrl?: (job: AiJob) => Promise<string | undefined>;
+  /** Where "Search with AI" gets its stream. The dev gallery passes a scripted one; the app leaves it out. */
+  jobSearch?: JobSearchOptions;
   /** A posting is already being read, so a second cannot start. */
   matchLocked: boolean;
   onOpenMatch: (matchId: string) => void;
@@ -57,7 +64,7 @@ export interface DiscoverScreenProps {
 }
 
 export function DiscoverScreen(props: DiscoverScreenProps) {
-  const { profileId, query, state, cities, localityDeclined, onQuery, onArea, onDeclineLocality, onPaste, onAddProject, onSeeMatch, matchLocked, onOpenMatch, check, blocked, initialOpenId } = props;
+  const { profileId, query, state, cities, localityDeclined, onQuery, onArea, onDeclineLocality, onPaste, onAddProject, onSeeMatch, onSeeMatchUrl, jobSearch, matchLocked, onOpenMatch, check, blocked, initialOpenId } = props;
   const { status, data: res, error, waited, reload } = state;
   const tracker = useTracker(profileId);
 
@@ -199,6 +206,9 @@ export function DiscoverScreen(props: DiscoverScreenProps) {
           )}
         </div>
       )}
+
+      {/* Search with AI: its own stream, so it does not wait for the list; keyed so another profile or city starts clean */}
+      {!blocked && <JobSearchPanel key={`${profileId}|${query.city ?? ''}`} profileId={profileId} city={query.city} matchLocked={matchLocked} onSeeMatch={onSeeMatchUrl} {...jobSearch} />}
 
       {!blocked && !res && status === 'loading' && <LoadingRows />}
       {!blocked && status === 'error' && <ErrorState message={error} onRetry={reload} />}

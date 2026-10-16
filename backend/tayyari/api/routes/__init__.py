@@ -13,6 +13,7 @@
     match     POST /api/match (NDJSON); GET /api/match/{id}, /api/matches; POST .../answers, .../resume (NDJSON), .../cover;
               GET, PATCH .../resume; GET .../cover, .../resume.pdf, .../resume.docx, .../cover.pdf
     discover  GET /api/discover; GET /api/discover/cities; GET /api/discover/listings/{id}
+    jobsearch POST /api/jobsearch       JSON `JobSearchRequest` -> NDJSON `JobSearchEvent` stream (search with AI)
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.
@@ -29,6 +30,7 @@ from tayyari.api.routes import (
     chat,
     discover,
     health,
+    jobsearch,
     match,
     me,
     portfolio,
@@ -37,7 +39,20 @@ from tayyari.api.routes import (
 )
 
 api_router = APIRouter()
-for _module in (health, analyze, chat, profile, sample, portfolio, auth, me, billing, match, discover):
+for _module in (
+    health,
+    analyze,
+    chat,
+    profile,
+    sample,
+    portfolio,
+    auth,
+    me,
+    billing,
+    match,
+    discover,
+    jobsearch,
+):
     api_router.include_router(_module.router)
 
 __all__ = ["api_router"]

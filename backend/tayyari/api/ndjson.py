@@ -1,5 +1,5 @@
-"""The NDJSON streaming response behind POST /api/analyze, POST /api/chat, POST /api/portfolio, POST /api/match and
-POST /api/match/{id}/resume.
+"""The NDJSON streaming response behind POST /api/analyze, POST /api/chat, POST /api/portfolio, POST /api/match,
+POST /api/match/{id}/resume and POST /api/jobsearch.
 
 `NdjsonResponse(request, events, tag)` writes one `contract.encode_event` line per event as soon as the
 producer yields it, and a blank line (`contract.HEARTBEAT`) after `HEARTBEAT_S` of quiet so an idle proxy does
@@ -38,6 +38,7 @@ from tayyari.contract.events import (
     encode_event,
     ev_error,
 )
+from tayyari.contract.jobsearch import JOBSEARCH_TERMINAL, JobSearchEvent
 from tayyari.contract.match_api import MATCH_TERMINAL, MatchStreamEvent
 from tayyari.contract.portfolio import PortfolioDoneEvent, PortfolioErrorEvent, PortfolioEvent
 from tayyari.core.limits import DISCONNECT_POLL_S, HEARTBEAT_S
@@ -47,11 +48,12 @@ log = get_logger(__name__)
 
 MEDIA_TYPE = "application/x-ndjson; charset=utf-8"
 CACHE_CONTROL = "no-cache, no-transform"
-NO_STORE_TAGS = frozenset({"portfolio", "match"})
-"""Streams whose body is personal data a shared cache must never keep (the owner's whole portfolio, a match with
-the person's evidence in it)."""
-StreamEvent = AnalysisEvent | ChatEvent | PortfolioEvent | MatchStreamEvent
-"""Whatever a route streams: the events of an analysis, a chat turn, a portfolio generation or a posting match."""
+NO_STORE_TAGS = frozenset({"portfolio", "match", "jobsearch"})
+"""Streams whose body is personal data a shared cache must never keep (the owner's whole portfolio, a match or a search
+with the person's evidence in it)."""
+StreamEvent = AnalysisEvent | ChatEvent | PortfolioEvent | MatchStreamEvent | JobSearchEvent
+"""Whatever a route streams: the events of an analysis, a chat turn, a portfolio generation, a posting match or a search
+with AI."""
 _TERMINAL = (
     DoneEvent,
     ErrorEvent,
@@ -60,6 +62,7 @@ _TERMINAL = (
     PortfolioDoneEvent,
     PortfolioErrorEvent,
     *MATCH_TERMINAL,
+    *JOBSEARCH_TERMINAL,
 )
 
 

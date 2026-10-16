@@ -118,6 +118,17 @@ class GuardSettings(BaseModel):
     """Posting matches one client address may start per day without an account (0 = not enforced). Counted for
     `POST /api/match` only, and only for a visitor with no sign-in; the per-address windows above apply as well. With
     no account there is nothing to charge, so this is the only meter on an anonymous run."""
+    jobsearch_per_minute: int = Field(default=1, ge=0)
+    jobsearch_per_hour: int = Field(default=4, ge=0)
+    jobsearch_per_day: int = Field(default=8, ge=0)
+    """Searches with AI one signed-in account may start, and (separately) one client address, per window (0 = the window
+    is not enforced)."""
+    jobsearch_global_per_hour: int = Field(default=40, ge=0)
+    """Backstop on searches with AI per hour across all clients (shared counter)."""
+    anon_jobsearch_per_day: int = Field(default=3, ge=0)
+    """Searches with AI one client address may start per day without an account (0 = not enforced)."""
+    est_jobsearch_usd: float = Field(default=0.20, ge=0)
+    """Spend reserved before a search with AI: up to nine web searches ($0.01 each) and the Haiku reads around them."""
     chat_global_per_hour: int = Field(default=600, ge=0)
     """Backstop on chat turns per hour across all clients (shared counter)."""
     chat_streams_per_ip: int = Field(default=2, ge=0)
@@ -328,6 +339,60 @@ class DiscoverSettings(BaseModel):
         return v
 
 
+class JobSearchSettings(BaseModel):
+    """Job search with AI: `TAYYARI_JOBSEARCH__*`. No secrets of its own: it uses the Anthropic key and reads employers'
+    own public job boards, like Discover.
+
+    A search sends ``scouts`` Claude Haiku calls that may each run ``searches_per_scout`` web searches restricted to
+    employers' applicant tracking sites, reads at most ``max_boards`` boards they lead to, and has Haiku read at most
+    ``max_judged`` postings, ``judge_batch`` to a call.
+    """
+
+    enabled: bool = True
+    """False: the route answers 503 and nothing is searched."""
+    model: str = "claude-haiku-5-5"
+    """The model of the scouts and of the reads. Haiku 5.5 by decision (2026-10-16): the cheapest that runs web search."""
+    scouts: int = Field(default=3, ge=1, le=5)
+    searches_per_scout: int = Field(default=3, ge=1, le=5)
+    max_boards: int = Field(default=30, ge=1, le=60)
+    """Boards found on the web that one search reads (those whose results read most like the person's role first)."""
+    fetch_concurrency: int = Field(default=8, ge=1, le=16)
+    """Boards read at once."""
+    max_judged: int = Field(default=12, ge=1, le=30)
+    """Postings Haiku reads against the person's evidence."""
+    judge_batch: int = Field(default=4, ge=1, le=8)
+    """Postings per read call (the calls run at once)."""
+    per_employer: int = Field(default=3, ge=1, le=10)
+    """The most postings of one employer on the shortlist (a big board must not fill it)."""
+    posting_chars: int = Field(default=6000, ge=1000, le=20_000)
+    """Characters of a posting's text a read sees."""
+    board_cache_minutes: float = Field(default=60.0, ge=0)
+    """How long a board read for one search is reused by the next (in this process)."""
+    request_timeout_s: float = Field(default=12.0, gt=0)
+    """The longest one board request may take."""
+
+    @field_validator(
+        "enabled",
+        "model",
+        "scouts",
+        "searches_per_scout",
+        "max_boards",
+        "fetch_concurrency",
+        "max_judged",
+        "judge_batch",
+        "per_employer",
+        "posting_chars",
+        "board_cache_minutes",
+        "request_timeout_s",
+        mode="before",
+    )
+    @classmethod
+    def _blank_keeps_the_default(cls, v: object) -> object:
+        if isinstance(v, str) and not v.strip():
+            raise PydanticUseDefault()
+        return v
+
+
 _SECRET_FIELDS = (
     "anthropic_api_key",
     "jev_api_key",
@@ -428,6 +493,7 @@ class Settings(BaseSettings):
     billing: BillingSettings = Field(default_factory=BillingSettings)
     match: MatchSettings = Field(default_factory=MatchSettings)
     discover: DiscoverSettings = Field(default_factory=DiscoverSettings)
+    jobsearch: JobSearchSettings = Field(default_factory=JobSearchSettings)
 
     synth_hints: bool = False
     """Feed the first-read results to the synthesizer as hints (off: they are stored for comparison only)."""

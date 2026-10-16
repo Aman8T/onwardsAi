@@ -9,6 +9,7 @@ the top-level services (analysis, chat, portfolio) never import each other. The 
 - ``decisions`` may import ``storage.ports`` (the decision log Protocol), nothing else of storage.
 - ``guard`` may import ``storage.ports`` and ``llm.errors`` (it raises the spend-ceiling error), nothing else.
 - ``discover`` is a self-contained service like ``billing``: ``core``, ``contract`` and ``storage.ports`` only.
+- ``jobsearch`` (search with AI) sees what the other model-calling services see, plus ``discover``'s pure parts.
 - ``container`` and ``cli`` are composition roots and may import everything; so may ``api``, which builds on them.
 - ``legacy`` and ``canary`` (the replaced app, deleted in Wave 4) stay excluded in case an old checkout has them.
 
@@ -67,6 +68,9 @@ RULES: dict[str, tuple[str, ...]] = {
     "discover": ("core", "contract", "storage.ports"),
     # posting match reuses the portfolio's line-cited fact extractor and its sentence anchors (no fork).
     "match": (*_SERVICES, "portfolio"),
+    # search with AI reuses Discover's board fetcher, parsing, places, vocabulary and quick fit (no fork); it never
+    # imports match, analysis or any other service, and discover never imports it.
+    "jobsearch": (*_SERVICES, "discover"),
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",
@@ -80,6 +84,7 @@ RULES: dict[str, tuple[str, ...]] = {
         "billing",
         "match",
         "discover",
+        "jobsearch",
         "guard",
         "ingest",
         "prompts",

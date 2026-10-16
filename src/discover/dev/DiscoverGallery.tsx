@@ -3,13 +3,19 @@
  * account. Pick a state in the bar, or link straight to one:
  *
  *   /dev/discover?state=full&open=j1
- *   states: full · nolocality · remote · moving · first · first-waited · nocity · empty · weak · weak-shown · thin ·
- *           coimbatore · loading · error · applications · blocked · origin
+ *   states: full · nolocality · remote · moving · ai · ai-running · ai-done · ai-empty · ai-error · ai-limit · ai-paused ·
+ *           first · first-waited · nocity · empty · weak · weak-shown · thin · coimbatore · loading · error ·
+ *           applications · blocked · origin
  *
  * `full`, `nolocality`, `remote` and `moving` are live: the lenses, lanes, order switch and area pickers really
  * filter and re-count the Bengaluru table in fixtures.ts, so the stops and the suggestion move together. Every other
  * state is a fixed answer (its lenses change nothing). Saving a role writes to this browser's storage under a
  * gallery profile id; "See full match", "Paste a posting" and "Add a project or link" are stubbed and say so.
+ *
+ * "Search with AI" never reaches the server here: every state hands the panel a scripted stream (`jobsearchFixtures.ts`)
+ * that plays through the real reader. `ai` is idle (press the button to watch a whole run in about ten seconds); the
+ * other `ai-…` states start by themselves and sit in one place: running part-way, done with five roles, done with
+ * nothing, stopped by an error, refused for a limit (429), refused because the AI is paused for today (503).
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { DiscoverResponse } from '../../../shared/discover';
@@ -21,7 +27,9 @@ import { Blocked } from '../States';
 import { DEFAULT_QUERY, mergeQuery } from '../route';
 import type { DiscoverQuery } from '../route';
 import { seedTracker } from '../tracker';
+import type { JobSearchOptions } from '../jobsearch/useJobSearch';
 import { CITIES, allWeakResponse, allWeakShownResponse, coimbatoreResponse, emptyNearResponse, firstRefreshResponse, noCityResponse, riyaResponse, thinResponse, trackedFixtures } from './fixtures';
+import { FAILS_MIDWAY, FULL_RUN, MIDWAY, NOTHING_FITTED, refused, scriptedStream } from './jobsearchFixtures';
 import '../../styles/discover.css';
 
 const STATES = [
@@ -29,6 +37,13 @@ const STATES = [
   ['nolocality', 'Bengaluru · no area yet'],
   ['remote', 'Remote lane'],
   ['moving', 'A city to move to'],
+  ['ai', 'Search with AI · idle'],
+  ['ai-running', 'Search with AI · running'],
+  ['ai-done', 'Search with AI · done'],
+  ['ai-empty', 'Search with AI · nothing fitted'],
+  ['ai-error', 'Search with AI · error'],
+  ['ai-limit', 'Search with AI · limit (429)'],
+  ['ai-paused', 'Search with AI · paused (503)'],
   ['first', 'First refresh'],
   ['first-waited', 'First refresh · still reading'],
   ['nocity', 'No city yet'],
@@ -49,6 +64,26 @@ const isState = (s: string | null): s is StateId => STATES.some(([id]) => id ===
 const GALLERY_PROFILE = 'dev-fixture';
 const GALLERY_APPS = 'dev-fixture-applications';
 const noop = () => {};
+
+/** The Search-with-AI panel's stand-in for the server, by state. Only `ai` waits for the button. */
+function jobSearchFor(id: StateId): JobSearchOptions {
+  switch (id) {
+    case 'ai-running':
+      return { stream: scriptedStream(MIDWAY, 0), autoStart: true };
+    case 'ai-done':
+      return { stream: scriptedStream(FULL_RUN, 0), autoStart: true };
+    case 'ai-empty':
+      return { stream: scriptedStream(NOTHING_FITTED, 0), autoStart: true };
+    case 'ai-error':
+      return { stream: scriptedStream(FAILS_MIDWAY, 0), autoStart: true };
+    case 'ai-limit':
+      return { stream: scriptedStream(refused(429, 'You have searched a lot in a short while. Please wait a little before the next search.', 42)), autoStart: true };
+    case 'ai-paused':
+      return { stream: scriptedStream(refused(503, 'Search with AI is paused for today. It starts again tomorrow.')), autoStart: true };
+    default:
+      return { stream: scriptedStream(FULL_RUN, 1) };
+  }
+}
 
 function readParams(): { state: StateId; open?: string; query: DiscoverQuery } {
   const p = new URLSearchParams(window.location.search);
@@ -104,6 +139,7 @@ function Stage({ id, open, initial, onNote }: { id: StateId; open?: string; init
     return base;
   };
   const [query, setQuery] = useState<DiscoverQuery>(startQuery);
+  const jobSearch = useMemo(() => jobSearchFor(id), [id]);
   const [declined, setDeclined] = useState(false);
 
   useEffect(() => {
@@ -116,6 +152,13 @@ function Stage({ id, open, initial, onNote }: { id: StateId; open?: string; init
       case 'nolocality':
       case 'remote':
       case 'moving':
+      case 'ai':
+      case 'ai-running':
+      case 'ai-done':
+      case 'ai-empty':
+      case 'ai-error':
+      case 'ai-limit':
+      case 'ai-paused':
         return riyaResponse({ breadth: query.breadth, lane: query.lane, order: query.order, reach: query.reach, otherCity: query.otherCity, city: query.city, locality: query.locality });
       case 'first':
       case 'first-waited':
@@ -159,7 +202,7 @@ function Stage({ id, open, initial, onNote }: { id: StateId; open?: string; init
     );
   }
 
-  const live = id === 'full' || id === 'nolocality' || id === 'remote' || id === 'moving';
+  const live = id === 'full' || id === 'nolocality' || id === 'remote' || id === 'moving' || id.startsWith('ai');
   const status = id === 'loading' ? 'loading' : id === 'error' ? 'error' : 'ready';
 
   const props: DiscoverScreenProps = {
@@ -189,6 +232,11 @@ function Stage({ id, open, initial, onNote }: { id: StateId; open?: string; init
       new Promise((resolve) => {
         window.setTimeout(() => resolve('Gallery: no match is started here. In the app this opens the posting match.'), 700);
       }),
+    onSeeMatchUrl: () =>
+      new Promise((resolve) => {
+        window.setTimeout(() => resolve("Gallery: no match is started here. In the app this opens the posting match from the role's address."), 700);
+      }),
+    jobSearch,
     matchLocked: false,
     onOpenMatch: (matchId) => onNote(`Gallery: "Open match" would open /match/${matchId}.`),
     check: id === 'applications' ? async (listing) => (listing === 'd4' ? 'gone' : 'open') : undefined,

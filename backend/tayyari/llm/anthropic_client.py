@@ -11,6 +11,8 @@ one `LlmCallRecord` through the usage sink, and every failure is a typed `Claude
     stream_chat()  streamed turn with the web search and web fetch tools always declared (so the cache prefix
                    never changes), ``tool_choice`` ``none`` to withhold them, ``pause_turn`` continuation and
                    one `TurnEnd` at the end.
+    search_web()   one turn with only the basic web search tool (domain-restricted), read back query by query from
+                   the response blocks, with ``pause_turn`` continuation.
 
 Prompt caching: `TextBlock.cache` becomes an explicit ephemeral breakpoint; ``cache_tail`` on a chat turn adds the
 API's top-level (automatic) breakpoint, which follows the end of the conversation. Request bodies are
@@ -29,7 +31,7 @@ import asyncio
 import base64
 import json
 import random
-from collections.abc import AsyncIterator, Callable, Iterable, Sequence
+from collections.abc import AsyncIterator, Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any, Final
 
@@ -67,6 +69,8 @@ from .types import (
     ChatStreamEvent,
     Effort,
     MessageParam,
+    SearchCall,
+    SearchHit,
     StructuredResult,
     TextBlock,
     TextDelta,
@@ -74,6 +78,7 @@ from .types import (
     ToolUse,
     TurnEnd,
     Usage,
+    WebSearchRun,
 )
 from .usage import UsageSink, usage_from_message
 
@@ -113,6 +118,72 @@ WEB_TOOLS_BASIC: Final[tuple[dict[str, Any], ...]] = (
 def web_tools_for(spec: ModelSpec) -> tuple[dict[str, Any], ...]:
     """The web tool declarations a model accepts (`ModelSpec.web_tools`)."""
     return WEB_TOOLS if spec.web_tools == "dynamic" else WEB_TOOLS_BASIC
+
+
+WEB_SEARCH_BASIC_TYPE: Final = "web_search_20250305"
+"""`search_web` declares the basic search tool on every model: its results come back as ``web_search_tool_result`` blocks
+the caller reads. The dynamic-filtering version may hand results to code execution instead, out of the caller's sight."""
+
+
+def search_tool(
+    max_searches: int,
+    allowed_domains: Sequence[str],
+    blocked_domains: Sequence[str],
+    user_location: Mapping[str, str] | None,
+) -> dict[str, Any]:
+    """The web search tool declaration of `search_web` (the API takes allowed or blocked domains, never both)."""
+    if allowed_domains and blocked_domains:
+        raise ValueError("web search takes allowed_domains or blocked_domains, not both")
+    tool: dict[str, Any] = {
+        "type": WEB_SEARCH_BASIC_TYPE,
+        "name": "web_search",
+        "max_uses": max(1, max_searches),
+    }
+    if allowed_domains:
+        tool["allowed_domains"] = list(allowed_domains)
+    elif blocked_domains:
+        tool["blocked_domains"] = list(blocked_domains)
+    if user_location:
+        tool["user_location"] = {"type": "approximate", **user_location}
+    return tool
+
+
+def searches_of(content: Iterable[Any]) -> list[tuple[str, SearchCall]]:
+    """``(tool_use id, SearchCall)`` for every web search in a response's content, in the order the model ran them.
+
+    The query is the ``server_tool_use`` input; the hits are the ``web_search_tool_result`` with the same id (a URL, a
+    title and the page age each), or its error code. A search with no result block reads as the error ``no_result``.
+    """
+    queries: dict[str, str] = {}
+    results: dict[str, tuple[tuple[SearchHit, ...], str | None]] = {}
+    for block in content:
+        kind = getattr(block, "type", None)
+        if kind == "server_tool_use" and getattr(block, "name", None) == "web_search":
+            raw = getattr(block, "input", None)
+            query = raw.get("query") if isinstance(raw, dict) else None
+            queries[str(getattr(block, "id", ""))] = tidy(query) if isinstance(query, str) else ""
+        elif kind == "web_search_tool_result":
+            tool_use_id = str(getattr(block, "tool_use_id", ""))
+            body = getattr(block, "content", None)
+            if isinstance(body, list):
+                hits = tuple(
+                    SearchHit(
+                        url=str(getattr(item, "url", "") or ""),
+                        title=tidy(getattr(item, "title", "") or ""),
+                        page_age=getattr(item, "page_age", None) or None,
+                    )
+                    for item in body
+                    if getattr(item, "type", None) == "web_search_result" and getattr(item, "url", None)
+                )
+                results[tool_use_id] = (hits, None)
+            else:
+                code = getattr(body, "error_code", None)
+                results[tool_use_id] = ((), str(code) if code else "error")
+    found: list[tuple[str, SearchCall]] = []
+    for tool_use_id, query in queries.items():
+        hits, error = results.get(tool_use_id, ((), "no_result"))
+        found.append((tool_use_id, SearchCall(query=query, hits=hits, error=error)))
+    return found
 
 
 WEB_TOOL_UI_NAMES: Final[dict[str, str]] = {"web_search": "WebSearch", "web_fetch": "WebFetch"}
@@ -831,6 +902,83 @@ class AnthropicClaudeClient:
             yield TurnEnd(text=text, usage=total, stop_reason=stop_reason)
             return
 
+    # ── web search ──
+
+    async def search_web(
+        self,
+        *,
+        model: str,
+        system: Sequence[TextBlock],
+        user: Sequence[TextBlock],
+        max_searches: int,
+        allowed_domains: Sequence[str] = (),
+        blocked_domains: Sequence[str] = (),
+        user_location: Mapping[str, str] | None = None,
+        max_tokens: int,
+        effort: Effort | None,
+        ctx: CallContext,
+    ) -> WebSearchRun:
+        """One search-only turn; see `ClaudeClient.search_web`. `WebSearchRun.usage` sums the turn's requests."""
+        client = self._get_client()
+        spec = spec_for(model)
+        params: dict[str, Any] = {
+            "model": model,
+            "max_tokens": max_tokens,
+            "tools": [search_tool(max_searches, allowed_domains, blocked_domains, user_location)],
+        }
+        system_blocks = _system_blocks(system)
+        if system_blocks:
+            params["system"] = system_blocks
+        if effort is not None and spec.supports_effort:
+            params["output_config"] = {"effort": effort}
+        thinking = self._thinking_param(spec, ctx.purpose, max_tokens)
+        if thinking is not None:
+            params["thinking"] = thinking
+        convo: list[dict[str, Any]] = [_user_message(user, None, ())]
+        seen: dict[str, SearchCall] = {}
+        texts: list[str] = []
+        total: Usage | None = None
+        pauses = 0
+        while True:
+            flight = _Flight(model=model, spec=spec, ctx=ctx, attempt=1, started=self._clock.monotonic())
+            try:
+                final = await self._run_structured(
+                    client, {**params, "messages": convo}, flight, _Progress(None)
+                )
+            except asyncio.CancelledError:
+                await self._record_unfinished(flight, "cancelled", None)
+                raise
+            except Exception as exc:
+                mapped = _map_error(exc)
+                await self._record_unfinished(flight, "error", mapped)
+                if mapped is exc:
+                    raise
+                raise mapped from exc
+            usage = self._usage_of(final, flight)
+            stop_reason = str(final.stop_reason or "end_turn")
+            if stop_reason == "refusal":
+                category = getattr(getattr(final, "stop_details", None), "category", None)
+                refusal = ClaudeRefusal(
+                    category if isinstance(category, str) else None, request_id=usage.request_id
+                )
+                await self._record_finished(flight, usage, stop_reason, "error", refusal.kind)
+                raise refusal
+            await self._record_finished(flight, usage, stop_reason, "ok", None)
+            total = usage if total is None else total + usage
+            for tool_use_id, call in searches_of(final.content):
+                seen.setdefault(tool_use_id, call)
+            texts.extend(block.text for block in final.content if getattr(block, "type", None) == "text")
+            if stop_reason == "pause_turn" and pauses < CHAT_MAX_PAUSE_CONTINUATIONS:
+                pauses += 1
+                convo = [*convo, {"role": "assistant", "content": final.content}]
+                continue
+            return WebSearchRun(
+                searches=tuple(seen.values()),
+                usage=total,
+                stop_reason=stop_reason,
+                text="".join(texts).strip(),
+            )
+
     def _chat_params(
         self,
         *,
@@ -1036,10 +1184,13 @@ if TYPE_CHECKING:
 __all__ = [
     "EMIT_TOOL",
     "WEB_FETCH_MAX_CONTENT_TOKENS",
+    "WEB_SEARCH_BASIC_TYPE",
     "WEB_TOOLS",
     "WEB_TOOLS_BASIC",
     "WEB_TOOL_UI_NAMES",
     "AnthropicClaudeClient",
     "parse_json_object",
+    "search_tool",
+    "searches_of",
     "web_tools_for",
 ]
