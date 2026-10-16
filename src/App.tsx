@@ -13,6 +13,8 @@ import { ChatView } from './views/ChatView';
 const PortfolioScreen = lazy(() => import('./portfolio/PortfolioScreen').then((m) => ({ default: m.PortfolioScreen })));
 // Posting match (paste, match, resume, cover note) likewise; it needs no profile on screen (a second device has none).
 const MatchRoot = lazy(() => import('./match/MatchRoot').then((m) => ({ default: m.MatchRoot })));
+// Discover (roles near you that fit, and the person's own list of saved roles) likewise; it needs a profile.
+const DiscoverRoot = lazy(() => import('./discover/DiscoverRoot').then((m) => ({ default: m.DiscoverRoot })));
 // The pricing page (and Checkout.js, which only it loads) likewise; anyone may open it, signed in or not.
 const PricingView = lazy(() => import('./billing/PricingView').then((m) => ({ default: m.PricingView })));
 
@@ -28,8 +30,8 @@ export function App() {
   // a posting pasted while signed out is matched once they are back signed in
   useResumeAfterSignIn();
 
-  // graph/chat/portfolio need a profile; fall back to onboarding without one
-  const shown = (view === 'graph' || view === 'chat' || view === 'portfolio') && !profile ? 'onboarding' : view;
+  // graph/chat/portfolio/discover need a profile; fall back to onboarding without one
+  const shown = (view === 'graph' || view === 'chat' || view === 'portfolio' || view === 'discover') && !profile ? 'onboarding' : view;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -54,6 +56,11 @@ export function App() {
           {shown === 'match' && (
             <Suspense fallback={null}>
               <MatchRoot />
+            </Suspense>
+          )}
+          {shown === 'discover' && profile && (
+            <Suspense fallback={null}>
+              <DiscoverRoot profile={profile} />
             </Suspense>
           )}
           {shown === 'pricing' && (

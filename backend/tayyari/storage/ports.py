@@ -9,9 +9,9 @@ the model never needs a storage change (``schema_version`` records which shape a
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Collection, Sequence
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Literal, Protocol
 from uuid import UUID
 
@@ -710,6 +710,146 @@ class MatchRepo(Protocol):
         ...
 
 
+# ───────────────────────────── discover ─────────────────────────────
+
+ListingStatus = Literal["open", "closed"]
+RunStatus = Literal["running", "ok", "failed"]
+
+
+@dataclass(frozen=True, slots=True)
+class DiscoverListing:
+    """One job on an employer's own board, as stored (`DiscoverListingRow`). ``posting_text`` is the plain text of the
+    posting; the list queries leave it ``None`` (a screen of listings must not read hundreds of descriptions)."""
+
+    id: str
+    employer_id: str
+    source: str
+    external_id: str
+    title: str
+    title_norm: str
+    work_mode: str
+    city: str | None
+    locality: str | None
+    lat: float | None
+    lng: float | None
+    precision: str
+    remote_india: bool
+    location_text: str
+    apply_url: str
+    apply_host: str
+    posted_at: datetime | None
+    first_seen_at: datetime
+    last_seen_at: datetime
+    status: ListingStatus
+    closed_at: datetime | None
+    salary_text: str | None
+    years_min: int | None
+    entry_level: bool
+    content_hash: str
+    posting_text: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class DiscoverRun:
+    """One refresh of the employers' boards (`DiscoverRunRow`)."""
+
+    id: str
+    started_at: datetime
+    finished_at: datetime | None
+    status: RunStatus
+    employers_ok: int
+    employers_failed: int
+    listings_open: int
+    listings_closed: int
+    note: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class UpsertCounts:
+    """What `DiscoverRepo.upsert_employer` did: rows added, rows whose content changed, rows that only got seen again."""
+
+    inserted: int
+    updated: int
+    unchanged: int
+
+
+class DiscoverRepo(Protocol):
+    """Listings read from employers' own boards, and the log of the refreshes that read them. Nothing here is about a
+    person. Every write by a refresh is scoped to one employer, so a board that failed to load leaves the rows of
+    every other employer (and its own) untouched."""
+
+    async def upsert_employer(
+        self, employer_id: str, listings: Sequence[DiscoverListing], *, now: datetime
+    ) -> UpsertCounts:
+        """Store what the employer's board lists now. A new id is inserted with ``first_seen_at = now``. A known id is
+        marked open and seen at ``now`` (``first_seen_at`` is kept, ``closed_at`` cleared, a closed listing that came
+        back is open again), and its content columns are replaced only when ``content_hash`` differs. In one
+        transaction."""
+        ...
+
+    async def close_missing(self, employer_id: str, seen_ids: Collection[str], *, now: datetime) -> int:
+        """Close the employer's open listings whose id is not in ``seen_ids`` (``status = closed``, ``closed_at = now``);
+        returns how many. Call it only after the employer's board was read successfully."""
+        ...
+
+    async def close_employers_except(self, employer_ids: Collection[str], *, now: datetime) -> int:
+        """Close the open listings of every employer not in ``employer_ids`` (one that left the registry)."""
+        ...
+
+    async def list_open(self) -> list[DiscoverListing]:
+        """Every open listing, without its text."""
+        ...
+
+    async def get(self, listing_id: str) -> DiscoverListing | None:
+        """The listing with its text, open or closed, or None."""
+        ...
+
+    async def texts(self, listing_ids: Sequence[str]) -> dict[str, tuple[str, str]]:
+        """``{id: (content_hash, posting_text)}`` for the open listings among ``listing_ids``."""
+        ...
+
+    async def counts(self) -> tuple[int, int]:
+        """``(employers with an open listing, open listings)``."""
+        ...
+
+    async def start_run(self, *, now: datetime, stale_after: timedelta) -> DiscoverRun | None:
+        """Single flight. Record a new ``running`` run and return it, unless a ``running`` run started less than
+        ``stale_after`` ago exists (then None, and nothing is written). Safe against two callers at once, also on two
+        replicas."""
+        ...
+
+    async def finish_run(
+        self,
+        run_id: str,
+        *,
+        now: datetime,
+        status: RunStatus,
+        employers_ok: int,
+        employers_failed: int,
+        listings_open: int,
+        listings_closed: int,
+        note: str | None,
+    ) -> None:
+        """Close a run with its outcome."""
+        ...
+
+    async def last_ok_run(self) -> DiscoverRun | None:
+        """The newest run with status ``ok``, or None."""
+        ...
+
+    async def first_run(self) -> DiscoverRun | None:
+        """The oldest run of any status, or None while there has never been one."""
+        ...
+
+    async def latest_run(self) -> DiscoverRun | None:
+        """The newest run of any status, or None while there has never been one."""
+        ...
+
+    async def purge_closed(self, cutoff: datetime) -> int:
+        """Delete listings closed before ``cutoff``; returns how many."""
+        ...
+
+
 __all__ = [
     "BillingRepo",
     "ChatMessage",
@@ -717,8 +857,12 @@ __all__ = [
     "ConsumeOutcome",
     "ConsumeSource",
     "DecisionLogRepo",
+    "DiscoverListing",
+    "DiscoverRepo",
+    "DiscoverRun",
     "KvRepo",
     "LimitRepo",
+    "ListingStatus",
     "LlmCallRepo",
     "MatchListing",
     "MatchRepo",
@@ -732,6 +876,7 @@ __all__ = [
     "ProfileNotClaimable",
     "ProfileOwnedByAnother",
     "ProfileRepo",
+    "RunStatus",
     "SessionConflict",
     "SessionNotFound",
     "SessionRepo",
@@ -746,6 +891,7 @@ __all__ = [
     "StoredUser",
     "StoredVariant",
     "ToolEvent",
+    "UpsertCounts",
     "UserFactRepo",
     "UserRepo",
     "VariantKind",

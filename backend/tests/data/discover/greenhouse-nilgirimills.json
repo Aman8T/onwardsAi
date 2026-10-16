@@ -1,0 +1,24 @@
+{
+  "jobs": [
+    {
+      "id": 4001,
+      "title": "Accounts Trainee",
+      "updated_at": "2026-10-14T08:00:00-04:00",
+      "first_published": "2026-10-14T12:00:00Z",
+      "location": { "name": "Coimbatore, Tamil Nadu" },
+      "absolute_url": "https://nilgirimills.example/careers/4001?gh_jid=4001",
+      "offices": [],
+      "content": "&lt;h2&gt;Requirements&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;0-2 years of experience&lt;/li&gt;&lt;li&gt;Tally, GST and bookkeeping&lt;/li&gt;&lt;/ul&gt;"
+    },
+    {
+      "id": 4002,
+      "title": "Junior Accountant",
+      "updated_at": "2026-10-13T08:00:00-04:00",
+      "location": { "name": "Coimbatore" },
+      "absolute_url": "https://nilgirimills.example/careers/4002?gh_jid=4002",
+      "offices": [],
+      "content": "&lt;h2&gt;Requirements&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;1+ years of experience in accounts payable&lt;/li&gt;&lt;li&gt;Tally, Microsoft Excel and reconciliation&lt;/li&gt;&lt;li&gt;Financial reporting&lt;/li&gt;&lt;/ul&gt;"
+    }
+  ],
+  "meta": { "total": 2 }
+}

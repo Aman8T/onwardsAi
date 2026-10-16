@@ -22,6 +22,7 @@ What is purged, with the windows from ``settings.retention``:
 ``decision_states``    unreferenced states untouched for ``metadata_days``
 ``rate_limit_hits``    counters older than two days
 ``auth``               sign-ins (``auth_sessions``) and emailed links (``magic_links``) past their expiry
+``discover_closed``    Discover listings closed more than 30 days ago (`CLOSED_LISTING_DAYS`)
 =====================  ===========================================================================
 
 The permanent sample corpus is exempt from the payload and metadata steps: decision and Jev rows flagged
@@ -62,6 +63,8 @@ log = get_logger(__name__)
 LAST_RUN_KEY = "maintenance:last_run"
 MIN_INTERVAL = timedelta(hours=6)
 HITS_RETENTION = timedelta(days=2)
+CLOSED_LISTING_RETENTION = timedelta(days=30)
+"""A Discover listing the employer's board stopped listing is deleted this long after it was closed."""
 ADVISORY_LOCK_KEY = 0x5441595941524932
 """``"TAYYARI2"``: the Postgres advisory lock that keeps replicas from purging at the same time."""
 USER_TEXT_PACKS: Final = frozenset({"chat_gate"})
@@ -236,6 +239,7 @@ async def run_maintenance(
         ("decision_states", lambda: _delete_unreferenced_states(db, metadata_cutoff)),
         ("rate_limit_hits", lambda: repos.limits.purge_hits(now - HITS_RETENTION)),
         ("auth", lambda: repos.users.purge_expired(now)),
+        ("discover_closed", lambda: repos.discover.purge_closed(now - CLOSED_LISTING_RETENTION)),
     ]
     counts: dict[str, int] = {}
     errors = 0
@@ -251,4 +255,11 @@ async def run_maintenance(
     return counts
 
 
-__all__ = ["ADVISORY_LOCK_KEY", "HITS_RETENTION", "LAST_RUN_KEY", "MIN_INTERVAL", "run_maintenance"]
+__all__ = [
+    "ADVISORY_LOCK_KEY",
+    "CLOSED_LISTING_RETENTION",
+    "HITS_RETENTION",
+    "LAST_RUN_KEY",
+    "MIN_INTERVAL",
+    "run_maintenance",
+]

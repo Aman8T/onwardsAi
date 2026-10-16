@@ -1,0 +1,16 @@
+[
+  {
+    "id": "22222222-bbbb-4bbb-8bbb-000000000001",
+    "text": "UI Engineer",
+    "createdAt": 1792065600000,
+    "hostedUrl": "https://jobs.lever.co/indigogrid/22222222-bbbb-4bbb-8bbb-000000000001",
+    "categories": { "location": "Whitefield, Bengaluru", "allLocations": ["Whitefield, Bengaluru"], "team": "Product" },
+    "workplaceType": "hybrid",
+    "country": "IN",
+    "descriptionPlain": "Build interfaces for fleet operators.",
+    "lists": [
+      { "text": "Requirements:", "content": "<li>2+ years of experience with React and TypeScript</li><li>Storybook and CSS</li>" }
+    ],
+    "additionalPlain": ""
+  }
+]

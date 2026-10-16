@@ -8,6 +8,7 @@ the top-level services (analysis, chat, portfolio) never import each other. The 
 - ``storage`` depends on ``core`` and ``contract`` only (services see it through the Protocols in ``storage.ports``).
 - ``decisions`` may import ``storage.ports`` (the decision log Protocol), nothing else of storage.
 - ``guard`` may import ``storage.ports`` and ``llm.errors`` (it raises the spend-ceiling error), nothing else.
+- ``discover`` is a self-contained service like ``billing``: ``core``, ``contract`` and ``storage.ports`` only.
 - ``container`` and ``cli`` are composition roots and may import everything; so may ``api``, which builds on them.
 - ``legacy`` and ``canary`` (the replaced app, deleted in Wave 4) stay excluded in case an old checkout has them.
 
@@ -61,6 +62,9 @@ RULES: dict[str, tuple[str, ...]] = {
     "auth": ("core", "contract", "storage.ports"),
     # payments and entitlements: Razorpay, Stripe, the ledger rules; reaches storage only through its Protocols.
     "billing": ("core", "contract", "storage.ports"),
+    # job discovery over employers' own boards: a self-contained service (its own tables, settings and HTTP client); it
+    # never imports match, analysis or any other service, and reaches storage only through its Protocols.
+    "discover": ("core", "contract", "storage.ports"),
     # posting match reuses the portfolio's line-cited fact extractor and its sentence anchors (no fork).
     "match": (*_SERVICES, "portfolio"),
     # api sits on top: everything except the CLI (and the legacy app).
@@ -75,6 +79,7 @@ RULES: dict[str, tuple[str, ...]] = {
         "auth",
         "billing",
         "match",
+        "discover",
         "guard",
         "ingest",
         "prompts",
@@ -389,6 +394,36 @@ def test_composition_roots_and_api_may_import_everything_below_them(tmp_path: Pa
         },
     )
     assert found == ["tayyari.api.app -> tayyari.cli.run"]
+
+
+def test_discover_sees_only_core_contract_and_the_storage_protocols(tmp_path: Path) -> None:
+    found = violations_of(
+        tmp_path,
+        {
+            "core/__init__.py": "",
+            "core/clock.py": "",
+            "contract/__init__.py": "",
+            "contract/discover.py": "",
+            "storage/__init__.py": "",
+            "storage/ports.py": "",
+            "storage/repos.py": "",
+            "match/__init__.py": "",
+            "match/service.py": "",
+            "discover/__init__.py": "",
+            "discover/ok.py": (
+                "from tayyari.core import clock\n"
+                "from tayyari.contract import discover\n"
+                "from tayyari.storage.ports import X\n"
+                "from tayyari.storage import ports\n"
+            ),
+            "discover/bad_storage.py": "from tayyari.storage.repos import Y\n",
+            "discover/bad_match.py": "from tayyari.match import service\n",
+        },
+    )
+    assert sorted(found) == [
+        "tayyari.discover.bad_match -> tayyari.match.service",
+        "tayyari.discover.bad_storage -> tayyari.storage.repos",
+    ]
 
 
 def test_nothing_below_the_composition_roots_may_import_them(tmp_path: Path) -> None:

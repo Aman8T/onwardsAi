@@ -1,0 +1,68 @@
+{
+  "id": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+  "createdAt": "2026-10-10T09:00:00.000Z",
+  "goal": "Accounts executive",
+  "person": {
+    "name": "Kavya Raman",
+    "headline": "B.Com 2026, Coimbatore",
+    "currentRole": "Accounts Trainee",
+    "location": "Coimbatore, Tamil Nadu",
+    "yearsExperience": 0,
+    "summary": "Commerce graduate with a Tally certificate and an internship in a trading firm."
+  },
+  "mastery": { "score": 40, "insight": "Early, with real Tally practice." },
+  "sources": [
+    { "id": "resume", "kind": "resume", "label": "Resume", "sub": "PDF", "summary": "One internship.", "notes": [], "ok": true }
+  ],
+  "domains": [
+    { "id": "accounts", "name": "Accounts", "short": "ACC", "score": 45, "summary": "Tally and bookkeeping." }
+  ],
+  "skills": [
+    {
+      "id": "tally",
+      "name": "Tally",
+      "domainId": "accounts",
+      "score": 55,
+      "evidence": [{ "sourceId": "resume", "text": "Completed a Tally Prime certificate course; kept the books of a trading firm during a 2 month internship" }],
+      "unlocks": []
+    },
+    {
+      "id": "excel",
+      "name": "Microsoft Excel",
+      "domainId": "accounts",
+      "score": 60,
+      "evidence": [{ "sourceId": "resume", "text": "Built a monthly stock register in Excel" }],
+      "unlocks": []
+    },
+    {
+      "id": "gst",
+      "name": "GST",
+      "domainId": "accounts",
+      "score": 45,
+      "evidence": [{ "sourceId": "resume", "text": "Prepared GSTR-3B drafts under supervision" }],
+      "unlocks": []
+    },
+    {
+      "id": "bookkeeping",
+      "name": "Bookkeeping",
+      "domainId": "accounts",
+      "score": 50,
+      "evidence": [{ "sourceId": "resume", "text": "Kept the cash book and bank reconciliations of a trading firm" }],
+      "unlocks": []
+    },
+    {
+      "id": "reconciliation",
+      "name": "Reconciliation",
+      "domainId": "accounts",
+      "score": 35,
+      "evidence": [{ "sourceId": "resume", "text": "Bank reconciliations for 2 months" }],
+      "unlocks": []
+    }
+  ],
+  "roles": [
+    { "id": "accounts-exec", "title": "Accounts Executive", "alignment": 70, "eta": "3 months", "why": "Tally and GST.", "requirements": [] },
+    { "id": "junior-accountant", "title": "Junior Accountant", "alignment": 65, "eta": "3 months", "why": "Books.", "requirements": [] },
+    { "id": "audit-assistant", "title": "Audit Assistant", "alignment": 55, "eta": "6 months", "why": "Reconciliation.", "requirements": [] }
+  ],
+  "models": { "reader": "claude-haiku-5-5", "synth": "claude-haiku-5-5" }
+}

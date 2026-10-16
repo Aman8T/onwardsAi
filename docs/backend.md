@@ -25,8 +25,9 @@ The package is importable as `backend/tayyari/`, laid out in layers with import 
 | `auth` | AuthService, GoogleOAuth, MagicLinks, SessionService, EmailSender | Google sign-in (PKCE, ID-token checks), emailed sign-in links, server-side sessions, Resend email |
 | `billing` | BillingService, EntitlementService, RazorpayGateway, StripeGateway | Products and prices, the consume order, orders, webhooks for INR (Razorpay) and USD (Stripe) |
 | `match` | MatchService and its stages | Posting match: reading a posting, facts, gates, coverage, radar, questions, resume, cover note, export and lint |
+| `discover` | DiscoverService, the refresher, the registry, the quick fit | Discover: employers' own job boards read into listings, grouped and ordered for one person; a separate service (own tables, settings and worker) |
 
-**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth` and `billing` depend only on `core`, `contract` and `storage.ports`. `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
+**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
 
 ## Request flows
 
@@ -176,6 +177,62 @@ The posting is stored once per normalised text (`postings`), so a text read befo
 
 **Cost.** About half a cent per match on Haiku 5.5, as measured. The reservation for a match, and for a resume or cover note that is written, is `TAYYARI_GUARD__EST_MATCH_USD` (0.06).
 
+### Discover (`/api/discover*`)
+
+Discover is a separate service in `backend/tayyari/discover/`, built on 2026-10-16. It finds roles near the person that fit their profile, read only from employers' own public job boards. Its v1 scope and what it defers are in `docs/discover-later.md`.
+
+**Service boundary.** The package imports only `core`, `contract` and `storage.ports` (`tests/unit/test_layering.py` enforces it), so it never imports `match`, `analysis` or another service. It owns its tables (`discover_listings`, `discover_runs`), its settings (`TAYYARI_DISCOVER__*`), its HTTP client and its registry file (`discover/data/employers.json`). It takes a `Profile` and returns the models in `contract/discover.py`, which `shared/discover.ts` mirrors field for field. No model is called, so Discover itself spends nothing and uses no credit. The route file `api/routes/discover.py` checks the gate, reads the query, opens the profile the way the other profile routes do (`api/deps.py`) and calls `DiscoverService`, which `container.discover` builds. Tests pass an `httpx2.MockTransport` through `ContainerOverrides.discover_transport`.
+
+**Sources.** Two public APIs that need no key: Greenhouse (`boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true`) and Lever (`api.lever.co/v0/postings/{site}?mode=json`). The registry lists 51 employers (38 on Greenhouse, 13 on Lever) with their Indian offices. `load_registry` checks the whole file and lists every problem at once: an id is a lowercase slug, a board token is `[A-Za-z0-9._-]`, each office's city and locality are ours, and the careers link is http(s). Nothing else is fetched: no careers-page crawling, no portal, no aggregator, and no link found inside a posting. A listing is kept when its country is `IN`, its location names India or one of our cities, or it is a remote role that names India.
+
+**Refresh.** Each board is read with a User-Agent that names the service, at most `FETCH_CONCURRENCY` boards at once, with a timeout per request, one retry for a timeout, a 429 or a 5xx, and a 64 MB cap on the answer. A board that cannot be read keeps its listings. A listing is closed only when its employer's board was read and no longer lists it. A run is `ok` when at least one board was read, else `failed`, and it records a note such as "2 of 51 boards could not be read." Single flight is decided in the database: a new run starts only when no run is `running` and started less than 20 minutes ago, so two replicas, or the web app and the worker, never read a board at the same time.
+
+A refresh runs in two places. The web app starts one in the background (`DiscoverService.maybe_refresh`) when the last good run is older than `REFRESH_HOURS`, or none exists, and a request never waits for it. Until the first run has finished, the answer is an empty list with the note "Reading employers' job boards for the first time. This takes about a minute." (or a note that the boards could not be read, when the last run failed). The other place is a process of its own: `uv run --directory backend python -m tayyari.cli discover-refresh` reads once and exits 1 when no board could be read, and `discover-worker --every HOURS` repeats it until stopped. Both migrate the database first and need no key.
+
+**What is stored, and what never is.** `discover_listings` holds what an employer's public board says: id, employer, title, place (city, locality and approximate coordinates), work mode, apply link, dates, the salary only when Lever states one, the years the posting asks for, and the plain text of the posting (at most 20,000 characters, HTML removed). `discover_runs` holds the counts and the note of each refresh. Neither table holds anything about a person. The person's area (city, locality and a second city) arrives with each request, is used to answer it and is then forgotten. The server never stores it, and the package never logs a city, a locality or a profile id. Their quick fit and groups are computed on each request. Only a process-memory cache keeps them between requests, keyed by a hash of their skills and years, capped in size and lost on restart.
+
+**Area and distance.** The city comes from the resume's location text, read against our city names and aliases, unless the person picks another. A locality must belong to the chosen city. `places.py` holds 14 cities and 100 localities with approximate centroids (good to about a kilometre, never drawn on a map). A listing takes a locality only from its own text, when one of our locality names appears there, or else from the one office the registry lists in that city when it names a locality, or else it stays at city level. Nothing is guessed. A distance is shown only when both the area and the listing are known to a locality, and always as a straight line (great-circle distance). Only 2 of the registry's 126 offices name a locality, so most listings show a city and no distance.
+
+**Quick fit (code only).** A posting is read once into an index. Its title and text are matched against the vocabulary in `discover/vocab.py`: 426 skills in 20 professional sections, each with aliases, matched on word boundaries with hyphens read as spaces. A skill named only in the company or benefits text is not counted. The count is in asks, not raw terms:
+- Skills in `GENERAL` (Git, Agile, Scrum, Kanban, Jira, code review, artificial intelligence, and diversity and inclusion boilerplate) are not counted.
+- Alternatives in `ANY_OF` ("React, Angular or Vue") are one ask, met by any one of them.
+- The profile shows a skill at a score of 30 or more (alias aware), or holds a skill that plainly includes it (`IMPLIES`: TypeScript shows JavaScript).
+
+From those asks, `named` is how many the posting makes, `matched` is how many the profile meets, and `notFound` lists up to five of the rest, most prominent first (title, then requirement lines, then most often). The word follows:
+- `cant_tell` when the posting makes fewer than 3 asks, or the profile has fewer than 3 skills;
+- `stretch` when the posting asks for 3 or more years than the profile shows;
+- otherwise `looks_close` at a share of 0.6 or more with at least 3 met, `worth_a_look` at 0.35 or more with at least 2 met, and `stretch` below that. The share is internal and never shown.
+
+The reasons are the two strongest matched skills, each "You show {skill}" and citing the first line of evidence the profile holds for it. A skill with no evidence gives no reason. No percentage appears anywhere. The thresholds were calibrated on 1,377 real listings on 2026-10-16, when counting raw terms rated every role "a stretch" for a strong frontend profile. Recalibrate against real listings before changing a threshold.
+
+**Groups, lenses and lanes.** Each listing has one home group, the first of these that fits. Any other group it also fits goes to `alsoFits` and is never counted twice.
+1. `next_role:{slug}`: the title is close to one of the top three next roles (token similarity of at least 0.5).
+2. `current`: the title is close to the current role.
+3. `skill_bridge:{skill}`: the profile shows 3 or more of the asks and 1 or 2 are missing. Grouped by the most common missing skill, with at least two listings.
+4. `first_steps`: entry-level titles, only for someone with under 2 years or none stated.
+5. `other`: the rest that look close.
+
+Each group carries one reason that cites the person's own evidence.
+
+How far (`reach`) is 3, 5, 10 or 25 km, or the whole city, and applies to the near lane. How wide (`breadth`) is `role` (the work the person does now, or one next role when they have no current role), `next` (every listing except stretch ones and can't-tell ones outside a group) or `stretch` (everything). The lanes are `near` (the area's city, within reach), `remote` (remote roles that name India, in any city) and `city` (the one other city the person would move to: `looks_close` roles only, and no internships past two years). The server defaults are `reach=city`, `breadth=next`, `lane=near`, `order=ranked`; the web app starts at 10 km once a locality is picked. Every stop carries its count.
+
+**Order.** `ranked` sorts by the fit word (looks close, worth a look, a stretch, can't tell), then group precedence, then distance (unknown last), then how recently the employer listed the role (newer first), then title. `posted` sorts newest first and nothing else. `signals` names the inputs of the ranking in plain words, with the person's own values. At most one suggestion is returned, naming the nearest wider reach that adds roles. The companies lane names up to three employers with roles in the person's groups elsewhere and none near them now. The web app shows it under the near lane only.
+
+**Freshness.** The age is the date the employer gives (Lever `createdAt`, Greenhouse `first_published` when present). Without one, the day we first saw the listing counts, but only when that day came after the first refresh finished, since everything the first run found was "seen" that day. The words are "Posted N days ago" (up to 14 days), "Open N weeks" (up to 45), "Worth checking it's still hiring" (up to 90), "Open over 3 months", and "On the employer's board now" when the age is unknown. The source line says when the board was last checked.
+
+**Apply links.** Each card links to the employer's own posting: Greenhouse `absolute_url`, Lever `hostedUrl`. The tracking parameters are removed (`utm_*`, `gclid`, `fbclid`, `mc_cid`, `mc_eid`, `lever-source`) and everything else stays, since `gh_jid` is needed. `applyHost` is the host without `www.`. A listing with no usable http(s) link is not stored. One listing is kept per employer, normalised title and city: the most recently posted.
+
+**Routes.** Every route answers `Cache-Control: no-store`, passes the in-memory `chat` read bucket before any work (429 when shed), and makes no model call.
+- `GET /api/discover?profileId=…` with optional `city`, `locality`, `otherCity`, `reach`, `breadth`, `lane` and `order` → `DiscoverResponse`: the lenses and their counts, the lane's groups and listings, the companies lane, coverage and `signals`.
+- `GET /api/discover/cities` → `DiscoverCitiesResponse`, for the pickers.
+- `GET /api/discover/listings/{id}?profileId=…` → `ListingDetail`: the card and `postingText`, which the web app sends to `POST /api/match` as `text`. "See full match" then runs as the paste flow does, with the same credits.
+
+Errors: 400 `bad_request` for a city, locality or other city we do not know (or a locality outside its city), or a lens value outside its list. 404 `Profile not found` for an unknown profile or someone else's. 404 `Listing not found` for an unknown, closed or malformed id. 503 `{"error": "discover_disabled"}` when `TAYYARI_DISCOVER__ENABLED` is false, and nothing is fetched.
+
+**Web app.** `/discover` (view `discover`, lazy-loaded in `src/App.tsx`), with its files in `src/discover/` and `src/styles/discover.css`. The lens lives in the address. The area is kept in this browser (`tayyari.discover.area.<profileId>`), and so are saved roles (`tayyari.discover.tracker.<profileId>`, labelled "Kept in this browser"). A match started from a listing keeps its origin in sessionStorage (`tayyari.match.origin`), which shows the way back on the match screen. The sample profile is not offered Discover in the browser, although the API answers it.
+
+**Tests.** `tests/unit/discover/` runs on fakes and `httpx2.MockTransport`, so nothing calls the network. The repo contract is in `tests/unit/storage/test_discover_contract.py`, the routes in `tests/integration/test_discover_routes.py`, and the mirror in `tests/unit/contract/test_discover_parity.py`.
+
 ## Jev decisions framework
 
 ### Decision specifications
@@ -260,6 +317,8 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 | `user_facts` | `id` PK (hash of profile id and fact id) | `user_id` FK cascade (NULL for something said without an account), `profile_id` FK cascade, `match_id` FK (set to NULL when the match goes), `question`, `answer`, `fact` JSON, `created_at` | Migration 0005; 0006 made `user_id` nullable. `(profile_id, created_at)`, `(user_id)`; a fact outlives the match it was said in |
 | `variants` | `id` PK | `match_id` FK cascade, `kind` (`resume` or `cover`), `spec` JSON, `status` (`needs_user` or `ready`), `version`, `created_at`, `updated_at` | Migration 0005. Unique `(match_id, kind)` |
 | `profile_facts` | `profile_id` PK, FK cascade | `facts_hash`, `facts` JSON, `created_at` | Migration 0005. One row per profile; a new hash replaces it |
+| `discover_listings` | `id` PK (stable hash of source, board and external id) | `employer_id`, `source` (`greenhouse` or `lever`), `external_id`, `title`, `title_norm`, `work_mode`, `city`, `locality`, `lat`, `lng`, `precision`, `remote_india`, `location_text`, `apply_url`, `apply_host`, `posted_at` (null), `first_seen_at`, `last_seen_at`, `status` (`open` or `closed`), `closed_at` (null), `salary_text` (null), `years_min` (null), `entry_level`, `content_hash`, `posting_text` | Migration 0007. Employers' public postings only; no column holds anything about a person. `(status)`, `(city)`, `(employer_id)`; closed rows are deleted 30 days after closing |
+| `discover_runs` | `id` PK | `started_at`, `finished_at` (null), `status` (`running`, `ok` or `failed`), `employers_ok`, `employers_failed`, `listings_open`, `listings_closed`, `note` (null) | Migration 0007. `(started_at)`. The single-flight check reads it: a `running` run under 20 minutes old blocks a new one |
 
 ### Retention (run at most every 6 hours, from the lifespan; replicas claim each run through a `kv` row, under a Postgres try-lock)
 
@@ -269,6 +328,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 - **Jev payloads** (states + raw JSON): purged after 30 days. Metadata (`decision_log` rows) kept for 180 days.
 - **Rate limit hits**: deleted after 2 days.
 - **Sign-ins and emailed links** (`auth_sessions`, `magic_links`): deleted once their expiry has passed. A used link that has not expired yet stays until it does.
+- **Discover listings**: a listing its employer's board stopped listing is deleted 30 days after it was closed. The `discover_runs` log has no retention step yet.
 - **Postings** are never purged yet. Matches, resumes, cover notes, the answers a person gave and profile facts are removed only with their account (`DELETE /api/me`) or their profile. Orders are kept when an account is deleted, with `user_id` cleared.
 
 ### Migrations (Alembic)
@@ -285,7 +345,7 @@ Migrations live in `storage/migrations/` inside the package. No external `alembi
 
 If migration fails, the transaction rolls back and startup crashes. Readiness checks fail, so the load balancer keeps the old version running.
 
-Revisions 0003 (accounts, and the owner columns on `profiles` and `portfolios`), 0004 (payments), 0005 (posting match) and 0006 (anonymous posting match) follow this rule.
+Revisions 0003 (accounts, and the owner columns on `profiles` and `portfolios`), 0004 (payments), 0005 (posting match), 0006 (anonymous posting match) and 0007 (Discover: two new tables, no change to an existing one) follow this rule.
 
 **Additive-only rule**: migrations add tables or nullable columns only. No drops, renames, or constraint tightening after revision 0001 (unless a file carries a `# contract-phase` marker). Relaxing a constraint, as 0006 does by dropping `NOT NULL` from `matches.user_id` and `user_facts.user_id`, is allowed: it only widens what the old release also writes, and the old release never reads a row with a NULL owner. 0006 spells the DDL out (`ALTER COLUMN … DROP NOT NULL` on Postgres; on SQLite an edit of the table's SQL in `sqlite_master`) instead of calling `alter_column`, because an Alembic batch rebuild of `matches` on SQLite would cascade into `variants` and delete every stored resume.
 
@@ -387,6 +447,7 @@ Accounts, payments and the posting match (names only; the values are never writt
 - **`TAYYARI_BILLING__*`:** `PACK3_INR`, `PASS30_INR`, `PACK3_USD`, `PASS30_USD` in minor units (paise, cents); 0 or unset means not on sale, and so does a price below the provider's minimum (100 paise, 50 cents). `FREE_MATCHES_PER_MONTH` (1).
 - **`TAYYARI_MATCH__*`:** `MODEL` (unset: the reader model), `WRITER_MODEL` (unset: the same as `MODEL`), `MAX_POSTING_CHARS` (20000), `CALL_TIMEOUT_S` (90), `ALLOW_ANONYMOUS` (`auto`, `true` or `false`; `auto` allows a posting match without a sign-in exactly when the server offers no way to sign in).
 - **Posting-match guard:** `TAYYARI_GUARD__MATCH_PER_MINUTE` (0), `MATCH_PER_HOUR` (10), `MATCH_PER_DAY` (30), `MATCH_GLOBAL_PER_HOUR` (120), `EST_MATCH_USD` (0.06), `ANON_MATCH_PER_DAY` (3: matches per client address per day without a sign-in, 0 = off).
+- **`TAYYARI_DISCOVER__*`** (no secrets; the boards are public): `ENABLED` (true; false answers 503 `discover_disabled` and fetches nothing), `REFRESH_HOURS` (6, how old the last good run may get before a request starts one), `FETCH_CONCURRENCY` (4), `REQUEST_TIMEOUT_S` (15), `MAX_LISTINGS_PER_EMPLOYER` (300: India listings kept per employer, known cities first, then remote, then the rest, newest first within each), `REGISTRY_PATH` (unset: the registry shipped in `discover/data/employers.json`).
 
 `backend/.env.example` lists each of these with its default or an empty value.
 

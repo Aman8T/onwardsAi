@@ -10,8 +10,10 @@ import * as api from './lib/api';
 import { PASTE_ROUTE, matchPath, parseMatchPath } from './match/route';
 import type { MatchRoute } from './match/route';
 import { PRICING_PATH, isPricingPath } from './billing/route';
+import { DEFAULT_QUERY, discoverPath, isDiscoverPath, mergeQuery, parseDiscoverUrl } from './discover/route';
+import type { DiscoverQuery } from './discover/route';
 
-export type View = 'onboarding' | 'analysis' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing';
+export type View = 'onboarding' | 'analysis' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing' | 'discover';
 
 export interface Signal {
   id: number;
@@ -92,6 +94,8 @@ export interface AppState {
   portfolio: PortfolioState;
   /** Which posting-match screen is showing while `view` is 'match'; mirrored in the address (/match/…). */
   matchRoute: MatchRoute;
+  /** The Discover lens while `view` is 'discover'; mirrored in the address (/discover?…). */
+  discoverRoute: DiscoverQuery;
 }
 
 const STORAGE_KEY = 'tayyari.v1';
@@ -120,6 +124,7 @@ function load(): AppState {
     activeThreadId: null,
     portfolio: emptyPortfolio(),
     matchRoute: PASTE_ROUTE,
+    discoverRoute: DEFAULT_QUERY,
   };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -144,6 +149,9 @@ function fromAddress(s: AppState): AppState {
   try {
     // the pricing page is a real address too (payment providers send people back to it), and needs no profile
     if (isPricingPath(window.location.pathname)) return { ...s, view: 'pricing' };
+    // Discover is for someone with a profile on screen; a visitor with a /discover link starts from Home
+    const lens = parseDiscoverUrl(window.location.pathname, window.location.search);
+    if (lens) return s.profile ? { ...s, view: 'discover', discoverRoute: lens } : s;
     const route = parseMatchPath(window.location.pathname);
     return route ? { ...s, view: 'match', matchRoute: route } : s;
   } catch {
@@ -176,6 +184,7 @@ function set(patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) {
   state = { ...state, ...next };
   leaveMatchAddress();
   leavePricingAddress();
+  leaveDiscoverAddress();
   listeners.forEach((l) => l());
   clearTimeout(persistTimer);
   persistTimer = setTimeout(persist, 250);
@@ -199,16 +208,30 @@ function leavePricingAddress() {
   }
 }
 
-// Back and Forward move between match screens and the pricing page (and out of them, to where the person came from).
+/** The address reads /discover only while the Discover screens are showing. */
+function leaveDiscoverAddress() {
+  try {
+    if (state.view !== 'discover' && isDiscoverPath(window.location.pathname)) window.history.replaceState(null, '', '/');
+  } catch {
+    /* no address bar to update */
+  }
+}
+
+// Back and Forward move between match screens, Discover and the pricing page (and out of them, to where the person came from).
 try {
   window.addEventListener('popstate', () => {
     if (isPricingPath(window.location.pathname)) {
       set({ view: 'pricing' });
       return;
     }
+    const lens = parseDiscoverUrl(window.location.pathname, window.location.search);
+    if (lens) {
+      set({ view: state.profile ? 'discover' : 'onboarding', discoverRoute: lens });
+      return;
+    }
     const route = parseMatchPath(window.location.pathname);
     if (route) set({ view: 'match', matchRoute: route });
-    else if (state.view === 'match' || state.view === 'pricing') set({ view: state.profile ? 'graph' : 'onboarding' });
+    else if (state.view === 'match' || state.view === 'pricing' || state.view === 'discover') set({ view: state.profile ? 'graph' : 'onboarding' });
   });
 } catch {
   /* not in a browser */
@@ -436,6 +459,23 @@ export const actions = {
     } catch {
       /* no address bar to update */
     }
+  },
+
+  /**
+   * Open Discover, or change its lens: `patch` is merged into the lens the person last had (a field set to undefined is
+   * cleared), and the address follows. Lens changes add a history entry so Back steps through them; `replace` is for
+   * housekeeping that should not (copying the remembered area into the address).
+   */
+  openDiscover(patch: Partial<DiscoverQuery> = {}, opts: { replace?: boolean } = {}) {
+    const route = mergeQuery(state.discoverRoute, patch);
+    // the address moves first, so leaving a match page keeps its history entry for Back
+    try {
+      const path = discoverPath(route);
+      if (window.location.pathname + window.location.search !== path) window.history[opts.replace ? 'replaceState' : 'pushState'](null, '', path);
+    } catch {
+      /* no address bar to update */
+    }
+    set({ view: 'discover', discoverRoute: route });
   },
 
   /** Open the pricing page (anyone may read it) and move the address to /pricing so Back returns to where they were. */

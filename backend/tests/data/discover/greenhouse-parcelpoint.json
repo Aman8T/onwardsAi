@@ -1,0 +1,24 @@
+{
+  "jobs": [
+    {
+      "id": 3001,
+      "title": "Frontend Engineer",
+      "updated_at": "2026-10-11T08:00:00-04:00",
+      "first_published": "2026-10-11T12:00:00Z",
+      "location": { "name": "Pune, India" },
+      "absolute_url": "https://parcelpoint.in/careers/3001?gh_jid=3001",
+      "offices": [],
+      "content": "&lt;h2&gt;Requirements&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;2+ years of experience with React, TypeScript and CSS&lt;/li&gt;&lt;li&gt;Jest&lt;/li&gt;&lt;/ul&gt;"
+    },
+    {
+      "id": 3002,
+      "title": "Full-stack Engineer",
+      "updated_at": "2026-10-11T08:00:00-04:00",
+      "location": { "name": "Hyderabad, India" },
+      "absolute_url": "https://parcelpoint.in/careers/3002?gh_jid=3002",
+      "offices": [],
+      "content": "&lt;h2&gt;Requirements&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;3+ years of experience with React, Node.js, Go, Kubernetes and AWS&lt;/li&gt;&lt;/ul&gt;"
+    }
+  ],
+  "meta": { "total": 2 }
+}

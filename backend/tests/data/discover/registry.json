@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "verifiedAt": "2026-10-16",
+  "employers": [
+    {
+      "id": "kestrel",
+      "name": "Kestrel Pay",
+      "ats": "greenhouse",
+      "board": "kestrelpay",
+      "careersUrl": "https://kestrelpay.in/careers",
+      "offices": [{ "city": "Bengaluru", "locality": "Koramangala" }, { "city": "Pune" }],
+      "families": ["engineering"],
+      "indiaJobsAtVerify": 6
+    },
+    {
+      "id": "northwind",
+      "name": "Northwind Analytics",
+      "ats": "lever",
+      "board": "northwind",
+      "careersUrl": "https://northwind.example/jobs",
+      "offices": [{ "city": "Bengaluru", "locality": "HSR Layout" }, { "city": "Bengaluru", "locality": "Indiranagar" }],
+      "families": ["engineering", "data"],
+      "indiaJobsAtVerify": 4
+    },
+    {
+      "id": "quill",
+      "name": "Quill & Co",
+      "ats": "greenhouse",
+      "board": "quillandco",
+      "careersUrl": "https://quillandco.in/jobs",
+      "offices": [{ "city": "Bengaluru" }],
+      "families": ["engineering"],
+      "indiaJobsAtVerify": 1
+    },
+    {
+      "id": "indigo",
+      "name": "Indigo Grid",
+      "ats": "lever",
+      "board": "indigogrid",
+      "careersUrl": "https://indigogrid.in/careers",
+      "offices": [{ "city": "Bengaluru", "locality": "Whitefield" }],
+      "families": ["engineering"],
+      "indiaJobsAtVerify": 2
+    },
+    {
+      "id": "parcelpoint",
+      "name": "Parcelpoint",
+      "ats": "greenhouse",
+      "board": "parcelpoint",
+      "careersUrl": "https://parcelpoint.in/careers",
+      "offices": [{ "city": "Pune" }, { "city": "Hyderabad" }],
+      "families": ["engineering", "operations"],
+      "indiaJobsAtVerify": 2
+    },
+    {
+      "id": "lattice",
+      "name": "Lattice & Loom",
+      "ats": "lever",
+      "board": "latticeloom",
+      "careersUrl": "https://latticeloom.example/careers",
+      "offices": [],
+      "families": ["engineering"],
+      "indiaJobsAtVerify": 1
+    },
+    {
+      "id": "nilgiri",
+      "name": "Nilgiri Mills",
+      "ats": "greenhouse",
+      "board": "nilgirimills",
+      "careersUrl": "https://nilgirimills.example/careers",
+      "offices": [{ "city": "Coimbatore", "locality": "Peelamedu" }],
+      "families": ["finance"],
+      "indiaJobsAtVerify": 2
+    },
+    {
+      "id": "kovai",
+      "name": "Kovai Auto Parts",
+      "ats": "lever",
+      "board": "kovaiauto",
+      "careersUrl": "https://kovaiauto.example/jobs",
+      "offices": [{ "city": "Coimbatore" }],
+      "families": ["finance", "operations"],
+      "indiaJobsAtVerify": 2
+    },
+    {
+      "id": "goneco",
+      "name": "Gone Co",
+      "ats": "greenhouse",
+      "board": "goneco",
+      "careersUrl": "https://goneco.example/careers",
+      "offices": [{ "city": "Mumbai" }],
+      "families": ["sales"],
+      "indiaJobsAtVerify": 3
+    }
+  ]
+}

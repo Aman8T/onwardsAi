@@ -137,6 +137,14 @@ export function GraphHeader({ profile }: { profile: Profile }) {
         >
           Match
         </button>
+        <button
+          type="button"
+          className="btn btn-quiet gv-portfolio"
+          title="Roles near you that fit what you can prove"
+          onClick={() => actions.openDiscover()}
+        >
+          Discover
+        </button>
         <button type="button" className="btn btn-quiet gv-ask" aria-label="Ask Tayyari" onClick={() => actions.openChat(freeAction().origin, '')}>
           Ask
         </button>

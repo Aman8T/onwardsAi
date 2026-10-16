@@ -39,6 +39,9 @@ export function MatchHeader({ onNavigate }: { onNavigate: (route: MatchRoute) =>
           <RouteLink route={PASTE_ROUTE} onNavigate={onNavigate} className="mt-navbtn is-current" current>
             Match
           </RouteLink>
+          <button type="button" className="mt-navbtn" onClick={() => actions.openDiscover()}>
+            Discover
+          </button>
         </nav>
       )}
       <div className="mt-header-end">

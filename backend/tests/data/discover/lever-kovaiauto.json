@@ -1,0 +1,16 @@
+[
+  {
+    "id": "44444444-dddd-4ddd-8ddd-000000000001",
+    "text": "Audit Assistant",
+    "createdAt": 1791979200000,
+    "hostedUrl": "https://jobs.lever.co/kovaiauto/44444444-dddd-4ddd-8ddd-000000000001",
+    "categories": { "location": "Coimbatore, India", "allLocations": ["Coimbatore, India"], "team": "Finance" },
+    "workplaceType": "on-site",
+    "country": "IN",
+    "descriptionPlain": "Support the audit of a plant.",
+    "lists": [
+      { "text": "Requirements:", "content": "<li>0-1 years of experience</li><li>Audit, Tally, GST and reconciliation</li>" }
+    ],
+    "additionalPlain": ""
+  }
+]

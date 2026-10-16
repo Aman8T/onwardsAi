@@ -20,6 +20,9 @@ if (pathname.startsWith('/p/')) {
 } else if (import.meta.env.DEV && pathname === '/dev/match') {
   // the five posting-match screens on the stored fixtures: no server, no account
   Root = lazy(() => import('./match/dev/MatchGallery').then((m) => ({ default: m.MatchGallery })));
+} else if (import.meta.env.DEV && pathname === '/dev/discover') {
+  // every Discover state on stored fixtures: no server, no account
+  Root = lazy(() => import('./discover/dev/DiscoverGallery').then((m) => ({ default: m.DiscoverGallery })));
 } else {
   Root = lazy(() => import('./App').then((m) => ({ default: m.App })));
 }

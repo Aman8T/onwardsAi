@@ -158,8 +158,55 @@ def build_parser() -> argparse.ArgumentParser:
     )
     deploy.add_argument("--skip-build", action="store_true", help="do not run `npm run build:static` first")
 
+    _add_discover_commands(commands)
     _add_eval_commands(commands)
     return parser
+
+
+def _positive_hours(value: str) -> float:
+    try:
+        hours = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{value!r} is not a number of hours") from None
+    if hours <= 0:
+        raise argparse.ArgumentTypeError(f"must be above 0, got {hours:g}")
+    return hours
+
+
+def _add_discover_commands(commands: Any) -> None:
+    """``discover-refresh`` and ``discover-worker``: read employers' own public job boards into the database."""
+    refresh = commands.add_parser(
+        "discover-refresh",
+        help="read employers' own public job boards (Greenhouse, Lever) into the database, once",
+        description="One refresh of Discover's listings: fetch each employer's public board from the registry "
+        "(no key needed), keep the India listings, close the ones a board no longer lists. Uses DATABASE_URL (SQLite "
+        "locally when unset). Exits 1 when no board could be read.",
+    )
+    refresh.add_argument(
+        "--registry",
+        type=Path,
+        default=None,
+        help="read this registry file instead of the bundled employers.json",
+    )
+    worker = commands.add_parser(
+        "discover-worker",
+        help="run discover-refresh in a loop (its own process, next to or instead of the web app's background refresh)",
+        description="Refresh Discover's listings every --every hours until stopped. Shares the single-flight rule with "
+        "the web app, so the two never read a board at the same time.",
+    )
+    worker.add_argument(
+        "--every",
+        type=_positive_hours,
+        default=None,
+        metavar="HOURS",
+        help="hours between refreshes (default: TAYYARI_DISCOVER__REFRESH_HOURS, 6)",
+    )
+    worker.add_argument(
+        "--registry",
+        type=Path,
+        default=None,
+        help="read this registry file instead of the bundled employers.json",
+    )
 
 
 def _add_eval_commands(commands: Any) -> None:
@@ -337,6 +384,18 @@ def _ingest_check(args: argparse.Namespace) -> int:
     return ingest_check.run(args.only, args.url)
 
 
+def _discover_refresh(args: argparse.Namespace) -> int:
+    from . import discover
+
+    return discover.run_refresh(args.registry)
+
+
+def _discover_worker(args: argparse.Namespace) -> int:
+    from . import discover
+
+    return discover.run_worker(args.every, args.registry)
+
+
 def _deploy(args: argparse.Namespace) -> int:
     from . import deploy
 
@@ -397,6 +456,8 @@ _HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "ingest-check": _ingest_check,
     "portfolio-eval": _portfolio_eval,
     "deploy": _deploy,
+    "discover-refresh": _discover_refresh,
+    "discover-worker": _discover_worker,
     "export": _export,
     "replay": _replay,
     "eval": _eval,

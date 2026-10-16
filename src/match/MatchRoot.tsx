@@ -12,6 +12,8 @@ import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useMe } from '../auth/useMe';
+import { OriginBar } from '../discover/OriginBar';
+import { clearMatchOrigin } from '../discover/origin';
 import { EASE } from '../lib/ui';
 import { actions, useApp } from '../store';
 import { CoverView } from './CoverView';
@@ -63,6 +65,7 @@ export function MatchRoot() {
   return (
     <div className="mt-view">
       <MatchHeader onNavigate={navigate} />
+      <OriginBar />
       <motion.main
         key={kind}
         className="mt-main"
@@ -135,6 +138,7 @@ function PasteScreen() {
       onDraft={matchActions.setDraft}
       onSubmit={() => {
         if (!profileId) return;
+        clearMatchOrigin(); // a posting pasted here is not the Discover listing a bar may remember
         void matchActions.submit({ profileId, text: m.draft.text, url: m.draft.url }, { signedIn: loaded ? !!user : null });
       }}
       busy={m.phase === 'reading'}

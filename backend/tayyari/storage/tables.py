@@ -585,6 +585,77 @@ class ProfileFactsRow(Base):
     created_at: Mapped[datetime] = mapped_column(UtcDateTime)
 
 
+# ───────────────────────────── discover ─────────────────────────────
+
+
+class DiscoverListingRow(Base):
+    """One job on an employer's own board (Greenhouse or Lever) that is in India. ``id`` is a stable hash of
+    ``(source, board, external id)`` (`discover.normalise.listing_id`), so a listing keeps its id across refreshes.
+
+    ``status`` is ``open`` while the board lists it and ``closed`` once a refresh that read the board did not; a closed
+    row is deleted 30 days after ``closed_at`` (`storage.maintenance`). ``lat``/``lng`` are approximate centroids of the
+    locality (``precision`` ``locality``) or of the city (``city``); they exist so a distance can be worked out, never to
+    show a pin. ``years_min`` is the years of experience the posting asks for, when it says; ``entry_level`` marks an
+    entry-level title or a posting asking for at most two years. No row holds anything about a person: the person's area
+    is chosen in the browser and sent with each request.
+    """
+
+    __tablename__ = "discover_listings"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    employer_id: Mapped[str] = mapped_column(String(64))
+    source: Mapped[str] = mapped_column(String(16))
+    external_id: Mapped[str] = mapped_column(String(PROVIDER_ID_LEN))
+    title: Mapped[str] = mapped_column(String(300))
+    title_norm: Mapped[str] = mapped_column(String(300))
+    work_mode: Mapped[str] = mapped_column(String(8))
+    city: Mapped[str | None] = mapped_column(String(40))
+    locality: Mapped[str | None] = mapped_column(String(48))
+    lat: Mapped[float | None] = mapped_column(Float)
+    lng: Mapped[float | None] = mapped_column(Float)
+    precision: Mapped[str] = mapped_column(String(8))
+    remote_india: Mapped[bool] = mapped_column(Boolean)
+    location_text: Mapped[str] = mapped_column(String(300))
+    apply_url: Mapped[str] = mapped_column(Text)
+    apply_host: Mapped[str] = mapped_column(String(255))
+    posted_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    first_seen_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    last_seen_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    status: Mapped[str] = mapped_column(String(8))
+    closed_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    salary_text: Mapped[str | None] = mapped_column(String(120))
+    years_min: Mapped[int | None] = mapped_column(Integer)
+    entry_level: Mapped[bool] = mapped_column(Boolean)
+    content_hash: Mapped[str] = mapped_column(String(HASH_LEN))
+    posting_text: Mapped[str] = mapped_column(Text)
+
+    __table_args__ = (
+        Index("ix_discover_listings_status", "status"),
+        Index("ix_discover_listings_city", "city"),
+        Index("ix_discover_listings_employer_id", "employer_id"),
+    )
+
+
+class DiscoverRunRow(Base):
+    """One refresh of the employers' boards. ``status``: ``running`` while it works, ``ok`` when at least one board was
+    read, ``failed`` when none was (or it crashed). A ``running`` row older than 20 minutes is a dead run (single flight
+    ignores it). ``note`` says what went wrong in a few words, never a response body."""
+
+    __tablename__ = "discover_runs"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    started_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    finished_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    status: Mapped[str] = mapped_column(String(8))
+    employers_ok: Mapped[int] = mapped_column(Integer)
+    employers_failed: Mapped[int] = mapped_column(Integer)
+    listings_open: Mapped[int] = mapped_column(Integer)
+    listings_closed: Mapped[int] = mapped_column(Integer)
+    note: Mapped[str | None] = mapped_column(String(500))
+
+    __table_args__ = (Index("ix_discover_runs_started_at", "started_at"),)
+
+
 __all__ = [
     "BAND_LEN",
     "EMAIL_LEN",
@@ -600,6 +671,8 @@ __all__ = [
     "CreditLedgerRow",
     "DecisionLogRow",
     "DecisionStateRow",
+    "DiscoverListingRow",
+    "DiscoverRunRow",
     "EntitlementRow",
     "JSONType",
     "JevCallRow",

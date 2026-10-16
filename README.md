@@ -131,6 +131,8 @@ Cost: about half a cent per match on Haiku 5.5, as measured. A match needs no ac
 
 Routes: `POST /api/match` (NDJSON), `GET /api/match/{id}`, `GET /api/matches`, `POST /api/match/{id}/answers`, `POST|GET|PATCH /api/match/{id}/resume`, `GET /api/match/{id}/resume.pdf|.docx`, `POST|GET /api/match/{id}/cover`, `GET /api/match/{id}/cover.pdf`. Details: `docs/backend.md` → Posting match.
 
+**Discover (v1).** Roles near the person that fit their profile, read from employers' own public job boards (Greenhouse and Lever, for the employers in our registry) and from nothing else. The city comes from the resume or is picked, and a locality gives straight-line distances. Each role says why it fits, as a word and counts computed in code with no model, and its apply link goes to the employer's own page. "See full match" runs the posting match on that role with the same credits as a pasted posting. Saved roles stay in the browser. What v1 leaves out, and what each item waits for, is in [docs/discover-later.md](docs/discover-later.md). Details: `docs/backend.md` → Discover.
+
 ## Key backend paths
 
 | Path | Module | Purpose |

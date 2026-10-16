@@ -8,6 +8,8 @@
     ingest-check  deterministic ingestion checks; the github and web sections use the network, no AI
     portfolio-eval  build a portfolio per fixture with the real clients and report grounding, cost and time
     deploy        build the web app, then ``fastapi deploy`` from backend/
+    discover-refresh  read employers' own public job boards into the database, once (no key needed)
+    discover-worker   the same in a loop, as its own process
 
 This package is the one place that prints to the terminal. Importing it imports nothing heavy: every command
 module is loaded only when its command runs.

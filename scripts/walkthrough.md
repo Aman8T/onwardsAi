@@ -109,6 +109,19 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     Nothing was charged." Close the window without paying and it reads "Checkout closed. Nothing was charged." If the
     server refuses the hand-off (a signature that does not verify, or an order that is not this account's), the notice
     shows the server's sentence followed by "Keep this payment id if you need help" and the payment id.
+15. **Discover:** works on the sample profile, with a banner saying these are the sample's roles; a full match from a
+    card needs an analysed resume of your own (on the sample, the card says so). Choose "Discover" in the graph header. On a server whose boards have not been read yet, the first visit shows
+    an empty list with "Reading employers' job boards for the first time. This takes about a minute." and asks again
+    about 20 seconds later. Once there are roles, the city reads "from your resume" with "Change". Choose "Change" and
+    pick a city and a locality from the lists: the How far stops show counts, the reach moves to 10 km, and each
+    distance reads "km straight line". A role whose listing names no known locality shows no distance. Pick another
+    How wide stop ("Your role", "+ next steps", "+ stretch") and the lanes ("Near you", "Remote, India-eligible",
+    "Worth moving for") count again. Open a row: the card is a popover on a wide screen and a bottom sheet under 760 px
+    (the 390×844 preset). Its "Apply on {host} ↗" opens the employer's own page in a new tab. Choose "See full match":
+    the match screen opens with "← Discover", the role, the "Apply on {host} ↗" link and "opens in a new tab";
+    "← Discover" returns to the same lens. Save a role with its bookmark button: it appears under "Your applications · N",
+    where its status can be changed, and the page says "Kept in this browser". Open "Why this order": it lists what the
+    ranking used and what it never uses, and "Show in posted order" switches to newest first and back.
 
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`).

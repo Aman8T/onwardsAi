@@ -10,6 +10,7 @@ from ..db import Database
 from ..ports import (
     BillingRepo,
     DecisionLogRepo,
+    DiscoverRepo,
     KvRepo,
     LimitRepo,
     LlmCallRepo,
@@ -24,6 +25,7 @@ from ..ports import (
 )
 from .billing import SqlBillingRepo
 from .decisions import SqlDecisionLogRepo
+from .discover import SqlDiscoverRepo
 from .kv import SqlKvRepo
 from .limits import SqlLimitRepo
 from .llm_calls import SqlLlmCallRepo
@@ -51,6 +53,7 @@ class Repositories:
     profile_facts: ProfileFactsRepo
     user_facts: UserFactRepo
     matches: MatchRepo
+    discover: DiscoverRepo
 
 
 def build_repositories(db: Database, clock: Clock | None = None) -> Repositories:
@@ -69,6 +72,7 @@ def build_repositories(db: Database, clock: Clock | None = None) -> Repositories
         profile_facts=SqlProfileFactsRepo(db, clock),
         user_facts=SqlUserFactRepo(db, clock),
         matches=SqlMatchRepo(db, clock),
+        discover=SqlDiscoverRepo(db, clock),
     )
 
 
@@ -76,6 +80,7 @@ __all__ = [
     "Repositories",
     "SqlBillingRepo",
     "SqlDecisionLogRepo",
+    "SqlDiscoverRepo",
     "SqlKvRepo",
     "SqlLimitRepo",
     "SqlLlmCallRepo",

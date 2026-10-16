@@ -49,6 +49,8 @@ EXPECTED_TABLES = {
     "user_facts",
     "variants",
     "profile_facts",
+    "discover_listings",
+    "discover_runs",
 }
 
 

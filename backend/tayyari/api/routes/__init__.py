@@ -12,6 +12,7 @@
     billing   GET /api/billing/entitlements; POST /api/billing/checkout, /verify; POST /api/billing/webhooks/razorpay, /stripe
     match     POST /api/match (NDJSON); GET /api/match/{id}, /api/matches; POST .../answers, .../resume (NDJSON), .../cover;
               GET, PATCH .../resume; GET .../cover, .../resume.pdf, .../resume.docx, .../cover.pdf
+    discover  GET /api/discover; GET /api/discover/cities; GET /api/discover/listings/{id}
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.
@@ -21,10 +22,22 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from tayyari.api.routes import analyze, auth, billing, chat, health, match, me, portfolio, profile, sample
+from tayyari.api.routes import (
+    analyze,
+    auth,
+    billing,
+    chat,
+    discover,
+    health,
+    match,
+    me,
+    portfolio,
+    profile,
+    sample,
+)
 
 api_router = APIRouter()
-for _module in (health, analyze, chat, profile, sample, portfolio, auth, me, billing, match):
+for _module in (health, analyze, chat, profile, sample, portfolio, auth, me, billing, match, discover):
     api_router.include_router(_module.router)
 
 __all__ = ["api_router"]

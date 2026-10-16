@@ -83,6 +83,7 @@ from tayyari.storage.ports import (
 )
 from tayyari.storage.repos import Repositories
 from tayyari.storage.repos.match import posting_listing_fields
+from tests.fakes.discover import FakeDiscoverRepo
 
 TOUCH_INTERVAL = timedelta(hours=1)
 TOTAL = "total"
@@ -1264,7 +1265,7 @@ class FakeBillingRepo:
 
 
 class FakeRepositories:
-    """The thirteen fakes over one shared state; ``bundle`` is the `Repositories` services are constructed with."""
+    """The fourteen fakes over one shared state; ``bundle`` is the `Repositories` services are constructed with."""
 
     def __init__(self, clock: Clock | None = None) -> None:
         self._state = _State(clock=clock or SystemClock())
@@ -1281,6 +1282,7 @@ class FakeRepositories:
         self.profile_facts = FakeProfileFactsRepo(self._state)
         self.user_facts = FakeUserFactRepo(self._state)
         self.matches = FakeMatchRepo(self._state)
+        self.discover = FakeDiscoverRepo()
         self.bundle = Repositories(
             profiles=self.profiles,
             sessions=self.sessions,
@@ -1295,6 +1297,7 @@ class FakeRepositories:
             profile_facts=self.profile_facts,
             user_facts=self.user_facts,
             matches=self.matches,
+            discover=self.discover,
         )
 
 

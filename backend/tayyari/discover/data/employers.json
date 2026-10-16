@@ -1,0 +1,1199 @@
+{
+  "version": 1,
+  "verifiedAt": "2026-10-16",
+  "employers": [
+    {
+      "id": "agoda",
+      "name": "Agoda",
+      "ats": "greenhouse",
+      "board": "agoda",
+      "careersUrl": "https://careersatagoda.com",
+      "offices": [
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Pune"
+        },
+        {
+          "city": "Mumbai"
+        }
+      ],
+      "families": [
+        "engineering",
+        "support",
+        "sales"
+      ],
+      "indiaJobsAtVerify": 12
+    },
+    {
+      "id": "airbnb",
+      "name": "Airbnb",
+      "ats": "greenhouse",
+      "board": "airbnb",
+      "careersUrl": "https://careers.airbnb.com",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Delhi NCR"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data"
+      ],
+      "indiaJobsAtVerify": 4
+    },
+    {
+      "id": "anaplan",
+      "name": "Anaplan",
+      "ats": "greenhouse",
+      "board": "anaplan",
+      "careersUrl": "https://boards.greenhouse.io/anaplan",
+      "offices": [
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data",
+        "operations",
+        "sales",
+        "support"
+      ],
+      "indiaJobsAtVerify": 31
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "ats": "greenhouse",
+      "board": "anthropic",
+      "careersUrl": "https://www.anthropic.com/careers",
+      "offices": [
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "engineering",
+        "sales"
+      ],
+      "indiaJobsAtVerify": 3
+    },
+    {
+      "id": "appsflyer",
+      "name": "AppsFlyer",
+      "ats": "greenhouse",
+      "board": "appsflyer",
+      "careersUrl": "https://boards.greenhouse.io/appsflyer",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "finance",
+        "hr",
+        "operations",
+        "sales"
+      ],
+      "indiaJobsAtVerify": 4
+    },
+    {
+      "id": "appviewx",
+      "name": "AppViewX",
+      "ats": "greenhouse",
+      "board": "appviewx",
+      "careersUrl": "https://boards.greenhouse.io/appviewx",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Coimbatore"
+        }
+      ],
+      "families": [
+        "engineering",
+        "marketing",
+        "legal"
+      ],
+      "indiaJobsAtVerify": 6
+    },
+    {
+      "id": "axiad",
+      "name": "Axiad",
+      "ats": "greenhouse",
+      "board": "axiad",
+      "careersUrl": "https://boards.greenhouse.io/axiad",
+      "offices": [
+        {
+          "city": "Hyderabad"
+        }
+      ],
+      "families": [
+        "engineering"
+      ],
+      "indiaJobsAtVerify": 3
+    },
+    {
+      "id": "coinbase",
+      "name": "Coinbase",
+      "ats": "greenhouse",
+      "board": "coinbase",
+      "careersUrl": "https://www.coinbase.com/careers",
+      "offices": [],
+      "families": [
+        "engineering",
+        "data"
+      ],
+      "indiaJobsAtVerify": 9
+    },
+    {
+      "id": "coupa",
+      "name": "Coupa",
+      "ats": "lever",
+      "board": "coupa",
+      "careersUrl": "https://jobs.lever.co/coupa",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Pune"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data"
+      ],
+      "indiaJobsAtVerify": 2
+    },
+    {
+      "id": "coursera",
+      "name": "Coursera",
+      "ats": "greenhouse",
+      "board": "coursera",
+      "careersUrl": "https://about.coursera.org/careers/",
+      "offices": [
+        {
+          "city": "Delhi NCR"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data",
+        "finance"
+      ],
+      "indiaJobsAtVerify": 7
+    },
+    {
+      "id": "cred",
+      "name": "CRED",
+      "ats": "lever",
+      "board": "cred",
+      "careersUrl": "https://jobs.lever.co/cred",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Hyderabad"
+        }
+      ],
+      "families": [
+        "finance",
+        "sales",
+        "marketing",
+        "content"
+      ],
+      "indiaJobsAtVerify": 7
+    },
+    {
+      "id": "databricks",
+      "name": "Databricks",
+      "ats": "greenhouse",
+      "board": "databricks",
+      "careersUrl": "https://www.databricks.com/company/careers",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Pune"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data",
+        "sales",
+        "finance",
+        "hr"
+      ],
+      "indiaJobsAtVerify": 94
+    },
+    {
+      "id": "datadog",
+      "name": "Datadog",
+      "ats": "greenhouse",
+      "board": "datadog",
+      "careersUrl": "https://careers.datadoghq.com",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Delhi NCR"
+        }
+      ],
+      "families": [
+        "sales",
+        "marketing"
+      ],
+      "indiaJobsAtVerify": 10
+    },
+    {
+      "id": "druva",
+      "name": "Druva",
+      "ats": "greenhouse",
+      "board": "druva",
+      "careersUrl": "https://boards.greenhouse.io/druva",
+      "offices": [
+        {
+          "city": "Pune"
+        },
+        {
+          "city": "Hyderabad"
+        }
+      ],
+      "families": [
+        "engineering",
+        "product"
+      ],
+      "indiaJobsAtVerify": 12
+    },
+    {
+      "id": "elastic",
+      "name": "Elastic",
+      "ats": "greenhouse",
+      "board": "elastic",
+      "careersUrl": "https://www.elastic.co/careers",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Delhi NCR"
+        }
+      ],
+      "families": [
+        "engineering",
+        "sales",
+        "marketing",
+        "data"
+      ],
+      "indiaJobsAtVerify": 18
+    },
+    {
+      "id": "fivetran",
+      "name": "Fivetran",
+      "ats": "greenhouse",
+      "board": "fivetran",
+      "careersUrl": "https://www.fivetran.com/careers",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "engineering",
+        "finance",
+        "data",
+        "product",
+        "content"
+      ],
+      "indiaJobsAtVerify": 22
+    },
+    {
+      "id": "fourkites",
+      "name": "FourKites",
+      "ats": "greenhouse",
+      "board": "fourkites",
+      "careersUrl": "https://boards.greenhouse.io/fourkites",
+      "offices": [
+        {
+          "city": "Chennai"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data",
+        "product",
+        "sales"
+      ],
+      "indiaJobsAtVerify": 7
+    },
+    {
+      "id": "gitlab",
+      "name": "GitLab",
+      "ats": "greenhouse",
+      "board": "gitlab",
+      "careersUrl": "https://about.gitlab.com/jobs/",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "engineering",
+        "hr",
+        "operations",
+        "sales",
+        "data",
+        "product",
+        "support"
+      ],
+      "indiaJobsAtVerify": 33
+    },
+    {
+      "id": "grafana-labs",
+      "name": "Grafana Labs",
+      "ats": "greenhouse",
+      "board": "grafanalabs",
+      "careersUrl": "https://grafana.com/about/careers/",
+      "offices": [],
+      "families": [
+        "sales"
+      ],
+      "indiaJobsAtVerify": 3
+    },
+    {
+      "id": "groww",
+      "name": "Groww",
+      "ats": "greenhouse",
+      "board": "groww",
+      "careersUrl": "https://boards.greenhouse.io/groww",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "finance",
+        "content",
+        "design"
+      ],
+      "indiaJobsAtVerify": 10
+    },
+    {
+      "id": "gushwork",
+      "name": "Gushwork",
+      "ats": "lever",
+      "board": "gushwork",
+      "careersUrl": "https://jobs.lever.co/gushwork",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "sales",
+        "engineering",
+        "product",
+        "operations"
+      ],
+      "indiaJobsAtVerify": 8
+    },
+    {
+      "id": "hackerrank",
+      "name": "HackerRank",
+      "ats": "greenhouse",
+      "board": "hackerrank",
+      "careersUrl": "https://boards.greenhouse.io/hackerrank",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data",
+        "design",
+        "support"
+      ],
+      "indiaJobsAtVerify": 20
+    },
+    {
+      "id": "harness",
+      "name": "Harness",
+      "ats": "greenhouse",
+      "board": "harnessinc",
+      "careersUrl": "https://boards.greenhouse.io/harnessinc",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "engineering",
+        "finance"
+      ],
+      "indiaJobsAtVerify": 7
+    },
+    {
+      "id": "hevo-data",
+      "name": "Hevo Data",
+      "ats": "lever",
+      "board": "hevodata",
+      "careersUrl": "https://jobs.lever.co/hevodata",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Pune"
+        }
+      ],
+      "families": [
+        "engineering",
+        "sales",
+        "marketing",
+        "support",
+        "finance",
+        "hr",
+        "product",
+        "data"
+      ],
+      "indiaJobsAtVerify": 53
+    },
+    {
+      "id": "inmobi",
+      "name": "InMobi",
+      "ats": "greenhouse",
+      "board": "inmobi",
+      "careersUrl": "https://boards.greenhouse.io/inmobi",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Mumbai",
+          "locality": "Powai"
+        }
+      ],
+      "families": [
+        "sales",
+        "data",
+        "marketing",
+        "finance",
+        "engineering",
+        "operations",
+        "legal"
+      ],
+      "indiaJobsAtVerify": 47
+    },
+    {
+      "id": "keyloop",
+      "name": "Keyloop",
+      "ats": "lever",
+      "board": "keyloop",
+      "careersUrl": "https://jobs.lever.co/keyloop",
+      "offices": [
+        {
+          "city": "Hyderabad"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data",
+        "design",
+        "sales",
+        "support",
+        "finance",
+        "operations"
+      ],
+      "indiaJobsAtVerify": 22
+    },
+    {
+      "id": "meesho",
+      "name": "Meesho",
+      "ats": "lever",
+      "board": "meesho",
+      "careersUrl": "https://jobs.lever.co/meesho",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Jaipur"
+        },
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Chennai"
+        },
+        {
+          "city": "Coimbatore"
+        },
+        {
+          "city": "Hyderabad"
+        },
+        {
+          "city": "Kochi"
+        }
+      ],
+      "families": [
+        "operations",
+        "finance",
+        "data",
+        "engineering",
+        "hr",
+        "sales",
+        "design",
+        "product"
+      ],
+      "indiaJobsAtVerify": 58
+    },
+    {
+      "id": "meltplan",
+      "name": "Meltplan",
+      "ats": "greenhouse",
+      "board": "meltplan",
+      "careersUrl": "https://boards.greenhouse.io/meltplan",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data"
+      ],
+      "indiaJobsAtVerify": 4
+    },
+    {
+      "id": "mindtickle",
+      "name": "Mindtickle",
+      "ats": "lever",
+      "board": "mindtickle",
+      "careersUrl": "https://jobs.lever.co/mindtickle",
+      "offices": [
+        {
+          "city": "Pune",
+          "locality": "Baner"
+        },
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "engineering",
+        "sales",
+        "design",
+        "operations",
+        "product"
+      ],
+      "indiaJobsAtVerify": 18
+    },
+    {
+      "id": "mitsogo",
+      "name": "Mitsogo",
+      "ats": "greenhouse",
+      "board": "mitsogoinc",
+      "careersUrl": "https://boards.greenhouse.io/mitsogoinc",
+      "offices": [
+        {
+          "city": "Chennai"
+        },
+        {
+          "city": "Kochi"
+        },
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Mumbai"
+        }
+      ],
+      "families": [
+        "engineering",
+        "sales",
+        "product",
+        "support",
+        "marketing",
+        "data"
+      ],
+      "indiaJobsAtVerify": 22
+    },
+    {
+      "id": "mixpanel",
+      "name": "Mixpanel",
+      "ats": "greenhouse",
+      "board": "mixpanel",
+      "careersUrl": "https://mixpanel.com/jobs/",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "sales"
+      ],
+      "indiaJobsAtVerify": 4
+    },
+    {
+      "id": "mongodb",
+      "name": "MongoDB",
+      "ats": "greenhouse",
+      "board": "mongodb",
+      "careersUrl": "https://www.mongodb.com/careers",
+      "offices": [
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Hyderabad"
+        }
+      ],
+      "families": [
+        "engineering",
+        "sales",
+        "finance",
+        "hr",
+        "data",
+        "marketing",
+        "operations",
+        "support",
+        "product"
+      ],
+      "indiaJobsAtVerify": 85
+    },
+    {
+      "id": "netskope",
+      "name": "Netskope",
+      "ats": "greenhouse",
+      "board": "netskope",
+      "careersUrl": "https://www.netskope.com/company/careers",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Hyderabad"
+        }
+      ],
+      "families": [
+        "engineering",
+        "sales",
+        "support",
+        "product",
+        "data"
+      ],
+      "indiaJobsAtVerify": 20
+    },
+    {
+      "id": "new-relic",
+      "name": "New Relic",
+      "ats": "greenhouse",
+      "board": "newrelic",
+      "careersUrl": "https://boards.greenhouse.io/newrelic",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Hyderabad"
+        }
+      ],
+      "families": [
+        "engineering",
+        "design",
+        "sales"
+      ],
+      "indiaJobsAtVerify": 7
+    },
+    {
+      "id": "okta",
+      "name": "Okta",
+      "ats": "greenhouse",
+      "board": "okta",
+      "careersUrl": "https://www.okta.com/company/careers/",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Mumbai"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data",
+        "sales",
+        "marketing",
+        "hr",
+        "product",
+        "design",
+        "content"
+      ],
+      "indiaJobsAtVerify": 110
+    },
+    {
+      "id": "paytm",
+      "name": "Paytm",
+      "ats": "lever",
+      "board": "paytm",
+      "careersUrl": "https://jobs.lever.co/paytm",
+      "offices": [
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Ahmedabad"
+        },
+        {
+          "city": "Hyderabad"
+        },
+        {
+          "city": "Chennai"
+        },
+        {
+          "city": "Pune"
+        },
+        {
+          "city": "Jaipur"
+        },
+        {
+          "city": "Chandigarh"
+        },
+        {
+          "city": "Coimbatore"
+        },
+        {
+          "city": "Kochi"
+        },
+        {
+          "city": "Kolkata"
+        }
+      ],
+      "families": [
+        "finance",
+        "marketing",
+        "sales",
+        "hr",
+        "data",
+        "product",
+        "operations",
+        "support",
+        "legal"
+      ],
+      "indiaJobsAtVerify": 171
+    },
+    {
+      "id": "paytm-payments",
+      "name": "Paytm Payments",
+      "ats": "lever",
+      "board": "paytmpayments",
+      "careersUrl": "https://jobs.lever.co/paytmpayments",
+      "offices": [
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Hyderabad"
+        },
+        {
+          "city": "Ahmedabad"
+        },
+        {
+          "city": "Chennai"
+        },
+        {
+          "city": "Pune"
+        },
+        {
+          "city": "Chandigarh"
+        },
+        {
+          "city": "Indore"
+        },
+        {
+          "city": "Jaipur"
+        },
+        {
+          "city": "Kochi"
+        },
+        {
+          "city": "Thiruvananthapuram"
+        },
+        {
+          "city": "Kolkata"
+        },
+        {
+          "city": "Coimbatore"
+        }
+      ],
+      "families": [
+        "sales",
+        "marketing",
+        "finance",
+        "hr",
+        "operations",
+        "support"
+      ],
+      "indiaJobsAtVerify": 1129
+    },
+    {
+      "id": "pubmatic",
+      "name": "PubMatic",
+      "ats": "greenhouse",
+      "board": "pubmatic",
+      "careersUrl": "https://boards.greenhouse.io/pubmatic",
+      "offices": [
+        {
+          "city": "Pune"
+        },
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Mumbai"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data",
+        "design",
+        "operations",
+        "sales"
+      ],
+      "indiaJobsAtVerify": 36
+    },
+    {
+      "id": "razorpay",
+      "name": "Razorpay",
+      "ats": "greenhouse",
+      "board": "razorpaysoftwareprivatelimited",
+      "careersUrl": "https://razorpay.com/jobs/",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Chennai"
+        },
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Kolkata"
+        }
+      ],
+      "families": [
+        "sales",
+        "finance",
+        "product",
+        "data"
+      ],
+      "indiaJobsAtVerify": 21
+    },
+    {
+      "id": "rubrik",
+      "name": "Rubrik",
+      "ats": "greenhouse",
+      "board": "rubrik",
+      "careersUrl": "https://www.rubrik.com/company/careers",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Mumbai"
+        },
+        {
+          "city": "Pune"
+        }
+      ],
+      "families": [
+        "engineering",
+        "sales",
+        "data",
+        "product",
+        "hr"
+      ],
+      "indiaJobsAtVerify": 33
+    },
+    {
+      "id": "safe-security",
+      "name": "SAFE Security",
+      "ats": "lever",
+      "board": "safe",
+      "careersUrl": "https://jobs.lever.co/safe",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Delhi NCR"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data"
+      ],
+      "indiaJobsAtVerify": 16
+    },
+    {
+      "id": "sonatype",
+      "name": "Sonatype",
+      "ats": "lever",
+      "board": "sonatype",
+      "careersUrl": "https://jobs.lever.co/sonatype",
+      "offices": [
+        {
+          "city": "Hyderabad"
+        }
+      ],
+      "families": [
+        "engineering"
+      ],
+      "indiaJobsAtVerify": 2
+    },
+    {
+      "id": "storable",
+      "name": "Storable",
+      "ats": "greenhouse",
+      "board": "storable",
+      "careersUrl": "https://boards.greenhouse.io/storable",
+      "offices": [
+        {
+          "city": "Hyderabad"
+        }
+      ],
+      "families": [
+        "engineering"
+      ],
+      "indiaJobsAtVerify": 1
+    },
+    {
+      "id": "stripe",
+      "name": "Stripe",
+      "ats": "greenhouse",
+      "board": "stripe",
+      "careersUrl": "https://stripe.com/jobs",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "operations",
+        "finance",
+        "engineering",
+        "data",
+        "support",
+        "hr",
+        "legal",
+        "sales"
+      ],
+      "indiaJobsAtVerify": 47
+    },
+    {
+      "id": "sumo-logic",
+      "name": "Sumo Logic",
+      "ats": "greenhouse",
+      "board": "sumologic",
+      "careersUrl": "https://boards.greenhouse.io/sumologic",
+      "offices": [
+        {
+          "city": "Delhi NCR"
+        },
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "engineering",
+        "product"
+      ],
+      "indiaJobsAtVerify": 5
+    },
+    {
+      "id": "twilio",
+      "name": "Twilio",
+      "ats": "greenhouse",
+      "board": "twilio",
+      "careersUrl": "https://www.twilio.com/en-us/company/jobs",
+      "offices": [],
+      "families": [
+        "engineering",
+        "data",
+        "marketing",
+        "hr"
+      ],
+      "indiaJobsAtVerify": 14
+    },
+    {
+      "id": "valgenesis",
+      "name": "ValGenesis",
+      "ats": "lever",
+      "board": "valgenesis",
+      "careersUrl": "https://jobs.lever.co/valgenesis",
+      "offices": [
+        {
+          "city": "Chennai"
+        },
+        {
+          "city": "Hyderabad"
+        },
+        {
+          "city": "Bengaluru"
+        }
+      ],
+      "families": [
+        "engineering",
+        "data",
+        "product"
+      ],
+      "indiaJobsAtVerify": 10
+    },
+    {
+      "id": "verantos",
+      "name": "Verantos",
+      "ats": "greenhouse",
+      "board": "verantos",
+      "careersUrl": "https://boards.greenhouse.io/verantos",
+      "offices": [
+        {
+          "city": "Pune"
+        }
+      ],
+      "families": [
+        "engineering",
+        "healthcare"
+      ],
+      "indiaJobsAtVerify": 3
+    },
+    {
+      "id": "workato",
+      "name": "Workato",
+      "ats": "greenhouse",
+      "board": "workato",
+      "careersUrl": "https://boards.greenhouse.io/workato",
+      "offices": [
+        {
+          "city": "Hyderabad"
+        }
+      ],
+      "families": [
+        "engineering"
+      ],
+      "indiaJobsAtVerify": 3
+    },
+    {
+      "id": "zeta",
+      "name": "Zeta",
+      "ats": "lever",
+      "board": "zeta",
+      "careersUrl": "https://jobs.lever.co/zeta",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Hyderabad"
+        },
+        {
+          "city": "Mumbai"
+        }
+      ],
+      "families": [
+        "engineering",
+        "hr",
+        "legal",
+        "finance",
+        "operations",
+        "data"
+      ],
+      "indiaJobsAtVerify": 21
+    },
+    {
+      "id": "zuora",
+      "name": "Zuora",
+      "ats": "greenhouse",
+      "board": "zuora",
+      "careersUrl": "https://boards.greenhouse.io/zuora",
+      "offices": [
+        {
+          "city": "Bengaluru"
+        },
+        {
+          "city": "Chennai"
+        }
+      ],
+      "families": [
+        "engineering",
+        "marketing"
+      ],
+      "indiaJobsAtVerify": 6
+    }
+  ]
+}

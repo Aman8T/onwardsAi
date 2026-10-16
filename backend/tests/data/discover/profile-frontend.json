@@ -1,0 +1,105 @@
+{
+  "id": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+  "createdAt": "2026-10-10T09:00:00.000Z",
+  "goal": "Senior frontend engineer",
+  "person": {
+    "name": "Riya Kapoor",
+    "headline": "Frontend engineer, 2.4 years, Bengaluru",
+    "currentRole": "Frontend Engineer",
+    "location": "Bengaluru, India",
+    "yearsExperience": 2.4,
+    "summary": "Frontend engineer who owns a design system and rebuilt checkout."
+  },
+  "mastery": { "score": 72, "insight": "Strong in React and design systems; thin on back end." },
+  "sources": [
+    { "id": "resume", "kind": "resume", "label": "Resume", "sub": "PDF", "summary": "Two roles.", "notes": [], "ok": true },
+    { "id": "github", "kind": "github", "label": "GitHub", "sub": "riya/ui-kit", "summary": "A component library.", "notes": [], "ok": true }
+  ],
+  "domains": [
+    { "id": "frontend", "name": "Frontend", "short": "FE", "score": 82, "summary": "React and TypeScript." }
+  ],
+  "skills": [
+    {
+      "id": "react",
+      "name": "React",
+      "domainId": "frontend",
+      "score": 90,
+      "evidence": [
+        { "sourceId": "resume", "text": "Rebuilt the checkout in React; owns a 42-component design system for 3 product teams" },
+        { "sourceId": "github", "text": "ui-kit: 212 stars, 31 test files" }
+      ],
+      "unlocks": ["Senior Frontend Engineer"]
+    },
+    {
+      "id": "typescript",
+      "name": "TypeScript",
+      "domainId": "frontend",
+      "score": 86,
+      "evidence": [{ "sourceId": "resume", "text": "Migrated 60k lines of checkout code to strict TypeScript" }],
+      "unlocks": []
+    },
+    {
+      "id": "css",
+      "name": "CSS",
+      "domainId": "frontend",
+      "score": 82,
+      "evidence": [{ "sourceId": "github", "text": "ui-kit: design tokens and responsive layouts in plain CSS" }],
+      "unlocks": []
+    },
+    {
+      "id": "a11y",
+      "name": "Accessibility (WCAG)",
+      "domainId": "frontend",
+      "score": 76,
+      "evidence": [{ "sourceId": "resume", "text": "WCAG audit of the checkout flow" }],
+      "unlocks": []
+    },
+    {
+      "id": "design-systems",
+      "name": "Design systems",
+      "domainId": "frontend",
+      "score": 87,
+      "evidence": [{ "sourceId": "github", "text": "ui-kit: 42 documented components" }],
+      "unlocks": []
+    },
+    {
+      "id": "jest",
+      "name": "Jest",
+      "domainId": "frontend",
+      "score": 60,
+      "evidence": [{ "sourceId": "resume", "text": "Raised unit test coverage of checkout from 31 to 78 percent with Jest" }],
+      "unlocks": []
+    },
+    {
+      "id": "node",
+      "name": "Node.js / BFF",
+      "domainId": "frontend",
+      "score": 40,
+      "evidence": [{ "sourceId": "resume", "text": "Wrote a small Node service for the checkout page" }],
+      "unlocks": []
+    },
+    {
+      "id": "git",
+      "name": "Git",
+      "domainId": "frontend",
+      "score": 70,
+      "evidence": [{ "sourceId": "github", "text": "ui-kit: pull request reviews on 40 changes" }],
+      "unlocks": []
+    },
+    {
+      "id": "llm-evals",
+      "name": "LLM evals",
+      "domainId": "frontend",
+      "score": 12,
+      "evidence": [{ "sourceId": "resume", "text": "Tried an evaluation script once" }],
+      "unlocks": []
+    }
+  ],
+  "roles": [
+    { "id": "design-engineer", "title": "Design Engineer", "alignment": 86, "eta": "3 months", "why": "Design systems and CSS.", "requirements": [] },
+    { "id": "senior-fe", "title": "Senior Frontend Engineer", "alignment": 78, "eta": "6 months", "why": "React depth.", "requirements": [] },
+    { "id": "full-stack", "title": "Full-Stack Engineer", "alignment": 62, "eta": "9 months", "why": "Some Node.", "requirements": [] },
+    { "id": "ai", "title": "AI Product Engineer", "alignment": 50, "eta": "12 months", "why": "Early.", "requirements": [] }
+  ],
+  "models": { "reader": "claude-haiku-5-5", "synth": "claude-haiku-5-5" }
+}

@@ -286,6 +286,48 @@ class MatchSettings(BaseModel):
         return self.allow_anonymous == "true"
 
 
+class DiscoverSettings(BaseModel):
+    """Discover, the job-discovery service: `TAYYARI_DISCOVER__*`. No secrets: it reads employers' own public job boards.
+
+    The refresh runs in the background of the web app when the last good run is older than ``refresh_hours``, and as its
+    own process (``python -m tayyari.cli discover-refresh`` once, ``discover-worker`` in a loop).
+    """
+
+    enabled: bool = True
+    """False: the routes answer 503 ``discover_disabled`` and nothing is fetched."""
+    refresh_hours: float = Field(default=6.0, gt=0)
+    """How old the last good refresh may get before the next request starts another one in the background."""
+    fetch_concurrency: int = Field(default=4, ge=1, le=32)
+    """Employer boards fetched at once."""
+    request_timeout_s: float = Field(default=15.0, gt=0)
+    """The longest one board request may take."""
+    max_listings_per_employer: int = Field(default=300, ge=1)
+    """Listings kept per employer in India (the newest first); a bigger board is cut here."""
+    registry_path: Path | None = None
+    """The employer registry (JSON). Unset: the one shipped with the package (``discover/data/employers.json``)."""
+
+    @field_validator("registry_path", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, v: object) -> object:
+        if isinstance(v, str):
+            return v.strip() or None
+        return v
+
+    @field_validator(
+        "enabled",
+        "refresh_hours",
+        "fetch_concurrency",
+        "request_timeout_s",
+        "max_listings_per_employer",
+        mode="before",
+    )
+    @classmethod
+    def _blank_keeps_the_default(cls, v: object) -> object:
+        if isinstance(v, str) and not v.strip():
+            raise PydanticUseDefault()
+        return v
+
+
 _SECRET_FIELDS = (
     "anthropic_api_key",
     "jev_api_key",
@@ -385,6 +427,7 @@ class Settings(BaseSettings):
     auth: AuthSettings = Field(default_factory=AuthSettings)
     billing: BillingSettings = Field(default_factory=BillingSettings)
     match: MatchSettings = Field(default_factory=MatchSettings)
+    discover: DiscoverSettings = Field(default_factory=DiscoverSettings)
 
     synth_hints: bool = False
     """Feed the first-read results to the synthesizer as hints (off: they are stored for comparison only)."""
@@ -488,6 +531,7 @@ __all__ = [
     "BillingSettings",
     "CacheTtl",
     "ConcurrencySettings",
+    "DiscoverSettings",
     "Effort",
     "Env",
     "GuardSettings",

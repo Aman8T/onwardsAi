@@ -1,0 +1,82 @@
+[
+  {
+    "id": "11111111-aaaa-4aaa-8aaa-000000000001",
+    "text": "Frontend Engineer II",
+    "createdAt": 1791374400000,
+    "hostedUrl": "https://jobs.lever.co/northwind/11111111-aaaa-4aaa-8aaa-000000000001?lever-source=Linkedin&utm_medium=social",
+    "applyUrl": "https://jobs.lever.co/northwind/11111111-aaaa-4aaa-8aaa-000000000001/apply",
+    "categories": {
+      "location": "HSR Layout, Bengaluru",
+      "allLocations": ["HSR Layout, Bengaluru"],
+      "team": "Engineering",
+      "commitment": "Full-time"
+    },
+    "workplaceType": "on-site",
+    "country": "IN",
+    "salaryRange": { "currency": "INR", "interval": "per-year-salary", "min": 2800000, "max": 3600000 },
+    "descriptionPlain": "Northwind builds analytics for retailers.\n\nYou will build dashboards in React.",
+    "lists": [
+      {
+        "text": "What you'll need:",
+        "content": "<li>3+ years of experience with React and Jest</li><li>Data visualization experience</li><li>Strong TypeScript</li>"
+      }
+    ],
+    "additionalPlain": "We are an equal opportunity employer."
+  },
+  {
+    "id": "11111111-aaaa-4aaa-8aaa-000000000002",
+    "text": "Data Analyst",
+    "createdAt": 1791806400000,
+    "hostedUrl": "https://jobs.lever.co/northwind/11111111-aaaa-4aaa-8aaa-000000000002",
+    "categories": { "location": "Bengaluru, India", "allLocations": ["Bengaluru, India"], "team": "Data" },
+    "workplaceType": "hybrid",
+    "country": "IN",
+    "descriptionPlain": "Turn retail data into decisions.",
+    "lists": [
+      {
+        "text": "Requirements:",
+        "content": "<li>1+ years of experience with SQL, Tableau and Microsoft Excel</li><li>Statistics and Power BI</li>"
+      }
+    ],
+    "additionalPlain": ""
+  },
+  {
+    "id": "11111111-aaaa-4aaa-8aaa-000000000003",
+    "text": "Senior Frontend Engineer",
+    "createdAt": 1791806400000,
+    "hostedUrl": "https://jobs.lever.co/northwind/11111111-aaaa-4aaa-8aaa-000000000003",
+    "categories": { "location": "Remote - India", "allLocations": ["Remote - India"], "team": "Engineering" },
+    "workplaceType": "remote",
+    "country": "IN",
+    "salaryRange": { "currency": "USD", "interval": "per-year-salary", "min": 40000, "max": 55000 },
+    "descriptionPlain": "Work from anywhere in India.",
+    "lists": [
+      { "text": "Requirements:", "content": "<li>4+ years of experience with React, TypeScript and CSS</li><li>Design systems</li>" }
+    ],
+    "additionalPlain": ""
+  },
+  {
+    "id": "11111111-aaaa-4aaa-8aaa-000000000004",
+    "text": "Account Executive",
+    "createdAt": 1791806400000,
+    "hostedUrl": "https://jobs.lever.co/northwind/11111111-aaaa-4aaa-8aaa-000000000004",
+    "categories": { "location": "New York, NY", "allLocations": ["New York, NY"], "team": "Sales" },
+    "workplaceType": "on-site",
+    "country": "US",
+    "descriptionPlain": "Sell to retailers.",
+    "lists": [],
+    "additionalPlain": ""
+  },
+  {
+    "id": "11111111-aaaa-4aaa-8aaa-000000000005",
+    "text": "Customer Support Associate",
+    "createdAt": 1791806400000,
+    "hostedUrl": "https://jobs.lever.co/northwind/11111111-aaaa-4aaa-8aaa-000000000005",
+    "categories": { "location": "Chennai, India", "allLocations": ["Chennai, India"], "team": "Support" },
+    "workplaceType": "on-site",
+    "country": "IN",
+    "descriptionPlain": "Help retailers. Zendesk and customer support experience.",
+    "lists": [],
+    "additionalPlain": ""
+  }
+]

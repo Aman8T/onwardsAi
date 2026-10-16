@@ -21,6 +21,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | R1 | Shareable radar card (SVG + OG PNG) | F1 | later | not started |
 | I1 | Evidence-grounded mock interview | M2 | later | not started |
 | X1 | ESCO + O*NET skill table, canonical skill ids | M2 | later | not started |
+| D1 | Discover: personal, location-aware jobs with direct apply links | M2 | Opus + Sonnet | v1 built 2026-10-16 (employers' own boards, no map); rest in docs/discover-later.md |
 
 Shared files are edited by one wave at a time, in this order: F1 → M2 → F2 for `storage/tables.py`, `storage/ports.py`, `core/settings.py`, `container.py`, `api/routes/__init__.py`, `api/security.py`, `backend/.env.example`. M1 touches none of them. Dependencies were added by the orchestrator (`authlib`, `reportlab`, `stripe`, `razorpay`; `pypdf` and `python-docx` were already present): no wave edits `pyproject.toml`.
 
@@ -168,6 +169,61 @@ Each wave ends with: `npm run check:all` green, new tests for every new unit, a 
 - **I1 · Grounded mock interview.** Claim ledger from facts + git-history decision signals; slot blueprint allocated by code; Surface/Push/Floor ladders; verdicts Defended/Shaky/Couldn't defend/Not assessed with verbatim-quote checks; Say/Avoid/Fix cards; readiness computed in code. Research §4.7.
 - **X1 · Skills table.** Seed from ESCO digital skills and O*NET software skills; aliases; `pending_review` for LLM-proposed skills; canonical ids on requirements and facts; NCO code crosswalk via ISCO-08 shown on Indian government roles.
 - **Growth.** A thin Claude Code skill calling `/api/match`; `/gh/<username>` zero-upload entry; README-as-landing-page launch kit.
+
+---
+
+## D1 · Discover (design)
+
+**v1 (2026-10-16).** Shipped: the list-first Discover screen at `/discover` and the `/api/discover*` routes, reading the Greenhouse and Lever boards of the 51 employers in `backend/tayyari/discover/data/employers.json`. It is a separate service in the Python backend (`backend/tayyari/discover/`): it imports only `core`, `contract` and `storage.ports`, owns `discover_listings` and `discover_runs` (migration 0007), its settings and its refresh, and calls no model. The quick fit is code over a 426-skill vocabulary, and its thresholds were calibrated on 1,377 real listings, where counting raw terms rated every role a stretch for a strong frontend profile. No map, commute time, alerts or other sources in v1. What each deferred item waits for is in `docs/discover-later.md`. Details: `docs/backend.md`, Discover.
+
+**Goal.** Open Tayyari and see roles near the person that fit their resume and skill graph, grouped by why they matter. Each role opens into the existing match screen and has a one-click apply link to the real posting. The full design is a Claude Design canvas with placeholder data (https://claude.ai/artifact/8A5u18LpAhxB7fGfAinhmv); v1 (below) builds the parts that need no permission or legal review, and the rest waits in `docs/discover-later.md`.
+
+**User decisions (2026-10-16).** Split list and map; on phones the list comes first, with a Map button. A separate, quiet lane for companies that fit but have nothing open. Saved roles, alerts for new fits and an application tracker are in. Opening a full match uses the same credits as today; browsing, hover cards and named gaps stay free.
+
+**Deviation from the brief.** The brief asks for a match score on the hover card. `project-soul.md` forbids percentage scores, so the card shows a word and counts ("Looks close · names 8 skills, 5 in your profile"), computed in code and marked as read from skill names only. The full match keeps today's bands.
+
+**Source tiers.**
+
+| Tier | Sources | Apply link | Confidence label |
+|---|---|---|---|
+| A employer-direct | Greenhouse, Lever, Ashby (after written OK), later JobPosting pages on allowlisted hosts | Employer page or ATS form | "Employer's own listing, checked today" |
+| B licensed aggregator | Adzuna India (after licence) | Landing page, "via Adzuna" | "From a partner, employer not confirmed" |
+| C remote partners | Himalayas, Remotive | Source-mandated "via" | As B |
+| D person-pasted | A pasted posting | The person's own link | "Added by you" (private) |
+| E partnerships | NCS, Apna, WorkIndia, Naukri | Per agreement | Set by each agreement |
+| Never | LinkedIn, scrapers, vendors built on LinkedIn data | None | None |
+
+**Design rules.**
+- **Layout.** Discover chip in the header; a context line (anchor, lenses); lane tabs Near you, Remote India-eligible, Worth moving for. Desktop: list 7/12, sticky quiet map 5/12. Phone: list first, Map button, cards as bottom sheets.
+- **Clusters.** Default is why it fits; switch to By place or By company. Precedence: each top-three next role, current work, one skill away, first steps, other close roles. At 5 results a flat list; at 500, at most six clusters of three cards.
+- **Area.** Anchor from the resume at city level, asked to confirm. Distances appear only after a locality is picked; never GPS or IP. Reach 3, 5, 10, 25 km or whole city, labelled "straight line". Relocation means a second city.
+- **Lenses.** How far and How wide; each stop shows its count before moving. One data-grounded suggestion at a time. Nothing is filtered silently.
+- **Card.** Title, employer, place, work mode, freshness, quick-fit word with counts, two cited reasons, biggest named gap, salary only if the employer states it. Actions: Apply (destination named), See full match, Save.
+- **Click-through.** The existing match screen; posting side free before "Check my evidence". A breadcrumb returns to the same lens, lane, cluster and map position, kept in the URL.
+- **Apply links.** Employer page, then ATS form, then aggregator labelled "via", then source-mandated "via". Never a portal search page. New tab, `noopener`, tracking parameters stripped, nothing added. No reliable link, no card.
+- **Save, alerts, tracker.** Saved, Applied, Interviewing, Offer, Closed. Alerts are explicit opt-in with one-click off, and not offered to under-18s.
+- **Trust.** Freshness from our first-seen date: 14 days or less plain; 15 to 45 days "Open 4 weeks"; 46 to 90 "Worth checking it's still hiring", sorted lower; over 90 hidden unless the employer feed confirmed it this week.
+- **Companies lane.** Name, locality, the reason from the last 90 days, Careers page link. Never mixed with open roles.
+- **States.** First run, inferred area awaiting confirmation, loading, empty, overloaded, all weak, source failing, dead apply link, thin resume.
+
+**Data model.** Contract `shared/discovery.ts` ⇄ `backend/tayyari/contract/discovery.py`, a later wave with a parity test.
+- `JobSource {id, tier, licence, applyPolicy, attribution, maxCacheHours, mayStoreDescription}`
+- `Employer {id, name, domains[], atsKind, boardToken, careersUrl, localities[]}`
+- `Listing {id, employerId, title, titleFamily, workMode, yearsMin?, yearsMax?, entryLevel, status, firstSeenAt, lastConfirmedAt, postedAt?, validThrough?, repostCount, salary? (employer-stated only), sourceConfidence, postingHash?, locations[], applyTargets[], sourceRefs[]}`
+- `ListingLocation {label, city, region, lat, lng, precision, provider, confidence}`; `ApplyTarget {url, hostLabel, kind, checkedAt, state}`
+- `HomeBase {label, city, locality?, precision, source: resume|user, confirmed}`; `Lens {reachKm|reachMinutes, breadth, lanes[], order: ranked|posted}`
+- `QuickFit {word, nameCounts {matched, notFound, notStated}, reasons[] (factIds), gates[], version}`; `Cluster {facetKey, labelParams, count, listingIds[], alsoFits[]}`; `CompanyLead {employerId, reason, careersUrl}`; `TrackedRole {listingId, status, savedAt, appliedAt?, closedAt?}`
+- Protocols with fakes: `ListingSource`, `Geocoder`, `QuickFitter`, `ReachIndex`. Click-through reuses the posting cache through `postingHash`.
+
+**Before build.**
+1. Ashby's written permission. Ashby stays off until it arrives.
+2. Adzuna licence decision (cost and terms). Tier B stays off until decided.
+3. Counsel on the map (India boundary rule, any national view) and on the regulation notes.
+4. Partnerships for tier E, and a person to read Naukri's live terms. Read the unread terms (Jooble, Careerjet, Jobicy, Cutshort, Unstop, LinkUp) before any use.
+
+Research: `docs/research/job-discovery.md` (sources, geography, matching, regulation, open questions).
+
+---
 
 ## Follow-ups
 

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "33333333-cccc-4ccc-8ccc-000000000001",
+    "text": "Frontend Engineer",
+    "createdAt": 1791979200000,
+    "hostedUrl": "https://jobs.lever.co/latticeloom/33333333-cccc-4ccc-8ccc-000000000001",
+    "categories": { "location": "Remote", "allLocations": ["Remote"], "team": "Engineering" },
+    "workplaceType": "remote",
+    "country": "IN",
+    "descriptionPlain": "Build interfaces. Experience with React, TypeScript and Next.js.",
+    "lists": [],
+    "additionalPlain": ""
+  }
+]

@@ -13,6 +13,9 @@
                                                    its key pair, Stripe for USD on its two secrets)
     MatchService                                  (the posting match: the guarded, recording Claude client, the
                                                    match models, and the stored postings and extracted facts)
+    DiscoverService                               (job discovery over employers' own public boards; no model, its own
+                                                   HTTP client; a refresh runs in the background when the data is old and
+                                                   is cancelled at shutdown)
     match_anonymous                               (may a visitor with no sign-in match a posting: the setting
                                                    resolved against the sign-in methods this server offers)
     maintenance                                   (retention purge, a tracked background task; it keeps
@@ -72,6 +75,7 @@ if TYPE_CHECKING:
     from tayyari.auth.service import AuthService
     from tayyari.billing.entitlements import EntitlementService
     from tayyari.billing.service import BillingService
+    from tayyari.discover.service import DiscoverService
     from tayyari.match.service import MatchService
     from tayyari.portfolio.service import PortfolioService
 
@@ -101,7 +105,9 @@ class ContainerOverrides:
     - ``mailer``: the sender of sign-in emails (otherwise Resend when ``RESEND_API_KEY`` is set, else none).
     - ``auth_transport``: an ``httpx2`` transport for every outgoing sign-in call (Google's token endpoint and keys,
       the email provider); tests hand in an ``httpx2.MockTransport`` so the flow runs without a network.
-    - ``entitlements``, ``billing``, ``match``: the services themselves.
+    - ``entitlements``, ``billing``, ``match``, ``discover``: the services themselves.
+    - ``discover_transport``: an ``httpx2`` transport for Discover's reads of employers' boards; tests hand in an
+      ``httpx2.MockTransport`` so a refresh runs without a network.
     - ``razorpay_session``: the ``requests.Session`` the Razorpay SDK sends through; tests hand in one that answers
       from memory.
     - ``stripe_http``: a ``stripe.HTTPClient`` for the Stripe SDK's requests; tests hand in one that answers from memory.
@@ -125,6 +131,8 @@ class ContainerOverrides:
     entitlements: EntitlementService | None = None
     billing: BillingService | None = None
     match: MatchService | None = None
+    discover: DiscoverService | None = None
+    discover_transport: httpx2.AsyncBaseTransport | None = None
     razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
 
@@ -196,6 +204,9 @@ class Container:
     match_anonymous: bool
     """Whether a visitor with no sign-in may match a posting: ``settings.match.allow_anonymous`` resolved against the
     sign-in methods this server offers (``auto`` is true exactly when it offers none). Decided once, at startup."""
+    discover: DiscoverService
+    """Job discovery. It starts a refresh of the employers' boards in the background when its data is old; the container
+    cancels that task at shutdown."""
     rate_limiter: RateLimiter
     spend_guard: SpendGuard
     ip_hash_key: bytes
@@ -239,6 +250,7 @@ class Container:
         from tayyari.billing.stripe_gw import StripeGateway
         from tayyari.chat.service import CoachChatService
         from tayyari.decisions.packs.service_impl import JevDecisionService
+        from tayyari.discover.service import DiscoverService
         from tayyari.match.service import MatchService
         from tayyari.portfolio.service import PortfolioService
 
@@ -448,6 +460,24 @@ class Container:
                     call_timeout_s=settings.match.call_timeout_s,
                 )
 
+            discover: DiscoverService
+            if ov.discover is not None:
+                discover = ov.discover
+            else:
+                discover = DiscoverService(
+                    settings=settings.discover,
+                    repo=repos.discover,
+                    clock=clock,
+                    transport=ov.discover_transport,
+                )
+                closers.append(("discover", discover.aclose))
+                log.info(
+                    "discover_ready",
+                    enabled=settings.discover.enabled,
+                    employers=len(discover.registry.employers),
+                    refresh_hours=settings.discover.refresh_hours,
+                )
+
             match_anonymous = settings.match.anonymous_allowed(auth.providers)
             log.info(
                 "match_anonymous",
@@ -490,6 +520,7 @@ class Container:
             billing=billing,
             match=match,
             match_anonymous=match_anonymous,
+            discover=discover,
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,
             ip_hash_key=ip_hash_key,
