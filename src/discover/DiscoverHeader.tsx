@@ -1,19 +1,28 @@
 /**
  * The header of the Discover screens: the wordmark, the sections of the app as quiet chips (Discover is where you
- * are), and on the right who you are, the person's saved roles, the atmosphere and the account control. Plain, flat
- * and on the field's own tone, like the match header.
+ * are), and on the right who you are, the person's open applications, the atmosphere and the account control. Plain,
+ * flat and on the field's own tone, like the match header.
  */
 import { AccountMenu } from '../auth/AccountMenu';
 import { Atmosphere } from '../components/Atmosphere';
 import { Brand } from '../components/Brand';
 import { actions, useApp } from '../store';
-import { useTracker } from './tracker';
+import { useTracker } from './applications/tracker';
+import type { DiscoverTab } from './route';
 import '../styles/discover.css';
 
-export function DiscoverHeader({ profileId, tab, onTab }: { profileId: string; tab: 'roles' | 'applications'; onTab: (tab: 'roles' | 'applications') => void }) {
+export interface DiscoverHeaderProps {
+  profileId: string;
+  tab: DiscoverTab;
+  onTab: (tab: 'roles' | 'applications') => void;
+}
+
+export function DiscoverHeader({ profileId, tab, onTab }: DiscoverHeaderProps) {
   const profile = useApp((s) => s.profile);
   const who = profile ? [profile.person.name, profile.person.currentRole].filter(Boolean).join(' · ') : '';
-  const saved = useTracker(profileId).items.length;
+  // the roles still moving: a closed one is history, not something waiting on the person
+  const open = useTracker(profileId).items.filter((t) => t.stage !== 'closed').length;
+  const apps = tab === 'applications';
 
   const graph = (flipped: boolean) => {
     actions.setFlipped(flipped);
@@ -36,14 +45,14 @@ export function DiscoverHeader({ profileId, tab, onTab }: { profileId: string; t
         <button type="button" className="dc-navbtn" onClick={() => actions.openMatch()}>
           Match
         </button>
-        <button type="button" className={`dc-navbtn${tab === 'roles' ? ' is-current' : ''}`} aria-current={tab === 'roles' ? 'page' : undefined} onClick={() => onTab('roles')}>
+        <button type="button" className={`dc-navbtn${apps ? '' : ' is-current'}`} aria-current={apps ? undefined : 'page'} onClick={() => onTab('roles')}>
           Discover
         </button>
       </nav>
       <div className="dc-header-end">
         {who && <span className="dc-who">{who}</span>}
-        <button type="button" className={`dc-navbtn${tab === 'applications' ? ' is-current' : ''}`} aria-current={tab === 'applications' ? 'page' : undefined} onClick={() => onTab('applications')}>
-          Your applications{saved > 0 ? ` · ${saved}` : ''}
+        <button type="button" className={`dc-navbtn${apps ? ' is-current' : ''}`} aria-current={apps ? 'page' : undefined} onClick={() => onTab('applications')}>
+          Your applications{open > 0 ? ` · ${open}` : ''}
         </button>
         <Atmosphere />
         <AccountMenu />

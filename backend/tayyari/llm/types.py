@@ -28,6 +28,8 @@ Purpose = Literal[
     "match.cover",
     "jobsearch.scout",
     "jobsearch.judge",
+    "jobsearch.prepare",
+    "jobsearch.referral",
 ]
 """Why a Claude call is made. Stored on every `llm_calls` row and used to script fakes."""
 

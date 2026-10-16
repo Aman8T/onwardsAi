@@ -765,6 +765,31 @@ class DiscoverRun:
 
 
 @dataclass(frozen=True, slots=True)
+class StoredSearchRun:
+    """One finished search with AI (`JobSearchRunRow`). ``result`` holds the `JobSearchRun` fields the person saw;
+    ``postings`` the shown postings' text by job id, never sent to a browser."""
+
+    id: str
+    profile_id: str
+    city: str | None
+    remote: bool
+    created_at: datetime
+    result: dict[str, Any]
+    postings: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class StoredSearchDoc:
+    """A role's prep page or referral note (`JobSearchDocRow`)."""
+
+    profile_id: str
+    job_id: str
+    kind: str
+    created_at: datetime
+    body: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
 class UpsertCounts:
     """What `DiscoverRepo.upsert_employer` did: rows added, rows whose content changed, rows that only got seen again."""
 
@@ -850,6 +875,34 @@ class DiscoverRepo(Protocol):
         ...
 
 
+class JobSearchRepo(Protocol):
+    """Searches with AI and what was written for their roles. Everything is scoped to a profile id."""
+
+    async def save_run(self, run: StoredSearchRun) -> None:
+        """Store a finished search."""
+        ...
+
+    async def latest_run(self, profile_id: str, city: str | None, remote: bool) -> StoredSearchRun | None:
+        """The newest search of this profile for this city (None: no city) and remote choice, or None."""
+        ...
+
+    async def get_run(self, run_id: str) -> StoredSearchRun | None:
+        """The search with this id, or None (the caller checks it is the asker's profile)."""
+        ...
+
+    async def get_doc(self, profile_id: str, job_id: str, kind: str) -> StoredSearchDoc | None:
+        """The stored prep page or referral note for this profile and role, or None."""
+        ...
+
+    async def save_doc(self, doc: StoredSearchDoc) -> None:
+        """Store a prep page or referral note, replacing the one for the same profile, role and kind."""
+        ...
+
+    async def purge(self, cutoff: datetime) -> int:
+        """Delete searches and documents created before ``cutoff``; returns how many rows went."""
+        ...
+
+
 __all__ = [
     "BillingRepo",
     "ChatMessage",
@@ -860,6 +913,7 @@ __all__ = [
     "DiscoverListing",
     "DiscoverRepo",
     "DiscoverRun",
+    "JobSearchRepo",
     "KvRepo",
     "LimitRepo",
     "ListingStatus",
@@ -888,6 +942,8 @@ __all__ = [
     "StoredMatch",
     "StoredOrder",
     "StoredPortfolio",
+    "StoredSearchDoc",
+    "StoredSearchRun",
     "StoredUser",
     "StoredVariant",
     "ToolEvent",

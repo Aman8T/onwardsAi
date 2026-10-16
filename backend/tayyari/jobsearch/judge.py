@@ -47,7 +47,7 @@ STRONG_MIN_CHECKED: Final = 3
 Status = Literal["met", "partly", "not_shown"]
 Kind = Literal["same", "next", "adjacent", "different"]
 ReaderLevel = Literal["below", "at", "step_up", "far_above", "unclear"]
-DropReason = Literal["missing", "different", "far_above", "nothing_met", "instructions"]
+DropReason = Literal["missing", "different", "far_above", "nothing_met", "instructions", "too_senior"]
 
 JUDGE_SCHEMA: Final[dict[str, Any]] = {
     "type": "object",
@@ -158,6 +158,10 @@ class Verdict:
     quotes_dropped: int = 0
     credit: float = 0.0
     checked: int = 0
+    met_count: int = 0
+    partly_count: int = 0
+    gap_count: int = 0
+    """Every checked requirement by outcome, before the lists are cut for the card (the pips)."""
 
 
 def verify(
@@ -221,6 +225,7 @@ def verify(
     verdict.met = [*shown, *partial][:MAX_MET_SHOWN]
     checked = met + partly + len(verdict.gaps)
     verdict.checked = checked
+    verdict.met_count, verdict.partly_count, verdict.gap_count = met, partly, len(verdict.gaps)
     verdict.credit = met + 0.5 * partly
     verdict.gaps = verdict.gaps[:MAX_GAPS_SHOWN]
 

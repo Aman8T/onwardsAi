@@ -13,8 +13,10 @@ from typing import Any
 import httpx
 import pytest
 
+from tayyari.contract.jobsearch import JobPosting, JobSearchRun, ReferralNote, RolePrep
 from tayyari.contract.stored import StoredContext
 from tayyari.core.settings import Settings
+from tayyari.jobsearch import service as jobsearch_service
 from tayyari.storage.tables import LlmCallRow
 from tests.fakes.claude import search_run
 from tests.fakes.discover import DATA, FakeBoards, profile_of, read_json
@@ -169,3 +171,87 @@ async def test_switched_off_it_answers_503(start: Any) -> None:
         await rig.profile()
         response = await rig.search()
         assert response.status_code == 503 and "switched off" in response.json()["error"]
+
+
+# ───────────────────────── reading back, and a role's prep page and referral note ─────────────────────────
+
+
+async def test_the_last_results_and_a_roles_posting_are_read_back_for_the_runs_own_profile(
+    start: Any,
+) -> None:
+    async with start() as rig:
+        await rig.profile()
+        missing = await rig.env.client.get("/api/jobsearch/latest", params={"profileId": FRONTEND_ID})
+        assert missing.status_code == 404 and missing.json() == {"error": "No search yet"}
+        rig.script()
+        events = events_of(await rig.search())
+        run_id = events[-1]["runId"]
+        latest = await rig.env.client.get(
+            "/api/jobsearch/latest", params={"profileId": FRONTEND_ID, "city": "Bengaluru", "remote": "1"}
+        )
+        assert latest.status_code == 200 and latest.headers["cache-control"] == "no-store"
+        run = JobSearchRun.model_validate(latest.json())
+        assert run.runId == run_id and [j.id for j in run.jobs] == [
+            e["job"]["id"] for e in events if e["type"] == "job"
+        ]
+        no_remote = await rig.env.client.get(
+            "/api/jobsearch/latest", params={"profileId": FRONTEND_ID, "remote": "0"}
+        )
+        assert no_remote.status_code == 404
+        (job,) = [j for j in run.jobs if j.applyUrl == HARBOUR_URL]
+        posting = await rig.env.client.get(
+            f"/api/jobsearch/runs/{run_id}/jobs/{job.id}/posting", params={"profileId": FRONTEND_ID}
+        )
+        assert posting.status_code == 200
+        assert (
+            "Strong experience with React and TypeScript"
+            in JobPosting.model_validate(posting.json()).postingText
+        )
+        for bad in (
+            f"/api/jobsearch/runs/{run_id}/jobs/{'f' * 32}/posting",
+            f"/api/jobsearch/runs/x/jobs/{job.id}/posting",
+        ):
+            assert (await rig.env.client.get(bad, params={"profileId": FRONTEND_ID})).status_code == 404
+
+
+async def test_a_roles_prep_page_and_referral_note_come_from_the_stored_run(
+    start: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def fake_prepare(**kwargs: Any) -> RolePrep:
+        job = kwargs["job"]
+        assert "Strong experience with React" in kwargs["posting_text"]
+        return RolePrep(
+            jobId=job.id,
+            title=job.title,
+            employer=job.employer,
+            lead=[],
+            gaps=[],
+            questions=[],
+            createdAt="t",
+        )
+
+    async def fake_referral(**kwargs: Any) -> ReferralNote:
+        job = kwargs["job"]
+        return ReferralNote(
+            jobId=job.id, lines=[], ask="Would you be open to referring me?", link=job.applyUrl, createdAt="t"
+        )
+
+    monkeypatch.setattr(jobsearch_service, "prepare_role", fake_prepare)
+    monkeypatch.setattr(jobsearch_service, "write_referral", fake_referral)
+    async with start() as rig:
+        await rig.profile()
+        rig.script()
+        events = events_of(await rig.search())
+        run_id = events[-1]["runId"]
+        job_id = next(
+            e["job"]["id"] for e in events if e["type"] == "job" and e["job"]["applyUrl"] == HARBOUR_URL
+        )
+        body = {"profileId": FRONTEND_ID, "runId": run_id, "jobId": job_id}
+        prep = await rig.env.client.post("/api/jobsearch/prepare", json=body)
+        assert prep.status_code == 200 and RolePrep.model_validate(prep.json()).employer == WEB_COMPANY
+        note = await rig.env.client.post("/api/jobsearch/referral", json={**body, "fresh": True})
+        assert note.status_code == 200 and ReferralNote.model_validate(note.json()).link == HARBOUR_URL
+        gone = await rig.env.client.post("/api/jobsearch/prepare", json={**body, "jobId": "f" * 32})
+        assert gone.status_code == 404
+        bad = await rig.env.client.post("/api/jobsearch/referral", json={**body, "runId": "not-a-run"})
+        assert bad.status_code == 404

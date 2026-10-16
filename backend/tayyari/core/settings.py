@@ -129,6 +129,8 @@ class GuardSettings(BaseModel):
     """Searches with AI one client address may start per day without an account (0 = not enforced)."""
     est_jobsearch_usd: float = Field(default=0.20, ge=0)
     """Spend reserved before a search with AI: up to nine web searches ($0.01 each) and the Haiku reads around them."""
+    est_jobsearch_doc_usd: float = Field(default=0.02, ge=0)
+    """Spend reserved before a role's prep page or referral note is written (one Haiku call; a kept one costs nothing)."""
     chat_global_per_hour: int = Field(default=600, ge=0)
     """Backstop on chat turns per hour across all clients (shared counter)."""
     chat_streams_per_ip: int = Field(default=2, ge=0)

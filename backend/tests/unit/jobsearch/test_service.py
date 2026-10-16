@@ -13,14 +13,18 @@ from typing import Any
 import pytest
 
 from tayyari.contract.jobsearch import (
+    AvoidPrefs,
     JobSearchDoneEvent,
     JobSearchJobEvent,
     JobSearchStepEvent,
+    ReferralNote,
+    RolePrep,
 )
 from tayyari.contract.models import Profile
 from tayyari.core.settings import DiscoverSettings, JobSearchSettings
 from tayyari.discover import places
 from tayyari.discover.service import DiscoverService
+from tayyari.jobsearch import service as service_module
 from tayyari.jobsearch.boards import BoardReader
 from tayyari.jobsearch.errors import JobSearchDisabled
 from tayyari.jobsearch.harvest import ALLOWED_DOMAINS
@@ -30,6 +34,7 @@ from tayyari.llm.types import CallContext
 from tests.fakes.claude import FakeClaudeClient, search_run
 from tests.fakes.clock import FakeClock
 from tests.fakes.discover import NOW, FakeBoards, FakeDiscoverRepo, fixture_registry, profile_of, read_json
+from tests.fakes.jobsearch import FakeJobSearchRepo
 from tests.unit.discover.conftest import BOARD_FILES
 from tests.unit.jobsearch.support import (
     INJECTED_HTML,
@@ -60,11 +65,14 @@ RESULTS = {
 
 
 class Rig:
-    def __init__(self, service: JobSearchService, claude: FakeClaudeClient, boards: FakeBoards) -> None:
-        self.service, self.claude, self.boards = service, claude, boards
+    def __init__(
+        self, service: JobSearchService, claude: FakeClaudeClient, boards: FakeBoards, runs: FakeJobSearchRepo
+    ) -> None:
+        self.service, self.claude, self.boards, self.runs = service, claude, boards, runs
 
-    async def run(self, profile: Profile | None = None) -> list[Any]:
-        return [event async for event in self.service.run(profile or profile_of("frontend"), BENGALURU, CTX)]
+    async def run(self, profile: Profile | None = None, **options: Any) -> list[Any]:
+        found = self.service.run(profile or profile_of("frontend"), BENGALURU, CTX, **options)
+        return [event async for event in found]
 
     def fetched(self, token: str) -> int:
         return sum(token in url for url in self.boards.urls)
@@ -97,15 +105,17 @@ async def make_rig() -> Callable[..., Any]:
             listing_cap=300,
             transport=boards.transport,
         )
+        runs = FakeJobSearchRepo()
         service = JobSearchService(
             claude=claude,
             settings=settings or JobSearchSettings(),
             repo=repo,
+            runs=runs,
             registry=fixture_registry,
             reader=reader_,
             clock=clock,
         )
-        return Rig(service, claude, boards)
+        return Rig(service, claude, boards, runs)
 
     return build
 
@@ -132,9 +142,11 @@ async def test_a_search_streams_its_trail_then_the_roles_that_survive_the_checks
     )
     events = await rig.run()
 
-    assert steps(events) == ["plan", "search", "search", "search", "boards", "narrow", "read", "result"]
+    stages = steps(events)
+    assert stages[0] == "plan" and stages[-1] == "result" and stages.count("search") == 3
+    assert stages.index("boards") < stages.index("narrow") < len(stages) - 1
     assert isinstance(events[-1], JobSearchDoneEvent) and isinstance(events[-2], JobSearchStepEvent)
-    (job,) = jobs(events)
+    (job,) = [j for j in jobs(events) if j.foundVia == "web"]
     assert (job.title, job.employer, job.place.label) == ("Frontend Engineer", WEB_COMPANY, "Bengaluru")
     assert (job.foundVia, job.foundBy, job.applyUrl) == ("web", QUERY, HARBOUR_URL)
     assert job.applyHost == "job-boards.greenhouse.io" and job.checkedAt == NOW.isoformat()
@@ -236,12 +248,15 @@ async def test_a_scout_that_fails_is_reported_and_the_others_go_on(make_rig: Any
     assert len(jobs(events)) == 1
 
 
-async def test_when_every_scout_fails_the_search_ends_with_that_error(make_rig: Any) -> None:
+async def test_when_every_scout_fails_and_nothing_near_fits_the_search_ends_with_that_error(
+    make_rig: Any,
+) -> None:
     rig = await make_rig()
     rig.claude.script_search(ClaudeOverloaded(), repeat=True)
+    rig.claude.script_structured("jobsearch.judge", reader({}), repeat=True)
     with pytest.raises(ClaudeOverloaded):
         await rig.run()
-    assert rig.claude.calls_for("jobsearch.judge") == []
+    assert rig.runs.runs == {}
 
 
 async def test_a_read_that_fails_shows_nothing_for_its_postings_and_says_so(make_rig: Any) -> None:
@@ -268,3 +283,181 @@ async def test_switched_off_it_refuses_before_anything_runs(make_rig: Any) -> No
     rig = await make_rig(settings=JobSearchSettings(enabled=False))
     with pytest.raises(JobSearchDisabled):
         rig.service.require_enabled()
+
+
+# ───────────────────────── runs, choices and what is built on a role ─────────────────────────
+
+
+def _good(posting_id: str, ev: dict[str, str]) -> dict[str, Any]:
+    """A read that meets one ask of a frontend posting whose text says React (the stored listings: the near half)."""
+    return item(posting_id, [("React and TypeScript", [ev["React"]], "met")], kind="same")
+
+
+def jobs_of_run(rig: Rig, run_id: str) -> list[dict[str, Any]]:
+    return list(rig.runs.runs[run_id].result["jobs"])
+
+
+async def test_a_finished_search_is_stored_and_read_back_as_the_last_results(make_rig: Any) -> None:
+    rig = await make_rig()
+    rig.claude.script_search(search_run(RESULTS), repeat=True)
+    rig.claude.script_structured(
+        "jobsearch.judge", reader({"Frontend Engineer": frontend_answer}), repeat=True
+    )
+    events = await rig.run()
+    finished = done(events)
+    assert finished.runId in rig.runs.runs and finished.createdAt == NOW.isoformat()
+    profile_id = profile_of("frontend").id
+    latest = await rig.service.latest(profile_id, BENGALURU, True)
+    assert latest is not None and latest.runId == finished.runId
+    assert [j.id for j in latest.jobs] == [j.id for j in jobs(events)]
+    assert [s.stage for s in latest.trail] == steps(events) and latest.funnel == finished.funnel
+    assert await rig.service.latest(profile_id, BENGALURU, False) is None
+    assert await rig.service.latest("someone-else", BENGALURU, True) is None
+    (job,) = [j for j in latest.jobs if j.foundVia == "web"]
+    posting = await rig.service.posting(profile_id, finished.runId, job.id)
+    assert posting is not None and "Strong experience with React and TypeScript" in posting.postingText
+    assert posting.applyUrl == HARBOUR_URL and posting.employer == WEB_COMPANY
+    assert await rig.service.posting("someone-else", finished.runId, job.id) is None
+    assert await rig.service.posting(profile_id, finished.runId, "f" * 32) is None
+
+
+async def test_the_card_counts_every_checked_ask(make_rig: Any) -> None:
+    rig = await make_rig()
+    rig.claude.script_search(search_run(RESULTS), repeat=True)
+    rig.claude.script_structured(
+        "jobsearch.judge", reader({"Frontend Engineer": frontend_answer}), repeat=True
+    )
+    (job,) = [j for j in jobs(await rig.run()) if j.foundVia == "web"]
+    assert (job.asks.met, job.asks.partly, job.asks.notShown) == (2, 0, 1)
+    assert job.openLong is None  # first published three days ago
+
+
+async def test_without_remote_roles_there_is_no_remote_scout_and_no_remote_role(make_rig: Any) -> None:
+    rig = await make_rig()
+    rig.claude.script_search(search_run(RESULTS), repeat=True)
+    rig.claude.script_structured(
+        "jobsearch.judge", reader({"Frontend Engineer": frontend_answer}), repeat=True
+    )
+    events = await rig.run(remote=False)
+    assert len(rig.claude.search_calls) == 2
+    assert all("remote" not in c.user_text.lower() for c in rig.claude.search_calls)
+    assert all(j.place.label != "Remote, India" for j in jobs(events))
+    read = "\n".join(c.user_text for c in rig.claude.calls_for("jobsearch.judge"))
+    assert "Remote - India" not in read
+    (stored,) = rig.runs.runs.values()
+    assert stored.remote is False and done(events).runId == stored.id
+
+
+async def test_not_for_me_keeps_hidden_roles_and_waved_off_employers_out(make_rig: Any) -> None:
+    rig = await make_rig()
+    rig.claude.script_search(search_run(RESULTS), repeat=True)
+    rig.claude.script_structured(
+        "jobsearch.judge", reader({"Frontend Engineer": frontend_answer}), repeat=True
+    )
+    first = await rig.run()
+    (harbour,) = [j for j in jobs(first) if j.employer == WEB_COMPANY]
+    before = len(rig.claude.calls_for("jobsearch.judge"))
+    avoid = AvoidPrefs(jobIds=[harbour.id], employers=["Kestrel Pay"], noStepUp=False)
+    second = await rig.run(avoid=avoid)
+    assert all(j.id != harbour.id for j in jobs(second))
+    shown = "\n".join(c.user_text for c in rig.claude.calls_for("jobsearch.judge")[before:])
+    assert "Employer: Kestrel Pay" not in shown and "Employer: Harbour Labs" not in shown
+
+
+async def test_too_senior_leaves_out_roles_a_step_up(make_rig: Any) -> None:
+    board = web_board(
+        gh_job(
+            107, "Senior Frontend Engineer", "Bengaluru, India", "&lt;p&gt;React and TypeScript.&lt;/p&gt;"
+        )
+    )
+    rig = await make_rig(board=board)
+    rig.claude.script_search(search_run(RESULTS), repeat=True)
+    rig.claude.script_structured(
+        "jobsearch.judge",
+        reader({"Frontend Engineer": frontend_answer, "Senior Frontend Engineer": _good}),
+        repeat=True,
+    )
+    events = await rig.run(avoid=AvoidPrefs(jobIds=[], employers=[], noStepUp=True))
+    assert all("Senior" not in j.title for j in jobs(events))
+    read = "\n".join(c.user_text for c in rig.claude.calls_for("jobsearch.judge"))
+    assert "Title: Senior Frontend Engineer" not in read
+
+
+async def test_tayyaris_own_employers_are_read_while_the_web_search_runs(make_rig: Any) -> None:
+    rig = await make_rig()
+    rig.claude.script_search(search_run(RESULTS), repeat=True)
+    rig.claude.script_structured(
+        "jobsearch.judge", reader({"Frontend Engineer": frontend_answer}), repeat=True
+    )
+    events = await rig.run()
+    reads = [e.step.text for e in events if isinstance(e, JobSearchStepEvent) and e.step.stage == "read"]
+    assert reads and "Tayyari's own employers" in reads[0]
+    ids = [j.id for j in jobs(events)]
+    assert len(ids) == len(set(ids))  # a role is read once, whichever half found it
+    judged = "\n".join(c.user_text for c in rig.claude.calls_for("jobsearch.judge"))
+    assert judged.count("Employer: Harbour Labs\nLocation: Bengaluru") == 1
+
+
+async def test_a_prep_page_is_written_once_kept_and_only_for_the_runs_own_profile(
+    make_rig: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rig = await make_rig()
+    rig.claude.script_search(search_run(RESULTS), repeat=True)
+    rig.claude.script_structured(
+        "jobsearch.judge", reader({"Frontend Engineer": frontend_answer}), repeat=True
+    )
+    finished = done(await rig.run())
+    written: list[str] = []
+
+    async def fake_prepare(**kwargs: Any) -> RolePrep:
+        written.append(kwargs["posting_text"][:40])
+        job = kwargs["job"]
+        return RolePrep(
+            jobId=job.id,
+            title=job.title,
+            employer=job.employer,
+            lead=[],
+            gaps=[],
+            questions=[],
+            createdAt="x",
+        )
+
+    monkeypatch.setattr(service_module, "prepare_role", fake_prepare)
+    profile = profile_of("frontend")
+    job_id = next(j for j in jobs_of_run(rig, finished.runId) if j["foundVia"] == "web")["id"]
+    first = await rig.service.prepare(profile, finished.runId, job_id, CTX)
+    again = await rig.service.prepare(profile, finished.runId, job_id, CTX)
+    assert first is not None and again == first and len(written) == 1
+    assert await rig.service.prepare(profile, finished.runId, job_id, CTX, fresh=True) is not None
+    assert len(written) == 2
+    other = Profile.from_dict({**profile.to_dict(), "id": "b" * 32})
+    assert await rig.service.prepare(other, finished.runId, job_id, CTX) is None
+    assert await rig.service.prepare(profile, "c" * 32, job_id, CTX) is None
+
+
+async def test_a_referral_note_is_written_once_and_rewritten_on_request(
+    make_rig: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rig = await make_rig()
+    rig.claude.script_search(search_run(RESULTS), repeat=True)
+    rig.claude.script_structured(
+        "jobsearch.judge", reader({"Frontend Engineer": frontend_answer}), repeat=True
+    )
+    finished = done(await rig.run())
+    calls: list[int] = []
+
+    async def fake_referral(**kwargs: Any) -> ReferralNote:
+        calls.append(1)
+        job = kwargs["job"]
+        return ReferralNote(
+            jobId=job.id, lines=[], ask="Would you be open to referring me?", link=job.applyUrl, createdAt="x"
+        )
+
+    monkeypatch.setattr(service_module, "write_referral", fake_referral)
+    profile = profile_of("frontend")
+    job_id = next(j for j in jobs_of_run(rig, finished.runId) if j["foundVia"] == "web")["id"]
+    note = await rig.service.referral(profile, finished.runId, job_id, CTX)
+    assert note is not None and note.link == HARBOUR_URL
+    await rig.service.referral(profile, finished.runId, job_id, CTX)
+    await rig.service.referral(profile, finished.runId, job_id, CTX, fresh=True)
+    assert len(calls) == 2

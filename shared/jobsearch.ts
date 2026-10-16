@@ -84,10 +84,21 @@ export interface AiJob {
   met: AskMet[];
   /** Requirements in the posting's own words that the profile does not show (at most three). */
   gaps: string[];
+  /** How the read's checked requirements came out, all of them (the card's pips): never a score. */
+  asks: AskCounts;
+  /** First published over a year ago and still listed: worth asking if it is still hiring. */
+  openLong?: boolean;
   /** The code quick fit, as Discover shows it. */
   quickFit: QuickFit;
   /** Only when the employer states it. */
   salary?: Salary;
+}
+
+/** The requirements a read checked and that survived the checks, by outcome. */
+export interface AskCounts {
+  met: number;
+  partly: number;
+  notShown: number;
 }
 
 /** One stage of the funnel: what was left after it. */
@@ -98,17 +109,131 @@ export interface FunnelStep {
 
 /**
  * `POST /api/jobsearch` streams one JSON object per line: `step` lines as the search moves, a `job` line for each role
- * that survives, then `done` (or `error`). Jobs arrive best first within each read batch; the web app keeps them ordered
- * by fit word.
+ * that survives, then `done` (or `error`). Roles from Tayyari's own employers arrive first (a few seconds in), the web
+ * search's after; the web app keeps them ordered by fit word. `done` names the stored run, which
+ * `GET /api/jobsearch/latest` returns until the next search.
  */
 export type JobSearchEvent =
   | { type: 'step'; step: TrailStep }
   | { type: 'job'; job: AiJob }
-  | { type: 'done'; jobs: number; funnel: FunnelStep[]; note?: string }
+  | { type: 'done'; jobs: number; funnel: FunnelStep[]; note?: string; runId: string; createdAt: string }
   | { type: 'error'; message: string };
+
+/**
+ * What "Not for me" taught the search. Kept in the browser and sent with each search: hidden roles never come back, an
+ * employer the person waved off is skipped, and "too senior" leaves out roles a step up.
+ */
+export interface AvoidPrefs {
+  jobIds: string[];
+  /** Employer names as shown on the cards. */
+  employers: string[];
+  noStepUp: boolean;
+}
 
 /** `POST /api/jobsearch` body. `city` is the city Discover is showing; the profile's city when it is left out. */
 export interface JobSearchRequest {
   profileId: string;
   city?: string;
+  /** Include remote roles open to India (true when left out). */
+  remote?: boolean;
+  avoid?: AvoidPrefs;
+}
+
+/**
+ * `GET /api/jobsearch/latest?profileId=…&city=…&remote=…`: the last finished search for this profile, city and remote
+ * choice (404 when there is none). The search runs only when the person presses Search; this is how the page shows the
+ * last results at once.
+ */
+export interface JobSearchRun {
+  runId: string;
+  createdAt: string;
+  city?: string;
+  remote: boolean;
+  jobs: AiJob[];
+  funnel: FunnelStep[];
+  trail: TrailStep[];
+  note?: string;
+}
+
+/**
+ * `GET /api/jobsearch/runs/{runId}/jobs/{jobId}/posting?profileId=…`: the posting's text as the search read it, which the
+ * web app sends to `POST /api/match` as `text` for "See how you fit".
+ */
+export interface JobPosting {
+  jobId: string;
+  title: string;
+  employer: string;
+  applyUrl: string;
+  postingText: string;
+}
+
+/** `POST /api/jobsearch/prepare` and `POST /api/jobsearch/referral` body. `fresh` asks for a new draft (Rewrite). */
+export interface RoleRequest {
+  profileId: string;
+  runId: string;
+  jobId: string;
+  fresh?: boolean;
+}
+
+/** A requirement the person's evidence meets, to lead with (from the search's checked read). */
+export interface PrepLead {
+  ask: string;
+  cite: Cite;
+  partly: boolean;
+}
+
+/** A requirement the profile does not show: the nearest evidence (checked), and one small step (a suggestion). */
+export interface PrepGap {
+  gap: string;
+  nearest?: Cite;
+  /** Written by the model as advice, never a claim about the person; the page labels it a suggestion. */
+  step: string;
+}
+
+/** One beat of a story: a line of the person's evidence, or a placeholder for what only they know. */
+export interface StoryPart {
+  label: string;
+  cite?: Cite;
+  placeholder?: string;
+}
+
+/** A question the posting suggests, tied to the requirement it comes from, with a story built from evidence. */
+export interface PrepQuestion {
+  question: string;
+  /** Word for word from the posting (checked in code). */
+  ask: string;
+  story: StoryPart[];
+}
+
+/** `POST /api/jobsearch/prepare` answer: the prep page for one role. */
+export interface RolePrep {
+  jobId: string;
+  title: string;
+  employer: string;
+  lead: PrepLead[];
+  gaps: PrepGap[];
+  questions: PrepQuestion[];
+  createdAt: string;
+}
+
+/** The three parts of a referral note: why the company, why the person fits, why the role fits them. */
+export type ReferralPart = 'company' | 'you' | 'role';
+
+/** One line of the note, and where its words come from ("the posting", "your resume"). */
+export interface ReferralLine {
+  part: ReferralPart;
+  text: string;
+  sources: string[];
+}
+
+/**
+ * `POST /api/jobsearch/referral` answer: a short note asking a connection for a referral. Three lines, then `ask` and the
+ * link. `[name]` in the first line is the connection's name, filled in by the person.
+ */
+export interface ReferralNote {
+  jobId: string;
+  lines: ReferralLine[];
+  ask: string;
+  link: string;
+  createdAt: string;
 }

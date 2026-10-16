@@ -95,6 +95,11 @@ def _evidence(profile: Profile) -> tuple[Evidence, ...]:
     return tuple(out)
 
 
+def evidence_lines(profile: Profile) -> tuple[Evidence, ...]:
+    """The profile's evidence lines ``E1…`` (the same numbering every search, prep page and referral note uses)."""
+    return _evidence(profile)
+
+
 def build_brief(profile: Profile, city: City | None, *, scouts: int) -> Brief:
     """The brief of one search. ``city`` is the city Discover shows (None: remote roles only)."""
     person = profile.person
@@ -131,4 +136,12 @@ def build_brief(profile: Profile, city: City | None, *, scouts: int) -> Brief:
     )
 
 
-__all__ = ["EVIDENCE_MIN_SCORE", "REMOTE_PLACE", "Angle", "Brief", "Evidence", "build_brief"]
+__all__ = [
+    "EVIDENCE_MIN_SCORE",
+    "REMOTE_PLACE",
+    "Angle",
+    "Brief",
+    "Evidence",
+    "build_brief",
+    "evidence_lines",
+]

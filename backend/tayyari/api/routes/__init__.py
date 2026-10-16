@@ -12,8 +12,9 @@
     billing   GET /api/billing/entitlements; POST /api/billing/checkout, /verify; POST /api/billing/webhooks/razorpay, /stripe
     match     POST /api/match (NDJSON); GET /api/match/{id}, /api/matches; POST .../answers, .../resume (NDJSON), .../cover;
               GET, PATCH .../resume; GET .../cover, .../resume.pdf, .../resume.docx, .../cover.pdf
-    discover  GET /api/discover; GET /api/discover/cities; GET /api/discover/listings/{id}
-    jobsearch POST /api/jobsearch       JSON `JobSearchRequest` -> NDJSON `JobSearchEvent` stream (search with AI)
+    discover  GET /api/discover/cities
+    jobsearch POST /api/jobsearch (NDJSON); GET /api/jobsearch/latest, .../runs/{id}/jobs/{id}/posting;
+              POST /api/jobsearch/prepare, /api/jobsearch/referral (search with AI)
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.

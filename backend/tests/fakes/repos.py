@@ -84,6 +84,7 @@ from tayyari.storage.ports import (
 from tayyari.storage.repos import Repositories
 from tayyari.storage.repos.match import posting_listing_fields
 from tests.fakes.discover import FakeDiscoverRepo
+from tests.fakes.jobsearch import FakeJobSearchRepo
 
 TOUCH_INTERVAL = timedelta(hours=1)
 TOTAL = "total"
@@ -1283,6 +1284,7 @@ class FakeRepositories:
         self.user_facts = FakeUserFactRepo(self._state)
         self.matches = FakeMatchRepo(self._state)
         self.discover = FakeDiscoverRepo()
+        self.jobsearch = FakeJobSearchRepo()
         self.bundle = Repositories(
             profiles=self.profiles,
             sessions=self.sessions,
@@ -1298,6 +1300,7 @@ class FakeRepositories:
             user_facts=self.user_facts,
             matches=self.matches,
             discover=self.discover,
+            jobsearch=self.jobsearch,
         )
 
 

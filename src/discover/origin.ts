@@ -13,7 +13,7 @@
  * Every storage access is wrapped: with storage blocked there is simply no origin bar.
  */
 import { useSyncExternalStore } from 'react';
-import { safeHref } from './model';
+import { safeHref } from './util';
 
 export const ORIGIN_KEY = 'tayyari.match.origin';
 

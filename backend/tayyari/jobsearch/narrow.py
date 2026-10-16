@@ -24,10 +24,9 @@ from datetime import datetime
 from typing import Final
 
 from tayyari.contract.jobsearch import FoundVia, FunnelStep
-from tayyari.discover.models import FIT_ORDER
 from tayyari.discover.normalise import is_entry_level_title, normalise_title, title_tokens
 from tayyari.discover.person import PersonIndex
-from tayyari.discover.quickfit import Fit, PostingIndex, quick_fit
+from tayyari.discover.quickfit import FIT_ORDER, Fit, PostingIndex, quick_fit
 from tayyari.discover.textutil import YearsAsked, years_asked
 from tayyari.discover.vocab import Vocabulary, prep
 from tayyari.storage.ports import DiscoverListing

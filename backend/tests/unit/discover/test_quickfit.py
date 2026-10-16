@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 
+from tayyari.contract.discover import QuickFitWord
 from tayyari.contract.models import Profile
 from tayyari.discover.person import PersonIndex
-from tayyari.discover.quickfit import IndexCache, PostingIndex, quick_fit
+from tayyari.discover.quickfit import FIT_ORDER, PostingIndex, quick_fit
 from tayyari.discover.vocab import vocabulary
 from tests.fakes.discover import profile_of
 
@@ -181,14 +182,14 @@ def test_nothing_in_a_quick_fit_is_a_percentage() -> None:
     }  # fmt: skip
 
 
-def test_the_posting_index_is_cached_by_listing_and_content() -> None:
-    cache = IndexCache(capacity=2)
-    first = PostingIndex("T", "React", VOCAB)
-    cache.put("a", "h1", first)
-    cache.put("b", "h1", first)
-    assert cache.get("a", "h1") is first and cache.get("a", "h2") is None
-    cache.put("c", "h1", first)  # over the capacity: the least recently used goes
-    assert cache.get("b", "h1") is None and cache.get("a", "h1") is first and len(cache) == 2
+def test_the_words_are_ordered_from_closest_to_least_known() -> None:
+    assert sorted(FIT_ORDER, key=FIT_ORDER.__getitem__) == [
+        "looks_close",
+        "worth_a_look",
+        "stretch",
+        "cant_tell",
+    ]
+    assert set(FIT_ORDER) == set(get_args(QuickFitWord))
 
 
 @pytest.mark.parametrize("name", ["frontend", "fresher"])

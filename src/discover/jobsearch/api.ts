@@ -9,15 +9,32 @@
  * The server's sentence is shown as it was written. A sentence is only replaced when the body held none (a proxy's
  * page, a bare status) or held a machine code instead.
  *
+ * Besides the stream: `GET /api/jobsearch/latest` (the last finished search, 404 when there is none) and
+ * `GET /api/jobsearch/runs/{runId}/jobs/{jobId}/posting` (the posting text "See how you fit" sends to the match flow).
+ *
  * Events are read defensively, like `match/api.ts`: a line this client does not know, or whose shape is wrong, is
  * dropped, never trusted. A job is dropped unless it has what the card must say (an id, a title, an employer, a plain
  * web address to apply at, a place, a fit word, where it was found, and when the employer's board listed it); fields
  * that only decorate it are left out when they are wrong. Lists are capped at the contract's own limits.
  */
 import type { DiscoverWorkMode, Place, PlacePrecision, QuickFit } from '../../../shared/discover';
-import type { AiFitWord, AiJob, AskMet, FoundVia, FunnelStep, JobSearchEvent, JobSearchRequest, LevelWord, TrailStage, TrailStep } from '../../../shared/jobsearch';
+import type {
+  AiFitWord,
+  AiJob,
+  AskCounts,
+  AskMet,
+  FoundVia,
+  FunnelStep,
+  JobPosting,
+  JobSearchEvent,
+  JobSearchRequest,
+  JobSearchRun,
+  LevelWord,
+  TrailStage,
+  TrailStep,
+} from '../../../shared/jobsearch';
 import { ApiError, readNdjson } from '../../lib/api';
-import { hostOf, safeHref } from '../model';
+import { hostOf, safeHref } from '../util';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
@@ -60,7 +77,7 @@ const looksLikeCode = (s: string) => /^[a-z][a-z0-9_]*$/.test(s);
 const FALLBACK: Record<number, string> = {
   400: "That search couldn't be started. Please reload the page and try again.",
   401: 'Sign in to search with AI.',
-  404: "We couldn't find your profile on this server. Analyse your resume again, then come back.",
+  404: 'Profile not found',
   429: 'Too many searches right now. Please wait a moment and try again.',
   503: 'Search with AI is not available right now.',
 };
@@ -140,6 +157,23 @@ function readQuickFit(raw: unknown): QuickFit {
   return { word: 'cant_tell', named: 0, matched: 0, notFound: [], reasons: [] };
 }
 
+const asksCount = (v: unknown): number => {
+  const n = finite(v);
+  return n !== undefined && n >= 0 ? Math.min(Math.round(n), 99) : 0;
+};
+
+/**
+ * The pips: how every checked requirement came out. A job that arrives without them (an older server) is counted from
+ * the quotes it does carry, so the card still draws something true.
+ */
+function readAsks(raw: unknown, met: readonly AskMet[], gaps: readonly string[]): AskCounts {
+  if (isObj(raw) && ['met', 'partly', 'notShown'].every((k) => finite(raw[k]) !== undefined)) {
+    return { met: asksCount(raw.met), partly: asksCount(raw.partly), notShown: asksCount(raw.notShown) };
+  }
+  const partly = met.filter((m) => m.partly).length;
+  return { met: met.length - partly, partly, notShown: gaps.length };
+}
+
 /** One job, or null when it lacks what its card must say. */
 export function readJob(raw: unknown): AiJob | null {
   if (!isObj(raw)) return null;
@@ -162,6 +196,18 @@ export function readJob(raw: unknown): AiJob | null {
   const levelQuote = text(raw.levelQuote, 600);
   const yearsAsked = finite(raw.yearsAsked);
   const salary = isObj(raw.salary) ? text(raw.salary.text, 200) : undefined;
+  const met = arr(raw.met)
+    .flatMap((m) => {
+      const one = readMet(m);
+      return one ? [one] : [];
+    })
+    .slice(0, MAX_MET);
+  const gaps = arr(raw.gaps)
+    .flatMap((g) => {
+      const gap = text(g, 1000);
+      return gap ? [gap] : [];
+    })
+    .slice(0, MAX_GAPS);
 
   return {
     id,
@@ -179,14 +225,10 @@ export function readJob(raw: unknown): AiJob | null {
     level: oneOf(LEVELS, raw.level) ?? 'unclear',
     ...(levelQuote ? { levelQuote } : {}),
     ...(yearsAsked !== undefined && yearsAsked >= 0 ? { yearsAsked } : {}),
-    met: arr(raw.met).flatMap((m) => {
-      const met = readMet(m);
-      return met ? [met] : [];
-    }).slice(0, MAX_MET),
-    gaps: arr(raw.gaps).flatMap((g) => {
-      const gap = text(g, 1000);
-      return gap ? [gap] : [];
-    }).slice(0, MAX_GAPS),
+    met,
+    gaps,
+    asks: readAsks(raw.asks, met, gaps),
+    ...(raw.openLong === true ? { openLong: true } : {}),
     quickFit: readQuickFit(raw.quickFit),
     ...(salary ? { salary: { text: salary } } : {}),
   };
@@ -232,7 +274,15 @@ export function readJobSearchEvent(raw: unknown): JobSearchEvent | null {
     }
     case 'done': {
       const note = text(raw.note, 600);
-      return { type: 'done', jobs: Math.max(0, Math.round(finite(raw.jobs) ?? 0)), funnel: readFunnel(raw.funnel), ...(note ? { note } : {}) };
+      // a server that names no run leaves "" here: the roles still show, but nothing can be fetched for them
+      return {
+        type: 'done',
+        jobs: Math.max(0, Math.round(finite(raw.jobs) ?? 0)),
+        funnel: readFunnel(raw.funnel),
+        ...(note ? { note } : {}),
+        runId: text(raw.runId, 64) ?? '',
+        createdAt: isoTime(raw.createdAt) ?? new Date().toISOString(),
+      };
     }
     case 'error':
       return { type: 'error', message: text(raw.message, 600) ?? TROUBLE };
@@ -252,3 +302,72 @@ export const streamJobSearch: JobSearchStream = async (req, onEvent, signal) => 
     if (e) onEvent(e);
   });
 };
+
+/* ───────────────────────── the last results, and a posting ───────────────────────── */
+
+/** The last finished search as the server stored it, read as defensively as a stream line; null when it is not one. */
+export function readRun(raw: unknown): JobSearchRun | null {
+  if (!isObj(raw)) return null;
+  const runId = text(raw.runId, 64);
+  const createdAt = isoTime(raw.createdAt);
+  if (!runId || !createdAt) return null;
+  const city = text(raw.city, 100);
+  const note = text(raw.note, 600);
+  return {
+    runId,
+    createdAt,
+    ...(city ? { city } : {}),
+    remote: raw.remote !== false,
+    jobs: arr(raw.jobs).flatMap((j) => {
+      const job = readJob(j);
+      return job ? [job] : [];
+    }),
+    funnel: readFunnel(raw.funnel),
+    trail: arr(raw.trail).flatMap((t) => {
+      const step = readStep(t);
+      return step ? [step] : [];
+    }).slice(0, 60),
+    ...(note ? { note } : {}),
+  };
+}
+
+/** A posting's text, as the search read it; null when the answer is not one. */
+export function readPosting(raw: unknown): JobPosting | null {
+  if (!isObj(raw)) return null;
+  const jobId = text(raw.jobId, 200);
+  const title = text(raw.title, 300);
+  const employer = text(raw.employer, 200);
+  const applyUrl = text(raw.applyUrl, 2000);
+  const postingText = typeof raw.postingText === 'string' ? raw.postingText : '';
+  if (!jobId || !title || !employer || !applyUrl || postingText.trim() === '') return null;
+  return { jobId, title, employer, applyUrl, postingText };
+}
+
+/** How the page asks for the last results; the dev gallery swaps in a scripted one. */
+export type LatestLoader = (profileId: string, city: string | undefined, remote: boolean, signal: AbortSignal) => Promise<JobSearchRun | null>;
+
+/** Said by `GET /api/jobsearch/latest` when the profile has not searched this place yet; any other 404 is the profile. */
+const NO_SEARCH_YET = /no search yet/i;
+
+/** `GET /api/jobsearch/latest`: the last finished search for this profile, city and remote choice; null when there is none. */
+export const getLatestRun: LatestLoader = async (profileId, city, remote, signal) => {
+  const q = new URLSearchParams({ profileId, remote: remote ? '1' : '0' });
+  if (city) q.set('city', city);
+  const res = await fetch(`/api/jobsearch/latest?${q}`, { signal });
+  if (res.status === 404) {
+    const err = await failure(res);
+    if (NO_SEARCH_YET.test(err.message)) return null;
+    throw err;
+  }
+  if (!res.ok) throw await failure(res);
+  return readRun(await res.json().catch(() => null));
+};
+
+/** `GET /api/jobsearch/runs/{runId}/jobs/{jobId}/posting`: the text "See how you fit" sends to the match flow. */
+export async function getPosting(runId: string, jobId: string, profileId: string, signal?: AbortSignal): Promise<JobPosting> {
+  const res = await fetch(`/api/jobsearch/runs/${encodeURIComponent(runId)}/jobs/${encodeURIComponent(jobId)}/posting?${new URLSearchParams({ profileId })}`, { signal });
+  if (!res.ok) throw await failure(res);
+  const posting = readPosting(await res.json().catch(() => null));
+  if (!posting) throw new JobSearchApiError(TROUBLE, 502);
+  return posting;
+}

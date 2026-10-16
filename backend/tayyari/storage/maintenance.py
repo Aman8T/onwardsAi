@@ -23,6 +23,7 @@ What is purged, with the windows from ``settings.retention``:
 ``rate_limit_hits``    counters older than two days
 ``auth``               sign-ins (``auth_sessions``) and emailed links (``magic_links``) past their expiry
 ``discover_closed``    Discover listings closed more than 30 days ago (`CLOSED_LISTING_DAYS`)
+``jobsearch``          searches with AI, prep pages and referral notes older than 30 days (`JOBSEARCH_RETENTION`)
 =====================  ===========================================================================
 
 The permanent sample corpus is exempt from the payload and metadata steps: decision and Jev rows flagged
@@ -65,6 +66,8 @@ MIN_INTERVAL = timedelta(hours=6)
 HITS_RETENTION = timedelta(days=2)
 CLOSED_LISTING_RETENTION = timedelta(days=30)
 """A Discover listing the employer's board stopped listing is deleted this long after it was closed."""
+JOBSEARCH_RETENTION: Final = timedelta(days=30)
+"""Searches with AI, and the prep pages and referral notes written for their roles, are deleted after this long."""
 ADVISORY_LOCK_KEY = 0x5441595941524932
 """``"TAYYARI2"``: the Postgres advisory lock that keeps replicas from purging at the same time."""
 USER_TEXT_PACKS: Final = frozenset({"chat_gate"})
@@ -240,6 +243,7 @@ async def run_maintenance(
         ("rate_limit_hits", lambda: repos.limits.purge_hits(now - HITS_RETENTION)),
         ("auth", lambda: repos.users.purge_expired(now)),
         ("discover_closed", lambda: repos.discover.purge_closed(now - CLOSED_LISTING_RETENTION)),
+        ("jobsearch", lambda: repos.jobsearch.purge(now - JOBSEARCH_RETENTION)),
     ]
     counts: dict[str, int] = {}
     errors = 0
@@ -259,6 +263,7 @@ __all__ = [
     "ADVISORY_LOCK_KEY",
     "CLOSED_LISTING_RETENTION",
     "HITS_RETENTION",
+    "JOBSEARCH_RETENTION",
     "LAST_RUN_KEY",
     "MIN_INTERVAL",
     "run_maintenance",

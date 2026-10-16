@@ -497,6 +497,7 @@ class Container:
                     claude=claude,
                     settings=settings.jobsearch,
                     repo=repos.discover,
+                    runs=repos.jobsearch,
                     registry=lambda: found_by.registry,
                     reader=BoardReader(
                         clock=clock,

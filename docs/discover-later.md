@@ -1,5 +1,7 @@
 # Discover: what waits for permission, legal review or infrastructure
 
+> Since 2026-10-16 (D3 in `docs/roadmap.md`) Discover is Search with AI only: the list-first screen, lenses, lanes, groups and companies lane described below were removed. The items that wait still apply to the sources and features the search would add.
+
 Discover v1 ships only what needs nobody's permission and no legal review: Greenhouse and Lever job boards from a curated employer registry, a list-first screen without a map, straight-line distance by locality, lenses, lanes, groups, a code-only quick fit, labelled apply links, the companies lane, click-through to the existing match, and save and track in the browser. The rest needs a yes from a source or partner, a legal read, infrastructure we have not built, or data we have not yet collected, so it waits. The full design, with placeholder data, is on the canvas at https://claude.ai/artifact/8A5u18LpAhxB7fGfAinhmv. Section numbers below refer to `docs/research/job-discovery.md`.
 
 ## What waits

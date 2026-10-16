@@ -656,6 +656,44 @@ class DiscoverRunRow(Base):
     __table_args__ = (Index("ix_discover_runs_started_at", "started_at"),)
 
 
+class JobSearchRunRow(Base):
+    """One finished search with AI. ``result`` is what the person saw (the `JobSearchRun` fields: roles, funnel, trail,
+    note); ``postings`` holds, server-side only, the text of each shown posting by job id (``title``, ``employer``,
+    ``applyUrl``, ``text``), so the prep page, the referral note and "See how you fit" read what the search read.
+    Purged after 30 days (`storage.maintenance`). No foreign key: like every profile-scoped row here."""
+
+    __tablename__ = "jobsearch_runs"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN))
+    city: Mapped[str | None] = mapped_column(String(40))
+    remote: Mapped[bool] = mapped_column(Boolean)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    result: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    postings: Mapped[dict[str, Any]] = mapped_column(JSONType)
+
+    __table_args__ = (
+        Index("ix_jobsearch_runs_profile_id", "profile_id", "created_at"),
+        Index("ix_jobsearch_runs_created_at", "created_at"),
+    )
+
+
+class JobSearchDocRow(Base):
+    """A role's prep page (``kind`` ``prep``) or referral note (``referral``), once written: one row per profile, job and
+    kind (``id`` is a hash of the three), replaced by a rewrite. Purged after 30 days."""
+
+    __tablename__ = "jobsearch_docs"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN))
+    job_id: Mapped[str] = mapped_column(String(ID_LEN))
+    kind: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    body: Mapped[dict[str, Any]] = mapped_column(JSONType)
+
+    __table_args__ = (Index("ix_jobsearch_docs_created_at", "created_at"),)
+
+
 __all__ = [
     "BAND_LEN",
     "EMAIL_LEN",
@@ -676,6 +714,8 @@ __all__ = [
     "EntitlementRow",
     "JSONType",
     "JevCallRow",
+    "JobSearchDocRow",
+    "JobSearchRunRow",
     "KvRow",
     "LlmCallRow",
     "MagicLinkRow",

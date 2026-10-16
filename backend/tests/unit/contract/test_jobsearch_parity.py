@@ -32,9 +32,21 @@ def _ts() -> TsTypes:
 INTERFACE_MODELS: dict[str, type[BaseModel]] = {
     "TrailStep": js.TrailStep,
     "AskMet": js.AskMet,
+    "AskCounts": js.AskCounts,
     "AiJob": js.AiJob,
     "FunnelStep": js.FunnelStep,
+    "AvoidPrefs": js.AvoidPrefs,
     "JobSearchRequest": js.JobSearchRequest,
+    "JobSearchRun": js.JobSearchRun,
+    "JobPosting": js.JobPosting,
+    "RoleRequest": js.RoleRequest,
+    "PrepLead": js.PrepLead,
+    "PrepGap": js.PrepGap,
+    "StoryPart": js.StoryPart,
+    "PrepQuestion": js.PrepQuestion,
+    "RolePrep": js.RolePrep,
+    "ReferralLine": js.ReferralLine,
+    "ReferralNote": js.ReferralNote,
 }
 
 UNIONS = {
@@ -42,6 +54,7 @@ UNIONS = {
     "AiFitWord": js.AiFitWord,
     "LevelWord": js.LevelWord,
     "TrailStage": js.TrailStage,
+    "ReferralPart": js.ReferralPart,
 }
 
 

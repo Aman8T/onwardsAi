@@ -11,8 +11,6 @@ from collections.abc import Callable
 
 import pytest
 
-from tayyari.contract.discover import DiscoverQuery
-from tayyari.contract.models import Profile
 from tayyari.core.settings import DiscoverSettings
 from tayyari.discover.service import DiscoverService
 from tests.fakes.clock import FakeClock
@@ -21,7 +19,6 @@ from tests.fakes.discover import (
     FakeBoards,
     FakeDiscoverRepo,
     fixture_registry,
-    profile_of,
     read_json,
 )
 
@@ -75,25 +72,3 @@ def make_service(
 @pytest.fixture
 def service(make_service: Callable[..., DiscoverService]) -> DiscoverService:
     return make_service()
-
-
-@pytest.fixture
-async def loaded(service: DiscoverService) -> DiscoverService:
-    """The service after one refresh of every fixture board."""
-    report = await service.refresh()
-    assert report is not None and report.status == "ok"
-    return service
-
-
-@pytest.fixture
-def frontend() -> Profile:
-    return profile_of("frontend")
-
-
-@pytest.fixture
-def fresher() -> Profile:
-    return profile_of("fresher")
-
-
-def query(profile: Profile, **fields: object) -> DiscoverQuery:
-    return DiscoverQuery.model_validate({"profileId": profile.id, **fields})

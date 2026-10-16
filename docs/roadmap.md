@@ -225,7 +225,7 @@ Research: `docs/research/job-discovery.md` (sources, geography, matching, regula
 
 ## D2 · Search with AI
 
-**Built 2026-10-16** (not committed or deployed yet). A "Search with AI" panel in Discover. Claude Haiku 5.5 scouts search employers' own job sites for the person's kind of role, code reads the boards they lead to and narrows the open roles, and Haiku reads the shortlist against the person's evidence. The trail of how it narrowed things down and the roles stream in as they come. **Haiku 5.5 only**, by the user's decision. The design follows two baseline runs by Opus and Sonnet on the sample resume (`docs/research/jobsearch-baseline.md`): search finds employers, not open jobs (about two in three job links from search were closed), so code decides what is open, near and within reach, and the model only searches and reads. Not on a design canvas: it reuses Discover's approved card language (the memory rule asks for a canvas first; a board can be added).
+**Built and deployed 2026-10-16** (commit fbf7907). A "Search with AI" panel in Discover; D3 below made it the whole of Discover. Claude Haiku 5.5 scouts search employers' own job sites for the person's kind of role, code reads the boards they lead to and narrows the open roles, and Haiku reads the shortlist against the person's evidence. The trail of how it narrowed things down and the roles stream in as they come. **Haiku 5.5 only**, by the user's decision. The design follows two baseline runs by Opus and Sonnet on the sample resume (`docs/research/jobsearch-baseline.md`): search finds employers, not open jobs (about two in three job links from search were closed), so code decides what is open, near and within reach, and the model only searches and reads. Not on a design canvas: it reuses Discover's approved card language (the memory rule asks for a canvas first; a board can be added).
 
 **How a run goes** (`backend/tayyari/jobsearch/`, ~20 s, ~$0.11):
 1. **plan** (`brief.py`, code): the role, the next roles, the years, the city (Discover's, else the resume's), the strongest skills, and evidence lines `E1…` taken word for word from the profile's evidence (skills at 45 and over). Up to three angles: the role here, the next role here, the role remote in India.
@@ -260,6 +260,68 @@ Research: `docs/research/job-discovery.md` (sources, geography, matching, regula
 - evergreen postings ranked lower;
 - a replay eval from stored search results;
 - a canvas board for the panel.
+
+## D3 · Discover is Search with AI
+
+**Built 2026-10-16** (not committed yet). The person's verdict on D2's roles ("some I never would have found"), and their
+decisions:
+- the AI search becomes the only Discover experience, and the old code-matched list, lenses, lanes and companies lane are
+  removed;
+- it runs only when pressed, and the last results are kept and shown;
+- cards in a grid on desktop and a swipe deck on phone;
+- every role gets Prepare (a prep page now, a mock interview next), Save (a tracker), See how you fit (the match),
+  Compare, Share, and Not for me.
+
+Share became "Ask for a referral": a short three-part note (why the company, why the person fits, why the role fits
+them).
+
+**Canvas:** https://claude.ai/artifact/X3SyjdzdYZhCjfBzTHsGYd. Its 12 boards:
+- results, searching and first visit;
+- the phone deck, sheet and searching;
+- one role in focus, Prepare, and Compare;
+- Your applications, Not for me and Share, and the states.
+
+**Contract** (`shared/jobsearch.ts` ⇄ `contract/jobsearch.py`, parity-tested):
+- `AiJob` gains `asks` (`AskCounts`: met, partly, not shown), which drives the card's pips (one square per checked
+  requirement; counts, never a score), and `openLong`.
+- `JobSearchRequest` gains `remote` and `avoid` (`AvoidPrefs`: hidden job ids, employers, no step up).
+- `done` names the stored run (`runId`, `createdAt`).
+- New: `JobSearchRun`, `JobPosting`, `RoleRequest`, `RolePrep` (with `PrepLead`, `PrepGap`, `PrepQuestion` and
+  `StoryPart`), and `ReferralNote` (with `ReferralLine` and `ReferralPart`).
+
+**Backend:**
+- **The run streams in two halves at once.** Tayyari's own employers are read from Discover's store and up to 6 go to
+  the read, while the scouts search. The web pool then goes to the read without the roles already read. The first cards
+  show in a few seconds.
+- **Stored runs.** Every run is kept in `jobsearch_runs` (migration 0008): what the person saw, plus the shown postings'
+  text, kept server-side only. Prep pages and referral notes are kept in `jobsearch_docs`. Both are purged after 30
+  days.
+- **Routes:**
+  - `GET /api/jobsearch/latest` returns the last run for the profile, city and remote choice.
+  - `GET /api/jobsearch/runs/{runId}/jobs/{jobId}/posting` returns the text that "See how you fit" sends to
+    `POST /api/match`.
+  - `POST /api/jobsearch/prepare` and `/referral`: a run is read back only for its own profile.
+- **Prepare** (`jobsearch/prepare.py`, one Haiku call):
+  - the lead comes from the checked read;
+  - every gap gets the nearest evidence and a small step, marked as a suggestion;
+  - 3 to 4 questions, each tied to a quoted ask, with a story built in code from cited evidence plus placeholders for
+    what only the person knows.
+- **Referral** (`jobsearch/referral.py`, one Haiku call): three lines in typed slots.
+  - Every quote is checked against the posting.
+  - Every number and name is checked against the cited evidence (`portfolio.ground` anchors).
+  - A line that fails falls back to a template built from facts.
+- **Old list removed.** Discover's old list service and routes are gone. `discover/` is now the board store, the
+  refresh, the parsers, places, vocabulary and quick fit behind the AI search, plus `GET /api/discover/cities`.
+
+**Web app:** `src/discover/`:
+- the new screen and cards, the deck, the focus panel, Not for me and the compare tray;
+- `prepare/`, `share/`, `compare/` and `applications/` (the tracker, kept in this browser).
+
+**Later:**
+- a mock interview grounded in the posting (I1);
+- the tracker synced to an account;
+- "Not for me" learning beyond ids, employers and level;
+- an alert when a saved role closes.
 
 ---
 

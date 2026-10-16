@@ -30,7 +30,6 @@ for it. A skill without evidence gives no reason.
 
 from __future__ import annotations
 
-from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Final
 
@@ -48,6 +47,8 @@ LOOK_SHARE: Final = 0.35
 LOOK_MIN_MET: Final = 2
 MAX_NOT_FOUND: Final = 5
 MAX_REASONS: Final = 2
+FIT_ORDER: Final = {"looks_close": 0, "worth_a_look": 1, "stretch": 2, "cant_tell": 3}
+"""The order of the quick-fit words in a ranked list."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,33 +96,9 @@ class PostingIndex:
         return self._tally(matcher)
 
 
-class IndexCache:
-    """A bounded cache of `PostingIndex` by ``(listing id, content hash)``: a posting is read once per process."""
-
-    def __init__(self, capacity: int = 6000) -> None:
-        self._capacity = capacity
-        self._items: OrderedDict[tuple[str, str], PostingIndex] = OrderedDict()
-
-    def get(self, listing_id: str, content_hash: str) -> PostingIndex | None:
-        key = (listing_id, content_hash)
-        found = self._items.get(key)
-        if found is not None:
-            self._items.move_to_end(key)
-        return found
-
-    def put(self, listing_id: str, content_hash: str, index: PostingIndex) -> None:
-        self._items[(listing_id, content_hash)] = index
-        self._items.move_to_end((listing_id, content_hash))
-        while len(self._items) > self._capacity:
-            self._items.popitem(last=False)
-
-    def __len__(self) -> int:
-        return len(self._items)
-
-
 @dataclass(frozen=True, slots=True)
 class Fit:
-    """A quick fit with what grouping needs beyond the contract: every unmatched skill, in order."""
+    """A quick fit with what the contract does not carry: every matched skill id and every unmatched skill, in order."""
 
     word: QuickFitWord
     named: int
@@ -250,8 +227,8 @@ def quick_fit(index: PostingIndex, years_asked: int | None, person: PersonIndex,
 
 
 __all__ = [
+    "FIT_ORDER",
     "Fit",
-    "IndexCache",
     "Mention",
     "PostingIndex",
     "quick_fit",

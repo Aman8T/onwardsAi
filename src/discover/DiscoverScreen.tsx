@@ -1,297 +1,223 @@
 /**
- * The Discover screen, presentational: everything it shows arrives as props (the response, the lens, the places),
- * everything it changes goes out as a callback. `DiscoverRoot` feeds it from the store and the server; the dev
- * gallery feeds it from fixtures. The saved roles and their tracker are the one thing it reads for itself, because
- * they live in this browser and nowhere else.
+ * The Discover screen, presentational: everything it shows arrives as props (the place, the person, the profile's
+ * state), everything it changes goes out as a callback. `DiscoverRoot` feeds it from the store, the server and the
+ * match flow; the dev gallery feeds it from fixtures and scripted streams.
  *
- *   title · where and how wide · lanes · (asking for an area) · groups of roles · companies · coverage · footer
+ *   roles           the search: start, searching, results (a grid, or a swipe deck on a phone)
+ *   prepare         one role's prep page            (built by `prepare/`)
+ *   compare         two or three roles side by side (built by `compare/`)
+ *   applications    the roles the person saved      (built by `applications/`)
  *
- * One column, as wide as the reading allows. The card for a role opens beside its row on wide screens and as a
- * bottom sheet under 760 px.
+ * The search itself (the stream, the last results, "not for me") lives in one keyed host above the tabs, so going to a
+ * prep page and back never loses a search in progress; the host starts over when the profile, the city or the remote
+ * choice changes. Share is a dialog any tab can open.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { DiscoverCity, DiscoverReach, ListingCard } from '../../shared/discover';
-import type { AiJob } from '../../shared/jobsearch';
-import { Applications } from './Applications';
-import type { ListingCheck } from './Applications';
-import { CompaniesLane } from './Companies';
-import { ContextBar, LocalityPrompt, NoCity } from './ContextBar';
-import type { AreaChoice } from './ContextBar';
-import { GroupList } from './GroupList';
-import { BreadthLens, LaneTabs, ReachLens } from './Lenses';
-import { JobSearchPanel } from './jobsearch/JobSearchPanel';
-import type { JobSearchOptions } from './jobsearch/useJobSearch';
-import { CardHost } from './ListingCard';
-import { FLAT_BELOW, headline, isAllWeak, isFirstRefresh, isThin, widenAction } from './model';
-import { CoverageNote, EmptyState, ErrorState, FirstRefresh, Footer, LoadingRows, ThinBanner, WeakBanner } from './States';
-import { WhyOrder } from './WhyOrder';
+import type { DiscoverCity } from '../../shared/discover';
+import type { AiJob, ReferralNote, RolePrep, RoleRequest } from '../../shared/jobsearch';
+import { NARROW_QUERY, useMediaQuery } from '../lib/ui';
+import { ApplicationsView } from './applications/ApplicationsView';
+import { useTracker } from './applications/tracker';
+import type { TrackedJob } from './applications/tracker';
+import { useAvoid } from './jobsearch/avoid';
+import { useDiscoverRun } from './jobsearch/useDiscoverRun';
+import type { DiscoverRunOptions } from './jobsearch/useDiscoverRun';
+import { LayoutContext } from './layout';
+import { CompareView } from './compare/CompareView';
+import { PrepareScreen } from './prepare/PrepareScreen';
+import { RolesView } from './roles/RolesView';
+import type { RolesViewProps } from './roles/RolesView';
+import { ShareDialog } from './share/ShareDialog';
 import type { DiscoverQuery } from './route';
-import type { DiscoverState } from './useDiscover';
-import { useTracker } from './tracker';
 import '../styles/discover.css';
 
 export interface DiscoverScreenProps {
   profileId: string;
   query: DiscoverQuery;
-  state: Pick<DiscoverState, 'status' | 'data' | 'error' | 'waited' | 'reload'>;
   cities: readonly DiscoverCity[];
-  /** The person chose "Show roles across the city for now" when asked for an area. */
-  localityDeclined: boolean;
+  resumeCity?: string;
+  resumeLocation?: string;
+  signedIn: boolean | null;
+  sample: boolean;
+  thin: boolean;
   onQuery: (patch: Partial<DiscoverQuery>) => void;
-  onArea: (choice: AreaChoice) => void;
-  onDeclineLocality: () => void;
-  /** Open the paste screen. */
-  onPaste: () => void;
-  /** Thin profile: add a project or a link. */
-  onAddProject: () => void;
-  /** Start a full match from a listing; resolves with a sentence when it could not start, nothing when it did. */
-  onSeeMatch: (card: ListingCard) => Promise<string | undefined>;
-  /** Start a full match from a role "Search with AI" found, by the address of its posting; same answer as `onSeeMatch`. */
-  onSeeMatchUrl?: (job: AiJob) => Promise<string | undefined>;
-  /** Where "Search with AI" gets its stream. The dev gallery passes a scripted one; the app leaves it out. */
-  jobSearch?: JobSearchOptions;
-  /** A posting is already being read, so a second cannot start. */
+  onArea: RolesViewProps['onArea'];
+  onSeeMatch: RolesViewProps['onSeeMatch'];
   matchLocked: boolean;
-  onOpenMatch: (matchId: string) => void;
-  check?: (id: string) => Promise<ListingCheck>;
-  /** Something that stops Discover for this profile, shown in place of the list. */
-  blocked?: ReactNode;
-  /** A line above the list that does not stop it (the sample profile says whose roles these are). */
-  banner?: ReactNode;
-  /** Open this listing's card on first paint (the dev gallery's `?open=`). */
-  initialOpenId?: string;
+  onAnalyse: () => void;
+  onAddProject: () => void;
+  /** Where the stream and the last results come from. The dev gallery passes scripted ones; the app leaves it out. */
+  source?: DiscoverRunOptions;
+  /** The dev gallery's scripted loaders for the prep page and the referral note; the app leaves them out. */
+  loadPrep?: (req: RoleRequest, signal?: AbortSignal) => Promise<RolePrep>;
+  loadReferral?: (req: RoleRequest, signal?: AbortSignal) => Promise<ReferralNote>;
+  /** The dev gallery shows a phone inside a frame on a desktop. */
+  layout?: { phone: boolean; frame: HTMLElement | null };
+  initial?: RolesViewProps['initial'] & { compareIds?: string[]; share?: { jobId: string } };
 }
 
 export function DiscoverScreen(props: DiscoverScreenProps) {
-  const { profileId, query, state, cities, localityDeclined, onQuery, onArea, onDeclineLocality, onPaste, onAddProject, onSeeMatch, onSeeMatchUrl, jobSearch, matchLocked, onOpenMatch, check, blocked, initialOpenId } = props;
-  const { status, data: res, error, waited, reload } = state;
+  const { profileId, query } = props;
+  const wide = useMediaQuery(NARROW_QUERY);
+  const narrow = props.layout?.phone ?? wide;
+  const frame = props.layout?.frame ?? null;
+  const layout = useMemo(() => ({ narrow, frame }), [narrow, frame]);
+
+  return (
+    <LayoutContext.Provider value={layout}>
+      <Host key={`${profileId}|${query.city ?? ''}|${query.remote ? 1 : 0}`} {...props} />
+    </LayoutContext.Provider>
+  );
+}
+
+/** Everything that lives as long as one profile, city and remote choice: the run, what was hidden, what was saved. */
+function Host(props: DiscoverScreenProps) {
+  const { profileId, query, onQuery } = props;
+  const avoid = useAvoid(profileId);
   const tracker = useTracker(profileId);
+  const run = useDiscoverRun(profileId, { city: query.city, remote: query.remote, avoid: avoid.prefs }, props.source);
+  const [compareIds, setCompareIds] = useState<string[]>(props.initial?.compareIds ?? []);
+  const [sharing, setSharing] = useState<{ job: AiJob; runId?: string } | null>(null);
+  const [matchNote, setMatchNote] = useState<string | undefined>();
 
-  const [openId, setOpenId] = useState<string | null>(initialOpenId ?? null);
-  const openRef = useRef<string | null>(null);
-  openRef.current = openId;
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
-  const [editing, setEditing] = useState(false);
-  const [focusField, setFocusField] = useState<'otherCity' | undefined>();
-  const [matching, setMatching] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ id: string; text: string } | null>(null);
-
-  const rowEls = useRef(new Map<string, HTMLLIElement>());
-  const titleEls = useRef(new Map<string, HTMLButtonElement>());
-  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-
-  const now = useMemo(() => Date.now(), [res]);
-  const first = res !== null && isFirstRefresh(res);
-  const dim = status === 'loading' && res !== null;
-
-  // a card whose listing is no longer in the answer closes
+  // the address is the source of truth while roles are being compared
+  const idsKey = (query.ids ?? []).join(',');
   useEffect(() => {
-    if (openId && res && !res.listings.some((l) => l.id === openId)) setOpenId(null);
-  }, [res, openId]);
+    if (query.tab === 'compare') setCompareIds(query.ids ?? []);
+    // keyed on the contents, not the array
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query.tab, idsKey]);
 
-  // a new screen (roles / your applications): the heading takes focus, but not on first paint
+  // a new tab starts at the top (not on first paint)
   const seenTab = useRef(query.tab);
   useEffect(() => {
     if (seenTab.current === query.tab) return;
     seenTab.current = query.tab;
+    setMatchNote(undefined);
     window.scrollTo({ top: 0 });
-    const frame = requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-dc-h1]')?.focus({ preventScroll: true }));
-    return () => cancelAnimationFrame(frame);
   }, [query.tab]);
 
-  const dismiss = useCallback((restoreFocus: boolean) => {
-    const id = openRef.current;
-    setOpenId(null);
-    if (restoreFocus && id) requestAnimationFrame(() => titleEls.current.get(id)?.focus());
-  }, []);
+  // the gallery opens the share dialog straight away
+  const initialShare = props.initial?.share?.jobId;
+  useEffect(() => {
+    if (!initialShare) return;
+    const job = run.shown?.jobs.find((j) => j.id === initialShare);
+    if (job) setSharing((s) => s ?? { job, runId: run.shown?.runId });
+  }, [initialShare, run.shown]);
 
-  const openCard = (card: ListingCard) => setOpenId((cur) => (cur === card.id ? null : card.id));
-  const toggleSave = (card: ListingCard) => {
-    const held = tracker.get(card.id);
-    if (!held) tracker.save(card, res?.area.city);
-    else if (held.status === 'saved') tracker.remove(card.id);
+  /** A role by id: from the search on screen, else from what was saved. */
+  const jobFor = (id: string | undefined): AiJob | undefined => (id ? (run.shown?.jobs.find((j) => j.id === id) ?? run.liveJobs.find((j) => j.id === id) ?? tracker.get(id)?.job) : undefined);
+  const runIdFor = (job: AiJob): string | undefined => (run.shown?.jobs.some((j) => j.id === job.id) ? run.shown.runId : tracker.get(job.id)?.runId);
+
+  const prepare = (job: AiJob, runId: string | undefined) => {
+    if (runId) onQuery({ tab: 'prepare', run: runId, job: job.id });
+    else setMatchNote('This role was saved before searches were kept, so it has no prep page. Search again to find it.');
   };
-  const seeMatch = async (card: ListingCard) => {
-    setNotice(null);
-    setMatching(card.id);
-    const text = await onSeeMatch(card);
-    setMatching(null);
-    if (text) setNotice({ id: card.id, text });
+  const seeMatch = (job: AiJob, runId: string | undefined) => {
+    setMatchNote(undefined);
+    void props.onSeeMatch(job, runId).then(setMatchNote);
   };
+  const back = () => onQuery({ tab: 'roles' });
 
-  const card = res && openId ? (res.listings.find((l) => l.id === openId) ?? null) : null;
+  const page = (children: ReactNode) => (
+    <main className="dc-main">
+      {matchNote && (
+        <p className="panel dc-matchnote" role="status">
+          {matchNote}
+        </p>
+      )}
+      {children}
+    </main>
+  );
 
-  /* ───────── the applications tab ───────── */
-  if (query.tab === 'applications') {
-    return (
-      <main className="dc-main">
-        <Applications tracker={tracker} check={check} onOpenMatch={onOpenMatch} onBack={() => onQuery({ tab: 'roles' })} />
-      </main>
-    );
+  let body: ReactNode;
+  switch (query.tab) {
+    case 'applications':
+      body = page(
+        <ApplicationsView
+          profileId={profileId}
+          onPrepare={(item: TrackedJob) => prepare(item.job, item.runId ?? runIdFor(item.job))}
+          onSeeMatch={(item: TrackedJob) => seeMatch(item.job, item.runId ?? runIdFor(item.job))}
+          onShare={(item: TrackedJob) => setSharing({ job: item.job, runId: item.runId ?? runIdFor(item.job) })}
+          onBack={back}
+        />,
+      );
+      break;
+    case 'prepare':
+      body = page(
+        <PrepareScreen
+          profileId={profileId}
+          runId={query.run ?? ''}
+          jobId={query.job ?? ''}
+          job={jobFor(query.job)}
+          onBack={back}
+          onSeeMatch={(job, runId) => seeMatch(job, runId)}
+          onShare={(job, runId) => setSharing({ job, runId })}
+          loadPrep={props.loadPrep}
+        />,
+      );
+      break;
+    case 'compare': {
+      const jobs = (query.ids ?? []).flatMap((id) => jobFor(id) ?? []);
+      body = page(
+        jobs.length === 0 ? (
+          <section className="panel dc-note" role="status">
+            <div className="dc-note-text">
+              <p className="dc-strong">{run.loading ? 'Finding those roles…' : "Those roles aren't in your last results any more."}</p>
+            </div>
+            <button type="button" className="btn dc-btn" onClick={back}>
+              Back to roles
+            </button>
+          </section>
+        ) : (
+          <CompareView
+            jobs={jobs}
+            onRemove={(id) => onQuery({ tab: 'compare', ids: (query.ids ?? []).filter((x) => x !== id) })}
+            onClear={() => {
+              setCompareIds([]);
+              back();
+            }}
+            onPrepare={(job) => prepare(job, runIdFor(job))}
+            onSeeMatch={(job) => seeMatch(job, runIdFor(job))}
+            onBack={back}
+          />
+        ),
+      );
+      break;
+    }
+    default:
+      body = (
+        <RolesView
+          profileId={profileId}
+          query={query}
+          run={run}
+          avoid={avoid}
+          tracker={tracker}
+          cities={props.cities}
+          resumeCity={props.resumeCity}
+          resumeLocation={props.resumeLocation}
+          signedIn={props.signedIn}
+          sample={props.sample}
+          thin={props.thin}
+          compareIds={compareIds}
+          onCompareIds={setCompareIds}
+          onQuery={onQuery}
+          onArea={props.onArea}
+          onSeeMatch={props.onSeeMatch}
+          onShare={(job, runId) => setSharing({ job, runId })}
+          matchLocked={props.matchLocked}
+          onAnalyse={props.onAnalyse}
+          onAddProject={props.onAddProject}
+          initial={props.initial}
+        />
+      );
   }
 
-  /* ───────── the title ───────── */
-  const title = blocked
-    ? 'Roles near you that fit'
-    : !res
-      ? status === 'error'
-        ? 'Roles near you that fit'
-        : 'Finding roles that fit you'
-      : first
-        ? "Reading employers' job boards"
-        : !res.area.city
-          ? 'Where should we look?'
-          : headline(res, query.otherCity);
-
-  const hasCity = !!res?.area.city && !first;
-  const localities = cities.find((c) => c.name === res?.area.city)?.localities ?? [];
-
   return (
-    <main className="dc-main">
-      <section className="dc-intro">
-        <p className="kicker">Discover · roles near you that fit</p>
-        <h1 className="serif dc-title" data-dc-h1 tabIndex={-1}>
-          {title}
-        </h1>
-        <p className="dc-lede">Built from your profile and your next roles. Nothing here was written by the postings.</p>
-      </section>
-
-      {blocked}
-      {!blocked && props.banner}
-
-      {!blocked && res && hasCity && (
-        <ContextBar
-          area={res.area}
-          otherCity={query.otherCity}
-          cities={cities}
-          editing={editing}
-          focusField={focusField}
-          onEditing={(open, focus) => {
-            setEditing(open);
-            setFocusField(open ? focus : undefined);
-          }}
-          onSave={onArea}
-        >
-          {res.lane === 'near' && <ReachLens stops={res.reachStops} value={res.reach} hasLocality={!!res.area.locality} onPick={(reach: DiscoverReach) => onQuery({ reach })} />}
-          {res.lane !== 'city' && <BreadthLens stops={res.breadthStops} value={res.breadth} onPick={(breadth) => onQuery({ breadth })} />}
-          <WhyOrder signals={res.signals} order={res.order} onOrder={(order) => onQuery({ order })} />
-        </ContextBar>
-      )}
-
-      {!blocked && res && hasCity && (
-        <div className="dc-lane-row">
-          <LaneTabs
-            lane={res.lane}
-            counts={res.laneCounts}
-            otherCity={query.otherCity}
-            onPick={(lane) => onQuery({ lane })}
-            onAddCity={() => {
-              setEditing(true);
-              setFocusField('otherCity');
-            }}
-          />
-          {res.lane === 'near' && res.suggestion && res.listings.length > 0 && (
-            <div className="dc-suggest">
-              <span className="dc-muted">{res.suggestion}</span>
-              {(() => {
-                const widen = widenAction(res);
-                return widen ? (
-                  <button type="button" className="btn btn-sm dc-btn-sm" onClick={() => onQuery({ reach: widen.reach })}>
-                    {widen.label}
-                  </button>
-                ) : null;
-              })()}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Search with AI: its own stream, so it does not wait for the list; keyed so another profile or city starts clean */}
-      {!blocked && <JobSearchPanel key={`${profileId}|${query.city ?? ''}`} profileId={profileId} city={query.city} matchLocked={matchLocked} onSeeMatch={onSeeMatchUrl} {...jobSearch} />}
-
-      {!blocked && !res && status === 'loading' && <LoadingRows />}
-      {!blocked && status === 'error' && <ErrorState message={error} onRetry={reload} />}
-
-      {!blocked && res && first && status !== 'error' && <FirstRefresh note={res.coverage.note} waited={waited} onCheck={reload} />}
-
-      {!blocked && res && !first && !res.area.city && status !== 'error' && <NoCity resumeText={res.area.resumeText} cities={cities} onPick={(city) => onArea({ city })} />}
-
-      {!blocked && res && hasCity && status !== 'error' && (
-        <>
-          {res.lane === 'near' && !res.area.locality && !localityDeclined && !editing && (
-            <LocalityPrompt
-              city={res.area.city!}
-              cityFrom={res.area.cityFrom}
-              localities={localities}
-              onPick={(locality) => onArea({ city: res.area.city, locality, otherCity: query.otherCity })}
-              onMore={() => setEditing(true)}
-              onSkip={onDeclineLocality}
-            />
-          )}
-
-          {isThin(res.listings) && <ThinBanner onAdd={onAddProject} />}
-          {!isThin(res.listings) && isAllWeak(res.listings) && <WeakBanner res={res} />}
-
-          <p className="sr-only" role="status">
-            {status === 'loading' ? 'Updating the list' : `${res.total} ${res.total === 1 ? 'role' : 'roles'} shown`}
-          </p>
-
-          <div className={`dc-results${dim ? ' is-dim' : ''}`} ref={setContainerEl} aria-busy={dim || undefined}>
-            {res.listings.length === 0 ? (
-              <EmptyState
-                res={res}
-                otherCity={query.otherCity}
-                onWiden={(reach) => onQuery({ reach: reach as DiscoverReach })}
-                onBreadth={(breadth) => onQuery({ breadth: breadth as DiscoverQuery['breadth'] })}
-                onRemote={() => onQuery({ lane: 'remote' })}
-                onPaste={onPaste}
-              />
-            ) : (
-              <GroupList
-                res={res}
-                flat={res.total < FLAT_BELOW || res.groups.length === 0}
-                areaCity={res.area.city}
-                otherCity={query.otherCity}
-                now={now}
-                openId={openId}
-                trackedOf={tracker.get}
-                expanded={expanded}
-                onExpand={(id) =>
-                  setExpanded((cur) => {
-                    const next = new Set(cur);
-                    if (!next.delete(id)) next.add(id);
-                    return next;
-                  })
-                }
-                onOpen={openCard}
-                onSave={toggleSave}
-                rowRef={(id, el) => (el ? rowEls.current.set(id, el) : rowEls.current.delete(id))}
-                titleRef={(id, el) => (el ? titleEls.current.set(id, el) : titleEls.current.delete(id))}
-              />
-            )}
-            <CardHost
-              card={card}
-              areaCity={res.area.city}
-              now={now}
-              rowEl={card ? (rowEls.current.get(card.id) ?? null) : null}
-              containerEl={containerEl}
-              onDismiss={dismiss}
-              tracked={card ? tracker.get(card.id) : undefined}
-              onSave={() => card && toggleSave(card)}
-              onSeeMatch={() => card && void seeMatch(card)}
-              matchBusy={!!card && matching === card.id}
-              matchLocked={matchLocked || (matching !== null && matching !== card?.id)}
-              notice={card && notice?.id === card.id ? notice.text : undefined}
-            />
-          </div>
-
-          {res.lane === 'near' && <CompaniesLane companies={res.companies} />}
-          {res.coverage.note && <CoverageNote note={res.coverage.note} onPaste={onPaste} />}
-        </>
-      )}
-
-      <Footer coverage={res?.coverage ?? { employers: 0, listings: 0 }} refreshedAt={res?.refreshedAt} />
-    </main>
+    <>
+      <div className="dc-body">{body}</div>
+      {sharing && <ShareDialog profileId={profileId} runId={sharing.runId} job={sharing.job} onClose={() => setSharing(null)} loadReferral={props.loadReferral} />}
+    </>
   );
 }

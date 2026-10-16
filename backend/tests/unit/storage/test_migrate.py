@@ -51,6 +51,8 @@ EXPECTED_TABLES = {
     "profile_facts",
     "discover_listings",
     "discover_runs",
+    "jobsearch_docs",
+    "jobsearch_runs",
 }
 
 

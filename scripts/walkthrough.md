@@ -109,36 +109,63 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     Nothing was charged." Close the window without paying and it reads "Checkout closed. Nothing was charged." If the
     server refuses the hand-off (a signature that does not verify, or an order that is not this account's), the notice
     shows the server's sentence followed by "Keep this payment id if you need help" and the payment id.
-15. **Discover:** works on the sample profile, with a banner saying these are the sample's roles; a full match from a
-    card needs an analysed resume of your own (on the sample, the card says so). Choose "Discover" in the graph header. On a server whose boards have not been read yet, the first visit shows
-    an empty list with "Reading employers' job boards for the first time. This takes about a minute." and asks again
-    about 20 seconds later. Once there are roles, the city reads "from your resume" with "Change". Choose "Change" and
-    pick a city and a locality from the lists: the How far stops show counts, the reach moves to 10 km, and each
-    distance reads "km straight line". A role whose listing names no known locality shows no distance. Pick another
-    How wide stop ("Your role", "+ next steps", "+ stretch") and the lanes ("Near you", "Remote, India-eligible",
-    "Worth moving for") count again. Open a row: the card is a popover on a wide screen and a bottom sheet under 760 px
-    (the 390×844 preset). Its "Apply on {host} ↗" opens the employer's own page in a new tab. Choose "See full match":
-    the match screen opens with "← Discover", the role, the "Apply on {host} ↗" link and "opens in a new tab";
-    "← Discover" returns to the same lens. Save a role with its bookmark button: it appears under "Your applications · N",
-    where its status can be changed, and the page says "Kept in this browser". Open "Why this order": it lists what the
-    ranking used and what it never uses, and "Show in posted order" switches to newest first and back.
-16. **Search with AI** (costs about $0.11 a run; 3 a day per address without an account): on Discover, the "Search
-    further" panel sits above the groups with "Search with AI". Press it. The trail fills in about 20 seconds:
-    - a plan line;
-    - three search lines, each with its short queries;
-    - the boards read;
-    - one narrowing line;
-    - "Claude Haiku is reading the N closest postings against your evidence".
-    Roles arrive best first, and Stop keeps what has arrived. Each card shows:
-    - the title, employer and place;
-    - a fit word ("Good fit", "A stretch"; never a number) and a level word, with the posting's own words about years;
-    - "Asks: … / You: …" pairs whose two quotes are word for word from the posting and from the profile;
-    - "Not on your resume: …";
-    - "Found on the web · Search: …" or "From Tayyari's employers", and "Listed on the employer's board today";
-    - "Apply on {host} ↗", opening the employer's own posting in a new tab.
-    The done state shows the funnel (open roles on the boards read → in the city or remote → your kind → within reach →
-    read → fit). Without a server, `/dev/discover?state=ai` plays a scripted run, and the other `ai-` states hold
-    running, done, nothing fitted, error, limit and paused.
+15. **Discover, with AI** (a search costs about $0.11; 3 a day per address without an account). Choose "Discover" in
+    the graph header. It works on the sample profile, with a banner saying these are the sample's roles.
+    - **First visit.** It shows "Roles you would not find on your own", the city chip ("Bengaluru · from your resume ·
+      Change"), "Include remote in India" (on) and "Search with AI". Nothing runs until it is pressed.
+    - **The search.**
+      - Press it. Within about 6 seconds the first roles, from Tayyari's own employers, appear beside a live trail.
+      - The trail shows a plan line, a read line, then three search lines, each with its short queries, while skeleton
+        cards fill in.
+      - After about 20 seconds it reads "N roles you might not have found". The "How it narrowed it down" strip counts:
+        open roles on the boards read, then in the city or remote, then your kind, then within reach, then read, then
+        fit. "Show the searches" opens the trail.
+      - Stop keeps what has arrived.
+    - **Results.**
+      - Filter chips: All, Strong fit, Good fit, A stretch, Saved.
+      - Sections: "Strong fits", "Good fits", "Stretches worth a try".
+    - **Each card.**
+      - A fit word and a level word.
+      - The title, employer and place.
+      - The pips: one square per checked ask (filled met, half partly, red outline not on your resume) and a count
+        line. Never a number score.
+      - One "Asks … / You …" pair whose two quotes are word for word from the posting and the profile.
+      - How it was found and how fresh it is ("open over a year · worth asking if it's still hiring" for evergreen
+        postings).
+      - "Apply on {host} ↗", then Prepare, See how you fit, Save, Compare and Not for me.
+    - **Focus.** The title opens the focus panel (a bottom sheet under 760 px) with every pair, the gaps, the level quote
+      and Share.
+    - **Coming back.** Reload: the last results show at once, with "Searched today at …", and no new search runs.
+    - **Not for me.** Asks "Why not this one?" with reasons. Too senior also skips step-ups next time; Company skips
+      that employer. The card becomes "Hidden · reason · Undo", and the next search leaves it out.
+    - **Compare.** Pick two or three roles and the tray reads "Compare N roles · names". Compare opens them side by side.
+    - **Phone.** At 390×844 the roles are a deck: "1 of N", a progress strip, Not for me / Details / Save, a swipe hint,
+      and a full-width Apply. Swipe right saves; swipe left asks Not for me.
+16. **One role, end to end.**
+    - **Prepare** opens "Frontend Engineer at {employer}". It has these sections:
+      - "Lead with these": They ask / You show, with sources.
+      - "Close or explain the gap": the nearest evidence and a step marked "Suggestion".
+      - "Questions they are likely to ask": each tied to a quoted ask, with a story of cited lines plus dashed boxes
+        for what only you know. A Result never repeats a line already shown.
+      - "Before you apply": a checklist with See how you fit, the tailored resume, the cover note, Apply and Mark as
+        applied.
+      - "Practice the interview": Coming next.
+
+      The first open takes a few seconds; after that it is kept.
+    - **Share** opens "Share this role" with "Ask for a referral".
+      - A To field fills in `[name]`.
+      - The note has three lines: why the company (a quote from its posting), why you fit (your evidence), and why the
+        role fits you. Then "Would you be open to referring me?" and the link.
+      - A key names each line's sources.
+      - Copy note and link, Share… (where the device has it) and Rewrite.
+      - "Just the link" is the plain option.
+    - **See how you fit** opens the match screen on the posting the search read, with "← Discover", for your own
+      analysed resume. On the sample it says a resume is needed first.
+    - **Save** adds the role to "Your applications · N". There, five stages are shown as columns (tabs on a phone),
+      each with a stage select, the date applied (set when the role first moves to Applied), a note, Prepare, Apply,
+      Share and Remove. The page says "Kept in this browser".
+    - **Without a server,** `/dev/discover?state=…` holds every state (start, searching, results, stale, focus, deck,
+      sheet, not-for-me, nothing fitted, limit, paused, error, prepare, share, compare, applications).
 
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`).

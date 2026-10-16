@@ -68,9 +68,10 @@ RULES: dict[str, tuple[str, ...]] = {
     "discover": ("core", "contract", "storage.ports"),
     # posting match reuses the portfolio's line-cited fact extractor and its sentence anchors (no fork).
     "match": (*_SERVICES, "portfolio"),
-    # search with AI reuses Discover's board fetcher, parsing, places, vocabulary and quick fit (no fork); it never
-    # imports match, analysis or any other service, and discover never imports it.
-    "jobsearch": (*_SERVICES, "discover"),
+    # search with AI reuses Discover's board fetcher, parsing, places, vocabulary and quick fit (no fork), and the
+    # portfolio's sentence anchors to check a referral note; it never imports match or analysis, and discover never
+    # imports it.
+    "jobsearch": (*_SERVICES, "discover", "portfolio"),
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",

@@ -3,17 +3,15 @@
  * and the employer's own apply link, named. It shows only for that match: once the match has an address it is
  * remembered (`origin.ts`), and a different match, or a new one started from the paste screen, does not carry it.
  *
- * A match that finishes while this bar is waiting also tells the saved role about itself, so "Your applications" can
- * open it later. Rendered by the match section (`MatchRoot`); it decides for itself whether there is anything to show.
+ * Rendered by the match section (`MatchRoot`); it decides for itself whether there is anything to show.
  */
 import { useEffect } from 'react';
 import { useMatch } from '../match/useMatch';
 import { actions, useApp } from '../store';
-import { ApplyLink } from './ListingRow';
 import { bindOrigin, useOrigin } from './origin';
 import type { MatchOrigin } from './origin';
 import { parseDiscoverUrl } from './route';
-import { attachMatchTo } from './tracker';
+import { applyLabel, safeHref } from './util';
 import '../styles/discover.css';
 
 export function OriginBar() {
@@ -21,13 +19,12 @@ export function OriginBar() {
   const route = useApp((s) => s.matchRoute);
   const m = useMatch();
 
-  // the match this origin started now has an address: remember it, and tell the saved role
+  // the match this origin started now has an address: remember which one, so the bar shows on that match only
   const finishedHere = !!origin && !origin.matchId && m.live && !!m.matchId && route.id === m.matchId;
   useEffect(() => {
-    if (!finishedHere || !origin || !m.matchId) return;
+    if (!finishedHere || !m.matchId) return;
     bindOrigin(m.matchId);
-    if (origin.profileId) attachMatchTo(origin.profileId, origin.listingId, m.matchId, m.result?.band);
-  }, [finishedHere, origin, m.matchId, m.result?.band]);
+  }, [finishedHere, m.matchId]);
 
   if (!origin) return null;
   const showing = origin.matchId ? route.id === origin.matchId : (route.screen === 'paste' && m.phase === 'reading') || finishedHere;
@@ -37,7 +34,7 @@ export function OriginBar() {
     const url = new URL(origin.discoverHref, window.location.origin);
     const q = parseDiscoverUrl(url.pathname, url.search);
     // every field is named, so one the address leaves out is cleared rather than left as it was
-    actions.openDiscover(q ? { city: q.city, locality: q.locality, otherCity: q.otherCity, reach: q.reach, breadth: q.breadth, lane: q.lane, order: q.order, tab: q.tab } : {});
+    actions.openDiscover(q ? { city: q.city, remote: q.remote, tab: q.tab, run: q.run, job: q.job, ids: q.ids } : {});
   };
   return <OriginBarView origin={origin} onBack={back} />;
 }
@@ -62,9 +59,26 @@ export function OriginBarView({ origin, onBack }: { origin: MatchOrigin; onBack:
         <span className="dc-muted"> · {origin.employer}</span>
       </span>
       <span className="dc-origin-apply">
-        <ApplyLink card={origin} className="btn btn-sm dc-btn-sm" />
+        <OriginApply origin={origin} />
         <span className="dc-faint dc-small">{origin.sourceLabel} · opens in a new tab</span>
       </span>
     </div>
+  );
+}
+
+/** "Apply on jobs.lever.co ↗", opening the employer's own posting in a new tab (only a plain web address is linked). */
+function OriginApply({ origin }: { origin: MatchOrigin }) {
+  const href = safeHref(origin.applyUrl);
+  if (!href) return <span className="dc-faint">{`Apply on ${origin.applyHost}`}</span>;
+  return (
+    <a
+      className="btn btn-sm dc-btn-sm"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Apply on ${origin.applyHost} for ${origin.title} at ${origin.employer}, opens in a new tab`}
+    >
+      {applyLabel(origin)}
+    </a>
   );
 }

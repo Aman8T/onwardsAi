@@ -1,115 +1,99 @@
 /**
- * The Discover section: the header and the screen, wired to the store, the server, the match flow and this
- * browser's storage.
+ * The Discover section: the header and the screen, wired to the store, the server, the match flow and this browser's
+ * storage.
  *
- *   /discover?city=…&locality=…&reach=…&breadth=…&lane=…&order=…&otherCity=…   the lens, in the address
- *   /discover?tab=applications                                                 the person's own list
+ *   /discover?city=…&remote=0                          the roles of the last search, here
+ *   /discover?tab=applications                         the person's own list
+ *   /discover?tab=prepare&run=…&job=…                  one role's prep page
+ *   /discover?tab=compare&ids=a,b,c                    roles side by side
  *
- * The area comes from the address, else from this browser (`area.ts`); it is sent with each request and never stored
- * by the server. "See full match" reads the listing's posting text from the server and hands it to the existing
- * match flow, remembering where it came from so the match screen can show the way back and the apply link.
+ * The place comes from the address, else from this browser (`area.ts`); it is sent with each search and each look at the
+ * last results and never stored by the server. "See how you fit" reads the role's posting text from the stored search
+ * and hands it to the existing match flow, remembering where it came from so the match screen can show the way back
+ * and the apply link.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Profile } from '../../shared/types';
-import type { ListingCard } from '../../shared/discover';
 import type { AiJob } from '../../shared/jobsearch';
 import { useMe } from '../auth/useMe';
 import { isSampleId, pickProfileId } from '../match/model';
 import { matchActions, useMatch } from '../match/useMatch';
 import { actions, useApp } from '../store';
-import { getListing } from './api';
-import { readArea, withStoredArea, writeArea } from './area';
+import { readArea, storedPatch, writeArea } from './area';
 import type { StoredArea } from './area';
-import type { AreaChoice } from './ContextBar';
 import { DiscoverHeader } from './DiscoverHeader';
 import { DiscoverScreen } from './DiscoverScreen';
-import { checkedWord } from './model';
+import { getPosting } from './jobsearch/api';
 import { writeOrigin } from './origin';
 import { discoverPath } from './route';
 import type { DiscoverQuery } from './route';
-import { useCities, useDiscover } from './useDiscover';
+import { checkedWord } from './util';
+import { cityFromLocation, useCities } from './useCities';
 import '../styles/discover.css';
 
-/** The sample has nothing of the visitor's to match, so a full match explains instead of starting. */
+/** The sample has nothing of the visitor's to match, so "See how you fit" explains instead of starting. */
 const NEEDS_ANALYSIS = 'A match compares a posting with your evidence, so your resume needs to be analysed first.';
 
+/** A profile with fewer skills than this has little for the search to go on. */
+const THIN_BELOW = 5;
+
 export function DiscoverRoot({ profile }: { profile: Profile }) {
-  const route = useApp((s) => s.discoverRoute);
+  const query = useApp((s) => s.discoverRoute);
   const cities = useCities();
   const { user, loaded, profiles } = useMe();
   const matchPhase = useMatch().phase;
-
-  // the area this browser remembers for this profile
   const [stored, setStored] = useState<StoredArea>(() => readArea(profile.id));
-  useEffect(() => setStored(readArea(profile.id)), [profile.id]);
-  const query = useMemo(() => withStoredArea(route, stored), [route, stored]);
 
-  // the address carries the area too: a link or a reload reads the same screen
+  // what this browser remembers that the address does not say (the city, "without remote") joins the address once
   useEffect(() => {
-    if (query.city !== route.city || query.locality !== route.locality || query.otherCity !== route.otherCity) {
-      actions.openDiscover({ city: query.city, locality: query.locality, otherCity: query.otherCity }, { replace: true });
+    const area = readArea(profile.id);
+    setStored(area);
+    const patch = storedPatch(query, area);
+    if (Object.keys(patch).length > 0) actions.openDiscover(patch, { replace: true });
+    // once per profile: later changes are the person's own and write both places
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile.id]);
+
+  const onQuery = (patch: Partial<DiscoverQuery>) => actions.openDiscover(patch);
+
+  const onArea = (choice: { city?: string | null; remote?: boolean }) => {
+    const next: StoredArea = { ...stored };
+    if (choice.city !== undefined) {
+      if (choice.city) next.city = choice.city;
+      else delete next.city;
     }
-  }, [query, route]);
-
-  // the sample is how most people first see Discover: it runs, and says whose roles these are
-  const sample = isSampleId(profile.id);
-  const state = useDiscover(profile.id, query, query.tab === 'roles');
-
-  const onQuery = useCallback((patch: Partial<DiscoverQuery>) => actions.openDiscover(patch), []);
-
-  const onArea = (choice: AreaChoice) => {
-    const next: StoredArea = { ...choice, ...(stored.localityDeclined && !choice.locality ? { localityDeclined: true } : {}) };
+    if (choice.remote !== undefined) {
+      if (choice.remote) delete next.remote;
+      else next.remote = false;
+    }
     writeArea(profile.id, next);
     setStored(readArea(profile.id));
     actions.openDiscover({
-      city: choice.city,
-      locality: choice.locality,
-      otherCity: choice.otherCity,
-      // the whole city stays the default: few employers state a neighbourhood, so a radius starts nearly empty;
-      // the distance stops show their counts and the person narrows when they want to
-      reach: choice.locality ? query.reach : undefined,
+      ...(choice.city !== undefined ? { city: choice.city ?? undefined } : {}),
+      ...(choice.remote !== undefined ? { remote: choice.remote } : {}),
     });
   };
 
-  const onDeclineLocality = () => {
-    const next = { ...stored, localityDeclined: true };
-    writeArea(profile.id, next);
-    setStored(readArea(profile.id));
-  };
-
-  // a full match from a listing: the posting text goes through the same flow as a pasted posting
-  // the match screen refuses the sample (there is nothing of the visitor's to match), so the card explains instead
+  const sample = isSampleId(profile.id);
+  // the match screen refuses the sample (there is nothing of the visitor's to match), so "See how you fit" explains instead
   const matchProfileId = pickProfileId(profile.id, profiles) ?? (!sample ? profile.id : undefined);
-  const seeMatch = async (card: ListingCard): Promise<string | undefined> => {
-    if (!matchProfileId) return NEEDS_ANALYSIS;
-    let detail;
-    try {
-      detail = await getListing(card.id, profile.id);
-    } catch (err) {
-      return err instanceof Error ? err.message : 'Discover is having trouble right now. Please try again in a moment.';
-    }
-    if (!detail) return "That role is no longer on the employer's board.";
-    writeOrigin({
-      listingId: card.id,
-      title: card.title,
-      employer: card.employer,
-      applyUrl: card.applyUrl,
-      applyHost: card.applyHost,
-      sourceLabel: card.sourceLabel,
-      discoverHref: discoverPath(query),
-      profileId: profile.id,
-    });
-    // if the match is refused (no free posting left, a sign-in needed), the posting waits in the paste box
-    matchActions.setDraft({ text: detail.postingText, url: '' });
-    actions.openMatch({ screen: 'paste' });
-    void matchActions.submit({ profileId: matchProfileId, text: detail.postingText }, { signedIn: loaded ? !!user : null });
-    return undefined;
-  };
+  const signedIn = loaded ? !!user : null;
 
-  // the same, for a role "Search with AI" found: the posting's address goes to the match flow, which reads the page
-  // itself, so there is no listing text to hand over. A refused match leaves the address in the paste box.
-  const seeMatchUrl = async (job: AiJob): Promise<string | undefined> => {
+  /**
+   * A full match for a role the search found. With the stored run, the posting's text goes through the same flow as a
+   * pasted posting; a role kept from before runs were stored has no run to read, so its posting's address goes to the
+   * match flow, which reads the page itself. A refused match leaves the text (or the address) in the paste box.
+   */
+  const seeMatch = async (job: AiJob, runId?: string): Promise<string | undefined> => {
     if (!matchProfileId) return NEEDS_ANALYSIS;
+    let text: string | undefined;
+    if (runId) {
+      try {
+        text = (await getPosting(runId, job.id, profile.id)).postingText;
+      } catch (err) {
+        return err instanceof Error ? err.message : 'Discover is having trouble right now. Please try again in a moment.';
+      }
+    }
     writeOrigin({
       listingId: job.id,
       title: job.title,
@@ -120,22 +104,11 @@ export function DiscoverRoot({ profile }: { profile: Profile }) {
       discoverHref: discoverPath(query),
       profileId: profile.id,
     });
-    matchActions.setDraft({ text: '', url: job.applyUrl });
+    matchActions.setDraft(text !== undefined ? { text, url: '' } : { text: '', url: job.applyUrl });
     actions.openMatch({ screen: 'paste' });
-    void matchActions.submit({ profileId: matchProfileId, url: job.applyUrl }, { signedIn: loaded ? !!user : null });
+    void matchActions.submit(text !== undefined ? { profileId: matchProfileId, text } : { profileId: matchProfileId, url: job.applyUrl }, { signedIn });
     return undefined;
   };
-
-  const check = useCallback(
-    async (id: string) => {
-      try {
-        return (await getListing(id, profile.id)) ? ('open' as const) : ('gone' as const);
-      } catch {
-        return 'unknown' as const;
-      }
-    },
-    [profile.id],
-  );
 
   return (
     <div className="dc-view">
@@ -143,31 +116,18 @@ export function DiscoverRoot({ profile }: { profile: Profile }) {
       <DiscoverScreen
         profileId={profile.id}
         query={query}
-        state={state}
         cities={cities}
-        localityDeclined={!!stored.localityDeclined}
+        resumeCity={cityFromLocation(profile.person.location, cities)}
+        resumeLocation={profile.person.location}
+        signedIn={signedIn}
+        sample={sample}
+        thin={profile.skills.length < THIN_BELOW}
         onQuery={onQuery}
         onArea={onArea}
-        onDeclineLocality={onDeclineLocality}
-        onPaste={() => actions.openMatch()}
-        onAddProject={() => actions.goto('onboarding')}
         onSeeMatch={seeMatch}
-        onSeeMatchUrl={seeMatchUrl}
         matchLocked={matchPhase === 'reading'}
-        onOpenMatch={(id) => actions.openMatch({ screen: 'match', id })}
-        check={check}
-        banner={
-          sample ? (
-            <section className="dc-banner" aria-label="About this profile">
-              <p className="dc-banner-text">
-                These are roles for the sample profile, a frontend engineer in Bengaluru. Analyse your own resume to see roles that fit you.
-              </p>
-              <button type="button" className="btn dc-btn" onClick={() => actions.goto('onboarding')}>
-                Analyse my resume
-              </button>
-            </section>
-          ) : undefined
-        }
+        onAnalyse={() => actions.goto('onboarding')}
+        onAddProject={() => actions.goto('onboarding')}
       />
     </div>
   );
