@@ -32,7 +32,7 @@ FoundVia = Literal["web", "tayyari"]
 AiFitWord = Literal["strong", "good", "stretch"]
 LevelWord = Literal["below", "at", "step_up", "unclear"]
 TrailStage = Literal["plan", "search", "boards", "narrow", "read", "result"]
-ReferralPart = Literal["company", "you", "role"]
+ReferralPart = Literal["intro", "fit", "draw"]
 
 PROFILE_ID_MAX_CHARS: Final = 64
 RUN_ID_MAX_CHARS: Final = 96
@@ -178,13 +178,17 @@ class RolePrep(_Model):
 
 
 class ReferralLine(_Model):
+    """One sentence of the note: who the person is (``intro``), why they fit what the employer needs (``fit``), why the
+    employer is where they want to go next (``draw``). ``sources`` say where its words come from, for the key under it."""
+
     part: ReferralPart
     text: str
     sources: list[str]
 
 
 class ReferralNote(_Model):
-    """A short note asking a connection for a referral: three checked lines, the ask and the link."""
+    """A short note asking a connection for a referral: three checked sentences that read as one paragraph, the ask and
+    the link. The web app puts the greeting ("Hi [name],") in front."""
 
     jobId: str
     lines: list[ReferralLine]

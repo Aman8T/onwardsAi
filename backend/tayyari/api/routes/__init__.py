@@ -15,6 +15,11 @@
     discover  GET /api/discover/cities
     jobsearch POST /api/jobsearch (NDJSON); GET /api/jobsearch/latest, .../runs/{id}/jobs/{id}/posting;
               POST /api/jobsearch/prepare, /api/jobsearch/referral (search with AI)
+    interview POST /api/interview/plan, /api/interview/sessions; GET /api/interview/sessions, .../sessions/{id};
+              POST .../sessions/{id}/answer, .../work, .../assistant, .../end, .../again, .../facts;
+              DELETE .../sessions/{id} (practice the interview)
+    speech    GET /api/speech/status; POST /api/speech/transcribe (raw audio), /api/speech/speak (Sarvam AI speech for
+              practice interviews)
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.
@@ -31,12 +36,14 @@ from tayyari.api.routes import (
     chat,
     discover,
     health,
+    interview,
     jobsearch,
     match,
     me,
     portfolio,
     profile,
     sample,
+    speech,
 )
 
 api_router = APIRouter()
@@ -53,6 +60,8 @@ for _module in (
     match,
     discover,
     jobsearch,
+    interview,
+    speech,
 ):
     api_router.include_router(_module.router)
 

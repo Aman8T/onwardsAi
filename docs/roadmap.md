@@ -19,7 +19,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | M3 | Posting-match frontend (Paste, Match, Resume, Cover, Pricing, sign-in) | M1 contract (mock data), then M2 | Sonnet | committed 03988c7, deployed 2026-10-12 |
 | T | Tests, docs, walkthrough steps, `.env.example`, README | each wave | Haiku | committed 03988c7, deployed 2026-10-12 |
 | R1 | Shareable radar card (SVG + OG PNG) | F1 | later | not started |
-| I1 | Evidence-grounded mock interview | M2 | later | not started |
+| I1 | Evidence-grounded mock interview (practice) | M2, D3 | Opus + Sonnet | designed 2026-10-16, built 2026-10-17 (not committed) |
 | X1 | ESCO + O*NET skill table, canonical skill ids | M2 | later | not started |
 | D1 | Discover: personal, location-aware jobs with direct apply links | M2 | Opus + Sonnet | v1 built 2026-10-16 (employers' own boards, no map); rest in docs/discover-later.md |
 
@@ -166,7 +166,7 @@ Each wave ends with: `npm run check:all` green, new tests for every new unit, a 
 ## Later waves (specs to be written when reached)
 
 - **R1 · Radar card.** `GET /r/{slug}.svg` from a `card_snapshots` row written when a profile finishes; random revocable slug, no upstream calls, camo-compatible CSP, `/og/{slug}.png` through `resvg-py`, server-rendered `/u/{slug}` landing with OG tags. Research §3.12 has the full design.
-- **I1 · Grounded mock interview.** Claim ledger from facts + git-history decision signals; slot blueprint allocated by code; Surface/Push/Floor ladders; verdicts Defended/Shaky/Couldn't defend/Not assessed with verbatim-quote checks; Say/Avoid/Fix cards; readiness computed in code. Research §4.7.
+- **I1 · Grounded mock interview** (designed 2026-10-16; see the I1 section below). Claim ledger from facts + git-history decision signals; slot blueprint allocated by code; Surface/Push/Floor ladders; verdicts Defended/Shaky/Couldn't defend/Not assessed with verbatim-quote checks; Say/Avoid/Fix cards; readiness computed in code. Research §4.7.
 - **X1 · Skills table.** Seed from ESCO digital skills and O*NET software skills; aliases; `pending_review` for LLM-proposed skills; canonical ids on requirements and facts; NCO code crosswalk via ISCO-08 shown on Indian government roles.
 - **Growth.** A thin Claude Code skill calling `/api/match`; `/gh/<username>` zero-upload entry; README-as-landing-page launch kit.
 
@@ -263,7 +263,7 @@ Research: `docs/research/job-discovery.md` (sources, geography, matching, regula
 
 ## D3 · Discover is Search with AI
 
-**Built 2026-10-16** (not committed yet). The person's verdict on D2's roles ("some I never would have found"), and their
+**Built 2026-10-16**, committed b2b2b0e and deployed the same day. The person's verdict on D2's roles ("some I never would have found"), and their
 decisions:
 - the AI search becomes the only Discover experience, and the old code-matched list, lenses, lanes and companies lane are
   removed;
@@ -317,11 +317,117 @@ them).
 - the new screen and cards, the deck, the focus panel, Not for me and the compare tray;
 - `prepare/`, `share/`, `compare/` and `applications/` (the tracker, kept in this browser).
 
+**Referral note, 2026-10-17 (the user's feedback):** one paragraph, a storyline in three sentences (`intro` who
+you are, `fit` why you fit them from the role's checked matches, `draw` why them), "Hi there" when the name is
+left empty; web employers named without a board number ("Appen", not "Appen 2").
+
 **Later:**
 - a mock interview grounded in the posting (I1);
 - the tracker synced to an account;
 - "Not for me" learning beyond ids, employers and level;
 - an alert when a saved role closes.
+
+---
+
+## I1 · Practice the interview
+
+**Designed 2026-10-16; built 2026-10-17 (not committed yet).** The user said "build it" once the canvas was done. Four waves ran in parallel with frozen interfaces (contract, ports, settings, purposes, route and API names): B1 the service (`backend/tayyari/interview/`), B2 storage, routes, guard and wiring, F1 the room, setup and work sample (`src/practice/room|setup|work`, speech), F2 Practice, the debrief, Progress and the entry points. How it works now is in `docs/backend.md` → Practice the interview; the browser walkthrough is step 17. The research is in
+`docs/research/mock-interview.md`: HackerRank's Chakra and HackerRank's practice interviews, their features and payment
+models, and what we take and leave. The earlier outline is in `docs/research/open-source-resume-tools.md` §4.7.
+
+**Canvas:** https://claude.ai/artifact/VtufBm3wga3E1SJRiHw3cd. Its 12 boards:
+- the room (interactive), Practice, the plan before you start, the work sample;
+- the debrief, what carries over, how each kind builds its questions, work samples for every profession;
+- the phone room and phone debrief, the edges, and how it works (with the HackerRank comparison and pricing later).
+
+**The user's decisions:**
+- **Answering.** Speak by default, type any time. The browser does speech-to-text and the interviewer's voice; Chrome's
+  speech service is Google's, and the app says so. No camera, and no audio kept. The transcript is kept 30 days.
+- **Four kinds, all in the first version:**
+  - This role, from a posting;
+  - Defend your resume;
+  - Behavioural stories;
+  - Work sample, then defend it, with an optional assistant.
+- **Free for now, price later,** under per-person daily limits and the spend cap.
+
+**The rules the design holds to:**
+- Questions come only from the person's evidence, the posting's asks and their gaps.
+- Code allocates the slots: for This role, 2 asks shown, 1 gap, 1 claim and 1 story, with must-asks first. The person
+  sees the plan and can skip any slot.
+- Each slot has a Surface question, a Push follow-up and an easier Floor, all phrased once by the model. Rules pick
+  the next rung.
+- A router in code handles silence, "I don't know", skip, "say it again", a dispute and drifting off, with no model
+  call. A dispute is checked against the cited line and conceded when the person is right.
+- Verdicts are Defended, Shaky, Couldn't defend or Not assessed.
+  - The judge cites a word-for-word quote of the answer before the verdict. Code checks the quote; a verdict without
+    a valid quote becomes Not assessed.
+  - Not assessed never counts against the person.
+- The debrief:
+  - counts in code, no number score, no hire or no-hire;
+  - Say, Avoid and Fix for each answer. Say is built only from the person's words and cited evidence
+    (`portfolio.ground` anchors), with `[brackets]` for what only they know;
+  - a good answer about something missing from the resume can become a fact marked "From you".
+- What carries over:
+  - the best verdict per claim across sessions;
+  - a "Practised" line on the skill in the graph, which never adds a skill;
+  - Fix steps in Prepare;
+  - practice dates on Your applications.
+- No reading of personality: no confidence, tone, accent, face or filler-word counts.
+- Nothing is shared with an employer.
+
+**As built** (the sketch, confirmed; differences noted):
+- **Contract.** `shared/interview.ts` ⇄ `contract/interview.py`:
+  - `InterviewKind` (role, resume, stories, work);
+  - `Slot {id, kind: ask|gap|claim|story|task, sources[], question, push, floor, covers[]}`. `covers` is hidden until
+    the debrief.
+  - `InterviewPlan`;
+  - `Turn {slotId, speaker, rung, text, atSeconds, mode: speech|typed}`;
+  - `SlotResult {slotId, quotes[], verdict, why, say, avoid?, fix?, storyParts?, newFact?}`;
+  - `Debrief {counts, firstThing, results, transcript}`.
+- **Tables:** one, `interview_sessions` (migration 0009): the whole state and the debrief as JSON, with a `version`
+  for compare-and-swap saves. Purged after 30 days. The best verdict per claim is computed from the stored debriefs.
+- **Routes:**
+  - `POST /api/interview/plan`;
+  - `POST /api/interview/sessions` to start, then `POST /api/interview/sessions/{id}/answer` (plain JSON, not NDJSON:
+    one small judge call per answer), `/work` and `/assistant` for work samples;
+  - `POST /api/interview/sessions/{id}/end`, which returns the debrief;
+  - `GET /api/interview/sessions/{id}` and `GET /api/interview/sessions` (history; empty for the shared sample
+    profile);
+  - `POST /api/interview/sessions/{id}/again`, one slot, no model call;
+  - `POST /api/interview/sessions/{id}/facts` and `DELETE /api/interview/sessions/{id}`.
+- **Prompts** (`prompts/interview.py`, Haiku 5.5, structured, citations first):
+  - `interview.phrase`: the questions for each slot;
+  - `interview.task`: a work sample from a code-picked template, filled from the posting, never from the resume;
+  - `interview.judge`: per answer;
+  - `interview.debrief`: Say, Avoid and Fix;
+  - `interview.assistant`: the work-sample helper.
+- **Guard:** an `interview` rate window per person (3 a day on the canvas) and a spend reservation per session. The
+  estimate is about $0.02 per interview, to be measured.
+- **Web app:** `src/practice/` (`/practice`, `/dev/practice` for every state): Practice, Setup, the room with a speech adapter (Web Speech recognition and synthesis,
+  feature-detected, falling back to typing), the work sample, the debrief and Progress. Entry points:
+  - Prepare's "Practice the interview";
+  - the rows of Your applications;
+  - the match screen;
+  - a Practice chip in the header.
+- **Speech through Sarvam AI (2026-10-17, the user's request, with 100 free credits):** the official `sarvamai`
+  SDK on the server (`backend/tayyari/speech/`, `/api/speech/*`, contract `shared/speech.ts`): Saaras v4
+  speech-to-text of answer pieces cut at pauses, with the interview's names as key terms, and a Bulbul v4-flash
+  Indian English voice for the interviewer, under a soft daily and per-session budget. The browser's speech and
+  typing remain the fallbacks. Details in `docs/backend.md` → Practice the interview → Speech.
+- **Differences from the canvas, decided while building:**
+  - "Defend your resume" never asks about a skill as if the resume listed it: a low-scoring profile skill is Tayyari's
+    reading, not the person's words (the live run asked "Your skills list includes RAG and retrieval", which was false).
+  - A work sample's tasks are fixed templates (the six on the canvas); the posting does not fill in details yet.
+  - "Add to Prepare" reads "Open Prepare": Prepare cannot take a step from the debrief yet.
+  - A "Practised" badge on the graph's skills is not built; Progress lists the best verdict per evidence line instead.
+  - "This role" practises roles from Discover (saved or found); a pasted posting is not a source yet.
+  - A fact kept "From you" stays in practice history; it is not yet added to the posting match's facts.
+  - The microphone needed `Permissions-Policy: microphone=(self)` (it was `microphone=()`).
+- **Checks:**
+  - a known-bad fixture for each verifier: a judge quote not in the transcript, a Say with an invented number, a
+    personality word in a Why;
+  - the router's phrases as table tests;
+  - a parity test for the contract.
 
 ---
 

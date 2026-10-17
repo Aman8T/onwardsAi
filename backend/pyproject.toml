@@ -23,6 +23,7 @@ dependencies = [
     "stripe>=16.0.0",
     "razorpay>=2.0.1",
     "requests>=2.34.2",
+    "sarvamai==0.1.35",
 ]
 
 # Deliberately no [build-system]: FastAPI Cloud installs the locked dependencies from uv.lock and

@@ -153,10 +153,15 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
 
       The first open takes a few seconds; after that it is kept.
     - **Share** opens "Share this role" with "Ask for a referral".
-      - A To field fills in `[name]`.
-      - The note has three lines: why the company (a quote from its posting), why you fit (your evidence), and why the
-        role fits you. Then "Would you be open to referring me?" and the link.
-      - A key names each line's sources.
+      - A To field fills in `[name]`; under it, "Left empty, the note says “Hi there”." Copy note and link (and Share…)
+        with the field empty gives "Hi there," while the box still shows `[name]`.
+      - The note is one short paragraph, a storyline in three sentences: who you are (your role, and one line of your
+        resume), why you fit them (one of the asks the search matched to your evidence, quoted, and what you did that met
+        it), and why they draw you (the posting's own words about their mission or the work). Then "Would you be open to
+        referring me?", a blank line and the link. About 60 to 90 words.
+      - "What each sentence draws on": 1 · Who you are · your resume, 2 · Why you fit · the match: the posting and your
+        resume, 3 · Why them · the posting.
+      - An employer found on the web is named without its board's number ("Appen", not "Appen 2").
       - Copy note and link, Share… (where the device has it) and Rewrite.
       - "Just the link" is the plain option.
     - **See how you fit** opens the match screen on the posting the search read, with "← Discover", for your own
@@ -166,6 +171,42 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
       Share and Remove. The page says "Kept in this browser".
     - **Without a server,** `/dev/discover?state=…` holds every state (start, searching, results, stale, focus, deck,
       sheet, not-for-me, nothing fitted, limit, paused, error, prepare, share, compare, applications).
+
+17. **Practice the interview** (each start makes one Haiku call, each answer one small one, the debrief one more; 3
+    interviews a day per address while it is free).
+    - **Entry.** "Practice" in the graph header and in Discover's header opens `/practice`. Prepare's "Practise for this
+      role" and the "Practise" action on a role in Your applications open the plan for that role.
+    - **Practice.** Coming up (roles at Interviewing or Applied), the four kinds with what each is built from, Your
+      practice with pips and counts, "Free while we test it · 3 a day". On the sample profile a banner says it is the
+      sample's interview, and Your practice stays empty (the sample is shared).
+    - **Setup.** The plan lists each question's kind and source quote with "Skip this one"; Spend more time on, Short or
+      Full with real counts, Speak or Type, "Test my microphone" (the meter moves only with your voice), the
+      interviewer's voice (on, slower, off), and the privacy line. With Sarvam set up on the server: "Your voice goes to
+      Sarvam AI, an Indian speech service, to be written down. Tayyari keeps only the text…" and "Speech by Sarvam AI,
+      made in India for Indian English and Hinglish." Without it (or once the day's Sarvam budget is used): the browser
+      line and "In Chrome, speech-to-text runs on Google's speech service."
+    - **The room.** The question in serif, "Why this question" closed by default; with Sarvam the interviewer reads it in
+      an Indian English voice ("Say it again" replays it with no new request). Speaking with Sarvam: your answer is cut
+      at each pause and "Your words appear after each pause", with "Writing down what you said…" while a piece is on its
+      way; with the browser: the transcript settles as you speak. Either way it can be fixed after Pause; "Done
+      answering" (Space). If Sarvam stops answering mid-interview the room says so once and the browser's speech (or
+      typing) takes over. Type instead works at any time. "Say it again" repeats
+      the question aloud; "I don't know" answers "That's fine. I'll note it and we'll move on." and moves on; Skip moves on.
+      A vague answer gets a follow-up, a stuck one an easier question, a story missing its end "What happened in the
+      end?". An off-topic answer hears "Let's come back to the question." once. No verdicts are shown until the end.
+      Block the microphone: the room says so and offers typing. In Firefox: typing only, with the reason.
+    - **Work sample.** The task and its material, your version and how you'd test it, the assistant with its switch;
+      "I'm done, ask me about it", then three questions on your choices in the room.
+    - **Debrief.** Pips and counts (never a score), "Work on this first" with "Ask this one again" (free), the role
+      summary, then one card per question: the deciding words marked inside your answer with their time, Why, Say (dashed
+      boxes for what only you know), Avoid (your own words), Fix with minutes, story parts, "Add as a fact · From you"
+      when an answer said something your resume doesn't. A work sample adds its checks and what was seen of the
+      assistant's use. The transcript panel links each time; "Delete now" removes the session. Reload keeps it.
+    - **Progress.** Each evidence line asked about, with its best verdict and date; the facts you kept; your sessions.
+    - **Phone (390×844).** The room becomes one column with a large "Tap when done" button, Type and Say again beside it;
+      the debrief opens the first thing to work on and folds the other questions.
+    - **Without a server,** `/dev/practice?state=…` holds every state (hub, setup, the room's steps and edges, work,
+      debrief, ended early, progress, limit, paused, sample, thin, no template, phone).
 
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`).

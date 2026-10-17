@@ -17,6 +17,7 @@ from tayyari.contract.jobsearch import (
     JobSearchDoneEvent,
     JobSearchJobEvent,
     JobSearchStepEvent,
+    ReferralLine,
     ReferralNote,
     RolePrep,
 )
@@ -25,12 +26,13 @@ from tayyari.core.settings import DiscoverSettings, JobSearchSettings
 from tayyari.discover import places
 from tayyari.discover.service import DiscoverService
 from tayyari.jobsearch import service as service_module
-from tayyari.jobsearch.boards import BoardReader
+from tayyari.jobsearch.boards import BoardReader, pretty_name
 from tayyari.jobsearch.errors import JobSearchDisabled
-from tayyari.jobsearch.harvest import ALLOWED_DOMAINS
+from tayyari.jobsearch.harvest import ALLOWED_DOMAINS, BoardLead, BoardRef
 from tayyari.jobsearch.service import JobSearchService
 from tayyari.llm.errors import ClaudeOverloaded
 from tayyari.llm.types import CallContext
+from tayyari.storage.ports import StoredSearchDoc
 from tests.fakes.claude import FakeClaudeClient, search_run
 from tests.fakes.clock import FakeClock
 from tests.fakes.discover import NOW, FakeBoards, FakeDiscoverRepo, fixture_registry, profile_of, read_json
@@ -43,6 +45,7 @@ from tests.unit.jobsearch.support import (
     frontend_answer,
     gh_job,
     item,
+    listing,
     reader,
     web_board,
 )
@@ -461,3 +464,113 @@ async def test_a_referral_note_is_written_once_and_rewritten_on_request(
     await rig.service.referral(profile, finished.runId, job_id, CTX)
     await rig.service.referral(profile, finished.runId, job_id, CTX, fresh=True)
     assert len(calls) == 2
+
+
+OLD_SHAPE = {
+    "lines": [
+        {
+            "part": "company",
+            "text": "Hi [name], Harbour Labs is hiring a Frontend Engineer in Bengaluru.",
+            "sources": ["the posting"],
+        },
+        {"part": "you", "text": "I rebuilt the checkout in React.", "sources": ["your resume"]},
+        {"part": "role", "text": "It is a Frontend Engineer role at my level.", "sources": ["the posting"]},
+    ],
+    "ask": "Would you be open to referring me?",
+    "link": HARBOUR_URL,
+    "createdAt": "2026-10-15T09:00:00+00:00",
+}
+
+
+async def test_a_referral_note_stored_in_the_old_shape_is_written_again_and_the_new_one_is_kept(
+    make_rig: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rig = await make_rig()
+    rig.claude.script_search(search_run(RESULTS), repeat=True)
+    rig.claude.script_structured(
+        "jobsearch.judge", reader({"Frontend Engineer": frontend_answer}), repeat=True
+    )
+    finished = done(await rig.run())
+    calls: list[int] = []
+
+    async def fake_referral(**kwargs: Any) -> ReferralNote:
+        calls.append(1)
+        job = kwargs["job"]
+        lines = [
+            ReferralLine(
+                part="intro", text="I'm a Frontend Engineer in Bengaluru.", sources=["your profile"]
+            ),
+            ReferralLine(
+                part="fit", text="Harbour Labs wants React, and I rebuilt it.", sources=["the posting"]
+            ),
+            ReferralLine(part="draw", text="What draws me is the role.", sources=["the posting"]),
+        ]
+        return ReferralNote(
+            jobId=job.id,
+            lines=lines,
+            ask="Would you be open to referring me?",
+            link=job.applyUrl,
+            createdAt="x",
+        )
+
+    monkeypatch.setattr(service_module, "write_referral", fake_referral)
+    profile = profile_of("frontend")
+    job_id = next(j for j in jobs_of_run(rig, finished.runId) if j["foundVia"] == "web")["id"]
+    old = StoredSearchDoc(
+        profile_id=profile.id,
+        job_id=job_id,
+        kind="referral",
+        created_at=NOW,
+        body={"jobId": job_id, **OLD_SHAPE},
+    )
+    await rig.runs.save_doc(old)
+
+    note = await rig.service.referral(profile, finished.runId, job_id, CTX)
+    assert note is not None and calls == [1]
+    assert [line.part for line in note.lines] == ["intro", "fit", "draw"]
+    kept = await rig.runs.get_doc(profile.id, job_id, "referral")
+    assert kept is not None and [line["part"] for line in kept.body["lines"]] == ["intro", "fit", "draw"]
+    again = await rig.service.referral(profile, finished.runId, job_id, CTX)
+    assert again == note and calls == [1]
+
+
+@pytest.mark.parametrize(
+    ("slug", "name"),
+    [
+        ("appen-2", "Appen"),
+        ("appen-2-3", "Appen"),
+        ("kestrel-pay", "Kestrel Pay"),
+        ("studio-54-labs", "Studio 54 Labs"),
+        ("7-eleven", "7 Eleven"),
+        ("acme_labs.io", "Acme Labs Io"),
+        ("2024", "2024"),
+        ("2024-2", "2024"),
+    ],
+)
+def test_a_slug_gives_a_readable_employer_name_without_the_numbers_on_its_end(slug: str, name: str) -> None:
+    assert pretty_name(slug) == name
+
+
+async def test_an_employer_that_is_only_a_board_slug_is_shown_without_the_boards_number(
+    make_rig: Any,
+) -> None:
+    rig = await make_rig()
+    assert rig.service._employer_name(listing(employer_id="appen-2")) == "Appen"
+    assert rig.service._employer_name(listing(employer_id="2024")) == "2024"
+
+
+async def test_a_web_employer_nobody_names_is_called_by_its_slug_and_a_name_from_the_board_wins() -> None:
+    boards = FakeBoards()
+    web = BoardReader(
+        clock=FakeClock(NOW),
+        timeout_s=5,
+        concurrency=1,
+        cache_minutes=60,
+        listing_cap=300,
+        transport=boards.transport,
+    )
+    lead = BoardLead(ref=BoardRef("lever", "appen-2"), first_query="Frontend Engineer")
+    assert web._employer(lead, None).name == "Appen"
+    hinted = BoardLead(ref=BoardRef("lever", "appen-2"), first_query="x", name_hint="Appen Limited")
+    assert web._employer(hinted, None).name == "Appen Limited"
+    assert web._employer(lead, {"jobs": [{"company_name": "Appen Ltd"}]}).name == "Appen Ltd"

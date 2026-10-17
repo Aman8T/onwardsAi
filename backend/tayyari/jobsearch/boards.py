@@ -62,8 +62,16 @@ def employer_id_of(ref: BoardRef) -> str:
     return f"web-{ref.ats}-{tail}"[:63]
 
 
-def _pretty(token: str) -> str:
-    return " ".join(part.capitalize() for part in re.split(r"[-_.]+", token) if part) or token
+def pretty_name(slug: str) -> str:
+    """A readable employer name from a board slug when nobody names the employer: ``kestrel-pay`` is "Kestrel Pay".
+
+    A board that shares its name with another employer gets a number on the end (``appen-2``): that is the board's, not
+    the employer's, so trailing all-digit segments are left out ("Appen"). A slug of nothing but digits keeps them.
+    """
+    parts = [part for part in re.split(r"[-_.]+", slug) if part]
+    while len(parts) > 1 and parts[-1].isdigit():
+        parts.pop()
+    return " ".join(part.capitalize() for part in parts) or slug
 
 
 def _company_name(payload: Any) -> str | None:
@@ -127,7 +135,11 @@ class BoardReader:
 
     def _employer(self, lead: BoardLead, payload: Any) -> Employer:
         ref = lead.ref
-        name = _company_name(payload) or (lead.name_hint or "").strip()[:NAME_MAX_CHARS] or _pretty(ref.token)
+        name = (
+            _company_name(payload)
+            or (lead.name_hint or "").strip()[:NAME_MAX_CHARS]
+            or pretty_name(ref.token)
+        )
         return Employer(
             id=employer_id_of(ref),
             name=name,
@@ -164,4 +176,4 @@ class BoardReader:
         return BoardRead(lead=lead, employer=employer, listings=listings, seen=parsed.seen)
 
 
-__all__ = ["BoardRead", "BoardReader", "employer_id_of"]
+__all__ = ["BoardRead", "BoardReader", "employer_id_of", "pretty_name"]

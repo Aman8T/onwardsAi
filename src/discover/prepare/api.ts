@@ -140,7 +140,7 @@ export function readRolePrep(raw: unknown, fallbackJobId = ''): RolePrep | null 
 
 /* ───────────────────────── reading the referral note ───────────────────────── */
 
-const PARTS: readonly ReferralPart[] = ['company', 'you', 'role'];
+const PARTS: readonly ReferralPart[] = ['intro', 'fit', 'draw'];
 const MAX_LINES = 3;
 const MAX_SOURCES = 6;
 /** The ask when the server's is missing: plain, and what the product's own fixture says. */

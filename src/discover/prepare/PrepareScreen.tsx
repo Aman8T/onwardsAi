@@ -195,7 +195,7 @@ function PrepareBody({ profileId, runId, jobId, job: given, onBack, onSeeMatch, 
                 appliedAt={tracked?.appliedAt}
                 onApplied={markApplied}
               />
-              <PracticeSection headingId={h.practice} />
+              <PracticeSection headingId={h.practice} runId={runId} jobId={jobId} />
             </motion.div>
           )}
         </div>

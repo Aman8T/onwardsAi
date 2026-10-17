@@ -790,6 +790,24 @@ class StoredSearchDoc:
 
 
 @dataclass(frozen=True, slots=True)
+class StoredInterview:
+    """One practice interview (`InterviewSessionRow`). ``state`` holds everything the service needs to carry on (the
+    plan, the phrased lines and hidden answer notes, the turns, the per-slot judgements, the work sample and the
+    assistant log); ``debrief`` the `Debrief` once it is done. ``version`` goes up by one on every save, so two tabs that
+    answer at once cannot overwrite each other (`InterviewRepo.save`)."""
+
+    id: str
+    profile_id: str
+    kind: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    version: int
+    state: dict[str, Any]
+    debrief: dict[str, Any] | None
+
+
+@dataclass(frozen=True, slots=True)
 class UpsertCounts:
     """What `DiscoverRepo.upsert_employer` did: rows added, rows whose content changed, rows that only got seen again."""
 
@@ -903,6 +921,39 @@ class JobSearchRepo(Protocol):
         ...
 
 
+class InterviewRepo(Protocol):
+    """Practice interviews. Everything is scoped to a profile id: another profile's session id reads as None."""
+
+    async def create(self, item: StoredInterview) -> None:
+        """Store a new session (``version`` 1)."""
+        ...
+
+    async def get(self, profile_id: str, session_id: str) -> StoredInterview | None:
+        """The session with this id when it belongs to this profile, else None."""
+        ...
+
+    async def save(self, item: StoredInterview) -> bool:
+        """Write ``state``, ``status``, ``debrief`` and ``updated_at`` with ``version`` set to ``item.version``, only if
+        the stored version is ``item.version - 1``. Returns False (and writes nothing) when it is not: someone saved first."""
+        ...
+
+    async def list(self, profile_id: str, limit: int) -> list[StoredInterview]:
+        """This profile's sessions, newest first, at most ``limit``."""
+        ...
+
+    async def delete(self, profile_id: str, session_id: str) -> bool:
+        """Delete one session of this profile; False when there was none."""
+        ...
+
+    async def count_since(self, profile_id: str, since: datetime) -> int:
+        """Sessions this profile started at or after ``since`` (for "left today")."""
+        ...
+
+    async def purge(self, cutoff: datetime) -> int:
+        """Delete sessions created before ``cutoff``; returns how many went."""
+        ...
+
+
 __all__ = [
     "BillingRepo",
     "ChatMessage",
@@ -913,6 +964,7 @@ __all__ = [
     "DiscoverListing",
     "DiscoverRepo",
     "DiscoverRun",
+    "InterviewRepo",
     "JobSearchRepo",
     "KvRepo",
     "LimitRepo",
@@ -938,6 +990,7 @@ __all__ = [
     "SettleStatus",
     "StoredAuthSession",
     "StoredEntitlements",
+    "StoredInterview",
     "StoredMagicLink",
     "StoredMatch",
     "StoredOrder",

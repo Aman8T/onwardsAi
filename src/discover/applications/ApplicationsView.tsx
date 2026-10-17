@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { NARROW_QUERY, useMediaQuery } from '../../lib/ui';
+import { actions } from '../../store';
 import '../../styles/discover-more.css';
 import { applyHref, applyText, dayLabel, FIT_CLASS, FIT_WORD, LEVEL_WORD, placeLine } from '../prepare/words';
 import { MAX_NOTE, STAGES, STAGE_LABEL, useTracker } from './tracker';
@@ -20,12 +21,14 @@ export interface ApplicationsViewProps {
   onSeeMatch: (item: TrackedJob) => void;
   onShare: (item: TrackedJob) => void;
   onBack: () => void;
+  /** Open the practice plan for a role; absent = Practice's plan screen for it. */
+  onPractise?: (item: TrackedJob) => void;
 }
 
 const roles = (n: number) => `${n} ${n === 1 ? 'role' : 'roles'}`;
 const nameOf = (t: TrackedJob) => `${t.job.title} at ${t.job.employer}`;
 
-export function ApplicationsView({ profileId, onPrepare, onSeeMatch, onShare, onBack }: ApplicationsViewProps) {
+export function ApplicationsView({ profileId, onPrepare, onSeeMatch, onShare, onBack, onPractise }: ApplicationsViewProps) {
   const tracker = useTracker(profileId);
   const narrow = useMediaQuery(NARROW_QUERY);
   const base = useId();
@@ -181,6 +184,7 @@ export function ApplicationsView({ profileId, onPrepare, onSeeMatch, onShare, on
                   onNote={(note) => tracker.setNote(t.job.id, note)}
                   onDate={(day) => tracker.setAppliedAt(t.job.id, day)}
                   onPrepare={() => onPrepare(t)}
+                  onPractise={() => (onPractise ? onPractise(t) : t.runId && actions.openPractice({ screen: 'setup', kind: 'role', run: t.runId, job: t.job.id }))}
                   onSeeMatch={() => onSeeMatch(t)}
                   onShare={() => onShare(t)}
                 />
@@ -208,11 +212,12 @@ interface ItemProps {
   onNote: (note: string) => void;
   onDate: (day: string | undefined) => void;
   onPrepare: () => void;
+  onPractise: () => void;
   onSeeMatch: () => void;
   onShare: () => void;
 }
 
-function Item({ item, selectId, confirming, onAskRemove, onKeep, onRemove, onStage, onNote, onDate, onPrepare, onSeeMatch, onShare }: ItemProps) {
+function Item({ item, selectId, confirming, onAskRemove, onKeep, onRemove, onStage, onNote, onDate, onPrepare, onPractise, onSeeMatch, onShare }: ItemProps) {
   const { job } = item;
   const ids = useId();
   const down = item.takenDownAt;
@@ -298,6 +303,11 @@ function Item({ item, selectId, confirming, onAskRemove, onKeep, onRemove, onSta
                 {item.runId && (
                   <button type="button" className="btn btn-sm dm-btn-sm" onClick={onPrepare}>
                     Prepare
+                  </button>
+                )}
+                {item.runId && (
+                  <button type="button" className="btn btn-sm dm-btn-sm" aria-label={`Practise the interview for ${nameOf(item)}`} onClick={onPractise}>
+                    Practise
                   </button>
                 )}
                 {href ? (

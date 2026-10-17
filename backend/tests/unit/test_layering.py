@@ -72,6 +72,12 @@ RULES: dict[str, tuple[str, ...]] = {
     # portfolio's sentence anchors to check a referral note; it never imports match or analysis, and discover never
     # imports it.
     "jobsearch": (*_SERVICES, "discover", "portfolio"),
+    # practice interviews read a role from search with AI (through a Protocol), its evidence lines and quote checks, and
+    # the portfolio's sentence anchors to check a "Say" line; nothing imports interview except api and the container.
+    "interview": (*_SERVICES, "jobsearch", "discover", "portfolio"),
+    # speech for practice interviews (Sarvam AI through its SDK): a self-contained service like discover, with its own
+    # settings and meter; it reaches storage only through its Protocols and never imports interview or any other service.
+    "speech": ("core", "contract", "storage.ports"),
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",
@@ -86,6 +92,8 @@ RULES: dict[str, tuple[str, ...]] = {
         "match",
         "discover",
         "jobsearch",
+        "interview",
+        "speech",
         "guard",
         "ingest",
         "prompts",

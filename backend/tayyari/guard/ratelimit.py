@@ -26,6 +26,11 @@ once with an account subject (``u:<user id>``, ``globally=False`` so the whole-s
 A visitor with no account is counted once more, under the route ``match_anon``: a single daily window per client
 (`GuardSettings.anon_match_per_day`), no in-memory bucket and no whole-service counter (``match`` has those).
 ``jobsearch`` and ``jobsearch_anon`` (a search with AI) follow the same pattern, with ``jobsearch:global:hour``.
+``interview`` (starting a practice interview) is counted per address and per account the same way, with
+``interview:global:hour``; ``interview_again`` ("ask this one again") is one daily window per address and per account and
+no whole-service counter.
+``speech`` (a piece of a spoken answer written down, or an interviewer's line read aloud, through Sarvam) is one per-minute
+window per address, no account counter and no whole-service counter: Sarvam's own credits are metered by `speech.meter`.
 
 `shed(route, ip_hash, ip_hash_48)` runs step 1 alone, synchronously, so a route can turn hammering away before it
 reads the request body; it then calls ``check(..., memory=False)`` after validating, so one request takes one
@@ -55,7 +60,18 @@ from tayyari.storage.ports import LimitRepo
 
 log = get_logger(__name__)
 
-Route = Literal["analyze", "chat", "portfolio", "match", "match_anon", "jobsearch", "jobsearch_anon"]
+Route = Literal[
+    "analyze",
+    "chat",
+    "portfolio",
+    "match",
+    "match_anon",
+    "jobsearch",
+    "jobsearch_anon",
+    "interview",
+    "interview_again",
+    "speech",
+]
 WindowName = Literal["min", "hour", "day"]
 
 UNKNOWN_SUBJECT = "unknown"
@@ -65,6 +81,7 @@ GLOBAL_CHAT_BUCKET = "chat:global:hour"
 GLOBAL_PORTFOLIO_BUCKET = "portfolio:global:hour"
 GLOBAL_MATCH_BUCKET = "match:global:hour"
 GLOBAL_JOBSEARCH_BUCKET = "jobsearch:global:hour"
+GLOBAL_INTERVIEW_BUCKET = "interview:global:hour"
 SUBNET_LIMIT_FACTOR = 4
 """An IPv6 /48 may use this many times the per-IP limit (a /64 is one household, a /48 is up to 65,536)."""
 
@@ -156,6 +173,18 @@ _MESSAGES: dict[tuple[str, str], str] = {
         "jobsearch_anon",
         "day",
     ): "That's today's limit for searches with AI without an account. It resets in {wait}.",
+    ("interview", "min"): "A practice interview is already starting. Please wait {wait} and try again.",
+    (
+        "interview",
+        "hour",
+    ): "You've used today's practice interviews. They're free while we test them. More in {wait}.",
+    (
+        "interview",
+        "day",
+    ): "You've used today's practice interviews. They're free while we test them. More in {wait}.",
+    ("interview", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
+    ("interview_again", "day"): "That's enough repeats for today. More in {wait}.",
+    ("speech", "min"): "Too many speech requests at once. Please wait {wait}.",
 }
 
 
@@ -213,6 +242,16 @@ class RateLimiter:
             )
         elif route == "jobsearch_anon":
             limits = (("day", s.anon_jobsearch_per_day),)
+        elif route == "interview":
+            limits = (
+                ("min", s.interview_per_minute),
+                ("hour", s.interview_per_hour),
+                ("day", s.interview_per_day),
+            )
+        elif route == "interview_again":
+            limits = (("day", s.interview_again_per_day),)
+        elif route == "speech":
+            limits = (("min", s.speech_per_minute),)
         else:  # portfolio
             limits = (
                 ("min", s.portfolio_per_minute),
@@ -249,6 +288,9 @@ class RateLimiter:
             "match_anon": (GLOBAL_MATCH_BUCKET, 0),  # the whole service is capped by ``match`` already
             "jobsearch": (GLOBAL_JOBSEARCH_BUCKET, s.jobsearch_global_per_hour),
             "jobsearch_anon": (GLOBAL_JOBSEARCH_BUCKET, 0),  # capped by ``jobsearch`` already
+            "interview": (GLOBAL_INTERVIEW_BUCKET, s.interview_global_per_hour),
+            "interview_again": (GLOBAL_INTERVIEW_BUCKET, 0),  # capped by ``interview`` already
+            "speech": ("speech:global:hour", 0),  # Sarvam's credits are metered by `speech.meter`, not here
         }
         return rules[route]
 
@@ -393,6 +435,7 @@ class RateLimiter:
 __all__ = [
     "GLOBAL_ANALYZE_BUCKET",
     "GLOBAL_CHAT_BUCKET",
+    "GLOBAL_INTERVIEW_BUCKET",
     "GLOBAL_JOBSEARCH_BUCKET",
     "GLOBAL_MATCH_BUCKET",
     "GLOBAL_PORTFOLIO_BUCKET",

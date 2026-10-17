@@ -19,6 +19,12 @@
     JobSearchService                              (search with AI: Haiku scouts over employers' job sites, the boards
                                                    read through Discover's fetcher, a checked Haiku read; the guarded
                                                    Claude client)
+    InterviewService                              (practice the interview: Haiku phrases, judges and debriefs; the guarded
+                                                   Claude client, its own session store, and a role read back through
+                                                   the job search)
+    SpeechService                                 (Sarvam AI speech for practice interviews: the engine over the official
+                                                   SDK when SARVAM_API_KEY is set and speech is on, none otherwise; a soft
+                                                   budget in the kv table; its own HTTP client)
     match_anonymous                               (may a visitor with no sign-in match a posting: the setting
                                                    resolved against the sign-in methods this server offers)
     maintenance                                   (retention purge, a tracked background task; it keeps
@@ -79,9 +85,12 @@ if TYPE_CHECKING:
     from tayyari.billing.entitlements import EntitlementService
     from tayyari.billing.service import BillingService
     from tayyari.discover.service import DiscoverService
+    from tayyari.interview.service import InterviewService
     from tayyari.jobsearch.service import JobSearchService
     from tayyari.match.service import MatchService
     from tayyari.portfolio.service import PortfolioService
+    from tayyari.speech.engine import SpeechEngine
+    from tayyari.speech.service import SpeechService
 
 log = get_logger(__name__)
 
@@ -112,7 +121,10 @@ class ContainerOverrides:
     - ``entitlements``, ``billing``, ``match``, ``discover``: the services themselves.
     - ``discover_transport``: an ``httpx2`` transport for Discover's reads of employers' boards (and the job search's);
       tests hand in an ``httpx2.MockTransport`` so a refresh runs without a network.
-    - ``jobsearch``: the job search service itself.
+    - ``jobsearch``, ``interview``: the job search service and the practice interview service themselves.
+    - ``speech``: the speech service itself. ``speech_engine``: just its engine (the service is still built here, over the
+      real ``kv`` budget); giving one switches Sarvam speech on without a ``SARVAM_API_KEY`` (the
+      ``TAYYARI_SPEECH__ENABLED`` kill switch still wins). Tests hand in a fake engine; nothing calls Sarvam.
     - ``razorpay_session``: the ``requests.Session`` the Razorpay SDK sends through; tests hand in one that answers
       from memory.
     - ``stripe_http``: a ``stripe.HTTPClient`` for the Stripe SDK's requests; tests hand in one that answers from memory.
@@ -139,6 +151,9 @@ class ContainerOverrides:
     discover: DiscoverService | None = None
     discover_transport: httpx2.AsyncBaseTransport | None = None
     jobsearch: JobSearchService | None = None
+    interview: InterviewService | None = None
+    speech: SpeechService | None = None
+    speech_engine: SpeechEngine | None = None
     razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
 
@@ -215,6 +230,12 @@ class Container:
     cancels that task at shutdown."""
     jobsearch: JobSearchService
     """Search with AI. The route reserves spend and counts the run; every Claude call goes through the guarded client."""
+    interview: InterviewService
+    """Practice the interview. The routes count a started interview and reserve spend; every Claude call goes through the
+    guarded client."""
+    speech: SpeechService
+    """Speech for practice interviews through Sarvam AI. Its engine is None without a key (the browser's own speech is used);
+    the routes count each request in the ``speech`` window."""
     rate_limiter: RateLimiter
     spend_guard: SpendGuard
     ip_hash_key: bytes
@@ -259,10 +280,12 @@ class Container:
         from tayyari.chat.service import CoachChatService
         from tayyari.decisions.packs.service_impl import JevDecisionService
         from tayyari.discover.service import DiscoverService
+        from tayyari.interview.service import InterviewService
         from tayyari.jobsearch.boards import BoardReader
         from tayyari.jobsearch.service import JobSearchService
         from tayyari.match.service import MatchService
         from tayyari.portfolio.service import PortfolioService
+        from tayyari.speech.service import SpeechService
 
         ov = overrides or ContainerOverrides()
         configure_logging(settings)
@@ -518,6 +541,47 @@ class Container:
                     searches_per_scout=settings.jobsearch.searches_per_scout,
                 )
 
+            interview: InterviewService
+            if ov.interview is not None:
+                interview = ov.interview
+            else:
+                interview = InterviewService(
+                    claude=claude,
+                    settings=settings.interview,
+                    sessions=repos.interview,
+                    roles=jobsearch,
+                    clock=clock,
+                )
+                log.info(
+                    "interview_ready",
+                    enabled=settings.interview.enabled,
+                    model=settings.interview.model,
+                    assistant_messages=settings.interview.assistant_messages,
+                )
+
+            speech: SpeechService
+            if ov.speech is not None:
+                speech = ov.speech
+            else:
+                engine = ov.speech_engine
+                if engine is None and settings.sarvam_api_key is not None and settings.speech.enabled:
+                    from tayyari.speech.sarvam import SarvamEngine
+
+                    built_engine = SarvamEngine(settings.sarvam_api_key, settings.speech)
+                    closers.append(("sarvam", built_engine.aclose))
+                    engine = built_engine
+                speech = SpeechService(engine, settings.speech, repos.kv, clock)
+                log.info(
+                    "speech_ready",
+                    provider="sarvam" if speech.configured else None,
+                    enabled=settings.speech.enabled,
+                    key_set=settings.sarvam_api_key is not None,
+                    stt_model=settings.speech.stt_model,
+                    tts_model=settings.speech.tts_model,
+                    stt_daily_seconds=settings.speech.stt_daily_seconds,
+                    tts_daily_chars=settings.speech.tts_daily_chars,
+                )
+
             match_anonymous = settings.match.anonymous_allowed(auth.providers)
             log.info(
                 "match_anonymous",
@@ -562,6 +626,8 @@ class Container:
             match_anonymous=match_anonymous,
             discover=discover,
             jobsearch=jobsearch,
+            interview=interview,
+            speech=speech,
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,
             ip_hash_key=ip_hash_key,

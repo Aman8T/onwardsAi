@@ -145,6 +145,14 @@ export function GraphHeader({ profile }: { profile: Profile }) {
         >
           Discover
         </button>
+        <button
+          type="button"
+          className="btn btn-quiet gv-portfolio"
+          title="Practise the interview: questions about your own work, with credit only for what you can back up"
+          onClick={() => actions.openPractice({ screen: 'hub' })}
+        >
+          Practice
+        </button>
         <button type="button" className="btn btn-quiet gv-ask" aria-label="Ask Tayyari" onClick={() => actions.openChat(freeAction().origin, '')}>
           Ask
         </button>

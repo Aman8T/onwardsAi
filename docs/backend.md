@@ -27,8 +27,10 @@ The package is importable as `backend/tayyari/`, laid out in layers with import 
 | `match` | MatchService and its stages | Posting match: reading a posting, facts, gates, coverage, radar, questions, resume, cover note, export and lint |
 | `discover` | DiscoverService, the refresher, the registry, the quick fit | The board store behind Search with AI: Tayyari's employers' own boards read into listings, plus the parsers, places, vocabulary and quick fit the search reuses; a separate service (own tables, settings and worker) |
 | `jobsearch` | JobSearchService, the brief, the harvest, the board reader, the narrowing, the checks | Search with AI: Haiku 5.5 scouts find employers' boards on the web, code reads them and narrows, Haiku reads the shortlist, code checks every quote; reuses `discover`'s pure parts |
+| `interview` | InterviewService, the plan, the router, the judge, the debrief, the work-sample templates | Practice the interview: plans in code from the person's evidence, a role or a template; Haiku 5.5 phrases, judges and writes the debrief; code checks every quote, name and number and decides every verdict |
+| `speech` | SpeechService, SarvamEngine, the meter | Speech for practice interviews through Sarvam AI's SDK: speech-to-text of answer pieces and the interviewer's voice, metered against a soft daily and per-session budget; self-contained like `discover` |
 
-**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `jobsearch` sits with the model-calling services and may also import `discover` (never the other way round). `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
+**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `jobsearch` sits with the model-calling services and may also import `discover` (never the other way round). `interview` sits with them too and may import `jobsearch`, `discover` and `portfolio` (nothing but `api` and the container imports it). `speech` is self-contained like `discover` (`core`, `contract`, `storage.ports` and the `sarvamai` SDK). `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
 
 ## Request flows
 
@@ -303,14 +305,22 @@ for its own profile; any other id is a 404.
   lines, plus placeholders for what only the person knows.
 - A posting with text aimed at an AI gets no model call, only the fallback page.
 
-**Referral** (`referral.py`, `jobsearch.referral`, one Haiku call). Three lines in typed slots: `company`, `you` and
-`role`, citations first.
-- Every quote is checked against the posting.
-- Numbers, names and seniority words must be in the cited evidence or the posting (`portfolio.ground` anchors; the
-  layering allows `jobsearch` to import `portfolio`).
-- `you` must cite evidence. `role` needs a posting quote and evidence.
-- A line that fails falls back to a template built from facts. The note ends with "Would you be open to referring me?"
-  and the employer's link.
+**Referral** (`referral.py`, `jobsearch.referral`, one Haiku call). One short paragraph, a storyline in three sentences in
+typed slots, citations first (changed 2026-10-17 from three separate lines, at the user's request):
+- `intro`, who you are: opens "I'm" or "I", the current role (and place) and at most one cited evidence line, no quote.
+- `fit`, why you fit them: the prompt gets the role's checked matches (`AiJob.met`, "what they need that you show");
+  the sentence quotes a short passage of ONE matched ask and says what the person did, citing exactly the evidence line
+  that met it. Up to 230 characters.
+- `draw`, why they fit you: the posting's own words about the mission or the work, and why that is where the person
+  wants to go; it may not claim anything the person did.
+- Every quote is checked against the posting; numbers, names and seniority words must be in the cited evidence or the
+  posting (`portfolio.ground` anchors; the layering allows `jobsearch` to import `portfolio`); no greeting, question
+  or praise words.
+- A sentence that fails falls back to a template that still reads in the paragraph ("{employer} wants “…”, and I can
+  point to {the evidence line}"; evidence is never clipped mid-phrase). The web app adds "Hi {name}," (or "Hi there,"
+  when the name is left empty), the ask "Would you be open to referring me?" and the employer's link. A note stored in
+  the old three-line shape fails validation and is written again.
+- An employer found on the web is named from its board slug without a trailing number (`appen-2` becomes "Appen").
 
 **Findings from building on the API.**
 - With `output_config.format` set alongside a server tool, Haiku 5.5 answered at once without searching. So the scouts
@@ -338,6 +348,119 @@ No credit is charged. Every answer is `no-store`.
 - `tests/unit/llm/test_search_web.py` uses SSE fixtures.
 - Also `tests/integration/test_jobsearch_routes.py`, `tests/unit/contract/test_jobsearch_parity.py` and the repo
   contract.
+
+### Practice the interview (`/api/interview/*`)
+
+`backend/tayyari/interview/` is I1, built 2026-10-17 from the canvas https://claude.ai/artifact/VtufBm3wga3E1SJRiHw3cd
+and the research in `docs/research/mock-interview.md` (what HackerRank's Chakra and its practice interviews do, and what
+we take and leave). Everything runs on Claude Haiku 5.5 (`TAYYARI_INTERVIEW__MODEL`). Speech goes through Sarvam AI when
+the server has a key (`/api/speech/*`, below), else the browser's own speech; either way the interview itself only
+ever sees text. It is free while we test it; the guard windows are the only meter.
+
+**Four kinds.**
+- **This role** comes from a search-with-AI role (`RoleSource {runId, jobId}`, read through `RoleLookup`, which
+  `JobSearchService.role` satisfies). Its slots are 2 asks the person shows, 1 gap, 1 claim and 1 story; Spend more time
+  on shifts the quotas.
+- **Defend your resume** asks about 5 of the person's evidence lines: two with a number, a "Led …" line, a line from a
+  repository or page, and one more. A low-scoring skill is never asked as if the resume listed it (it is Tayyari's
+  reading, not the person's words).
+- **Behavioural stories** builds 4 stories from evidence lines with people or action in them.
+- **Work sample** uses one of six templates (`tasks.py`: frontend, data analyst, marketing, nursing, accounts,
+  teaching), picked from the role's or the person's title. The task comes first, then 3 questions on the choices. An
+  optional assistant can be used along the way.
+
+**A session.**
+1. **Plan, in code** (`plan.py`, `POST /api/interview/plan`). It is deterministic and free. Slot ids are `s1…`, and every
+   source is an evidence line or the posting's own words. `start` recomputes the plan and drops the slots the person
+   skipped.
+2. **Phrase** (`phrase.py`, `interview.phrase`, one call at start; work samples skip it). Each slot gets a question, a
+   push, a floor and hidden notes on what a full answer covers.
+   - Code checks each line: under 200 characters, ending with "?", and every number and name in the slot's sources or
+     the posting.
+   - A line that fails gets the kind's template.
+   - A posting with text aimed at an AI gets templates only.
+3. **Answer** (`router.py`, `judge.py`, `flow.py`).
+   - The router handles these in code, with no model call: repeat, skip, "I don't know" (Couldn't defend, with the words
+     quoted), a dispute (the cited line is shown, once per slot) and unclear input.
+   - Otherwise `interview.judge` reads the answer. It returns quotes first, then on-topic, story parts, a verdict, why,
+     and a new fact.
+   - Code keeps a verdict only on a quote that is a passage of the answer; with none it is Not assessed. A floor answer
+     is capped at Shaky, and a story needs situation, action and result to be Defended.
+   - A personality word in `why` is replaced. A new fact is kept only on a Defended answer to an ask, gap, claim or
+     story, written like a resume line (never "The person …"), with every name and number from the answer.
+   - The rungs follow fixed rules. Surface: defended moves to the next slot, shaky goes to push, couldn't goes to floor.
+     A story's push asks for its missing part.
+   - Off-topic answers are redirected once.
+   - A failed judge call answers 503 (`ModelUnavailable`) and records nothing, so the person can answer again.
+4. **End** (`debrief.py`, `interview.debrief`; `checks.py`, `interview.checks` for work samples).
+   - Counts, the first thing to work on and the role summary are worked out in code.
+   - The model phrases Say, Avoid and Fix. Say is checked against the answer and the sources, and `[brackets]` hold
+     what only the person knows. Avoid must quote the answer. Fix is clamped to 5 to 120 minutes.
+   - Each work-sample check needs a quote from the work, the test note or an answer.
+   - The assistant's use is described in code ("Asked the assistant 2 things · changed its version before using it").
+   - A failed call still gives a debrief built from code. `end` on a finished session returns the stored debrief.
+
+**Storage.** `interview_sessions` holds one row per session.
+- `state` (JSON) holds the plan, the phrased lines and notes, the rung, the per-slot judgements, the turns, the work and
+  the assistant log. `debrief` (JSON) is filled once the session is done.
+- `version` makes saves compare-and-swap: a lost race is a 409 "This interview moved on in another tab."
+- Rows are purged after `retention_days` (30).
+- Ask again creates a one-slot session from the stored lines, with no model call.
+- `set_fact` marks a new fact as kept "From you".
+- History works out the best verdict per evidence line across sessions, the kept facts, and the interviews left today.
+
+**Routes** (`api/routes/interview.py`). Every answer is `no-store`, and a session id that is not 32 hex is a 404. The
+profile is opened as the job search opens it, sample profile included. The sample profile's history is always empty,
+because everyone shares it: a sample session is reachable only through the id its own browser holds.
+- `POST /api/interview/plan` → `InterviewPlan`.
+- `POST /api/interview/sessions` → `InterviewSession`. The checks run in this order: shed `interview`, off (503), body,
+  profile, the `interview` windows per address and per account, then the spend reservation (`EST_INTERVIEW_USD`).
+- `GET /api/interview/sessions?profileId=` → `PracticeHistory`. `GET /api/interview/sessions/{id}?profileId=` →
+  `SessionView`.
+- `POST …/{id}/answer` (reserves `EST_INTERVIEW_TURN_USD`), `…/work`, `…/assistant` (reserves the turn amount),
+  `…/end` (reserves `EST_INTERVIEW_END_USD`), `…/again` (its own `interview_again` window), `…/facts`, and
+  `DELETE …/{id}`.
+- Off, every route answers 503 except `DELETE`, so a transcript can always be removed.
+
+**Speech, through Sarvam AI** (`backend/tayyari/speech/`, `api/routes/speech.py`, added 2026-10-17). The user added a
+Sarvam key with 100 free credits; the official `sarvamai` SDK (pinned 0.1.35) is called only from the server, so the
+key never reaches a browser.
+- **Speech-to-text:** Saaras v4 (`en-IN`). The room cuts a spoken answer at each pause (at most 30 s a piece) and sends
+  each piece to `POST /api/speech/transcribe` as the raw body (WebM/Opus, Ogg, MP4/AAC, MP3 or WAV). The interview's
+  own names and terms (`InterviewService.speech_context`: employer, title, slot topics, names and tech words from the
+  sources, the work material's identifiers; at most 50) go as Sarvam `keyterms`, so "Kitebird" and "LCP" come back
+  right. The audio is never stored or logged; only the text reaches the interview.
+- **The interviewer's voice:** Bulbul v4-flash, speaker `simran_en_customer`, MP3. `POST /api/speech/speak` reads only
+  a line the interviewer said or is saying in that session (anything else is a 404), and keeps an in-process cache so a
+  repeated line costs nothing. The room plays it through Web Audio (no `media-src` change to the CSP).
+- **Budget** (soft, `speech/meter.py` on `KvRepo`, one key per UTC day): `TAYYARI_SPEECH__STT_DAILY_SECONDS` (1800) and
+  `TTS_DAILY_CHARS` (6000) across the service, `STT_SESSION_SECONDS` (600) and `TTS_SESSION_CHARS` (3000) per session.
+  A piece is billed at what the browser says it ran or what its size says, by the weight of its format, at most 30 s.
+  Prices (2026-10): about Rs 0.50 a minute of speech-to-text and Rs 2 per 1,000 characters of voice, so the daily caps
+  are about Rs 15 and Rs 12. When a budget runs out, or the key is unset, or Sarvam fails, `GET /api/speech/status`
+  says so and the room falls back to the browser's speech, then typing.
+- **Routes:** `GET /api/speech/status?profileId=&sessionId=` (session optional),
+  `POST /api/speech/transcribe?profileId=&sessionId=&seconds=` (409 on an ended interview, 413 over 1.5 MB, 415 for a
+  non-audio type, 503 with the reason when Sarvam is unavailable), `POST /api/speech/speak` returning `audio/mpeg`. The
+  `speech` window allows 40 requests a minute per address.
+- **Measured locally, 2026-10-17:** a 110-character question spoken in about 2 s (0.03 s from the cache); a 9-second
+  answer written down in about 0.5 s, names right.
+- **Sarvam's side:** its terms say identifiable content is not used for training without opt-in; retention is set per
+  workspace in Sarvam's dashboard (Settings, Workspace, Data retention). Set it to the shortest period.
+
+**Microphone.** The app's `Permissions-Policy` allows `microphone=(self)` (camera and geolocation stay off).
+
+**Measured locally, 2026-10-17, real Haiku 5.5:**
+- start (the phrasing call) about 6 s;
+- each judged answer 1.5 to 4 s;
+- the debrief 2 to 5 s;
+- a work sample starts at once (no phrasing call).
+
+**Tests.**
+- `tests/unit/interview/`: plans, the router table, the judge, phrase, debrief and checks with known-bad fixtures, the
+  assistant observation, and full `role` and `work` flows over `FakeInterviewRepo` and a scripted Haiku.
+- `tests/integration/test_interview_routes.py`, `tests/unit/storage/test_interview_contract.py`,
+  `tests/unit/contract/test_interview_parity.py` and `tests/unit/guard/test_ratelimit_interview.py`.
 
 ## Jev decisions framework
 
@@ -427,6 +550,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 | `discover_runs` | `id` PK | `started_at`, `finished_at` (null), `status` (`running`, `ok` or `failed`), `employers_ok`, `employers_failed`, `listings_open`, `listings_closed`, `note` (null) | Migration 0007. `(started_at)`. The single-flight check reads it: a `running` run under 20 minutes old blocks a new one |
 | `jobsearch_runs` | `id` PK (32 hex) | `profile_id`, `city` (null), `remote`, `created_at`, `result` (JSON: the `JobSearchRun` the person saw), `postings` (JSON: shown postings' text by job id, server-side only) | Migration 0008. `(profile_id, created_at)`, `(created_at)`; purged after 30 days |
 | `jobsearch_docs` | `id` PK (hash of profile, job, kind) | `profile_id`, `job_id`, `kind` (`prep` or `referral`), `created_at`, `body` (JSON) | Migration 0008. `(created_at)`; replaced by a rewrite; purged after 30 days |
+| `interview_sessions` | `id` PK (32 hex) | `profile_id`, `kind`, `status` (`active` or `done`), `created_at`, `updated_at`, `version` (compare-and-swap), `state` (JSON: plan, phrased lines, turns, judgements, work, assistant log), `debrief` (JSON, null until done) | Migration 0009. `(profile_id, created_at)`, `(created_at)`; purged after 30 days |
 
 ### Retention (run at most every 6 hours, from the lifespan; replicas claim each run through a `kv` row, under a Postgres try-lock)
 
@@ -438,6 +562,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 - **Sign-ins and emailed links** (`auth_sessions`, `magic_links`): deleted once their expiry has passed. A used link that has not expired yet stays until it does.
 - **Discover listings**: a listing its employer's board stopped listing is deleted 30 days after it was closed. The `discover_runs` log has no retention step yet.
 - **Searches with AI**: `jobsearch_runs` and `jobsearch_docs` rows are deleted 30 days after they were written.
+- **Practice interviews**: `interview_sessions` rows (transcript and debrief) are deleted `TAYYARI_INTERVIEW__RETENTION_DAYS` (30) days after they started.
 - **Postings** are never purged yet. Matches, resumes, cover notes, the answers a person gave and profile facts are removed only with their account (`DELETE /api/me`) or their profile. Orders are kept when an account is deleted, with `user_id` cleared.
 
 ### Migrations (Alembic)
@@ -557,6 +682,8 @@ Accounts, payments and the posting match (names only; the values are never writt
 - **`TAYYARI_MATCH__*`:** `MODEL` (unset: the reader model), `WRITER_MODEL` (unset: the same as `MODEL`), `MAX_POSTING_CHARS` (20000), `CALL_TIMEOUT_S` (90), `ALLOW_ANONYMOUS` (`auto`, `true` or `false`; `auto` allows a posting match without a sign-in exactly when the server offers no way to sign in).
 - **Posting-match guard:** `TAYYARI_GUARD__MATCH_PER_MINUTE` (0), `MATCH_PER_HOUR` (10), `MATCH_PER_DAY` (30), `MATCH_GLOBAL_PER_HOUR` (120), `EST_MATCH_USD` (0.06), `ANON_MATCH_PER_DAY` (3: matches per client address per day without a sign-in, 0 = off).
 - **`TAYYARI_JOBSEARCH__*`** (no secrets of its own; it uses the Anthropic key): `ENABLED` (true), `MODEL` (claude-haiku-5-5), `SCOUTS` (3), `SEARCHES_PER_SCOUT` (3), `MAX_BOARDS` (30), `FETCH_CONCURRENCY` (8), `MAX_JUDGED` (12), `JUDGE_BATCH` (4), `PER_EMPLOYER` (3), `POSTING_CHARS` (6000), `BOARD_CACHE_MINUTES` (60), `REQUEST_TIMEOUT_S` (12). Its limits are guard settings: `JOBSEARCH_PER_MINUTE` 1, `_PER_HOUR` 4, `_PER_DAY` 8, `JOBSEARCH_GLOBAL_PER_HOUR` 40, `ANON_JOBSEARCH_PER_DAY` 3, `EST_JOBSEARCH_USD` 0.20, `EST_JOBSEARCH_DOC_USD` 0.02 (a prep page or referral note).
+- **`TAYYARI_INTERVIEW__*`** (no secrets of its own): `ENABLED` (true), `MODEL` (claude-haiku-5-5), `MAX_TURNS` (60), `ASSISTANT_MESSAGES` (12), `POSTING_CHARS` (6000), `RETENTION_DAYS` (30), `HISTORY_LIMIT` (50). Its limits are guard settings: `INTERVIEW_PER_MINUTE` 2, `_PER_HOUR` 3, `_PER_DAY` 3 (per address and per account), `INTERVIEW_GLOBAL_PER_HOUR` 60, `INTERVIEW_AGAIN_PER_DAY` 20, `EST_INTERVIEW_USD` 0.03 (start), `EST_INTERVIEW_TURN_USD` 0.005 (an answer or an assistant message), `EST_INTERVIEW_END_USD` 0.02 (the debrief).
+- **`SARVAM_API_KEY`** (secret, optional) and **`TAYYARI_SPEECH__*`**: `ENABLED` (true), `STT_MODEL` (saaras:v4), `STT_LANGUAGE` (en-IN), `TTS_MODEL` (bulbul:v4-flash), `TTS_SPEAKER` (simran_en_customer), `TTS_LANGUAGE` (en-IN), `TTS_CODEC` (mp3), `TTS_SAMPLE_RATE` (22050), `MAX_SEGMENT_SECONDS` (30), `MAX_SEGMENT_BYTES` (1,500,000), `STT_DAILY_SECONDS` (1800), `TTS_DAILY_CHARS` (6000), `STT_SESSION_SECONDS` (600), `TTS_SESSION_CHARS` (3000), `REQUEST_TIMEOUT_S` (20), `TTS_CACHE_ITEMS` (256). Guard: `SPEECH_PER_MINUTE` 40. Without the key, practice uses the browser's speech.
 - **`TAYYARI_DISCOVER__*`** (no secrets; the boards are public): `ENABLED` (true; false answers 503 `discover_disabled` and fetches nothing), `REFRESH_HOURS` (6, how old the last good run may get before a request starts one), `FETCH_CONCURRENCY` (4), `REQUEST_TIMEOUT_S` (15), `MAX_LISTINGS_PER_EMPLOYER` (300: India listings kept per employer, known cities first, then remote, then the rest, newest first within each), `REGISTRY_PATH` (unset: the registry shipped in `discover/data/employers.json`).
 
 `backend/.env.example` lists each of these with its default or an empty value.

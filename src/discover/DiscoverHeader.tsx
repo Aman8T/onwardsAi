@@ -48,6 +48,9 @@ export function DiscoverHeader({ profileId, tab, onTab }: DiscoverHeaderProps) {
         <button type="button" className={`dc-navbtn${apps ? '' : ' is-current'}`} aria-current={apps ? undefined : 'page'} onClick={() => onTab('roles')}>
           Discover
         </button>
+        <button type="button" className="dc-navbtn" onClick={() => actions.openPractice({ screen: 'hub' })}>
+          Practice
+        </button>
       </nav>
       <div className="dc-header-end">
         {who && <span className="dc-who">{who}</span>}

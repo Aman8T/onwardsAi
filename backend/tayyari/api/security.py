@@ -185,7 +185,7 @@ _FIXED_HEADERS: tuple[tuple[str, str], ...] = (
     ("X-Content-Type-Options", "nosniff"),
     ("Referrer-Policy", "no-referrer"),
     ("X-Frame-Options", "DENY"),
-    ("Permissions-Policy", "camera=(), microphone=(), geolocation=()"),
+    ("Permissions-Policy", "camera=(), microphone=(self), geolocation=()"),
 )
 
 

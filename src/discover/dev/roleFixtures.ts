@@ -4,8 +4,9 @@
  * Engineer for the prep page and the referral note; Headout, SonicWall and Drivetrain for the compare table; and the
  * four roles she saved plus one the employer took down for the applications list.
  *
- * Every quote is the one the run returned, word for word. The three lines of the referral note are the ones on board 11
- * of the canvas; the questions and their stories are board 8's.
+ * Every quote is the one the run returned, word for word. The referral note is the shape the server now writes: three
+ * sentences that read as one paragraph (who she is, why she fits what Headout needs, why Headout is where she wants to
+ * go), the fit one built on a match the search found (`HEADOUT_JOB.met`); the questions and their stories are board 8's.
  */
 import type { AiJob, ReferralNote, RolePrep } from '../../../shared/jobsearch';
 import type { TrackedJob } from '../applications/tracker';
@@ -196,24 +197,27 @@ export const ROLE_PREP_FIXTURE: RolePrep = {
   createdAt: '2026-10-16T14:01:00Z',
 };
 
-/** The referral note for the same role (board 11): three checked lines, the ask and the posting's link. */
+/**
+ * The referral note for the same role (board 11): three sentences that read as one paragraph, the ask and the posting's
+ * link. The fit sentence quotes a passage of the first match and cites the line that met it.
+ */
 export const REFERRAL_FIXTURE: ReferralNote = {
   jobId: 'headout-frontend',
   lines: [
     {
-      part: 'company',
-      text: 'Hi [name], Headout is hiring a Frontend Engineer in Bengaluru. Their aim to be “the easiest, fastest, and most delightful way to head out to a real-life experience” is what caught me.',
-      sources: ['the posting'],
+      part: 'intro',
+      text: "I'm a Frontend Engineer in Bengaluru who owns Kite UI, 42 components used by 3 squads.",
+      sources: ['your resume'],
     },
     {
-      part: 'you',
-      text: "I rebuilt Kitebird's checkout in React and cut its LCP from 4.1s to 1.9s, close to the “high-performance web applications” they build.",
-      sources: ['your resume', 'the posting'],
-    },
-    {
-      part: 'role',
-      text: "It's at my level, and I'd get to “build projects end-to-end”, the kind of ownership I have with Kite UI.",
+      part: 'fit',
+      text: "Headout wants “Strong proficiency in React”, and I rebuilt Kitebird's checkout in React.",
       sources: ['the posting', 'your resume'],
+    },
+    {
+      part: 'draw',
+      text: 'What draws me is “the easiest, fastest, and most delightful way to head out to a real-life experience”, a product I want to build.',
+      sources: ['the posting'],
     },
   ],
   ask: 'Would you be open to referring me?',
@@ -221,24 +225,24 @@ export const REFERRAL_FIXTURE: ReferralNote = {
   createdAt: '2026-10-16T14:01:00Z',
 };
 
-/** A different draft, for Rewrite. */
+/** A different draft, for Rewrite: the fit sentence rests on the second match. */
 export const REFERRAL_REWRITE_FIXTURE: ReferralNote = {
   ...REFERRAL_FIXTURE,
   lines: [
     {
-      part: 'company',
-      text: 'Hi [name], I saw that Headout is hiring a Frontend Engineer in Bengaluru, and the way they talk about “high-performance web applications” stood out to me.',
-      sources: ['the posting'],
-    },
-    {
-      part: 'you',
-      text: "At Kitebird I rebuilt the checkout in React, and its LCP went from 4.1s to 1.9s.",
+      part: 'intro',
+      text: "I'm a Frontend Engineer in Bengaluru, and I rebuilt Kitebird's checkout in React.",
       sources: ['your resume'],
     },
     {
-      part: 'role',
-      text: "The posting asks for 1-3 years of frontend experience, which is where I am, and Kite UI gave me real ownership of 42 components.",
+      part: 'fit',
+      text: "Headout asks for “basic performance optimization”, and I took that checkout's LCP from 4.1s to 1.9s.",
       sources: ['the posting', 'your resume'],
+    },
+    {
+      part: 'draw',
+      text: 'What draws me is “build projects end-to-end”, because I want a role where I own a feature from the first idea to launch.',
+      sources: ['the posting'],
     },
   ],
   createdAt: '2026-10-16T14:05:00Z',

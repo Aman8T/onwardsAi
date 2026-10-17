@@ -30,6 +30,11 @@ Purpose = Literal[
     "jobsearch.judge",
     "jobsearch.prepare",
     "jobsearch.referral",
+    "interview.phrase",
+    "interview.judge",
+    "interview.checks",
+    "interview.debrief",
+    "interview.assistant",
 ]
 """Why a Claude call is made. Stored on every `llm_calls` row and used to script fakes."""
 

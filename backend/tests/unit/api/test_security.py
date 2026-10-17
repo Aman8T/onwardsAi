@@ -400,7 +400,7 @@ async def test_every_response_gets_the_hardening_headers() -> None:
     assert res.headers["x-content-type-options"] == "nosniff"
     assert res.headers["referrer-policy"] == "no-referrer"
     assert res.headers["x-frame-options"] == "DENY"
-    assert res.headers["permissions-policy"] == "camera=(), microphone=(), geolocation=()"
+    assert res.headers["permissions-policy"] == "camera=(), microphone=(self), geolocation=()"
     assert "strict-transport-security" not in res.headers  # plain http
 
 

@@ -81,6 +81,12 @@ def roomy_guard(**overrides: Any) -> GuardSettings:
         "jobsearch_per_day": 1000,
         "jobsearch_global_per_hour": 0,
         "anon_jobsearch_per_day": 1000,
+        "interview_per_minute": 1000,
+        "interview_per_hour": 1000,
+        "interview_per_day": 1000,
+        "interview_global_per_hour": 0,
+        "interview_again_per_day": 1000,
+        "speech_per_minute": 1000,
         "daily_ceiling_usd": 1000.0,
     }
     values.update(overrides)

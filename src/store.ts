@@ -12,8 +12,10 @@ import type { MatchRoute } from './match/route';
 import { PRICING_PATH, isPricingPath } from './billing/route';
 import { DEFAULT_QUERY, discoverPath, isDiscoverPath, mergeQuery, parseDiscoverUrl } from './discover/route';
 import type { DiscoverQuery } from './discover/route';
+import { DEFAULT_PRACTICE, isPracticePath, mergePractice, parsePracticeUrl, practicePath } from './practice/route';
+import type { PracticeQuery } from './practice/route';
 
-export type View = 'onboarding' | 'analysis' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing' | 'discover';
+export type View = 'onboarding' | 'analysis' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing' | 'discover' | 'practice';
 
 export interface Signal {
   id: number;
@@ -96,6 +98,8 @@ export interface AppState {
   matchRoute: MatchRoute;
   /** The Discover lens while `view` is 'discover'; mirrored in the address (/discover?…). */
   discoverRoute: DiscoverQuery;
+  /** The Practice screen while `view` is 'practice'; mirrored in the address (/practice?…). */
+  practiceRoute: PracticeQuery;
 }
 
 const STORAGE_KEY = 'tayyari.v1';
@@ -125,6 +129,7 @@ function load(): AppState {
     portfolio: emptyPortfolio(),
     matchRoute: PASTE_ROUTE,
     discoverRoute: DEFAULT_QUERY,
+    practiceRoute: DEFAULT_PRACTICE,
   };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -152,6 +157,9 @@ function fromAddress(s: AppState): AppState {
     // Discover is for someone with a profile on screen; a visitor with a /discover link starts from Home
     const lens = parseDiscoverUrl(window.location.pathname, window.location.search);
     if (lens) return s.profile ? { ...s, view: 'discover', discoverRoute: lens } : s;
+    // Practice is for someone with a profile on screen too
+    const practice = parsePracticeUrl(window.location.pathname, window.location.search);
+    if (practice) return s.profile ? { ...s, view: 'practice', practiceRoute: practice } : s;
     const route = parseMatchPath(window.location.pathname);
     return route ? { ...s, view: 'match', matchRoute: route } : s;
   } catch {
@@ -185,6 +193,7 @@ function set(patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) {
   leaveMatchAddress();
   leavePricingAddress();
   leaveDiscoverAddress();
+  leavePracticeAddress();
   listeners.forEach((l) => l());
   clearTimeout(persistTimer);
   persistTimer = setTimeout(persist, 250);
@@ -217,7 +226,16 @@ function leaveDiscoverAddress() {
   }
 }
 
-// Back and Forward move between match screens, Discover and the pricing page (and out of them, to where the person came from).
+/** The address reads /practice only while the Practice screens are showing. */
+function leavePracticeAddress() {
+  try {
+    if (state.view !== 'practice' && isPracticePath(window.location.pathname)) window.history.replaceState(null, '', '/');
+  } catch {
+    /* no address bar to update */
+  }
+}
+
+// Back and Forward move between match screens, Discover, Practice and the pricing page (and out of them, to where the person came from).
 try {
   window.addEventListener('popstate', () => {
     if (isPricingPath(window.location.pathname)) {
@@ -229,9 +247,14 @@ try {
       set({ view: state.profile ? 'discover' : 'onboarding', discoverRoute: lens });
       return;
     }
+    const practice = parsePracticeUrl(window.location.pathname, window.location.search);
+    if (practice) {
+      set({ view: state.profile ? 'practice' : 'onboarding', practiceRoute: practice });
+      return;
+    }
     const route = parseMatchPath(window.location.pathname);
     if (route) set({ view: 'match', matchRoute: route });
-    else if (state.view === 'match' || state.view === 'pricing' || state.view === 'discover') set({ view: state.profile ? 'graph' : 'onboarding' });
+    else if (state.view === 'match' || state.view === 'pricing' || state.view === 'discover' || state.view === 'practice') set({ view: state.profile ? 'graph' : 'onboarding' });
   });
 } catch {
   /* not in a browser */
@@ -476,6 +499,24 @@ export const actions = {
       /* no address bar to update */
     }
     set({ view: 'discover', discoverRoute: route });
+  },
+
+  /**
+   * Open Practice, or change its screen: `patch` is merged into the screen the person last had (a field set to undefined is
+   * cleared; a screen keeps only the fields it uses), and the address follows. Moving between screens adds a history entry
+   * so Back steps through them; `replace` is for housekeeping that should not (a finished interview sending the person to
+   * its debrief). `openPractice({ screen: 'hub' })` always opens the hub.
+   */
+  openPractice(patch: Partial<PracticeQuery> = {}, opts: { replace?: boolean } = {}) {
+    const route = mergePractice(state.practiceRoute, patch);
+    // the address moves first, so leaving another screen keeps its history entry for Back
+    try {
+      const path = practicePath(route);
+      if (window.location.pathname + window.location.search !== path) window.history[opts.replace ? 'replaceState' : 'pushState'](null, '', path);
+    } catch {
+      /* no address bar to update */
+    }
+    set({ view: 'practice', practiceRoute: route });
   },
 
   /** Open the pricing page (anyone may read it) and move the address to /pricing so Back returns to where they were. */

@@ -24,6 +24,8 @@ What is purged, with the windows from ``settings.retention``:
 ``auth``               sign-ins (``auth_sessions``) and emailed links (``magic_links``) past their expiry
 ``discover_closed``    Discover listings closed more than 30 days ago (`CLOSED_LISTING_DAYS`)
 ``jobsearch``          searches with AI, prep pages and referral notes older than 30 days (`JOBSEARCH_RETENTION`)
+``interview``          practice interviews (transcript, work and debrief) older than ``settings.interview.retention_days``
+                       (30 by default, `INTERVIEW_RETENTION`)
 =====================  ===========================================================================
 
 The permanent sample corpus is exempt from the payload and metadata steps: decision and Jev rows flagged
@@ -68,6 +70,9 @@ CLOSED_LISTING_RETENTION = timedelta(days=30)
 """A Discover listing the employer's board stopped listing is deleted this long after it was closed."""
 JOBSEARCH_RETENTION: Final = timedelta(days=30)
 """Searches with AI, and the prep pages and referral notes written for their roles, are deleted after this long."""
+INTERVIEW_RETENTION: Final = timedelta(days=30)
+"""How long a practice interview (its transcript, work and debrief) is kept: the default of
+``settings.interview.retention_days``, which is what the purge reads."""
 ADVISORY_LOCK_KEY = 0x5441595941524932
 """``"TAYYARI2"``: the Postgres advisory lock that keeps replicas from purging at the same time."""
 USER_TEXT_PACKS: Final = frozenset({"chat_gate"})
@@ -228,6 +233,7 @@ async def run_maintenance(
     profile_cutoff = now - timedelta(days=retention.profile_days)
     payload_cutoff = now - timedelta(days=retention.payload_days)
     metadata_cutoff = now - timedelta(days=retention.metadata_days)
+    interview_retention = timedelta(days=settings.interview.retention_days)
 
     steps: list[tuple[str, Callable[[], Awaitable[int]]]] = [
         ("profiles", lambda: repos.profiles.purge_expired(profile_cutoff)),
@@ -244,6 +250,7 @@ async def run_maintenance(
         ("auth", lambda: repos.users.purge_expired(now)),
         ("discover_closed", lambda: repos.discover.purge_closed(now - CLOSED_LISTING_RETENTION)),
         ("jobsearch", lambda: repos.jobsearch.purge(now - JOBSEARCH_RETENTION)),
+        ("interview", lambda: repos.interview.purge(now - interview_retention)),
     ]
     counts: dict[str, int] = {}
     errors = 0
@@ -263,6 +270,7 @@ __all__ = [
     "ADVISORY_LOCK_KEY",
     "CLOSED_LISTING_RETENTION",
     "HITS_RETENTION",
+    "INTERVIEW_RETENTION",
     "JOBSEARCH_RETENTION",
     "LAST_RUN_KEY",
     "MIN_INTERVAL",

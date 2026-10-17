@@ -694,6 +694,32 @@ class JobSearchDocRow(Base):
     __table_args__ = (Index("ix_jobsearch_docs_created_at", "created_at"),)
 
 
+class InterviewSessionRow(Base):
+    """One practice interview (I1). ``state`` is everything the service needs to carry on (the plan, the phrased lines
+    and hidden answer notes, the turns, the per-slot judgements, the work sample and the assistant log); ``debrief`` the
+    `Debrief` once the interview is done, else NULL. ``version`` starts at 1 and goes up by one on every save, and a
+    save only lands on the version before it (`InterviewRepo.save`), so two tabs answering at once cannot overwrite
+    each other. Purged ``settings.interview.retention_days`` (30) after ``created_at`` (`storage.maintenance`). No
+    foreign key: like every profile-scoped row here, it goes with the retention purge, not with the profile."""
+
+    __tablename__ = "interview_sessions"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN))
+    kind: Mapped[str] = mapped_column(String(16))
+    status: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    version: Mapped[int] = mapped_column(Integer)
+    state: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    debrief: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+
+    __table_args__ = (
+        Index("ix_interview_sessions_profile_id", "profile_id", "created_at"),
+        Index("ix_interview_sessions_created_at", "created_at"),
+    )
+
+
 __all__ = [
     "BAND_LEN",
     "EMAIL_LEN",
@@ -712,6 +738,7 @@ __all__ = [
     "DiscoverListingRow",
     "DiscoverRunRow",
     "EntitlementRow",
+    "InterviewSessionRow",
     "JSONType",
     "JevCallRow",
     "JobSearchDocRow",

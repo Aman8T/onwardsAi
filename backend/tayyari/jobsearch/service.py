@@ -83,7 +83,7 @@ from tayyari.storage.ports import (
     StoredSearchRun,
 )
 
-from .boards import BoardRead, BoardReader
+from .boards import BoardRead, BoardReader, pretty_name
 from .brief import Angle, Brief, build_brief
 from .errors import JobSearchDisabled
 from .harvest import ALLOWED_DOMAINS, harvest
@@ -604,7 +604,7 @@ class JobSearchService:
 
     def _employer_name(self, listing: DiscoverListing) -> str:
         employer = self._registry().get(listing.employer_id)
-        return employer.name if employer is not None else listing.employer_id.replace("-", " ").title()
+        return employer.name if employer is not None else pretty_name(listing.employer_id)
 
     # ───────────────────────── after a run ─────────────────────────
 
@@ -684,6 +684,11 @@ class JobSearchService:
         )
         await self._keep(profile.id, job_id, "referral", note.to_dict())
         return note
+
+    async def role(self, profile_id: str, run_id: str, job_id: str) -> tuple[AiJob, str] | None:
+        """A shown role and the text of its posting as the search read it, or None (another profile's run, or a run or
+        role that is gone). The practice interview reads a role through this (`interview.roles.RoleLookup`)."""
+        return await self._role(profile_id, run_id, job_id)
 
     async def _role(self, profile_id: str, run_id: str, job_id: str) -> tuple[AiJob, str] | None:
         stored = await self._owned_run(profile_id, run_id)

@@ -820,10 +820,21 @@ textarea.field.dm-box {
   gap: var(--s4);
 }
 
+.dm-tofield {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .dm-to {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* lines up under the field, past the "To" label (its width and the gap) */
+.dm-tohint {
+  margin: 0 0 0 40px;
 }
 
 .dm-to .kicker {

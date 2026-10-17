@@ -1,16 +1,23 @@
 /**
  * The words of the share dialog, kept apart from the markup: the referral note as one editable text, the connection's
- * name filled into it live, and the counts under it.
+ * name filled into it live, what is sent, and the key under it.
  *
  * The note is held as a template that contains `[name]` where the connection's first name goes. What the person sees in
  * the textarea is the template with the name filled in (`fill`); what they type is turned back into the template
  * (`edit`), so changing the name afterwards still reaches every `[name]` they left in place, and never touches a word
- * they wrote that happens to look like the name.
+ * they wrote that happens to look like the name. What leaves the app (`outgoing`) never has a `[name]` left in it: with
+ * no name given, the greeting reads "Hi there,".
  */
 import type { ReferralLine, ReferralNote, ReferralPart } from '../../../shared/jobsearch';
 import { joinNames } from '../prepare/words';
 
 export const NAME = '[name]';
+
+/** What stands in for the name in what is copied or shared when the To field was left empty ("Hi there,"). */
+export const FALLBACK_NAME = 'there';
+
+/** The greeting that opens the note. */
+export const GREETING = `Hi ${NAME},`;
 
 /** The longest first name taken: a longer one is not a first name. */
 const NAME_MAX = 40;
@@ -28,6 +35,14 @@ export function cleanName(raw: string): string {
 export function fill(template: string, name: string): string {
   const n = name.trim();
   return n ? template.split(NAME).join(n) : template;
+}
+
+/**
+ * The template as it leaves the app (copied, or handed to the share sheet): every `[name]` is the name, or "there" when
+ * none was given, so no placeholder is ever sent ("Hi there,").
+ */
+export function outgoing(template: string, name: string): string {
+  return fill(template, name.trim() || FALLBACK_NAME);
 }
 
 /**
@@ -72,28 +87,37 @@ export function edit(template: string, name: string, next: string): string {
   return template.slice(0, from) + next.slice(shownFrom, next.length - (prev.length - shownTo)) + template.slice(to);
 }
 
-/** The note as one text: the three lines, a blank line between, and the ask closing the last one. */
+/**
+ * The note as one text: "Hi [name]," and a blank line, then one paragraph (the sentences in order, then the ask, joined by
+ * single spaces). The link goes on a line of its own after it (`withLink`).
+ */
 export function compose(note: Pick<ReferralNote, 'lines' | 'ask'>): string {
-  const paragraphs = note.lines.map((l) => l.text.trim());
-  if (paragraphs.length === 0) return note.ask.trim();
-  paragraphs[paragraphs.length - 1] = `${paragraphs[paragraphs.length - 1]} ${note.ask.trim()}`;
-  return paragraphs.join('\n\n');
+  const paragraph = [...note.lines.map((l) => l.text.trim()), note.ask.trim()].filter(Boolean).join(' ');
+  return `${GREETING}\n\n${paragraph}`;
 }
 
 /** What gets copied or shared: the note, then the link on a line of its own. */
 export const withLink = (text: string, link: string) => `${text.trim()}\n\n${link}`;
 
-/** "3 lines · 62 words": the lines are the paragraphs, as the person will see them in a message. */
-export function countLine(text: string): string {
-  const lines = text.split('\n').filter((l) => l.trim() !== '').length;
+/** "70 words": how long the message is, greeting and ask included. */
+export function countWords(text: string): string {
   const words = text.split(/\s+/).filter(Boolean).length;
-  return `${lines} ${lines === 1 ? 'line' : 'lines'} · ${words} ${words === 1 ? 'word' : 'words'}`;
+  return `${words} ${words === 1 ? 'word' : 'words'}`;
 }
 
-/** What a line of the note is for, in the key under it. */
-export function partLabel(part: ReferralPart, employer: string): string {
-  return part === 'company' ? `Why ${employer}` : part === 'you' ? 'Why you fit' : 'Why it fits you';
+/** What a sentence of the note is for, in the key under it. */
+export function partLabel(part: ReferralPart): string {
+  return part === 'intro' ? 'Who you are' : part === 'fit' ? 'Why you fit' : 'Why them';
 }
 
-/** "the posting and your resume": where a line's words come from. */
+/** "the posting and your resume": where a sentence's words come from. */
 export const sourcesText = (line: Pick<ReferralLine, 'sources'>) => (line.sources.length > 0 ? joinNames(line.sources) : 'the posting and your profile');
+
+/**
+ * One line of the key under the note, "What each sentence draws on": "1 · Who you are · your resume",
+ * "2 · Why you fit · the match: the posting and your resume", "3 · Why them · the posting".
+ */
+export function keyLine(line: Pick<ReferralLine, 'part' | 'sources'>, index: number): string {
+  const from = sourcesText(line);
+  return `${index + 1} · ${partLabel(line.part)} · ${line.part === 'fit' ? `the match: ${from}` : from}`;
+}

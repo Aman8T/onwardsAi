@@ -341,7 +341,7 @@ async def test_the_page_carries_the_csp_with_the_hash_of_its_inline_script(
         assert res.headers["x-content-type-options"] == "nosniff"
         assert res.headers["x-frame-options"] == "DENY"
         assert res.headers["referrer-policy"] == "no-referrer"
-        assert res.headers["permissions-policy"] == "camera=(), microphone=(), geolocation=()"
+        assert res.headers["permissions-policy"] == "camera=(), microphone=(self), geolocation=()"
         assert "x-request-id" in res.headers
 
 

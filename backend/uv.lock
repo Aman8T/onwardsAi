@@ -1524,6 +1524,22 @@ wheels = [
 ]
 
 [[package]]
+name = "sarvamai"
+version = "0.1.35"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-core" },
+    { name = "typing-extensions" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/93/30/e195e2845236a4ddc4d116fac95042e15c64988e4581c71510dd9d981042/sarvamai-0.1.35.tar.gz", hash = "sha256:d423809b40a5e22cf333169c9d7d2362a988dae6698b8174808cefed49ecc259", size = 228128, upload-time = "2026-09-29T09:45:30.745Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/66/72/85e44604babc64e5bd68d25a5f18518aac3ec2dcdf02c2c80dd55fa857d9/sarvamai-0.1.35-py3-none-any.whl", hash = "sha256:ea6e48858997050700c22d056b79b3e25b15e3cd76bd36b3977b7c0fa215bc9f", size = 478553, upload-time = "2026-09-29T09:45:29.046Z" },
+]
+
+[[package]]
 name = "sentry-sdk"
 version = "2.71.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1647,6 +1663,7 @@ dependencies = [
     { name = "razorpay" },
     { name = "reportlab" },
     { name = "requests" },
+    { name = "sarvamai" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "stripe" },
     { name = "structlog" },
@@ -1682,6 +1699,7 @@ requires-dist = [
     { name = "razorpay", specifier = ">=2.0.1" },
     { name = "reportlab", specifier = ">=5.0.1" },
     { name = "requests", specifier = ">=2.34.2" },
+    { name = "sarvamai", specifier = "==0.1.35" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.36" },
     { name = "stripe", specifier = ">=16.0.0" },
     { name = "structlog", specifier = ">=24.4" },

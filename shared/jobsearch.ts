@@ -216,10 +216,13 @@ export interface RolePrep {
   createdAt: string;
 }
 
-/** The three parts of a referral note: why the company, why the person fits, why the role fits them. */
-export type ReferralPart = 'company' | 'you' | 'role';
+/**
+ * The three sentences of a referral note, in the order they read as one paragraph: who the person is (`intro`), why they
+ * fit what the employer needs (`fit`, from the checked match), why the employer is where they want to go next (`draw`).
+ */
+export type ReferralPart = 'intro' | 'fit' | 'draw';
 
-/** One line of the note, and where its words come from ("the posting", "your resume"). */
+/** One sentence of the note, and where its words come from ("the posting", "your resume"). */
 export interface ReferralLine {
   part: ReferralPart;
   text: string;
@@ -227,8 +230,9 @@ export interface ReferralLine {
 }
 
 /**
- * `POST /api/jobsearch/referral` answer: a short note asking a connection for a referral. Three lines, then `ask` and the
- * link. `[name]` in the first line is the connection's name, filled in by the person.
+ * `POST /api/jobsearch/referral` answer: a short note asking a connection for a referral. Three sentences that read as
+ * one paragraph (the lines, in order), then `ask`, then the `link`. The web app puts "Hi [name]," in front; `[name]` is
+ * the connection's name, filled in by the person (or "there" when they leave it empty).
  */
 export interface ReferralNote {
   jobId: string;

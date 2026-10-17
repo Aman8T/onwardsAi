@@ -53,6 +53,7 @@ EXPECTED_TABLES = {
     "discover_runs",
     "jobsearch_docs",
     "jobsearch_runs",
+    "interview_sessions",
 }
 
 

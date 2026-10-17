@@ -1,14 +1,16 @@
 /**
- * Share this role: "Ask for a referral" (a three-line note from `POST /api/jobsearch/referral`) and "Just the link"
+ * Share this role: "Ask for a referral" (a short note from `POST /api/jobsearch/referral`) and "Just the link"
  * (board 11 of the "Discover with AI" canvas).
  *
  * A real modal dialog (the app's shared `Sheet`): focus lands in it, Tab stays inside, Escape closes, and focus goes back
  * to whatever opened it; under 760 px it is a bottom sheet. Nothing about the person goes into a link: the link is the
  * employer's own posting, and the only other thing that can leave is the note they read and edit here.
  *
- * The referral note is three lines the server wrote from the posting and the person's own evidence, each checked, then
- * the ask. They can name the connection (`[name]` fills in live), edit every word, copy it with the link, send it through
- * the system share sheet where there is one, or ask for a new draft.
+ * The referral note is one short paragraph: three sentences the server wrote from the posting, the match the search
+ * already worked out and the person's own evidence (who they are, why they fit, why the employer is where they want to
+ * go), each checked, then the ask, under "Hi [name],". They can name the connection (`[name]` fills in live; left empty,
+ * what is copied or shared says "Hi there,"), edit every word, copy it with the link, send it through the system share
+ * sheet where there is one, or ask for a new draft.
  */
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
@@ -19,7 +21,7 @@ import { safeHref } from '../util';
 import { TROUBLE, postReferral } from '../prepare/api';
 import { ApiError } from '../../lib/api';
 import { canShare, copyText, shareData } from './clipboard';
-import { cleanName, compose, countLine, edit, fill, partLabel, sourcesText, withLink } from './note';
+import { FALLBACK_NAME, cleanName, compose, countWords, edit, fill, keyLine, outgoing, withLink } from './note';
 
 export interface ShareDialogProps {
   profileId: string;
@@ -189,12 +191,26 @@ function ReferralPanel({ profileId, runId, job, loadReferral, say, status }: { p
   const edited = template !== baseline;
 
   // the note grows with its words, so there is one scroll (the dialog's) rather than a scroll inside a scroll
-  useLayoutEffect(() => {
+  const fitNote = useCallback(() => {
     const el = noteRef.current;
     if (!el) return;
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
-  }, [shown, draft.status]);
+  }, []);
+  useLayoutEffect(fitNote, [fitNote, shown, draft.status]);
+  // the dialog's own scrollbar appears once the note is as tall as its words, which narrows the note and wraps one more line
+  useEffect(() => {
+    const el = noteRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    let width = el.clientWidth;
+    const watch = new ResizeObserver(() => {
+      if (el.clientWidth === width) return;
+      width = el.clientWidth;
+      fitNote();
+    });
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, [fitNote, draft.status]);
 
   const rewrite = async () => {
     setConfirming(false);
@@ -241,16 +257,23 @@ function ReferralPanel({ profileId, runId, job, loadReferral, say, status }: { p
   }
 
   const { note } = draft;
-  const send = withLink(shown, note.link);
-  const ready = { title: `${job.title} at ${job.employer}`, text: shown, url: note.link };
+  // what leaves the app never has a `[name]` in it: an empty To field makes the greeting "Hi there,"
+  const going = outgoing(template, name);
+  const send = withLink(going, note.link);
+  const ready = { title: `${job.title} at ${job.employer}`, text: going, url: note.link };
 
   return (
     <div className="dm-referral">
-      <div className="dm-to">
-        <label htmlFor={`${ids}-to`} className="kicker">
-          To<span className="sr-only"> (their first name)</span>
-        </label>
-        <input id={`${ids}-to`} className="field dm-box" type="text" autoComplete="off" maxLength={60} placeholder="Their first name" value={to} onChange={(e) => setTo(e.target.value)} />
+      <div className="dm-tofield">
+        <div className="dm-to">
+          <label htmlFor={`${ids}-to`} className="kicker">
+            To<span className="sr-only"> (their first name)</span>
+          </label>
+          <input id={`${ids}-to`} className="field dm-box" type="text" autoComplete="off" maxLength={60} placeholder="Their first name" value={to} aria-describedby={`${ids}-to-hint`} onChange={(e) => setTo(e.target.value)} />
+        </div>
+        <p id={`${ids}-to-hint`} className="dm-muted dm-small dm-tohint">
+          Left empty, the note says “Hi {FALLBACK_NAME}”.
+        </p>
       </div>
 
       <div className="dm-notebox" aria-busy={rewriting}>
@@ -258,7 +281,7 @@ function ReferralPanel({ profileId, runId, job, loadReferral, say, status }: { p
           <label htmlFor={`${ids}-note`} className="dm-muted dm-small">
             Your note
           </label>
-          <span className="dm-muted dm-small">{countLine(shown)}</span>
+          <span className="dm-muted dm-small">{countWords(shown)}</span>
         </div>
         <div className="dm-notefield">
           <textarea ref={noteRef} id={`${ids}-note`} className="dm-notetext" rows={6} value={shown} readOnly={rewriting} onChange={(e) => setTemplate(edit(template, name, e.target.value))} />
@@ -267,11 +290,11 @@ function ReferralPanel({ profileId, runId, job, loadReferral, say, status }: { p
       </div>
 
       <div className="dm-key">
-        <p className="kicker">What each line draws on</p>
+        <p className="kicker">What each sentence draws on</p>
         <ol className="dm-keylist">
           {note.lines.map((line, i) => (
             <li key={i} className="dm-cite">
-              {i + 1} · {partLabel(line.part, job.employer)} · {sourcesText(line)}
+              {keyLine(line, i)}
             </li>
           ))}
         </ol>

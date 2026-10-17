@@ -9,6 +9,8 @@
 import { useId } from 'react';
 import type { ReactNode } from 'react';
 import type { AiJob, AskCounts, PrepGap, PrepLead, PrepQuestion, StoryPart } from '../../../shared/jobsearch';
+import { FREE_LINE } from '../../practice/words';
+import { actions, useApp } from '../../store';
 import '../../styles/discover-more.css';
 import { Evidence, Suggest, quoted } from './parts';
 import { MAX_STORY_CHARS } from './storage';
@@ -320,7 +322,25 @@ export function ChecklistSection({ headingId, job, ticks, onTick, onSeeMatch, ap
 
 /* ───────────────────────── practice the interview ───────────────────────── */
 
-export function PracticeSection({ headingId }: { headingId: string }) {
+export interface PracticeSectionProps {
+  headingId: string;
+  /** The search this role came from and the role; absent = the ones the Discover address names (the prep page is open on them). */
+  runId?: string;
+  jobId?: string;
+  /** Where "Practise for this role" goes; absent = the plan screen of Practice, for this role. */
+  onPractise?: (role: { runId: string; jobId: string }) => void;
+}
+
+export function PracticeSection({ headingId, runId, jobId, onPractise }: PracticeSectionProps) {
+  // the prep page is open on a role of a stored search, and the address says which
+  const lens = useApp((s) => s.discoverRoute);
+  const run = runId ?? lens.run;
+  const job = jobId ?? lens.job;
+  const go = () => {
+    if (!run || !job) return;
+    if (onPractise) onPractise({ runId: run, jobId: job });
+    else actions.openPractice({ screen: 'setup', kind: 'role', run, job });
+  };
   return (
     <section className="panel dm-sec dm-sec-quiet" aria-labelledby={headingId}>
       <div className="dm-practice-text">
@@ -328,12 +348,12 @@ export function PracticeSection({ headingId }: { headingId: string }) {
           <h2 className="serif dm-h2s" id={headingId} tabIndex={-1}>
             Practice the interview
           </h2>
-          <span className="chip">Coming next</span>
         </div>
-        <p className="dm-muted">A mock interview on this posting, grounded in your own work.</p>
+        <p className="dm-muted">A mock interview on this posting, grounded in your own work. Credit only for what you can back up.</p>
+        <p className="dm-muted dm-small">{FREE_LINE}</p>
       </div>
-      <button type="button" className="btn dm-btn" disabled>
-        Notify me
+      <button type="button" className="btn dm-btn" disabled={!run || !job} onClick={go}>
+        Practise for this role
       </button>
     </section>
   );
