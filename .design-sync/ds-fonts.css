@@ -1,0 +1,3 @@
+/* The three faces index.html loads from Google Fonts (design.md §5). Imported first by ds-entry.ts so
+ * esbuild hoists the @import to the top of _ds_bundle.css, which styles.css pulls into every design. */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap");

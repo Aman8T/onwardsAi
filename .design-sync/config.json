@@ -1,0 +1,117 @@
+{
+  "projectId": "b24d61ea-deb6-4a70-86fe-1d4e55964d71",
+  "pkg": "tayyari",
+  "globalName": "Tayyari",
+  "shape": "package",
+  "entry": ".design-sync/ds-entry.ts",
+  "buildCmd": "node .design-sync/emit-types.mjs",
+  "tsconfig": "tsconfig.json",
+  "componentSrcMap": {
+    "Radar": "src/components/Radar.tsx",
+    "RadarGlyph": "src/components/Radar.tsx",
+    "Ring": "src/components/Ring.tsx",
+    "ValueLine": "src/components/ValueLine.tsx",
+    "Popover": "src/components/Popover.tsx",
+    "Brand": "src/components/Brand.tsx",
+    "Atmosphere": "src/components/Atmosphere.tsx",
+    "IconArrowRight": "src/components/Icons.tsx",
+    "IconCheck": "src/components/Icons.tsx",
+    "IconDoc": "src/components/Icons.tsx",
+    "IconMinus": "src/components/Icons.tsx",
+    "IconPlus": "src/components/Icons.tsx",
+    "IconRefresh": "src/components/Icons.tsx",
+    "IconStop": "src/components/Icons.tsx",
+    "IconUpload": "src/components/Icons.tsx",
+    "PortfolioPage": "src/portfolio/PublicView.tsx",
+    "Hero": "src/portfolio/blocks/Hero.tsx",
+    "Proof": "src/portfolio/blocks/Proof.tsx",
+    "About": "src/portfolio/blocks/About.tsx",
+    "Experience": "src/portfolio/blocks/Experience.tsx",
+    "Projects": "src/portfolio/blocks/Projects.tsx",
+    "Achievements": "src/portfolio/blocks/Achievements.tsx",
+    "Education": "src/portfolio/blocks/Education.tsx",
+    "Clips": "src/portfolio/blocks/Clips.tsx",
+    "OpenTo": "src/portfolio/blocks/OpenTo.tsx",
+    "Contact": "src/portfolio/blocks/Contact.tsx",
+    "Footer": "src/portfolio/blocks/Footer.tsx"
+  },
+  "docsDir": ".design-sync/docs",
+  "docsMap": {
+    "IconArrowRight": ".design-sync/docs/Icons.md",
+    "IconCheck": ".design-sync/docs/Icons.md",
+    "IconDoc": ".design-sync/docs/Icons.md",
+    "IconMinus": ".design-sync/docs/Icons.md",
+    "IconPlus": ".design-sync/docs/Icons.md",
+    "IconRefresh": ".design-sync/docs/Icons.md",
+    "IconStop": ".design-sync/docs/Icons.md",
+    "IconUpload": ".design-sync/docs/Icons.md",
+    "Hero": ".design-sync/docs/PortfolioBlocks.md",
+    "Proof": ".design-sync/docs/PortfolioBlocks.md",
+    "About": ".design-sync/docs/PortfolioBlocks.md",
+    "Experience": ".design-sync/docs/PortfolioBlocks.md",
+    "Projects": ".design-sync/docs/PortfolioBlocks.md",
+    "Achievements": ".design-sync/docs/PortfolioBlocks.md",
+    "Education": ".design-sync/docs/PortfolioBlocks.md",
+    "Clips": ".design-sync/docs/PortfolioBlocks.md",
+    "OpenTo": ".design-sync/docs/PortfolioBlocks.md",
+    "Contact": ".design-sync/docs/PortfolioBlocks.md",
+    "Footer": ".design-sync/docs/PortfolioBlocks.md"
+  },
+  "overrides": {
+    "Radar": {
+      "cardMode": "column"
+    },
+    "Popover": {
+      "cardMode": "single",
+      "primaryStory": "DomainCard"
+    },
+    "PortfolioPage": {
+      "cardMode": "column"
+    },
+    "Hero": {
+      "cardMode": "column"
+    },
+    "Proof": {
+      "cardMode": "column"
+    },
+    "About": {
+      "cardMode": "column"
+    },
+    "Experience": {
+      "cardMode": "column"
+    },
+    "Projects": {
+      "cardMode": "column"
+    },
+    "Achievements": {
+      "cardMode": "column"
+    },
+    "Education": {
+      "cardMode": "column"
+    },
+    "Contact": {
+      "cardMode": "column"
+    },
+    "OpenTo": {
+      "cardMode": "column"
+    },
+    "Footer": {
+      "cardMode": "column"
+    },
+    "Atmosphere": {
+      "cardMode": "column"
+    }
+  },
+  "runtimeFontPrefixes": [
+    "Newsreader",
+    "Bricolage Grotesque",
+    "UnifrakturMaguntia",
+    "Playfair Display",
+    "Libre Caslon Text"
+  ],
+  "guidelinesGlob": [
+    "design.md",
+    "docs/design-notes.md"
+  ],
+  "readmeHeader": ".design-sync/conventions.md"
+}

@@ -24,3 +24,11 @@ htmlcov/
 cloud/static/
 backend/static/
 backend/evals/reports/
+
+# Claude Design sync: staged converter, build output, machine state (durable inputs live in .design-sync/)
+.ds-sync/
+ds-bundle/
+ds-types/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
