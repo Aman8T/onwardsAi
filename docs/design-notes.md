@@ -44,7 +44,7 @@ Here: surfaces step 2–4 OKL points (field .97, surface .99, surface-2 .955), d
 The literature is blunt about radars (Scott Logic, Observable, Datawrapper, Nightingale): area grows with the square of values, axis order changes the shape, lines imply continuity, and overlapping series occlude. The design keeps what works and removes the rest:
 
 - 5–8 axes, fixed order per profile, never sorted by value (StatsBomb's fixed templates make shapes recognisable with use).
-- At most two series: "you" as a 12 % fill with a 1.5 px stroke, the target as an unfilled hairline (Few's bullet-graph logic: benchmark thin, actual bold).
+- At most two series: "you" as a 12 % fill with a 1.5 px stroke, the target as a dashed hairline (Few's bullet-graph logic: benchmark thin, actual bold). From 2026-10-17, at the user's request, the target also gets a light 8 % fill and "you" deepens to 18 % beside it: an unfilled target was hard to tell from the grid, and the two shapes should read as darker (you) and lighter (the role) at a glance.
 - Straight edges only; hairline rings at 25/50/75/100; labels outside the rim; numerals in tabular figures.
 - Hover highlights one spoke; vertices are real buttons with roving tabindex and arrow-key navigation (WAI-ARIA APG); a visually hidden data table is always present (W3C WAI complex images).
 - Animation tweens the values along their spokes, never the path string; axis-set changes crossfade (vertex counts differ).

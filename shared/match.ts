@@ -164,10 +164,14 @@ export interface RadarAxis {
   you: number;
   /** What the role expects of the domain, 0..100 against the busiest domain. */
   role: number;
+  /** The requirements (ids) that make up `role`. Absent on a radar stored before 2026-10-17. */
+  asks?: string[];
 }
 
 export interface Radar {
   axes: RadarAxis[];
+  /** The requirements (ids) that belong to none of the person's areas: named beside the chart, never an axis. */
+  outside?: string[];
 }
 
 export interface Question {

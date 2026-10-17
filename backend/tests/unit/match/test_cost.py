@@ -65,15 +65,16 @@ def dollars(fake: MeteredFake) -> float:
 
 
 @pytest.mark.parametrize("persona", [meera(), riya()], ids=["meera", "riya"])
-async def test_a_whole_match_costs_well_under_five_cents_in_at_most_nine_calls(persona: Persona) -> None:
+async def test_a_whole_match_costs_well_under_five_cents_in_at_most_ten_calls(persona: Persona) -> None:
     fake = await whole_match(persona)
     cost = dollars(fake)
     purposes = [p for p, _, _ in fake.meter]
-    assert len(purposes) <= 9, purposes
+    assert len(purposes) <= 10, purposes
     assert set(purposes) == {
         "match.posting",
         "match.gates",
         "match.coverage",
+        "match.areas",
         "match.relevance",
         "match.phrase",
         "match.cover",
@@ -87,6 +88,7 @@ async def test_a_whole_match_costs_well_under_five_cents_in_at_most_nine_calls(p
 
 
 def test_even_if_every_call_used_its_whole_output_budget_a_match_stays_under_five_cents() -> None:
+    from tayyari.match.areas import AREAS_MAX_TOKENS
     from tayyari.match.cover import COVER_MAX_TOKENS
     from tayyari.match.coverage import COVERAGE_MAX_TOKENS
     from tayyari.match.gate import GATES_MAX_TOKENS
@@ -97,6 +99,7 @@ def test_even_if_every_call_used_its_whole_output_budget_a_match_stays_under_fiv
         POSTING_MAX_TOKENS
         + GATES_MAX_TOKENS
         + 2 * COVERAGE_MAX_TOKENS
+        + AREAS_MAX_TOKENS
         + RELEVANCE_MAX_TOKENS
         + MAX_PHRASE_CALLS * PHRASE_MAX_TOKENS
         # the cover note is asked for at most twice: the whole note again when it came out short, or one re-ask of

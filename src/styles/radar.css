@@ -62,15 +62,21 @@
   vector-effect: non-scaling-stroke;
 }
 
-/* The target series: unfilled hairline, dashed (Few's bullet-graph logic). */
+/* Beside a target, "you" fills deeper so the two shapes never read as one. */
+.radar-poly.has-target {
+  fill: var(--fill-strong);
+}
+
+/* The target series: a lighter fill under a dashed hairline (Few's bullet-graph logic), so "you" reads darker
+   wherever it reaches past what the role expects. Drawn first, under "you". */
 .radar-poly-2 {
-  fill: none;
+  fill: var(--fill-2);
   stroke: var(--accent-ui);
   stroke-width: 1;
   stroke-dasharray: 3 4;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  opacity: 0.8;
+  stroke-opacity: 0.8;
 }
 .radar-poly-2.is-reveal {
   animation: radarFadeIn var(--d-base) var(--ease) 500ms backwards;

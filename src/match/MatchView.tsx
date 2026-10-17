@@ -8,7 +8,7 @@
  * the screen in `MatchRoot` feeds it from the store, the dev gallery from fixtures.
  */
 import { useRef, useState } from 'react';
-import type { Coverage, GateAnswer, MatchResult, Posting, Question, Radar as RadarData } from '../../shared/match';
+import type { Coverage, GateAnswer, MatchResult, Posting, Question, Radar as RadarData, Requirement } from '../../shared/match';
 import { Radar } from '../components/Radar';
 import type { RadarAxis } from '../components/Radar';
 import { NARROW_QUERY, plural, timeAgo, useMediaQuery } from '../lib/ui';
@@ -139,20 +139,20 @@ export function MatchView(props: MatchViewProps) {
             <h2 className="kicker mt-h2">You against what the role expects</h2>
             <p className="mt-legend" aria-hidden="true">
               <span>
-                <svg width="24" height="8" viewBox="0 0 24 8" focusable="false">
-                  <line className="mt-lg-you" x1="0" y1="4" x2="24" y2="4" />
+                <svg width="22" height="14" viewBox="0 0 22 14" focusable="false">
+                  <rect className="mt-lg-you" x="1" y="1" width="20" height="12" rx="2" />
                 </svg>
                 You
               </span>
               <span>
-                <svg width="24" height="8" viewBox="0 0 24 8" focusable="false">
-                  <line className="mt-lg-role" x1="0" y1="4" x2="24" y2="4" />
+                <svg width="22" height="14" viewBox="0 0 22 14" focusable="false">
+                  <rect className="mt-lg-role" x="1" y="1" width="20" height="12" rx="2" />
                 </svg>
                 Role expects
               </span>
             </p>
           </div>
-          {radar ? <RadarPanel radar={radar} reveal={reveal} /> : <p className="mt-muted mt-wait">Drawn once the evidence is checked.</p>}
+          {radar ? <RadarPanel radar={radar} requirements={posting?.requirements} reveal={reveal} /> : <p className="mt-muted mt-wait">Drawn once the evidence is checked.</p>}
         </div>
 
         <div className="panel mt-panel">
@@ -206,7 +206,7 @@ export function MatchView(props: MatchViewProps) {
       )}
 
       <p className="mt-fine mt-footer">
-        Role expectations are built from the posting's own wording, not by a model. This service uses the ESCO classification of the European Commission.
+        How much the role expects of each area is counted from how strongly the posting asks for each thing; a model only sorts each ask into one of your areas. This service uses the ESCO classification of the European Commission.
       </p>
     </>
   );
@@ -214,24 +214,53 @@ export function MatchView(props: MatchViewProps) {
 
 /* ───────────────────────── the radar ───────────────────────── */
 
-export function RadarPanel({ radar, reveal = false }: { radar: RadarData; reveal?: boolean }) {
+/** Requirements named under the chart before the rest is counted. */
+const OUTSIDE_SHOWN = 3;
+
+export function RadarPanel({
+  radar,
+  requirements,
+  reveal = false,
+}: {
+  radar: RadarData;
+  /** The posting's requirements, to name what lies outside the person's areas. */
+  requirements?: readonly Requirement[];
+  reveal?: boolean;
+}) {
   const [picked, setPicked] = useState<string | null>(null);
   const axes: RadarAxis[] = radar.axes.map((a) => ({ id: a.domain, label: a.domain, value: a.you, secondary: a.role }));
   const sel = radar.axes.find((a) => a.domain === picked);
+  const textOf = new Map((requirements ?? []).map((r) => [r.id, r.text]));
+  const outside = (radar.outside ?? []).map((id) => textOf.get(id)).filter((t): t is string => !!t);
+  const outsideNote = outside.length > 0 && (
+    <p className="mt-outside">
+      Also asked, outside your areas: {outside.slice(0, OUTSIDE_SHOWN).join(' · ')}
+      {outside.length > OUTSIDE_SHOWN && (
+        <>
+          {' '}
+          and <span className="numeral">{outside.length - OUTSIDE_SHOWN}</span> more
+        </>
+      )}
+      . Each is in the list below.
+    </p>
+  );
 
   if (axes.length < 3) {
     // not enough spokes for a polygon: the same two numbers as a quiet list
     return (
-      <ul className="mt-radar-list" aria-label="You against what the role expects">
-        {radar.axes.map((a) => (
-          <li key={a.domain}>
-            <span>{a.domain}</span>
-            <span className="numeral">
-              {a.you} / {a.role}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <>
+        <ul className="mt-radar-list" aria-label="You against what the role expects">
+          {radar.axes.map((a) => (
+            <li key={a.domain}>
+              <span>{a.domain}</span>
+              <span className="numeral">
+                {a.you} / {a.role}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {outsideNote}
+      </>
     );
   }
 
@@ -245,19 +274,27 @@ export function RadarPanel({ radar, reveal = false }: { radar: RadarData; reveal
         axisState="pressed"
         reveal={reveal}
         ariaLabel={`Your ${plural(axes.length, 'domain')} against what the role expects`}
-        tableCaption="Values along each spoke, 0 to 100. Role weights come from the posting's wording."
+        tableCaption="Values along each spoke, 0 to 100. Role weights come from how strongly the posting asks."
         onSelect={(id) => setPicked((p) => (p === id ? null : id))}
         onBackgroundClick={() => setPicked(null)}
       />
       <p className="mt-readout" aria-live="polite">
         {sel ? (
           <>
-            {sel.domain}: you <span className="numeral">{sel.you}</span>, role expects <span className="numeral">{sel.role}</span>.
+            {sel.domain}: you <span className="numeral">{sel.you}</span>, role expects <span className="numeral">{sel.role}</span>
+            {sel.asks && (
+              <>
+                {' '}
+                ({sel.asks.length === 0 ? 'nothing the posting asks' : <>from <span className="numeral">{sel.asks.length}</span> of the posting's asks</>})
+              </>
+            )}
+            .
           </>
         ) : (
           'Select a domain to read its two values.'
         )}
       </p>
+      {outsideNote}
     </div>
   );
 }

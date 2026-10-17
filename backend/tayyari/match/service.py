@@ -4,7 +4,8 @@
     2  build_facts    the person's `FactBook`: portfolio facts (cached or extracted), skills of the graph, user facts
     3  answer_gates   one Haiku call; only a `fail` with severity 7 or more blocks
     4  assess_coverage  Haiku per batch of at most 10 requirements, concurrently; downgrades in code
-    5  build_radar    role expectation per profile domain, from requirement weights
+       place_requirements  one Haiku call, at the same time: each requirement's area among the person's own
+    5  build_radar    role expectation per profile domain, from requirement weights (no "Other" axis)
     6  make_questions at most three, must-haves first
     7  compose_variant  the resume from cited facts (relevance, selection, phrasing, verification)
     8  write_cover    the cover note from (requirement, fact) pairs and a plain sentence per gap
@@ -16,7 +17,7 @@ hands in the cached posting, facts and user facts through the optional ports, or
 
 Order of effects: the posting is read at the same time as the facts are gathered (they never meet in a prompt); the
 gates and the coverage are checked at the same time; the band, counts, confidence, radar and questions are computed
-afterwards, in code, from the answers.
+afterwards, in code, from the answers. A re-check keeps the radar: the requirements and the graph have not changed.
 """
 
 from __future__ import annotations
@@ -42,6 +43,7 @@ from tayyari.contract.portfolio import Fact as PortfolioFact
 from tayyari.contract.stored import StoredContext
 from tayyari.llm.claude import ClaudeClient
 from tayyari.llm.types import CallContext
+from tayyari.match.areas import Placement, place_requirements
 from tayyari.match.bullets import DecisionOutcome, DraftContext, apply_decisions
 from tayyari.match.calls import call_timeout, gather2
 from tayyari.match.cover import CoverResult, write_cover
@@ -131,8 +133,13 @@ def assemble_result(
     coverage: Sequence[Coverage],
     *,
     version: int = 1,
+    placed: Placement | None = None,
+    radar: Radar | None = None,
 ) -> MatchResult:
-    """The `MatchResult` of the checked rows: band, counts, confidence, blocked, radar and questions, all by code."""
+    """The `MatchResult` of the checked rows: band, counts, confidence, blocked, radar and questions, all by code.
+
+    ``radar`` is kept as given (a re-check); otherwise it is built from ``placed`` (the areas call) and code.
+    """
     confidence, note = confidence_of(
         posting.requirements, coverage, decision.answers, gate_count=len(posting.gates)
     )
@@ -145,7 +152,7 @@ def assemble_result(
         gates=list(decision.answers),
         blocked=decision.blocked,
         coverage=list(coverage),
-        radar=build_radar(profile, posting.requirements, coverage),
+        radar=radar if radar is not None else build_radar(profile, posting.requirements, placed),
         questions=make_questions(posting, coverage, decision.answers),
         version=version,
     )
@@ -247,19 +254,30 @@ class MatchService:
             def batch(rows: list[Coverage]) -> None:
                 _send(emit, CoverageBatch(rows))
 
-            decision, coverage = await gather2(
+            decision, (coverage, placed) = await gather2(
                 self._gates(posting, book, call_ctx),
-                assess_coverage(
-                    self._claude,
-                    model=self._model,
-                    requirements=posting.requirements,
-                    facts=book.facts,
-                    call_ctx=call_ctx,
-                    on_batch=batch,
+                gather2(
+                    assess_coverage(
+                        self._claude,
+                        model=self._model,
+                        requirements=posting.requirements,
+                        facts=book.facts,
+                        call_ctx=call_ctx,
+                        on_batch=batch,
+                    ),
+                    place_requirements(
+                        self._claude,
+                        model=self._model,
+                        profile=profile,
+                        requirements=posting.requirements,
+                        call_ctx=call_ctx,
+                    ),
                 ),
             )
             _send(emit, GatesReady(decision.answers, decision.blocked))
-            result = assemble_result(profile, posting, decision, coverage, version=MATCH_VERSION)
+            result = assemble_result(
+                profile, posting, decision, coverage, version=MATCH_VERSION, placed=placed
+            )
             _send(emit, RadarReady(result.radar))
             _send(emit, QuestionsReady(result.questions))
             return MatchOutcome(posting=posting, book=book, result=result, report=read.report)
@@ -282,7 +300,8 @@ class MatchService:
     ) -> MatchResult:
         """Re-check only the named rows and gates (after the person answered), keep the rest, bump the version.
 
-        ``None`` means "all". Never consumes anything: it is the free re-check the product promises.
+        ``None`` means "all". Never consumes anything: it is the free re-check the product promises. The radar is
+        kept (a radar stored before ``outside`` existed is built again by code).
         """
         wanted = set(requirement_ids) if requirement_ids is not None else {r.id for r in posting.requirements}
         wanted_gates = set(gate_ids) if gate_ids is not None else {g.id for g in posting.gates}
@@ -303,7 +322,8 @@ class MatchService:
         answers.update({a.gateId: a for a in fresh_decision.answers})
         merged = decide(posting.gates, [answers[g.id] for g in posting.gates if g.id in answers])
         coverage = [rows[r.id] for r in posting.requirements if r.id in rows]
-        return assemble_result(profile, posting, merged, coverage, version=previous.version + 1)
+        kept = previous.radar if previous.radar.outside is not None else None
+        return assemble_result(profile, posting, merged, coverage, version=previous.version + 1, radar=kept)
 
     # ── 7 · the resume ──
 

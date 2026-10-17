@@ -84,7 +84,9 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     signed in is claimed too. Open "Match a posting" (the card beside the graph, or "Match" in the header), paste the
     text of `backend/tests/data/match/meera.posting.txt` and choose "Match this posting". The stream reads the posting,
     fills the requirement rows batch by batch, then the gates, the radar and the questions; the band appears in words
-    when it is done, with its evidence confidence. Choose "Close the gaps", answer a question and choose "Save answers
+    when it is done, with its evidence confidence. The radar has one axis per area of the person's graph and no "Other"
+    axis: "you" is the darker fill, "role expects" a lighter fill under a dashed line, and the asks that fit none of the
+    areas (here the language and the MBA) are named under the chart. Selecting an area says how many asks make it up. Choose "Close the gaps", answer a question and choose "Save answers
     and re-check": the page says the answer becomes a fact marked "From you", and the rows it touches are checked again.
     Choose "Build my resume for this role". The preview lists each line that needs a decision (Keep, Soften, Drop, a
     figure for a number, or a term to confirm). While one is open, "Download PDF" and "Download DOCX" are disabled and

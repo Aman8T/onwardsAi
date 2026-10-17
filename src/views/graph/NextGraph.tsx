@@ -353,14 +353,14 @@ export function NextGraph({ profile }: { profile: Profile }) {
                     />
                     <p className="next-legend" aria-hidden="true">
                       <span>
-                        <svg width="24" height="8" viewBox="0 0 24 8" focusable="false">
-                          <line className="next-lg-you" x1="0" y1="4" x2="24" y2="4" />
+                        <svg width="22" height="14" viewBox="0 0 22 14" focusable="false">
+                          <rect className="next-lg-you" x="1" y="1" width="20" height="12" rx="2" />
                         </svg>
                         You
                       </span>
                       <span>
-                        <svg width="24" height="8" viewBox="0 0 24 8" focusable="false">
-                          <line className="next-lg-exp" x1="0" y1="4" x2="24" y2="4" />
+                        <svg width="22" height="14" viewBox="0 0 22 14" focusable="false">
+                          <rect className="next-lg-exp" x="1" y="1" width="20" height="12" rx="2" />
                         </svg>
                         Role expects
                       </span>

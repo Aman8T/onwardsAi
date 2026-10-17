@@ -138,7 +138,8 @@ Line heights: tight 1.08 (display), snug 1.3, body 1.55. Measure 62ch.
 Radars are kept because the product is about a *shape of skills*, and tamed because the literature is blunt about their faults:
 
 - 5–8 axes in a **fixed order per profile**, never sorted by value, so shapes become recognisable with use.
-- At most two series: "you" as a 12 % fill with a 1.5 px stroke; a target as an unfilled hairline (benchmark thin, actual bold).
+- At most two series: "you" as a 12 % fill with a 1.5 px stroke; beside a target, "you" fills at 18 % and the target is an 8 % fill under a dashed hairline (`--fill-strong`, `--fill-2`), so the person reads darker and the role lighter (benchmark thin, actual bold).
+- Every axis is one of the person's own areas. Whatever fits none of them is named beside the chart, never summed into an "Other" axis (a catch-all outweighs every real area and bends the shape towards a corner that means nothing).
 - Straight edges only; hairline rings at 25 / 50 / 75 / 100; labels outside the rim; numerals in tabular figures.
 - Hover highlights one spoke. Vertices are real buttons with roving `tabindex` and arrow-key navigation; Enter opens, Escape restores focus.
 - A visually hidden data table is always present and is the source of truth for parity tests.

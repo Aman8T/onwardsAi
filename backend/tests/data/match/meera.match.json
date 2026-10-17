@@ -995,33 +995,55 @@
         {
           "domain": "Paid",
           "you": 78,
-          "role": 79
+          "role": 79,
+          "asks": [
+            "r1",
+            "r2",
+            "r13"
+          ]
         },
         {
           "domain": "Lifecycle",
           "you": 80,
-          "role": 23
+          "role": 23,
+          "asks": [
+            "r3"
+          ]
         },
         {
           "domain": "Experiments",
           "you": 74,
-          "role": 100
+          "role": 100,
+          "asks": [
+            "r4",
+            "r7",
+            "r8",
+            "r9",
+            "r12",
+            "r14",
+            "r15"
+          ]
         },
         {
           "domain": "Team",
           "you": 60,
-          "role": 23
+          "role": 23,
+          "asks": [
+            "r5"
+          ]
         },
         {
           "domain": "Content",
           "you": 58,
-          "role": 7
-        },
-        {
-          "domain": "Other",
-          "you": 0,
-          "role": 30
+          "role": 7,
+          "asks": [
+            "r10"
+          ]
         }
+      ],
+      "outside": [
+        "r6",
+        "r11"
       ]
     },
     "questions": [

@@ -699,20 +699,33 @@
   gap: 10px;
 }
 
+/* The legend's swatches are the two shapes in small: "you" darker and solid, the role lighter and dashed. */
 .mt-lg-you,
 .mt-lg-role {
-  fill: none;
   stroke: var(--accent-ui);
+  vector-effect: non-scaling-stroke;
 }
 
 .mt-lg-you {
+  fill: var(--fill-strong);
   stroke-width: 1.5;
 }
 
 .mt-lg-role {
+  fill: var(--fill-2);
   stroke-width: 1;
-  stroke-dasharray: 3 4;
-  opacity: 0.8;
+  stroke-dasharray: 3 3;
+  stroke-opacity: 0.8;
+}
+
+.mt-outside {
+  width: 100%;
+  max-width: var(--radar-max, 460px);
+  margin: 0 auto;
+  text-align: center;
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  color: var(--text-muted);
 }
 
 .mt-radar {

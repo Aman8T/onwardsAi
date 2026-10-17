@@ -260,7 +260,7 @@ function Layer({ axes, reveal, reduced, hasSecondary, selectedId, hoveredId, rel
       {hasSecondary && (
         <path ref={path2Ref} className={cx('radar-poly-2', drawFromCentre && 'is-reveal')} d={initialD2} />
       )}
-      <path ref={pathRef} className="radar-poly" d={initialD} />
+      <path ref={pathRef} className={cx('radar-poly', hasSecondary && 'has-target')} d={initialD} />
       {/* Re-keyed on every values change so the fade restarts after the tween. */}
       <g key={valuesKey} className="radar-dots" style={{ animationDelay: `${dotsDelayMs}ms` }}>
         {hasSecondary &&

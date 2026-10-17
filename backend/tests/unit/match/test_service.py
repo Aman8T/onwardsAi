@@ -29,6 +29,7 @@ from tests.unit.match.support import (
     CTX,
     HAIKU,
     Persona,
+    areas_responder,
     coverage_responder,
     gate_responder,
     js,
@@ -43,6 +44,7 @@ PURPOSES = {
     "match.posting",
     "match.gates",
     "match.coverage",
+    "match.areas",
     "match.relevance",
     "match.phrase",
     "match.cover",
@@ -221,6 +223,7 @@ async def test_the_call_plan_uses_only_match_purposes_on_haiku_with_thinking_lef
         "match.posting": 1,
         "match.gates": 1,
         "match.coverage": 2,
+        "match.areas": 1,
     }
     await service.compose_resume(
         book=outcome.book, posting=outcome.posting, result=outcome.result, call_ctx=CTX
@@ -234,7 +237,7 @@ async def test_the_call_plan_uses_only_match_purposes_on_haiku_with_thinking_lef
     assert counts["match.relevance"] == 1
     assert 1 <= counts["match.phrase"] <= 3
     assert counts["match.cover"] == 1
-    assert sum(counts.values()) <= 9
+    assert sum(counts.values()) <= 10
     assert all(c.model == HAIKU for c in fake.structured_calls)
     assert all(
         c.effort is None for c in fake.structured_calls
@@ -243,7 +246,7 @@ async def test_the_call_plan_uses_only_match_purposes_on_haiku_with_thinking_lef
     assert fake.problems == []
 
 
-async def test_gates_and_coverage_are_asked_at_the_same_time() -> None:
+async def test_gates_coverage_and_areas_are_asked_at_the_same_time() -> None:
     persona = meera()
     fake = FakeClaudeClient()
     inflight = peak = 0
@@ -262,6 +265,7 @@ async def test_gates_and_coverage_are_asked_at_the_same_time() -> None:
     fake.script_structured("match.posting", persona.posting_answer)
     fake.script_structured("match.gates", slow(gate_responder(persona)))
     fake.script_structured("match.coverage", slow(coverage_responder(persona)), repeat=True)
+    fake.script_structured("match.areas", slow(areas_responder(persona)))
     service = MatchService(claude=fake, model=HAIKU)
     await service.analyse(
         profile=persona.profile,
@@ -270,7 +274,7 @@ async def test_gates_and_coverage_are_asked_at_the_same_time() -> None:
         call_ctx=CTX,
         portfolio_facts=persona.portfolio_facts,
     )
-    assert peak == 3  # the gate call and both coverage batches
+    assert peak == 4  # the gate call, both coverage batches and the areas call
 
 
 async def test_the_events_come_in_the_order_the_stream_sends_them() -> None:

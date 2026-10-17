@@ -60,6 +60,8 @@
   --accent-strong: #2e5072;
   --accent-soft: #d9eafc;
   --fill: rgba(72, 117, 163, 0.12);
+  --fill-2: rgba(72, 117, 163, 0.08);
+  --fill-strong: rgba(72, 117, 163, 0.18);
   --grid: rgba(26, 34, 43, 0.08);
   --line: #c7d2de;
   --line-strong: #6e8398;
@@ -86,6 +88,8 @@
     --accent-strong: oklch(0.42 calc(0.07 * var(--k)) var(--h));
     --accent-soft: oklch(0.93 calc(0.03 * var(--k)) var(--h));
     --fill: oklch(0.55 calc(0.088 * var(--k)) var(--h) / 0.12);
+    --fill-2: oklch(0.55 calc(0.088 * var(--k)) var(--h) / 0.08);
+    --fill-strong: oklch(0.55 calc(0.088 * var(--k)) var(--h) / 0.18);
     --grid: oklch(0.25 calc(0.02 * var(--k)) var(--h) / 0.08);
     --line: oklch(0.86 calc(0.02 * var(--k)) var(--h));
     --line-strong: oklch(0.60 calc(0.04 * var(--k)) var(--h));
@@ -243,6 +247,8 @@ body {
     --accent-strong: Highlight;
     --accent-soft: Canvas;
     --fill: transparent;
+    --fill-2: transparent;
+    --fill-strong: transparent;
     --grid: CanvasText;
     --line: CanvasText;
     --line-strong: CanvasText;

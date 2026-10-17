@@ -1,6 +1,6 @@
 """What the models are asked to return, as Pydantic models, and the JSON Schemas built from them.
 
-The models below are the *answer* shapes of the six Haiku calls. Two rules shape them:
+The models below are the *answer* shapes of the seven Haiku calls. Two rules shape them:
 
   - citations come first: in every row ``factIds`` precedes ``status``, ``level`` and ``verdict``, so the model
     names its evidence before it may state a conclusion (properties are generated in field order);
@@ -110,6 +110,22 @@ class CoverageRowOut(_Out):
 
 class CoverageOut(_Out):
     rows: list[CoverageRowOut]
+
+
+# ───────────────────────── areas ─────────────────────────
+
+
+class AreaRowOut(_Out):
+    requirementId: str
+    skill: str = Field(
+        default="",
+        description="The person's listed skill this requirement is closest to, copied exactly. Empty when none is close.",
+    )
+    area: str = Field(description="The id of the person's area the requirement belongs to, or none.")
+
+
+class AreasOut(_Out):
+    rows: list[AreaRowOut]
 
 
 # ───────────────────────── relevance ─────────────────────────
@@ -268,6 +284,8 @@ def rows_of[T: BaseModel](data: Mapping[str, Any], key: str, model: type[T]) -> 
 
 __all__ = [
     "MAX_ROWS",
+    "AreaRowOut",
+    "AreasOut",
     "BulletOut",
     "CoverOut",
     "CoverParagraphOut",

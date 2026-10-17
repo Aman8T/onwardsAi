@@ -170,10 +170,31 @@ class RadarAxis(_Model):
     domain: str
     you: int
     role: int
+    asks: list[str] | None = None
+    """The requirements (ids) that make up ``role``. Absent on a radar stored before 2026-10-17."""
+
+
+LEGACY_OTHER_AXIS: Final = "Other"
+"""The axis a radar stored before 2026-10-17 gathered unplaced requirements on; dropped when such a radar is read."""
 
 
 class Radar(_Model):
     axes: list[RadarAxis]
+    outside: list[str] | None = None
+    """The requirements (ids) that belong to none of the person's areas, named beside the chart, never an axis."""
+
+    @model_validator(mode="after")
+    def _without_the_legacy_other_axis(self) -> Radar:
+        """A stored radar from before ``outside`` drew its unplaced requirements as one "Other" axis, which then
+        outweighed every real area. Drop it and scale ``role`` again against the busiest remaining axis."""
+        if self.outside is not None or not any(a.domain == LEGACY_OTHER_AXIS for a in self.axes):
+            return self
+        kept = [a for a in self.axes if a.domain != LEGACY_OTHER_AXIS]
+        peak = max((a.role for a in kept), default=0)
+        self.axes = [
+            a.model_copy(update={"role": round(100 * a.role / peak) if peak > 0 else 0}) for a in kept
+        ]
+        return self
 
 
 class Question(_Model):
@@ -322,6 +343,7 @@ __all__ = [
     "COVER_WORDS_MAX",
     "COVER_WORDS_MIN",
     "GATE_BLOCK_SEVERITY",
+    "LEGACY_OTHER_AXIS",
     "MATCH_VERSION",
     "MAX_GATES",
     "MAX_QUESTIONS",

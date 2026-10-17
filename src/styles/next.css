@@ -252,18 +252,20 @@
 
 .next-lg-you,
 .next-lg-exp {
-  fill: none;
   stroke: var(--accent-ui);
+  vector-effect: non-scaling-stroke;
 }
 
 .next-lg-you {
+  fill: var(--fill-strong);
   stroke-width: 1.5;
 }
 
 .next-lg-exp {
+  fill: var(--fill-2);
   stroke-width: 1;
-  stroke-dasharray: 3 4;
-  opacity: 0.8;
+  stroke-dasharray: 3 3;
+  stroke-opacity: 0.8;
 }
 
 /* Fewer than three requirements: a quiet list instead of a radar, same popover. */

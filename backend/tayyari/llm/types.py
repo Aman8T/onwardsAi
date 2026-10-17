@@ -23,6 +23,7 @@ Purpose = Literal[
     "match.posting",
     "match.gates",
     "match.coverage",
+    "match.areas",
     "match.relevance",
     "match.phrase",
     "match.cover",

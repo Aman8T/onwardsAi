@@ -6,10 +6,10 @@ from typing import Any
 
 import pytest
 
-from tayyari.contract.match import Coverage, Gate, GateAnswer, Posting, Requirement
+from tayyari.contract.match import Coverage, Gate, GateAnswer, Posting, Radar, Requirement
 from tayyari.contract.models import Profile
 from tayyari.match.questions import make_questions
-from tayyari.match.radar import OTHER_AXIS, build_radar, map_requirement
+from tayyari.match.radar import build_radar, map_requirement
 from tests.unit.match.support import meera, riya
 
 
@@ -60,29 +60,40 @@ def test_role_is_the_tier_weighted_share_scaled_to_the_busiest_axis_and_you_is_t
     assert [a.you for a in radar.axes] == [80, 50]  # the profile's own domain scores
     # Frontend weighs 1.0 + 0.25 = 1.25 (100); Backend weighs 0.8 (64)
     assert [a.role for a in radar.axes] == [100, 64]
+    assert [a.asks for a in radar.axes] == [["a", "b"], ["c"]]
+    assert radar.outside == []
 
 
-def test_unmapped_requirements_form_an_other_axis_only_from_two() -> None:
+def test_requirements_outside_the_graph_are_listed_never_an_axis_and_never_outweigh_a_real_area() -> None:
     profile = profile_with(DOMAINS)
-    one = build_radar(
-        profile, [req("a", "must", "Frontend"), req("x", "required", "Underwater basket weaving")]
-    )
-    assert [a.domain for a in one.axes] == ["Frontend", "Backend"]
-
-    two = build_radar(
+    radar = build_radar(
         profile,
         [
-            req("a", "must", "Frontend"),
-            req("x", "required", "Underwater basket weaving"),
+            req("a", "nice", "Frontend"),
+            req("x", "must", "Underwater basket weaving"),
             req("y", "must", "Beekeeping"),
+            req("z", "required", "Education"),
         ],
-        [cov("x", "covered", 4), cov("y", "partial", 2)],
     )
-    other = two.axes[-1]
-    assert other.domain == OTHER_AXIS
-    assert other.role == 100  # 0.8 + 1.0 = 1.8 against 1.0 for Frontend: the busiest axis
-    assert two.axes[0].role == round(100 * 1.0 / 1.8)
-    assert other.you == round(100 * (4 + 2) / (4 * 2))  # the mean coverage of those requirements
+    assert [a.domain for a in radar.axes] == ["Frontend", "Backend"]  # no "Other" axis, however many
+    assert radar.outside == ["x", "y", "z"]
+    assert [a.role for a in radar.axes] == [100, 0]  # the one real ask is the busiest axis
+
+
+def test_the_areas_placement_wins_over_code_and_none_means_outside() -> None:
+    profile = profile_with(DOMAINS)
+    reqs = [req("a", "must", "Frontend"), req("b", "required", "Cloud"), req("c", "required", "Frontend")]
+    radar = build_radar(profile, reqs, {"a": "back", "b": "back", "c": None})
+    assert [a.asks for a in radar.axes] == [[], ["a", "b"]]
+    assert radar.outside == ["c"]  # the model said none, though the hint names Frontend
+
+
+def test_an_unplaced_requirement_and_an_unknown_area_fall_back_to_code() -> None:
+    profile = profile_with(DOMAINS)
+    reqs = [req("a", "must", "Frontend"), req("b", "required", "APIs")]
+    radar = build_radar(profile, reqs, {"b": "nowhere"})  # "a" missing: code; "b" an id the graph lacks
+    assert [a.asks for a in radar.axes] == [["a"], []]
+    assert radar.outside == ["b"]
 
 
 def test_a_requirement_finds_its_domain_by_its_terms_when_the_hint_does_not() -> None:
@@ -97,9 +108,60 @@ def test_a_requirement_finds_its_domain_by_its_terms_when_the_hint_does_not() ->
     assert map_requirement(req("b", "must", "Something vague"), profile) is None
 
 
+AI_DOMAINS = [
+    ("eval", "LLM Evaluation & Optimization", "LLM Eval", 80),
+    ("design", "Design Systems & Motion", "Design", 70),
+    ("agents", "Agent & RAG Systems", "Agents & RAG", 76),
+    ("backend", "Backend & Cloud", "Backend & Cloud", 58),
+    ("gov", "Observability & Governance", "Observability", 55),
+    ("practice", "Engineering Practice", "Practice", 50),
+]
+AI_SKILLS = [
+    {
+        "id": "rag",
+        "name": "RAG & retrieval",
+        "domainId": "agents",
+        "score": 70,
+        "evidence": [],
+        "unlocks": [],
+    },
+    {"id": "py", "name": "Python", "domainId": "backend", "score": 80, "evidence": [], "unlocks": []},
+    {
+        "id": "k8s",
+        "name": "Cloud & containers",
+        "domainId": "backend",
+        "score": 60,
+        "evidence": [],
+        "unlocks": [],
+    },
+]
+
+
+@pytest.mark.parametrize(
+    ("hint", "terms", "domain"),
+    [
+        ("Cloud infrastructure", [], "backend"),  # a distinctive word the names share
+        ("Agentic AI", [], "agents"),  # "agentic" begins with "agent", over the AI alias of LLM Eval
+        ("Retrieval", ["RAG"], "agents"),  # a term inside a skill's name
+        ("Data storage", ["Python"], "backend"),  # the skill the term names
+        ("Software engineering", [], None),  # only a generic word in common
+        ("Systems", ["Rust"], None),  # a generic word alone names no area, even inside a name
+        ("Engineering practices", [], "practice"),  # generic words still name an area of the very same name
+        ("Education", [], None),
+    ],
+)
+def test_code_places_a_hint_the_alias_table_does_not_know(
+    hint: str, terms: list[str], domain: str | None
+) -> None:
+    profile = profile_with(AI_DOMAINS, AI_SKILLS)
+    found = map_requirement(req("a", "required", hint, terms), profile)
+    assert (found.id if found else None) == domain
+
+
 def test_no_requirements_gives_flat_axes() -> None:
     radar = build_radar(profile_with(DOMAINS), [])
     assert [a.role for a in radar.axes] == [0, 0]
+    assert radar.outside == []
 
 
 def test_the_personas_radars_have_one_axis_per_domain_and_a_busiest_axis_of_one_hundred() -> None:
@@ -110,9 +172,28 @@ def test_the_personas_radars_have_one_axis_per_domain_and_a_busiest_axis_of_one_
         posting = parse_posting(posting_answer(persona), persona.posting_text).posting
         radar = build_radar(persona.profile, posting.requirements)
         domains = [d.short for d in persona.profile.domains]
-        assert [a.domain for a in radar.axes][: len(domains)] == domains
+        assert [a.domain for a in radar.axes] == domains
         assert max(a.role for a in radar.axes) == 100
         assert all(0 <= a.role <= 100 and 0 <= a.you <= 100 for a in radar.axes)
+        placed = {r for a in radar.axes for r in a.asks or []} | set(radar.outside or [])
+        assert placed == {r.id for r in posting.requirements}  # every requirement is on one axis or outside
+
+
+def test_a_stored_radar_with_an_other_axis_is_read_without_it_and_scaled_again() -> None:
+    stored = {
+        "axes": [
+            {"domain": "Frontend", "you": 80, "role": 20},
+            {"domain": "Backend", "you": 50, "role": 40},
+            {"domain": "Other", "you": 100, "role": 100},
+        ]
+    }
+    radar = Radar.from_dict(stored)
+    assert [(a.domain, a.role) for a in radar.axes] == [("Frontend", 50), ("Backend", 100)]
+    assert radar.outside is None  # which requirements were outside is not known for an old radar
+    new = Radar.from_dict({"axes": stored["axes"], "outside": []})
+    assert [a.domain for a in new.axes][
+        -1
+    ] == "Other"  # a new radar is read as it is (a graph may name an area so)
 
 
 # ───────────────────────── questions ─────────────────────────

@@ -122,6 +122,11 @@ def _words(text: str) -> list[str]:
     return [_stem(w) for w in _fold(text).replace("&", " ").split() if w not in _STOP]
 
 
+def name_words(text: str) -> list[str]:
+    """The significant words of a name, folded and singular ("Agents & RAG Systems" → agent, rag, system)."""
+    return _words(text)
+
+
 def _groups(text: str) -> set[int]:
     folded = _fold(text)
     found = {i for word, i in _DOMAIN_INDEX.items() if " " in word and word in folded}
@@ -148,4 +153,4 @@ def domain_score(hint: str, domain_name: str) -> int:
     return 1 if set(a) & set(b) else 0
 
 
-__all__ = ["DOMAIN_GROUPS", "TERM_GROUPS", "domain_score", "same_term", "term_variants"]
+__all__ = ["DOMAIN_GROUPS", "TERM_GROUPS", "domain_score", "name_words", "same_term", "term_variants"]

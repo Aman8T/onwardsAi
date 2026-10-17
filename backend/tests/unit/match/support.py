@@ -1,9 +1,9 @@
-"""Shared helpers for the match tests: the two personas, and a scripted "good Haiku" for each of the six calls.
+"""Shared helpers for the match tests: the two personas, and a scripted "good Haiku" for each of the seven calls.
 
 `meera()` and `riya()` load a persona (profile, stored context, posting, the posting answer a careful model gives,
 and the portfolio facts that the real extractor verification yields from the scripted extraction of the portfolio
-tests). The responders (`posting_answer`, `gate_responder`, `coverage_responder`, `relevance_responder`,
-`phrase_responder`) read the prompt of each call the way the real model would and answer from tables written next to
+tests). The responders (`posting_answer`, `gate_responder`, `coverage_responder`, `areas_responder`,
+`relevance_responder`, `phrase_responder`) read the prompt of each call the way the real model would and answer from tables written next to
 the personas, so the service tests run the whole pipeline with no network.
 """
 
@@ -199,6 +199,29 @@ def coverage_responder(persona: Persona) -> Callable[[StructuredCall], dict[str,
     return respond
 
 
+_AREA_REQ_LINE = re.compile(r"^(r\d+) \| \w+ \| .*? \| field: ", re.MULTILINE)
+
+
+def areas_responder(persona: Persona) -> Callable[[StructuredCall], dict[str, Any]]:
+    """Places each requirement where the code fallback would (``none`` when it finds no area), naming no skill."""
+    from tayyari.match.posting import parse_posting
+    from tayyari.match.radar import map_requirement
+
+    requirements = {
+        r.id: r for r in parse_posting(posting_answer(persona), persona.posting_text).posting.requirements
+    }
+
+    def respond(call: StructuredCall) -> dict[str, Any]:
+        rows = []
+        for req_id in _AREA_REQ_LINE.findall(call.user_text):
+            req = requirements.get(req_id)
+            domain = map_requirement(req, persona.profile) if req is not None else None
+            rows.append({"requirementId": req_id, "skill": "", "area": domain.id if domain else "none"})
+        return {"rows": rows}
+
+    return respond
+
+
 def relevance_responder(persona: Persona) -> Callable[[StructuredCall], dict[str, Any]]:
     def respond(call: StructuredCall) -> dict[str, Any]:
         reqs = {t: (rid, tier) for rid, tier, _k, t in _REQ_LINE.findall(call.user_text)}
@@ -259,6 +282,7 @@ def script_pipeline(
     )
     fake.script_structured("match.gates", gate_responder(persona), repeat=True)
     fake.script_structured("match.coverage", coverage_responder(persona), repeat=True)
+    fake.script_structured("match.areas", areas_responder(persona), repeat=True)
     fake.script_structured("match.relevance", relevance_responder(persona), repeat=True)
     fake.script_structured("match.phrase", phrase_responder(phrase), repeat=True)
     return fake

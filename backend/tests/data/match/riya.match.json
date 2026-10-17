@@ -1217,38 +1217,58 @@
         {
           "domain": "Frontend",
           "you": 81,
-          "role": 98
+          "role": 100,
+          "asks": [
+            "r1",
+            "r3",
+            "r5",
+            "r8"
+          ]
         },
         {
           "domain": "Design & Motion",
           "you": 85,
-          "role": 100
+          "role": 68,
+          "asks": [
+            "r2",
+            "r11",
+            "r12"
+          ]
         },
         {
           "domain": "Backend & APIs",
           "you": 58,
-          "role": 34
+          "role": 26,
+          "asks": [
+            "r6"
+          ]
         },
         {
           "domain": "AI & LLM",
           "you": 36,
-          "role": 0
+          "role": 0,
+          "asks": []
         },
         {
           "domain": "Eng Practice",
           "you": 55,
-          "role": 34
+          "role": 26,
+          "asks": [
+            "r4"
+          ]
         },
         {
           "domain": "Product & Collab",
           "you": 55,
-          "role": 21
-        },
-        {
-          "domain": "Other",
-          "you": 100,
-          "role": 45
+          "role": 16,
+          "asks": [
+            "r7"
+          ]
         }
+      ],
+      "outside": [
+        "r9",
+        "r10"
       ]
     },
     "questions": [
