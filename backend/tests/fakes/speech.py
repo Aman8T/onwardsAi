@@ -2,11 +2,14 @@
 
 `FakeSpeechEngine` implements `tayyari.speech.engine.SpeechEngine`. A test sets what it hears and what it says aloud, makes it
 raise `SpeechUnavailable` / `SpeechRejected` (or anything else), and reads back every call: the audio it was handed, the
-audio type, the key terms, the text and the pace.
+audio type, the key terms, the text and the pace. Give it a ``hold`` event and every spoken line waits for the event to be set
+(a slow Sarvam); ``asked`` is set when the first line reaches it, and ``active`` and ``peak`` say how many lines it was
+making at once.
 """
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -37,11 +40,16 @@ class FakeSpeechEngine:
         *,
         transcribe_error: BaseException | None = None,
         speak_error: BaseException | None = None,
+        hold: asyncio.Event | None = None,
     ) -> None:
         self.heard = heard if isinstance(heard, Heard) else Heard(heard, "en-IN")
         self.audio = audio
         self.transcribe_error = transcribe_error
         self.speak_error = speak_error
+        self.hold = hold
+        self.asked = asyncio.Event()
+        self.active = 0
+        self.peak = 0
         self.transcribed: list[Transcription] = []
         self.spoken: list[Speech] = []
 
@@ -53,9 +61,17 @@ class FakeSpeechEngine:
 
     async def speak(self, text: str, *, pace: float) -> bytes:
         self.spoken.append(Speech(text, pace))
-        if self.speak_error is not None:
-            raise self.speak_error
-        return self.audio
+        self.asked.set()
+        self.active += 1
+        self.peak = max(self.peak, self.active)
+        try:
+            if self.hold is not None:
+                await self.hold.wait()
+            if self.speak_error is not None:
+                raise self.speak_error
+            return self.audio
+        finally:
+            self.active -= 1
 
     @property
     def calls(self) -> int:

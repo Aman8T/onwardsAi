@@ -484,6 +484,13 @@ class SpeechSettings(BaseModel):
     request_timeout_s: float = Field(default=20.0, gt=0)
     tts_cache_items: int = Field(default=256, ge=0, le=5000)
     """Spoken lines kept in memory, so a repeated line ("Say it again", a template) costs nothing."""
+    tts_prefetch: bool = True
+    """Make the interviewer's next lines ready before the browser asks for them (needs the cache: ``tts_cache_items`` > 0)."""
+    tts_prefetch_followups: bool = True
+    """Also make the lines only some answers lead to ready: the current question's follow-up and easier question. Off, only the
+    line being said and the questions still to come are made ahead (fewer credits spent on lines nobody hears)."""
+    tts_prefetch_concurrency: int = Field(default=2, ge=1, le=8)
+    """Lines made ahead at the same time across the whole process (a line a person is waiting for never queues behind them)."""
 
     @field_validator(
         "enabled",
@@ -502,6 +509,9 @@ class SpeechSettings(BaseModel):
         "tts_session_chars",
         "request_timeout_s",
         "tts_cache_items",
+        "tts_prefetch",
+        "tts_prefetch_followups",
+        "tts_prefetch_concurrency",
         mode="before",
     )
     @classmethod

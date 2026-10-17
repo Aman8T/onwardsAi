@@ -1,27 +1,33 @@
-"""Speech for practice interviews: what is on, what a piece of an answer costs, and the two things the room asks for.
+"""Speech for practice interviews: what is on, what a piece of an answer costs, and the things the room asks for.
 
     status      `SpeechStatus`: whether Sarvam writes down answers (``stt``) and reads questions aloud (``tts``) for this
                 session, and if not, why (no key, switched off, the day's budget or the session's share used up).
     transcribe  one piece of an answer (audio) -> words. Checked first (an audio type we accept, not empty, not over the size
                 cap), then the budget, then charged, then sent to the engine. The audio is held for the call and dropped.
     speak       one interviewer line -> MP3. A line spoken before costs nothing (an LRU cache, keyed by voice, pace and text);
-                a new one is checked against the budget, charged by its characters, and sent to the engine.
+                a line being made right now is shared (whoever asks for it waits for the one Sarvam call); a new one is
+                checked against the budget, charged by its characters, and sent to the engine.
+    prefetch    lines the interview will probably say next, made in the background before anyone asks (a question's voice
+                takes about 5 s to come back from Sarvam, a made one about 1 s). Fire and forget: it never raises and never
+                waits. Each line is charged like any other, and one the budget would not cover is skipped without a word.
 
 The engine is None when there is no key (or speech is switched off): everything then says so, and the room uses the
-browser's own speech. Budgets are soft (`speech.meter`). Which lines may be spoken, and which words bias recognition, are the
-interview's to say: the routes get them from `InterviewService.speech_context` and hand them in.
+browser's own speech. Budgets are soft (`speech.meter`). Which lines may be spoken, which to make ahead, and which words bias
+recognition, are the interview's to say: the routes get them from `InterviewService` and hand them in.
 
 Nothing here logs or keeps audio or text, only sizes, seconds and counts.
 """
 
 from __future__ import annotations
 
+import asyncio
 import math
 from collections import OrderedDict
-from collections.abc import Sequence
-from typing import Final, Literal
+from collections.abc import Iterable, Sequence
+from functools import partial
+from typing import Any, Final, Literal
 
-from tayyari.contract.speech import SpeechOffReason, SpeechStatus, TranscribeResult
+from tayyari.contract.speech import SPEAK_TEXT_MAX_CHARS, SpeechOffReason, SpeechStatus, TranscribeResult
 from tayyari.core.clock import Clock
 from tayyari.core.errors import PayloadTooLarge
 from tayyari.core.logging import get_logger
@@ -56,8 +62,13 @@ TOO_LARGE_MESSAGE: Final = "That piece is too long to write down. Say a little l
 NOTHING_TO_SAY: Final = "There is nothing to read aloud."
 DAILY_MESSAGE: Final = "Today's Sarvam speech is used up. Your browser's speech will take over."
 SESSION_MESSAGE: Final = "This interview's Sarvam speech is used up. Your browser's speech will take over."
+MAX_PACES: Final = 2048
+"""Sessions whose last pace this process remembers."""
 
 Kind = Literal["stt", "tts"]
+Source = Literal["request", "prefetch"]
+Key = tuple[str, str, float, str]
+"""What identifies a spoken line: the model, the speaker, the pace and the text. The cache and the lines being made share it."""
 
 
 class SpeechService:
@@ -67,7 +78,19 @@ class SpeechService:
         self._engine = engine
         self._settings = settings
         self._meter = SpeechMeter(kv, clock, settings)
-        self._cache: OrderedDict[tuple[str, str, float, str], bytes] = OrderedDict()
+        self._cache: OrderedDict[Key, bytes] = OrderedDict()
+        self._making: dict[Key, asyncio.Task[bytes]] = {}
+        """Lines being made right now: one task each, shared by everyone who asks for the line meanwhile."""
+        self._queued: set[Key] = set()
+        """Lines `prefetch` has scheduled and not yet started making."""
+        self._background: set[asyncio.Task[Any]] = set()
+        """Strong references to every task this service started (the event loop only keeps weak ones)."""
+        self._slots = asyncio.Semaphore(settings.tts_prefetch_concurrency)
+        self._budget = asyncio.Lock()
+        """Held while a prefetch looks at the budget and pays from it, so two lines made at once are not both checked against
+        the same credits."""
+        self._paces: OrderedDict[str, float] = OrderedDict()
+        """session id -> the pace its browser last asked for (a person who chose the slower voice asks for 0.85)."""
 
     @property
     def meter(self) -> SpeechMeter:
@@ -77,6 +100,17 @@ class SpeechService:
     def configured(self) -> bool:
         """Whether there is an engine (a key) and speech is not switched off."""
         return self._engine is not None and self._settings.enabled
+
+    @property
+    def prefetching(self) -> bool:
+        """Whether lines are made ahead: Sarvam is on, ``tts_prefetch`` is on, and there is a cache to keep them in."""
+        s = self._settings
+        return self.configured and s.tts_prefetch and s.tts_cache_items > 0
+
+    @property
+    def prefetching_followups(self) -> bool:
+        """Whether the lines only some answers lead to (the follow-up and the easier question) are made ahead too."""
+        return self.prefetching and self._settings.tts_prefetch_followups
 
     # ───────────────────────── status ─────────────────────────
 
@@ -178,7 +212,7 @@ class SpeechService:
 
     # ───────────────────────── text to speech ─────────────────────────
 
-    def _remember(self, key: tuple[str, str, float, str], audio: bytes) -> None:
+    def _remember(self, key: Key, audio: bytes) -> None:
         limit = self._settings.tts_cache_items
         if limit <= 0:
             return
@@ -187,26 +221,196 @@ class SpeechService:
         while len(self._cache) > limit:
             self._cache.popitem(last=False)
 
+    def _recall(self, key: Key) -> bytes | None:
+        """A line made before, now the most recently used."""
+        cached = self._cache.get(key)
+        if cached is not None:
+            self._cache.move_to_end(key)
+        return cached
+
+    @staticmethod
+    def _rate(pace: float | None) -> float:
+        return round(min(2.0, max(0.5, pace if pace is not None else 1.0)), 2)
+
+    def _note_pace(self, session_id: str, rate: float) -> None:
+        self._paces[session_id] = rate
+        self._paces.move_to_end(session_id)
+        while len(self._paces) > MAX_PACES:
+            self._paces.popitem(last=False)
+
+    def _ready(self, key: Key) -> bool:
+        """Whether a line is made or being made."""
+        return self._recall(key) is not None or key in self._making
+
+    def _make(
+        self,
+        key: Key,
+        session_id: str,
+        said: str,
+        rate: float,
+        engine: SpeechEngine,
+        source: Source,
+        *,
+        paid: bool = False,
+    ) -> asyncio.Task[bytes]:
+        """Start making a line and keep it where `speak` and `prefetch` find it until it is over. Callers check that nobody
+        else is making it and call this with no await in between, so one line is only ever made once at a time. ``paid``:
+        the line was charged already."""
+        task = asyncio.create_task(
+            self._generate(key, session_id, said, rate, engine, source, paid), name="tayyari-voice"
+        )
+        self._making[key] = task
+        self._background.add(task)
+        task.add_done_callback(partial(self._made, key))
+        return task
+
+    def _made(self, key: Key, task: asyncio.Task[bytes]) -> None:
+        """A line is over (made, failed or cancelled). A made one is in the cache already, so a line is never in neither."""
+        self._background.discard(task)
+        if self._making.get(key) is task:
+            del self._making[key]
+        if not task.cancelled():
+            task.exception()  # read, so a line nobody waited for does not end as "exception never retrieved"
+
+    async def _generate(
+        self,
+        key: Key,
+        session_id: str,
+        said: str,
+        rate: float,
+        engine: SpeechEngine,
+        source: Source,
+        paid: bool,
+    ) -> bytes:
+        if not paid:
+            await self._meter.charge(session_id, tts_chars=len(said))
+        audio = await engine.speak(said, pace=rate)
+        self._remember(key, audio)
+        log.info("speech_spoken", chars=len(said), bytes=len(audio), pace=rate, source=source)
+        return audio
+
     async def speak(self, session_id: str, text: str, pace: float | None = None) -> bytes:
-        """``text`` as MP3. A line spoken before comes from memory and costs nothing; a new one is charged by its
-        characters. Raises `SpeechRejected` (nothing to say) and `SpeechUnavailable` (no engine, budget used, or the provider
-        failed)."""
+        """``text`` as MP3. A line spoken before comes from memory and costs nothing; one being made right now is waited for
+        (one Sarvam call serves everyone who asks); a new one is charged by its characters. Raises `SpeechRejected` (nothing
+        to say) and `SpeechUnavailable` (no engine, budget used, or the provider failed)."""
         s = self._settings
         said = " ".join(text.split())
         if not said:
             raise SpeechRejected(NOTHING_TO_SAY, detail="empty text")
-        rate = round(min(2.0, max(0.5, pace if pace is not None else 1.0)), 2)
-        key = (s.tts_model, s.tts_speaker, rate, said)
-        cached = self._cache.get(key)
+        rate = self._rate(pace)
+        self._note_pace(session_id, rate)
+        key: Key = (s.tts_model, s.tts_speaker, rate, said)
+        cached = self._recall(key)
         if cached is not None:
-            self._cache.move_to_end(key)
             return cached
-        engine = await self._engine_for("tts", session_id)
-        await self._meter.charge(session_id, tts_chars=len(said))
-        audio = await engine.speak(said, pace=rate)
-        self._remember(key, audio)
-        log.info("speech_spoken", chars=len(said), bytes=len(audio), pace=rate)
-        return audio
+        task = self._making.get(key)
+        if task is None:
+            engine = await self._engine_for("tts", session_id)
+            # the check above may have waited: the line can have been made, or started, by someone else meanwhile
+            cached = self._recall(key)
+            if cached is not None:
+                return cached
+            task = self._making.get(key) or self._make(key, session_id, said, rate, engine, "request")
+        # shielded: a browser that hangs up does not stop a line that others (and the cache) are waiting for
+        return await asyncio.shield(task)
+
+    # ───────────────────────── making lines ahead ─────────────────────────
+
+    def prefetch(self, session_id: str, texts: Iterable[str], *, pace: float | None = None) -> int:
+        """Start making these lines in the background, in order, so they are ready when the browser asks. Fire and forget:
+        it returns at once and never raises. A line already made, being made or waiting its turn is left alone; the rest
+        are made ``tts_prefetch_concurrency`` at a time across the process, each charged like `speak` charges it, and one
+        the day's or the session's budget would not cover is skipped. A line that fails is logged (its size and the reason,
+        never its text) and leaves nothing behind. ``pace`` is the session's last pace when not given (a browser that asked
+        for the slower voice is made that voice's lines, not the normal ones; 1.0 before it has asked for anything).
+        Returns how many lines were scheduled."""
+        if not self.prefetching:
+            return 0
+        try:
+            return self._schedule(session_id, texts, pace)
+        except Exception as exc:  # a prefetch never breaks the request that asked for it
+            log.warning("speech_prefetch_failed", reason=type(exc).__name__, stage="schedule")
+            return 0
+
+    def _schedule(self, session_id: str, texts: Iterable[str], pace: float | None) -> int:
+        asyncio.get_running_loop()  # fails here, before anything is scheduled, when called outside the event loop
+        s = self._settings
+        rate = self._rate(pace if pace is not None else self._paces.get(session_id))
+        scheduled = ready = 0
+        for text in texts:
+            said = " ".join(text.split()) if isinstance(text, str) else ""
+            if not said or len(said) > SPEAK_TEXT_MAX_CHARS:
+                continue
+            key: Key = (s.tts_model, s.tts_speaker, rate, said)
+            if self._ready(key) or key in self._queued:
+                ready += 1
+                continue
+            self._queued.add(key)
+            task = asyncio.create_task(
+                self._prefetch_line(session_id, key, said, rate), name="tayyari-prefetch"
+            )
+            self._background.add(task)
+            task.add_done_callback(self._background.discard)
+            scheduled += 1
+        if scheduled:
+            log.info("speech_prefetch_scheduled", lines=scheduled, ready=ready, pace=rate)
+        return scheduled
+
+    async def _prefetch_line(self, session_id: str, key: Key, said: str, rate: float) -> None:
+        """One scheduled line: wait for a place among the lines made ahead, then make it if it is still wanted and paid for."""
+        try:
+            async with self._slots:
+                await self._prefetch_now(session_id, key, said, rate)
+        except Exception as exc:  # never raises: the task is nobody's to await
+            log.warning("speech_prefetch_failed", chars=len(said), reason=_reason(exc))
+        finally:
+            self._queued.discard(key)
+
+    async def _prefetch_now(self, session_id: str, key: Key, said: str, rate: float) -> None:
+        engine = self._engine
+        if engine is None or not self.prefetching or self._ready(key):
+            return
+        async with self._budget:
+            remaining = await self._meter.remaining(session_id)
+            reason = self._spent("tts", remaining)
+            if reason is not None or remaining.tts_chars < len(said):
+                log.info(
+                    "speech_prefetch_skipped",
+                    reason=reason or "budget",
+                    chars=len(said),
+                    left=remaining.tts_chars,
+                )
+                return
+            if self._ready(key):  # asked for, and started, while the budget was read
+                return
+            # paid before it is made, as `speak` pays
+            await self._meter.charge(session_id, tts_chars=len(said))
+        # a request that came while the charge was written made it and paid too: this was a few characters over
+        if self._ready(key):
+            return
+        task = self._make(key, session_id, said, rate, engine, "prefetch", paid=True)
+        await asyncio.wait({task})  # the place is kept for as long as Sarvam works on the line
+        failure = None if task.cancelled() else task.exception()
+        if failure is not None:
+            log.warning("speech_prefetch_failed", chars=len(said), reason=_reason(failure))
+
+    async def drain(self) -> None:
+        """Wait until every line being made, or waiting to be made, is over (tests, and a clean stop)."""
+        while self._background:
+            await asyncio.gather(*self._background, return_exceptions=True)
+
+    async def aclose(self) -> None:
+        """Stop making lines. Safe to call twice."""
+        tasks = list(self._background)
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+
+def _reason(exc: BaseException) -> str:
+    """Why a line failed, for a log: the error's own short detail (a status and Sarvam's code), else its type. Never its text."""
+    detail = getattr(exc, "detail", None)
+    return detail if isinstance(detail, str) and detail else type(exc).__name__
 
 
 __all__ = [
@@ -215,6 +419,7 @@ __all__ = [
     "NOTHING_TO_SAY",
     "SESSION_MESSAGE",
     "TOO_LARGE_MESSAGE",
+    "Key",
     "Kind",
     "SpeechService",
 ]

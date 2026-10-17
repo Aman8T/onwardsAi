@@ -1,7 +1,8 @@
-"""What speech may do for one practice interview: which lines the voice may read, and which words bias the listening.
+"""What speech may do for one practice interview: which lines the voice may read, which it will probably read next, and which
+words bias the listening.
 
-`speech_context(state)` is code over the stored session; no model, no I/O. The speech routes ask the interview for it and hand
-it to the speech service, which knows nothing of interviews:
+`speech_context(state)` and `upcoming_of(state)` are code over the stored session; no model, no I/O. The routes ask the interview
+for them and hand them to the speech service, which knows nothing of interviews:
 
     lines      the folded text of everything the interviewer said or is saying: every interviewer turn (a lead and its
                question as one line, as they are spoken), the current line's text and its lead on their own, and a work
@@ -12,6 +13,14 @@ it to the speech service, which knows nothing of interviews:
                and technical words of the slots' sources (the person's own evidence and the posting's asks) found by their
                shape alone: "Kitebird", "LCP", "Storybook", "TypeScript", "safe-area", "Next.js". A word that only starts a
                sentence is not taken for a name ("Rebuilt", "Led").
+
+    upcoming   the lines the interview will probably say next, in the order they are most likely to be wanted, so the voice can
+               be made before the browser asks for it (`SpeechService.prefetch`): the line being said now (its lead, then its
+               text); then what the current question can lead to (its follow-up and its easier question, or for a story the
+               fixed questions about a missing part), the questions still to come in plan order, and the fixed sentences the
+               interviewer says the same way to everyone (a reply to "I don't know", a way back to the question, "I didn't
+               catch that", the closing line). These texts stay on the server: the browser is never sent one it has not been
+               told, and `/api/speech/speak` still reads only a line that was said (by then it has been).
 
 The terms bias recognition; they are never shown, never sent to a model and never an instruction (a posting is untrusted
 text, and its words only ever end up as hints to a speech recogniser).
@@ -25,9 +34,12 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Final
 
+from tayyari.contract.interview import PlanSlot
 from tayyari.core.text import tidy
 
-from .state import SessionState
+from .flow import DONE_TEXT, DONT_KNOW_LEAD, DRIFT_LEAD, UNCLEAR_LEAD
+from .phrase import STORY_PARTS
+from .state import SessionState, SlotState
 from .text import STOPWORDS, fold
 
 KEYTERM_LIMIT: Final = 50
@@ -48,6 +60,10 @@ _TIER_NAME: Final = 2
 """A capitalised word in the middle of a sentence."""
 _TIER_COMPOUND: Final = 3
 """A lower-case compound with a hyphen or underscore ("safe-area", "cross-browser")."""
+
+FIXED_LINES: Final = (DONT_KNOW_LEAD, DRIFT_LEAD, UNCLEAR_LEAD, DONE_TEXT)
+"""What the interviewer says in the same words to everyone: the replies to "I don't know" and to an off-topic or too short
+answer, and the closing line. One made line serves every session, so they cost credits once."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -187,11 +203,74 @@ def speech_context(state: SessionState, *, active: bool) -> SpeechContext:
     return SpeechContext(active=active, lines=lines_of(state), keyterms=keyterms_of(state))
 
 
+# ───────────────────────── what will probably be said next ─────────────────────────
+
+
+@dataclass(frozen=True, slots=True)
+class SpeechUpcoming:
+    """The lines to have ready for a session in its present state. Never sent to a browser."""
+
+    now: tuple[str, ...]
+    """The line being said: its lead (when it has one), then its text."""
+    soon: tuple[str, ...]
+    """What may be said later, most likely first: the current question's follow-up and easier question, the questions still
+    to come, then the fixed sentences (`FIXED_LINES`). Empty once the closing line is the current one."""
+    next_turn: tuple[str, ...]
+    """What the very next turn may need, a head of ``soon``: the current question's follow-up and easier question, and the
+    surface question of the slot after it (which one comes depends on the judge, which takes a moment)."""
+
+
+def _follow_ups(slot: PlanSlot, st: SlotState) -> list[str]:
+    """What the current question can lead to (`flow.follow_up`): a follow-up or an easier question; a story's follow-up is
+    one of four fixed questions about its missing part. A work sample asks each question once."""
+    if slot.kind == "task":
+        return []
+    texts = [*STORY_PARTS.values(), st.floor] if slot.kind == "story" else [st.push, st.floor]
+    return [text for text in texts if text.strip()]
+
+
+def _questions_to_come(state: SessionState) -> list[str]:
+    """The surface questions of the slots not asked yet, in plan order. The question about the assistant waits until the
+    assistant has been used (the interview passes it over otherwise)."""
+    if state.slot() is not None:
+        first = state.slotIndex + 1
+    elif state.over:
+        return []
+    else:
+        first = 0  # a work sample's task is being read: its questions come once the work is handed in
+    return [
+        st.question
+        for st in state.slotStates[first:]
+        if not st.reached and (state.assistant or not st.needsAssistant)
+    ]
+
+
+def upcoming_of(state: SessionState, *, followups: bool = True) -> SpeechUpcoming:
+    """The lines to have ready for a session in this state. ``followups=False`` leaves out the lines only some answers lead
+    to (the current question's follow-up and easier question)."""
+    line = state.current
+    now = tuple(text for text in (line.lead, line.text) if text) if line is not None else ()
+    if state.over:
+        return SpeechUpcoming(now=now, soon=(), next_turn=())
+    current = state.slot()
+    rung = line.rung if line is not None and line.rung is not None else None
+    follow = _follow_ups(*current) if followups and current is not None and rung == "surface" else []
+    later = _questions_to_come(state)
+    return SpeechUpcoming(
+        now=now,
+        soon=(*follow, *later, *FIXED_LINES),
+        next_turn=(*follow, *later[:1]),
+    )
+
+
 __all__ = [
+    "FIXED_LINES",
     "KEYTERM_CHARS",
     "KEYTERM_LIMIT",
     "SpeechContext",
+    "SpeechUpcoming",
     "keyterms_of",
     "lines_of",
     "speech_context",
+    "upcoming_of",
 ]

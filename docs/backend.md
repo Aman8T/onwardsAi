@@ -433,6 +433,45 @@ key never reaches a browser.
 - **The interviewer's voice:** Bulbul v4-flash, speaker `simran_en_customer`, MP3. `POST /api/speech/speak` reads only
   a line the interviewer said or is saying in that session (anything else is a 404), and keeps an in-process cache so a
   repeated line costs nothing. The room plays it through Web Audio (no `media-src` change to the CSP).
+- **Made ahead** (added 2026-10-17). Measured on production, a question's voice took about 4.7 s to come back from Sarvam
+  (0.9 s from the cache), so the server makes the lines an interview will probably say before the browser asks.
+  - *One line, one call.* A line being made is one shared task, keyed like the cache (model, speaker, pace, text).
+    `SpeechService.speak` for a line already being made waits for that task instead of calling Sarvam again, so a request
+    for a line that is being made ahead, or two requests for one new line, cost one call and one charge. The task is
+    shielded: a browser that hangs up does not stop it, and a finished line goes into the LRU as before. The service
+    keeps every task it starts in a set until it is done (`drain()` waits for them, `aclose()` stops them at shutdown).
+  - *`SpeechService.prefetch(session_id, texts, pace=None)`* is fire and forget: it schedules each text not cached, not
+    being made and not already waiting, in order, and returns at once. It never raises (a failure is logged with the size
+    and the reason, never the text or audio, and leaves nothing cached). At most `TTS_PREFETCH_CONCURRENCY` (2) lines are
+    made at a time across the process (a semaphore; a person's own `/speak` never queues behind it). Each line is charged
+    like `speak` charges it, but first checked under a lock: a line the day's or the session's remaining budget would not
+    cover is skipped silently, so a prefetch never spends the last credits a person may be waiting for. It is off when
+    `TTS_PREFETCH` is false, there is no engine, or the cache is off (`TTS_CACHE_ITEMS=0`). The pace is the one the session's
+    browser last asked for (the slower voice is 0.85), else 1.0, so a person on the slower voice is not sent lines they
+    will not ask for.
+  - *What to make* is the interview's to say (`InterviewService.speech_upcoming`, code over the stored session, no model,
+    `None` for another profile's session or a finished one). `now` is the line being said, its lead and then its text.
+    `soon`, most likely first, is the current question's follow-up and easier question (only at the surface rung and only
+    with `TTS_PREFETCH_FOLLOWUPS`; a story's follow-up is one of its four fixed part questions; a work sample asks each
+    question once), the surface questions of the slots not asked yet in plan order, and the sentences the interviewer
+    says the same way to everyone: the replies to "I don't know" and to an off-topic or too short answer, and the closing
+    line. Those are one made line for every session, so they cost credits once. These texts stay on the server;
+    `/api/speech/speak` still reads only a line the session has said or is saying, and by the time the browser asks, it has.
+  - *When* (the api layer composes interview and speech, `api/routes/_voice.py`; only while Sarvam speech is on):
+    `POST /sessions` (start), `…/work`, `…/again` (for the new session) and `GET /sessions/{id}` (a reload, which also
+    warms a replica that has not made the lines) have `now` then `soon` made once the response has been sent (a Starlette
+    background task, so the person is not kept waiting). `…/answer` asks first for the lines the next turn may need (the
+    current slot's follow-up and easier question and the next slot's question) while the judge reads the answer, which
+    takes about 2 s, and after the reply for the new `now` and `soon` (a dispute or redirect lead could not be known
+    before). A problem making lines ahead never changes what a route answers.
+  - *Cost.* Lines nobody hears are paid for: a full five-question interview makes about 1.1 thousand characters
+    (about Rs 2.2, every question plus every slot's follow-up and easier question) against about 0.6 thousand before, so
+    the day's 6,000 characters cover about five of them instead of ten. A person who turned the voice off in the browser is still charged (the server does not know). Raise
+    `TTS_DAILY_CHARS`, or set `TTS_PREFETCH_FOLLOWUPS=false` to leave out the lines only some answers lead to.
+  - *The browser* (`src/practice/speech.ts`, `useInterview.ts`) asks for a line's lead and question together and plays the
+    lead as soon as it arrives while the question is still on its way (a question Sarvam cannot give is read by the
+    browser's voice after the lead), and `warmVoice` starts the requests the moment a new line is known, before the room
+    renders it. Its per-line cache and the browser-voice fallback are unchanged.
 - **Budget** (soft, `speech/meter.py` on `KvRepo`, one key per UTC day): `TAYYARI_SPEECH__STT_DAILY_SECONDS` (1800) and
   `TTS_DAILY_CHARS` (6000) across the service, `STT_SESSION_SECONDS` (600) and `TTS_SESSION_CHARS` (3000) per session.
   A piece is billed at what the browser says it ran or what its size says, by the weight of its format, at most 30 s.
@@ -683,7 +722,7 @@ Accounts, payments and the posting match (names only; the values are never writt
 - **Posting-match guard:** `TAYYARI_GUARD__MATCH_PER_MINUTE` (0), `MATCH_PER_HOUR` (10), `MATCH_PER_DAY` (30), `MATCH_GLOBAL_PER_HOUR` (120), `EST_MATCH_USD` (0.06), `ANON_MATCH_PER_DAY` (3: matches per client address per day without a sign-in, 0 = off).
 - **`TAYYARI_JOBSEARCH__*`** (no secrets of its own; it uses the Anthropic key): `ENABLED` (true), `MODEL` (claude-haiku-5-5), `SCOUTS` (3), `SEARCHES_PER_SCOUT` (3), `MAX_BOARDS` (30), `FETCH_CONCURRENCY` (8), `MAX_JUDGED` (12), `JUDGE_BATCH` (4), `PER_EMPLOYER` (3), `POSTING_CHARS` (6000), `BOARD_CACHE_MINUTES` (60), `REQUEST_TIMEOUT_S` (12). Its limits are guard settings: `JOBSEARCH_PER_MINUTE` 1, `_PER_HOUR` 4, `_PER_DAY` 8, `JOBSEARCH_GLOBAL_PER_HOUR` 40, `ANON_JOBSEARCH_PER_DAY` 3, `EST_JOBSEARCH_USD` 0.20, `EST_JOBSEARCH_DOC_USD` 0.02 (a prep page or referral note).
 - **`TAYYARI_INTERVIEW__*`** (no secrets of its own): `ENABLED` (true), `MODEL` (claude-haiku-5-5), `MAX_TURNS` (60), `ASSISTANT_MESSAGES` (12), `POSTING_CHARS` (6000), `RETENTION_DAYS` (30), `HISTORY_LIMIT` (50). Its limits are guard settings: `INTERVIEW_PER_MINUTE` 2, `_PER_HOUR` 3, `_PER_DAY` 3 (per address and per account), `INTERVIEW_GLOBAL_PER_HOUR` 60, `INTERVIEW_AGAIN_PER_DAY` 20, `EST_INTERVIEW_USD` 0.03 (start), `EST_INTERVIEW_TURN_USD` 0.005 (an answer or an assistant message), `EST_INTERVIEW_END_USD` 0.02 (the debrief).
-- **`SARVAM_API_KEY`** (secret, optional) and **`TAYYARI_SPEECH__*`**: `ENABLED` (true), `STT_MODEL` (saaras:v4), `STT_LANGUAGE` (en-IN), `TTS_MODEL` (bulbul:v4-flash), `TTS_SPEAKER` (simran_en_customer), `TTS_LANGUAGE` (en-IN), `TTS_CODEC` (mp3), `TTS_SAMPLE_RATE` (22050), `MAX_SEGMENT_SECONDS` (30), `MAX_SEGMENT_BYTES` (1,500,000), `STT_DAILY_SECONDS` (1800), `TTS_DAILY_CHARS` (6000), `STT_SESSION_SECONDS` (600), `TTS_SESSION_CHARS` (3000), `REQUEST_TIMEOUT_S` (20), `TTS_CACHE_ITEMS` (256). Guard: `SPEECH_PER_MINUTE` 40. Without the key, practice uses the browser's speech.
+- **`SARVAM_API_KEY`** (secret, optional) and **`TAYYARI_SPEECH__*`**: `ENABLED` (true), `STT_MODEL` (saaras:v4), `STT_LANGUAGE` (en-IN), `TTS_MODEL` (bulbul:v4-flash), `TTS_SPEAKER` (simran_en_customer), `TTS_LANGUAGE` (en-IN), `TTS_CODEC` (mp3), `TTS_SAMPLE_RATE` (22050), `MAX_SEGMENT_SECONDS` (30), `MAX_SEGMENT_BYTES` (1,500,000), `STT_DAILY_SECONDS` (1800), `TTS_DAILY_CHARS` (6000), `STT_SESSION_SECONDS` (600), `TTS_SESSION_CHARS` (3000), `REQUEST_TIMEOUT_S` (20), `TTS_CACHE_ITEMS` (256), `TTS_PREFETCH` (true: make the interviewer's next lines in the background; needs the cache), `TTS_PREFETCH_FOLLOWUPS` (true: include the current question's follow-up and easier question), `TTS_PREFETCH_CONCURRENCY` (2, 1 to 8: lines made at once across the process). Guard: `SPEECH_PER_MINUTE` 40. Without the key, practice uses the browser's speech.
 - **`TAYYARI_DISCOVER__*`** (no secrets; the boards are public): `ENABLED` (true; false answers 503 `discover_disabled` and fetches nothing), `REFRESH_HOURS` (6, how old the last good run may get before a request starts one), `FETCH_CONCURRENCY` (4), `REQUEST_TIMEOUT_S` (15), `MAX_LISTINGS_PER_EMPLOYER` (300: India listings kept per employer, known cities first, then remote, then the rest, newest first within each), `REGISTRY_PATH` (unset: the registry shipped in `discover/data/employers.json`).
 
 `backend/.env.example` lists each of these with its default or an empty value.

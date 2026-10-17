@@ -19,7 +19,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | M3 | Posting-match frontend (Paste, Match, Resume, Cover, Pricing, sign-in) | M1 contract (mock data), then M2 | Sonnet | committed 03988c7, deployed 2026-10-12 |
 | T | Tests, docs, walkthrough steps, `.env.example`, README | each wave | Haiku | committed 03988c7, deployed 2026-10-12 |
 | R1 | Shareable radar card (SVG + OG PNG) | F1 | later | not started |
-| I1 | Evidence-grounded mock interview (practice) | M2, D3 | Opus + Sonnet | designed 2026-10-16, built 2026-10-17 (not committed) |
+| I1 | Evidence-grounded mock interview (practice) | M2, D3 | Opus + Sonnet | committed 659b7d6, deployed 2026-10-17 |
 | X1 | ESCO + O*NET skill table, canonical skill ids | M2 | later | not started |
 | D1 | Discover: personal, location-aware jobs with direct apply links | M2 | Opus + Sonnet | v1 built 2026-10-16 (employers' own boards, no map); rest in docs/discover-later.md |
 
@@ -331,7 +331,7 @@ left empty; web employers named without a board number ("Appen", not "Appen 2").
 
 ## I1 · Practice the interview
 
-**Designed 2026-10-16; built 2026-10-17 (not committed yet).** The user said "build it" once the canvas was done. Four waves ran in parallel with frozen interfaces (contract, ports, settings, purposes, route and API names): B1 the service (`backend/tayyari/interview/`), B2 storage, routes, guard and wiring, F1 the room, setup and work sample (`src/practice/room|setup|work`, speech), F2 Practice, the debrief, Progress and the entry points. How it works now is in `docs/backend.md` → Practice the interview; the browser walkthrough is step 17. The research is in
+**Designed 2026-10-16; built, committed (659b7d6) and deployed 2026-10-17.** The user said "build it" once the canvas was done. Four waves ran in parallel with frozen interfaces (contract, ports, settings, purposes, route and API names): B1 the service (`backend/tayyari/interview/`), B2 storage, routes, guard and wiring, F1 the room, setup and work sample (`src/practice/room|setup|work`, speech), F2 Practice, the debrief, Progress and the entry points. How it works now is in `docs/backend.md` → Practice the interview; the browser walkthrough is step 17. The research is in
 `docs/research/mock-interview.md`: HackerRank's Chakra and HackerRank's practice interviews, their features and payment
 models, and what we take and leave. The earlier outline is in `docs/research/open-source-resume-tools.md` §4.7.
 
@@ -414,6 +414,11 @@ models, and what we take and leave. The earlier outline is in `docs/research/ope
   speech-to-text of answer pieces cut at pauses, with the interview's names as key terms, and a Bulbul v4-flash
   Indian English voice for the interviewer, under a soft daily and per-session budget. The browser's speech and
   typing remain the fallbacks. Details in `docs/backend.md` → Practice the interview → Speech.
+- **The voice, generated ahead (2026-10-17, the user's request after a 4.7 s wait on production):** at start the
+  first question, then every surface question of the plan; while a question is being answered, its push and floor
+  (`TAYYARI_SPEECH__TTS_PREFETCH_FOLLOWUPS`) and the next question; the fixed leads once per process. A line being
+  generated is shared, never made twice. Measured locally: later lines 0.02 to 0.04 s instead of about 2 s. About
+  1,100 voice characters per full interview instead of 600.
 - **Differences from the canvas, decided while building:**
   - "Defend your resume" never asks about a skill as if the resume listed it: a low-scoring profile skill is Tayyari's
     reading, not the person's words (the live run asked "Your skills list includes RAG and retrieval", which was false).

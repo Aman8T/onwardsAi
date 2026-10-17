@@ -5,6 +5,9 @@ The service behind them is a stub handed in through the container override (`Con
 job search's tests swap theirs: what the service itself does is tested in tests/unit/interview. The stub records what the
 routes handed it (the profile, the request, the call context) and how much spend was held while it ran. Nothing here
 calls Claude or the network.
+
+The last section is the voice made ahead: the real speech service over `FakeSpeechEngine` behind the stub, and what each route
+asks it to get ready (and when: before the judge reads an answer, or after the reply is out).
 """
 
 from __future__ import annotations
@@ -46,7 +49,7 @@ from tayyari.contract.jobsearch import AiJob, AskCounts, AskMet, JobSearchRun
 from tayyari.contract.models import Profile
 from tayyari.contract.stored import StoredContext
 from tayyari.core.errors import BadRequest, Conflict, NotFound, ServiceUnavailable
-from tayyari.core.settings import GuardSettings, Settings
+from tayyari.core.settings import GuardSettings, Settings, SpeechSettings
 from tayyari.interview.errors import (
     AssistantUnavailable,
     BadPlan,
@@ -57,11 +60,14 @@ from tayyari.interview.errors import (
     RoleGone,
     WorkFirst,
 )
+from tayyari.interview.speech import SpeechUpcoming
 from tayyari.llm.errors import SPEND_CEILING_MESSAGE
 from tayyari.llm.types import CallContext
+from tayyari.speech.engine import SpeechUnavailable
 from tayyari.storage.ports import StoredSearchRun
 from tayyari.storage.tables import LlmCallRow, RateLimitHitRow
 from tests.fakes.discover import profile_of
+from tests.fakes.speech import FakeSpeechEngine
 from tests.integration.support import Env, roomy_guard, running
 
 MakeSettings = Callable[..., Settings]
@@ -78,7 +84,14 @@ SOURCE = SlotSource(origin="evidence", text="Cut the checkout load from 4s to 1.
 SLOT = PlanSlot(id="s1", kind="claim", topic="Performance", sources=[SOURCE])
 
 
-def line(text: str = "Walk me through it.", kind: str = "question") -> InterviewLine:
+LEAD = "Let's come back to the question."
+QUESTION = "Walk me through it."
+NEXT_UP = ("Which part of it was yours?", "Who else was involved?", "What did you build next?")
+UPCOMING = SpeechUpcoming(now=(LEAD, QUESTION), soon=NEXT_UP, next_turn=NEXT_UP[:1])
+"""What the stub says the voice should have ready: the line being said (a lead and its question), then what may follow."""
+
+
+def line(text: str = QUESTION, kind: str = "question") -> InterviewLine:
     return InterviewLine(kind=kind, text=text, slotId="s1", rung="surface")  # type: ignore[arg-type]
 
 
@@ -148,6 +161,10 @@ class StubInterview:
     contexts: list[CallContext] = field(default_factory=list)
     held: Callable[[], int] = lambda: 0
     fail_with: Exception | None = None
+    upcoming: SpeechUpcoming = field(default_factory=lambda: UPCOMING)
+    upcoming_error: Exception | None = None
+    after_answer: SpeechUpcoming | None = None
+    """What the voice should have ready once an answer has been taken (the interviewer has moved on)."""
 
     @property
     def enabled(self) -> bool:
@@ -171,6 +188,17 @@ class StubInterview:
     def names(self) -> list[str]:
         return [c.method for c in self.calls]
 
+    async def speech_upcoming(
+        self, profile: Profile, session_id: str, *, followups: bool = True
+    ) -> SpeechUpcoming | None:
+        self.calls.append(Seen("speech_upcoming", profile.id, (session_id, followups), self.held()))
+        if self.upcoming_error is not None:
+            raise self.upcoming_error
+        found = self.sessions.get((profile.id, session_id))
+        if found is None or found.status == "done":
+            return None
+        return self.upcoming
+
     async def plan(self, profile: Profile, req: PlanRequest) -> InterviewPlan:
         self._see("plan", profile, req)
         return InterviewPlan(kind=req.kind, title="Defend your resume", slots=[SLOT], minutes=3)
@@ -188,6 +216,8 @@ class StubInterview:
         self._see("answer", profile, session_id, req)
         self.contexts.append(ctx)
         found = self._own(profile, session_id)
+        if self.after_answer is not None:
+            self.upcoming = self.after_answer
         return found.model_copy(update={"turns": [Turn(speaker="you", text=req.text, at=5, slotId="s1")]})
 
     async def submit_work(self, profile: Profile, session_id: str, req: WorkSubmit) -> InterviewSession:
@@ -298,10 +328,10 @@ class Rig:
 @pytest.fixture
 def start(build_settings: MakeSettings):  # type: ignore[no-untyped-def]
     @asynccontextmanager
-    async def run(**overrides: Any) -> AsyncIterator[Rig]:
+    async def run(*, voice: FakeSpeechEngine | None = None, **overrides: Any) -> AsyncIterator[Rig]:
         stub = StubInterview(on=overrides.pop("on", True))
         overrides.setdefault("guard", roomy())
-        async with running(build_settings(**overrides), interview=stub) as env:
+        async with running(build_settings(**overrides), interview=stub, speech_engine=voice) as env:
             stub.held = lambda: env.container.spend_guard.reserved_micro
             yield Rig(env, stub)
 
@@ -1140,3 +1170,275 @@ async def test_switched_off_by_setting_the_real_service_answers_503(build_settin
         )
         assert response.status_code == 503 and response.json() == {"error": OFF}
         assert env.claude.calls == []
+
+
+# ───────────────────────── the voice made ahead ─────────────────────────
+
+NOTHING = SpeechUpcoming(now=(), soon=(), next_turn=())
+MOVED_ON = SpeechUpcoming(
+    now=("That's fine. I'll note it and we'll move on.", "How did you decide?"),
+    soon=("What would you change?", "Who reviewed it?"),
+    next_turn=("What would you change?",),
+)
+ONE_AT_A_TIME = SpeechSettings(tts_prefetch_concurrency=1)
+"""One line at a time, so the engine sees the lines in the order they were asked for."""
+
+
+def spoken(voice: FakeSpeechEngine) -> list[str]:
+    return [made.text for made in voice.spoken]
+
+
+async def voice_done(rig: Rig) -> None:
+    """Wait for every line the routes asked the speech service to make."""
+    await rig.env.container.speech.drain()
+
+
+async def test_starting_has_the_current_line_and_what_follows_made_once_the_answer_is_out(start: Any) -> None:
+    voice = FakeSpeechEngine()
+    async with start(voice=voice, speech=ONE_AT_A_TIME) as rig:
+        await rig.profile()
+        response = await rig.start()
+        assert response.status_code == 200 and InterviewSession.model_validate(response.json())
+        sid = response.json()["id"]
+        await voice_done(rig)
+        assert spoken(voice) == [
+            LEAD,
+            QUESTION,
+            *NEXT_UP,
+        ]  # the line first (its lead, then its text), then what follows
+        assert rig.stub.names() == ["start", "speech_upcoming"]
+        assert rig.stub.calls[-1].args == (sid, True)
+        for text in NEXT_UP:
+            assert text not in response.text  # what may come next never goes to the browser
+
+
+async def test_an_answer_has_the_next_turns_lines_made_while_it_is_judged_and_the_new_line_after(
+    start: Any,
+) -> None:
+    voice = FakeSpeechEngine()
+    async with start(voice=voice, speech=ONE_AT_A_TIME) as rig:
+        await rig.profile()
+        rig.stub.upcoming = NOTHING
+        sid = await rig.started()
+        rig.stub.upcoming, rig.stub.after_answer = UPCOMING, MOVED_ON
+        rig.stub.calls.clear()
+        answered = await rig.client.post(
+            f"/api/interview/sessions/{sid}/answer",
+            json={"profileId": FRONTEND_ID, "text": "I cut the load time by 70%.", "mode": "speech"},
+        )
+        assert answered.status_code == 200
+        await voice_done(rig)
+        # before the judge reads the answer, then after the reply: the line and what follows it
+        assert rig.stub.names() == ["speech_upcoming", "answer", "speech_upcoming"]
+        assert [c.args[0] for c in rig.stub.calls] == [sid, sid, sid]
+        assert spoken(voice) == [NEXT_UP[0], *MOVED_ON.now, *MOVED_ON.soon]
+        for text in (*MOVED_ON.now[:1], *MOVED_ON.soon, NEXT_UP[0]):
+            assert text not in answered.text
+
+
+async def test_the_lines_before_the_judge_are_asked_for_before_the_spend_is_held(start: Any) -> None:
+    voice = FakeSpeechEngine()
+    async with start(voice=voice) as rig:
+        await rig.profile()
+        sid = await rig.started()
+        rig.stub.calls.clear()
+        await rig.client.post(
+            f"/api/interview/sessions/{sid}/answer",
+            json={"profileId": FRONTEND_ID, "text": "I cut the load time by 70%.", "mode": "speech"},
+        )
+        before, judging, after = rig.stub.calls
+        assert (before.method, judging.method, after.method) == (
+            "speech_upcoming",
+            "answer",
+            "speech_upcoming",
+        )
+        assert before.held_micro == 0 and judging.held_micro > 0 and after.held_micro == 0
+
+
+async def test_handing_in_work_asking_again_and_a_reload_each_get_their_lines_made(start: Any) -> None:
+    voice = FakeSpeechEngine()
+    async with start(voice=voice) as rig:
+        await rig.profile()
+        sid = await rig.started()
+        base = f"/api/interview/sessions/{sid}"
+        body = {"profileId": FRONTEND_ID}
+        rig.stub.calls.clear()
+
+        assert (
+            await rig.client.post(f"{base}/work", json={**body, "work": "export const x = 1;"})
+        ).status_code == 200
+        assert [(c.method, c.args[0]) for c in rig.stub.calls] == [
+            ("submit_work", sid),
+            ("speech_upcoming", sid),
+        ]
+
+        rig.stub.calls.clear()
+        again = await rig.client.post(f"{base}/again", json={**body, "slotId": "s1"})
+        new_id = again.json()["id"]
+        assert new_id != sid
+        assert [(c.method, c.args[0]) for c in rig.stub.calls] == [
+            ("again", sid),
+            ("speech_upcoming", new_id),
+        ]
+
+        rig.stub.calls.clear()
+        assert (await rig.client.get(base, params=body)).status_code == 200
+        assert [(c.method, c.args[0]) for c in rig.stub.calls] == [("view", sid), ("speech_upcoming", sid)]
+        await voice_done(rig)
+        assert set(spoken(voice)) == {LEAD, QUESTION, *NEXT_UP}
+
+
+async def test_a_finished_interview_that_is_reloaded_gets_nothing_made(start: Any) -> None:
+    voice = FakeSpeechEngine()
+    async with start(voice=voice) as rig:
+        await rig.profile()
+        sid = await rig.started()
+        await voice_done(rig)
+        voice.spoken.clear()
+        rig.stub.sessions[(FRONTEND_ID, sid)] = session_of(FRONTEND_ID, sid, status="done")
+        rig.stub.calls.clear()
+        response = await rig.client.get(f"/api/interview/sessions/{sid}", params={"profileId": FRONTEND_ID})
+        assert response.status_code == 200
+        assert rig.stub.names() == ["view"]  # not even asked what to make
+        assert voice.calls == 0
+
+
+async def test_nothing_is_made_for_a_session_the_interview_does_not_know(start: Any) -> None:
+    voice = FakeSpeechEngine()
+    async with start(voice=voice) as rig:
+        await rig.profile()
+        response = await rig.client.post(
+            f"/api/interview/sessions/{'f' * 32}/answer",
+            json={"profileId": FRONTEND_ID, "text": "Something I did.", "mode": "typed"},
+        )
+        assert response.status_code == 404 and response.json() == {"error": SESSION_NOT_FOUND}
+        await voice_done(rig)
+        assert voice.calls == 0  # the stub says there is nothing to get ready for a session it does not know
+
+
+@pytest.mark.parametrize(
+    ("with_engine", "speech"),
+    [
+        (False, SpeechSettings()),
+        (True, SpeechSettings(enabled=False)),
+        (True, SpeechSettings(tts_prefetch=False)),
+        (True, SpeechSettings(tts_cache_items=0)),
+    ],
+    ids=["no key", "speech switched off", "prefetch switched off", "no cache to keep them in"],
+)
+async def test_with_speech_off_no_route_makes_or_asks_for_anything(
+    start: Any, with_engine: bool, speech: SpeechSettings
+) -> None:
+    voice = FakeSpeechEngine() if with_engine else None
+    async with start(voice=voice, speech=speech) as rig:
+        await rig.profile()
+        sid = await rig.started()
+        base = f"/api/interview/sessions/{sid}"
+        body = {"profileId": FRONTEND_ID}
+        answered = await rig.client.post(
+            f"{base}/answer", json={**body, "text": "Cut it by 70%.", "mode": "typed"}
+        )
+        assert answered.status_code == 200
+        assert (await rig.client.post(f"{base}/work", json={**body, "work": "x"})).status_code == 200
+        assert (await rig.client.post(f"{base}/again", json={**body, "slotId": "s1"})).status_code == 200
+        assert (await rig.client.get(base, params=body)).status_code == 200
+        await voice_done(rig)
+        assert "speech_upcoming" not in rig.stub.names()
+        assert voice is None or voice.calls == 0
+
+
+async def test_the_followups_setting_is_passed_on_to_the_interview(start: Any) -> None:
+    for followups in (True, False):
+        async with start(
+            voice=FakeSpeechEngine(), speech=SpeechSettings(tts_prefetch_followups=followups)
+        ) as rig:
+            await rig.profile()
+            sid = await rig.started()
+            await voice_done(rig)
+            assert rig.stub.calls[-1].method == "speech_upcoming"
+            assert rig.stub.calls[-1].args == (sid, followups)
+
+
+@pytest.mark.parametrize("failure", ["interview", "engine"])
+async def test_a_problem_making_lines_ahead_never_changes_what_a_route_answers(
+    start: Any, failure: str
+) -> None:
+    voice = FakeSpeechEngine(speak_error=SpeechUnavailable() if failure == "engine" else None)
+    async with start(voice=voice) as rig:
+        await rig.profile()
+        if failure == "interview":
+            rig.stub.upcoming_error = RuntimeError("the session store hiccuped")
+        started = await rig.start()
+        assert started.status_code == 200
+        sid = started.json()["id"]
+        base = f"/api/interview/sessions/{sid}"
+        body = {"profileId": FRONTEND_ID}
+        answered = await rig.client.post(
+            f"{base}/answer", json={**body, "text": "Cut it by 70%.", "mode": "typed"}
+        )
+        assert answered.status_code == 200
+        assert InterviewSession.model_validate(answered.json()).turns[0].text == "Cut it by 70%."
+        for response in (
+            await rig.client.post(f"{base}/work", json={**body, "work": "x"}),
+            await rig.client.post(f"{base}/again", json={**body, "slotId": "s1"}),
+            await rig.client.get(base, params=body),
+        ):
+            assert response.status_code == 200 and is_no_store(response)
+        await voice_done(rig)
+        assert "speech_upcoming" in rig.stub.names()  # it was tried, and failed quietly
+
+
+async def test_lines_the_budget_would_not_cover_are_left_unmade_without_a_word(start: Any) -> None:
+    voice = FakeSpeechEngine()
+    # the day has room for the lead and the question (51 characters) and for nothing after them
+    async with start(
+        voice=voice, speech=SpeechSettings(tts_daily_chars=60, tts_prefetch_concurrency=1)
+    ) as rig:
+        await rig.profile()
+        response = await rig.start()
+        assert response.status_code == 200
+        await voice_done(rig)
+        assert spoken(voice) == [LEAD, QUESTION]
+    voice.spoken.clear()
+    async with start(
+        voice=voice, speech=SpeechSettings(tts_session_chars=40, tts_prefetch_concurrency=1)
+    ) as rig:
+        await rig.profile()
+        assert (await rig.start()).status_code == 200
+        await voice_done(rig)
+        assert spoken(voice) == [LEAD]  # this interview's share: 32 used, 8 left, and the question needs 19
+
+
+async def test_nothing_is_made_once_the_days_or_the_sessions_speech_is_used_up(start: Any) -> None:
+    for settings in (SpeechSettings(tts_daily_chars=60), SpeechSettings(tts_session_chars=60)):
+        voice = FakeSpeechEngine()
+        async with start(voice=voice, speech=settings) as rig:
+            await rig.profile()
+            sid = await rig.started()
+            await voice_done(rig)
+            assert voice.spoken  # the first lines were made
+            speech = rig.env.container.speech
+            await speech.meter.charge(sid, tts_chars=1000)  # the day, and this interview, are spent now
+            assert (await speech.status(sid)).tts is False
+            voice.spoken.clear()
+            rig.stub.upcoming = SpeechUpcoming(
+                now=("A new line.",), soon=("Another new line.",), next_turn=()
+            )
+            body = {"profileId": FRONTEND_ID}
+            assert (await rig.client.get(f"/api/interview/sessions/{sid}", params=body)).status_code == 200
+            await voice_done(rig)
+            assert voice.calls == 0
+
+
+async def test_only_lines_that_can_be_spoken_are_made_and_each_once(start: Any) -> None:
+    voice = FakeSpeechEngine()
+    async with start(voice=voice) as rig:
+        await rig.profile()
+        rig.stub.upcoming = SpeechUpcoming(
+            now=("  Only this.  ", ""), soon=("Only this.", "x" * 5000), next_turn=()
+        )
+        await rig.started()
+        await voice_done(rig)
+        assert spoken(voice) == [
+            "Only this."
+        ]  # tidied, once, and a line too long to be spoken is passed over

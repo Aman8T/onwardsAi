@@ -571,6 +571,7 @@ class Container:
                     closers.append(("sarvam", built_engine.aclose))
                     engine = built_engine
                 speech = SpeechService(engine, settings.speech, repos.kv, clock)
+                closers.append(("speech", speech.aclose))
                 log.info(
                     "speech_ready",
                     provider="sarvam" if speech.configured else None,

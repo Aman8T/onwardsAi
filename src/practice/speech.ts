@@ -18,6 +18,8 @@
  *                Chrome stops a session by itself after a stretch of quiet, and while listening is wanted it starts again.
  *                Errors are mapped to four issues: blocked, no-speech (quiet, not fatal), network, unsupported.
  *   voice        `say(lines, …)`: Sarvam audio when asked for, `speechSynthesis` otherwise or when a line cannot be had.
+ *                The lines of one call are requested together and played as they arrive; `warmVoice` starts the
+ *                requests the moment a new line is known, before the room has rendered it.
  *   microphone   one `getUserMedia` stream shared by the level meter and the Sarvam recogniser (`leaseMic`), let go when the
  *                last of them is done. About 24 bars are written per frame straight to the elements (never React state).
  *                Under reduced motion nothing is painted: the level is only read.
@@ -1296,17 +1298,30 @@ async function lineAudio(ctx: AudioContext, via: SarvamVoice, text: string, pace
   return pending;
 }
 
-/** True once the lines have been handled (played, cancelled, or blocked); false when the browser's voice should take over. */
+/** A failure of the Sarvam voice that will not mend within this interview (refused, rate limited, out of budget): its lines use the browser's voice. */
+function noteVoiceFailure(via: SarvamVoice, err: unknown): void {
+  if (err instanceof PracticeApiError && (err.status === 403 || err.status === 429 || err.status === 503)) voiceDown.add(via.sessionId);
+}
+
+/**
+ * True once the lines have been handled (played, cancelled, or blocked); false when the browser's voice should take over.
+ *
+ * Every line is asked for at once, so a question is on its way while its lead is fetched and while the lead plays. The first
+ * line is played the moment it is here and each later one follows it as it arrives; a later line Sarvam cannot give is read by
+ * the browser's voice after the ones that played.
+ */
 async function playSarvam(lines: readonly string[], via: SarvamVoice, opts: SpeakOptions, mine: number): Promise<boolean> {
   const ctx = audioContextForPlayback();
   if (!ctx) return false;
   const pace = opts.slow ? SLOW_PACE : 1;
-  let buffers: AudioBuffer[];
+  const pending = lines.map((line) => lineAudio(ctx, via, line, pace));
+  for (const p of pending) p.catch(() => undefined); // each failure is handled where its line is waited for
+  let first: AudioBuffer;
   try {
-    buffers = await Promise.all(lines.map((line) => lineAudio(ctx, via, line, pace)));
+    first = await pending[0];
   } catch (err) {
     if (mine !== token) return true;
-    if (err instanceof PracticeApiError && (err.status === 403 || err.status === 429 || err.status === 503)) voiceDown.add(via.sessionId);
+    noteVoiceFailure(via, err);
     return false;
   }
   if (mine !== token) return true;
@@ -1320,30 +1335,76 @@ async function playSarvam(lines: readonly string[], via: SarvamVoice, opts: Spea
   if (mine !== token) return true;
 
   const nodes: AudioBufferSourceNode[] = [];
-  let at = ctx.currentTime + 0.04;
-  buffers.forEach((buffer, i) => {
-    const node = ctx.createBufferSource();
-    node.buffer = buffer;
-    node.connect(ctx.destination);
-    node.start(at);
-    nodes.push(node);
-    at += buffer.duration + (i < buffers.length - 1 ? GAP_S : 0);
-  });
   playing = nodes;
+  let at = ctx.currentTime + 0.04;
+  let ended = 0;
+  let closed = false;
   let over = false;
+  let rest = '';
   const finish = () => {
     if (over || mine !== token) return;
     over = true;
     window.clearTimeout(watchdog);
     playing = [];
-    opts.onEnd();
+    if (rest) speak(rest, opts);
+    else opts.onEnd();
   };
-  const last = nodes[nodes.length - 1];
-  if (last) last.onended = finish;
-  // some browsers never say a source has ended: the audio's own length, and a little more, is longer than the lines
-  watchdog = window.setTimeout(finish, Math.max(0, at - ctx.currentTime) * 1000 + 2500);
+  const settle = () => {
+    if (closed && ended >= nodes.length) finish();
+  };
+  const queue = (buffer: AudioBuffer) => {
+    const node = ctx.createBufferSource();
+    node.buffer = buffer;
+    node.connect(ctx.destination);
+    const begin = Math.max(at, ctx.currentTime + 0.02);
+    node.start(begin);
+    node.onended = () => {
+      ended += 1;
+      settle();
+    };
+    nodes.push(node);
+    at = begin + buffer.duration + GAP_S;
+  };
+  queue(first);
   opts.onStart?.();
+  for (let i = 1; i < pending.length; i += 1) {
+    try {
+      const buffer = await pending[i];
+      if (mine !== token) return true;
+      queue(buffer);
+    } catch (err) {
+      if (mine !== token) return true;
+      noteVoiceFailure(via, err);
+      rest = lines.slice(i).join(' ');
+      break;
+    }
+  }
+  closed = true;
+  // some browsers never say a source has ended: the audio's own length, and a little more, is longer than the lines
+  window.clearTimeout(watchdog);
+  watchdog = window.setTimeout(finish, Math.max(0, at - ctx.currentTime) * 1000 + 2500);
+  settle();
   return true;
+}
+
+export interface WarmOptions {
+  /** The Sarvam voice of this interview; without it nothing is asked for (the browser's voice needs no request). */
+  sarvam?: SarvamVoice;
+  slow?: boolean;
+}
+
+/**
+ * Start fetching the audio of `lines` now, before anything asks for them to be said (a new line has just arrived, and the room
+ * has yet to render). The request is the one `say` makes, so `say` finds it in flight or decoded; a failure is left for `say`
+ * to meet when it asks, and nothing is played.
+ */
+export function warmVoice(lines: readonly string[], opts: WarmOptions): void {
+  const via = opts.sarvam;
+  if (!via || !sarvamVoiceSupported() || voiceDown.has(via.sessionId)) return;
+  const ctx = audioContextForPlayback();
+  if (!ctx) return;
+  const pace = opts.slow ? SLOW_PACE : 1;
+  for (const line of lines.map((l) => l.trim()).filter(Boolean)) lineAudio(ctx, via, line, pace).catch(() => undefined);
 }
 
 export interface SayOptions extends SpeakOptions {

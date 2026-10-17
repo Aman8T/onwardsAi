@@ -32,7 +32,7 @@ import type { InterviewApi } from './api';
 import { deriveRoom, lineKey, speakParts } from './room/model';
 import type { ListenState, MicNote, Problem, RoomActions, RoomModel } from './room/model';
 import { fetchSpeechStatus } from './sarvam';
-import { cancelSpeech, createListener, effectivePrefs, planSpeech, readPrefs, say, writePrefs } from './speech';
+import { cancelSpeech, createListener, effectivePrefs, planSpeech, readPrefs, say, warmVoice, writePrefs } from './speech';
 import type { Listener, SpeechPlan } from './speech';
 
 /** Moves the Practice address (the store keeps the address and the screen in step). */
@@ -214,6 +214,17 @@ export function useInterview({ profileId, sessionId, onDebrief, onLeave, api = r
   /** How the interviewer's lines are read: with Sarvam's voice when this interview has it, else the browser's. */
   const voiceVia = () => (planRef.current.voice === 'sarvam' ? { sarvam: { profileId: live.current.profileId, sessionId: live.current.sessionId } } : {});
 
+  /**
+   * Ask for a new line's audio the moment it is known, so the request is under way while the room renders. The server has
+   * usually made the line ahead already, and `say` finds this request in flight or its audio decoded.
+   */
+  const warmLine = (next: InterviewSession, voiceWanted: boolean) => {
+    const line = next.current;
+    const workspace = next.kind === 'work' && !!next.task && next.work === undefined;
+    if (!line || !voiceWanted || workspace || next.status === 'done' || planRef.current.voice !== 'sarvam') return;
+    warmVoice(speakParts(line, false), { slow: live.current.slow, ...voiceVia() });
+  };
+
   /* ───────────────────────── the recogniser ───────────────────────── */
 
   const ensureRecognizer = (): Listener | null => {
@@ -376,6 +387,7 @@ export function useInterview({ profileId, sessionId, onDebrief, onLeave, api = r
     Promise.all([live.current.api.fetchSession(sessionId, profileId, ctl.signal), askSpeech()]).then(
       ([view]) => {
         if (ctl.signal.aborted) return;
+        warmLine(view.session, effectivePrefs(chosen, planRef.current).voice !== 'off');
         setSession(view.session);
         setLoad({ status: 'ready' });
         if (view.session.status === 'done' && view.debrief) {
@@ -425,6 +437,7 @@ export function useInterview({ profileId, sessionId, onDebrief, onLeave, api = r
   const applySession = (next: InterviewSession, action: AnswerAction) => {
     setGate(action === 'dont_know' && next.current?.kind !== 'done' && !!next.current?.lead);
     setProblem(undefined);
+    warmLine(next, live.current.voiceOn);
     setSession(next);
   };
 

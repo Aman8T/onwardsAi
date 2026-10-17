@@ -10,6 +10,7 @@ or the network.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
@@ -52,6 +53,8 @@ PIECE = b"\x1a\x45\xdf\xa3" + MARKER + b"\x00" * 3000
 
 QUESTION = "Walk me through the Kitebird checkout rebuild. What did you change first, and why?"
 FOLLOW_UP = "When the cart update failed, what did the person see?"
+LATER = "Which part of the checkout was yours, in one sentence?"
+"""A line the interview has not said yet (it may well say it next)."""
 KEYTERMS = ("Headout", "Kitebird", "LCP")
 
 
@@ -516,6 +519,68 @@ async def test_a_line_said_before_is_free_the_second_time(start: Any) -> None:
         spaced = "  Walk me through the Kitebird checkout rebuild.   What did you change first, and why?  "
         assert (await rig.speak(spaced)).status_code == 200
         assert len(rig.engine.spoken) == 1  # spacing does not make a new recording
+
+
+async def waiting_for_sarvam(rig: Rig) -> None:
+    """Until the fake Sarvam has been asked (it then holds its answer until the test lets it go)."""
+    assert rig.engine is not None
+    async with asyncio.timeout(10):
+        await rig.engine.asked.wait()
+    await asyncio.sleep(
+        0.05
+    )  # and long enough for a second call to show itself, if there were going to be one
+
+
+async def test_a_line_made_ahead_is_still_refused_until_the_interview_has_said_it(start: Any) -> None:
+    async with start() as rig:
+        await rig.profile()
+        speech = rig.env.container.speech
+        assert speech.prefetch(SID, [LATER]) == 1
+        await speech.drain()
+        assert rig.engine is not None and [s.text for s in rig.engine.spoken] == [LATER]  # it is made ...
+        refused = await rig.speak(LATER)
+        assert refused.status_code == 404 and refused.json() == {
+            "error": LINE_NOT_FOUND
+        }  # ... and not given out
+        assert MP3 not in refused.content
+        # the interview says it: it is readable at once, from what was made ahead
+        rig.stub.contexts[(FRONTEND_ID, SID)] = context(QUESTION, FOLLOW_UP, LATER)
+        said = await rig.speak(LATER)
+        assert said.status_code == 200 and said.content == MP3
+        assert len(rig.engine.spoken) == 1
+        usage = await rig.env.container.repos.kv.get(speech.meter.key())
+        assert usage["tts_chars"] == len(LATER)  # paid once
+
+
+async def test_a_request_for_a_line_being_made_ahead_waits_for_it_instead_of_asking_sarvam_again(
+    start: Any,
+) -> None:
+    hold = asyncio.Event()
+    async with start(fake=FakeSpeechEngine(hold=hold)) as rig:
+        await rig.profile()
+        rig.env.container.speech.prefetch(SID, [QUESTION])
+        await waiting_for_sarvam(rig)
+        asked = asyncio.create_task(rig.speak())
+        await asyncio.sleep(0.1)
+        assert not asked.done()
+        hold.set()
+        response = await asked
+        assert response.status_code == 200 and response.content == MP3
+        assert rig.engine is not None and len(rig.engine.spoken) == 1
+
+
+async def test_two_browsers_asking_for_one_new_line_at_once_cost_one_sarvam_call(start: Any) -> None:
+    hold = asyncio.Event()
+    async with start(fake=FakeSpeechEngine(hold=hold)) as rig:
+        await rig.profile()
+        both = [asyncio.create_task(rig.speak(headers=rig.at(ip))) for ip in ("198.51.100.1", "198.51.100.2")]
+        await waiting_for_sarvam(rig)
+        hold.set()
+        responses = await asyncio.gather(*both)
+        assert [r.status_code for r in responses] == [200, 200] and all(r.content == MP3 for r in responses)
+        assert rig.engine is not None and len(rig.engine.spoken) == 1
+        usage = await rig.env.container.repos.kv.get(rig.env.container.speech.meter.key())
+        assert usage["tts_chars"] == len(QUESTION)
 
 
 async def test_the_default_pace_is_normal_and_slower_is_a_different_recording(start: Any) -> None:

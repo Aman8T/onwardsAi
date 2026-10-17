@@ -26,6 +26,11 @@ an account: practice is free while it is tested, and the windows are the only me
 
 Switched off (``TAYYARI_INTERVIEW__ENABLED=false``) every route answers 503 except the delete: a person can always take
 their transcript away.
+
+Voice made ahead (`api.routes._voice`). When Sarvam speech is on, starting, reloading (the view), handing in work and asking
+again have the interviewer's next lines made in the background once the answer has been sent, and an answer has the lines the
+next turn may need made while the judge reads it, then the new line and what follows once the reply has been sent. It never
+changes what a route answers: no Sarvam, a used-up budget or any failure means nothing is made ahead.
 """
 
 from __future__ import annotations
@@ -36,11 +41,13 @@ from typing import Final, Literal
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
+from starlette.background import BackgroundTask
 from starlette.responses import Response
 
 from tayyari.api.deps import get_current_user, get_request_context, require_profile_access
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes._body import read_model
+from tayyari.api.routes._voice import prefetch_voice, voice_after
 from tayyari.api.security import subnet_hash
 from tayyari.container import Container
 from tayyari.contract.interview import (
@@ -125,8 +132,8 @@ async def _begin(request: Request, session_id: str | None = None) -> tuple[Conta
     return container, rc
 
 
-def _json(data: dict[str, object]) -> JSONResponse:
-    return JSONResponse(data, headers=NO_STORE)
+def _json(data: dict[str, object], background: BackgroundTask | None = None) -> JSONResponse:
+    return JSONResponse(data, headers=NO_STORE, background=background)
 
 
 async def _count(
@@ -169,7 +176,7 @@ async def start_interview(request: Request) -> JSONResponse:
     await _count(request, container, rc, "interview")
     async with container.spend_guard.reserve(container.settings.guard.est_interview_usd):
         session = await service.start(profile, body, _ctx(rc, profile.id, "interview.phrase"))
-    return _json(session.to_dict())
+    return _json(session.to_dict(), voice_after(container, profile, session.id))
 
 
 # ───────────────────────── reading back ─────────────────────────
@@ -195,7 +202,9 @@ async def interview_view(session_id: str, request: Request) -> JSONResponse:
     view = await container.interview.view(profile, session_id)
     if view is None:
         raise NotFound(SESSION_NOT_FOUND)
-    return _json(view.to_dict())
+    # a reload: this replica may not have the lines yet (its memory is its own)
+    active = view.session.status == "active"
+    return _json(view.to_dict(), voice_after(container, profile, session_id) if active else None)
 
 
 # ───────────────────────── inside an interview ─────────────────────────
@@ -206,11 +215,14 @@ async def answer_interview(session_id: str, request: Request) -> JSONResponse:
     container, rc = await _begin(request, session_id)
     body = await read_model(request, container, AnswerRequest, max_bytes=ANSWER_BODY_MAX_BYTES)
     profile = await _profile(request, container, body.profileId)
+    # the judge takes about 2 s: meanwhile the lines the next turn may need are made (which one it is depends on the judge)
+    await prefetch_voice(container, profile, session_id, next_turn=True)
     async with container.spend_guard.reserve(container.settings.guard.est_interview_turn_usd):
         session = await container.interview.answer(
             profile, session_id, body, _ctx(rc, profile.id, "interview.judge")
         )
-    return _json(session.to_dict())
+    # the new line, and what follows it (a reply to a dispute or an off-topic answer could not be known before)
+    return _json(session.to_dict(), voice_after(container, profile, session_id))
 
 
 @router.post("/api/interview/sessions/{session_id}/work")
@@ -219,7 +231,7 @@ async def submit_interview_work(session_id: str, request: Request) -> JSONRespon
     body = await read_model(request, container, WorkSubmit, max_bytes=WORK_BODY_MAX_BYTES)
     profile = await _profile(request, container, body.profileId)
     session = await container.interview.submit_work(profile, session_id, body)
-    return _json(session.to_dict())
+    return _json(session.to_dict(), voice_after(container, profile, session_id))
 
 
 @router.post("/api/interview/sessions/{session_id}/assistant")
@@ -256,7 +268,7 @@ async def ask_again(session_id: str, request: Request) -> JSONResponse:
     profile = await _profile(request, container, body.profileId)
     await _count(request, container, rc, "interview_again")
     session = await container.interview.again(profile, session_id, body.slotId)
-    return _json(session.to_dict())
+    return _json(session.to_dict(), voice_after(container, profile, session.id))
 
 
 @router.post("/api/interview/sessions/{session_id}/facts")

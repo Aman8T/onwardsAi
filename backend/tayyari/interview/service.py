@@ -66,7 +66,7 @@ from .phrase import phrase_slots
 from .plan import build_plan, plan_minutes
 from .roles import RoleLookup
 from .router import classify
-from .speech import SpeechContext, speech_context
+from .speech import SpeechContext, SpeechUpcoming, speech_context, upcoming_of
 from .state import SessionState, SlotState, as_utc, read_state, seconds_since, session_of
 
 log = get_logger(__name__)
@@ -360,6 +360,18 @@ class InterviewService:
         if item is None or state is None:
             return None
         return speech_context(state, active=item.status != "done")
+
+    async def speech_upcoming(
+        self, profile: Profile, session_id: str, *, followups: bool = True
+    ) -> SpeechUpcoming | None:
+        """The lines the voice should have ready for a session that is still going: the one being said now, then what may be
+        said next (see `tayyari.interview.speech`). None for an unknown id, another profile's, or a finished interview.
+        ``followups=False`` leaves out the current question's follow-up and easier question. No model call."""
+        item = await self._sessions.get(profile.id, session_id)
+        state = read_state(item) if item is not None else None
+        if item is None or state is None or item.status == "done":
+            return None
+        return upcoming_of(state, followups=followups)
 
     async def history(self, profile: Profile, *, per_day: int | None = None) -> PracticeHistory:
         """The person's practice, newest first, and how many interviews they have left today when ``per_day`` is given."""
