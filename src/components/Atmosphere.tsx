@@ -1,18 +1,24 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { CYCLE_MINUTES, useAtmoMode } from '../theme/ambient';
-import type { AtmoMode } from '../theme/ambient';
+import { CYCLE_MINUTES, useAtmoMode, useScheme } from '../theme/ambient';
+import type { AtmoMode, SchemeChoice } from '../theme/ambient';
 
-interface Option {
-  mode: AtmoMode;
+interface Option<T extends string> {
+  value: T;
   label: string;
   hint: string;
 }
 
-const OPTIONS: readonly Option[] = [
-  { mode: 'drift', label: 'Drift', hint: `colour travels the spectrum, one circle every ${CYCLE_MINUTES} minutes` },
-  { mode: 'still', label: 'Still', hint: 'a single calm colour' },
-  { mode: 'off', label: 'Off', hint: 'neutral greys' },
+const MODES: readonly Option<AtmoMode>[] = [
+  { value: 'drift', label: 'Drift', hint: `colour travels the spectrum, one circle every ${CYCLE_MINUTES} minutes` },
+  { value: 'still', label: 'Still', hint: 'a single calm colour' },
+  { value: 'off', label: 'Off', hint: 'neutral greys' },
+];
+
+const SCHEMES: readonly Option<SchemeChoice>[] = [
+  { value: 'system', label: 'System', hint: 'light or dark, as your device is' },
+  { value: 'light', label: 'Light', hint: 'always the light field' },
+  { value: 'dark', label: 'Dark', hint: 'always the dark field' },
 ];
 
 /** The word after "Atmosphere": what the field is doing right now. */
@@ -23,12 +29,14 @@ function stateWord(chosen: AtmoMode, effective: AtmoMode): string {
 }
 
 /**
- * Drift / Still / Off control for the living gradient. A menu button with
- * three radio items: arrows move, Escape closes and refocuses the button,
- * a pointer outside closes, choosing applies the mode and closes.
+ * The Atmosphere control: Drift / Still / Off for the living gradient and System / Light / Dark
+ * for the scheme, in one menu as two groups. A menu button with radio items: arrows move across
+ * both groups, Escape closes and refocuses the button, a pointer outside closes, choosing applies
+ * the value and closes.
  */
 export function Atmosphere({ className }: { className?: string }) {
   const [chosen, effective, setMode] = useAtmoMode();
+  const [scheme, , setScheme] = useScheme();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -45,10 +53,10 @@ export function Atmosphere({ className }: { className?: string }) {
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [open]);
 
-  // Opening moves focus onto the checked item.
+  // Opening moves focus onto the checked mode.
   useEffect(() => {
     if (!open) return;
-    const index = Math.max(0, OPTIONS.findIndex((o) => o.mode === chosen));
+    const index = Math.max(0, MODES.findIndex((o) => o.value === chosen));
     itemRefs.current[index]?.focus();
   }, [open, chosen]);
 
@@ -57,8 +65,13 @@ export function Atmosphere({ className }: { className?: string }) {
     if (refocus) buttonRef.current?.focus();
   };
 
-  const choose = (mode: AtmoMode) => {
+  const chooseMode = (mode: AtmoMode) => {
     setMode(mode);
+    close(true);
+  };
+
+  const chooseScheme = (choice: SchemeChoice) => {
+    setScheme(choice);
     close(true);
   };
 
@@ -101,6 +114,25 @@ export function Atmosphere({ className }: { className?: string }) {
     }
   };
 
+  // Every item of both groups in one roving list: the modes first, then the schemes.
+  const item = <T extends string>(option: Option<T>, index: number, checked: boolean, choose: (value: T) => void) => (
+    <button
+      key={option.value}
+      ref={(el) => {
+        itemRefs.current[index] = el;
+      }}
+      type="button"
+      role="menuitemradio"
+      aria-checked={checked}
+      className="atmo-item"
+      tabIndex={-1}
+      onClick={() => choose(option.value)}
+    >
+      <span>{option.label}</span>
+      <span className="atmo-hint">{option.hint}</span>
+    </button>
+  );
+
   return (
     <div ref={wrapRef} className={className ? `atmo ${className}` : 'atmo'}>
       <button
@@ -117,23 +149,16 @@ export function Atmosphere({ className }: { className?: string }) {
       </button>
       {open && (
         <div id={menuId} role="menu" aria-label="Atmosphere" className="atmo-menu" onKeyDown={onMenuKeyDown}>
-          {OPTIONS.map((option, i) => (
-            <button
-              key={option.mode}
-              ref={(el) => {
-                itemRefs.current[i] = el;
-              }}
-              type="button"
-              role="menuitemradio"
-              aria-checked={chosen === option.mode}
-              className="atmo-item"
-              tabIndex={-1}
-              onClick={() => choose(option.mode)}
-            >
-              <span>{option.label}</span>
-              <span className="atmo-hint">{option.hint}</span>
-            </button>
-          ))}
+          <div role="group" aria-label="Field" className="atmo-group">
+            {MODES.map((option, i) => item(option, i, chosen === option.value, chooseMode))}
+          </div>
+          <div role="separator" className="atmo-sep" />
+          <div role="group" aria-label="Appearance" className="atmo-group">
+            <span className="kicker atmo-group-label" aria-hidden="true">
+              Appearance
+            </span>
+            {SCHEMES.map((option, i) => item(option, MODES.length + i, scheme === option.value, chooseScheme))}
+          </div>
         </div>
       )}
     </div>

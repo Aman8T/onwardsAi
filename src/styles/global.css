@@ -25,9 +25,7 @@ canvas {
   max-width: 100%;
 }
 
-html {
-  color-scheme: light;
-}
+/* html's color-scheme and static background live in tokens.css: they flip with the scheme. */
 
 body {
   font: 400 var(--fs-3) / var(--lh-body) var(--font-sans);
@@ -276,6 +274,22 @@ textarea.field {
   font-size: var(--fs-0);
   line-height: var(--lh-snug);
   color: var(--text-muted);
+}
+
+/* The two groups (the field's mode, then the scheme) with a hairline between and a label on the second. */
+.atmo-group {
+  display: grid;
+  gap: 2px;
+}
+
+.atmo-sep {
+  height: 1px;
+  margin: var(--s2) 0;
+  background: var(--line);
+}
+
+.atmo-group-label {
+  padding: 2px 10px 4px;
 }
 
 /* Reduced motion: every animation and transition collapses to a single frame. */

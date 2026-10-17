@@ -1,11 +1,13 @@
 /*
  * Boot — runs inline in <head> before any stylesheet, immediately after hue.js
  * (inlined with its exports stripped by the calmBoot() plugin in vite.config.ts),
- * so `hueAt` and `applyHue` are already in scope. It writes the five hue custom
- * properties and data-atmo on <html> so the very first paint has the right colour.
+ * so `hueAt` and `applyHue` are already in scope. It writes data-scheme, the five
+ * hue custom properties and data-atmo on <html> so the very first paint has the
+ * right scheme and the right colour.
  *
  * No imports, no exports, no module syntax. Everything is guarded: if anything
- * fails, the @property initial values and the hex fallback in tokens.css apply.
+ * fails, the stylesheet's `prefers-color-scheme` rule, the @property initial
+ * values and the hex fallbacks in tokens.css apply.
  */
 (function () {
   /** @param {string} key @returns {string | null} */
@@ -24,6 +26,18 @@
     } catch (_) {
       /* storage blocked: the session still works, the value just does not persist */
     }
+  }
+
+  // The scheme first, on its own: a fixed choice (or ?scheme=light|dark for screenshots) goes on
+  // <html data-scheme>; System leaves it off so the stylesheet follows the device.
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var pinned = params.get('scheme');
+    var scheme = pinned === 'light' || pinned === 'dark' ? pinned : read('tayyari.scheme');
+    if (scheme === 'light' || scheme === 'dark') document.documentElement.dataset.scheme = scheme;
+    else delete document.documentElement.dataset.scheme;
+  } catch (_) {
+    /* the media query decides */
   }
 
   try {

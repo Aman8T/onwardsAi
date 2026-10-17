@@ -1,26 +1,34 @@
 /*
  * Ambient — the runtime side of the living gradient.
  *
- * Owns the Drift / Still / Off choice, the ?h= override, the reduced-motion and
- * slow-update fallbacks, and the 7-second stepper that writes the hue custom
- * properties. The only DOM writes anywhere in this module are the five custom
- * properties (through applyHue) and data-atmo on <html>. No requestAnimationFrame:
- * between steps the page produces zero frames.
+ * Owns the Drift / Still / Off choice, the Light / Dark / System choice, the ?h=
+ * and ?scheme= overrides, the reduced-motion and slow-update fallbacks, and the
+ * 7-second stepper that writes the hue custom properties. The only DOM writes
+ * anywhere in this module are the five custom properties (through applyHue) and
+ * data-atmo / data-scheme on <html>. No requestAnimationFrame: between steps the
+ * page produces zero frames.
  */
 import { useSyncExternalStore } from 'react';
 import { applyHue, hueAt, PERIOD_MS, STEP_MS } from './hue';
 
 export type AtmoMode = 'drift' | 'still' | 'off';
+/** What the person chose for the scheme: a fixed one, or the device's. */
+export type SchemeChoice = 'light' | 'dark' | 'system';
+/** The scheme in force. */
+export type Scheme = 'light' | 'dark';
 
 /** localStorage key for the per-install hue offset (integer degrees). */
 export const HUE0_KEY = 'tayyari.hue0';
 /** localStorage key for the chosen atmosphere mode. */
 export const MODE_KEY = 'tayyari.atmo';
+/** localStorage key for the chosen scheme. */
+export const SCHEME_KEY = 'tayyari.scheme';
 /** Minutes per full hue circle, for copy that explains the drift. */
 export const CYCLE_MINUTES = PERIOD_MS / 60_000;
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const slowUpdate = window.matchMedia('(update: slow)');
+const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 
 function readStorage(key: string): string | null {
   try {
@@ -40,6 +48,14 @@ function writeStorage(key: string, value: string): void {
 
 function isMode(value: string | null): value is AtmoMode {
   return value === 'drift' || value === 'still' || value === 'off';
+}
+
+function isScheme(value: string | null): value is Scheme {
+  return value === 'light' || value === 'dark';
+}
+
+function isSchemeChoice(value: string | null): value is SchemeChoice {
+  return isScheme(value) || value === 'system';
 }
 
 const mod360 = (x: number): number => ((x % 360) + 360) % 360;
@@ -84,9 +100,57 @@ export function effectiveMode(): AtmoMode {
   return chosen;
 }
 
+/* ----------------------------------------------------------------------------
+ * Scheme
+ * ------------------------------------------------------------------------- */
+
+let chosenScheme: SchemeChoice = ((): SchemeChoice => {
+  const stored = readStorage(SCHEME_KEY);
+  return isSchemeChoice(stored) ? stored : 'system';
+})();
+
+/** The scheme the person chose (what the Atmosphere control shows as checked). */
+export function getScheme(): SchemeChoice {
+  return chosenScheme;
+}
+
+/** The ?scheme=light|dark override for previews and screenshots, or null when absent or not a scheme. */
+export function forcedScheme(): Scheme | null {
+  const raw = new URLSearchParams(window.location.search).get('scheme');
+  return isScheme(raw) ? raw : null;
+}
+
+/** The scheme in force: the pinned one, else the chosen one, else the device's. */
+export function effectiveScheme(): Scheme {
+  const forced = forcedScheme();
+  if (forced !== null) return forced;
+  if (chosenScheme !== 'system') return chosenScheme;
+  return darkScheme.matches ? 'dark' : 'light';
+}
+
+/**
+ * Writes data-scheme on <html>: the pinned or chosen scheme, or nothing under System so the
+ * stylesheet's `prefers-color-scheme` rule decides. The same write boot.js makes before the first paint.
+ */
+function applyScheme(): void {
+  const forced = forcedScheme();
+  const scheme = forced ?? chosenScheme;
+  if (scheme === 'system') delete document.documentElement.dataset.scheme;
+  else document.documentElement.dataset.scheme = scheme;
+}
+
+/** Persists and applies a scheme choice, then tells subscribers. */
+export function setScheme(choice: SchemeChoice): void {
+  if (choice === chosenScheme) return;
+  chosenScheme = choice;
+  writeStorage(SCHEME_KEY, choice);
+  applyScheme();
+  notify();
+}
+
 const listeners = new Set<() => void>();
 
-/** Subscribes to mode changes (chosen or effective); returns the unsubscribe. */
+/** Subscribes to mode and scheme changes (chosen or effective); returns the unsubscribe. */
 export function subscribe(cb: () => void): () => void {
   listeners.add(cb);
   return () => {
@@ -171,16 +235,22 @@ function stopAmbient(): void {
   document.removeEventListener('visibilitychange', onVisibility);
   reducedMotion.removeEventListener('change', onMediaChange);
   slowUpdate.removeEventListener('change', onMediaChange);
+  darkScheme.removeEventListener('change', notify);
 }
 
 /**
- * Starts the ambient system once: applies the current hue, then steps every 7 s
- * while the effective mode is Drift and the tab is visible. Idempotent; returns
- * the stop function. A no-op on engines without oklch (the hex fallback is static).
+ * Starts the ambient system once: applies the scheme and the current hue, then steps
+ * every 7 s while the effective mode is Drift and the tab is visible. Idempotent;
+ * returns the stop function. On engines without oklch only the scheme is applied
+ * (the hex fallbacks are static, one per scheme).
  */
 export function startAmbient(): () => void {
   if (started) return stopAmbient;
-  if (!CSS.supports('color', 'oklch(0 0 0)')) return () => {};
+  applyScheme();
+  darkScheme.addEventListener('change', notify);
+  if (!CSS.supports('color', 'oklch(0 0 0)')) {
+    return () => darkScheme.removeEventListener('change', notify);
+  }
   started = true;
   apply();
   refresh();
@@ -199,4 +269,11 @@ export function useAtmoMode(): [chosen: AtmoMode, effective: AtmoMode, set: (mod
   const current = useSyncExternalStore(subscribe, getMode);
   const effective = useSyncExternalStore(subscribe, effectiveMode);
   return [current, effective, setMode];
+}
+
+/** [chosen, effective, set] for the scheme; the effective one follows the device under System. */
+export function useScheme(): [chosen: SchemeChoice, effective: Scheme, set: (choice: SchemeChoice) => void] {
+  const current = useSyncExternalStore(subscribe, getScheme);
+  const effective = useSyncExternalStore(subscribe, effectiveScheme);
+  return [current, effective, setScheme];
 }

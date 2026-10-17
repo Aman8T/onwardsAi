@@ -3,9 +3,10 @@
  *
  * Reads dist/index.html and dist/assets/*.css after `vite build` and asserts that
  * esbuild's CSS pass left the oklch tokens, the @property registrations and the
- * @supports block intact, that no shadow slipped through, and that the HTML has
- * the light colour-scheme, the inline boot script before any stylesheet, and the
- * ambient layer. Zero dependencies; run with `npx tsx scripts/build-check.ts`.
+ * @supports block intact, that the dark table survived under its media query and
+ * its data-scheme selector, that no shadow slipped through, and that the HTML has
+ * the light-dark colour-scheme, the inline boot script (hue and scheme) before any
+ * stylesheet, and the ambient layer. Zero dependencies; run with `npx tsx scripts/build-check.ts`.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -65,7 +66,12 @@ function main(): number {
     },
     { name: '@supports (color: oklch(…)) block', ok: /@supports\s*\(\s*color\s*:\s*oklch\(/.test(css) },
     { name: 'no box-shadow', ok: !css.includes('box-shadow') && !html.includes('box-shadow') },
-    { name: 'meta color-scheme light', ok: /<meta\s+name="color-scheme"\s+content="light"\s*\/?>/.test(html) },
+    { name: 'meta color-scheme light dark', ok: /<meta\s+name="color-scheme"\s+content="light dark"\s*\/?>/.test(html) },
+    {
+      name: 'dark table under prefers-color-scheme and data-scheme',
+      ok: /@media\s*\(\s*prefers-color-scheme\s*:\s*dark\s*\)/.test(css) && /\[data-scheme=["']?dark["']?\]/.test(css),
+    },
+    { name: 'boot script writes data-scheme', ok: html.includes('tayyari.scheme') },
     {
       name: 'inline boot script before the first stylesheet',
       ok: bootAt !== -1 && stylesheetAt !== -1 && bootAt < stylesheetAt,

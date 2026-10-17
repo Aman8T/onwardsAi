@@ -75,11 +75,40 @@ Browsers clip out-of-gamut OKLCH instead of mapping it, which bends lightness an
 
 ### 3.4 Fallbacks, in order
 
-1. A generated hex palette for one fixed hue, declared before the `@supports (color: oklch(0 0 0))` block, for engines without OKLCH (`npm run emit:fallback`).
+1. A generated hex palette for one fixed hue, declared before the `@supports (color: oklch(0 0 0))` block, for engines without OKLCH (`npm run emit:fallback`), one block per scheme.
 2. `prefers-reduced-motion: reduce` or `(update: slow)` → the field holds Still.
-3. `prefers-contrast: more` → the lobes are removed; ink goes to L .15 / .35, lines to .70, grid alpha .2.
+3. `prefers-contrast: more` → the lobes are removed; ink goes to L .15 / .35, lines to .70, grid alpha .2 (in dark: ink .97 / .82, lines .48, grid alpha .3).
 4. `forced-colors: active` → the field is hidden; every token maps to a system colour.
 5. "Off" → `--k: 0`: every chroma collapses to zero, lightness stays.
+
+### 3.5 The dark scheme
+
+The same rules with lightness flipped (canvas https://claude.ai/artifact/TgdnAmEhne9Wrbe6FpnEV6, 2026-10-17). One hue still drives every colour and the field still drifts; only the L and C per role change, so the dark table is proved the same way, once for all 360 hues: ink on any surface ≥ 13:1, secondary ink ≥ 6:1, accent strokes ≥ 5.8:1, `--line-strong` ≥ 4:1, button text on the primary fill ≥ 9:1, no gamut failure. Three things differ in kind: the lobes keep a lower chroma (a saturated lobe on a dark field is a spotlight), the chart fills need more alpha to read over a dark ground, and the primary button becomes a light fill with surface-coloured text, which needs no CSS change because the roles swap while the tokens do not.
+
+| Token | L | C | Light was |
+|---|---|---|---|
+| `--bg` | .16 | .012 × `--kw` | .97 / .012 |
+| `--lobe-1`, `--lobe-2` | .27 | .034 × `--kw` × `--kb` | .90 / .044 |
+| `--lobe-3` | .25 | .026 × `--kw` × `--kb` | .92 / .034 |
+| `--surface` | .20 | .008 | .99 / .004 |
+| `--surface-2` | .245 | .014 | .955 / .016 |
+| `--text` | .93 | .01 | .25 / .02 |
+| `--text-muted` | .72 | .02 | .45 / .03 |
+| `--text-faint` | .62 | .025 | .55 / .03 |
+| `--accent` | .78 | .09 | .50 / .08 |
+| `--accent-ui` | .72 | .10 | .55 / .088 |
+| `--accent-strong` | .80 | .08 | .42 / .07 |
+| `--accent-soft` | .30 | .04 | .93 / .03 |
+| `--fill` / `--fill-2` / `--fill-strong` | accent-ui at α .18 / .12 / .26 | | α .12 / .08 / .18 |
+| `--grid` | ink at α .12 | | α .08 |
+| `--line` | .32 | .02 | .86 / .02 |
+| `--line-strong` | .56 | .04 | .60 / .04 |
+| `--selection` | .38 | .06 | .88 / .055 |
+| `--danger` | .72 | .12 at hue 25 | .48 / .12 |
+
+**Switching.** The dark table applies under `prefers-color-scheme: dark` unless `<html data-scheme="light">`, and always under `<html data-scheme="dark">`; the Atmosphere menu's second group (System / Light / Dark) writes the attribute, persisted in `localStorage` (`tayyari.scheme`) and applied by the boot script before the first paint. `?scheme=light|dark` pins it for screenshots, like `?h=`. The `<html>` static background and `color-scheme` flip with it. Every scheme selector is wrapped in `:where()` so each has the specificity of `:root` and the file order decides; the dark table exists twice in the sheet (the media query and the attribute) and `palette-check` asserts the copies agree and that dark redefines every light role.
+
+**What stays light.** A portfolio page (`.pf-scope`) recomputes the light table from its own hues, so public pages and the Old Newspaper skin keep their palettes in either scheme; the portfolio editor's chrome follows the app. The cursor light is not mounted in dark (§8).
 
 ## 4. The living gradient
 
@@ -111,7 +140,7 @@ kb = 0.925 + 0.075·sin(2π·now / 17 min)
 
 `h0` is a random per-install offset kept in `localStorage`, so two tabs always agree and reloads never jump. The same module is inlined into `<head>` by a build plugin and run by a boot script before the first stylesheet, so the first paint already carries the right hue.
 
-**Controls.** Drift / Still / Off (persisted). `?h=<deg>` pins the hue for previews and screenshots and forces Still. Reduced motion forces Still and the control reads "Still · system".
+**Controls.** Drift / Still / Off and System / Light / Dark, both persisted, in one Atmosphere menu. `?h=<deg>` pins the hue for previews and screenshots and forces Still; `?scheme=light|dark` pins the scheme. Reduced motion forces Still and the control reads "Still · system".
 
 ## 5. Type, space, shape, motion
 
@@ -175,7 +204,7 @@ When pages must look different for every person *and* must never break, variety 
 
 Home only. A soft field of colour follows the pointer, as the page's way of being quietly aware of the person. It bends "no spatial motion" and "no effects", and it is bounded so that it stays one exception.
 
-**Why it is allowed.** The motion is the person's own: the field moves only because they moved, so there is no onset that is not theirs. While they are still, only the outline morphs (isoluminant colour change below the detection threshold), and after 45 s it fades and the loop stops. It is not mounted on touch or coarse pointers, under reduced motion or slow updates, under forced colours or more contrast, or with the Atmosphere Off.
+**Why it is allowed.** The motion is the person's own: the field moves only because they moved, so there is no onset that is not theirs. While they are still, only the outline morphs (isoluminant colour change below the detection threshold), and after 45 s it fades and the loop stops. It is not mounted on touch or coarse pointers, under reduced motion or slow updates, under forced colours or more contrast, with the Atmosphere Off, or in the dark scheme: its body at L .89 over a field at .16 would be the bright core on a darker ground that the boundaries below forbid, and no dark ink role could keep its floor over it. A light for the dark field would be its own design pass.
 
 **Luminous without brightness.** The field is at L .97, so "brighter" has nowhere to go; a bright core on a light page is the spotlight everyone has seen. Light through paper does the opposite: a paler, less saturated heart (L .965, C .016) with the colour in the body around it (L .89, C .048), fading with no edge. Lightness never drops below .89, which keeps `text-muted` ≥ 5:1 and large accent text ≥ 3:1 at every hue; the proof uses the same constants the shader is built from.
 
@@ -203,9 +232,9 @@ Only in the Old Newspaper skin: a blackletter nameplate at 56 px or larger, and 
 
 | Script | Proves |
 |---|---|
-| `scripts/palette-check.ts` | every token inside sRGB at all 360 hues and lobe extremes; every contrast pair at its floor; the cursor light's body under every text role; `--fallback <hue>` emits the hex block |
+| `scripts/palette-check.ts` | every token inside sRGB at all 360 hues and lobe extremes, in both schemes; every contrast pair at its floor, alpha tokens composited over each scheme's field; the dark table's two copies agree and cover every role; the cursor light's body under every text role (light scheme); `--fallback <hue>` emits the hex blocks for both schemes |
 | `scripts/restraint-check.ts` | the rules in §2, over every `.css/.ts/.tsx` file and `index.html` |
-| `scripts/build-check.ts` | the built bundle still carries `@property --h`, the OKLCH tokens, the boot script before the first stylesheet, the ambient layer, and no `box-shadow` |
+| `scripts/build-check.ts` | the built bundle still carries `@property --h`, the OKLCH tokens, the dark table under its media query and attribute, the boot script (hue and scheme) before the first stylesheet, the ambient layer, and no `box-shadow` |
 | `scripts/portfolio-parity.tsx` | rendered chart numbers equal the source in every variant, skin and mode (784 renders) |
 | `scripts/walkthrough.md` | the browser walkthrough: every interaction, every hue, mobile, the idle-paint test (`rafs 0`, `longTasks 0` over 30 s), the cursor light's schedule and fallbacks |
 
@@ -214,7 +243,7 @@ Only in the Old Newspaper skin: a blackletter nameplate at 56 px or larger, and 
 ## 12. Applying this to another application
 
 1. **Copy the colour engine:** `src/theme/tokens.css` (keep it the only file with colour literals), `src/theme/hue.js`, `src/theme/boot.js`, `src/theme/ambient.ts`, the `calmBoot()` plugin from `vite.config.ts`, and the `<div class="ambient">` in `index.html` before the app root. Keep `html` on a static neutral and the app root at `z-index: 1`.
-2. **Keep the roles, change nothing but hue.** If a new role is needed, pick L and C inside the gamut rule (§3.3), add it to `tokens.css` in the `oklch(L calc(C * var(--k)) var(--h))` form, add its contrast pairs to `palette-check`, regenerate the hex fallback.
+2. **Keep the roles, change nothing but hue.** If a new role is needed, pick L and C inside the gamut rule (§3.3), add it to `tokens.css` in the `oklch(L calc(C * var(--k)) var(--h))` form in the light table and in both copies of the dark table (§3.5), add its contrast pairs to `palette-check`, regenerate the hex fallbacks.
 3. **Bring the primitives** (`src/styles/global.css`) and the type, space and motion tokens. Choose one display serif for the one line per screen; load fonts with `display=swap`.
 4. **Install the checks** (`scripts/*`) and wire `npm run check` into CI before writing any UI. The restraint rules are what keep the system calm when many hands touch it.
 5. **Motion conventions:** `EASE` from `src/lib/ui.ts`, `useReducedMotion()` to skip initial animations, `useMediaQuery` for capability gates, per-frame writes outside React state (see `Radar.tsx`).
@@ -222,7 +251,7 @@ Only in the Old Newspaper skin: a blackletter nameplate at 56 px or larger, and 
 7. **Variety, if needed:** build a closed kit (§7) and let code compose from it; let models only write into typed, limited, checked slots.
 8. **Exceptions:** allow at most one or two, bounded in lightness and chroma, with their own proof in `palette-check` and a fallback matrix like §8. Write them down in `docs/design-notes.md`.
 9. **CSP:** the hue boot script is inlined and must be hashed in `script-src`; `style-src` needs `'unsafe-inline'` for the custom-property writes; WebGL needs nothing extra; same-origin workers are fine, `blob:` workers are not.
-10. **Ship with the Atmosphere control** (Drift / Still / Off) and honour reduced motion from the first paint — the system is calm only if the person can make it still.
+10. **Ship with the Atmosphere control** (Drift / Still / Off, System / Light / Dark) and honour reduced motion and the colour-scheme preference from the first paint — the system is calm only if the person can make it still, and only if it meets them in the scheme their device is in.
 
 ## 13. Sources, in brief
 

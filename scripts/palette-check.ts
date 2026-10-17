@@ -2,9 +2,15 @@
  * Palette check — proves src/theme/tokens.css is inside the sRGB gamut and meets
  * WCAG contrast at every one of the 360 base hues, including the side-lobe offsets
  * at their extremes and the chroma multipliers at both ends of their ranges.
+ * Both schemes: the light table, and the dark table under `prefers-color-scheme: dark`
+ * / `[data-scheme='dark']` (whose two copies must agree, and which must redefine
+ * every role the light table defines). Alpha tokens are composited over each
+ * scheme's own --bg. The cursor light is checked on the light field only: it is
+ * not mounted in dark (src/light/CursorLight.tsx).
  *
  * Zero dependencies. Run with `npx tsx scripts/palette-check.ts`.
- *   --fallback <hue>   print the hex ':root { ... }' block for that hue instead of checking
+ *   --fallback <hue>   print the hex blocks for that hue (the light ':root', then the
+ *                      dark media and attribute copies) instead of checking
  *
  * Maths: OKLCH → OKLab → linear sRGB with Björn Ottosson's matrices; WCAG relative
  * luminance from linear RGB; alpha tokens are composited over --bg (in gamma-encoded
@@ -53,9 +59,9 @@ const TOKEN_RE =
   /--([a-z0-9-]+)\s*:\s*oklch\(\s*([\d.]+)\s+(?:([\d.]+)|calc\(\s*([\d.]+)\s*\*\s*var\(--k\)((?:\s*\*\s*var\(--k[wb]\))*)\s*\))\s+(?:var\(--(h[23]?)\)|([\d.]+))\s*(?:\/\s*([\d.]+))?\s*\)/g;
 
 /**
- * Reads every oklch token from the sheet. The first definition of a name wins:
- * later ones are the media-query overrides (prefers-contrast), which only ever
- * move ink darker and lines stronger.
+ * Reads every oklch token from a stretch of the sheet. The first definition of a
+ * name wins: in the whole sheet that is the light table (the dark table and the
+ * prefers-contrast overrides come after it); inside one block it is that block's own.
  */
 function parseTokens(css: string): Token[] {
   const seen = new Map<string, Token>();
@@ -73,6 +79,76 @@ function parseTokens(css: string): Token[] {
     });
   }
   return [...seen.values()];
+}
+
+/** Index of the `}` matching the `{` at `open`, or -1. */
+function closingBrace(text: string, open: number): number {
+  let depth = 0;
+  for (let i = open; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}' && --depth === 0) return i;
+  }
+  return -1;
+}
+
+/**
+ * The tokens of the first block opened by `opener` that defines any: that scheme copy's base
+ * table. Earlier matches are the hex fallback (no oklch in it); later ones are the
+ * prefers-contrast overrides, which come after the base table in the sheet.
+ */
+function firstTokenBlock(css: string, opener: RegExp): Token[] {
+  for (const m of css.matchAll(opener)) {
+    const open = m.index + m[0].length - 1;
+    const close = closingBrace(css, open);
+    const tokens = parseTokens(css.slice(open, close === -1 ? undefined : close));
+    if (tokens.length) return tokens;
+  }
+  return [];
+}
+
+/** The dark table as the system preference applies it: inside `@media (prefers-color-scheme: dark)`. */
+const DARK_MEDIA_RE = /@media\s*\(\s*prefers-color-scheme\s*:\s*dark\s*\)\s*\{/g;
+/** The dark table as forced by <html data-scheme="dark">. */
+const DARK_FORCED_RE = /:root:where\(\[data-scheme=['"]dark['"]\]\)\s*\{/g;
+
+const sameToken = (a: Token, b: Token): boolean =>
+  a.L === b.L && a.C === b.C && a.hue === b.hue && a.kw === b.kw && a.kb === b.kb && a.alpha === b.alpha;
+
+/** Tokens that hold their value in both schemes: the Old Newspaper skin's fixed paper and ink. */
+const schemeFree = (name: string): boolean => name.startsWith('press-');
+
+interface DarkTable {
+  /** The dark tokens laid over the light ones, as the cascade does it. */
+  tokens: Token[];
+  /** The tokens the dark table itself defines. */
+  own: Token[];
+  /** Why the dark table is not usable as written; empty when it is. */
+  problems: string[];
+}
+
+/** Reads the dark table, proves its two copies agree and that it redefines every light role. */
+function darkTable(css: string, light: Token[]): DarkTable {
+  const media = firstTokenBlock(css, DARK_MEDIA_RE);
+  const forced = firstTokenBlock(css, DARK_FORCED_RE);
+  const problems: string[] = [];
+  if (!media.length) problems.push('no dark table under @media (prefers-color-scheme: dark)');
+  if (!forced.length) problems.push("no dark table under :root:where([data-scheme='dark'])");
+  const forcedByName = new Map(forced.map((t) => [t.name, t]));
+  for (const t of media) {
+    const other = forcedByName.get(t.name);
+    if (!other) problems.push(`--${t.name} is in the media copy of the dark table but not the forced one`);
+    else if (!sameToken(t, other)) problems.push(`--${t.name} differs between the two copies of the dark table`);
+  }
+  for (const t of forced) {
+    if (!media.some((m) => m.name === t.name)) problems.push(`--${t.name} is in the forced copy of the dark table but not the media one`);
+  }
+  const darkNames = new Set(media.map((t) => t.name));
+  for (const t of light) {
+    if (!schemeFree(t.name) && !darkNames.has(t.name)) problems.push(`--${t.name} is not redefined in the dark table`);
+  }
+  const merged = new Map(light.map((t) => [t.name, t]));
+  for (const t of media) merged.set(t.name, t);
+  return { tokens: [...merged.values()], own: media, problems };
 }
 
 /* ----------------------------------------------------------------------------
@@ -175,7 +251,11 @@ interface Pair {
   min: number;
 }
 
-/** Required contrast pairs: foreground over background, minimum WCAG ratio. */
+/**
+ * Required contrast pairs: foreground over background, minimum WCAG ratio. The same pairs hold in
+ * both schemes; in dark, surface / accent-strong is the dark button text on the light primary fill,
+ * and the alpha tokens are composited over the dark field.
+ */
 const PAIRS: Pair[] = [
   { fg: 'text', bg: 'bg', min: 4.5 },
   { fg: 'text', bg: 'surface', min: 4.5 },
@@ -262,7 +342,9 @@ function check(tokens: Token[]): { pairs: PairResult[]; gamut: GamutFailure[]; m
 /* ----------------------------------------------------------------------------
  * The cursor light (src/light/palette.ts): its deepest colour under every text
  * role that sits on the bare field on Home. The shader reads the same numbers,
- * so what is proved here is what is drawn.
+ * so what is proved here is what is drawn. Light scheme only: the light is not
+ * mounted on the dark field (a pale body there would be the bright core on a
+ * darker ground the design forbids, and no ink role could sit on it).
  * ------------------------------------------------------------------------- */
 
 /**
@@ -329,18 +411,85 @@ function toRgba(lin: Lin, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-/** The ':root { ... }' hex block for one base hue at k = kw = kb = 1. */
+/** One hex declaration per token for one base hue at k = kw = kb = 1, each line indented by `pad`. */
+function fallbackLines(tokens: Token[], hue: number, pad: string): string {
+  return tokens
+    .map((t) => {
+      const lin = nominal(t, hue);
+      return `${pad}--${t.name}: ${t.alpha >= 1 ? toHex(lin) : toRgba(lin, t.alpha)};`;
+    })
+    .join('\n');
+}
+
+/** The ':root { ... }' hex block for one base hue. The press tokens are left out: they have their own hex block. */
 function fallbackBlock(tokens: Token[], hue: number): string {
-  const lines = tokens.map((t) => {
-    const lin = nominal(t, hue);
-    return `  --${t.name}: ${t.alpha >= 1 ? toHex(lin) : toRgba(lin, t.alpha)};`;
-  });
-  return `:root {\n${lines.join('\n')}\n}`;
+  return `:root {\n${fallbackLines(
+    tokens.filter((t) => !schemeFree(t.name)),
+    hue,
+    '  ',
+  )}\n}`;
+}
+
+/** The dark hex blocks for one base hue: the media copy, then the forced copy, as tokens.css lays them out. */
+function darkFallbackBlocks(dark: Token[], hue: number): string {
+  return [
+    '@media (prefers-color-scheme: dark) {',
+    "  :root:where(:not([data-scheme='light'])) {",
+    fallbackLines(dark, hue, '    '),
+    '  }',
+    '}',
+    ":root:where([data-scheme='dark']) {",
+    fallbackLines(dark, hue, '  '),
+    '}',
+  ].join('\n');
 }
 
 /* ----------------------------------------------------------------------------
  * CLI
  * ------------------------------------------------------------------------- */
+
+const HEADER = ['pair', 'worst', 'at hue', 'min', 'result'];
+
+function printTable(rows: string[][]): void {
+  const widths = HEADER.map((h, i) => Math.max(h.length, ...rows.map((row) => row[i].length)));
+  const fmt = (row: string[]) => row.map((c, i) => c.padEnd(widths[i])).join('  ');
+  console.log(fmt(HEADER));
+  console.log(widths.map((w) => '-'.repeat(w)).join('  '));
+  for (const row of rows) console.log(fmt(row));
+}
+
+/** Runs the pair and gamut checks for one scheme's tokens and prints them; returns true when all pass. */
+function reportScheme(scheme: string, tokens: Token[]): boolean {
+  const { pairs, gamut, missing } = check(tokens);
+  let ok = true;
+  console.log(`palette-check, ${scheme}: ${tokens.length} tokens, 360 hues\n`);
+  printTable(
+    pairs.map((r) => {
+      const pass = r.worst >= r.min;
+      ok &&= pass;
+      return [`${r.fg} / ${r.bg}`, r.worst.toFixed(2), String(r.worstHue), r.min.toFixed(1), pass ? 'pass' : 'FAIL'];
+    }),
+  );
+
+  if (missing.length) {
+    ok = false;
+    console.log(`\nMissing tokens: ${missing.join(', ')}`);
+  }
+
+  if (gamut.length) {
+    ok = false;
+    const byToken = new Map<string, number[]>();
+    for (const g of gamut) byToken.set(g.name, [...(byToken.get(g.name) ?? []), g.hue]);
+    console.log('\nOut of sRGB gamut:');
+    for (const [name, hues] of byToken) {
+      console.log(`  --${name}: ${hues.length} hue(s), e.g. ${hues.slice(0, 6).join(', ')}${hues.length > 6 ? ', …' : ''}`);
+    }
+  } else {
+    console.log('\nGamut: every token inside sRGB at every hue.');
+  }
+  console.log();
+  return ok;
+}
 
 function main(): number {
   const css = readFileSync(TOKENS_PATH, 'utf8');
@@ -349,6 +498,7 @@ function main(): number {
     console.error(`palette-check: no oklch tokens found in ${TOKENS_PATH}`);
     return 1;
   }
+  const dark = darkTable(css, tokens);
 
   const args = process.argv.slice(2);
   const fallbackAt = args.indexOf('--fallback');
@@ -359,54 +509,32 @@ function main(): number {
       return 1;
     }
     console.log(fallbackBlock(tokens, hue));
+    console.log();
+    console.log(darkFallbackBlocks(dark.own, hue));
     return 0;
   }
 
-  const { pairs, gamut, missing } = check(tokens);
-  let failed = false;
+  let failed = !reportScheme('light', tokens);
 
-  console.log(`palette-check: ${tokens.length} tokens, 360 hues\n`);
-  const header = ['pair', 'worst', 'at hue', 'min', 'result'];
-  const rows = pairs.map((r) => {
-    const ok = r.worst >= r.min;
-    failed ||= !ok;
-    return [`${r.fg} / ${r.bg}`, r.worst.toFixed(2), String(r.worstHue), r.min.toFixed(1), ok ? 'pass' : 'FAIL'];
-  });
-  const widths = header.map((h, i) => Math.max(h.length, ...rows.map((row) => row[i].length)));
-  const fmt = (row: string[]) => row.map((c, i) => c.padEnd(widths[i])).join('  ');
-  console.log(fmt(header));
-  console.log(widths.map((w) => '-'.repeat(w)).join('  '));
-  for (const row of rows) console.log(fmt(row));
-
-  if (missing.length) {
+  if (dark.problems.length) {
     failed = true;
-    console.log(`\nMissing tokens: ${missing.join(', ')}`);
+    console.log('Dark table:');
+    for (const p of dark.problems) console.log(`  ${p}`);
+    console.log();
   }
-
-  if (gamut.length) {
-    failed = true;
-    const byToken = new Map<string, number[]>();
-    for (const g of gamut) byToken.set(g.name, [...(byToken.get(g.name) ?? []), g.hue]);
-    console.log('\nOut of sRGB gamut:');
-    for (const [name, hues] of byToken) {
-      console.log(`  --${name}: ${hues.length} hue(s), e.g. ${hues.slice(0, 6).join(', ')}${hues.length > 6 ? ', …' : ''}`);
-    }
-  } else {
-    console.log('\nGamut: every token inside sRGB at every hue.');
-  }
+  failed = !reportScheme('dark', dark.tokens) || failed;
 
   const light = checkLight(tokens);
-  console.log(`\ncursor light: body L ${LIGHT.bodyL}, C ${LIGHT.bodyC}, hue within ±${MAX_HUE_OFFSET}° of the field (+${LIGHT.haloHueOffset}° halo)\n`);
-  const lightRows = light.pairs.map((r) => {
-    const ok = r.worst >= r.min;
-    failed ||= !ok;
-    return [`${r.fg} / ${r.bg}`, r.worst.toFixed(2), String(r.worstHue), r.min.toFixed(1), ok ? 'pass' : 'FAIL'];
-  });
-  const lightWidths = header.map((h, i) => Math.max(h.length, ...lightRows.map((row) => row[i].length)));
-  const fmtLight = (row: string[]) => row.map((c, i) => c.padEnd(lightWidths[i])).join('  ');
-  console.log(fmtLight(header));
-  console.log(lightWidths.map((w) => '-'.repeat(w)).join('  '));
-  for (const row of lightRows) console.log(fmtLight(row));
+  console.log(
+    `cursor light (light scheme only; not mounted in dark): body L ${LIGHT.bodyL}, C ${LIGHT.bodyC}, hue within ±${MAX_HUE_OFFSET}° of the field (+${LIGHT.haloHueOffset}° halo)\n`,
+  );
+  printTable(
+    light.pairs.map((r) => {
+      const ok = r.worst >= r.min;
+      failed ||= !ok;
+      return [`${r.fg} / ${r.bg}`, r.worst.toFixed(2), String(r.worstHue), r.min.toFixed(1), ok ? 'pass' : 'FAIL'];
+    }),
+  );
   if (light.gamut.length) {
     failed = true;
     console.log(`\nLight body out of sRGB gamut at ${light.gamut.length} hue(s), e.g. ${light.gamut.slice(0, 6).join(', ')}`);

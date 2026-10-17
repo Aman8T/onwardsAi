@@ -27,6 +27,17 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
 8. **Atmosphere:** choose Still, then Off (neutral greys), then Drift; each persists
    across reload (`localStorage` `tayyari.atmo`). With the OS reduced-motion setting on,
    the control reads "Still · system".
+8a. **Dark:** in the Atmosphere menu's second group ("Appearance"), choose Dark: the field,
+    every surface, the ink and the hairlines flip in place, the primary button becomes a light
+    fill with dark text, and `<html data-scheme="dark">` is set. Reload: it is dark from the
+    first paint (no light flash; `localStorage` `tayyari.scheme`). Choose System: the attribute
+    goes away and the page follows the device (in the pane, Viewport › dark). Choose Light under
+    a dark device: light, with `data-scheme="light"`. Load `?scheme=dark&h=120` and
+    `?scheme=dark&h=300` and screenshot Home, Now and the posting match at both hues: ink and
+    muted ink read on every surface and lobe, the radar's fills read against the dark field, Off
+    gives neutral dark greys. On Home in dark, no `canvas.light` is in the DOM (the cursor light
+    is not mounted). A published portfolio (`/p/<id>`, and `/dev/portfolios`) stays light in
+    either scheme, the Old Newspaper skin too. Arrow keys move through all six items of the menu.
 9. **Mobile (390×844):** every popover kind opens as a bottom sheet; `onPickSkill`
    works from the sheet; the chat rail toggles.
 10. **Idle paint:** on Now, Drift mode, paste the snippet below into the console and
@@ -70,7 +81,8 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     the form panel stays opaque. With `?light=stats`, run `__light.sweep(10, 1200)` in the console:
     expect `p95` at or under one frame period, `behind` at most 40 px, `gpu` under 2 ms and
     `min L` at or above 0.885; once asleep, the step-10 snippet reports `rafs 0`. Mobile preset:
-    no `canvas.light` in the DOM. `?light=reduce` (or the OS setting) and Atmosphere Off: none.
+    no `canvas.light` in the DOM. `?light=reduce` (or the OS setting), Atmosphere Off and the dark
+    scheme: none.
 12. **Accounts:** after an analysis of your own resume (not the sample), and only when the server has a sign-in
     method set up, the "Save this to your account" card appears under the graph header once the radar has drawn; "Not now" hides it for this profile on this device.
     Choose "Save to my account" and, in local development with no Resend key, enter an email and choose "Email me a
