@@ -4,7 +4,7 @@ version = "0.2.0"
 description = "Tayyari API on FastAPI: resume and link analysis, skill graph synthesis, Jev decisions and career chat."
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "fastapi[standard]>=0.116",
+    "fastapi[standard]>=0.143.3",
     "anthropic>=1.11",
     "httpx>=0.27",
     "pydantic>=2.7",
@@ -23,7 +23,7 @@ dependencies = [
     "stripe>=16.0.0",
     "razorpay>=2.0.1",
     "requests>=2.34.2",
-    "sarvamai==0.1.35",
+    "sarvamai==0.1.37",
 ]
 
 # Deliberately no [build-system]: FastAPI Cloud installs the locked dependencies from uv.lock and

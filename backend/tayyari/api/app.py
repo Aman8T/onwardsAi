@@ -6,11 +6,19 @@ Order matters in `create_app`: the error handlers and the middlewares first, the
 `mount_spa` last because its catch-all routes would shadow anything registered after them. The middlewares,
 outermost first: the request id, the security headers (so a refusal below carries them too), and the
 cross-site guard. The docs pages are off: this is a private API for the bundled web app.
+
+FastAPI's own OpenTelemetry (`TELEMETRY`) records request traces and metrics; on FastAPI Cloud the metrics reach
+its Metrics dashboard with no setup, and elsewhere nothing is exported until `FASTAPI_OTEL_AUTO_CONFIGURE=true`
+and an `OTEL_EXPORTER_OTLP_ENDPOINT` are set.
 """
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
+from typing import Any
+
 from fastapi import FastAPI
+from fastapi.telemetry import TelemetryConfig
 
 import tayyari
 from tayyari.api.deps import RequestIdMiddleware
@@ -22,6 +30,23 @@ from tayyari.api.static import mount_spa
 from tayyari.container import ContainerOverrides
 from tayyari.core.paths import STATIC_DIR
 from tayyari.core.settings import Settings, get_settings
+
+# Sign-in links and callbacks carry a one-time secret in the query string, which a span records as `url.query`.
+_SECRET_IN_QUERY = frozenset({"/api/auth/magic/verify", "/api/auth/google/callback"})
+
+
+def _skip_telemetry(scope: MutableMapping[str, Any]) -> bool:
+    """Skip the health probes and the web app's files (so counts and error rates are the API's) and sign-in links."""
+    path = str(scope.get("path", ""))
+    return not path.startswith("/api/") or path.startswith("/api/health") or path in _SECRET_IN_QUERY
+
+
+TELEMETRY: TelemetryConfig = {
+    # FastAPI's logs carry exception messages and stack traces past `core.redact`; unhandled errors are already
+    # logged, redacted, by `api.errors`.
+    "logs": False,
+    "exclude": _skip_telemetry,
+}
 
 
 def create_app(settings: Settings | None = None, *, overrides: ContainerOverrides | None = None) -> FastAPI:
@@ -38,6 +63,7 @@ def create_app(settings: Settings | None = None, *, overrides: ContainerOverride
         redoc_url=None,
         openapi_url=None,
         lifespan=build_lifespan(resolved, overrides, STATIC_DIR),
+        telemetry=TELEMETRY,
     )
     app.state.settings = resolved
     install_error_handlers(app)

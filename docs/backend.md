@@ -664,6 +664,14 @@ Also set a **spend limit on the Anthropic workspace** as a hard backstop outside
 
 The header named by `TAYYARI_GUARD__CLIENT_IP_HEADER` is read first when present (default `cf-connecting-ip`, which Cloudflare sets in front of FastAPI Cloud and overwrites any value the client sent). Otherwise `X-Forwarded-For` is read, counting `TAYYARI_GUARD__TRUSTED_PROXY_HOPS` entries from the right (default 3, the number measured on FastAPI Cloud); then the socket peer. IPv6 clients are counted per /64 network. HMAC-SHA256 of the IP (salt generated at first startup, stored in `kv` table). Never store the raw IP.
 
+## Telemetry (FastAPI's OpenTelemetry)
+
+FastAPI 0.142.2 and later record OpenTelemetry for every request with no code of ours; `api/app.py` (`TELEMETRY`) only narrows it:
+- **What is recorded:** a span per API request (`GET /api/interview/sessions/{session_id}`) with child spans for dependency resolution, the endpoint, response serialization and each `BackgroundTasks` task; request count, duration and in-flight metrics. Spans keep the path and query string; profile ids there are random ids, not names.
+- **Left out:** the health probes and everything outside `/api/` (the web app's files), so counts and error rates are the API's; the two sign-in URLs whose query string holds a one-time secret (`/api/auth/magic/verify`, `/api/auth/google/callback`), since FastAPI redacts only cloud-storage signatures from `url.query`; and FastAPI's own logs (`logs: False`), because they carry exception messages and stack traces past `core.redact`. Unhandled errors are still logged, redacted, by `api/errors.py`.
+- **Where it goes:** on FastAPI Cloud the metrics reach the Metrics dashboard (request counts, error rates, response times; Pro plans) with nothing to set. Elsewhere nothing is exported until `FASTAPI_OTEL_AUTO_CONFIGURE=true`, `OTEL_SERVICE_NAME=tayyari` and `OTEL_EXPORTER_OTLP_ENDPOINT` (OTLP over HTTP/protobuf; `OTEL_EXPORTER_OTLP_HEADERS` for a key) are set; since 0.143.0 the endpoint alone does nothing. The optional Logfire setup (`LOGFIRE_TOKEN`, `core/logging.py`) configures the global providers, and FastAPI then uses them.
+- **Not traced yet:** model calls and Sarvam calls run inside the endpoint span without spans of their own; their cost and latency are in `llm_calls` and the structlog lines.
+
 ## Testing layout
 
 Tests use **pytest** with **respx** (mocking HTTP) and **asgi-lifespan** (FastAPI lifespan fixture).
