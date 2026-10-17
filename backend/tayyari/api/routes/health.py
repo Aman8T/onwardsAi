@@ -22,7 +22,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
 
-from tayyari.api.deps import get_request_context
+from tayyari.api.deps import get_request_context, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.security import subnet_hash
 from tayyari.contract.models import Health, HealthModels
@@ -86,7 +86,10 @@ async def health_deep(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
     container.rate_limiter.shed(
-        "chat", rc.ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip)
+        "chat",
+        rc.ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip),
+        exempt=await unlimited(request, container),
     )
     if container.db is None:  # fake repositories in a test: there is no database to ask
         return JSONResponse({"ok": True, "db": "none"})

@@ -37,6 +37,9 @@ reads the request body; it then calls ``check(..., memory=False)`` after validat
 token. Callers that do not know the /48 simply omit ``ip_hash_48``; behaviour is then exactly as before.
 
 A limit of 0 means "this window is not enforced"; ``GuardSettings.enabled = False`` switches the limiter off.
+An account on the unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``, `GuardSettings.is_unlimited`) is exempt from every
+rule above: its routes pass ``exempt=True`` (resolved by `api.deps.unlimited`) to `shed` and `check`, which then return
+at once and touch no bucket and no counter, the whole-service ones included. Nothing else here changes.
 When the repository errors or is slow, the limiter fails open to the in-memory bucket, logs it, and stops
 asking the database for a short while so a database outage does not add a timeout to every request.
 Rejections are `core.errors.RateLimited` (HTTP 429 with ``Retry-After`` = seconds until the window ends)
@@ -330,13 +333,18 @@ class RateLimiter:
             limit = shortest.limit * (SUBNET_LIMIT_FACTOR if subnet else 1)
             raise self._limited(route, shortest.name, retry, count=None, limit=limit, subnet=subnet)
 
-    def shed(self, route: Route, ip_hash: str | None, ip_hash_48: str | None = None) -> None:
+    def shed(
+        self, route: Route, ip_hash: str | None, ip_hash_48: str | None = None, *, exempt: bool = False
+    ) -> None:
         """Only the in-memory bucket, no database: cheap enough to run before the request body is read.
 
         Raises `RateLimited` when this client is hammering. A route that calls this first and `check` later
         (after validation) passes ``memory=False`` to `check` so one request takes one token, not two.
-        ``ip_hash_48`` (IPv6 clients) adds the wider /48 bucket.
+        ``ip_hash_48`` (IPv6 clients) adds the wider /48 bucket. ``exempt=True`` (an account on the unlimited list,
+        `GuardSettings.is_unlimited`) takes no token at all.
         """
+        if exempt:
+            return
         if self._settings.enabled:
             self._take_token(route, ip_hash, self._windows(route), ip_hash_48)
 
@@ -348,6 +356,7 @@ class RateLimiter:
         *,
         memory: bool = True,
         globally: bool = True,
+        exempt: bool = False,
     ) -> None:
         """Count this request against every rule, or raise `RateLimited`. Never raises anything else.
 
@@ -356,9 +365,11 @@ class RateLimiter:
         at `SUBNET_LIMIT_FACTOR` times the per-IP limits. Leave it out for IPv4 and unknown clients.
         ``globally=False`` leaves the whole-service counter alone (a second call for the same request, with another
         subject such as an account, must not count the request twice).
+        ``exempt=True`` (an account on the unlimited list, `GuardSettings.is_unlimited`) counts nothing anywhere: not the
+        client's windows, not the account's, not the whole-service counter.
         """
         settings = self._settings
-        if not settings.enabled:
+        if exempt or not settings.enabled:
             return
         subject = ip_hash or UNKNOWN_SUBJECT
         windows = self._windows(route)

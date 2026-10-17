@@ -126,9 +126,11 @@ class BillingService:
         self, user: StoredUser | None, *, accept_language: str | None = None, timezone: str | None = None
     ) -> EntitlementsResponse:
         summary = ZERO if user is None else await self.entitlements.summary(user.id)
+        unlimited = user is not None and self._settings.guard.is_unlimited(user.email)
         return EntitlementsResponse.model_validate(
             {
                 **_summary_fields(summary),
+                "unlimited": True if unlimited else None,
                 "currency": self.currency_for(user, accept_language=accept_language, timezone=timezone),
                 "prices": self.prices().model_dump(exclude_none=True),
             }

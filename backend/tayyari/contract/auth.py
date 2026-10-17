@@ -66,6 +66,9 @@ class MeEntitlements(_Model):
     credits: int
     passUntil: str | None = None
     freeMatchAvailable: bool
+    unlimited: bool | None = None
+    """True for an account on the server's unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``): no limits, nothing charged.
+    Left out of the JSON for everyone else (the field is ``unlimited?`` in the TypeScript contract)."""
 
 
 class MeProviders(_Model):

@@ -14,6 +14,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { InterviewFocus, InterviewKind, InterviewLength, InterviewPlan, PlanRequest, RoleSource } from '../../../shared/interview';
 import type { Profile } from '../../../shared/types';
+import { useMe } from '../../auth/useMe';
 import { dayLabel } from '../../discover/prepare/words';
 import { useTracker } from '../../discover/applications/tracker';
 import { isSampleId } from '../../match/model';
@@ -49,6 +50,7 @@ function SetupBody({ profile, kind, role }: SetupScreenProps) {
   const open = usePracticeNav();
   const tracker = useTracker(profile.id);
   const tracked = role ? tracker.get(role.jobId) : undefined;
+  const { unlimited } = useMe();
 
   const [length, setLength] = useState<InterviewLength>('full');
   const [focus, setFocus] = useState<InterviewFocus | undefined>();
@@ -197,6 +199,7 @@ function SetupBody({ profile, kind, role }: SetupScreenProps) {
       listenBy={choice.listen === 'sarvam' ? 'sarvam' : 'browser'}
       mic={{ testing, heard, ...(micProblem ? { problem: micProblem } : {}) }}
       {...(left !== undefined ? { left } : {})}
+      unlimited={unlimited}
       starting={starting}
       {...(startError ? { startError } : {})}
       onBack={() => open({ screen: 'hub' })}

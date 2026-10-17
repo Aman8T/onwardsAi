@@ -20,7 +20,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from tayyari.api.deps import get_request_context, require_profile_access
+from tayyari.api.deps import get_request_context, require_profile_access, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.security import subnet_hash
 from tayyari.core.errors import NotFound
@@ -36,7 +36,10 @@ async def get_profile(pid: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
     container.rate_limiter.shed(
-        "chat", rc.ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip)
+        "chat",
+        rc.ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip),
+        exempt=await unlimited(request, container),
     )
     if not is_valid_id(pid):
         raise NotFound(PROFILE_NOT_FOUND)

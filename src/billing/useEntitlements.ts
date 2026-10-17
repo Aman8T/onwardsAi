@@ -14,6 +14,7 @@ import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import type { Currency, EntitlementsResponse, PriceBook, ProductPrices } from '../../shared/billing';
 import { useMe } from '../auth/useMe';
 import * as api from '../lib/api';
+import { isUnlimited } from './format';
 
 export type EntitlementsStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -72,6 +73,8 @@ export interface EntitlementsView {
   credits: number;
   passUntil: string | undefined;
   freeMatchAvailable: boolean;
+  /** The account has no limits and is never charged (`GET /api/billing/entitlements` said so); false otherwise. */
+  unlimited: boolean;
   /** The currency the page shows: the person's choice, else the server's guess, else USD. */
   currency: Currency;
   prices: PriceBook;
@@ -117,6 +120,7 @@ export function useEntitlements(): EntitlementsView {
     credits: data?.credits ?? 0,
     passUntil: data?.passUntil,
     freeMatchAvailable: data?.freeMatchAvailable ?? false,
+    unlimited: isUnlimited(data),
     currency,
     prices,
     priced: prices[currency],

@@ -109,8 +109,10 @@ class Rig:
         token, _ = await container.auth.sessions.start(user.id, ip_hash=None, user_agent=None)
         return user.id, {"cookie": f"{SESSION_COOKIE}={token}"}
 
-    async def status(self, **params: str) -> httpx.Response:
-        return await self.client.get("/api/speech/status", params={"profileId": FRONTEND_ID, **params})
+    async def status(self, *, headers: dict[str, str] | None = None, **params: str) -> httpx.Response:
+        return await self.client.get(
+            "/api/speech/status", params={"profileId": FRONTEND_ID, **params}, headers=headers or {}
+        )
 
     async def transcribe(
         self,
@@ -696,3 +698,78 @@ async def test_the_voice_budget_stops_new_lines_but_not_a_line_already_spoken(st
         fresh = await rig.speak(FOLLOW_UP)
         assert fresh.status_code == 503 and fresh.json() == {"error": DAILY_MESSAGE}
         assert rig.engine is not None and len(rig.engine.spoken) == 1
+
+
+# ───────────────────────── an account on the unlimited list ─────────────────────────
+
+LISTED = "tester@example.com"
+OTHER = "other@example.com"
+
+
+def listed_guard(**overrides: Any) -> GuardSettings:
+    """Roomy limits with an unlimited list written the way an owner might (padding, capitals, a second address)."""
+    return roomy(unlimited_emails=f" {LISTED.upper()} , second.listed@example.org", **overrides)
+
+
+async def test_a_listed_account_is_not_held_to_the_speech_window_or_the_chat_shed(start: Any) -> None:
+    async with start(guard=listed_guard(speech_per_minute=1, chat_per_minute=1)) as rig:
+        await rig.profile()
+        _, listed = await rig.account(LISTED)
+        _, other = await rig.account(OTHER)
+        address = rig.at("198.51.100.30")
+        pieces = [(await rig.transcribe(headers={**listed, **address})).status_code for _ in range(6)]
+        lines = [(await rig.speak(headers={**listed, **address})).status_code for _ in range(6)]
+        assert pieces == [200] * 6 and lines == [200] * 6
+        assert await rig.env.rows(RateLimitHitRow, RateLimitHitRow.bucket.like("speech%")) == []
+
+        # the same setup, the same address: everyone else is still counted
+        assert (await rig.transcribe(headers={**other, **address})).status_code == 200
+        refused = await rig.transcribe(headers={**other, **address})
+        assert refused.status_code == 429
+        assert refused.json()["error"].startswith("Too many speech requests at once.")
+        assert (await rig.speak(headers=address)).status_code == 429
+
+
+@pytest.mark.parametrize(("who", "allowed"), [(LISTED, True), (OTHER, False)])
+async def test_a_sessions_share_of_speech_does_not_apply_to_a_listed_account(
+    start: Any, who: str, allowed: bool
+) -> None:
+    speech = SpeechSettings(stt_session_seconds=4, tts_session_chars=60)
+    async with start(guard=listed_guard(), speech=speech) as rig:
+        await rig.profile()
+        _, headers = await rig.account(who)
+        assert (await rig.transcribe(seconds="4", headers=headers)).status_code == 200
+        more = await rig.transcribe(seconds="4", headers=headers)
+        assert (await rig.speak(headers=headers)).status_code == 200  # 80 characters, over the share of 60
+        line = await rig.speak(FOLLOW_UP, headers=headers)
+        status = (await rig.status(sessionId=SID, headers=headers)).json()
+        if allowed:
+            assert more.status_code == 200 and line.status_code == 200
+            assert (status["stt"], status["tts"]) == (True, True)
+            assert "sttReason" not in status and "ttsReason" not in status
+        else:
+            assert more.status_code == 503 and more.json() == {"error": SESSION_MESSAGE}
+            assert line.status_code == 503 and line.json() == {"error": SESSION_MESSAGE}
+            assert (status["sttReason"], status["ttsReason"]) == ("session_budget", "session_budget")
+
+
+async def test_the_days_sarvam_budget_still_stops_a_listed_account(start: Any) -> None:
+    speech = SpeechSettings(stt_daily_seconds=3, tts_daily_chars=20)
+    async with start(guard=listed_guard(), speech=speech) as rig:
+        await rig.profile()
+        _, listed = await rig.account(LISTED)
+        assert (await rig.transcribe(seconds="3", headers=listed)).status_code == 200
+        assert (
+            await rig.speak(headers=listed)
+        ).status_code == 200  # the first line takes the day's characters
+        piece = await rig.transcribe(seconds="1", headers=listed)
+        assert piece.status_code == 503 and piece.json() == {"error": DAILY_MESSAGE}
+        line = await rig.speak(FOLLOW_UP, headers=listed)
+        assert line.status_code == 503 and line.json() == {"error": DAILY_MESSAGE}
+        status = (await rig.status(sessionId=SID, headers=listed)).json()
+        assert (status["stt"], status["tts"], status["sttReason"], status["ttsReason"]) == (
+            False,
+            False,
+            "daily_budget",
+            "daily_budget",
+        )

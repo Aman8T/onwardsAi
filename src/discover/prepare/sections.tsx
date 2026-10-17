@@ -9,7 +9,7 @@
 import { useId } from 'react';
 import type { ReactNode } from 'react';
 import type { AiJob, AskCounts, PrepGap, PrepLead, PrepQuestion, StoryPart } from '../../../shared/jobsearch';
-import { FREE_LINE } from '../../practice/words';
+import { useFreeLine } from '../../practice/useFreeLine';
 import { actions, useApp } from '../../store';
 import '../../styles/discover-more.css';
 import { Evidence, Suggest, quoted } from './parts';
@@ -334,6 +334,7 @@ export interface PracticeSectionProps {
 export function PracticeSection({ headingId, runId, jobId, onPractise }: PracticeSectionProps) {
   // the prep page is open on a role of a stored search, and the address says which
   const lens = useApp((s) => s.discoverRoute);
+  const freeLine = useFreeLine();
   const run = runId ?? lens.run;
   const job = jobId ?? lens.job;
   const go = () => {
@@ -350,7 +351,7 @@ export function PracticeSection({ headingId, runId, jobId, onPractise }: Practic
           </h2>
         </div>
         <p className="dm-muted">A mock interview on this posting, grounded in your own work. Credit only for what you can back up.</p>
-        <p className="dm-muted dm-small">{FREE_LINE}</p>
+        <p className="dm-muted dm-small">{freeLine}</p>
       </div>
       <button type="button" className="btn dm-btn" disabled={!run || !job} onClick={go}>
         Practise for this role

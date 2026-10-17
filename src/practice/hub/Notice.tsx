@@ -7,7 +7,7 @@
  * Exported so the plan screen can show `LimitNotice`, `PausedNotice`, `ThinNote` and `NoTemplateNote` on the same words.
  */
 import type { ReactNode } from 'react';
-import { FREE_LINE } from '../words';
+import { FREE_LINE, UNLIMITED_LINE } from '../words';
 
 /** How many practice interviews a person has each day while this is free. */
 export const DAILY_INTERVIEWS = 3;
@@ -138,8 +138,12 @@ export function ErrorNote({ message, onRetry, onBack }: { message: string; onRet
   );
 }
 
-/** "Free while we test it · 3 a day · 2 left today": what practice costs now, and what is left of today. */
-export function freeLine(leftToday: number | undefined): string {
+/**
+ * "Free while we test it · 3 a day · 2 left today": what practice costs now, and what is left of today. An account with
+ * no limits has no count to give, so it reads "Unlimited for this account".
+ */
+export function freeLine(leftToday: number | undefined, unlimited = false): string {
+  if (unlimited) return UNLIMITED_LINE;
   if (leftToday === undefined) return FREE_LINE;
   return `${FREE_LINE} · ${leftToday === 0 ? 'none left today' : `${leftToday} left today`}`;
 }

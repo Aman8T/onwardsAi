@@ -17,7 +17,9 @@ An empty (or whitespace-only) value counts as unset everywhere.
 
 from __future__ import annotations
 
+import json
 import os
+import re
 import tempfile
 from functools import cached_property, lru_cache
 from pathlib import Path
@@ -39,11 +41,37 @@ LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
 AnonymousMatch = Literal["auto", "true", "false"]
 
 _CLOUD_MARKERS = ("FASTAPICLOUD_DEPLOYMENT_ID", "FASTAPI_PUBLIC_URL")
+_EMAIL_SEPARATORS = re.compile(r"[,;\s]+")
+_EMAIL_DECORATION = "[]\"' "
 
 
 def detect_env() -> Env:
     """``"prod"`` when FastAPI Cloud's deployment variables are present in the environment, else ``"local"``."""
     return "prod" if any(os.environ.get(name, "").strip() for name in _CLOUD_MARKERS) else "local"
+
+
+@lru_cache(maxsize=16)
+def parse_email_list(raw: str) -> tuple[str, ...]:
+    """The addresses in ``raw``, trimmed, lower-cased, without repeats, in the order given.
+
+    ``raw`` is a comma-separated list (``a@x.com, b@y.com``) or a JSON list of strings (``["a@x.com","b@y.com"]``);
+    semicolons and line breaks separate too. A piece with no ``@`` is dropped, and so is everything when ``raw`` is
+    blank. A JSON list that does not parse is read as plain text rather than failing the start-up.
+    """
+    text = raw.strip()
+    if text.startswith("["):
+        try:
+            loaded = json.loads(text)
+        except ValueError:
+            loaded = None
+        if isinstance(loaded, list):
+            text = ",".join(item for item in loaded if isinstance(item, str))
+    found: list[str] = []
+    for piece in _EMAIL_SEPARATORS.split(text):
+        email = piece.strip(_EMAIL_DECORATION).lower()
+        if "@" in email and email not in found:
+            found.append(email)
+    return tuple(found)
 
 
 def _default_data_dir(data: dict[str, Any]) -> Path:
@@ -170,6 +198,38 @@ class GuardSettings(BaseModel):
     client_ip_header: str | None = "cf-connecting-ip"
     """Read the client IP from this header when present (Cloudflare sets it in front of FastAPI Cloud and
     overwrites any client-sent value); otherwise fall back to X-Forwarded-For, then the socket peer."""
+    unlimited_emails: str = Field(default="", repr=False, exclude=True)
+    """Sign-in emails of accounts that have no rate limits and are never charged: ``TAYYARI_GUARD__UNLIMITED_EMAILS=
+    a@x.com,b@y.com`` (a JSON list works too). Kept as the text it came in (a list or tuple given in code is joined), read
+    through `unlimited_email_list` / `is_unlimited`. Matched exactly after trimming and lower-casing; both sign-in methods
+    prove the person owns the address. Still applied to these accounts: the daily spend ceiling, the limits on sign-in
+    links, process capacity and Sarvam's daily budget. Never logged or dumped (``repr=False``, ``exclude=True``)."""
+
+    @field_validator("unlimited_emails", mode="before")
+    @classmethod
+    def _emails_as_text(cls, v: object) -> object:
+        """Blank is empty; a list, tuple or set (code, tests) is joined into the comma-separated text."""
+        if v is None:
+            return ""
+        if isinstance(v, list | tuple | set | frozenset):
+            return ",".join(str(item) for item in v)
+        return v
+
+    @property
+    def unlimited_email_list(self) -> tuple[str, ...]:
+        """The addresses on the unlimited list, trimmed, lower-cased and without repeats (empty for none)."""
+        return parse_email_list(self.unlimited_emails)
+
+    @property
+    def has_unlimited(self) -> bool:
+        """Whether any address is on the unlimited list (the quick test before a request looks anyone up)."""
+        return bool(self.unlimited_emails.strip()) and bool(self.unlimited_email_list)
+
+    def is_unlimited(self, email: str | None) -> bool:
+        """Whether ``email`` (the address a signed-in account proved it owns) is on the unlimited list."""
+        if not email or not self.unlimited_emails:
+            return False
+        return email.strip().lower() in self.unlimited_email_list
 
     @field_validator("client_ip_header", mode="before")
     @classmethod
@@ -716,6 +776,7 @@ class Settings(BaseSettings):
             "database": self.db.safe_url,
             "storage": "ephemeral" if self.db.ephemeral else self.db.kind,
             "daily_ceiling_usd": self.guard.daily_ceiling_usd if self.guard.enabled else None,
+            "unlimited_accounts": len(self.guard.unlimited_email_list),
             "decision_overrides": sorted(self.decision_overrides),
         }
 
@@ -744,4 +805,5 @@ __all__ = [
     "SynthCache",
     "detect_env",
     "get_settings",
+    "parse_email_list",
 ]

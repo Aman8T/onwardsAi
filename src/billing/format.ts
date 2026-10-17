@@ -24,10 +24,19 @@ export function shortDate(iso: string): string {
 }
 
 /**
- * What the next posting will use, in the words of the chip: a pass first, then the month's free posting and the
- * credits ("1 free this month · 2 postings left"), or "No postings left".
+ * True for an account on the server's unlimited list (`TAYYARI_GUARD__UNLIMITED_EMAILS`): no limits, nothing charged.
+ * The one place the flag is read, so no screen has to guess; a missing flag (an older server, a visitor) means false.
+ */
+export function isUnlimited(e: { unlimited?: boolean } | null | undefined): boolean {
+  return e?.unlimited === true;
+}
+
+/**
+ * What the next posting will use, in the words of the chip: "Unlimited" for an account with no limits, else a pass
+ * first, then the month's free posting and the credits ("1 free this month · 2 postings left"), or "No postings left".
  */
 export function entitlementText(e: MeEntitlements, now: number = Date.now()): string {
+  if (isUnlimited(e)) return 'Unlimited';
   const until = e.passUntil ? Date.parse(e.passUntil) : NaN;
   if (e.passUntil && Number.isFinite(until) && until > now) return `Pass until ${shortDate(e.passUntil)}`;
   const parts: string[] = [];

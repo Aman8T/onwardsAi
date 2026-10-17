@@ -17,6 +17,7 @@ import { MicMeter } from '../room/MicMeter';
 import type { MeterTrouble, Prefs, VoiceSetting } from '../speech';
 import {
   FREE_LINE,
+  UNLIMITED_LINE,
   HOW_IT_ENDS,
   HOW_IT_WORKS,
   KIND_BLURB,
@@ -71,6 +72,8 @@ export interface SetupViewProps {
   mic: MicTest;
   /** Practice interviews left today, when the server says. */
   left?: number;
+  /** The account has no limits: no daily count and no "used up" state, whatever `left` says. */
+  unlimited?: boolean;
   starting: boolean;
   startError?: string;
   onBack(): void;
@@ -114,7 +117,8 @@ export function SetupView(p: SetupViewProps) {
   const kept = p.plan ? p.plan.slots.filter((s) => !p.skipped.has(s.id)) : [];
   const answerValue = p.speechSupported ? p.prefs.answer : 'type';
   const employer = p.job?.employer ?? (p.plan?.title.includes(' at ') ? p.plan.title.slice(p.plan.title.lastIndexOf(' at ') + 4) : '');
-  const out = p.left === 0;
+  const left = p.unlimited ? undefined : p.left;
+  const out = left === 0;
   const canStart = !!p.plan && kept.length > 0 && !p.starting && !out && !p.loading;
 
   const lede = (() => {
@@ -375,7 +379,7 @@ export function SetupView(p: SetupViewProps) {
             {p.job ? <RoleSummary job={p.job} /> : <KindSummary kind={p.kind} plan={p.plan} count={kept.length} />}
 
             <div className="rm-summary-foot">
-              <p className="rm-faint rm-small">{p.left !== undefined ? `${FREE_LINE} · ${p.left} left today` : FREE_LINE}</p>
+              <p className="rm-faint rm-small">{p.unlimited ? UNLIMITED_LINE : left !== undefined ? `${FREE_LINE} · ${left} left today` : FREE_LINE}</p>
               {out && <p className="rm-muted rm-small">{LIMIT_USED}</p>}
             </div>
 

@@ -34,6 +34,17 @@ Who is signed in, for routes that need an account:
 
 Analysis and chat stay open to anonymous visitors and do not call these; routes that persist for a person do.
 
+Who has no limits, for every route that rate-limits or charges:
+
+    unlimited(request, container)
+                                True when the signed-in account's email is on the unlimited list
+                                (``TAYYARI_GUARD__UNLIMITED_EMAILS``, `GuardSettings.is_unlimited`). A route resolves it
+                                first and passes it as ``exempt=`` to `RateLimiter.shed` / `check` (and skips the
+                                entitlement charge). With no list, or no session cookie, it answers False without any lookup,
+                                so anonymous traffic costs what it did before; otherwise it reuses `get_auth_context`'s
+                                once-per-request session lookup, and the answer is kept on the request. A lookup that fails
+                                counts as "not unlimited" (the limits apply), never as an error of its own.
+
 Whose profile it is, for every route that takes a profile id:
 
     require_profile_access(request, profile_id, not_found=...)
@@ -51,7 +62,7 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import UTC, datetime
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from starlette.datastructures import Headers, MutableHeaders
 from starlette.requests import HTTPConnection, Request
@@ -70,6 +81,9 @@ from tayyari.guard.client_ip import client_ip, ip_subject
 from tayyari.storage.ports import ProfileAccess
 from tayyari.storage.ports import StoredUser as User
 
+if TYPE_CHECKING:
+    from tayyari.container import Container
+
 log = get_logger(__name__)
 
 PROFILE_NOT_FOUND: Final = "Profile not found"
@@ -79,6 +93,7 @@ REQUEST_ID_MAX_CHARS = 64
 _REQUEST_ID_UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
 _CONTEXT_KEY = "request_context"
 _AUTH_KEY = "auth_context"
+_UNLIMITED_KEY = "unlimited"
 _UNSET: Any = object()
 _KEY_CACHE_ATTR = "_ip_hash_key_resolved"
 _WARNED_ATTR = "_ip_hash_key_warned"
@@ -214,6 +229,30 @@ async def get_current_user(request: Request) -> User | None:
     return None if resolved is None else resolved.user
 
 
+async def unlimited(request: Request, container: Container) -> bool:
+    """Whether the signed-in account is on the unlimited list: no rate limits, and nothing charged (see the module docstring).
+
+    Answers False with no lookup when the list is empty or the request carries no session cookie. Otherwise the session is
+    resolved through `get_auth_context` (cached for the request, so a route that looks the user up later pays nothing more),
+    and the answer is cached on the request too, so asking twice is free.
+    """
+    state = _state(request.scope)
+    cached = state.get(_UNLIMITED_KEY)
+    if isinstance(cached, bool):
+        return cached
+    settings = container.settings
+    answer = False
+    if settings.guard.has_unlimited and request.cookies.get(settings.auth.cookie_name):
+        try:
+            user = await get_current_user(request)
+        except Exception:  # not worth failing the request: the limits apply to anyone we cannot name
+            log.warning("unlimited_lookup_failed", exc_info=True)
+        else:
+            answer = user is not None and settings.guard.is_unlimited(user.email)
+    state[_UNLIMITED_KEY] = answer
+    return answer
+
+
 async def require_user(request: Request) -> User:
     """The signed-in account; a 401 (`Unauthorized`) when there is none."""
     user = await get_current_user(request)
@@ -273,5 +312,6 @@ __all__ = [
     "require_profile_access",
     "require_user",
     "sanitize_request_id",
+    "unlimited",
     "user_or_anonymous",
 ]

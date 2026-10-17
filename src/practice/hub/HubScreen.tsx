@@ -4,6 +4,7 @@
  * itself is `HubView`.
  */
 import type { Profile } from '../../../shared/types';
+import { useMe } from '../../auth/useMe';
 import { useTracker } from '../../discover/applications/tracker';
 import { isSampleId } from '../../match/model';
 import { fetchHistory } from '../api';
@@ -13,6 +14,7 @@ import { useLoad } from './useLoad';
 
 export function HubScreen({ profile }: { profile: Profile }) {
   const tracker = useTracker(profile.id);
+  const { unlimited } = useMe();
   const { load, reload } = useLoad((signal) => fetchHistory(profile.id, signal), [profile.id]);
-  return <HubView sample={isSampleId(profile.id)} tracked={tracker.items} history={load} onReload={reload} nav={liveNav} />;
+  return <HubView sample={isSampleId(profile.id)} tracked={tracker.items} history={load} unlimited={unlimited} onReload={reload} nav={liveNav} />;
 }

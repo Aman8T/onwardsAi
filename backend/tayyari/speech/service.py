@@ -15,6 +15,10 @@ The engine is None when there is no key (or speech is switched off): everything 
 browser's own speech. Budgets are soft (`speech.meter`). Which lines may be spoken, which to make ahead, and which words bias
 recognition, are the interview's to say: the routes get them from `InterviewService` and hand them in.
 
+``unlimited=True`` (the caller is an account on the unlimited list, `GuardSettings.is_unlimited`) leaves out the per-session share
+(``stt_session_seconds``, ``tts_session_chars``): the checks look at the day's budget alone, whatever the session has used.
+The day's budget is the owner's Sarvam credits and still applies; it is still charged to the session's record and the day's.
+
 Nothing here logs or keeps audio or text, only sizes, seconds and counts.
 """
 
@@ -137,14 +141,19 @@ class SpeechService:
             return "session_budget"
         return None
 
-    async def status(self, session_id: str | None = None) -> SpeechStatus:
+    async def _remaining(self, session_id: str | None, unlimited: bool) -> Remaining:
+        """What is left: the day's budget, and the session's share unless the caller is unlimited. A session cap that is 0 is
+        still a switch (`_spent`), not a quota, and keeps its meaning for everyone."""
+        return await self._meter.remaining(None if unlimited else session_id)
+
+    async def status(self, session_id: str | None = None, *, unlimited: bool = False) -> SpeechStatus:
         """What Sarvam speech can do now. Without ``session_id`` only the day's budget counts (Setup asks before a session
         exists)."""
         s = self._settings
         off = self._unconfigured()
         stt = tts = off
         if off is None:
-            remaining = await self._meter.remaining(session_id)
+            remaining = await self._remaining(session_id, unlimited)
             stt, tts = self._spent("stt", remaining), self._spent("tts", remaining)
         return SpeechStatus(
             stt=stt is None,
@@ -156,11 +165,11 @@ class SpeechService:
             maxSegmentBytes=s.max_segment_bytes,
         )
 
-    async def _engine_for(self, kind: Kind, session_id: str) -> SpeechEngine:
+    async def _engine_for(self, kind: Kind, session_id: str, unlimited: bool = False) -> SpeechEngine:
         """The engine, when ``kind`` is on for this session; else the `SpeechUnavailable` that says why."""
         reason = self._unconfigured()
         if reason is None:
-            reason = self._spent(kind, await self._meter.remaining(session_id))
+            reason = self._spent(kind, await self._remaining(session_id, unlimited))
         if reason is None and self._engine is not None:
             return self._engine
         if reason == "daily_budget":
@@ -169,10 +178,10 @@ class SpeechService:
             raise SpeechUnavailable(SESSION_MESSAGE, detail=f"{kind} session budget used")
         raise SpeechUnavailable(detail=f"{kind} {reason}")
 
-    async def ensure(self, kind: Kind, session_id: str) -> None:
+    async def ensure(self, kind: Kind, session_id: str, *, unlimited: bool = False) -> None:
         """Raise the `SpeechUnavailable` that says why ``kind`` is off for this session, or return when it is on. A route
         asks before it reads an upload, so a request that cannot be served costs no bytes."""
-        await self._engine_for(kind, session_id)
+        await self._engine_for(kind, session_id, unlimited)
 
     # ───────────────────────── speech to text ─────────────────────────
 
@@ -190,6 +199,8 @@ class SpeechService:
         mime: str,
         claimed_seconds: float,
         keyterms: Sequence[str],
+        *,
+        unlimited: bool = False,
     ) -> TranscribeResult:
         """One piece of an answer as words. Raises `SpeechRejected` (not audio we accept, or empty),
         `PayloadTooLarge` (over the size cap) and `SpeechUnavailable` (no engine, budget used, or the provider failed)."""
@@ -200,7 +211,7 @@ class SpeechService:
             raise SpeechRejected(detail="empty audio")
         if len(audio) > self._settings.max_segment_bytes:
             raise PayloadTooLarge(TOO_LARGE_MESSAGE)
-        engine = await self._engine_for("stt", session_id)
+        engine = await self._engine_for("stt", session_id, unlimited)
         seconds = self.billed_seconds(len(audio), claimed_seconds, codec)
         await self._meter.charge(session_id, stt_s=seconds)
         heard: Heard = await engine.transcribe(audio, mime=mime, keyterms=clean_keyterms(keyterms))
@@ -289,7 +300,9 @@ class SpeechService:
         log.info("speech_spoken", chars=len(said), bytes=len(audio), pace=rate, source=source)
         return audio
 
-    async def speak(self, session_id: str, text: str, pace: float | None = None) -> bytes:
+    async def speak(
+        self, session_id: str, text: str, pace: float | None = None, *, unlimited: bool = False
+    ) -> bytes:
         """``text`` as MP3. A line spoken before comes from memory and costs nothing; one being made right now is waited for
         (one Sarvam call serves everyone who asks); a new one is charged by its characters. Raises `SpeechRejected` (nothing
         to say) and `SpeechUnavailable` (no engine, budget used, or the provider failed)."""
@@ -305,7 +318,7 @@ class SpeechService:
             return cached
         task = self._making.get(key)
         if task is None:
-            engine = await self._engine_for("tts", session_id)
+            engine = await self._engine_for("tts", session_id, unlimited)
             # the check above may have waited: the line can have been made, or started, by someone else meanwhile
             cached = self._recall(key)
             if cached is not None:
@@ -316,7 +329,9 @@ class SpeechService:
 
     # ───────────────────────── making lines ahead ─────────────────────────
 
-    def prefetch(self, session_id: str, texts: Iterable[str], *, pace: float | None = None) -> int:
+    def prefetch(
+        self, session_id: str, texts: Iterable[str], *, pace: float | None = None, unlimited: bool = False
+    ) -> int:
         """Start making these lines in the background, in order, so they are ready when the browser asks. Fire and forget:
         it returns at once and never raises. A line already made, being made or waiting its turn is left alone; the rest
         are made ``tts_prefetch_concurrency`` at a time across the process, each charged like `speak` charges it, and one
@@ -327,12 +342,12 @@ class SpeechService:
         if not self.prefetching:
             return 0
         try:
-            return self._schedule(session_id, texts, pace)
+            return self._schedule(session_id, texts, pace, unlimited)
         except Exception as exc:  # a prefetch never breaks the request that asked for it
             log.warning("speech_prefetch_failed", reason=type(exc).__name__, stage="schedule")
             return 0
 
-    def _schedule(self, session_id: str, texts: Iterable[str], pace: float | None) -> int:
+    def _schedule(self, session_id: str, texts: Iterable[str], pace: float | None, unlimited: bool) -> int:
         asyncio.get_running_loop()  # fails here, before anything is scheduled, when called outside the event loop
         s = self._settings
         rate = self._rate(pace if pace is not None else self._paces.get(session_id))
@@ -347,7 +362,7 @@ class SpeechService:
                 continue
             self._queued.add(key)
             task = asyncio.create_task(
-                self._prefetch_line(session_id, key, said, rate), name="tayyari-prefetch"
+                self._prefetch_line(session_id, key, said, rate, unlimited), name="tayyari-prefetch"
             )
             self._background.add(task)
             task.add_done_callback(self._background.discard)
@@ -356,22 +371,26 @@ class SpeechService:
             log.info("speech_prefetch_scheduled", lines=scheduled, ready=ready, pace=rate)
         return scheduled
 
-    async def _prefetch_line(self, session_id: str, key: Key, said: str, rate: float) -> None:
+    async def _prefetch_line(
+        self, session_id: str, key: Key, said: str, rate: float, unlimited: bool = False
+    ) -> None:
         """One scheduled line: wait for a place among the lines made ahead, then make it if it is still wanted and paid for."""
         try:
             async with self._slots:
-                await self._prefetch_now(session_id, key, said, rate)
+                await self._prefetch_now(session_id, key, said, rate, unlimited)
         except Exception as exc:  # never raises: the task is nobody's to await
             log.warning("speech_prefetch_failed", chars=len(said), reason=_reason(exc))
         finally:
             self._queued.discard(key)
 
-    async def _prefetch_now(self, session_id: str, key: Key, said: str, rate: float) -> None:
+    async def _prefetch_now(
+        self, session_id: str, key: Key, said: str, rate: float, unlimited: bool = False
+    ) -> None:
         engine = self._engine
         if engine is None or not self.prefetching or self._ready(key):
             return
         async with self._budget:
-            remaining = await self._meter.remaining(session_id)
+            remaining = await self._remaining(session_id, unlimited)
             reason = self._spent("tts", remaining)
             if reason is not None or remaining.tts_chars < len(said):
                 log.info(

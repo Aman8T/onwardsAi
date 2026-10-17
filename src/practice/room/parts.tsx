@@ -8,7 +8,8 @@
  */
 import { useEffect, useId, useRef } from 'react';
 import type { InterviewSession, PlanSlot } from '../../../shared/interview';
-import { NO_SPEECH, SILENCE, SLOT_KIND_LABEL, MIC_BLOCKED, SARVAM_NOTE, SPEECH_NETWORK, END_EARLY, FREE_LINE, clock as fmtClock, leftLine, privacyLine, quoted } from '../words';
+import { NO_SPEECH, SILENCE, SLOT_KIND_LABEL, MIC_BLOCKED, SARVAM_NOTE, SPEECH_NETWORK, END_EARLY, clock as fmtClock, leftLine, privacyLine, quoted } from '../words';
+import { useFreeLine } from '../useFreeLine';
 import { ChevronIcon, KeyboardIcon, MicOffIcon, RepeatIcon } from './icons';
 import type { MicNote, Problem, RoomActions, RoomModel } from './model';
 
@@ -83,6 +84,7 @@ export function WhyBlock({ slot, open, onToggle }: { slot: PlanSlot; open: boole
 
 export function PlanRail({ model }: { model: RoomModel }) {
   const { session, position, total, done } = model;
+  const freeLine = useFreeLine();
   const askedIds = new Set(session.turns.filter((t) => t.speaker === 'you' && t.slotId).map((t) => t.slotId));
   return (
     <aside className="rm-rail" aria-label="The plan">
@@ -113,7 +115,7 @@ export function PlanRail({ model }: { model: RoomModel }) {
       <div className="rm-notes">
         <p className="rm-faint rm-small">{privacyLine(model.listenBy)}</p>
         {model.listenBy === 'sarvam' && <p className="rm-faint rm-small">{SARVAM_NOTE}</p>}
-        <p className="rm-faint rm-small">{FREE_LINE}</p>
+        <p className="rm-faint rm-small">{freeLine}</p>
       </div>
     </aside>
   );

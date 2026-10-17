@@ -38,6 +38,8 @@ export interface MeEntitlements {
   /** ISO timestamp until which every posting is included, when a pass is active. */
   passUntil?: string;
   freeMatchAvailable: boolean;
+  /** True for an account on the server's unlimited list (`TAYYARI_GUARD__UNLIMITED_EMAILS`): no limits, nothing charged. */
+  unlimited?: boolean;
 }
 
 /** Which ways of signing in this server offers; the sign-in sheet hides the others. */

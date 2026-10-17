@@ -1,7 +1,8 @@
 /**
  * Who is signed in. `useMe()` loads `/api/me` once (the first component to ask starts it) and exposes the `user`,
- * the account's `profiles`, the `entitlements`, the sign-in `providers`, whether the server matches postings without
- * an account (`anonymousMatch`, summed up as `matchAccess`) and `refresh()`.
+ * the account's `profiles`, the `entitlements` (and `unlimited`, whether the account is on the server's list with no
+ * limits: every screen that would pre-judge a limit reads that one flag), the sign-in `providers`, whether the server
+ * matches postings without an account (`anonymousMatch`, summed up as `matchAccess`) and `refresh()`.
  *
  * The state lives in this module, like the app store, so the account menu, the sign-in sheet and the invitation all
  * read the same answer. `useAutoClaim()` (mounted once, in App) attaches the profile on screen to the account as soon
@@ -13,6 +14,7 @@
  */
 import { useEffect, useSyncExternalStore } from 'react';
 import type { MeEntitlements, MeProfile, MeProviders, MeResponse, MeUser } from '../../shared/auth';
+import { isUnlimited } from '../billing/format';
 import * as api from '../lib/api';
 import { actions, getState, useApp } from '../store';
 
@@ -102,6 +104,8 @@ export interface MeView {
   user: MeUser | undefined;
   profiles: MeProfile[];
   entitlements: MeEntitlements;
+  /** The account has no limits and is never charged (`entitlements.unlimited`); false for a visitor and when the server says nothing. */
+  unlimited: boolean;
   providers: MeProviders;
   /** The server matches postings without an account (it said so; false when it said nothing). */
   anonymousMatch: boolean;
@@ -125,6 +129,7 @@ export function useMe(): MeView {
     user: me?.user,
     profiles: me?.profiles ?? [],
     entitlements: me?.entitlements ?? NO_ENTITLEMENTS,
+    unlimited: isUnlimited(me?.entitlements),
     providers: me?.providers ?? NO_PROVIDERS,
     anonymousMatch: me?.anonymousMatch === true,
     matchAccess: accessOf(snap),

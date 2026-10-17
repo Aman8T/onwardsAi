@@ -267,16 +267,26 @@ class InterviewService:
         return await self._save(item, state)
 
     async def assistant(
-        self, profile: Profile, session_id: str, req: AssistantRequest, ctx: CallContext
+        self,
+        profile: Profile,
+        session_id: str,
+        req: AssistantRequest,
+        ctx: CallContext,
+        *,
+        unlimited: bool = False,
     ) -> AssistantReply:
-        """One message to the work sample's assistant. Not graded; the debrief only reports how it was used."""
+        """One message to the work sample's assistant. Not graded; the debrief only reports how it was used.
+
+        ``unlimited`` (an account on the unlimited list) lifts the per-session cap on messages: it is never told it has used
+        them, and ``left`` stays at the full allowance so a client that stops at 0 keeps going. A setting of 0 still means
+        "no assistant" for everyone."""
         self.require_enabled()
         item, state = await self._open(profile, session_id)
         limit = self._settings.assistant_messages
         task = state.task
         if state.kind != "work" or task is None or not task.assistant or limit <= 0:
             raise AssistantUnavailable()
-        if len(state.assistant) >= limit:
+        if not unlimited and len(state.assistant) >= limit:
             raise AssistantUnavailable("You've used this session's assistant messages.")
         message = req.message.strip()
         if not message:
@@ -296,7 +306,7 @@ class InterviewService:
         state.assistant.append(AssistantTurn(you=message, assistant=reply))
         await self._save(item, state)
         asked = len(state.assistant)
-        return AssistantReply(reply=reply, asked=asked, left=max(0, limit - asked))
+        return AssistantReply(reply=reply, asked=asked, left=limit if unlimited else max(0, limit - asked))
 
     async def end(self, profile: Profile, session_id: str, ctx: CallContext) -> Debrief:
         """End the interview (a finished one returns its debrief again) and write the debrief."""

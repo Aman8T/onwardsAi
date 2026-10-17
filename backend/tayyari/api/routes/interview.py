@@ -24,6 +24,11 @@ ending and the assistant shed in the ``chat`` bucket and reserve a small spend (
 work, a repeat and adding a fact call no model. "Ask this one again" has a daily window of its own. Nothing is charged to
 an account: practice is free while it is tested, and the windows are the only meter.
 
+An account on the unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``, `api.deps.unlimited`) is counted in none of those windows
+(every ``shed`` and ``check`` is skipped, "ask this one again" included), is told no number of interviews left today
+(``leftToday`` is absent), has no per-session limit on the work sample's assistant messages, and has no per-session share of
+Sarvam speech. The spend reservations, the turn cap of one session and the day's Sarvam budget still apply.
+
 Switched off (``TAYYARI_INTERVIEW__ENABLED=false``) every route answers 503 except the delete: a person can always take
 their transcript away.
 
@@ -44,7 +49,7 @@ from pydantic import ValidationError
 from starlette.background import BackgroundTask
 from starlette.responses import Response
 
-from tayyari.api.deps import get_current_user, get_request_context, require_profile_access
+from tayyari.api.deps import get_current_user, get_request_context, require_profile_access, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes._body import read_model
 from tayyari.api.routes._voice import prefetch_voice, voice_after
@@ -114,9 +119,12 @@ def _ctx(rc: RequestContext, profile_id: str, purpose: Purpose) -> CallContext:
     return CallContext(purpose=purpose, request_id=rc.request_id, profile_id=profile_id, ip_hash=rc.ip_hash)
 
 
-def _shed_light(container: Container, rc: RequestContext) -> None:
+async def _shed_light(request: Request, container: Container, rc: RequestContext) -> None:
     container.rate_limiter.shed(
-        "chat", rc.ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip)
+        "chat",
+        rc.ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip),
+        exempt=await unlimited(request, container),
     )
 
 
@@ -125,7 +133,7 @@ async def _begin(request: Request, session_id: str | None = None) -> tuple[Conta
     the shape of the session id (before a body is read for a session that cannot be there)."""
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed_light(container, rc)
+    await _shed_light(request, container, rc)
     container.interview.require_enabled()
     if session_id is not None:
         _require_hex(session_id)
@@ -142,12 +150,17 @@ async def _count(
     """Count one request against the client's windows for ``route``, and the account's when signed in (the whole-service
     counter is only touched once)."""
     limiter = container.rate_limiter
+    free = await unlimited(request, container)
     await limiter.check(
-        route, rc.ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip), memory=False
+        route,
+        rc.ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip),
+        memory=False,
+        exempt=free,
     )
     user = await get_current_user(request)
     if user is not None:
-        await limiter.check(route, f"u:{user.id}", memory=False, globally=False)
+        await limiter.check(route, f"u:{user.id}", memory=False, globally=False, exempt=free)
 
 
 # ───────────────────────── planning and starting ─────────────────────────
@@ -167,7 +180,10 @@ async def start_interview(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
     container.rate_limiter.shed(
-        "interview", rc.ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip)
+        "interview",
+        rc.ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip),
+        exempt=await unlimited(request, container),
     )
     service = container.interview
     service.require_enabled()
@@ -176,7 +192,8 @@ async def start_interview(request: Request) -> JSONResponse:
     await _count(request, container, rc, "interview")
     async with container.spend_guard.reserve(container.settings.guard.est_interview_usd):
         session = await service.start(profile, body, _ctx(rc, profile.id, "interview.phrase"))
-    return _json(session.to_dict(), voice_after(container, profile, session.id))
+    free = await unlimited(request, container)
+    return _json(session.to_dict(), voice_after(container, profile, session.id, unlimited=free))
 
 
 # ───────────────────────── reading back ─────────────────────────
@@ -187,6 +204,8 @@ async def practice_history(request: Request) -> JSONResponse:
     container, _ = await _begin(request)
     profile = await _profile(request, container, request.query_params.get("profileId", ""))
     per_day = container.settings.guard.interview_per_day
+    if await unlimited(request, container):
+        per_day = 0  # no daily allowance to count down: the history says nothing about interviews left today
     if container.sample.is_sample_profile(profile.id):
         # Everyone shares the sample profile, so its practice is never listed: a session is reachable only through
         # the id its own browser holds. Another visitor's transcript and kept facts must not show up here.
@@ -204,7 +223,10 @@ async def interview_view(session_id: str, request: Request) -> JSONResponse:
         raise NotFound(SESSION_NOT_FOUND)
     # a reload: this replica may not have the lines yet (its memory is its own)
     active = view.session.status == "active"
-    return _json(view.to_dict(), voice_after(container, profile, session_id) if active else None)
+    free = await unlimited(request, container)
+    return _json(
+        view.to_dict(), voice_after(container, profile, session_id, unlimited=free) if active else None
+    )
 
 
 # ───────────────────────── inside an interview ─────────────────────────
@@ -216,13 +238,14 @@ async def answer_interview(session_id: str, request: Request) -> JSONResponse:
     body = await read_model(request, container, AnswerRequest, max_bytes=ANSWER_BODY_MAX_BYTES)
     profile = await _profile(request, container, body.profileId)
     # the judge takes about 2 s: meanwhile the lines the next turn may need are made (which one it is depends on the judge)
-    await prefetch_voice(container, profile, session_id, next_turn=True)
+    free = await unlimited(request, container)
+    await prefetch_voice(container, profile, session_id, next_turn=True, unlimited=free)
     async with container.spend_guard.reserve(container.settings.guard.est_interview_turn_usd):
         session = await container.interview.answer(
             profile, session_id, body, _ctx(rc, profile.id, "interview.judge")
         )
     # the new line, and what follows it (a reply to a dispute or an off-topic answer could not be known before)
-    return _json(session.to_dict(), voice_after(container, profile, session_id))
+    return _json(session.to_dict(), voice_after(container, profile, session_id, unlimited=free))
 
 
 @router.post("/api/interview/sessions/{session_id}/work")
@@ -231,7 +254,8 @@ async def submit_interview_work(session_id: str, request: Request) -> JSONRespon
     body = await read_model(request, container, WorkSubmit, max_bytes=WORK_BODY_MAX_BYTES)
     profile = await _profile(request, container, body.profileId)
     session = await container.interview.submit_work(profile, session_id, body)
-    return _json(session.to_dict(), voice_after(container, profile, session_id))
+    free = await unlimited(request, container)
+    return _json(session.to_dict(), voice_after(container, profile, session_id, unlimited=free))
 
 
 @router.post("/api/interview/sessions/{session_id}/assistant")
@@ -241,7 +265,11 @@ async def ask_interview_assistant(session_id: str, request: Request) -> JSONResp
     profile = await _profile(request, container, body.profileId)
     async with container.spend_guard.reserve(container.settings.guard.est_interview_turn_usd):
         reply = await container.interview.assistant(
-            profile, session_id, body, _ctx(rc, profile.id, "interview.assistant")
+            profile,
+            session_id,
+            body,
+            _ctx(rc, profile.id, "interview.assistant"),
+            unlimited=await unlimited(request, container),
         )
     return _json(reply.to_dict())
 
@@ -268,7 +296,8 @@ async def ask_again(session_id: str, request: Request) -> JSONResponse:
     profile = await _profile(request, container, body.profileId)
     await _count(request, container, rc, "interview_again")
     session = await container.interview.again(profile, session_id, body.slotId)
-    return _json(session.to_dict(), voice_after(container, profile, session.id))
+    free = await unlimited(request, container)
+    return _json(session.to_dict(), voice_after(container, profile, session.id, unlimited=free))
 
 
 @router.post("/api/interview/sessions/{session_id}/facts")
@@ -286,7 +315,7 @@ async def set_interview_fact(session_id: str, request: Request) -> JSONResponse:
 async def delete_interview(session_id: str, request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed_light(container, rc)
+    await _shed_light(request, container, rc)
     _require_hex(session_id)
     profile = await _profile(request, container, request.query_params.get("profileId", ""))
     if not await container.interview.delete(profile, session_id):

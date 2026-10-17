@@ -22,14 +22,14 @@ export interface PasteViewProps {
   busy: boolean;
   /** The server's sentence after a refusal (422, 429, a failed stream). */
   notice?: string;
-  /** Show the "you've used your free posting" panel. */
+  /** Show the "you've used your free posting" panel (never for an account with no limits: the caller leaves it off). */
   paywall: boolean;
   onDismissPaywall: () => void;
   /** Why matching is not possible yet, as a sentence (no profile, a sample profile); empty when it is. */
   blocker?: string;
   /** What to do about the blocker, when there is something to do. */
   blockerAction?: { label: string; run: () => void };
-  /** Say that the first posting is free (a visitor, or a signed-in person with the free one still available). */
+  /** Say that the first posting is free (a visitor, or a signed-in person with the free one still available; never for an account with no limits). */
   showFree: boolean;
   /**
    * The server matches without an account and nobody is signed in: say it is free while Tayyari is in preview and that

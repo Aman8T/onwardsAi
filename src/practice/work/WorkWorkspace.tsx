@@ -5,6 +5,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import type { AssistantTurn } from '../../../shared/interview';
+import { useMe } from '../../auth/useMe';
 import { useNow } from '../../lib/ui';
 import { sentenceOf } from '../api';
 import type { RoomActions, RoomModel } from '../room/model';
@@ -54,6 +55,8 @@ export function WorkWorkspace({ model, actions, work }: { model: RoomModel; acti
   const [asking, setAsking] = useState(false);
   const [askError, setAskError] = useState<string | undefined>();
   const [left, setLeft] = useState<number | undefined>();
+  // an account with no limits never sees a message count
+  const { unlimited } = useMe();
   const now = useNow(30_000);
 
   // the note is also kept in a ref: the last words of "talk it through" can land after a click, and the hand-in must have them
@@ -84,7 +87,7 @@ export function WorkWorkspace({ model, actions, work }: { model: RoomModel; acti
       const reply = await work.ask(msg, text);
       setLog((l) => [...l, { you: msg, assistant: reply.reply }]);
       setMessage('');
-      setLeft(reply.left);
+      setLeft(unlimited ? undefined : reply.left);
     } catch (err) {
       setAskError(sentenceOf(err));
     } finally {

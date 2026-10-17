@@ -22,7 +22,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.responses import Response
 
-from tayyari.api.deps import get_request_context
+from tayyari.api.deps import get_request_context, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes._body import read_model
 from tayyari.api.security import subnet_hash
@@ -56,9 +56,14 @@ def _clear_state_cookie(response: Response, container: Container) -> None:
     )
 
 
-def _shed(container: Container, request_ip_hash: str | None, client_ip: str | None) -> None:
+async def _shed(
+    request: Request, container: Container, request_ip_hash: str | None, client_ip: str | None
+) -> None:
     container.rate_limiter.shed(
-        "chat", request_ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, client_ip)
+        "chat",
+        request_ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, client_ip),
+        exempt=await unlimited(request, container),
     )
 
 
@@ -66,7 +71,7 @@ def _shed(container: Container, request_ip_hash: str | None, client_ip: str | No
 async def google_start(request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     try:
         start = container.auth.google_start(request.query_params.get("next"))
     except GoogleError as err:
@@ -89,7 +94,7 @@ async def google_start(request: Request) -> Response:
 async def google_callback(request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     params = request.query_params
     if params.get("error"):
         # The person said no on Google's page (access_denied) or Google refused: nothing to verify.
@@ -119,7 +124,7 @@ async def google_callback(request: Request) -> Response:
 async def request_magic_link(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     body = await read_model(request, container, MagicLinkRequest)
     outcome = await container.auth.request_magic_link(body.email, rc.ip_hash)
     answer = MagicLinkResponse(ok=True, devLink=outcome.dev_link)
@@ -130,7 +135,7 @@ async def request_magic_link(request: Request) -> JSONResponse:
 async def verify_magic_link(request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     signed = await container.auth.verify_magic_link(
         request.query_params.get("token", ""),
         ip_hash=rc.ip_hash,
@@ -147,7 +152,7 @@ async def verify_magic_link(request: Request) -> Response:
 async def logout(request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     await container.auth.sessions.end(request.cookies.get(container.settings.auth.cookie_name))
     response = Response(status_code=204, headers=NO_STORE)
     clear_session_cookie(response, container.settings)

@@ -6,7 +6,8 @@ a CORS preflight, JSON it cannot), the body read with its size cap and a deadlin
 (400 with the legacy text), the profile's owner (404: a profile an account has claimed is chatted about only by that
 account's session, and anyone else gets the sentence an unknown id gets, see `api.deps.require_profile_access`), a
 stream slot (429: a few conversations per client and per process at a time, a chat answer streams for many seconds),
-the shared per-IP counters (429) and the daily spend ceiling (503).
+the shared per-IP counters (429) and the daily spend ceiling (503). An account on the unlimited list
+(``TAYYARI_GUARD__UNLIMITED_EMAILS``) skips ``shed`` and the counters; the slot and the ceiling still apply.
 
 The stream slot and the spend reservation (the estimate counts against the ceiling for everyone else while the
 turn runs) are held until the response is over, however it ends.
@@ -20,7 +21,7 @@ from fastapi import APIRouter, Request
 from pydantic import ValidationError
 from starlette.responses import Response
 
-from tayyari.api.deps import get_request_context, require_profile_access
+from tayyari.api.deps import get_request_context, require_profile_access, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes.analyze import HeldResponse
 from tayyari.api.security import subnet_hash
@@ -70,7 +71,8 @@ async def chat(request: Request) -> Response:
     limiter = container.rate_limiter
     guard = container.settings.guard
     ip48 = subnet_hash(container.ip_hash_key, rc.client_ip)
-    limiter.shed("chat", rc.ip_hash, ip_hash_48=ip48)
+    free = await unlimited(request, container)
+    limiter.shed("chat", rc.ip_hash, ip_hash_48=ip48, exempt=free)
     require_json_content_type(request)
     raw = await read_json_body(request, read_timeout_s=guard.upload_read_timeout_s)
     try:
@@ -83,7 +85,7 @@ async def chat(request: Request) -> Response:
     try:
         # The slot first: a refused conversation costs nothing, and does not use up the caller's rate-limit windows.
         await held.enter_async_context(get_chat_slots(request, container).acquire(rc.ip_hash))
-        await limiter.check("chat", rc.ip_hash, ip_hash_48=ip48, memory=False)
+        await limiter.check("chat", rc.ip_hash, ip_hash_48=ip48, memory=False, exempt=free)
         await held.enter_async_context(container.spend_guard.reserve(guard.est_chat_usd))
         return HeldResponse(request, container.chat.stream_turn(body, rc), TAG, held)
     except BaseException:

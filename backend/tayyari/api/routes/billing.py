@@ -27,7 +27,7 @@ from contextlib import aclosing
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from tayyari.api.deps import get_current_user, get_request_context, require_user
+from tayyari.api.deps import get_current_user, get_request_context, require_user, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes._body import read_model
 from tayyari.api.security import subnet_hash
@@ -48,8 +48,13 @@ WEBHOOK_MAX_BYTES = 512 * 1024
 BODY_TOO_LARGE = "Request body too large"
 
 
-def _shed(container: Container, ip_hash: str | None, client_ip: str | None) -> None:
-    container.rate_limiter.shed("chat", ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, client_ip))
+async def _shed(request: Request, container: Container, ip_hash: str | None, client_ip: str | None) -> None:
+    container.rate_limiter.shed(
+        "chat",
+        ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, client_ip),
+        exempt=await unlimited(request, container),
+    )
 
 
 def _timezone(value: str | None) -> str | None:
@@ -77,7 +82,7 @@ async def _read_raw(request: Request, container: Container) -> bytes:
 async def get_entitlements(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     user = await get_current_user(request)
     answer = await container.billing.entitlements_view(
         user,
@@ -91,7 +96,7 @@ async def get_entitlements(request: Request) -> JSONResponse:
 async def checkout(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     user = await require_user(request)
     body = await read_model(request, container, CheckoutRequest)
     currency = body.currency or container.billing.currency_for(
@@ -105,7 +110,7 @@ async def checkout(request: Request) -> JSONResponse:
 async def verify(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     user = await require_user(request)
     body = await read_model(request, container, VerifyRequest)
     answer = await container.billing.verify_razorpay(

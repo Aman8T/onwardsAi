@@ -17,7 +17,7 @@ from tayyari.contract.jobsearch import JobPosting, JobSearchRun, ReferralNote, R
 from tayyari.contract.stored import StoredContext
 from tayyari.core.settings import Settings
 from tayyari.jobsearch import service as jobsearch_service
-from tayyari.storage.tables import LlmCallRow
+from tayyari.storage.tables import LlmCallRow, RateLimitHitRow
 from tests.fakes.claude import search_run
 from tests.fakes.discover import DATA, FakeBoards, profile_of, read_json
 from tests.integration.support import Env, ndjson_lines, roomy_guard, running
@@ -156,6 +156,73 @@ async def test_without_an_account_the_daily_allowance_is_the_meter(start: Any) -
         assert second.status_code == 429 and int(second.headers["retry-after"]) > 0
         assert "without an account" in second.json()["error"]
         assert len(rig.env.claude.search_calls) == 3  # the refused run started nothing
+
+
+# ───────────────────────── an account on the unlimited list ─────────────────────────
+
+LISTED = "tester@example.com"
+OTHER = "other@example.com"
+UNLIMITED_LIST = f" {LISTED.upper()} , second.listed@example.org"
+"""Written the way an owner might: padding, capitals, a second address."""
+ONE_EACH = {
+    "jobsearch_per_minute": 1,
+    "jobsearch_per_hour": 1,
+    "jobsearch_per_day": 1,
+    "jobsearch_global_per_hour": 1,
+    "anon_jobsearch_per_day": 1,
+}
+
+
+async def test_a_listed_account_searches_past_every_window_and_others_do_not(start: Any) -> None:
+    guard = roomy_guard(unlimited_emails=UNLIMITED_LIST, **ONE_EACH)
+    async with start(guard=guard) as rig:
+        await rig.profile()
+        rig.script()
+        listed_id, listed = await rig.account(LISTED)
+        _, other = await rig.account(OTHER)
+        address = {"cf-connecting-ip": "203.0.113.8"}
+        for _ in range(3):  # per account, per address and for the whole service: none of it is counted
+            run = await rig.search(headers={**listed, **address})
+            assert run.status_code == 200 and events_of(run)[-1]["type"] == "done"
+        assert not [h for h in await rig.env.rows(RateLimitHitRow) if h.bucket.startswith("jobsearch")]
+
+        # the same setup, the same address: the whole service had nothing counted, so one more is welcome
+        first = await rig.search(headers={**other, **address})
+        second = await rig.search(headers={**other, **address})
+        anonymous = await rig.search(headers=address)
+        counted = [h.bucket for h in await rig.env.rows(RateLimitHitRow) if h.bucket.startswith("jobsearch")]
+    assert first.status_code == 200
+    assert second.status_code == 429 and int(second.headers["retry-after"]) > 0
+    assert anonymous.status_code == 429
+    assert counted and not any(listed_id in bucket for bucket in counted)
+    assert (
+        len(rig.env.claude.search_calls) == 12
+    )  # four searches ran, three scouts each; the refused ones started nothing
+
+
+async def test_the_light_job_search_reads_never_shed_a_listed_account(start: Any) -> None:
+    async with start(guard=roomy_guard(unlimited_emails=UNLIMITED_LIST, chat_per_minute=1)) as rig:
+        await rig.profile()
+        _, listed = await rig.account(LISTED)
+        params = {"profileId": FRONTEND_ID}
+        mine = [
+            (await rig.env.client.get("/api/jobsearch/latest", params=params, headers=listed)).status_code
+            for _ in range(10)
+        ]
+        theirs = [
+            (await rig.env.client.get("/api/jobsearch/latest", params=params)).status_code for _ in range(6)
+        ]
+    assert 429 not in mine  # a 404 each: there is no search yet
+    assert theirs[:2] == [404, 404] and 429 in theirs
+
+
+async def test_a_listed_account_still_meets_the_spend_ceiling_on_a_search(start: Any) -> None:
+    async with start(guard=roomy_guard(unlimited_emails=UNLIMITED_LIST, daily_ceiling_usd=0.05)) as rig:
+        await rig.profile()
+        rig.script()
+        _, listed = await rig.account(LISTED)
+        response = await rig.search(headers=listed)
+        assert response.status_code == 503 and rig.env.claude.calls == []
 
 
 async def test_a_spend_ceiling_refuses_before_the_stream_starts(start: Any) -> None:

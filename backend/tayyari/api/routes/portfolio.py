@@ -22,7 +22,8 @@ route (429) and the daily spend ceiling (503, the estimate stays reserved until 
 portfolio that already exists AND can be read back (`PortfolioService.has_readable`) costs nothing, so that path skips
 the counters and the reservation; a stored document that no longer validates is rebuilt, and paid for. Reads, edits and
 the delete call no model and only ``shed`` in the ``chat`` bucket, like `routes/profile.py`; a section rewrite pays like
-a generation. State-changing methods are covered by the cross-site guard (`api.security.CrossSiteGuard`).
+a generation. An account on the unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``) skips every ``shed`` and counter here;
+the spend reservation still applies. State-changing methods are covered by the cross-site guard (`api.security.CrossSiteGuard`).
 """
 
 from __future__ import annotations
@@ -34,7 +35,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from starlette.responses import Response
 
-from tayyari.api.deps import get_request_context, require_profile_access
+from tayyari.api.deps import get_request_context, require_profile_access, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes.analyze import HeldResponse
 from tayyari.api.security import subnet_hash
@@ -82,9 +83,12 @@ def _require_id(value: str, message: str) -> None:
         raise NotFound(message)
 
 
-def _shed(container: Container, rc: RequestContext, route: Route) -> None:
+async def _shed(request: Request, container: Container, rc: RequestContext, route: Route) -> None:
     container.rate_limiter.shed(
-        route, rc.ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip)
+        route,
+        rc.ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip),
+        exempt=await unlimited(request, container),
     )
 
 
@@ -107,7 +111,8 @@ async def generate(request: Request) -> Response:
     limiter = container.rate_limiter
     guard = container.settings.guard
     ip48 = subnet_hash(container.ip_hash_key, rc.client_ip)
-    limiter.shed("portfolio", rc.ip_hash, ip_hash_48=ip48)
+    free = await unlimited(request, container)
+    limiter.shed("portfolio", rc.ip_hash, ip_hash_48=ip48, exempt=free)
     body = await _read_body(request, container, PortfolioRequest)
     _require_id(body.profileId, PROFILE_NOT_FOUND)
     await require_profile_access(request, body.profileId, not_found=PROFILE_NOT_FOUND)
@@ -117,7 +122,7 @@ async def generate(request: Request) -> Response:
     try:
         has_page = not regenerate and await container.portfolio.has_readable(body.profileId)
         if not has_page:
-            await limiter.check("portfolio", rc.ip_hash, ip_hash_48=ip48, memory=False)
+            await limiter.check("portfolio", rc.ip_hash, ip_hash_48=ip48, memory=False, exempt=free)
             await held.enter_async_context(container.spend_guard.reserve(guard.est_portfolio_usd))
         return HeldResponse(request, container.portfolio.generate(body.profileId, regenerate, rc), TAG, held)
     except BaseException:
@@ -129,7 +134,7 @@ async def generate(request: Request) -> Response:
 async def get_portfolio(profile_id: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc, "chat")
+    await _shed(request, container, rc, "chat")
     _require_id(profile_id, PORTFOLIO_NOT_FOUND)
     await require_profile_access(request, profile_id, not_found=PORTFOLIO_NOT_FOUND)
     portfolio = await container.portfolio.get(profile_id)
@@ -142,7 +147,7 @@ async def get_portfolio(profile_id: str, request: Request) -> JSONResponse:
 async def patch_portfolio(profile_id: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc, "chat")
+    await _shed(request, container, rc, "chat")
     _require_id(profile_id, PORTFOLIO_NOT_FOUND)
     await require_profile_access(request, profile_id, not_found=PORTFOLIO_NOT_FOUND)
     patch = await _read_body(request, container, PortfolioPatch)
@@ -154,7 +159,7 @@ async def patch_portfolio(profile_id: str, request: Request) -> JSONResponse:
 async def delete_portfolio(profile_id: str, request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc, "chat")
+    await _shed(request, container, rc, "chat")
     _require_id(profile_id, PORTFOLIO_NOT_FOUND)
     await require_profile_access(request, profile_id, not_found=PORTFOLIO_NOT_FOUND)
     await container.portfolio.delete(profile_id)
@@ -166,11 +171,12 @@ async def rewrite_slot(profile_id: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
     ip48 = subnet_hash(container.ip_hash_key, rc.client_ip)
-    container.rate_limiter.shed("portfolio", rc.ip_hash, ip_hash_48=ip48)
+    free = await unlimited(request, container)
+    container.rate_limiter.shed("portfolio", rc.ip_hash, ip_hash_48=ip48, exempt=free)
     _require_id(profile_id, PORTFOLIO_NOT_FOUND)
     await require_profile_access(request, profile_id, not_found=PORTFOLIO_NOT_FOUND)
     body = await _read_body(request, container, RewriteRequest)
-    await container.rate_limiter.check("portfolio", rc.ip_hash, ip_hash_48=ip48, memory=False)
+    await container.rate_limiter.check("portfolio", rc.ip_hash, ip_hash_48=ip48, memory=False, exempt=free)
     async with container.spend_guard.reserve(container.settings.guard.est_portfolio_usd):
         portfolio = await container.portfolio.rewrite(profile_id, body.slotId, rc)
     return _no_store(portfolio.to_dict())
@@ -180,7 +186,7 @@ async def rewrite_slot(profile_id: str, request: Request) -> JSONResponse:
 async def public_preview(profile_id: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc, "chat")
+    await _shed(request, container, rc, "chat")
     _require_id(profile_id, PORTFOLIO_NOT_FOUND)
     await require_profile_access(request, profile_id, not_found=PORTFOLIO_NOT_FOUND)
     preview = await container.portfolio.public_preview(profile_id)
@@ -191,7 +197,7 @@ async def public_preview(profile_id: str, request: Request) -> JSONResponse:
 async def public_page(public_id: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc, "chat")
+    await _shed(request, container, rc, "chat")
     _require_id(public_id, PORTFOLIO_NOT_FOUND)
     page = await container.portfolio.public(public_id)
     if page is None:

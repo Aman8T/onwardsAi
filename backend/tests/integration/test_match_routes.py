@@ -25,6 +25,7 @@ from tayyari.storage.tables import (
     MatchRow,
     PostingRow,
     ProfileFactsRow,
+    RateLimitHitRow,
     UserFactRow,
     VariantRow,
 )
@@ -658,6 +659,113 @@ async def test_the_whole_service_has_a_cap_too(start: Any) -> None:
         second = await rig.post_match(bob, headers={"cf-connecting-ip": "203.0.113.2"})
     assert first.status_code == 200 and second.status_code == 429
     assert "busy" in second.json()["error"]
+
+
+# ───────────────────────── an account on the unlimited list ─────────────────────────
+
+LISTED = "tester@example.com"
+OTHER = "other@example.com"
+UNLIMITED_LIST = f" {LISTED.upper()} , second.listed@example.org"
+"""Written the way an owner might: padding, capitals, a second address."""
+
+
+def listed_guard(**overrides: Any) -> Any:
+    return roomy_guard(unlimited_emails=UNLIMITED_LIST, **overrides)
+
+
+async def test_a_listed_account_is_past_the_free_match_with_no_402_and_nothing_is_charged(start: Any) -> None:
+    async with start(guard=listed_guard()) as rig:
+        tester = await rig.account(LISTED)
+        bob = await rig.account(OTHER, "b" * 32)
+        ids = [
+            (await rig.match(tester))[0] for _ in range(3)
+        ]  # the free match was never used, and there are no credits
+        assert len(set(ids)) == 3 and len(await rig.rows(MatchRow, MatchRow.user_id == tester.user.id)) == 3
+        assert await rig.ledger(tester) == []  # no free_monthly, no match, no refund: the ledger is untouched
+        assert await rig.entitlements(tester) == {"credits": 0, "freeMatchAvailable": True, "unlimited": True}
+
+        # the same setup for an ordinary account: the free match once, then a 402 and nothing else
+        await rig.match(bob)
+        refused = await rig.post_match(bob)
+        assert refused.status_code == 402
+        assert refused.json() == {"error": "payment_required", "reason": "no_credits"}
+        assert await rig.entitlements(bob) == {"credits": 0, "freeMatchAvailable": False}
+        assert await rig.ledger(tester) == []
+
+        # what the listed account made is its own: only it can open it
+        opened = await rig.get(tester, f"/api/match/{ids[0]}")
+        stranger = await rig.get(bob, f"/api/match/{ids[0]}")
+    assert opened.status_code == 200 and stranger.status_code == 404
+
+
+async def test_a_listed_account_is_not_counted_against_any_match_limit(start: Any) -> None:
+    limits = {"match_per_minute": 1, "match_per_hour": 1, "match_per_day": 1, "match_global_per_hour": 1}
+    async with start(guard=listed_guard(**limits)) as rig:
+        tester = await rig.account(LISTED)
+        bob = await rig.account(OTHER, "b" * 32)
+        await rig.env.container.entitlements.grant(bob.user.id, "pass30", "order-1")
+        home = {"cf-connecting-ip": "203.0.113.5"}
+        for _ in range(4):  # not per account, not per address, not for the whole service
+            assert (await rig.post_match(tester, headers=home)).status_code == 200
+        counted = [h for h in await rig.rows(RateLimitHitRow) if h.bucket.startswith("match")]
+        assert counted == []
+
+        # the whole service had nothing counted, so Bob's first goes through, from the very same address; his second does not
+        assert (await rig.post_match(bob, headers=home)).status_code == 200
+        refused = await rig.post_match(bob, headers=home)
+        assert refused.status_code == 429 and int(refused.headers["retry-after"]) >= 1
+
+
+async def test_the_other_match_routes_never_shed_a_listed_account(start: Any) -> None:
+    async with start(guard=listed_guard(chat_per_minute=1)) as rig:
+        tester = await rig.account(LISTED)
+        bob = await rig.account(OTHER, "b" * 32)
+        match_id, _ = await rig.match(tester)
+        bob_match_id, _ = await rig.match(bob)
+        address = {"cf-connecting-ip": "203.0.113.77"}
+        mine = [
+            (
+                await rig.client.get(f"/api/match/{match_id}", headers={**tester.headers, **address})
+            ).status_code
+            for _ in range(10)
+        ]
+        theirs = [
+            (
+                await rig.client.get(f"/api/match/{bob_match_id}", headers={**bob.headers, **address})
+            ).status_code
+            for _ in range(6)
+        ]
+    assert mine == [200] * 10
+    assert theirs[:2] == [200, 200] and 429 in theirs  # the listed account never used up the address's share
+
+
+async def test_a_failed_match_of_a_listed_account_has_nothing_to_give_back(start: Any) -> None:
+    claude = scripted(meera())
+    rescript(claude, "match.posting", ClaudeOverloaded())
+    async with start(claude=claude, guard=listed_guard()) as rig:
+        tester = await rig.account(LISTED)
+        failed = lines(await rig.post_match(tester))
+        assert failed[-1]["type"] == "error" and failed[-1]["code"] == "failed"
+        assert await rig.ledger(tester) == []  # no charge, so no refund row either
+        assert await rig.rows(MatchRow) == []
+        assert (await rig.entitlements(tester))["freeMatchAvailable"] is True
+
+
+async def test_a_listed_account_still_meets_the_spend_ceiling(start: Any) -> None:
+    async with start(guard=listed_guard(daily_ceiling_usd=0.01)) as rig:
+        tester = await rig.account(LISTED)
+        response = await rig.post_match(tester)
+        assert response.status_code == 503
+        assert await rig.ledger(tester) == [] and rig.claude.structured_calls == []
+
+
+async def test_an_empty_list_leaves_a_matching_email_ordinary(start: Any) -> None:
+    async with start(guard=roomy_guard(match_per_hour=1, match_per_day=0)) as rig:
+        tester = await rig.account(LISTED)
+        await rig.env.container.entitlements.grant(tester.user.id, "pass30", "order-1")
+        assert (await rig.post_match(tester)).status_code == 200
+        assert (await rig.post_match(tester)).status_code == 429
+        assert "unlimited" not in await rig.entitlements(tester)
 
 
 # ───────────────────────── questions ─────────────────────────

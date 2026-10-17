@@ -2,6 +2,8 @@
 
 The order of the guards is part of the contract (everything before the stream is a JSON error):
 
+0. ``deps.unlimited``: an account on the unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``) skips steps 1 and 4; steps 2,
+   3, 5 and 6 (the upload limits, the spend ceiling, the slots) apply to everyone.
 1. ``rate_limiter.shed``: the in-memory bucket turns hammering away before the body is read.
 2. ``parse_analyze_form``: streamed multipart with hard caps (413 / 400), a deadline for the whole read (408),
    one upload being read per client (429) and a process-wide budget of buffered upload bytes (503).
@@ -26,7 +28,7 @@ from fastapi import APIRouter, Request
 from starlette.responses import Response
 from starlette.types import Receive, Scope, Send
 
-from tayyari.api.deps import get_request_context
+from tayyari.api.deps import get_request_context, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.ndjson import NdjsonResponse, StreamEvent
 from tayyari.api.security import subnet_hash
@@ -72,7 +74,8 @@ async def analyze(request: Request) -> Response:
     limiter = container.rate_limiter
     guard = container.settings.guard
     ip48 = subnet_hash(container.ip_hash_key, rc.client_ip)
-    limiter.shed("analyze", rc.ip_hash, ip_hash_48=ip48)
+    free = await unlimited(request, container)
+    limiter.shed("analyze", rc.ip_hash, ip_hash_48=ip48, exempt=free)
     req = await parse_analyze_form(
         request,
         read_timeout_s=guard.upload_read_timeout_s,
@@ -83,7 +86,7 @@ async def analyze(request: Request) -> Response:
     slots = container.analysis_slots
     if slots.locked():
         raise _busy()
-    await limiter.check("analyze", rc.ip_hash, ip_hash_48=ip48, memory=False)
+    await limiter.check("analyze", rc.ip_hash, ip_hash_48=ip48, memory=False, exempt=free)
 
     held = AsyncExitStack()
     try:

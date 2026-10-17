@@ -44,6 +44,8 @@ export interface EntitlementsResponse {
   /** ISO timestamp until which every posting is included, when a pass is active. */
   passUntil?: string;
   freeMatchAvailable: boolean;
+  /** True for an account on the server's unlimited list (`TAYYARI_GUARD__UNLIMITED_EMAILS`): no limits, nothing charged. */
+  unlimited?: boolean;
   currency: Currency;
   prices: PriceBook;
 }

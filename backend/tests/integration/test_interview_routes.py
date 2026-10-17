@@ -165,6 +165,8 @@ class StubInterview:
     upcoming_error: Exception | None = None
     after_answer: SpeechUpcoming | None = None
     """What the voice should have ready once an answer has been taken (the interviewer has moved on)."""
+    unlimited_seen: list[bool] = field(default_factory=list)
+    """The ``unlimited`` flag each assistant message came with."""
 
     @property
     def enabled(self) -> bool:
@@ -225,10 +227,17 @@ class StubInterview:
         return self._own(profile, session_id).model_copy(update={"work": req.work})
 
     async def assistant(
-        self, profile: Profile, session_id: str, req: AssistantRequest, ctx: CallContext
+        self,
+        profile: Profile,
+        session_id: str,
+        req: AssistantRequest,
+        ctx: CallContext,
+        *,
+        unlimited: bool = False,
     ) -> AssistantReply:
         self._see("assistant", profile, session_id, req)
         self.contexts.append(ctx)
+        self.unlimited_seen.append(unlimited)
         self._own(profile, session_id)
         return AssistantReply(reply="Try a memo.", asked=1, left=11)
 
@@ -962,6 +971,139 @@ async def test_history_is_not_told_a_number_when_the_day_window_is_off(start: An
         history = await rig.client.get("/api/interview/sessions", params={"profileId": FRONTEND_ID})
         assert history.status_code == 200 and "leftToday" not in history.json()
         assert rig.stub.calls[-1].args == (None,)
+
+
+# ───────────────────────── an account on the unlimited list ─────────────────────────
+
+LISTED = "tester@example.com"
+OTHER = "other@example.com"
+TINY_WINDOWS = {
+    "interview_per_minute": 1,
+    "interview_per_hour": 1,
+    "interview_per_day": 1,
+    "interview_global_per_hour": 1,
+    "interview_again_per_day": 1,
+}
+"""Every window allows one request."""
+
+
+def listed_guard(**overrides: Any) -> GuardSettings:
+    """Roomy limits with an unlimited list that is written the way an owner might (padding, capitals, a second address)."""
+    return roomy(unlimited_emails=f" {LISTED.upper()} , second.listed@example.org", **overrides)
+
+
+async def test_a_listed_account_starts_past_every_window_and_is_counted_nowhere(start: Any) -> None:
+    async with start(guard=listed_guard(**TINY_WINDOWS)) as rig:
+        listed_id, listed = await rig.account(LISTED)
+        _, other = await rig.account(OTHER)
+        await rig.profile()
+        for n in range(
+            6
+        ):  # from one address and from several: neither the address nor the account is counted
+            headers = {**listed, **rig.at("198.51.100.1" if n % 2 else f"198.51.100.{n + 10}")}
+            assert (await rig.start(headers=headers)).status_code == 200
+        assert rig.stub.names().count("start") == 6
+        assert not [h for h in await rig.env.rows(RateLimitHitRow) if h.bucket.startswith("interview")]
+
+        # the same setup still limits everyone else: per account, per address, and the whole service
+        assert (await rig.start(headers={**other, **rig.at("198.51.100.1")})).status_code == 200
+        by_account = await rig.start(headers={**other, **rig.at("198.51.100.2")})
+        by_address = await rig.start(headers=rig.at("198.51.100.1"))
+        assert by_account.status_code == 429 and by_address.status_code == 429
+        counted = [h for h in await rig.env.rows(RateLimitHitRow) if h.bucket.startswith("interview")]
+        assert counted and not any(listed_id in h.bucket for h in counted)
+        assert rig.stub.names().count("start") == 7
+
+
+async def test_a_listed_account_asks_again_past_the_daily_window_and_others_do_not(start: Any) -> None:
+    async with start(guard=listed_guard(interview_again_per_day=1)) as rig:
+        _, listed = await rig.account(LISTED)
+        _, other = await rig.account(OTHER)
+        await rig.profile()
+        sid = await rig.started(headers=listed)
+        url = f"/api/interview/sessions/{sid}/again"
+        body = {"profileId": FRONTEND_ID, "slotId": "s1"}
+        mine = [
+            (
+                await rig.client.post(url, json=body, headers={**listed, **rig.at(f"198.51.100.{n}")})
+            ).status_code
+            for n in range(1, 6)
+        ]
+        assert mine == [200] * 5
+        first = await rig.client.post(url, json=body, headers={**other, **rig.at("198.51.100.50")})
+        second = await rig.client.post(url, json=body, headers={**other, **rig.at("198.51.100.51")})
+        assert (first.status_code, second.status_code) == (200, 429)
+        assert rig.stub.names().count("again") == 6
+
+
+async def test_light_reads_never_shed_a_listed_account_but_do_shed_others(start: Any) -> None:
+    async with start(guard=listed_guard(chat_per_minute=1)) as rig:
+        _, listed = await rig.account(LISTED)
+        _, other = await rig.account(OTHER)
+        await rig.profile()
+        params = {"profileId": FRONTEND_ID}
+        url = "/api/interview/sessions"
+        address = rig.at("198.51.100.20")
+        mine = [
+            (await rig.client.get(url, params=params, headers={**listed, **address})).status_code
+            for _ in range(12)
+        ]
+        theirs = [
+            (await rig.client.get(url, params=params, headers={**other, **address})).status_code
+            for _ in range(12)
+        ]
+        assert mine == [200] * 12  # the address was never charged for them, so the next account starts fresh
+        assert theirs[0] == 200 and 429 in theirs
+
+
+async def test_history_tells_a_listed_account_no_number_of_interviews_left(start: Any) -> None:
+    async with start(guard=listed_guard(interview_per_day=3)) as rig:
+        _, listed = await rig.account(LISTED)
+        _, other = await rig.account(OTHER)
+        await rig.profile()
+        params = {"profileId": FRONTEND_ID}
+        mine = await rig.client.get("/api/interview/sessions", params=params, headers=listed)
+        assert mine.status_code == 200 and "leftToday" not in mine.json()
+        assert rig.stub.calls[-1].args == (None,)
+        theirs = await rig.client.get("/api/interview/sessions", params=params, headers=other)
+        assert PracticeHistory.model_validate(theirs.json()).leftToday == 3
+        assert rig.stub.calls[-1].args == (3,)
+
+
+async def test_the_assistant_is_told_who_is_unlimited(start: Any) -> None:
+    async with start(guard=listed_guard()) as rig:
+        _, listed = await rig.account(LISTED)
+        _, other = await rig.account(OTHER)
+        await rig.profile()
+        for headers in (listed, other, {}):
+            sid = await rig.started(headers=headers)
+            reply = await rig.client.post(
+                f"/api/interview/sessions/{sid}/assistant",
+                json={"profileId": FRONTEND_ID, "message": "How do I start?"},
+                headers=headers,
+            )
+            assert reply.status_code == 200
+        assert rig.stub.unlimited_seen == [True, False, False]
+
+
+async def test_a_listed_account_is_still_refused_at_the_spend_ceiling(start: Any) -> None:
+    async with start(guard=listed_guard(daily_ceiling_usd=0.001)) as rig:
+        _, listed = await rig.account(LISTED)
+        await rig.profile()
+        refused = await rig.start(headers=listed)
+        assert refused.status_code == 503 and "start" not in rig.stub.names()
+
+
+async def test_the_voice_made_ahead_leaves_out_the_session_share_for_a_listed_account(start: Any) -> None:
+    for who, expected in ((LISTED, [LEAD, QUESTION, *NEXT_UP]), (OTHER, [LEAD])):
+        voice = FakeSpeechEngine()
+        speech = SpeechSettings(tts_session_chars=40, tts_prefetch_concurrency=1)
+        async with start(voice=voice, speech=speech, guard=listed_guard()) as rig:
+            _, headers = await rig.account(who)
+            await rig.profile()
+            assert (await rig.start(headers=headers)).status_code == 200
+            await voice_done(rig)
+            assert spoken(voice) == expected, who
 
 
 # ───────────────────────── spend ─────────────────────────

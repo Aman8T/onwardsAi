@@ -61,6 +61,15 @@ export const engineNote = (by: SpeechBy): string => (by === 'sarvam' ? SARVAM_NO
 
 export const FREE_LINE = 'Free while we test it · 3 a day';
 
+/** The same line for an account with no limits: the count of 3 a day is not true for it, so it is left out. */
+export const FREE_LINE_UNLIMITED = 'Free while we test it';
+
+/** Where the line also says how many are left today, an account with no limits reads this instead. */
+export const UNLIMITED_LINE = 'Unlimited for this account';
+
+/** The line that says what practice costs: with the daily count, or without it for an account with no limits. */
+export const freeLineFor = (unlimited: boolean): string => (unlimited ? FREE_LINE_UNLIMITED : FREE_LINE);
+
 export const NOT_RECORDED = 'Nothing is recorded';
 
 /** The short form of the promise on the room's bar. With Sarvam the voice does leave the browser for a moment, so it says what is true. */

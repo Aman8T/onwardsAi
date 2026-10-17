@@ -33,6 +33,10 @@ client's daily allowance (``TAYYARI_GUARD__ANON_MATCH_PER_DAY``, 429) -> the spe
 counted; the resume and the cover note reserve spend because they call a model, and everything else only ``shed``s in
 the ``chat`` bucket like the other cheap routes.
 
+An account on the unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``, `api.deps.unlimited`) is counted nowhere (every ``shed``
+and ``check`` above is skipped) and is never charged: no ``consume``, so there is nothing to give back (``Charge`` is built with
+no account). The match is still stored under its real account, and the spend reservation (503) still applies.
+
 Failures before a stream starts are JSON ``{"error": "<sentence>"}``, except the 402 whose body is
 ``{"error": "payment_required", "reason": ...}`` (a code the web app turns into the pricing panel).
 """
@@ -47,7 +51,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.responses import Response
 
-from tayyari.api.deps import get_request_context, user_or_anonymous
+from tayyari.api.deps import get_request_context, unlimited, user_or_anonymous
 from tayyari.api.lifespan import get_container
 from tayyari.api.matching import (
     MATCH_NOT_FOUND,
@@ -109,9 +113,12 @@ DOCX: Final = "application/vnd.openxmlformats-officedocument.wordprocessingml.do
 FIGURE_QUESTION: Final = "A figure for a line of your resume"
 
 
-def _shed(container: Container, rc: RequestContext, route: Route = "chat") -> None:
+async def _shed(request: Request, container: Container, rc: RequestContext, route: Route = "chat") -> None:
     container.rate_limiter.shed(
-        route, rc.ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip)
+        route,
+        rc.ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip),
+        exempt=await unlimited(request, container),
     )
 
 
@@ -142,7 +149,7 @@ async def _open(request: Request, match_id: str) -> tuple[Container, RequestCont
     """The cheap routes' common start: shed, sign-in (or anonymous matching), id shape, the match this caller may open."""
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc)
+    await _shed(request, container, rc)
     user = await user_or_anonymous(request, anonymous_allowed=container.match_anonymous)
     _require_id(match_id, MATCH_NOT_FOUND)
     return container, rc, await open_match(container, None if user is None else user.id, match_id)
@@ -157,7 +164,8 @@ async def start_match(request: Request) -> Response:
     rc = await get_request_context(request)
     limiter = container.rate_limiter
     ip48 = subnet_hash(container.ip_hash_key, rc.client_ip)
-    limiter.shed("match", rc.ip_hash, ip_hash_48=ip48)
+    free = await unlimited(request, container)
+    limiter.shed("match", rc.ip_hash, ip_hash_48=ip48, exempt=free)
     user = await user_or_anonymous(request, anonymous_allowed=container.match_anonymous)
     body = await read_model(request, container, MatchRequest, max_bytes=MATCH_BODY_MAX_BYTES)
     _require_id(body.profileId, PROFILE_NOT_FOUND)
@@ -176,9 +184,9 @@ async def start_match(request: Request) -> Response:
             open_profile.context,
             not open_profile.is_sample,
         )
-    await limiter.check("match", rc.ip_hash, ip_hash_48=ip48, memory=False)
+    await limiter.check("match", rc.ip_hash, ip_hash_48=ip48, memory=False, exempt=free)
     if user is not None:
-        await limiter.check("match", f"u:{user.id}", memory=False, globally=False)
+        await limiter.check("match", f"u:{user.id}", memory=False, globally=False, exempt=free)
     text = await posting_text_of(container, body)
     try:
         profile = Profile.from_dict(profile_doc)
@@ -191,12 +199,14 @@ async def start_match(request: Request) -> Response:
 
     match_id = new_match_id()
     user_id = None if user is None else user.id
-    charge = Charge(container, user_id, match_id)
+    # An account on the unlimited list is never charged: no consume, and a Charge with no account has nothing to give back.
+    charged_id = None if free else user_id
+    charge = Charge(container, charged_id, match_id)
     held = AsyncExitStack()
     try:
         await held.enter_async_context(container.spend_guard.reserve(container.settings.guard.est_match_usd))
-        if user_id is not None:
-            await container.entitlements.consume(user_id, match_id)
+        if charged_id is not None:
+            await container.entitlements.consume(charged_id, match_id)
             held.push_async_callback(charge.refund)
         events = stream_match(
             container,
@@ -222,7 +232,7 @@ async def start_match(request: Request) -> Response:
 async def list_matches(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc)
+    await _shed(request, container, rc)
     user = await user_or_anonymous(request, anonymous_allowed=container.match_anonymous)
     # A visitor with no sign-in has no identity to list by: the web app keeps its own list of the ids it was given.
     rows = [] if user is None else await container.repos.matches.list_for_user(user.id)
@@ -254,7 +264,7 @@ async def get_match(match_id: str, request: Request) -> JSONResponse:
 async def post_answers(match_id: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc)
+    await _shed(request, container, rc)
     user = await user_or_anonymous(request, anonymous_allowed=container.match_anonymous)
     _require_id(match_id, MATCH_NOT_FOUND)
     body = await read_model(request, container, AnswersRequest, max_bytes=SMALL_BODY_MAX_BYTES)
@@ -344,7 +354,7 @@ async def get_resume(match_id: str, request: Request) -> JSONResponse:
 async def settle_resume(match_id: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc)
+    await _shed(request, container, rc)
     user = await user_or_anonymous(request, anonymous_allowed=container.match_anonymous)
     _require_id(match_id, MATCH_NOT_FOUND)
     body = await read_model(request, container, DecisionsRequest, max_bytes=SMALL_BODY_MAX_BYTES)

@@ -112,7 +112,7 @@ const toPaste = (
 
 function PasteScreen() {
   const m = useMatch();
-  const { user, loaded, profiles, entitlements, matchAccess } = useMe();
+  const { user, loaded, profiles, entitlements, matchAccess, unlimited } = useMe();
   const profile = useApp((s) => s.profile);
   const shownId = profile?.id;
   const profileId = pickProfileId(shownId, profiles) ?? (shownId && !isSampleId(shownId) ? shownId : undefined);
@@ -143,11 +143,11 @@ function PasteScreen() {
       }}
       busy={m.phase === 'reading'}
       notice={m.notice}
-      paywall={m.paywall}
+      paywall={m.paywall && !unlimited}
       onDismissPaywall={matchActions.clearNotice}
       blocker={blocker}
       blockerAction={!profileId ? { label: 'Analyse my resume', run: () => actions.goto('onboarding') } : undefined}
-      showFree={!loaded || !user || entitlements.freeMatchAvailable}
+      showFree={!unlimited && (!loaded || !user || entitlements.freeMatchAvailable)}
       noAccount={matchAccess === 'anonymous'}
       recent={m.recent ?? []}
       roles={roles}

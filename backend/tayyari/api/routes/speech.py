@@ -24,6 +24,10 @@ speech on and its budget (503) and then calls Sarvam.
 
 The speech window is 40 requests a minute per address (`GuardSettings.speech_per_minute`); Sarvam's credits have their own
 soft budget (`SpeechSettings`, `speech.meter`). Nothing is charged to an account and no model is called.
+
+An account on the unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``, `api.deps.unlimited`) skips the ``shed`` and the ``speech``
+window, and the per-session share of Sarvam speech (``stt_session_seconds``, ``tts_session_chars``) is not counted against
+it; the day's budget still applies (it is the owner's Sarvam credits), and when it is used up the browser's speech takes over.
 """
 
 from __future__ import annotations
@@ -36,7 +40,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from starlette.responses import Response
 
-from tayyari.api.deps import get_request_context
+from tayyari.api.deps import get_request_context, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes._body import read_model
 from tayyari.api.routes.interview import SESSION_NOT_FOUND, _profile, _require_hex
@@ -62,14 +66,19 @@ UNSUPPORTED_AUDIO: Final = "Send the piece as audio/webm, audio/ogg, audio/mp4, 
 """The sentence of the 415 for a body that is not an audio type we take."""
 
 
-def _shed(container: Container, rc: RequestContext, bucket: Literal["chat", "speech"]) -> None:
+async def _shed(
+    request: Request, container: Container, rc: RequestContext, bucket: Literal["chat", "speech"]
+) -> None:
     """Turn hammering away before anything is read (the in-memory bucket only; no database)."""
     container.rate_limiter.shed(
-        bucket, rc.ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip)
+        bucket,
+        rc.ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip),
+        exempt=await unlimited(request, container),
     )
 
 
-async def _count(container: Container, rc: RequestContext, *, memory: bool) -> None:
+async def _count(request: Request, container: Container, rc: RequestContext, *, memory: bool) -> None:
     """Count one request in the client's ``speech`` window (429 with ``Retry-After`` past it)."""
     await container.rate_limiter.check(
         "speech",
@@ -77,6 +86,7 @@ async def _count(container: Container, rc: RequestContext, *, memory: bool) -> N
         ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip),
         memory=memory,
         globally=False,
+        exempt=await unlimited(request, container),
     )
 
 
@@ -128,14 +138,14 @@ async def _read_audio(request: Request, limit: int, timeout_s: float) -> bytes:
 async def speech_status(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc, "speech")
+    await _shed(request, container, rc, "speech")
     params = request.query_params
     session_id = params.get("sessionId")
     if session_id:
         await _context(request, container, params.get("profileId", ""), session_id)
     else:
         await _profile(request, container, params.get("profileId", ""))
-    status = await container.speech.status(session_id or None)
+    status = await container.speech.status(session_id or None, unlimited=await unlimited(request, container))
     return JSONResponse(status.to_dict(), headers=NO_STORE)
 
 
@@ -146,7 +156,7 @@ async def speech_status(request: Request) -> JSONResponse:
 async def transcribe_piece(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc, "chat")
+    await _shed(request, container, rc, "chat")
     container.interview.require_enabled()
     params = request.query_params
     mime = media_type(request.headers.get("content-type", ""))
@@ -158,12 +168,15 @@ async def transcribe_piece(request: Request) -> JSONResponse:
     )
     if not context.active:
         raise InterviewEnded()
-    await container.speech.ensure("stt", session_id)
-    await _count(container, rc, memory=True)
+    free = await unlimited(request, container)
+    await container.speech.ensure("stt", session_id, unlimited=free)
+    await _count(request, container, rc, memory=True)
     audio = await _read_audio(
         request, container.settings.speech.max_segment_bytes, container.settings.guard.upload_read_timeout_s
     )
-    result = await container.speech.transcribe(session_id, audio, mime, seconds, context.keyterms)
+    result = await container.speech.transcribe(
+        session_id, audio, mime, seconds, context.keyterms, unlimited=free
+    )
     return JSONResponse(result.to_dict(), headers=NO_STORE)
 
 
@@ -174,14 +187,16 @@ async def transcribe_piece(request: Request) -> JSONResponse:
 async def speak_line(request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc, "speech")
+    await _shed(request, container, rc, "speech")
     container.interview.require_enabled()
     body = await read_model(request, container, SpeakRequest, max_bytes=SPEAK_BODY_MAX_BYTES)
     session_id, context = await _context(request, container, body.profileId, body.sessionId)
     if not context.allows(body.text):
         raise NotFound(LINE_NOT_FOUND)
-    await _count(container, rc, memory=False)
-    audio = await container.speech.speak(session_id, body.text, body.pace)
+    await _count(request, container, rc, memory=False)
+    audio = await container.speech.speak(
+        session_id, body.text, body.pace, unlimited=await unlimited(request, container)
+    )
     return Response(content=audio, media_type="audio/mpeg", headers=NO_STORE)
 
 

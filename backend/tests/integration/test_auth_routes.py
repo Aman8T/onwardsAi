@@ -34,7 +34,7 @@ from tests.fakes.auth import (
     new_key,
 )
 from tests.fakes.clock import FakeClock
-from tests.integration.support import Env, running
+from tests.integration.support import Env, roomy_guard, running
 
 MakeSettings = Callable[..., Settings]
 SESSION = "tayyari_session"
@@ -370,6 +370,41 @@ async def test_a_client_gets_three_links_per_fifteen_minutes_whoever_they_ask_fo
         rig.clock.advance(15 * 60)
         await rig.client.post("/api/auth/magic", json={"email": "later@example.com"})
         assert len(rig.mailer.sent) == 4
+
+
+async def test_a_listed_email_gets_the_same_three_links_per_fifteen_minutes(start: Any) -> None:
+    """The unlimited list lifts the rate limits, not the limits on mail we send: exempting them would let anyone flood
+    that inbox through our sender."""
+    async with start(guard=roomy_guard(unlimited_emails=f" {EMAIL.upper()} ")) as rig:
+        signed_in = as_user(
+            await sign_in_by_link(rig)
+        )  # one link used to sign in; the account is on the list now
+        me = await rig.client.get("/api/me", headers=signed_in)
+        assert me.json()["entitlements"]["unlimited"] is True
+        answers = []
+        for i in range(5):  # asked from a signed-in browser and from strangers alike
+            headers = {"cf-connecting-ip": f"203.0.113.{i + 20}", **(signed_in if i % 2 else {})}
+            r = await rig.client.post("/api/auth/magic", json={"email": EMAIL}, headers=headers)
+            answers.append((r.status_code, r.json()))
+        assert answers == [(202, {"ok": True})] * 5
+        assert len(rig.mailer.sent) == 3 and len(await rig.env.rows(MagicLinkRow)) == 3
+        rig.clock.advance(15 * 60)
+        await rig.client.post("/api/auth/magic", json={"email": EMAIL})
+        assert len(rig.mailer.sent) == 4
+
+
+async def test_a_client_still_gets_three_links_per_fifteen_minutes_when_the_asker_is_listed(
+    start: Any,
+) -> None:
+    async with start(guard=roomy_guard(unlimited_emails=f" {EMAIL.upper()} ")) as rig:
+        signed_in = as_user(await sign_in_by_link(rig, ip="203.0.113.99"))
+        for i in range(5):
+            await rig.client.post(
+                "/api/auth/magic",
+                json={"email": f"person{i}@example.com"},
+                headers={"cf-connecting-ip": "203.0.113.99", **signed_in},
+            )
+        assert len(rig.mailer.sent) == 3  # the first of them was the sign-in above
 
 
 # ───────────────────────── the dev link ─────────────────────────

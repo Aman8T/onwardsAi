@@ -9,6 +9,9 @@ says which (`InterviewService.speech_upcoming`, code over the stored session); t
     voice_after      the same, as a task the response runs after it has been sent (so the person is not kept waiting for it)
     next_turn=True   only what the very next turn may need, asked before the judge reads an answer (it takes about 2 s)
 
+``unlimited=True`` (an account on the unlimited list, `api.deps.unlimited`) leaves out the per-session share of Sarvam speech, as it
+does everywhere the speech service is asked; the day's budget still applies.
+
 Nothing here ever changes the answer of the route that calls it: no Sarvam, a switched-off prefetch, a budget that is used up, a
 session that is gone or any failure at all means nothing is made ahead and the route goes on. The texts stay on the server;
 `/api/speech/speak` still reads only a line the interview has said, and by the time the browser asks for one, it has.
@@ -26,7 +29,12 @@ log = get_logger(__name__)
 
 
 async def prefetch_voice(
-    container: Container, profile: Profile, session_id: str, *, next_turn: bool = False
+    container: Container,
+    profile: Profile,
+    session_id: str,
+    *,
+    next_turn: bool = False,
+    unlimited: bool = False,
 ) -> None:
     """Ask the speech service to make the lines this session will probably need. Never raises."""
     speech = container.speech
@@ -41,20 +49,22 @@ async def prefetch_voice(
         ):  # not this profile's session, or over: also what keeps a made-up id out of the speech budget
             return
         if not (
-            await speech.status(session_id)
+            await speech.status(session_id, unlimited=unlimited)
         ).tts:  # the same rules as everywhere: a spent budget makes nothing
             return
         lines = upcoming.next_turn if next_turn else (*upcoming.now, *upcoming.soon)
-        speech.prefetch(session_id, lines)
+        speech.prefetch(session_id, lines, unlimited=unlimited)
     except Exception as exc:  # a voice made ahead is a courtesy: never the reason a route fails
         log.warning("speech_prefetch_failed", reason=type(exc).__name__, stage="upcoming")
 
 
-def voice_after(container: Container, profile: Profile, session_id: str) -> BackgroundTask | None:
+def voice_after(
+    container: Container, profile: Profile, session_id: str, *, unlimited: bool = False
+) -> BackgroundTask | None:
     """`prefetch_voice` as a task for the response to run once it has been sent; None when nothing is made ahead."""
     if not container.speech.prefetching:
         return None
-    return BackgroundTask(prefetch_voice, container, profile, session_id)
+    return BackgroundTask(prefetch_voice, container, profile, session_id, unlimited=unlimited)
 
 
 __all__ = ["prefetch_voice", "voice_after"]

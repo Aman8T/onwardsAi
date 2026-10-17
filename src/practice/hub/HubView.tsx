@@ -27,6 +27,8 @@ export interface HubViewProps {
   /** Everything in Your applications; the hub reads the roles that can be practised from it. */
   tracked: readonly TrackedJob[];
   history: Load<PracticeHistory>;
+  /** The account has no limits: no daily count, nothing disabled, whatever the server's history says. */
+  unlimited?: boolean;
   onReload: () => void;
   nav: PracticeNav;
 }
@@ -101,10 +103,10 @@ const CARDS: readonly { kind: InterviewKind; blurb: string; built: readonly stri
   },
 ];
 
-export function HubView({ sample, tracked, history, onReload, nav }: HubViewProps) {
+export function HubView({ sample, tracked, history, unlimited = false, onReload, nav }: HubViewProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const sessions = history.status === 'ready' ? history.data.sessions : [];
-  const left = history.status === 'ready' ? history.data.leftToday : undefined;
+  const left = history.status === 'ready' && !unlimited ? history.data.leftToday : undefined;
   const limited = left === 0;
   const paused = history.status === 'error' && history.code === 503;
   const coming = useMemo(() => comingUp(tracked, sessions), [tracked, sessions]);
@@ -123,7 +125,7 @@ export function HubView({ sample, tracked, history, onReload, nav }: HubViewProp
           Practice the interview
         </h1>
         <p className="pc-lede">Questions about your own work, asked out loud. Credit only for what you can back up.</p>
-        <p className="pc-muted pc-small">{freeLine(left)}</p>
+        <p className="pc-muted pc-small">{freeLine(left, unlimited)}</p>
       </header>
 
       {sample && <SampleNotice onAnalyse={nav.analyse} />}

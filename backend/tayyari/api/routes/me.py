@@ -24,7 +24,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from starlette.responses import Response
 
-from tayyari.api.deps import User, get_auth_context, get_request_context, require_user
+from tayyari.api.deps import User, get_auth_context, get_request_context, require_user, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes._body import read_model
 from tayyari.api.security import subnet_hash
@@ -52,8 +52,13 @@ PROFILE_NOT_FOUND = "Profile not found"
 PROFILE_TAKEN = "That profile already belongs to another account."
 
 
-def _shed(container: Container, ip_hash: str | None, client_ip: str | None) -> None:
-    container.rate_limiter.shed("chat", ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, client_ip))
+async def _shed(request: Request, container: Container, ip_hash: str | None, client_ip: str | None) -> None:
+    container.rate_limiter.shed(
+        "chat",
+        ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, client_ip),
+        exempt=await unlimited(request, container),
+    )
 
 
 async def me_response(container: Container, user: User | None) -> MeResponse:
@@ -70,6 +75,7 @@ async def me_response(container: Container, user: User | None) -> MeResponse:
     if user is not None and user.currency in ("INR", "USD"):
         currency = "INR" if user.currency == "INR" else "USD"
     summary = ZERO if user is None else await container.entitlements.summary(user.id)
+    is_unlimited = user is not None and container.settings.guard.is_unlimited(user.email)
     return MeResponse(
         user=None
         if user is None
@@ -81,6 +87,7 @@ async def me_response(container: Container, user: User | None) -> MeResponse:
             credits=summary.credits,
             passUntil=None if summary.pass_until is None else summary.pass_until.isoformat(),
             freeMatchAvailable=summary.free_match_available,
+            unlimited=True if is_unlimited else None,
         ),
         providers=MeProviders(google=google, magic=magic),
         anonymousMatch=container.match_anonymous,
@@ -95,7 +102,7 @@ def _json(answer: MeResponse) -> JSONResponse:
 async def get_me(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     signed_in = await get_auth_context(request)
     response = _json(await me_response(container, None if signed_in is None else signed_in.user))
     if signed_in is not None and signed_in.refreshed:
@@ -107,7 +114,7 @@ async def get_me(request: Request) -> JSONResponse:
 async def claim_profile(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     user = await require_user(request)
     body = await read_model(request, container, ClaimRequest)
     if not is_valid_id(body.profileId):
@@ -125,7 +132,7 @@ async def claim_profile(request: Request) -> JSONResponse:
 async def patch_me(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     user = await require_user(request)
     body = await read_model(request, container, MePatch)
     updated = await container.repos.users.update(user.id, name=body.name, currency=body.currency)
@@ -136,7 +143,7 @@ async def patch_me(request: Request) -> JSONResponse:
 async def delete_me(request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed(container, rc.ip_hash, rc.client_ip)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
     user = await require_user(request)
     await container.repos.users.delete(user.id)
     response = Response(status_code=204, headers=NO_STORE)

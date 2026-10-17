@@ -20,7 +20,8 @@ The search, in this order, all answered as JSON before the stream starts: ``shed
 -> switched off (503) -> body (415 / 413 / 408 / 400) -> profile (404) -> city (400) -> the client's counters, and the
 account's when signed in, or the client's daily allowance without an account (429 with ``Retry-After``) -> the spend
 reservation (503). Nothing is charged to an account: a run costs about $0.10 to $0.15 (mostly the $0.01 web searches).
-Every request here also starts a background refresh of Discover's store when it is old (never waited for).
+Every request here also starts a background refresh of Discover's store when it is old (never waited for). An account on
+the unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``) skips every ``shed`` and counter; the spend reservation still applies.
 
 The reads (latest, posting) shed in the ``chat`` bucket like other light reads. Prepare and referral shed in ``chat`` and
 reserve a small spend, because writing one calls a model (a kept one does not).
@@ -38,7 +39,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.responses import Response
 
-from tayyari.api.deps import get_current_user, get_request_context, require_profile_access
+from tayyari.api.deps import get_current_user, get_request_context, require_profile_access, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes._body import read_model
 from tayyari.api.routes.analyze import HeldResponse
@@ -107,9 +108,12 @@ def _ctx(rc: RequestContext, profile_id: str, purpose: Purpose) -> CallContext:
     return CallContext(purpose=purpose, request_id=rc.request_id, profile_id=profile_id, ip_hash=rc.ip_hash)
 
 
-def _shed_light(container: Container, rc: RequestContext) -> None:
+async def _shed_light(request: Request, container: Container, rc: RequestContext) -> None:
     container.rate_limiter.shed(
-        "chat", rc.ip_hash, ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip)
+        "chat",
+        rc.ip_hash,
+        ip_hash_48=subnet_hash(container.ip_hash_key, rc.client_ip),
+        exempt=await unlimited(request, container),
     )
 
 
@@ -126,7 +130,8 @@ async def start_jobsearch(request: Request) -> Response:
     rc = await get_request_context(request)
     limiter = container.rate_limiter
     ip48 = subnet_hash(container.ip_hash_key, rc.client_ip)
-    limiter.shed("jobsearch", rc.ip_hash, ip_hash_48=ip48)
+    free = await unlimited(request, container)
+    limiter.shed("jobsearch", rc.ip_hash, ip_hash_48=ip48, exempt=free)
     service = container.jobsearch
     service.require_enabled()
     body = await read_model(request, container, JobSearchRequest, max_bytes=BODY_MAX_BYTES)
@@ -135,9 +140,9 @@ async def start_jobsearch(request: Request) -> Response:
     await _refresh_store(container)
 
     user = await get_current_user(request)
-    await limiter.check("jobsearch", rc.ip_hash, ip_hash_48=ip48, memory=False)
+    await limiter.check("jobsearch", rc.ip_hash, ip_hash_48=ip48, memory=False, exempt=free)
     if user is not None:
-        await limiter.check("jobsearch", f"u:{user.id}", memory=False, globally=False)
+        await limiter.check("jobsearch", f"u:{user.id}", memory=False, globally=False, exempt=free)
     else:
         await limiter.check("jobsearch_anon", rc.ip_hash, ip_hash_48=ip48, memory=False)
 
@@ -166,7 +171,7 @@ async def start_jobsearch(request: Request) -> Response:
 async def latest_jobsearch(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed_light(container, rc)
+    await _shed_light(request, container, rc)
     container.jobsearch.require_enabled()
     params = request.query_params
     profile = await _profile(request, container, params.get("profileId", ""))
@@ -182,7 +187,7 @@ async def latest_jobsearch(request: Request) -> JSONResponse:
 async def job_posting(run_id: str, job_id: str, request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed_light(container, rc)
+    await _shed_light(request, container, rc)
     container.jobsearch.require_enabled()
     _require_hex(run_id, ROLE_NOT_FOUND)
     _require_hex(job_id, ROLE_NOT_FOUND)
@@ -199,7 +204,7 @@ async def job_posting(run_id: str, job_id: str, request: Request) -> JSONRespons
 async def _role_doc(request: Request, kind: Purpose) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
-    _shed_light(container, rc)
+    await _shed_light(request, container, rc)
     service = container.jobsearch
     service.require_enabled()
     body = await read_model(request, container, RoleRequest, max_bytes=ROLE_BODY_MAX_BYTES)
