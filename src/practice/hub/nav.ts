@@ -3,12 +3,13 @@
  * they call these, and `liveNav` is the one that moves the app (the store and the address). The dev page passes a stub
  * that says where each button would go, so a screen can be looked at with no app around it.
  */
-import type { InterviewKind, RoleSource } from '../../../shared/interview';
+import type { GraphRoleSource, InterviewKind, RoleSource } from '../../../shared/interview';
 import { actions } from '../../store';
 
 export interface PracticeNav {
-  /** The plan for a kind, before it starts; `role` names the role of a search with AI it is built from. */
-  setup(kind: InterviewKind, role?: RoleSource): void;
+  /** The plan for a kind, before it starts; `role` names the role of a search with AI it is built from, `graphRole` a
+   * role of the person's graph (for `role` practice without a posting). */
+  setup(kind: InterviewKind, role?: RoleSource, graphRole?: GraphRoleSource): void;
   room(sessionId: string): void;
   debrief(sessionId: string): void;
   hub(): void;
@@ -24,7 +25,7 @@ export interface PracticeNav {
 }
 
 export const liveNav: PracticeNav = {
-  setup: (kind, role) => actions.openPractice({ screen: 'setup', kind, run: role?.runId, job: role?.jobId }),
+  setup: (kind, role, graphRole) => actions.openPractice({ screen: 'setup', kind, run: role?.runId, job: role?.jobId, graphRole: graphRole?.roleId }),
   room: (session) => actions.openPractice({ screen: 'room', session }),
   debrief: (session) => actions.openPractice({ screen: 'debrief', session }),
   hub: () => actions.openPractice({ screen: 'hub' }),

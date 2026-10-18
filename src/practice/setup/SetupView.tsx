@@ -5,10 +5,14 @@
  *
  * Presentational: `SetupScreen` loads the plan and starts the interview; the dev gallery draws this from fixtures. The plan
  * is shown here and not during the interview, which is why each source is quoted word for word with where it is from.
+ *
+ * A role of the person's graph has no posting: its gaps cite "The role" (what the role needs, as the graph reads it), and
+ * the side summary counts its requirements with the same pips a posting's asks get. No percentage, here or anywhere.
  */
 import { useId } from 'react';
 import type { ReactNode } from 'react';
 import type { AiJob } from '../../../shared/jobsearch';
+import type { Role } from '../../../shared/types';
 import '../../styles/practice-room.css';
 import type { InterviewFocus, InterviewKind, InterviewLength, InterviewPlan, PlanSlot, SlotSource } from '../../../shared/interview';
 import { asksLabel, asksLine, asksTotal, cleanAsks, FIT_WORD, LEVEL_WORD, placeLine } from '../../discover/prepare/words';
@@ -17,6 +21,7 @@ import { MicMeter } from '../room/MicMeter';
 import type { MeterTrouble, Prefs, VoiceSetting } from '../speech';
 import {
   FREE_LINE,
+  GRAPH_ROLE_BLURB,
   UNLIMITED_LINE,
   HOW_IT_ENDS,
   HOW_IT_WORKS,
@@ -33,8 +38,10 @@ import {
   privacyLine,
   questionsWord,
   quoted,
+  requirementStanding,
+  requirementsLine,
 } from '../words';
-import type { SpeechBy } from '../words';
+import type { RequirementStanding, SpeechBy } from '../words';
 
 
 export type PlanProblem = { message: string; noTemplate: boolean; gone: boolean };
@@ -56,6 +63,8 @@ export interface SetupViewProps {
   sub: string;
   /** The role, when it is a role the person tracks or found. */
   job?: AiJob;
+  /** The role, when it is one of the person's graph (no posting). */
+  graphRole?: Role;
   plan: InterviewPlan | null;
   loading: boolean;
   problem?: PlanProblem;
@@ -93,7 +102,12 @@ export interface SetupViewProps {
 }
 
 /** What the person sees of a source: its words in quotes, with where they are from. */
-function sourceRow(slot: PlanSlot, s: SlotSource): { cite: string; fact: string } {
+function sourceRow(slot: PlanSlot, s: SlotSource, role?: Role): { cite: string; fact: string } {
+  if (s.origin === 'role') {
+    const found = role?.requirements.find((r) => r.name.trim() === s.text);
+    const lead = found && requirementStanding(found) === 'below' ? "Below the role's level: " : 'Not shown yet: ';
+    return { cite: 'The role', fact: `${lead}${quoted(s.text)}` };
+  }
   const cite = s.origin === 'posting' ? 'Posting' : s.source || 'Your evidence';
   if (slot.kind === 'gap') return { cite, fact: `${s.origin === 'posting' ? 'Not on your resume: ' : 'Nearest evidence: '}${quoted(s.text)}` };
   return { cite, fact: quoted(s.text) };
@@ -125,6 +139,7 @@ export function SetupView(p: SetupViewProps) {
     if (!p.plan) return '';
     const n = kept.length;
     const wontShow = "The interviewer won't show you this during the interview.";
+    if (p.kind === 'role' && p.graphRole) return `${questionsWord(n)} from what the role needs and what your evidence shows. ${wontShow}`;
     if (p.kind === 'role') return `${questionsWord(n)} from what ${employer || 'the role'} asks and what your resume shows. ${wontShow}`;
     if (p.kind === 'work') return `A small real task, then ${n === 1 ? 'one question' : `${questionsWord(n).toLowerCase()}`} on your choices. The questions are about what you actually write.`;
     return `${questionsWord(n)} from your own evidence. ${wontShow}`;
@@ -186,7 +201,7 @@ export function SetupView(p: SetupViewProps) {
             ) : (
               <>
                 <p className="rm-muted rm-lede">{lede}</p>
-                {p.kind === 'role' && <p className="rm-faint rm-small">Asks the posting marks as must-have come first.</p>}
+                {p.kind === 'role' && <p className="rm-faint rm-small">{p.graphRole ? 'Your biggest gaps come first.' : 'Asks the posting marks as must-have come first.'}</p>}
                 {p.plan.note && (
                   <div className="rm-shown" role="note">
                     <p>{p.plan.note}</p>
@@ -214,7 +229,7 @@ export function SetupView(p: SetupViewProps) {
                             <span className={`chip rm-kind rm-kind-${slot.kind}`}>{SLOT_KIND_LABEL[slot.kind]}</span>
                           </div>
                           {slot.sources.map((s, j) => {
-                            const row = sourceRow(slot, s);
+                            const row = sourceRow(slot, s, p.graphRole);
                             return (
                               <div className="rm-slot-source" key={j}>
                                 <span className="rm-cite">{row.cite}</span>
@@ -375,8 +390,8 @@ export function SetupView(p: SetupViewProps) {
         </div>
 
         <aside className="rm-setup-side" aria-label="About this practice">
-          <section className="panel rm-summary" aria-label={p.job ? 'This role' : 'This practice'}>
-            {p.job ? <RoleSummary job={p.job} /> : <KindSummary kind={p.kind} plan={p.plan} count={kept.length} />}
+          <section className="panel rm-summary" aria-label={p.job || p.graphRole ? 'This role' : 'This practice'}>
+            {p.job ? <RoleSummary job={p.job} /> : p.graphRole ? <GraphRoleSummary role={p.graphRole} /> : <KindSummary kind={p.kind} plan={p.plan} count={kept.length} />}
 
             <div className="rm-summary-foot">
               <p className="rm-faint rm-small">{p.unlimited ? UNLIMITED_LINE : left !== undefined ? `${FREE_LINE} · ${left} left today` : FREE_LINE}</p>
@@ -436,6 +451,32 @@ function RoleSummary({ job }: { job: AiJob }) {
             ))}
           </span>
           <span className="rm-muted rm-small">{asksLine(asks)}</span>
+        </div>
+      )}
+    </>
+  );
+}
+
+const PIP_OF: Record<RequirementStanding, 'met' | 'part' | 'gap'> = { met: 'met', below: 'part', notShown: 'gap' };
+
+/** A role of the person's graph: its title, and its requirements as pips (met, below the role's level, not shown yet). */
+function GraphRoleSummary({ role }: { role: Role }) {
+  const order: readonly RequirementStanding[] = ['met', 'below', 'notShown'];
+  const pips = order.flatMap((s) => role.requirements.filter((r) => requirementStanding(r) === s).map(() => PIP_OF[s])).slice(0, 30);
+  const line = requirementsLine(role.requirements);
+  return (
+    <>
+      <p className="kicker">This role</p>
+      <p className="rm-strong">{role.title}</p>
+      <p className="rm-muted rm-small">{GRAPH_ROLE_BLURB}</p>
+      {pips.length > 0 && (
+        <div className="rm-askpips">
+          <span className="rm-pips" role="img" aria-label={line}>
+            {pips.map((k, i) => (
+              <span key={i} className={`rm-pip rm-pip-${k}`} aria-hidden="true" />
+            ))}
+          </span>
+          <span className="rm-muted rm-small">{line}</span>
         </div>
       )}
     </>

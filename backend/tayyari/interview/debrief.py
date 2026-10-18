@@ -458,6 +458,7 @@ def assemble(
         transcript=state.turns,
         keptUntil=kept_until(created_at, retention_days),
         role=state.role,
+        graphRole=state.graphRole,
         task=state.task,
         work=state.work,
     )

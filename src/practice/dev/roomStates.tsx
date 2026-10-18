@@ -8,7 +8,7 @@
  * Speech by Sarvam AI has its own states: `room-listening-sarvam` (pieces settled, and the quiet "Writing down what you
  * said…" for the one on its way), `room-sarvam-unclear` (one piece could not be made out), `room-sarvam-fallback` (Sarvam
  * stopped answering and the browser's speech took over, said once), `phone-sarvam`, and `setup-sarvam` (the setup page with
- * Sarvam's privacy copy).
+ * Sarvam's privacy copy). `setup-graph` is the setup page for a role of the person's graph, which has no posting.
  */
 import { useState } from 'react';
 import type { ReactElement } from 'react';
@@ -21,7 +21,7 @@ import { SetupView } from '../setup/SetupView';
 import type { Prefs } from '../speech';
 import { WorkView } from '../work/WorkView';
 import type { Dictation } from '../work/useDictation';
-import { PIECE_UNCLEAR, SARVAM_DOWN } from '../words';
+import { GRAPH_ROLE_SUB, PIECE_UNCLEAR, SARVAM_DOWN } from '../words';
 import type { SpeechBy } from '../words';
 import '../../styles/practice-room.css';
 import {
@@ -32,6 +32,9 @@ import {
   CART_BEFORE,
   LIVE_BARS,
   LIVE_BARS_2,
+  GRAPH_PLAN_FULL,
+  GRAPH_PLAN_SHORT,
+  GRAPH_ROLE,
   PLAN_FULL,
   PLAN_SHORT,
   PLAN_THIN,
@@ -162,24 +165,25 @@ const work = (props: WorkPreviewProps) => () => <WorkPreview {...props} />;
 
 /* ───────────────────────── the setup page ───────────────────────── */
 
-function SetupPreview({ thin = false, by = 'browser' }: { thin?: boolean; by?: SpeechBy }) {
+function SetupPreview({ thin = false, by = 'browser', graph = false }: { thin?: boolean; by?: SpeechBy; graph?: boolean }) {
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   const [focus, setFocus] = useState<InterviewFocus | undefined>('claims');
   const [length, setLength] = useState<InterviewLength>('full');
   const [prefs, setPrefs] = useState<Prefs>({ answer: 'speech', voice: 'normal' });
   const [testing, setTesting] = useState(false);
   const [heard, setHeard] = useState(false);
-  const plan = thin ? PLAN_THIN : length === 'short' ? PLAN_SHORT : PLAN_FULL;
+  const [short, full] = graph ? [GRAPH_PLAN_SHORT, GRAPH_PLAN_FULL] : [PLAN_SHORT, PLAN_FULL];
+  const plan = thin ? PLAN_THIN : length === 'short' ? short : full;
   return (
     <SetupView
       kind="role"
       sample={false}
       title={plan.title}
-      sub="From the posting you applied to on 14 Oct · Apply link stays in Your applications"
-      job={HEADOUT}
+      sub={graph ? GRAPH_ROLE_SUB : 'From the posting you applied to on 14 Oct · Apply link stays in Your applications'}
+      {...(graph ? { graphRole: GRAPH_ROLE } : { job: HEADOUT })}
       plan={plan}
       loading={false}
-      lengths={{ short: PLAN_SHORT, full: PLAN_FULL }}
+      lengths={{ short, full }}
       length={length}
       {...(focus ? { focus } : {})}
       skipped={skipped}
@@ -231,6 +235,11 @@ export const ROOM_STATES: Record<string, () => ReactElement> = {
   'setup-sarvam': () => (
     <div className="rm-frame">
       <SetupPreview by="sarvam" />
+    </div>
+  ),
+  'setup-graph': () => (
+    <div className="rm-frame">
+      <SetupPreview graph />
     </div>
   ),
 

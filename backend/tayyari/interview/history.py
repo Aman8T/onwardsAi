@@ -85,6 +85,7 @@ def build_history(items: Sequence[StoredInterview], *, left_today: int | None = 
                     verdicts=[r.verdict for r in debrief.results],
                     counts=debrief.counts,
                     role=debrief.role,
+                    graphRole=debrief.graphRole,
                 )
             )
         else:
@@ -100,6 +101,7 @@ def build_history(items: Sequence[StoredInterview], *, left_today: int | None = 
                     status="active",
                     verdicts=[],
                     role=state.role,
+                    graphRole=state.graphRole,
                 )
             )
     for item, debrief in reversed(done):

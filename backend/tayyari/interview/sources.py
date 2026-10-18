@@ -23,14 +23,20 @@ def posting_of(sources: Sequence[SlotSource]) -> list[SlotSource]:
     return [s for s in sources if s.origin == "posting"]
 
 
+def asks_of(sources: Sequence[SlotSource]) -> list[SlotSource]:
+    """What the role asks for: a posting's words, or a graph role's requirement (origin ``role``)."""
+    return [s for s in sources if s.origin in ("posting", "role")]
+
+
 def evidence_labels(sources: Sequence[SlotSource]) -> list[str]:
     """Where the slot's evidence is from ("Resume", "GitHub" ...), once each, in order."""
     return list(dict.fromkeys(s.source for s in evidence_of(sources) if s.source))
 
 
 def quote_source(sources: Sequence[SlotSource]) -> SlotSource | None:
-    """The source a question quotes: the posting's words when there are any (an ask, a gap), else the first evidence line."""
-    return next(iter(posting_of(sources)), None) or next(iter(evidence_of(sources)), None)
+    """The source a question quotes: what the role asks for when the slot has it (an ask, a gap: the posting's words or a
+    graph role's requirement), else the first evidence line."""
+    return next(iter(asks_of(sources)), None) or next(iter(evidence_of(sources)), None)
 
 
 def sources_text(sources: Sequence[SlotSource]) -> str:
@@ -39,6 +45,7 @@ def sources_text(sources: Sequence[SlotSource]) -> str:
 
 __all__ = [
     "YOUR_ANSWER",
+    "asks_of",
     "evidence_labels",
     "evidence_of",
     "posting_of",

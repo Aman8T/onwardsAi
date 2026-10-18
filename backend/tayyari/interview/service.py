@@ -1,6 +1,7 @@
 """Practice the interview: plan, start, answer, hand in work, end, and everything a person can do with a finished one.
 
-    plan      code only: `plan.build_plan` from the person's evidence, a role's asks and gaps, or a work-sample template.
+    plan      code only: `plan.build_plan` from the person's evidence, a role's asks and gaps (a search's) or requirements (the
+              graph's), or a work-sample template.
     start     the plan again (the same inputs give the same plan), the slots the person skipped dropped, one phrasing call
               (`phrase`), the first question asked. Everything is stored with the session.
     answer    `router.classify` decides what the turn is. "Say it again", "skip", "I don't know", a dispute and an answer too
@@ -114,7 +115,12 @@ class InterviewService:
         built = await build_plan(
             profile,
             PlanRequest(
-                profileId=profile.id, kind=req.kind, role=req.role, length=req.length, focus=req.focus
+                profileId=profile.id,
+                kind=req.kind,
+                role=req.role,
+                graphRole=req.graphRole,
+                length=req.length,
+                focus=req.focus,
             ),
             self._roles,
         )
@@ -142,7 +148,7 @@ class InterviewService:
                 claude=self._claude,
                 model=self._settings.model,
                 slots=slots,
-                title=job.title if job is not None else None,
+                title=built.title,
                 employer=job.employer if job is not None else None,
                 posting_text=built.posting_text,
                 posting_chars=self._settings.posting_chars,
@@ -165,6 +171,7 @@ class InterviewService:
             slots=slots,
             slotStates=states,
             role=plan.role,
+            graphRole=plan.graphRole,
             employer=built.job.employer if built.job is not None else None,
             task=template.to_task() if template is not None else None,
             checks=list(template.checks) if template is not None else [],
@@ -417,6 +424,7 @@ class InterviewService:
                 )
             ],
             role=state.role,
+            graphRole=state.graphRole,
             employer=state.employer,
             task=state.task,
             checks=list(state.checks),

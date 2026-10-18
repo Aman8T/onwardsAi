@@ -19,6 +19,15 @@ class RoleGone(NotFound):
     user_message = "That role is not in your searches any more. Search again, then practise it."
 
 
+class GraphRoleGone(NotFound):
+    """The graph role a plan was asked for is not among the profile's roles any more (the profile was analysed again)."""
+
+    code = "interview_graph_role_gone"
+    user_message = (
+        "That role is not on your skill graph any more. Pick a role from your graph, then practise it."
+    )
+
+
 class InterviewMovedOn(Conflict):
     """Two tabs answered at once: the second save found a newer version."""
 
@@ -72,6 +81,7 @@ class AssistantUnavailable(BadRequest):
 __all__ = [
     "AssistantUnavailable",
     "BadPlan",
+    "GraphRoleGone",
     "InterviewEnded",
     "InterviewMovedOn",
     "InterviewNotFound",

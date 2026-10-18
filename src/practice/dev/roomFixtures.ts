@@ -1,9 +1,11 @@
 /**
  * Fixtures for the room, the work sample and the setup page: the sample profile's Headout interview of the Interview
- * canvas (questions, answers and plan word for word), and the frontend work sample. Used by `roomStates.tsx`; nothing here
- * is sent anywhere and no server is needed.
+ * canvas (questions, answers and plan word for word), the plan for a role of her graph (Senior Frontend Engineer, as the
+ * server plans it), and the frontend work sample. Used by `roomStates.tsx`; nothing here is sent anywhere and no server is
+ * needed.
  */
-import type { AssistantTurn, InterviewPlan, InterviewSession, PlanSlot, Turn, WorkTask } from '../../../shared/interview';
+import type { AssistantTurn, GraphRoleSource, InterviewPlan, InterviewSession, PlanSlot, Turn, WorkTask } from '../../../shared/interview';
+import type { Role } from '../../../shared/types';
 import { deriveRoom } from '../room/model';
 import type { RoomModel, RoomUi } from '../room/model';
 
@@ -143,6 +145,55 @@ export const PLAN_THIN: InterviewPlan = {
   slots: SLOTS.slice(0, 3),
   note: 'Your profile is short, so this interview has 3 questions, not 5. Add a project or a link to get more.',
 };
+
+/* ───────────────────────── a role of the graph ───────────────────────── */
+
+/** The sample profile's Senior Frontend Engineer role (`Profile.roles`), requirements as the analysis read them. */
+export const GRAPH_ROLE: Role = {
+  id: 'senior-frontend-engineer',
+  title: 'Senior Frontend Engineer',
+  alignment: 78,
+  eta: '~6 months',
+  why: 'Owns checkout and Kite UI with metrics and mentoring. Testing depth and cross-team scope beyond one product are the gaps.',
+  requirements: [
+    { name: 'React', skillId: 'react', have: true, current: 90, target: 88 },
+    { name: 'Web performance', skillId: 'web-performance', have: true, current: 74, target: 80 },
+    { name: 'Accessibility (WCAG)', skillId: 'accessibility', have: true, current: 76, target: 75 },
+    { name: 'Automated testing', skillId: 'testing', have: false, current: 48, target: 75 },
+    { name: 'Mentoring & review', skillId: 'mentoring-review', have: true, current: 68, target: 75 },
+    { name: 'System design', have: false, current: 45, target: 70 },
+  ],
+};
+
+export const DEV_GRAPH_ROLE: GraphRoleSource = { roleId: GRAPH_ROLE.id };
+
+/** What `POST /api/interview/plan` gives for it: the biggest gaps, then what she can defend, then a story. */
+export const GRAPH_SLOTS: PlanSlot[] = [
+  {
+    id: 's1',
+    kind: 'gap',
+    topic: 'Automated testing',
+    sources: [
+      { origin: 'role', text: 'Automated testing' },
+      { origin: 'evidence', text: 'Vitest and Jest listed; no testing bullet at work', source: 'Resume' },
+    ],
+  },
+  {
+    id: 's2',
+    kind: 'gap',
+    topic: 'System design',
+    sources: [
+      { origin: 'role', text: 'System design' },
+      { origin: 'evidence', text: 'Owns Kite UI: 42 components, 3 squads, Storybook', source: 'Resume' },
+    ],
+  },
+  { id: 's3', kind: 'claim', topic: 'React', sources: [{ origin: 'evidence', text: 'Rebuilt Kitebird checkout in React; owns 42-component Kite UI', source: 'Resume' }] },
+  { id: 's4', kind: 'claim', topic: 'Accessibility (WCAG)', sources: [{ origin: 'evidence', text: 'WCAG 2.1 AA checkout audit: 37 issues logged, 21 fixed', source: 'Portfolio' }] },
+  { id: 's5', kind: 'story', topic: 'Mentoring & review', sources: [{ origin: 'evidence', text: 'Mentored 2 interns, both hired full-time; reviews for 4-person team', source: 'Resume' }] },
+];
+
+export const GRAPH_PLAN_FULL: InterviewPlan = { kind: 'role', title: GRAPH_ROLE.title, slots: GRAPH_SLOTS, minutes: 20, graphRole: DEV_GRAPH_ROLE };
+export const GRAPH_PLAN_SHORT: InterviewPlan = { ...GRAPH_PLAN_FULL, slots: GRAPH_SLOTS.slice(0, 3), minutes: 12 };
 
 /* ───────────────────────── the work sample ───────────────────────── */
 

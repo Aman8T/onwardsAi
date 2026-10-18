@@ -12,7 +12,7 @@
  * line when the server offers it, the browser's otherwise. The room asks again for its own session when it loads.
  */
 import { useEffect, useRef, useState } from 'react';
-import type { InterviewFocus, InterviewKind, InterviewLength, InterviewPlan, PlanRequest, RoleSource } from '../../../shared/interview';
+import type { GraphRoleSource, InterviewFocus, InterviewKind, InterviewLength, InterviewPlan, PlanRequest, RoleSource } from '../../../shared/interview';
 import type { Profile } from '../../../shared/types';
 import { useMe } from '../../auth/useMe';
 import { dayLabel } from '../../discover/prepare/words';
@@ -24,7 +24,7 @@ import { fetchSpeechStatus } from '../sarvam';
 import { cancelSpeech, chooseSpeech, primeVoice, readPrefs, speak, writePrefs } from '../speech';
 import type { MeterTrouble, Prefs, SpeechChoice, VoiceSetting } from '../speech';
 import { usePracticeNav } from '../useInterview';
-import { KIND_BLURB, KIND_LABEL } from '../words';
+import { GRAPH_ROLE_SUB, KIND_BLURB, KIND_LABEL } from '../words';
 import { SetupView } from './SetupView';
 import type { PlanProblem } from './SetupView';
 import '../../styles/practice-room.css';
@@ -33,6 +33,8 @@ export interface SetupScreenProps {
   profile: Profile;
   kind: InterviewKind;
   role?: RoleSource;
+  /** For `role`: a role of the person's graph instead of one from a search (ignored when `role` is given). */
+  graphRole?: GraphRoleSource;
 }
 
 /** The microphone test stops by itself after this long. */
@@ -43,13 +45,16 @@ const STATUS_WAIT_MS = 3000;
 
 export function SetupScreen(props: SetupScreenProps) {
   // a different kind or role is a fresh page: its own plan, its own skips
-  return <SetupBody key={`${props.profile.id}:${props.kind}:${props.role?.runId ?? ''}:${props.role?.jobId ?? ''}`} {...props} />;
+  return <SetupBody key={`${props.profile.id}:${props.kind}:${props.role?.runId ?? ''}:${props.role?.jobId ?? ''}:${props.graphRole?.roleId ?? ''}`} {...props} />;
 }
 
-function SetupBody({ profile, kind, role }: SetupScreenProps) {
+function SetupBody({ profile, kind, role, graphRole: asked }: SetupScreenProps) {
   const open = usePracticeNav();
   const tracker = useTracker(profile.id);
   const tracked = role ? tracker.get(role.jobId) : undefined;
+  // a graph role is only for `role` practice, and a search's role wins when both are named
+  const graphRole = kind === 'role' && !role ? asked : undefined;
+  const graph = graphRole ? profile.roles.find((r) => r.id === graphRole.roleId) : undefined;
   const { unlimited } = useMe();
 
   const [length, setLength] = useState<InterviewLength>('full');
@@ -91,7 +96,7 @@ function SetupBody({ profile, kind, role }: SetupScreenProps) {
   useEffect(() => {
     const ctl = new AbortController();
     setLoading(true);
-    const base: PlanRequest = { profileId: profile.id, kind, ...(role ? { role } : {}), ...(kind === 'role' && focus ? { focus } : {}) };
+    const base: PlanRequest = { profileId: profile.id, kind, ...(role ? { role } : {}), ...(graphRole ? { graphRole } : {}), ...(kind === 'role' && focus ? { focus } : {}) };
     const lengths: Array<InterviewLength | undefined> = kind === 'work' ? [undefined] : ['full', 'short'];
     void Promise.allSettled(lengths.map((l) => realApi.fetchPlan({ ...base, ...(l ? { length: l } : {}) }, ctl.signal))).then((results) => {
       if (ctl.signal.aborted) return;
@@ -112,7 +117,7 @@ function SetupBody({ profile, kind, role }: SetupScreenProps) {
       }
     });
     return () => ctl.abort();
-  }, [profile.id, kind, role?.runId, role?.jobId, focus, attempt]);
+  }, [profile.id, kind, role?.runId, role?.jobId, graphRole?.roleId, focus, attempt]);
 
   // how many practice interviews are left today (free for now); a failure here is not worth a word
   useEffect(() => {
@@ -145,8 +150,9 @@ function SetupBody({ profile, kind, role }: SetupScreenProps) {
   };
 
   const job = tracked?.job;
-  const title = plan?.title || (job ? `${job.title} at ${job.employer}` : KIND_LABEL[kind]);
+  const title = plan?.title || (job ? `${job.title} at ${job.employer}` : graph?.title || KIND_LABEL[kind]);
   const sub = (() => {
+    if (graphRole) return GRAPH_ROLE_SUB;
     if (kind !== 'role' && !(kind === 'work' && tracked)) return KIND_BLURB[kind];
     if (!tracked) return kind === 'role' ? 'From a role Search with AI found' : KIND_BLURB[kind];
     const where = 'Apply link stays in Your applications';
@@ -165,6 +171,7 @@ function SetupBody({ profile, kind, role }: SetupScreenProps) {
         profileId: profile.id,
         kind,
         ...(role ? { role } : {}),
+        ...(graphRole ? { graphRole } : {}),
         ...(kind !== 'work' ? { length } : {}),
         ...(kind === 'role' && focus ? { focus } : {}),
         ...(skipped.size > 0 ? { skip: [...skipped] } : {}),
@@ -186,6 +193,7 @@ function SetupBody({ profile, kind, role }: SetupScreenProps) {
       title={title}
       sub={sub}
       {...(job ? { job } : {})}
+      {...(graph ? { graphRole: graph } : {})}
       plan={plan}
       loading={loading}
       {...(problem ? { problem } : {})}

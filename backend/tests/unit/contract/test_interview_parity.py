@@ -25,6 +25,7 @@ def _ts() -> TsTypes:
 
 INTERFACE_MODELS: dict[str, type[BaseModel]] = {
     "RoleSource": iv.RoleSource,
+    "GraphRoleSource": iv.GraphRoleSource,
     "SlotSource": iv.SlotSource,
     "PlanSlot": iv.PlanSlot,
     "PlanRequest": iv.PlanRequest,
@@ -100,7 +101,7 @@ def test_every_exported_literal_union_is_checked() -> None:
 
 
 def test_the_inline_origin_union_is_the_models() -> None:
-    assert set(get_args(iv.SourceOrigin)) == {"posting", "evidence"}
+    assert set(get_args(iv.SourceOrigin)) == {"posting", "evidence", "role"}
 
 
 def test_the_verdicts_are_words_and_there_is_no_score_anywhere() -> None:
@@ -142,6 +143,8 @@ def test_the_requests_refuse_overlong_text_and_ids() -> None:
         iv.PlanRequest.model_validate({"profileId": "p", "kind": "mock"})
     with pytest.raises(ValidationError):
         iv.RoleSource.model_validate({"runId": "r" * (iv.RUN_ID_MAX_CHARS + 1), "jobId": "j"})
+    with pytest.raises(ValidationError):
+        iv.GraphRoleSource.model_validate({"roleId": "r" * (iv.ROLE_ID_MAX_CHARS + 1)})
 
 
 def test_optional_fields_are_omitted_on_the_wire() -> None:

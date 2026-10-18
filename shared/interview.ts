@@ -3,8 +3,9 @@
  *
  * A practice interview asks about the person's own work and credits only what they back up, in their own words:
  *
- *   1. plan     code picks the slots from the person's evidence lines, a role's asks and gaps (from a search with AI), or
- *               a work-sample template for their kind of work. No model call: the plan is free to look at and change.
+ *   1. plan     code picks the slots from the person's evidence lines, a role's asks and gaps (from a search with AI), the
+ *               requirements of a role on their graph, or a work-sample template for their kind of work. No model call:
+ *               the plan is free to look at and change.
  *   2. phrase   Claude Haiku phrases each slot once: a question, a "push" follow-up, an easier "floor", and what a full
  *               answer covers (hidden until the debrief). Code checks every name and number against the slot's sources.
  *   3. answer   the browser turns speech into text (or the person types). Code routes "I don't know", "skip", "say it
@@ -64,9 +65,20 @@ export interface RoleSource {
   jobId: string;
 }
 
-/** One thing a slot is about: the posting's own words, or one of the person's evidence lines. */
+/**
+ * A role on the person's own graph (`Profile.roles`), for `role` practice without a posting: its plan is built from the
+ * role's requirements, gaps first, and the interviewer's title is the role's title.
+ */
+export interface GraphRoleSource {
+  roleId: string;
+}
+
+/**
+ * One thing a slot is about: the posting's own words, one of the person's evidence lines, or (`role`) a requirement of a
+ * role on their graph, which is Tayyari's reading of what the role needs, never a posting's words.
+ */
 export interface SlotSource {
-  origin: 'posting' | 'evidence';
+  origin: 'posting' | 'evidence' | 'role';
   text: string;
   /** For evidence: where it is from ("Resume", "GitHub", a page's label). */
   source?: string;
@@ -85,8 +97,10 @@ export interface PlanSlot {
 export interface PlanRequest {
   profileId: string;
   kind: InterviewKind;
-  /** Required for `role`; for `work` it picks the task's family from the role's title. */
+  /** For `role`, this or `graphRole` (not both); for `work` it picks the task's family from the role's title. */
   role?: RoleSource;
+  /** For `role`: a role on the person's graph instead of one from a search. */
+  graphRole?: GraphRoleSource;
   /** Default `full`. */
   length?: InterviewLength;
   focus?: InterviewFocus;
@@ -94,12 +108,13 @@ export interface PlanRequest {
 
 export interface InterviewPlan {
   kind: InterviewKind;
-  /** "Frontend Engineer at Headout", "Defend your resume", "Behavioural stories", "Work sample · Frontend engineer". */
+  /** "Frontend Engineer at Headout", "Senior Frontend Engineer" (a graph role), "Defend your resume", "Work sample · …". */
   title: string;
   slots: PlanSlot[];
   /** About how long it takes, in minutes. */
   minutes: number;
   role?: RoleSource;
+  graphRole?: GraphRoleSource;
   /** A sentence about the plan when it is shorter than asked ("Your profile is short, so …"). */
   note?: string;
   /** For `work`: the family the task comes from ("Frontend engineer"). */
@@ -111,6 +126,7 @@ export interface StartRequest {
   profileId: string;
   kind: InterviewKind;
   role?: RoleSource;
+  graphRole?: GraphRoleSource;
   length?: InterviewLength;
   focus?: InterviewFocus;
   /** Slot ids from the plan to leave out (at least one slot must remain). */
@@ -172,6 +188,7 @@ export interface InterviewSession {
   turns: Turn[];
   minutes: number;
   role?: RoleSource;
+  graphRole?: GraphRoleSource;
   task?: WorkTask;
   /** For `work`: the person's work, once handed in. */
   work?: string;
@@ -322,6 +339,7 @@ export interface Debrief {
   /** The day the transcript is deleted (ISO date). */
   keptUntil: string;
   role?: RoleSource;
+  graphRole?: GraphRoleSource;
   task?: WorkTask;
   work?: string;
 }
@@ -342,6 +360,7 @@ export interface SessionSummary {
   verdicts: Verdict[];
   counts?: VerdictCounts;
   role?: RoleSource;
+  graphRole?: GraphRoleSource;
 }
 
 export interface ClaimMark {

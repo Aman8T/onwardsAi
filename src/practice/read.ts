@@ -17,6 +17,7 @@ import type {
   ClaimMark,
   Debrief,
   FixStep,
+  GraphRoleSource,
   InterviewKind,
   InterviewLine,
   InterviewPlan,
@@ -102,7 +103,7 @@ const STATUSES: readonly SessionStatus[] = ['active', 'done'];
 const LINE_KINDS: readonly LineKind[] = ['question', 'followup', 'floor', 'done'];
 const SPEAKERS: readonly Speaker[] = ['interviewer', 'you'];
 const MATERIALS: readonly MaterialKind[] = ['code', 'table', 'text'];
-const ORIGINS = ['posting', 'evidence'] as const;
+const ORIGINS = ['posting', 'evidence', 'role'] as const;
 
 /** Limits: generous, so a real answer is never refused, but a page cannot be flooded. */
 const MAX_SLOTS = 12;
@@ -118,6 +119,13 @@ export function readRole(raw: unknown): RoleSource | undefined {
   const runId = text(raw.runId, 96);
   const jobId = text(raw.jobId, 96);
   return runId && jobId ? { runId, jobId } : undefined;
+}
+
+/** A role of the person's graph: its id has the shape the address allows (a slug). */
+export function readGraphRole(raw: unknown): GraphRoleSource | undefined {
+  if (!isObj(raw)) return undefined;
+  const roleId = text(raw.roleId, 64);
+  return roleId && /^[A-Za-z0-9_-]+$/.test(roleId) ? { roleId } : undefined;
 }
 
 export function readSource(raw: unknown): SlotSource | null {
@@ -143,6 +151,7 @@ export function readPlan(raw: unknown): InterviewPlan | null {
   const kind = oneOf(KINDS, raw.kind);
   if (!kind || !Array.isArray(raw.slots)) return null;
   const role = readRole(raw.role);
+  const graphRole = readGraphRole(raw.graphRole);
   const note = text(raw.note, 400);
   const family = text(raw.family, 120);
   return {
@@ -151,6 +160,7 @@ export function readPlan(raw: unknown): InterviewPlan | null {
     slots: list(raw.slots, readSlot, MAX_SLOTS),
     minutes: whole(raw.minutes) ?? 0,
     ...(role ? { role } : {}),
+    ...(graphRole ? { graphRole } : {}),
     ...(note ? { note } : {}),
     ...(family ? { family } : {}),
   };
@@ -217,6 +227,7 @@ export function readSession(raw: unknown): InterviewSession | null {
   const slotIndex = Math.min(whole(raw.slotIndex) ?? 0, slots.length);
   const current = readLine(raw.current);
   const role = readRole(raw.role);
+  const graphRole = readGraphRole(raw.graphRole);
   const task = readTask(raw.task);
   const work = str(raw.work, MAX_WORK);
   const testNote = str(raw.testNote, 4000);
@@ -234,6 +245,7 @@ export function readSession(raw: unknown): InterviewSession | null {
     turns: list(raw.turns, readTurn, MAX_TURNS),
     minutes: whole(raw.minutes) ?? 0,
     ...(role ? { role } : {}),
+    ...(graphRole ? { graphRole } : {}),
     ...(task ? { task } : {}),
     ...(work !== undefined ? { work } : {}),
     ...(testNote !== undefined ? { testNote } : {}),
@@ -359,6 +371,7 @@ export function readDebrief(raw: unknown): Debrief | null {
   const summary = text(raw.summary, 800);
   const assistantUse = text(raw.assistantUse, 800);
   const role = readRole(raw.role);
+  const graphRole = readGraphRole(raw.graphRole);
   const task = readTask(raw.task);
   const work = str(raw.work, MAX_WORK);
   const kept = isoDay(raw.keptUntil) ?? (isoTime(raw.keptUntil) ? isoTime(raw.keptUntil)?.slice(0, 10) : undefined);
@@ -378,6 +391,7 @@ export function readDebrief(raw: unknown): Debrief | null {
     transcript: list(raw.transcript, readTurn, MAX_TURNS),
     keptUntil: kept ?? '',
     ...(role ? { role } : {}),
+    ...(graphRole ? { graphRole } : {}),
     ...(task ? { task } : {}),
     ...(work !== undefined ? { work } : {}),
   };
@@ -403,7 +417,18 @@ function readSummary(raw: unknown): SessionSummary | null {
   const verdicts = list(raw.verdicts, (v) => oneOf(VERDICTS, v) ?? null, MAX_SLOTS);
   const counts = readCounts(raw.counts);
   const role = readRole(raw.role);
-  return { id, kind, title: text(raw.title, 300) ?? '', createdAt, status, verdicts, ...(counts ? { counts } : {}), ...(role ? { role } : {}) };
+  const graphRole = readGraphRole(raw.graphRole);
+  return {
+    id,
+    kind,
+    title: text(raw.title, 300) ?? '',
+    createdAt,
+    status,
+    verdicts,
+    ...(counts ? { counts } : {}),
+    ...(role ? { role } : {}),
+    ...(graphRole ? { graphRole } : {}),
+  };
 }
 
 function readMark(raw: unknown): ClaimMark | null {

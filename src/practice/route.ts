@@ -3,14 +3,16 @@
  *
  *   /practice                                                     the hub: what is coming up, the four kinds, past sessions
  *   /practice?screen=setup&kind=role&run=…&job=…                  the plan for one role of a search with AI, before it starts
+ *   /practice?screen=setup&kind=role&graphRole=…                  the plan for one role of the person's graph (no posting)
  *   /practice?screen=setup&kind=resume                            the plan for a kind that needs no role (resume, stories, work)
  *   /practice?screen=room&session=…                               an interview in progress (or carried on after a reload)
  *   /practice?screen=debrief&session=…                            what an interview showed, question by question
  *   /practice?screen=progress                                     what carries over: claims at their best, facts from you
  *
  * A screen keeps only the fields it uses, and a screen without them is the hub. `run` and `job` name a role of a search
- * with AI (`RoleSource`); the setup screen for `role` needs both, the one for `work` may have both (the task's family
- * then comes from the role's title).
+ * with AI (`RoleSource`); `graphRole` names a role of the person's graph (`GraphRoleSource`, `Profile.roles[].id`). The
+ * setup screen for `role` needs one of the two (a search's role when it has both), the one for `work` may have `run` and
+ * `job` (the task's family then comes from the role's title).
  *
  * Pure functions only (the store imports this file), so nothing here may touch the store or the DOM.
  */
@@ -28,6 +30,8 @@ export interface PracticeQuery {
   run?: string;
   /** `screen=setup`: the role. */
   job?: string;
+  /** `screen=setup` with `kind=role`: a role of the person's graph, instead of `run` and `job`. */
+  graphRole?: string;
   /** `screen=room` and `screen=debrief`: the interview. */
   session?: string;
 }
@@ -56,6 +60,8 @@ function settle(query: PracticeQuery): PracticeQuery {
           next.run = query.run;
           next.job = query.job;
         }
+      } else if (query.kind === 'role' && query.graphRole) {
+        next.graphRole = query.graphRole;
       } else if (query.kind === 'role') {
         return hub;
       }
@@ -81,9 +87,11 @@ export function parsePracticeUrl(pathname: string, search: string): PracticeQuer
   if (kind) q.kind = kind;
   const run = idOf(p.get('run'));
   const job = idOf(p.get('job'));
+  const graphRole = idOf(p.get('graphRole'));
   const session = idOf(p.get('session'));
   if (run) q.run = run;
   if (job) q.job = job;
+  if (graphRole) q.graphRole = graphRole;
   if (session) q.session = session;
   return settle(q);
 }
@@ -104,6 +112,7 @@ export function practicePath(query: PracticeQuery): string {
   if (q.kind) p.set('kind', q.kind);
   if (q.run) p.set('run', q.run);
   if (q.job) p.set('job', q.job);
+  if (q.graphRole) p.set('graphRole', q.graphRole);
   if (q.session) p.set('session', q.session);
   return `${PRACTICE_PATH}?${p.toString()}`;
 }

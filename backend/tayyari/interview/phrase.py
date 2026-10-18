@@ -3,7 +3,8 @@ the hidden notes of what a full answer covers. Code checks every line and a fail
 
     line        at most 200 characters, ends with "?", four words or more, and every number and capitalised name in it is in
                 the slot's sources, the posting, the job title or the employer (`portfolio.ground`). One that is not gets the
-                slot kind's template, built from the source's own words.
+                slot kind's template, built from the source's own words. A role on the person's graph has a title and no
+                employer or posting: its requirements are among the slots' sources.
     covers      at most four notes of at most 120 characters, with the same name and number check; the rest are dropped.
     posting     text aimed at an AI in the posting (`jobsearch.judge.has_injection`): no call at all, templates only.
     failure     a model that fails, or leaves a slot out, gives the templates for it. An interview never waits on a model.
@@ -80,8 +81,9 @@ class Phrased:
     covers: tuple[str, ...] = ()
 
 
-def template_lines(kind: str, text: str) -> Phrased:
-    """The plain lines of a slot kind, built from the words of its source (clipped to 90 characters)."""
+def template_lines(kind: str, text: str, *, posting: bool = True) -> Phrased:
+    """The plain lines of a slot kind, built from the words of its source (clipped to 90 characters). ``posting=False`` is
+    a graph role's gap: the role needs it, and no posting asked for it."""
     said = clip_quote(text)
     if kind == "ask":
         return Phrased(
@@ -91,7 +93,7 @@ def template_lines(kind: str, text: str) -> Phrased:
         )
     if kind == "gap":
         return Phrased(
-            f"The role asks for “{said}”. How would you handle that in your first month?",
+            f"The role {'asks for' if posting else 'needs'} “{said}”. How would you handle that in your first month?",
             "What's the closest thing you've done?",
             "Where would you start?",
         )
@@ -110,7 +112,9 @@ def template_lines(kind: str, text: str) -> Phrased:
 
 def slot_template(slot: PlanSlot) -> Phrased:
     source = quote_source(slot.sources)
-    return template_lines(slot.kind, source.text if source is not None else slot.topic)
+    if source is None:
+        return template_lines(slot.kind, slot.topic)
+    return template_lines(slot.kind, source.text, posting=source.origin != "role")
 
 
 def _line_ok(line: str, corpus: Corpus) -> bool:

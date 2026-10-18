@@ -8,6 +8,7 @@
  * an employer); and nothing here shows a price.
  */
 import type { InterviewKind, PlanSlot, SlotKind, Verdict } from '../../shared/interview';
+import type { RoleRequirement } from '../../shared/types';
 import { plural } from '../lib/ui';
 
 /** Who turns the person's speech into text: Sarvam AI when the server offers it, else the browser. */
@@ -185,6 +186,30 @@ export const KIND_BLURB: Record<InterviewKind, string> = {
   stories: '“Tell me about a time…”, built from your own experience, with follow-ups that make each story complete.',
   work: 'A small real task for your kind of work, then questions on your choices.',
 };
+
+/** The line under the title of a role taken from the person's graph, which has no posting. */
+export const GRAPH_ROLE_SUB = 'From your skill graph · no posting';
+
+/** What practice for a graph role is, for the side summary. */
+export const GRAPH_ROLE_BLURB = 'Built from what the role needs: your biggest gaps first, then what you can defend.';
+
+/** Where a graph role's requirement stands: met, below the role's level, or not shown (the backend's `shortfall`). */
+export type RequirementStanding = 'met' | 'below' | 'notShown';
+
+export function requirementStanding(r: RoleRequirement): RequirementStanding {
+  if (!r.have) return 'notShown';
+  return r.current < r.target ? 'below' : 'met';
+}
+
+/** "6 requirements · 2 met · 2 below the role's level · 2 not shown yet": counts, never a percentage. */
+export function requirementsLine(requirements: readonly RoleRequirement[]): string {
+  const n = (s: RequirementStanding) => requirements.filter((r) => requirementStanding(r) === s).length;
+  const parts = [plural(requirements.length, 'requirement')];
+  if (n('met') > 0) parts.push(`${n('met')} met`);
+  if (n('below') > 0) parts.push(`${n('below')} below the role's level`);
+  if (n('notShown') > 0) parts.push(`${n('notShown')} not shown yet`);
+  return parts.join(' · ');
+}
 
 /** The three lines of "How it works" on the setup page. */
 export const HOW_IT_WORKS = [

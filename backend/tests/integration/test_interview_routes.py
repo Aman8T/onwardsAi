@@ -53,6 +53,7 @@ from tayyari.core.settings import GuardSettings, Settings, SpeechSettings
 from tayyari.interview.errors import (
     AssistantUnavailable,
     BadPlan,
+    GraphRoleGone,
     InterviewEnded,
     InterviewMovedOn,
     InterviewNotFound,
@@ -61,7 +62,7 @@ from tayyari.interview.errors import (
     WorkFirst,
 )
 from tayyari.interview.speech import SpeechUpcoming
-from tayyari.llm.errors import SPEND_CEILING_MESSAGE
+from tayyari.llm.errors import SPEND_CEILING_MESSAGE, ClaudeOverloaded
 from tayyari.llm.types import CallContext
 from tayyari.speech.engine import SpeechUnavailable
 from tayyari.storage.ports import StoredSearchRun
@@ -455,6 +456,25 @@ async def test_a_whole_interview_goes_through_the_routes(start: Any) -> None:
         deleted = await rig.client.delete(base, params=body)
         assert deleted.status_code == 204 and deleted.content == b"" and is_no_store(deleted)
         assert (await rig.client.get(base, params=body)).status_code == 404
+
+
+async def test_a_role_from_the_graph_reaches_the_service_through_plan_and_start(start: Any) -> None:
+    async with start() as rig:
+        await rig.profile()
+        body = {"profileId": FRONTEND_ID, "kind": "role", "graphRole": {"roleId": "senior-fe"}}
+        plan = await rig.client.post("/api/interview/plan", json={**body, "length": "short"})
+        assert plan.status_code == 200 and is_no_store(plan)
+        planned = rig.stub.calls[-1].args[0]
+        assert isinstance(planned, PlanRequest) and planned.role is None
+        assert planned.graphRole is not None and planned.graphRole.roleId == "senior-fe"
+        started = await rig.start(body={**body, "skip": ["s2"]})
+        assert started.status_code == 200 and is_no_store(started)
+        asked = rig.stub.calls[-1].args[0]
+        assert isinstance(asked, StartRequest) and asked.graphRole is not None and asked.skip == ["s2"]
+        too_long = {**body, "graphRole": {"roleId": "r" * 65}}
+        refused = await rig.client.post("/api/interview/plan", json=too_long)
+        # refused by the contract, so it never reached the service
+        assert refused.status_code == 400 and rig.stub.calls[-1].method == "start"
 
 
 async def test_the_services_calls_carry_who_asked_and_what_for(start: Any) -> None:
@@ -1184,6 +1204,7 @@ async def test_a_spend_ceiling_refuses_before_the_service_is_asked(start: Any) -
         (ServiceUnavailable(OFF), 503),
         (InterviewNotFound(), 404),
         (RoleGone(), 404),
+        (GraphRoleGone(), 404),
         (InterviewMovedOn(), 409),
         (InterviewEnded(), 409),
         (NoTemplate(), 400),
@@ -1298,6 +1319,50 @@ async def test_the_container_builds_the_real_service_over_the_job_search(
         service = env.container.interview
         assert isinstance(service, service_module.InterviewService)
         assert service.enabled is True
+
+
+async def test_a_role_from_the_sample_graph_is_planned_and_started_by_the_real_service(
+    build_settings: MakeSettings,
+) -> None:
+    """The graph-role path end to end: the plan from the sample profile's own Senior Frontend Engineer role (no model call,
+    no search read), then a start whose phrasing fails, so the interviewer asks the role's biggest gap from a template."""
+    async with running(build_settings(guard=roomy())) as env:
+        body = {
+            "profileId": env.sample_id,
+            "kind": "role",
+            "graphRole": {"roleId": "senior-frontend-engineer"},
+        }
+        planned = await env.client.post("/api/interview/plan", json=body)
+        assert planned.status_code == 200, planned.text
+        plan = InterviewPlan.model_validate(planned.json())
+        assert (plan.title, plan.role, plan.graphRole and plan.graphRole.roleId) == (
+            "Senior Frontend Engineer",
+            None,
+            "senior-frontend-engineer",
+        )
+        assert [(s.kind, s.topic) for s in plan.slots][:3] == [
+            ("gap", "Automated testing"),
+            ("gap", "System design"),
+            ("claim", "React"),
+        ]
+        assert plan.slots[0].sources[0] == SlotSource(origin="role", text="Automated testing")
+        assert env.claude.calls == []
+
+        env.claude.script_structured("interview.phrase", ClaudeOverloaded())
+        started = await env.client.post("/api/interview/sessions", json=body)
+        assert started.status_code == 200, started.text
+        session = InterviewSession.model_validate(started.json())
+        assert session.graphRole is not None and session.graphRole.roleId == "senior-frontend-engineer"
+        assert session.current is not None and session.current.text == (
+            "The role needs “Automated testing”. How would you handle that in your first month?"
+        )
+
+        gone = await env.client.post(
+            "/api/interview/plan", json={**body, "graphRole": {"roleId": "no-such-role"}}
+        )
+        assert gone.status_code == 404 and gone.json() == {"error": GraphRoleGone.user_message}
+        both = await env.client.post("/api/interview/plan", json={**body, "role": RUN})
+        assert both.status_code == 400 and both.json() == {"error": "Choose one role to practise for."}
 
 
 async def test_switched_off_by_setting_the_real_service_answers_503(build_settings: MakeSettings) -> None:

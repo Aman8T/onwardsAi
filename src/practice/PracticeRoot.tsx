@@ -3,6 +3,7 @@
  *
  *   /practice                                              the hub
  *   /practice?screen=setup&kind=role&run=…&job=…           the plan, before it starts (the room's own side: `setup/`)
+ *   /practice?screen=setup&kind=role&graphRole=…           the same for a role of the person's graph
  *   /practice?screen=room&session=…                        the interview (`room/`; it has a bar of its own, no header)
  *   /practice?screen=debrief&session=…                     what it showed
  *   /practice?screen=progress                              what carries over
@@ -51,10 +52,11 @@ export function PracticeRoot({ profile }: { profile: Profile }) {
         {route.screen === 'setup' && route.kind && (
           <Suspense fallback={null}>
             <SetupScreen
-              key={`${route.kind}|${route.run ?? ''}|${route.job ?? ''}`}
+              key={`${route.kind}|${route.run ?? ''}|${route.job ?? ''}|${route.graphRole ?? ''}`}
               profile={profile}
               kind={route.kind}
               role={route.run && route.job ? { runId: route.run, jobId: route.job } : undefined}
+              graphRole={route.graphRole ? { roleId: route.graphRole } : undefined}
             />
           </Suspense>
         )}

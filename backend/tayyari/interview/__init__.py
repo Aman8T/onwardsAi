@@ -1,7 +1,8 @@
 """Practice the interview (I1): plans, the interviewer loop, the judge and the debrief. See the I1 section of
 docs/roadmap.md and shared/interview.ts.
 
-    plan      code only: the slots of an interview from the person's evidence, a role's asks and gaps, or a work sample
+    plan      code only: the slots of an interview from the person's evidence, a role's asks and gaps (a search's), a
+              graph role's requirements, or a work sample
     phrase    one model call phrases the questions; code checks every name and number and falls back to templates
     router    code decides what a turn is (repeat, skip, don't know, dispute, too short) without a model
     judge     one small call per answer: the model quotes the answer first, code checks the quote and picks the verdict
@@ -16,6 +17,7 @@ role lookup comes in through a Protocol (`RoleLookup`). Nothing imports this pac
 from tayyari.interview.errors import (
     AssistantUnavailable,
     BadPlan,
+    GraphRoleGone,
     InterviewEnded,
     InterviewMovedOn,
     InterviewNotFound,
@@ -29,6 +31,7 @@ from tayyari.interview.service import InterviewService
 __all__ = [
     "AssistantUnavailable",
     "BadPlan",
+    "GraphRoleGone",
     "InterviewEnded",
     "InterviewMovedOn",
     "InterviewNotFound",

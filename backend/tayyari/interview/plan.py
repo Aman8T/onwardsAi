@@ -3,7 +3,12 @@
     role      a role from a search with AI: the asks the evidence shows, a gap, a claim and a story. Quotas by kind (and by
               what the person wants more of), asks the posting marks as met first; a kind with no material is filled
               from the next kind that has some.
-    resume    claims on the resume: numbers first, a "Led ..." line, a line from a source that is not the resume (a repo,
+              Or a role on the person's graph (`Profile.roles`), which has no posting: where they are weakest first, then
+              what they can defend. A requirement they do not show, or show below the role's level, is a gap (the biggest
+              shortfall first); one they meet is a claim on an evidence line of its own skill (a met requirement whose
+              skill has no evidence line is not asked); then a story, from the role's skills first. The requirement's
+              name is a source of origin ``role``: Tayyari's reading of what the role needs, never a posting's words.
+    resume   claims on the resume: numbers first, a "Led ..." line, a line from a source that is not the resume (a repo,
               a page), then any other line. Skills the analysis could not evidence are never asked as if the resume
               listed them: the profile's low-scoring skills are Tayyari's reading, not the person's words.
     stories   "tell me about a time ...", one per evidence line with people or action in it, distinct skills first.
@@ -16,8 +21,8 @@ invented, and a plan shorter than asked says so ("Your profile is short, so ..."
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
-from dataclasses import dataclass, field
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from typing import Final
 
 from tayyari.contract.interview import (
@@ -32,11 +37,11 @@ from tayyari.contract.interview import (
     SlotSource,
 )
 from tayyari.contract.jobsearch import AiJob, AskMet
-from tayyari.contract.models import Profile
+from tayyari.contract.models import Profile, Role, RoleRequirement
 from tayyari.core.text import clip_words, tidy
 from tayyari.jobsearch.brief import Evidence, evidence_lines
 
-from .errors import BadPlan, NoTemplate, RoleGone
+from .errors import BadPlan, GraphRoleGone, NoTemplate, RoleGone
 from .roles import RoleLookup
 from .tasks import WorkTemplate, template_for_title
 from .text import few_words, fold, has_injection, shared_words
@@ -49,6 +54,15 @@ ROLE_QUOTAS: Final[dict[InterviewFocus | None, dict[SlotKind, int]]] = {
     "claims": {"ask": 2, "gap": 1, "claim": 2, "story": 0},
     "stories": {"ask": 2, "gap": 1, "claim": 0, "story": 2},
 }
+GRAPH_KINDS: Final[tuple[SlotKind, ...]] = ("gap", "claim", "story")
+"""The order of a graph role's interview: where the person is weakest first, then what they can defend, then a story."""
+GRAPH_QUOTAS: Final[dict[InterviewFocus | None, dict[SlotKind, int]]] = {
+    None: {"gap": 2, "claim": 2, "story": 1},
+    "gaps": {"gap": 3, "claim": 1, "story": 1},
+    "claims": {"gap": 1, "claim": 4, "story": 0},
+    "stories": {"gap": 1, "claim": 2, "story": 2},
+}
+"""Five questions, as for a posting; a graph role's met requirements stand in for the asks a posting shows."""
 SHORT_SLOTS: Final = 3
 SHORT_STORIES: Final = 2
 FULL_SLOTS: Final[dict[str, int]] = {"resume": 5, "stories": 4}
@@ -56,6 +70,7 @@ MINUTES_PER_SLOT: Final[dict[str, int]] = {"role": 4, "resume": 3, "stories": 5}
 WORK_EXTRA_MINUTES: Final = 9
 """A work sample is its template's minutes plus about three minutes for each of its three follow-ups."""
 SNIPPET_CHARS: Final = 140
+TOPIC_MAX_CHARS: Final = 32
 
 _DIGIT: Final = re.compile(r"\d")
 _LEADER: Final = re.compile(
@@ -84,13 +99,20 @@ class Candidate:
 
 @dataclass(frozen=True, slots=True)
 class BuiltPlan:
-    """The plan and what building it read: the job and the posting text (a role interview), the template (a work sample)."""
+    """The plan and what building it read: the job and the posting text (a role from a search), the role's title (a role
+    on the graph, which has neither), the template (a work sample)."""
 
     plan: InterviewPlan
     job: AiJob | None = None
     posting_text: str | None = None
     template: WorkTemplate | None = None
     injected: bool = False
+    role_title: str | None = None
+
+    @property
+    def title(self) -> str | None:
+        """The role's title as the questions may name it: the job's, or the graph role's; None for the other kinds."""
+        return self.job.title if self.job is not None else self.role_title
 
 
 @dataclass(slots=True)
@@ -105,6 +127,10 @@ class _Chooser:
         fresh = [line for line in free if line.skill not in self.skills]
         pool = fresh or free
         return pool[0] if pool else None
+
+    def free(self, lines: Sequence[Evidence]) -> Evidence | None:
+        """The first line nobody has used yet, in the order given (whatever its skill)."""
+        return next((line for line in lines if fold(line.cite.text) not in self.texts), None)
 
     def use(self, cand: Candidate) -> None:
         self.texts.update(cand.uses)
@@ -229,37 +255,146 @@ def plan_role(
     people_lines = _resume_first([ln for ln in lines if _PEOPLE.search(ln.cite.text)], resume)
     any_lines = _resume_first(list(lines), resume)
     chooser = _Chooser()
-    picked: dict[SlotKind, list[Candidate]] = {kind: [] for kind in KINDS}
 
-    def take(kind: SlotKind) -> bool:
-        cand: Candidate | None = None
+    def take(kind: SlotKind) -> Candidate | None:
         if kind == "ask":
-            cand = ask_pool.pop(0) if ask_pool else None
-        elif kind == "gap":
-            cand = gap_pool.pop(0) if gap_pool else None
-        elif kind == "claim":
+            return ask_pool.pop(0) if ask_pool else None
+        if kind == "gap":
+            return gap_pool.pop(0) if gap_pool else None
+        if kind == "claim":
             line = chooser.pick(digit_lines)
-            cand = line_candidate("claim", line) if line is not None else None
-        else:
-            line = chooser.pick(people_lines) or chooser.pick(any_lines)
-            cand = line_candidate("story", line) if line is not None else None
+            return line_candidate("claim", line) if line is not None else None
+        line = chooser.pick(people_lines) or chooser.pick(any_lines)
+        return line_candidate("story", line) if line is not None else None
+
+    ordered = _fill(KINDS, quotas, take, chooser)
+    wanted = SHORT_SLOTS if length == "short" else sum(quotas.values())
+    return ordered[:wanted], wanted, dropped
+
+
+def shortfall(req: RoleRequirement) -> int:
+    """How far below the role's level the person is (target − current); at least 1 for a requirement they do not show."""
+    short = req.target - req.current
+    return short if req.have else max(short, 1)
+
+
+def graph_role(profile: Profile, role_id: str) -> Role:
+    """The role of the person's graph with this id. Raises `GraphRoleGone` when there is none (analysed again since)."""
+    found = next((role for role in profile.roles if role.id == role_id), None)
+    if found is None:
+        raise GraphRoleGone()
+    return found
+
+
+def plan_graph_role(
+    profile: Profile,
+    role: Role,
+    *,
+    length: InterviewLength | None,
+    focus: InterviewFocus | None,
+) -> tuple[list[Candidate], int]:
+    """The candidates of an interview for a role on the person's graph, in order, and how many were asked for."""
+    lines = evidence_lines(profile)
+    resume = resume_labels(profile)
+    names = {skill.id: skill.name for skill in profile.skills}
+    quotas = GRAPH_QUOTAS[focus]
+    asked = [r for r in role.requirements if tidy(r.name) and not has_injection(r.name)]
+    # the biggest shortfall first; sorted is stable, so equal ones keep the role's order
+    gaps = sorted((r for r in asked if shortfall(r) > 0), key=lambda r: -shortfall(r))
+    met = [r for r in asked if shortfall(r) <= 0]
+    role_skills = {names[r.skillId] for r in asked if r.skillId in names}
+
+    def own_lines(req: RoleRequirement) -> list[Evidence]:
+        """The evidence lines of the requirement's own skill, resume first; none when it is not a skill on the graph."""
+        skill = names.get(req.skillId) if req.skillId else None
+        return _resume_first([ln for ln in lines if ln.skill == skill], resume) if skill else []
+
+    def near_lines(req: RoleRequirement) -> list[Evidence]:
+        """Its own skill's lines, then any line that shares a meaningful word with it, most shared first."""
+        scored = [(shared_words(req.name, f"{ln.skill} {ln.cite.text}"), i, ln) for i, ln in enumerate(lines)]
+        shared = [ln for score, _, ln in sorted(scored, key=lambda t: (-t[0], t[1])) if score > 0]
+        return [*own_lines(req), *shared]
+
+    def role_first(pool: Sequence[Evidence]) -> list[Evidence]:
+        return [
+            *(ln for ln in pool if ln.skill in role_skills),
+            *(ln for ln in pool if ln.skill not in role_skills),
+        ]
+
+    people_lines = role_first(_resume_first([ln for ln in lines if _PEOPLE.search(ln.cite.text)], resume))
+    any_lines = role_first(_resume_first(list(lines), resume))
+    chooser = _Chooser()
+
+    def take(kind: SlotKind) -> Candidate | None:
+        if kind == "gap":
+            if not gaps:
+                return None
+            req = gaps.pop(0)
+            return requirement_gap(req, chooser.free(near_lines(req)))
+        if kind == "claim":
+            while met:
+                req = met.pop(0)
+                line = chooser.free(own_lines(req))
+                if line is not None:
+                    return replace(line_candidate("claim", line), topic=requirement_topic(req))
+            return None
+        line = chooser.pick(people_lines) or chooser.pick(any_lines)
+        return line_candidate("story", line) if line is not None else None
+
+    ordered = _fill(GRAPH_KINDS, quotas, take, chooser)
+    wanted = SHORT_SLOTS if length == "short" else sum(quotas.values())
+    return ordered[:wanted], wanted
+
+
+def requirement_gap(req: RoleRequirement, near: Evidence | None) -> Candidate:
+    """A gap of a graph role: the requirement (origin ``role``) and the evidence line nearest to it, if there is one."""
+    sources = [SlotSource(origin="role", text=tidy(req.name))]
+    uses: tuple[str, ...] = ()
+    if near is not None:
+        sources.append(SlotSource(origin="evidence", text=near.cite.text, source=near.cite.source))
+        uses = (fold(near.cite.text),)
+    return Candidate(
+        kind="gap",
+        topic=requirement_topic(req),
+        sources=tuple(sources),
+        uses=uses,
+        skill=near.skill if near is not None else None,
+    )
+
+
+def requirement_topic(req: RoleRequirement) -> str:
+    """The requirement's name as the plan rail shows it: whole when it fits ("Accessibility (WCAG)"), else its first words."""
+    name = tidy(req.name)
+    return name if len(name) <= TOPIC_MAX_CHARS else few_words(name, TOPIC_MAX_CHARS)
+
+
+def _fill(
+    kinds: Sequence[SlotKind],
+    quotas: Mapping[SlotKind, int],
+    take: Callable[[SlotKind], Candidate | None],
+    chooser: _Chooser,
+) -> list[Candidate]:
+    """Each kind's quota in turn; then each kind's shortfall from the next kind that still has material. In ``kinds``
+    order, every candidate marked used as it is taken."""
+    picked: dict[SlotKind, list[Candidate]] = {kind: [] for kind in kinds}
+
+    def got(kind: SlotKind) -> bool:
+        cand = take(kind)
         if cand is None:
             return False
         chooser.use(cand)
         picked[kind].append(cand)
         return True
 
-    for kind in KINDS:
+    for kind in kinds:
         for _ in range(quotas[kind]):
-            take(kind)
-    for index, kind in enumerate(KINDS):
+            got(kind)
+    for index, kind in enumerate(kinds):
         for _ in range(quotas[kind] - len(picked[kind])):
-            for step in range(1, len(KINDS)):
-                if take(KINDS[(index + step) % len(KINDS)]):
+            for step in range(1, len(kinds)):
+                if got(kinds[(index + step) % len(kinds)]):
                     break
-    ordered = [cand for kind in KINDS for cand in picked[kind]]
-    wanted = SHORT_SLOTS if length == "short" else sum(quotas.values())
-    return ordered[:wanted], wanted, dropped
+    return [cand for kind in kinds for cand in picked[kind]]
 
 
 def plan_resume(profile: Profile, *, length: InterviewLength | None) -> tuple[list[Candidate], int]:
@@ -341,9 +476,28 @@ def _work_title(profile: Profile) -> str:
 
 
 async def build_plan(profile: Profile, req: PlanRequest, roles: RoleLookup) -> BuiltPlan:
-    """The plan for ``req`` and what it was made from. Raises `BadPlan` (no role chosen), `RoleGone` (the role is not in the
-    person's searches any more) or `NoTemplate` (no work sample for this kind of work)."""
+    """The plan for ``req`` and what it was made from. Raises `BadPlan` (no role chosen, or two), `RoleGone` (the role is not
+    in the person's searches any more), `GraphRoleGone` (nor on their graph) or `NoTemplate` (no work sample for this kind
+    of work)."""
     kind = req.kind
+    if kind == "role" and req.graphRole is not None:
+        if req.role is not None:
+            raise BadPlan("Choose one role to practise for.")
+        role = graph_role(profile, req.graphRole.roleId)
+        cands, wanted = plan_graph_role(profile, role, length=req.length, focus=req.focus)
+        slots = _slots(cands)
+        named = tidy(role.title) or "This role"
+        return BuiltPlan(
+            plan=InterviewPlan(
+                kind="role",
+                title=named,
+                slots=slots,
+                minutes=plan_minutes("role", len(slots)),
+                graphRole=req.graphRole,
+                note=short_note(len(slots), wanted),
+            ),
+            role_title=named,
+        )
     if kind == "role":
         if req.role is None:
             raise BadPlan("Choose a role to practise for.")
@@ -403,19 +557,26 @@ async def build_plan(profile: Profile, req: PlanRequest, roles: RoleLookup) -> B
 
 __all__ = [
     "FULL_SLOTS",
+    "GRAPH_KINDS",
+    "GRAPH_QUOTAS",
     "KINDS",
     "ROLE_QUOTAS",
     "SHORT_SLOTS",
     "BuiltPlan",
     "Candidate",
     "build_plan",
+    "graph_role",
     "injection_snippet",
     "line_candidate",
+    "plan_graph_role",
     "plan_minutes",
     "plan_resume",
     "plan_role",
     "plan_stories",
     "plan_work",
+    "requirement_gap",
+    "requirement_topic",
     "resume_labels",
     "short_note",
+    "shortfall",
 ]

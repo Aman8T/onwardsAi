@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from tayyari.contract.interview import (
     AssistantTurn,
+    GraphRoleSource,
     InterviewKind,
     InterviewLine,
     InterviewSession,
@@ -110,6 +111,7 @@ class SessionState(_Base):
     turns: list[Turn] = Field(default_factory=list)
     answered: int = 0
     role: RoleSource | None = None
+    graphRole: GraphRoleSource | None = None
     employer: str | None = None
     task: WorkTask | None = None
     checks: list[str] = Field(default_factory=list)
@@ -159,6 +161,7 @@ def session_of(item: StoredInterview, state: SessionState) -> InterviewSession:
         turns=state.turns,
         minutes=state.minutes,
         role=state.role,
+        graphRole=state.graphRole,
         task=state.task,
         work=state.work,
         testNote=state.testNote,

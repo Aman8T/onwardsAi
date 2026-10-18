@@ -85,7 +85,8 @@ const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(re
 /** Every button that leaves a screen says where it would go. */
 function stubNav(note: (s: string) => void): PracticeNav {
   return {
-    setup: (kind, role) => note(`Gallery: opens the plan for ${kind}${role ? ` (role ${role.jobId})` : ''}.`),
+    setup: (kind, role, graphRole) =>
+      note(`Gallery: opens the plan for ${kind}${role ? ` (role ${role.jobId})` : graphRole ? ` (graph role ${graphRole.roleId})` : ''}.`),
     room: (id) => note(`Gallery: opens the room of interview ${id}.`),
     debrief: (id) => note(`Gallery: opens the debrief of interview ${id}.`),
     hub: () => note('Gallery: opens the hub.'),

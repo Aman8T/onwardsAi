@@ -82,13 +82,16 @@ function jumpTo(ev: { preventDefault: () => void }, id: string, ctx: CardContext
 
 /* ───────────────────────── what it was about ───────────────────────── */
 
-const ABOUT_LABEL: Record<SlotKind, { posting: string; evidence: string }> = {
-  ask: { posting: 'They ask', evidence: 'You show' },
-  gap: { posting: 'They ask', evidence: 'Nearest evidence' },
-  claim: { posting: 'They ask', evidence: 'You show' },
-  story: { posting: 'They ask', evidence: 'The story came from' },
-  task: { posting: 'From the task', evidence: 'From' },
+/** `role` is a requirement of a role on the person's graph: what the role needs, as the graph reads it, never a posting. */
+const ABOUT_LABEL: Record<SlotKind, Record<SlotSource['origin'], string>> = {
+  ask: { posting: 'They ask', evidence: 'You show', role: 'The role needs' },
+  gap: { posting: 'They ask', evidence: 'Nearest evidence', role: 'The role needs' },
+  claim: { posting: 'They ask', evidence: 'You show', role: 'The role needs' },
+  story: { posting: 'They ask', evidence: 'The story came from', role: 'The role needs' },
+  task: { posting: 'From the task', evidence: 'From', role: 'The role needs' },
 };
+
+const citeOf = (s: SlotSource) => (s.origin === 'posting' ? 'Posting' : s.origin === 'role' ? 'Your skill graph' : (s.source ?? 'Resume'));
 
 function About({ kind, sources }: { kind: SlotKind; sources: readonly SlotSource[] }) {
   if (sources.length === 0) return null;
@@ -97,7 +100,7 @@ function About({ kind, sources }: { kind: SlotKind; sources: readonly SlotSource
       <div className="kicker">What it was about</div>
       {sources.map((s, i) => (
         <p key={i} className="pc-fact">
-          <span className="pc-lbl">{ABOUT_LABEL[kind][s.origin]} </span>“{s.text}” <span className="pc-cite">{s.origin === 'posting' ? 'Posting' : (s.source ?? 'Resume')}</span>
+          <span className="pc-lbl">{ABOUT_LABEL[kind][s.origin]} </span>“{s.text}” <span className="pc-cite">{citeOf(s)}</span>
           {s.origin === 'posting' && kind === 'gap' && <span className="pc-muted"> · not on your resume</span>}
         </p>
       ))}

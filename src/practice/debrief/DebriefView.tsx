@@ -169,7 +169,7 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete }:
 
   const actions = (
     <div className="pc-actions pc-end">
-      <button type="button" className="btn btn-primary pc-btn" onClick={() => nav.setup(debrief.kind, debrief.role)}>
+      <button type="button" className="btn btn-primary pc-btn" onClick={() => nav.setup(debrief.kind, debrief.role, debrief.graphRole)}>
         Practise again
       </button>
       <button type="button" className="btn pc-btn" onClick={() => nav.setup(other)}>

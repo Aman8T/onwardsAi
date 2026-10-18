@@ -5,7 +5,7 @@ Same rules as `tayyari.contract.discover`: camelCase field names that are the JS
 fails when the two drift.
 
 What this contract carries (project-soul.md): questions come only from the person's evidence, a posting's asks and gaps,
-or a work-sample template; a verdict is a word worked out in code from a quote of the person's own answer that code
+the requirements of a role on the person's graph, or a work-sample template; a verdict is a word worked out in code from a quote of the person's own answer that code
 checked, never a score; "Say" lines hold only the person's words and cited evidence, with ``[brackets]`` for what only
 they know; Not assessed never counts against anyone. Nothing here is shared with an employer.
 """
@@ -33,10 +33,12 @@ LineKind = Literal["question", "followup", "floor", "done"]
 Speaker = Literal["interviewer", "you"]
 StoryPartName = Literal["situation", "action", "result", "reflection"]
 MaterialKind = Literal["code", "table", "text"]
-SourceOrigin = Literal["posting", "evidence"]
+SourceOrigin = Literal["posting", "evidence", "role"]
 
 PROFILE_ID_MAX_CHARS: Final = 64
 RUN_ID_MAX_CHARS: Final = 96
+ROLE_ID_MAX_CHARS: Final = 64
+"""A role id of the person's graph (`Profile.roles`): a slug of at most about 44 characters."""
 SLOT_ID_MAX_CHARS: Final = 16
 MAX_SKIP: Final = 12
 ANSWER_MAX_CHARS: Final = 6000
@@ -49,6 +51,10 @@ ASSISTANT_MESSAGE_MAX_CHARS: Final = 1000
 class RoleSource(_Model):
     runId: str = Field(max_length=RUN_ID_MAX_CHARS)
     jobId: str = Field(max_length=RUN_ID_MAX_CHARS)
+
+
+class GraphRoleSource(_Model):
+    roleId: str = Field(max_length=ROLE_ID_MAX_CHARS)
 
 
 class SlotSource(_Model):
@@ -68,6 +74,7 @@ class PlanRequest(_Model):
     profileId: str = Field(max_length=PROFILE_ID_MAX_CHARS)
     kind: InterviewKind
     role: RoleSource | None = None
+    graphRole: GraphRoleSource | None = None
     length: InterviewLength | None = None
     focus: InterviewFocus | None = None
 
@@ -78,6 +85,7 @@ class InterviewPlan(_Model):
     slots: list[PlanSlot]
     minutes: int
     role: RoleSource | None = None
+    graphRole: GraphRoleSource | None = None
     note: str | None = None
     family: str | None = None
 
@@ -86,6 +94,7 @@ class StartRequest(_Model):
     profileId: str = Field(max_length=PROFILE_ID_MAX_CHARS)
     kind: InterviewKind
     role: RoleSource | None = None
+    graphRole: GraphRoleSource | None = None
     length: InterviewLength | None = None
     focus: InterviewFocus | None = None
     skip: list[str] | None = Field(default=None, max_length=MAX_SKIP)
@@ -137,6 +146,7 @@ class InterviewSession(_Model):
     turns: list[Turn]
     minutes: int
     role: RoleSource | None = None
+    graphRole: GraphRoleSource | None = None
     task: WorkTask | None = None
     work: str | None = None
     testNote: str | None = None
@@ -257,6 +267,7 @@ class Debrief(_Model):
     transcript: list[Turn]
     keptUntil: str
     role: RoleSource | None = None
+    graphRole: GraphRoleSource | None = None
     task: WorkTask | None = None
     work: str | None = None
 
@@ -275,6 +286,7 @@ class SessionSummary(_Model):
     verdicts: list[Verdict]
     counts: VerdictCounts | None = None
     role: RoleSource | None = None
+    graphRole: GraphRoleSource | None = None
 
 
 class ClaimMark(_Model):
@@ -310,6 +322,7 @@ __all__ = [
     "ANSWER_MAX_CHARS",
     "ASSISTANT_MESSAGE_MAX_CHARS",
     "PROFILE_ID_MAX_CHARS",
+    "ROLE_ID_MAX_CHARS",
     "RUN_ID_MAX_CHARS",
     "SLOT_ID_MAX_CHARS",
     "TEST_NOTE_MAX_CHARS",
@@ -328,6 +341,7 @@ __all__ = [
     "Debrief",
     "FactRequest",
     "FixStep",
+    "GraphRoleSource",
     "InterviewFocus",
     "InterviewKind",
     "InterviewLength",
@@ -351,6 +365,7 @@ __all__ = [
     "SlotKind",
     "SlotResult",
     "SlotSource",
+    "SourceOrigin",
     "Speaker",
     "StartRequest",
     "StoryPartName",

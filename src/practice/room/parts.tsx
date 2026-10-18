@@ -7,7 +7,7 @@
  * Every string that came from the server or the person is a text node.
  */
 import { useEffect, useId, useRef } from 'react';
-import type { InterviewSession, PlanSlot } from '../../../shared/interview';
+import type { InterviewSession, PlanSlot, SlotSource } from '../../../shared/interview';
 import { NO_SPEECH, SILENCE, SLOT_KIND_LABEL, MIC_BLOCKED, SARVAM_NOTE, SPEECH_NETWORK, END_EARLY, clock as fmtClock, leftLine, privacyLine, quoted } from '../words';
 import { useFreeLine } from '../useFreeLine';
 import { ChevronIcon, KeyboardIcon, MicOffIcon, RepeatIcon } from './icons';
@@ -44,13 +44,20 @@ export function ListenClock({ read }: { read: () => number }) {
 
 /* ───────────────────────── why this question ───────────────────────── */
 
-/** Which source is which: the posting's own words, or a line of the person's evidence with where it is from. */
-const sourceLabel = (s: PlanSlot['sources'][number]) => (s.origin === 'posting' ? 'Posting' : s.source || 'Your evidence');
+/** Which source is which: the posting's own words, a graph role's requirement, or a line of the person's evidence with where
+ * it is from. */
+const sourceLabel = (s: PlanSlot['sources'][number]) => (s.origin === 'posting' ? 'Posting' : s.origin === 'role' ? 'The role' : s.source || 'Your evidence');
+
+/** Why a gap is asked: a posting's ask that is not on the resume, or what a graph role needs that the graph shows too little of. */
+function gapNote(slot: PlanSlot): string {
+  const has = (origin: SlotSource['origin']) => slot.sources.some((s) => s.origin === origin);
+  const nearest = has('evidence') ? ' This is the nearest evidence.' : '';
+  if (has('role')) return `The role needs this, and your graph shows less of it than the role expects.${nearest}`;
+  return has('posting') && has('evidence') ? "The posting's ask is not on your resume. This is the nearest evidence." : "The posting's ask is not on your resume.";
+}
 
 export function WhyBlock({ slot, open, onToggle }: { slot: PlanSlot; open: boolean; onToggle: () => void }) {
   const body = useId();
-  const hasPosting = slot.sources.some((s) => s.origin === 'posting');
-  const hasEvidence = slot.sources.some((s) => s.origin === 'evidence');
   return (
     <div className="rm-why">
       <button type="button" className="rm-why-btn" aria-expanded={open} aria-controls={body} onClick={onToggle}>
@@ -70,9 +77,7 @@ export function WhyBlock({ slot, open, onToggle }: { slot: PlanSlot; open: boole
               <span className="rm-fact">{quoted(s.text)}</span>
             </div>
           ))}
-          {slot.kind === 'gap' && (
-            <p className="rm-faint rm-small">{hasPosting && hasEvidence ? "The posting's ask is not on your resume. This is the nearest evidence." : "The posting's ask is not on your resume."}</p>
-          )}
+          {slot.kind === 'gap' && <p className="rm-faint rm-small">{gapNote(slot)}</p>}
           {slot.kind === 'task' && <p className="rm-faint rm-small">This question is about the work you handed in.</p>}
         </div>
       )}
