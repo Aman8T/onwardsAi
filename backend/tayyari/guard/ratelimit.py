@@ -31,6 +31,8 @@ A visitor with no account is counted once more, under the route ``match_anon``: 
 no whole-service counter.
 ``speech`` (a piece of a spoken answer written down, or an interviewer's line read aloud, through Sarvam) is one per-minute
 window per address, no account counter and no whole-service counter: Sarvam's own credits are metered by `speech.meter`.
+``prepare`` (a plan for a role, "How do I prepare for this role?", and a headline rewritten for it: the two routes that
+call a model) is counted per address and per account like ``interview``, with ``prepare:global:hour``.
 
 `shed(route, ip_hash, ip_hash_48)` runs step 1 alone, synchronously, so a route can turn hammering away before it
 reads the request body; it then calls ``check(..., memory=False)`` after validating, so one request takes one
@@ -74,6 +76,7 @@ Route = Literal[
     "interview",
     "interview_again",
     "speech",
+    "prepare",
 ]
 WindowName = Literal["min", "hour", "day"]
 
@@ -85,6 +88,7 @@ GLOBAL_PORTFOLIO_BUCKET = "portfolio:global:hour"
 GLOBAL_MATCH_BUCKET = "match:global:hour"
 GLOBAL_JOBSEARCH_BUCKET = "jobsearch:global:hour"
 GLOBAL_INTERVIEW_BUCKET = "interview:global:hour"
+GLOBAL_PREPARE_BUCKET = "prepare:global:hour"
 SUBNET_LIMIT_FACTOR = 4
 """An IPv6 /48 may use this many times the per-IP limit (a /64 is one household, a /48 is up to 65,536)."""
 
@@ -188,6 +192,10 @@ _MESSAGES: dict[tuple[str, str], str] = {
     ("interview", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
     ("interview_again", "day"): "That's enough repeats for today. More in {wait}.",
     ("speech", "min"): "Too many speech requests at once. Please wait {wait}.",
+    ("prepare", "min"): "A plan is already on its way. Please wait {wait} and try again.",
+    ("prepare", "hour"): "You've reached the hourly limit for plans. Please try again in {wait}.",
+    ("prepare", "day"): "You've reached today's limit for plans. It resets in {wait}.",
+    ("prepare", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
 }
 
 
@@ -255,6 +263,12 @@ class RateLimiter:
             limits = (("day", s.interview_again_per_day),)
         elif route == "speech":
             limits = (("min", s.speech_per_minute),)
+        elif route == "prepare":
+            limits = (
+                ("min", s.prepare_per_minute),
+                ("hour", s.prepare_per_hour),
+                ("day", s.prepare_per_day),
+            )
         else:  # portfolio
             limits = (
                 ("min", s.portfolio_per_minute),
@@ -294,6 +308,7 @@ class RateLimiter:
             "interview": (GLOBAL_INTERVIEW_BUCKET, s.interview_global_per_hour),
             "interview_again": (GLOBAL_INTERVIEW_BUCKET, 0),  # capped by ``interview`` already
             "speech": ("speech:global:hour", 0),  # Sarvam's credits are metered by `speech.meter`, not here
+            "prepare": (GLOBAL_PREPARE_BUCKET, s.prepare_global_per_hour),
         }
         return rules[route]
 
@@ -450,6 +465,7 @@ __all__ = [
     "GLOBAL_JOBSEARCH_BUCKET",
     "GLOBAL_MATCH_BUCKET",
     "GLOBAL_PORTFOLIO_BUCKET",
+    "GLOBAL_PREPARE_BUCKET",
     "SUBNET_LIMIT_FACTOR",
     "UNKNOWN_SUBJECT",
     "InProcessBucket",

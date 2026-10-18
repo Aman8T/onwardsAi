@@ -199,6 +199,15 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
       Sarvam AI, an Indian speech service, to be written down. Tayyari keeps only the text…" and "Speech by Sarvam AI,
       made in India for Indian English and Hinglish." Without it (or once the day's Sarvam budget is used): the browser
       line and "In Chrome, speech-to-text runs on Google's speech service."
+    - **A role from your graph.** Prepare's "Practice the interview for this role", or
+      `/practice?screen=setup&kind=role&graphRole=senior-frontend-engineer` on the sample: "Senior Frontend Engineer",
+      "From your skill graph · no posting", "Your biggest gaps come first." Gap rows cite "The role" ("Not shown yet:
+      “Automated testing”", or "Below the role's level: …") with the nearest evidence line; claims quote a line of their own
+      skill; the side summary counts requirements over pips, never a percentage. The first question is about the biggest
+      gap; "Why this question" says "The role needs this, and your graph shows less of it than the role expects." The
+      debrief labels it "The role needs “…” · Your skill graph", has no employer summary, and "Practise again" reopens
+      the same role. A role id no longer on the graph: "That role is not on your skill graph any more…" with "Back to
+      Practice". `/dev/practice?state=setup-graph` draws the setup.
     - **The room.** The question in serif, "Why this question" closed by default; with Sarvam the interviewer reads it in
       an Indian English voice ("Say it again" replays it with no new request). Speaking with Sarvam: your answer is cut
       at each pause and "Your words appear after each pause", with "Writing down what you said…" while a piece is on its
@@ -222,5 +231,44 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     - **Without a server,** `/dev/practice?state=…` holds every state (hub, setup, the room's steps and edges, work,
       debrief, ended early, progress, limit, paused, sample, thin, no template, phone).
 
+18. **Prepare** (a new plan for a role makes two Haiku calls; a stored one opens at once, with no call).
+    - **From the graph.** On Next, "How do I prepare for this role?" opens a thread whose head line reads
+      "Design Engineer · closest of your 5 roles · ~2 months" (never a percentage; the "Started from" card shows the
+      role's rank). The question "How do I prepare for the Design Engineer role?" is followed by four blocks, not
+      prose; the fixed suggestion chips are gone and the composer stays.
+    - **How it arrives.** "Where you stand" draws at once from the graph: one row per gap with a bar (today filled,
+      the target a tick), "the biggest gap" under one of them, "Already strong: …" under the rows. The move and the
+      plan are quiet outlines ("Choosing the one move…", "Laying out the plan…") with "Stop here" under them, and
+      nothing shimmers. The headline and each gap's "why" fill in, then the move and the plan appear. "Stop here"
+      mid-way keeps what arrived and offers "Carry on"; a failed call shows a calm line with "Try again".
+    - **Where you stand.** A row opens with + / −: the why, a chip "From your resume" (tap: the evidence line, word
+      for word, with its skill) and "Help me with just this", which opens a second thread for that one gap
+      ("Automated testing · Senior Frontend Engineer · gap 48→75") with its own shorter plan.
+    - **The one move.** "1 of 3", the serif title, "What you already have" chips (tap: the lines they rest on),
+      "Works on" chips that are gap names, "about 36 h" (the phases' hours summed in code). "Show another move"
+      cycles through the moves; "Plan it" / "Hide the plan" folds the plan.
+    - **Your plan.** Hours a week 3 / 6 / 10 (`aria-pressed`): the summary and every phase's weeks change at once
+      ("Weeks 1–2" at 6 h becomes "Weeks 1–4" at 3 h; the total is the hours over the hours a week, rounded up).
+      Phase pills carry a progress line; the open phase's tasks are checkboxes; a tick strikes the task and the
+      pill's line grows; "You'll have" names the deliverable; "Add a link" keeps a web link on the phase (a non-link
+      is refused). Reload: the ticks, the hours and the links are still there (saved to the plan after a short
+      pause; if another tab saved first, the plan reloads and saves on top).
+    - **Next.** Four buttons open a panel in place. Calendar: pick a day and a time; "Download the calendar file"
+      saves `tayyari-plan.ics` with one block a week for as long as the plan, each titled with its phase. Repo: your
+      repos ranked with code-made reasons, one marked "start here", "Open on GitHub"; without a GitHub source it says
+      to add one. Headline: "Now", "For this role", "Rests on" chips, Copy and "Another wording"; when no wording
+      passed the check, the note says so. Practice: "Practice the interview for this role" opens Practice · This
+      role for the plan's role.
+    - **Read this as text** at the end is written from the blocks (the same numbers, the weeks at your hours).
+      "Make a new plan" asks before it replaces the plan and its ticks.
+    - **Follow-ups.** The composer still sends to the coach chat; its answers show under the blocks, and "Jump to
+      latest" appears only once there is a chat answer below.
+    - **Phone (390×844).** A Stand / Move / Plan / Next bar sticks to the top of the thread and marks the block on
+      screen; the plan is a list where the open phase expands in place; "Plan it" and "Show another move" stay at
+      the bottom of the move while it is on screen.
+    - **Without a server,** `/dev/prepare?state=…` holds every state (full, stream, streaming, standing, error,
+      refused, thin, requirement, no-github, no-headline, conflict, phone); add `&scheme=dark` for the dark scheme.
+
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
-every chat seed question and caption byte-identical to today (same `prompts.ts`).
+every chat seed question and caption byte-identical to today (same `prompts.ts`), except the
+role's, which Prepare changed on purpose (no percentage).

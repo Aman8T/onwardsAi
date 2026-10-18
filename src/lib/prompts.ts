@@ -3,6 +3,7 @@
  * and the CTA label shown on its popover.
  */
 import type { ChatOrigin, Domain, Profile, Role, RoleRequirement, Skill, SourceSummary } from '../../shared/types';
+import { rankLabel } from './layout';
 
 export interface NodeAction {
   /** Button label on the popover. */
@@ -54,11 +55,16 @@ export function sourceAction(source: SourceSummary): NodeAction {
   };
 }
 
-export function roleAction(role: Role): NodeAction {
+/**
+ * A role: the question opens a Prepare thread (blocks, not prose). `standing` is the role's place among the
+ * person's roles by alignment (`roleStanding` in lib/layout): the caption says "closest of your 5 roles", never a
+ * percentage.
+ */
+export function roleAction(role: Role, standing: { rank: number; count: number }): NodeAction {
   return {
     cta: 'How do I prepare for this role?',
-    question: `How do I prepare for the ${role.title} role? I'm ${role.alignment}% aligned.`,
-    origin: { kind: 'role', refId: role.id, title: role.title, caption: `${role.alignment}% aligned · ${role.eta}` },
+    question: `How do I prepare for the ${role.title} role?`,
+    origin: { kind: 'role', refId: role.id, title: role.title, caption: `${rankLabel(standing.rank, standing.count)} · ${role.eta}` },
   };
 }
 

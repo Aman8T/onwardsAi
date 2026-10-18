@@ -1,0 +1,48 @@
+{
+  "github": true,
+  "repos": [
+    {
+      "name": "notes-ai",
+      "url": "https://github.com/riya-kapoor/notes-ai",
+      "language": "TypeScript",
+      "description": "Notes with embeddings search over your own files",
+      "tests": false,
+      "ci": false,
+      "readme": true,
+      "reasons": ["calls OpenAI", "has embeddings search", "no tests yet", "no CI"],
+      "suggested": true
+    },
+    {
+      "name": "recipe-genie-web",
+      "url": "https://github.com/riya-kapoor/recipe-genie-web",
+      "language": "TypeScript",
+      "description": "The web front of the Recipe Genie app",
+      "tests": false,
+      "ci": true,
+      "readme": true,
+      "reasons": ["calls OpenAI", "has CI", "no tests yet"],
+      "suggested": false
+    },
+    {
+      "name": "motion-kit",
+      "url": "https://github.com/riya-kapoor/motion-kit",
+      "language": "TypeScript",
+      "description": "Spring physics for React, 4.2 KB gzipped",
+      "tests": true,
+      "ci": true,
+      "readme": true,
+      "reasons": ["has tests", "has CI", "no model calls"],
+      "suggested": false
+    },
+    {
+      "name": "trpc-starter",
+      "url": "https://github.com/riya-kapoor/trpc-starter",
+      "language": "TypeScript",
+      "tests": true,
+      "ci": false,
+      "readme": false,
+      "reasons": ["has tests", "no README yet", "no model calls"],
+      "suggested": false
+    }
+  ]
+}

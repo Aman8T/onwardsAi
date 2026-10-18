@@ -1,0 +1,537 @@
+{
+  "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "profileId": "sample-muw68cno-d358c0",
+  "roleId": "ai-product-engineer",
+  "roleTitle": "AI Product Engineer",
+  "scope": "role",
+  "rank": 5,
+  "roleCount": 5,
+  "eta": "~9 months",
+  "createdAt": "2026-10-18T09:00:00+00:00",
+  "headline": "You ship AI features already, in two OpenAI apps; what the role still asks for is proof that their answers are checked and tuned.",
+  "gaps": [
+    {
+      "name": "LLM evals",
+      "skillId": "llm-evals",
+      "current": 12,
+      "target": 65,
+      "biggest": true,
+      "why": "notes-ai and Recipe Genie both answer, but nothing checks the answers: no eval harness in your 34 repos, no output rating beyond a favourite heart.",
+      "evidenceIds": [
+        "e1",
+        "e2"
+      ]
+    },
+    {
+      "name": "AI UX patterns",
+      "skillId": "ai-ux-patterns",
+      "current": 32,
+      "target": 70,
+      "biggest": false,
+      "why": "Recipe Genie shows only rotating loading text and a retry-less error toast; the role expects streaming, a retry and a way to say an answer is wrong.",
+      "evidenceIds": [
+        "e3"
+      ]
+    },
+    {
+      "name": "Prompt design",
+      "skillId": "prompt-design",
+      "current": 38,
+      "target": 70,
+      "biggest": false,
+      "why": "Your Recipe Genie prompt takes dietary filters, but no iteration is shown; the role wants prompts versioned and compared.",
+      "evidenceIds": [
+        "e4"
+      ]
+    },
+    {
+      "name": "RAG & retrieval",
+      "skillId": "rag-retrieval",
+      "current": 40,
+      "target": 65,
+      "biggest": false,
+      "why": "notes-ai already does embeddings search; its own TODO lists chunking and citations, which is what retrieval rigour means here.",
+      "evidenceIds": [
+        "e5"
+      ]
+    },
+    {
+      "name": "LLM API integration",
+      "skillId": "llm-integration",
+      "current": 52,
+      "target": 75,
+      "biggest": false,
+      "why": "Recipe Genie calls OpenAI through a Supabase Edge Function with structured JSON, and notes-ai calls it too; the role asks for that at production scale.",
+      "evidenceIds": [
+        "e6",
+        "e7"
+      ]
+    }
+  ],
+  "strong": [
+    {
+      "name": "React",
+      "current": 90,
+      "target": 85
+    },
+    {
+      "name": "TypeScript",
+      "current": 86,
+      "target": 80
+    }
+  ],
+  "evidence": [
+    {
+      "id": "e1",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "LLM evals",
+      "text": "No eval harness in any of 34 repos; notes-ai has no tests"
+    },
+    {
+      "id": "e2",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "LLM evals",
+      "text": "Recipe Genie has no output rating beyond a favourite heart"
+    },
+    {
+      "id": "e3",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "AI UX patterns",
+      "text": "Only rotating loading text and a retry-less error toast"
+    },
+    {
+      "id": "e4",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "Prompt design",
+      "text": "Recipe Genie prompt takes dietary filters; no iteration shown"
+    },
+    {
+      "id": "e5",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "RAG & retrieval",
+      "text": "notes-ai: embeddings search, TODO lists chunking and citations"
+    },
+    {
+      "id": "e6",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "LLM API integration",
+      "text": "Recipe Genie: OpenAI via Supabase Edge Function, structured JSON"
+    },
+    {
+      "id": "e7",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "LLM API integration",
+      "text": "notes-ai and recipe-genie-web call OpenAI"
+    },
+    {
+      "id": "e8",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "React",
+      "text": "Rebuilt Kitebird checkout in React; owns 42-component Kite UI"
+    },
+    {
+      "id": "e9",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "React",
+      "text": "motion-kit: 212 stars, 31 test files"
+    },
+    {
+      "id": "e10",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "TypeScript",
+      "text": "196 of 412 recent commits in TypeScript"
+    },
+    {
+      "id": "e11",
+      "sourceId": "portfolio-1",
+      "sourceKind": "portfolio",
+      "sourceLabel": "your portfolio",
+      "skill": "TypeScript",
+      "text": "Kite UI typed in strict TypeScript"
+    },
+    {
+      "id": "e12",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Motion & animation",
+      "text": "motion-kit: spring physics, 212 stars, 4.2 KB gzipped"
+    },
+    {
+      "id": "e13",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Motion & animation",
+      "text": "ReactFoo talk 'Springs, not durations'; motion guidelines"
+    },
+    {
+      "id": "e14",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Design systems",
+      "text": "Owns Kite UI: 42 components, 3 squads, Storybook"
+    },
+    {
+      "id": "e15",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Design systems",
+      "text": "design-tokens (58 stars) used by Kite UI in production"
+    },
+    {
+      "id": "e16",
+      "sourceId": "portfolio-1",
+      "sourceKind": "portfolio",
+      "sourceLabel": "your portfolio",
+      "skill": "Accessibility (WCAG)",
+      "text": "WCAG 2.1 AA checkout audit: 37 issues logged, 21 fixed"
+    },
+    {
+      "id": "e17",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Accessibility (WCAG)",
+      "text": "a11y-checklist repo (19 stars)"
+    },
+    {
+      "id": "e18",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Web performance",
+      "text": "Checkout LCP 4.1s to 1.9s at Kitebird"
+    },
+    {
+      "id": "e19",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Web performance",
+      "text": "Virtualised 10,000+ invoice tables at Saffron Ledger"
+    },
+    {
+      "id": "e20",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Figma-to-code",
+      "text": "design-tokens syncs Figma variables to CSS, TS, Tailwind"
+    },
+    {
+      "id": "e21",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Figma-to-code",
+      "text": "Pairs with designers on Figma-to-code handoffs"
+    },
+    {
+      "id": "e22",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Mentoring & review",
+      "text": "Mentored 2 interns, both hired full-time; reviews for 4-person team"
+    },
+    {
+      "id": "e23",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Mentoring & review",
+      "text": "19 PR reviews in 90 days"
+    },
+    {
+      "id": "e24",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Next.js",
+      "text": "4 repos: checkout-lab, notes-ai, recipe-genie-web, portfolio-site"
+    },
+    {
+      "id": "e25",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Next.js",
+      "text": "Freelance landing pages for 3 clients in Next.js"
+    },
+    {
+      "id": "e26",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Node.js / BFF",
+      "text": "Built Express BFF aggregating catalog, pricing, inventory APIs"
+    },
+    {
+      "id": "e27",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "REST & GraphQL APIs",
+      "text": "Owned REST and GraphQL contracts with 2 backend teams"
+    },
+    {
+      "id": "e28",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "REST & GraphQL APIs",
+      "text": "gql-playground compares Apollo and urql"
+    },
+    {
+      "id": "e29",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "CI/CD & tooling",
+      "text": "PR preview deploys via GitHub Actions and Vercel; Vite migration"
+    },
+    {
+      "id": "e30",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "CI/CD & tooling",
+      "text": "GitHub Actions in 9 of 34 repos"
+    },
+    {
+      "id": "e31",
+      "sourceId": "portfolio-1",
+      "sourceKind": "portfolio",
+      "sourceLabel": "your portfolio",
+      "skill": "Experimentation",
+      "text": "3-week A/B test behind a feature flag on checkout"
+    },
+    {
+      "id": "e32",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Experimentation",
+      "text": "Checkout conversion +9.4%; won 'Ship It' award"
+    },
+    {
+      "id": "e33",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Postgres & Prisma",
+      "text": "trpc-starter: Express, tRPC, Prisma, PostgreSQL with auth"
+    },
+    {
+      "id": "e34",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "Postgres & Prisma",
+      "text": "Recipe Genie uses three Supabase Postgres tables"
+    },
+    {
+      "id": "e35",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Automated testing",
+      "text": "Tests in 6 of 34 repos; motion-kit has 31 test files"
+    },
+    {
+      "id": "e36",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Automated testing",
+      "text": "Vitest and Jest listed; no testing bullet at work"
+    },
+    {
+      "id": "e37",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "Product analytics",
+      "text": "No GA, PostHog or Mixpanel on Recipe Genie despite 600+ users claimed"
+    }
+  ],
+  "moves": [
+    {
+      "id": "m1",
+      "title": "Add an eval harness and citations to notes-ai",
+      "body": "You turn notes-ai from a demo into a product you can defend: a question set, an eval that scores the answers, citations in every answer, and prompts that are versioned and compared.",
+      "have": [
+        {
+          "text": "notes-ai already does embeddings search over your notes and calls OpenAI.",
+          "evidenceIds": [
+            "e5",
+            "e7"
+          ]
+        },
+        {
+          "text": "motion-kit shows you can keep a test suite going: 31 test files.",
+          "evidenceIds": [
+            "e35"
+          ]
+        }
+      ],
+      "works": [
+        "LLM evals",
+        "RAG & retrieval",
+        "Prompt design"
+      ],
+      "phases": [
+        {
+          "title": "Write the question set",
+          "hours": 6,
+          "tasks": [
+            "Collect questions your notes can answer and the answer each should contain",
+            "Mark which note each answer must cite",
+            "Commit the set as a fixture next to the prompts"
+          ],
+          "deliverable": "A fixture of questions with expected answers and citations"
+        },
+        {
+          "title": "Score every answer",
+          "hours": 10,
+          "tasks": [
+            "Write a runner that asks each question and compares the answer with the expected one",
+            "Report a score per question and a total in the terminal",
+            "Run it in GitHub Actions on every push"
+          ],
+          "deliverable": "A passing eval run in CI with a score table"
+        },
+        {
+          "title": "Add citations and fix chunking",
+          "hours": 12,
+          "tasks": [
+            "Return the note and line each answer rests on",
+            "Replace the chunking the TODO names with chunks that keep a heading with its text",
+            "Re-run the eval and keep the chunking that scores best"
+          ],
+          "deliverable": "Answers that cite their notes, and an eval that shows the change"
+        },
+        {
+          "title": "Version the prompts",
+          "hours": 6,
+          "tasks": [
+            "Keep each prompt change as a new file next to the old one",
+            "Run the eval against both and record the scores in the README",
+            "Write up what changed and why"
+          ],
+          "deliverable": "A README section with prompt versions and their eval scores"
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "title": "Give Recipe Genie streaming, a retry and a thumbs-down",
+      "body": "You replace the loading text and the dead-end toast with the patterns the role expects: streamed output, a retry that keeps the input, and a rating that is stored.",
+      "have": [
+        {
+          "text": "Recipe Genie already calls OpenAI through a Supabase Edge Function and returns structured JSON.",
+          "evidenceIds": [
+            "e6"
+          ]
+        },
+        {
+          "text": "Its UI shows rotating loading text and a retry-less error toast today.",
+          "evidenceIds": [
+            "e3"
+          ]
+        }
+      ],
+      "works": [
+        "AI UX patterns",
+        "LLM evals"
+      ],
+      "phases": [
+        {
+          "title": "Stream the recipe",
+          "hours": 6,
+          "tasks": [
+            "Switch the Edge Function to a streamed response",
+            "Render the recipe as it arrives, with a stop button"
+          ],
+          "deliverable": "A recipe that appears line by line"
+        },
+        {
+          "title": "Retry and rate",
+          "hours": 6,
+          "tasks": [
+            "Add a retry that keeps the pantry list and shows what changed",
+            "Add a thumbs-up and a thumbs-down stored in a Supabase table",
+            "Show the last rating next to the recipe"
+          ],
+          "deliverable": "Ratings in a table you can query"
+        }
+      ]
+    },
+    {
+      "id": "m3",
+      "title": "Compare three prompt versions for Recipe Genie",
+      "body": "You write two more versions of the prompt, run the same pantry inputs through all of them, and keep notes on what each version got wrong.",
+      "have": [
+        {
+          "text": "The Recipe Genie prompt takes dietary filters.",
+          "evidenceIds": [
+            "e4"
+          ]
+        }
+      ],
+      "works": [
+        "Prompt design"
+      ],
+      "phases": [
+        {
+          "title": "Write the versions",
+          "hours": 3,
+          "tasks": [
+            "Copy the prompt into a versioned file",
+            "Write a stricter and a shorter version"
+          ],
+          "deliverable": "Three prompt files in the repository"
+        },
+        {
+          "title": "Run and compare",
+          "hours": 4,
+          "tasks": [
+            "Run the same pantry inputs through each version",
+            "Note what each version got wrong in a table in the README"
+          ],
+          "deliverable": "A README table comparing the versions"
+        }
+      ]
+    }
+  ],
+  "state": {
+    "hoursPerWeek": 6,
+    "moveIndex": 0,
+    "done": [],
+    "links": []
+  },
+  "version": 1
+}

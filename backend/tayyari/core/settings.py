@@ -178,6 +178,18 @@ class GuardSettings(BaseModel):
     speech_per_minute: int = Field(default=40, ge=0)
     """Speech requests (a transcribed piece of an answer, or a spoken question) one client address may make per minute
     (0 = not enforced). Sarvam's own budget is metered separately (`SpeechSettings`)."""
+    prepare_per_minute: int = Field(default=2, ge=0)
+    prepare_per_hour: int = Field(default=10, ge=0)
+    prepare_per_day: int = Field(default=30, ge=0)
+    """Plans ("How do I prepare for this role?") and headline rewrites one signed-in account may ask for, and
+    (separately) one client address, per window (0 = the window is not enforced). A stored plan that is returned as it is,
+    reading a plan back, saving its state and the repo ranking are not counted: nothing is written by a model for them."""
+    prepare_global_per_hour: int = Field(default=120, ge=0)
+    """Backstop on plans and headline rewrites per hour across all clients (shared counter)."""
+    est_prepare_usd: float = Field(default=0.06, ge=0)
+    """Spend reserved before a plan is written: two calls of the chat model at the same time (where you stand, the moves)."""
+    est_prepare_headline_usd: float = Field(default=0.02, ge=0)
+    """Spend reserved before a headline is rewritten for a plan's role (one short call of the chat model)."""
     chat_global_per_hour: int = Field(default=600, ge=0)
     """Backstop on chat turns per hour across all clients (shared counter)."""
     chat_streams_per_ip: int = Field(default=2, ge=0)

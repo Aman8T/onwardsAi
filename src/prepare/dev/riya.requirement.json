@@ -1,0 +1,119 @@
+{
+  "id": "plan_riya_senior_fe_testing",
+  "profileId": "riya-demo",
+  "roleId": "senior-frontend-engineer",
+  "roleTitle": "Senior Frontend Engineer",
+  "scope": "requirement",
+  "requirement": "Automated testing",
+  "rank": 3,
+  "roleCount": 5,
+  "eta": "~6 months",
+  "createdAt": "2026-10-18T10:05:00Z",
+  "headline": "You test your open source and not your day job.",
+  "gaps": [
+    {
+      "name": "Automated testing",
+      "skillId": "testing",
+      "current": 48,
+      "target": 75,
+      "biggest": true,
+      "why": "Tests sit in 6 of your 34 repos and motion-kit has 31 test files, but your resume lists Vitest and Jest with no testing bullet at work.",
+      "evidenceIds": ["e1", "e2"]
+    }
+  ],
+  "strong": [],
+  "evidence": [
+    {
+      "id": "e1",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Automated testing",
+      "text": "Tests in 6 of 34 repos; motion-kit has 31 test files"
+    },
+    {
+      "id": "e2",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Automated testing",
+      "text": "Vitest and Jest listed; no testing bullet at work"
+    },
+    {
+      "id": "e3",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "React",
+      "text": "Rebuilt Kitebird checkout in React; owns 42-component Kite UI"
+    },
+    {
+      "id": "e4",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Figma-to-code",
+      "text": "design-tokens syncs Figma variables to CSS, TS, Tailwind"
+    }
+  ],
+  "moves": [
+    {
+      "id": "m1",
+      "title": "Put a test suite under Kite UI's checkout components",
+      "body": "Bring the discipline motion-kit shows to the work you are paid for, where a reviewer can see it.",
+      "have": [
+        { "text": "motion-kit has 31 test files", "evidenceIds": ["e1"] },
+        {
+          "text": "You own Kite UI's 42 components and rebuilt checkout",
+          "evidenceIds": ["e3"]
+        }
+      ],
+      "works": ["Automated testing"],
+      "phases": [
+        {
+          "title": "Cover the checkout flow",
+          "hours": 8,
+          "tasks": [
+            "Write component tests for the three checkout steps with Testing Library",
+            "Add one visual regression run with Playwright on the design system"
+          ],
+          "deliverable": "A green suite in CI on every pull request"
+        },
+        {
+          "title": "Make it a habit",
+          "hours": 6,
+          "tasks": ["Add a test to every pull request for a month", "Write the testing bullet for your resume, with the counts"],
+          "deliverable": "A resume line with real counts"
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "title": "Add visual regression to design-tokens",
+      "body": "The smallest step: one public repo of yours gains a test kind recruiters ask about.",
+      "have": [
+        {
+          "text": "design-tokens syncs Figma variables to CSS, TS and Tailwind",
+          "evidenceIds": ["e4"]
+        }
+      ],
+      "works": ["Automated testing"],
+      "phases": [
+        {
+          "title": "Set it up",
+          "hours": 4,
+          "tasks": ["Render every token in a Storybook story", "Compare screenshots on every pull request"],
+          "deliverable": "Screenshots compared on every pull request"
+        },
+        {
+          "title": "Document it",
+          "hours": 2,
+          "tasks": ["Write the README section on how the check runs", "Link it from your graph"],
+          "deliverable": "A README section a hiring manager can read"
+        }
+      ]
+    }
+  ],
+  "state": { "hoursPerWeek": 6, "moveIndex": 0, "done": [], "links": [] },
+  "version": 1
+}

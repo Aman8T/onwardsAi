@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { ChatOrigin, Profile } from '../../../shared/types';
-import { Ring } from '../../components/Ring';
 import { IconCheck } from '../../components/Icons';
+import { roleStanding } from '../../lib/layout';
 import { ORIGIN_WHERE } from './helpers';
 
 const num = (s: string, re: RegExp): number | undefined => {
@@ -10,22 +10,16 @@ const num = (s: string, re: RegExp): number | undefined => {
 };
 
 /**
- * The small visual that stands in for the node: a hairline ring with the alignment for roles,
- * a plain numeral for skills, domains and requirements. Sources, "you" and open questions have
+ * The small visual that stands in for the node: the role's place among the person's roles (1 = closest, never a
+ * percentage), a plain numeral for skills, domains and requirements. Sources, "you" and open questions have
  * none: the title and the caption carry them.
  */
 function visualFor(origin: ChatOrigin, profile: Profile): ReactNode {
   switch (origin.kind) {
     case 'role': {
       const role = profile.roles.find((r) => r.id === origin.refId);
-      const a = role?.alignment ?? num(origin.caption, /(\d+)\s*%/);
-      if (a === undefined) break;
-      return (
-        <>
-          <Ring value={a} size={36} stroke={1.25} />
-          <span className="numeral ch-origin-pct">{Math.round(a)}%</span>
-        </>
-      );
+      if (!role) break;
+      return <span className="numeral ch-origin-score">{roleStanding(profile, role.id).rank}</span>;
     }
     case 'skill': {
       const score = profile.skills.find((s) => s.id === origin.refId)?.score ?? num(origin.caption, /(\d+)\s*\/\s*100/) ?? 50;

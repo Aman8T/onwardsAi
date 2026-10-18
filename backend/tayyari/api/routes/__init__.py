@@ -20,6 +20,8 @@
               DELETE .../sessions/{id} (practice the interview)
     speech    GET /api/speech/status; POST /api/speech/transcribe (raw audio), /api/speech/speak (Sarvam AI speech for
               practice interviews)
+    prepare   POST /api/prepare (NDJSON); GET /api/prepare/{id}; PUT .../state; GET .../repos; POST .../headline
+              ("How do I prepare for this role?" as blocks)
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.
@@ -41,6 +43,7 @@ from tayyari.api.routes import (
     match,
     me,
     portfolio,
+    prepare,
     profile,
     sample,
     speech,
@@ -62,6 +65,7 @@ for _module in (
     jobsearch,
     interview,
     speech,
+    prepare,
 ):
     api_router.include_router(_module.router)
 

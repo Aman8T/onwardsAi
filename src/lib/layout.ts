@@ -29,6 +29,28 @@ export function rankRoles(profile: Profile, max = 6): Role[] {
   return [...profile.roles].sort((a, b) => b.alignment - a.alignment).slice(0, max);
 }
 
+/** Where a role stands among the person's roles by alignment (1 = closest), and how many there are. No percentage. */
+export function roleStanding(profile: Profile, roleId: string): { rank: number; count: number } {
+  const sorted = [...profile.roles].sort((a, b) => b.alignment - a.alignment);
+  const i = sorted.findIndex((r) => r.id === roleId);
+  return { rank: i < 0 ? sorted.length : i + 1, count: sorted.length };
+}
+
+const ordinal = (n: number) => {
+  const r10 = n % 10;
+  const r100 = n % 100;
+  if (r10 === 1 && r100 !== 11) return `${n}st`;
+  if (r10 === 2 && r100 !== 12) return `${n}nd`;
+  if (r10 === 3 && r100 !== 13) return `${n}rd`;
+  return `${n}th`;
+};
+
+/** "closest of your 5 roles", "2nd closest of your 5 roles", "your only role". */
+export function rankLabel(rank: number, count: number): string {
+  if (count <= 1) return 'your only role';
+  return rank <= 1 ? `closest of your ${count} roles` : `${ordinal(rank)} closest of your ${count} roles`;
+}
+
 /** A role's requirements as radar axes: the ones you have first, then the gaps, original order within each. */
 export function orderRequirements(role: Role, max = 7): RoleRequirement[] {
   return [...role.requirements.filter((r) => r.have), ...role.requirements.filter((r) => !r.have)].slice(0, max);

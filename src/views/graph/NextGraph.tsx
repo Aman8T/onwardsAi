@@ -17,7 +17,7 @@ import type { PopoverModel } from '../../components/Popover';
 import { Radar, RadarGlyph } from '../../components/Radar';
 import type { RadarAxis, RadarHandle, VertexGeom } from '../../components/Radar';
 import { ValueLine } from '../../components/ValueLine';
-import { TIER_LABEL, orderRequirements, placePopover, rankRoles, reqKey, tier } from '../../lib/layout';
+import { TIER_LABEL, orderRequirements, placePopover, rankRoles, reqKey, roleStanding, tier } from '../../lib/layout';
 import { requirementAction, roleAction } from '../../lib/prompts';
 import { NARROW_QUERY, useMediaQuery } from '../../lib/ui';
 import { actions, useApp } from '../../store';
@@ -199,15 +199,18 @@ export function NextGraph({ profile }: { profile: Profile }) {
   const haveChips = sel ? sel.requirements.filter((r) => r.have) : [];
   const gapChips = sel ? sel.requirements.filter((r) => !r.have) : [];
 
+  // "How do I prepare for this role?" opens a Prepare thread (blocks, not prose) for the role.
   const openRoleChat = () => {
     if (!sel) return;
-    const a = roleAction(sel);
-    actions.openChat(a.origin, a.question);
+    const a = roleAction(sel, roleStanding(profile, sel.id));
+    actions.openChat(a.origin, a.question, { roleId: sel.id });
   };
 
   let pop: { model: PopoverModel; run: () => void } | null = null;
   if (sel && popReq && openKey) {
     const a = requirementAction(popReq, sel);
+    // a gap opens a Prepare thread for just that requirement; a strength stays a chat question
+    const prepare = popReq.have ? undefined : { roleId: sel.id, requirement: popReq.name };
     const body = popReq.have
       ? `You are at ${popReq.current}. This already counts toward ${sel.title} — make it visible in your ${hasGithub ? 'pinned repos' : 'projects'} and resume.`
       : `You are at ${popReq.current}; the role expects about ${popReq.target}. ` +
@@ -226,7 +229,7 @@ export function NextGraph({ profile }: { profile: Profile }) {
         summary: body,
         cta: a.cta,
       },
-      run: () => actions.openChat(a.origin, a.question),
+      run: () => actions.openChat(a.origin, a.question, prepare),
     };
   }
 
@@ -298,7 +301,7 @@ export function NextGraph({ profile }: { profile: Profile }) {
                 {sel.why && <p className="next-why">{sel.why}</p>}
                 <div>
                   <button type="button" className="btn btn-primary next-cta" onClick={openRoleChat}>
-                    {roleAction(sel).cta}
+                    {roleAction(sel, roleStanding(profile, sel.id)).cta}
                   </button>
                 </div>
               </div>

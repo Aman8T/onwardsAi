@@ -1,0 +1,1162 @@
+/*
+ * Prepare ("pp-" prefix): the four blocks of "How do I prepare for this role?" inside a chat thread, from the Prepare
+ * canvas (Main, PhoneMove, PhonePlan, Stream, Actions, Anatomy boards).
+ *   block ........ a panel (surface, hairline, 16px radius) with a quiet head line
+ *   standing ..... gap rows: name, a 6px bar (today filled, the target a tick), the numbers, +/−
+ *   move ......... a serif title, have-chips, works-on chips, the hours, two buttons
+ *   plan ......... hours a week as a segmented control, phase pills with a progress line, tasks as checkboxes
+ *   next ......... four tiles that open a panel in place
+ *   skeleton ..... a quiet outline while the model works: nothing moves
+ *   narrow ....... the phone: a sticky jump bar, the phone's plan list, sticky move actions (class-driven, so the
+ *                  dev page's 390px frame shows it too)
+ * Tokens only (src/theme/tokens.css): no shadows, no colour literals, 1px hairlines, no looping animation.
+ */
+
+.pp-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pp-who {
+  font-weight: 400;
+}
+
+.pp-root {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  font-size: var(--fs-3);
+  line-height: var(--lh-body);
+  color: var(--text);
+}
+
+/* ───────────── blocks ───────────── */
+
+.pp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 22px;
+  min-width: 0;
+}
+
+.pp-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.pp-h {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.pp-h3 {
+  font-size: var(--fs-4);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+}
+
+.pp-meta {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.pp-muted {
+  color: var(--text-muted);
+}
+
+.pp-small {
+  font-size: var(--fs-2);
+}
+
+.pp-num {
+  color: var(--text);
+}
+
+.pp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.pp-btn {
+  min-height: 44px;
+  padding-inline: 18px;
+  font-size: var(--fs-2);
+}
+
+.pp-btn-sm {
+  min-height: 36px;
+}
+
+/* a text-only action, in the accent, with a touch target */
+.pp-link {
+  min-height: 44px;
+  padding-inline: 4px;
+  color: var(--accent);
+  font-size: var(--fs-2);
+}
+
+.pp-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ───────────── where you stand ───────────── */
+
+.pp-headline {
+  font-size: 26px;
+  text-wrap: balance;
+}
+
+.pp-headline-wait,
+.pp-why-wait,
+.pp-wait {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.pp-gaps {
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-gap {
+  border-top: 1px solid var(--line);
+}
+
+.pp-gap-btn {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) auto 18px;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 0;
+  color: inherit;
+  text-align: left;
+}
+
+.pp-gap-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pp-gap-tag {
+  font-size: var(--fs-1);
+  color: var(--accent);
+}
+
+.pp-bar {
+  position: relative;
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+}
+
+.pp-bar-cur {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent-ui);
+  transform-origin: left center;
+}
+
+.pp-bar-tgt {
+  position: absolute;
+  top: -5px;
+  width: 2px;
+  height: 16px;
+  margin-left: -1px;
+  background: var(--text-muted);
+}
+
+.pp-gap-nums {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.pp-gap-chev {
+  display: inline-flex;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.pp-gap-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 14px;
+}
+
+.pp-gap-body[hidden] {
+  display: none;
+}
+
+.pp-why {
+  color: var(--text);
+}
+
+.pp-strong {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.pp-strong-ic {
+  flex: none;
+  margin-top: 3px;
+  color: var(--accent-ui);
+}
+
+/* evidence chips and the line behind them */
+
+.pp-ev {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pp-ev-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-ev-chip {
+  min-height: 28px;
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+button.pp-ev-chip:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.pp-ev-chip.is-on {
+  background: var(--accent-soft);
+  border-color: var(--accent-ui);
+  color: var(--text);
+}
+
+.pp-ev-line {
+  font-size: var(--fs-2);
+  color: var(--text);
+}
+
+.pp-ev-line[hidden] {
+  display: none;
+}
+
+.pp-ev-line q {
+  quotes: '“' '”';
+}
+
+.pp-ev-skill {
+  color: var(--text-muted);
+}
+
+/* ───────────── the one move ───────────── */
+
+.pp-move-title {
+  font-size: 30px;
+  text-wrap: balance;
+}
+
+.pp-move-body {
+  color: var(--text-muted);
+}
+
+.pp-have {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pp-have-chip {
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  color: var(--text);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.pp-have-chip:hover {
+  border-color: var(--line-strong);
+}
+
+.pp-have-chip.is-on {
+  background: var(--accent-soft);
+  border-color: var(--accent-ui);
+}
+
+.pp-works {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-work {
+  padding: 4px 11px;
+  background: var(--accent-soft);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.pp-hours {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ───────────── your plan ───────────── */
+
+.pp-plan {
+  gap: 16px;
+}
+
+.pp-plan-head {
+  align-items: center;
+}
+
+.pp-plan-title {
+  font-size: 26px;
+}
+
+.pp-hours-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.pp-hours-group > .kicker {
+  margin-right: 4px;
+}
+
+/* one option of a segmented control (hours, weekdays) */
+.pp-seg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 52px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  font-size: 13px;
+  color: var(--text-muted);
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.pp-seg:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.pp-seg.is-on {
+  background: var(--accent-soft);
+  border-color: var(--accent-ui);
+  color: var(--text);
+}
+
+.pp-plan-summary {
+  font-size: 13px;
+}
+
+.pp-pills {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.pp-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.pp-pill:hover {
+  border-color: var(--line-strong);
+}
+
+.pp-pill.is-on {
+  background: var(--accent-soft);
+  border-color: var(--accent-ui);
+}
+
+.pp-pill-title {
+  font-size: var(--fs-2);
+  line-height: 1.35;
+}
+
+.pp-track {
+  position: relative;
+  display: block;
+  height: 3px;
+  margin-top: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+}
+
+.pp-pill.is-on .pp-track {
+  background: var(--fill-2);
+}
+
+.pp-track-bar {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent-ui);
+  transform-origin: left center;
+  transition: transform var(--d-slow) var(--ease);
+}
+
+.pp-phase {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.pp-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pp-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pp-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 0;
+}
+
+.pp-check {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 3px 0 0;
+  accent-color: var(--accent-strong);
+}
+
+.pp-task-label {
+  cursor: pointer;
+  transition: color var(--d-fast) var(--ease);
+}
+
+.pp-task-label.is-done {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.pp-deliver {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 10px 14px;
+  border-radius: var(--r-m);
+  background: var(--surface-2);
+  font-size: var(--fs-2);
+}
+
+.pp-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.pp-link-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pp-link-list a {
+  overflow-wrap: anywhere;
+}
+
+.pp-link-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 4px;
+  font-size: 13px;
+}
+
+.pp-linkform {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-linkfield {
+  flex: 1 1 220px;
+  width: auto;
+  min-width: 0;
+  font-size: var(--fs-2);
+}
+
+.pp-err-line {
+  flex: 1 1 100%;
+  font-size: var(--fs-1);
+  color: var(--danger);
+}
+
+/* the phone's plan list: a number, the title, the weeks; the open phase expands in place */
+
+.pp-phase-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-phase-item {
+  border-top: 1px solid var(--line);
+}
+
+.pp-phase-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 0;
+  color: inherit;
+  text-align: left;
+}
+
+.pp-phase-row-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.pp-phase-item.is-on .pp-phase-row-title {
+  font-weight: 500;
+}
+
+.pp-phase-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.pp-phase-item.is-on .pp-phase-n {
+  background: var(--accent-soft);
+  border-color: var(--accent-ui);
+  color: var(--text);
+}
+
+.pp-phase-n.is-done {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--surface);
+}
+
+.pp-phase-item .pp-detail {
+  padding: 0 0 14px 34px;
+}
+
+/* ───────────── next ───────────── */
+
+.pp-next {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pp-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 10px;
+}
+
+.pp-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.pp-tile:hover {
+  border-color: var(--line-strong);
+}
+
+.pp-tile.is-on {
+  background: var(--accent-soft);
+  border-color: var(--accent-ui);
+}
+
+.pp-tile-ic {
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent-ui);
+}
+
+.pp-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pp-tile-label {
+  font-size: var(--fs-2);
+}
+
+.pp-tile-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.pp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 12px;
+}
+
+.pp-panel-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pp-panel-row > .pp-stack {
+  flex: 1 1 260px;
+  gap: 2px;
+}
+
+.pp-cal-opts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.pp-cal-days {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.pp-cal-days > .kicker {
+  margin-right: 4px;
+}
+
+.pp-cal-days .pp-seg {
+  min-width: 48px;
+  min-height: 40px;
+  padding: 0 10px;
+}
+
+.pp-cal-from {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-time {
+  width: auto;
+  padding: 8px 0;
+  font-size: 13px;
+}
+
+.pp-rows {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-row-line {
+  display: flex;
+  gap: 16px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-2);
+}
+
+.pp-row-weeks {
+  flex: none;
+  width: 92px;
+  font-size: 13px;
+}
+
+.pp-repo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.pp-repo-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.pp-repo-name {
+  font-size: var(--fs-3);
+}
+
+.pp-repo.is-suggested .pp-repo-name {
+  font-weight: 500;
+}
+
+.pp-repo-tag {
+  font-size: var(--fs-1);
+  color: var(--accent);
+}
+
+.pp-repo-open {
+  margin-left: auto;
+  font-size: 13px;
+}
+
+.pp-proposed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--r-m);
+  background: var(--surface-2);
+}
+
+.pp-proposed-text {
+  font-size: var(--fs-4);
+  line-height: var(--lh-snug);
+}
+
+/* ───────────── skeletons, stream controls, errors ───────────── */
+
+.pp-skel {
+  gap: 8px;
+  border-color: var(--surface-2);
+}
+
+.pp-skel-line {
+  display: block;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+
+.pp-skel-line.is-tall {
+  height: 16px;
+}
+
+.pp-stream {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.pp-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.pp-error strong {
+  font-weight: 500;
+  color: var(--danger);
+}
+
+.pp-error > span {
+  flex: 1 1 240px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ───────────── read this as text, the foot ───────────── */
+
+.pp-text {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+/* the default disclosure marker stays (a flex summary would hide it) */
+.pp-text-summary {
+  padding: 11px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.pp-text-summary::marker {
+  color: var(--text-muted);
+}
+
+.pp-text-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+  max-width: var(--measure);
+  color: var(--text);
+}
+
+.pp-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+/* ───────────── the phone ───────────── */
+
+.pp-root.is-narrow {
+  gap: 12px;
+}
+
+.pp-root.is-narrow .pp-block {
+  padding: 16px;
+  gap: 10px;
+}
+
+.pp-root.is-narrow .pp-headline {
+  font-size: 23px;
+}
+
+.pp-root.is-narrow .pp-move-title {
+  font-size: 24px;
+}
+
+.pp-root.is-narrow .pp-plan-title {
+  font-size: 24px;
+}
+
+/* gap rows stack: name and numbers on one line, the bar under them */
+.pp-root.is-narrow .pp-gap-btn {
+  grid-template-columns: minmax(0, 1fr) auto 18px;
+  grid-template-areas:
+    'name nums chev'
+    'bar bar bar';
+  gap: 6px 8px;
+  padding: 10px 0;
+}
+
+.pp-root.is-narrow .pp-gap-name {
+  grid-area: name;
+}
+
+.pp-root.is-narrow .pp-gap-nums {
+  grid-area: nums;
+}
+
+.pp-root.is-narrow .pp-gap-chev {
+  grid-area: chev;
+}
+
+.pp-root.is-narrow .pp-bar {
+  grid-area: bar;
+}
+
+.pp-root.is-narrow .pp-hours-group.is-narrow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+}
+
+.pp-root.is-narrow .pp-seg {
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.pp-root.is-narrow .pp-tiles.is-narrow {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pp-root.is-narrow .pp-tile {
+  min-height: 56px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.pp-root.is-narrow .pp-tile-ic {
+  display: none;
+}
+
+.pp-root.is-narrow .pp-tile-label {
+  font-size: 13px;
+}
+
+/* the jump bar sticks to the top of the thread's scroller; the blocks leave room for it when jumped to */
+.pp-jump {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+  margin: 0 -2px;
+  padding: 8px 2px;
+  background: var(--bg);
+}
+
+.pp-root.is-narrow > section {
+  scroll-margin-top: 64px;
+}
+
+.pp-jump-a {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.pp-jump-a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.pp-jump-a.is-on {
+  background: var(--accent-soft);
+  border-color: var(--accent-ui);
+  color: var(--text);
+}
+
+.pp-jump-a[aria-disabled='true'] {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+/* the move's two actions stay reachable while its block is on screen */
+.pp-root.is-narrow .pp-move-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin: 0 -16px -16px;
+  padding: 10px 16px 16px;
+  background: var(--surface);
+}
+
+.pp-root.is-narrow .pp-move-actions .pp-btn {
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: 48px;
+}
+
+/* Touch: every tappable chip and small button reaches 44px (the canvas's chips are 28px, fine for a pointer). */
+@media (pointer: coarse) {
+  .pp-ev-chip,
+  .pp-have-chip,
+  .pp-btn-sm {
+    min-height: 44px;
+  }
+}
+
+.pp-root.is-narrow button.pp-ev-chip,
+.pp-root.is-narrow .pp-have-chip,
+.pp-root.is-narrow .pp-btn-sm {
+  min-height: 44px;
+}
+
+/* ───────────── the dev page ───────────── */
+
+.pp-dev {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--text);
+}
+
+.pp-dev-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  padding: var(--s4) var(--s6);
+  border-bottom: 1px solid var(--line);
+}
+
+.pp-dev-nav {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.pp-dev-navbtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--s3);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.pp-dev-navbtn:hover {
+  color: var(--text);
+}
+
+.pp-dev-navbtn.is-current {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.pp-dev-note {
+  flex: 1 1 100%;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.pp-dev-note:empty {
+  display: none;
+}
+
+.pp-dev-main {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--s5) var(--s4) var(--s8);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.pp-dev-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px var(--s4);
+}
+
+.pp-dev-frame {
+  width: 390px;
+  max-width: 100%;
+  height: 844px;
+  margin: 0 auto;
+  padding: 14px 16px 20px;
+  overflow-y: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-l);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 760px) {
+  .pp-dev-header {
+    padding-inline: var(--s4);
+  }
+
+  .pp-dev-navbtn {
+    min-height: 44px;
+  }
+}

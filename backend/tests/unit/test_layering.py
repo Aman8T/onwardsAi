@@ -78,6 +78,9 @@ RULES: dict[str, tuple[str, ...]] = {
     # speech for practice interviews (Sarvam AI through its SDK): a self-contained service like discover, with its own
     # settings and meter; it reaches storage only through its Protocols and never imports interview or any other service.
     "speech": ("core", "contract", "storage.ports"),
+    # prepare for a role sits with the model-calling services and reuses the posting match's schema helpers (`schema_of`,
+    # `rows_of`; no fork); nothing imports prepare except api and the container.
+    "prepare": (*_SERVICES, "match"),
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",
@@ -94,6 +97,7 @@ RULES: dict[str, tuple[str, ...]] = {
         "jobsearch",
         "interview",
         "speech",
+        "prepare",
         "guard",
         "ingest",
         "prompts",

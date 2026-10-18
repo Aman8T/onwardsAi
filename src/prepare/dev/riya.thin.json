@@ -1,0 +1,98 @@
+{
+  "id": "plan_riya_design_engineer",
+  "profileId": "riya-demo",
+  "roleId": "design-engineer",
+  "roleTitle": "Design Engineer",
+  "scope": "role",
+  "rank": 1,
+  "roleCount": 5,
+  "eta": "~2 months",
+  "createdAt": "2026-10-18T09:40:00Z",
+  "headline": "Your motion and design-system work is the job. The one gap is how a product behaves while a model is thinking.",
+  "gaps": [
+    {
+      "name": "AI UX patterns",
+      "skillId": "ai-ux-patterns",
+      "current": 32,
+      "target": 55,
+      "biggest": true,
+      "why": "Recipe Genie shows only rotating loading text and a retry-less error toast, so your AI states are thinner than your motion work.",
+      "evidenceIds": ["e1"]
+    }
+  ],
+  "strong": [
+    { "name": "Motion & animation", "current": 91, "target": 85 },
+    { "name": "Design systems", "current": 87, "target": 80 },
+    { "name": "Figma-to-code", "current": 74, "target": 75 },
+    { "name": "React", "current": 90, "target": 85 }
+  ],
+  "evidence": [
+    {
+      "id": "e1",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "AI UX patterns",
+      "text": "Only rotating loading text and a retry-less error toast"
+    },
+    {
+      "id": "e2",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "Motion & animation",
+      "text": "motion-kit: spring physics, 212 stars, 4.2 KB gzipped"
+    },
+    {
+      "id": "e3",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Design systems",
+      "text": "Owns Kite UI: 42 components, 3 squads, Storybook"
+    }
+  ],
+  "moves": [
+    {
+      "id": "m1",
+      "title": "Add AI states to Kite UI",
+      "body": "Give the design system you own the components an AI product needs: thinking, streaming, partial and failed.",
+      "have": [
+        {
+          "text": "You own Kite UI: 42 components across 3 squads",
+          "evidenceIds": ["e3"]
+        },
+        {
+          "text": "motion-kit's spring physics, 212 stars",
+          "evidenceIds": ["e2"]
+        }
+      ],
+      "works": ["AI UX patterns"],
+      "phases": [
+        {
+          "title": "Name the states",
+          "hours": 4,
+          "tasks": ["List the states a generated answer passes through, from your own two apps", "Sketch each one in Figma with the motion it needs"],
+          "deliverable": "A one-page spec of AI states"
+        },
+        {
+          "title": "Build four components",
+          "hours": 10,
+          "tasks": [
+            "A thinking indicator, a streaming text block, a partial-result card and a failed-call toast with a retry",
+            "Stories for each, with reduced motion covered"
+          ],
+          "deliverable": "Four components in Storybook"
+        },
+        {
+          "title": "Prove them in a product",
+          "hours": 6,
+          "tasks": ["Drop them into Recipe Genie in place of the loading text and the toast", "Record a short clip of each state"],
+          "deliverable": "A clip and a Storybook link you can put on your resume"
+        }
+      ]
+    }
+  ],
+  "state": { "hoursPerWeek": 3, "moveIndex": 0, "done": [], "links": [] },
+  "version": 1
+}

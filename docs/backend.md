@@ -29,8 +29,9 @@ The package is importable as `backend/tayyari/`, laid out in layers with import 
 | `jobsearch` | JobSearchService, the brief, the harvest, the board reader, the narrowing, the checks | Search with AI: Haiku 5.5 scouts find employers' boards on the web, code reads them and narrows, Haiku reads the shortlist, code checks every quote; reuses `discover`'s pure parts |
 | `interview` | InterviewService, the plan, the router, the judge, the debrief, the work-sample templates | Practice the interview: plans in code from the person's evidence, a role or a template; Haiku 5.5 phrases, judges and writes the debrief; code checks every quote, name and number and decides every verdict |
 | `speech` | SpeechService, SarvamEngine, the meter | Speech for practice interviews through Sarvam AI's SDK: speech-to-text of answer pieces and the interviewer's voice, metered against a soft daily and per-session budget; self-contained like `discover` |
+| `prepare` | PrepareService, assemble, verify, github | Prepare ("How do I prepare for this role?") as typed blocks: the plan's numbers and evidence from the graph in code, two calls of the chat model at once (where you stand, the moves) checked line by line, a stored plan with the person's state, the repo ranking from the stored GitHub digest, a headline rewrite |
 
-**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `jobsearch` sits with the model-calling services and may also import `discover` (never the other way round). `interview` sits with them too and may import `jobsearch`, `discover` and `portfolio` (nothing but `api` and the container imports it). `speech` is self-contained like `discover` (`core`, `contract`, `storage.ports` and the `sarvamai` SDK). `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
+**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `jobsearch` sits with the model-calling services and may also import `discover` (never the other way round). `interview` sits with them too and may import `jobsearch`, `discover` and `portfolio` (nothing but `api` and the container imports it). `prepare` sits with them and reuses the posting match's schema helpers (`match.schemas.schema_of`, `rows_of`), nothing else of `match`. `speech` is self-contained like `discover` (`core`, `contract`, `storage.ports` and the `sarvamai` SDK). `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
 
 ## Request flows
 
@@ -363,6 +364,13 @@ ever sees text. It is free while we test it; the guard windows are the only mete
 - **This role** comes from a search-with-AI role (`RoleSource {runId, jobId}`, read through `RoleLookup`, which
   `JobSearchService.role` satisfies). Its slots are 2 asks the person shows, 1 gap, 1 claim and 1 story; Spend more time
   on shifts the quotas.
+  A role of the person's graph (`GraphRoleSource {roleId}`, `Profile.roles`) has no posting. Its plan is the role's
+  requirements: a gap is one the person does not show or shows below the role's level (`target − current`, biggest
+  first), with the nearest evidence line; a met requirement is a claim on an evidence line of its own skill (a met
+  requirement whose skill has no evidence line is not asked); then a story, the role's skills first. Quotas gap 2,
+  claim 2, story 1 (Spend more time on shifts them). The requirement is a source of origin `role`, prompted as
+  "role needs: …" and never as a posting. The title is the role's title; there is no employer summary. An id that is
+  not among the profile's roles is `GraphRoleGone` (404). Prepare's "Practice the interview for this role" opens it.
 - **Defend your resume** asks about 5 of the person's evidence lines: two with a number, a "Led …" line, a line from a
   repository or page, and one more. A low-scoring skill is never asked as if the resume listed it (it is Tayyari's
   reading, not the person's words).
@@ -503,6 +511,91 @@ key never reaches a browser.
 - `tests/integration/test_interview_routes.py`, `tests/unit/storage/test_interview_contract.py`,
   `tests/unit/contract/test_interview_parity.py` and `tests/unit/guard/test_ratelimit_interview.py`.
 
+### Prepare (`/api/prepare*`)
+
+`backend/tayyari/prepare/` is P1 (spec in `docs/roadmap.md`, canvas https://claude.ai/artifact/QgpVd4MRfnsqZRrPrLRe73),
+built 2026-10-18. "How do I prepare for this role?" on the skill graph answers with four typed blocks instead of the coach's
+prose: where you stand, the one move, the plan, next actions. The contract is `shared/prepare.ts` ⇄
+`contract/prepare.py` (`tests/unit/contract/test_prepare_parity.py`). Everything runs on the chat model
+(`TAYYARI_CHAT_MODEL`, at `TAYYARI_CHAT_EFFORT`); the `prepare.*` purposes are not in the client's "wants thinking" table,
+so Haiku 5.5 runs them with thinking off and Sonnet 5.5 at the chat effort.
+
+**Code supplies every number** (`prepare/assemble.py`, no model). For `PrepareRequest {profileId, roleId, requirement?,
+fresh?}` the role is found on `Profile.roles`:
+- gaps are the requirements the graph does not meet (`have` false, or `current` under `target`), ordered by
+  `target - current`; exactly one is `biggest` (ties: the first); `strong` are the requirements met;
+- scope `requirement` keeps only that gap (matched by name, case-insensitive); a requirement already met is 400
+  `already_strong`, and so is a role with no gap at all; an unknown role or requirement is 404;
+- `rank` and `roleCount` come from the roles by alignment (1 = closest), never a percentage;
+- the evidence list is every `Skill.evidence` line numbered `e1…` (the skills the role's requirements point to first, by
+  `skillId` else by name, then the other skills by score; at most 40), each with its source's kind and the chip's label
+  (`resume` → "your resume", `github` → "your GitHub", `lovable` → "your Lovable app", `linkedin` → "your LinkedIn",
+  `portfolio` → "your portfolio", else the source's own label).
+
+**Two calls at the same time** (`prompts/prepare.py`, `prepare/schemas.py`; citations before the text in every object,
+`evidenceIds` restricted to the plan's ids and the gap names to the plan's gaps in the schema itself):
+- `prepare.standing` → `{headline, gaps: [{name, evidenceIds, why}]}`: one sentence over the gaps and one "why" per gap.
+- `prepare.moves` → `{moves: [{have: [{evidenceIds, text}], title, body, works, phases: [{title, hours, tasks,
+  deliverable}]}]}`: one to three moves, best first, distinct in size. The prompt gets the role's title, eta and why, the
+  gaps with their levels, what is met, the evidence lines, the person's headline and summary, and the readers' summaries
+  and notes from `StoredContext.readers` (clipped).
+
+**Code checks** (`prepare/verify.py`; a known-bad test for each): a cited id must exist; a why or have item without a
+valid citation is dropped; every digit sequence in a why, have item, title, body, task or deliverable must be in the cited
+evidence (the move's have citations for its title, body and phases), the gaps' levels or the role's eta, else that sentence
+is dropped and a move whose title or body fails is dropped; `works` is filtered to the plan's gap names
+(case-insensitive) and a move with none left is dropped; hours outside 1–40 drop the phase; at most 5 phases of at most
+4 tasks; a phase with no task or no deliverable left is dropped, and a move with no phase; lengths are clipped at a word
+(titles 90, body 200, tasks 160, deliverable 120, why 180, headline 160); the surviving moves are `m1`…`m3`.
+
+**The stream** (`POST /api/prepare`, NDJSON, `Cache-Control: no-store`): `gaps` at once with the plan (no moves, no
+whys), then `standing` and `moves` as each call lands (either order), then `done` with the stored plan (version 1, state
+`{hoursPerWeek: 6, moveIndex: 0, done: [], links: []}`); or `error` with code `no_moves` (the moves call failed or no
+move survived; a retry is the client's) or `failed` (a model error or the spend ceiling). A standing call that fails or
+runs late leaves the gaps with their numbers alone. A plan already stored for the same profile, role and requirement
+streams `gaps` then `done` at once, unless `fresh` is true: no counter, no reservation, no model call. The guards, in
+order, all answered as JSON before the stream starts: `shed` (in-memory `prepare` bucket, before the body is read) →
+body (415 / 413 / 408 / 400) → profile (404; opened as the job search and the interview open it, the bundled sample
+seeded on first use so a plan's row can refer to it) → the plan's numbers from the graph (404 / 400) → a stored plan →
+the `prepare` windows per client address and per account (`TAYYARI_GUARD__PREPARE_PER_MINUTE` 2, `_PER_HOUR` 10,
+`_PER_DAY` 30, `PREPARE_GLOBAL_PER_HOUR` 120; 429 with `Retry-After`) → the spend reservation (`EST_PREPARE_USD`, 0.06;
+503). An account on the unlimited list skips every `shed` and counter; the reservation still applies. Nothing is charged
+to an account.
+
+**After the stream.**
+- `GET /api/prepare/{planId}?profileId=` → `PreparePlan`. A plan is read back only for its profile; another profile's
+  plan id, an unknown one and an id that is not 32 hexadecimal characters are the same 404.
+- `PUT /api/prepare/{planId}/state` `PrepareStateUpdate {profileId, version, state}` → `PrepareStateSaved`: a
+  compare-and-swap on `version` (409 `plan_changed` when stale; the new version is `version + 1`). Every done key
+  (`"<moveId>:<phaseIndex>:<taskIndex>"`), `moveIndex` and link must name a move, phase and task the plan has, and a
+  link's url must be `http(s)`, else 400. Sheds in the `chat` bucket; no model.
+- `GET /api/prepare/{planId}/repos?profileId=` → `PrepareRepos` (`prepare/github.py`, code only, nothing fetched): the
+  `### N. name` blocks of the GitHub source's digest in the stored context (`ingest.github`'s format; the sample's is
+  `tayyari/sample/github.md`), ranked by the words they share with the plan's moves and gap names plus a small bonus for
+  tests and CI; reasons are short code-made strings ("names evals", "has tests", "has CI", "no README yet"); at most one
+  `suggested`, only when it shares a word with the plan; urls from the source url's owner; `github: false` without a
+  GitHub source.
+- `POST /api/prepare/{planId}/headline` `{profileId}` → `PrepareHeadline` (`prepare.headline`, one call, counted and
+  reserved like a plan with `EST_PREPARE_HEADLINE_USD`, 0.02): a headline for the role citing evidence ids first, kept
+  as `proposed` only when it is at most 120 characters, cites at least one valid id, and every number and every
+  capitalised word after the first is in the cited evidence, the role title or the current headline (`Person.headline`);
+  otherwise `proposed` is absent and `note` says why in a sentence.
+
+**Storage.** `prepare_plans` (migration 0010, additive): `content` is the plan without `state` and `version`, written once;
+`state` and `version` change with every save. The foreign key to `profiles` cascades, so a plan goes with its profile's
+purge or its account's deletion and needs no retention step of its own. The newest row for a (profile, role, requirement)
+is the one handed back; `fresh` adds a row and the older plan stays readable by its id.
+
+**Tests.**
+- `tests/unit/prepare/`: assembly, the verifiers with a known-bad answer per check, the digest parser and ranking over the
+  sample digest, the prompts and schemas, the service's stream over fakes and a scripted model (both orders, failures,
+  cancellation, the stored plan, the state's compare-and-swap, repos, headline), and the golden
+  `tests/data/prepare/riya.prepare.json` (Riya's AI Product Engineer plan from the hand-written answers next to it;
+  `UPDATE_PREPARE_GOLDEN=1` rewrites it).
+- `tests/integration/test_prepare_routes.py` (the real service over the real app, a scripted Claude at the edge),
+  `tests/unit/storage/test_prepare_contract.py`, `tests/unit/guard/test_ratelimit_prepare.py` and
+  `tests/unit/contract/test_prepare_parity.py`.
+
 ## Jev decisions framework
 
 ### Decision specifications
@@ -592,6 +685,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 | `jobsearch_runs` | `id` PK (32 hex) | `profile_id`, `city` (null), `remote`, `created_at`, `result` (JSON: the `JobSearchRun` the person saw), `postings` (JSON: shown postings' text by job id, server-side only) | Migration 0008. `(profile_id, created_at)`, `(created_at)`; purged after 30 days |
 | `jobsearch_docs` | `id` PK (hash of profile, job, kind) | `profile_id`, `job_id`, `kind` (`prep` or `referral`), `created_at`, `body` (JSON) | Migration 0008. `(created_at)`; replaced by a rewrite; purged after 30 days |
 | `interview_sessions` | `id` PK (32 hex) | `profile_id`, `kind`, `status` (`active` or `done`), `created_at`, `updated_at`, `version` (compare-and-swap), `state` (JSON: plan, phrased lines, turns, judgements, work, assistant log), `debrief` (JSON, null until done) | Migration 0009. `(profile_id, created_at)`, `(created_at)`; purged after 30 days |
+| `prepare_plans` | `id` PK (32 hex) | `profile_id` FK cascade, `role_id`, `requirement` (null for a plan over the whole role), `content` (JSON: the `PreparePlan` without its state and version), `state` (JSON: hours a week, the move shown, done task keys, links), `version` (compare-and-swap on state saves), `created_at`, `updated_at` | Migration 0010. `(profile_id, role_id, requirement)`; goes with its profile, no retention step of its own |
 
 ### Retention (run at most every 6 hours, from the lifespan; replicas claim each run through a `kv` row, under a Postgres try-lock)
 
@@ -604,6 +698,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 - **Discover listings**: a listing its employer's board stopped listing is deleted 30 days after it was closed. The `discover_runs` log has no retention step yet.
 - **Searches with AI**: `jobsearch_runs` and `jobsearch_docs` rows are deleted 30 days after they were written.
 - **Practice interviews**: `interview_sessions` rows (transcript and debrief) are deleted `TAYYARI_INTERVIEW__RETENTION_DAYS` (30) days after they started.
+- **Plans** (`prepare_plans`) follow their profile through the foreign key: an anonymous profile's purge and an account's deletion take its plans along; there is no window of their own.
 - **Postings** are never purged yet. Matches, resumes, cover notes, the answers a person gave and profile facts are removed only with their account (`DELETE /api/me`) or their profile. Orders are kept when an account is deleted, with `user_id` cleared.
 
 ### Migrations (Alembic)
@@ -620,7 +715,7 @@ Migrations live in `storage/migrations/` inside the package. No external `alembi
 
 If migration fails, the transaction rolls back and startup crashes. Readiness checks fail, so the load balancer keeps the old version running.
 
-Revisions 0003 (accounts, and the owner columns on `profiles` and `portfolios`), 0004 (payments), 0005 (posting match), 0006 (anonymous posting match) and 0007 (Discover: two new tables, no change to an existing one) follow this rule.
+Revisions 0003 (accounts, and the owner columns on `profiles` and `portfolios`), 0004 (payments), 0005 (posting match), 0006 (anonymous posting match), 0007 (Discover: two new tables, no change to an existing one), 0008 (search with AI), 0009 (practice interviews) and 0010 (plans for roles) follow this rule.
 
 **Additive-only rule**: migrations add tables or nullable columns only. No drops, renames, or constraint tightening after revision 0001 (unless a file carries a `# contract-phase` marker). Relaxing a constraint, as 0006 does by dropping `NOT NULL` from `matches.user_id` and `user_facts.user_id`, is allowed: it only widens what the old release also writes, and the old release never reads a row with a NULL owner. 0006 spells the DDL out (`ALTER COLUMN … DROP NOT NULL` on Postgres; on SQLite an edit of the table's SQL in `sqlite_master`) instead of calling `alter_column`, because an Alembic batch rebuild of `matches` on SQLite would cascade into `variants` and delete every stored resume.
 
@@ -735,6 +830,7 @@ Accounts, payments and the posting match (names only; the values are never writt
 - **Posting-match guard:** `TAYYARI_GUARD__MATCH_PER_MINUTE` (0), `MATCH_PER_HOUR` (10), `MATCH_PER_DAY` (30), `MATCH_GLOBAL_PER_HOUR` (120), `EST_MATCH_USD` (0.06), `ANON_MATCH_PER_DAY` (3: matches per client address per day without a sign-in, 0 = off).
 - **`TAYYARI_JOBSEARCH__*`** (no secrets of its own; it uses the Anthropic key): `ENABLED` (true), `MODEL` (claude-haiku-5-5), `SCOUTS` (3), `SEARCHES_PER_SCOUT` (3), `MAX_BOARDS` (30), `FETCH_CONCURRENCY` (8), `MAX_JUDGED` (12), `JUDGE_BATCH` (4), `PER_EMPLOYER` (3), `POSTING_CHARS` (6000), `BOARD_CACHE_MINUTES` (60), `REQUEST_TIMEOUT_S` (12). Its limits are guard settings: `JOBSEARCH_PER_MINUTE` 1, `_PER_HOUR` 4, `_PER_DAY` 8, `JOBSEARCH_GLOBAL_PER_HOUR` 40, `ANON_JOBSEARCH_PER_DAY` 3, `EST_JOBSEARCH_USD` 0.20, `EST_JOBSEARCH_DOC_USD` 0.02 (a prep page or referral note).
 - **`TAYYARI_INTERVIEW__*`** (no secrets of its own): `ENABLED` (true), `MODEL` (claude-haiku-5-5), `MAX_TURNS` (60), `ASSISTANT_MESSAGES` (12), `POSTING_CHARS` (6000), `RETENTION_DAYS` (30), `HISTORY_LIMIT` (50). Its limits are guard settings: `INTERVIEW_PER_MINUTE` 2, `_PER_HOUR` 3, `_PER_DAY` 3 (per address and per account), `INTERVIEW_GLOBAL_PER_HOUR` 60, `INTERVIEW_AGAIN_PER_DAY` 20, `EST_INTERVIEW_USD` 0.03 (start), `EST_INTERVIEW_TURN_USD` 0.005 (an answer or an assistant message), `EST_INTERVIEW_END_USD` 0.02 (the debrief).
+- **Prepare** has no settings group of its own: it runs on `TAYYARI_CHAT_MODEL` at `TAYYARI_CHAT_EFFORT`. Its limits are guard settings: `PREPARE_PER_MINUTE` 2, `_PER_HOUR` 10, `_PER_DAY` 30 (per address and per account; a plan written and a headline rewritten count, a stored plan handed back does not), `PREPARE_GLOBAL_PER_HOUR` 120, `EST_PREPARE_USD` 0.06 (the two calls of a plan), `EST_PREPARE_HEADLINE_USD` 0.02.
 - **`SARVAM_API_KEY`** (secret, optional) and **`TAYYARI_SPEECH__*`**: `ENABLED` (true), `STT_MODEL` (saaras:v4), `STT_LANGUAGE` (en-IN), `TTS_MODEL` (bulbul:v4-flash), `TTS_SPEAKER` (simran_en_customer), `TTS_LANGUAGE` (en-IN), `TTS_CODEC` (mp3), `TTS_SAMPLE_RATE` (22050), `MAX_SEGMENT_SECONDS` (30), `MAX_SEGMENT_BYTES` (1,500,000), `STT_DAILY_SECONDS` (1800), `TTS_DAILY_CHARS` (6000), `STT_SESSION_SECONDS` (600), `TTS_SESSION_CHARS` (3000), `REQUEST_TIMEOUT_S` (20), `TTS_CACHE_ITEMS` (256), `TTS_PREFETCH` (true: make the interviewer's next lines in the background; needs the cache), `TTS_PREFETCH_FOLLOWUPS` (true: include the current question's follow-up and easier question), `TTS_PREFETCH_CONCURRENCY` (2, 1 to 8: lines made at once across the process). Guard: `SPEECH_PER_MINUTE` 40. Without the key, practice uses the browser's speech.
 - **`TAYYARI_DISCOVER__*`** (no secrets; the boards are public): `ENABLED` (true; false answers 503 `discover_disabled` and fetches nothing), `REFRESH_HOURS` (6, how old the last good run may get before a request starts one), `FETCH_CONCURRENCY` (4), `REQUEST_TIMEOUT_S` (15), `MAX_LISTINGS_PER_EMPLOYER` (300: India listings kept per employer, known cities first, then remote, then the rest, newest first within each), `REGISTRY_PATH` (unset: the registry shipped in `discover/data/employers.json`).
 

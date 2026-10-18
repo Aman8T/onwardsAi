@@ -720,13 +720,47 @@ class InterviewSessionRow(Base):
     )
 
 
+# ───────────────────────────── prepare ─────────────────────────────
+
+PLAN_ID_LEN = 32
+"""A plan's id: ``token_hex(16)``."""
+ROLE_ID_LEN = 120
+"""`contract.prepare.ROLE_ID_MAX_CHARS`: a `Role.id` of the graph, or a requirement's name."""
+
+
+class PreparePlanRow(Base):
+    """One plan for a role of a profile's graph (P1, "How do I prepare for this role?"). ``content`` is the `PreparePlan`
+    JSON without ``state`` and ``version`` (the gaps, the evidence, the moves and the headline, written once);
+    ``state`` is what the person changes (hours a week, the move shown, done tasks, links) and ``version`` goes up by one
+    on every state save, which lands only on the version before it (`PrepareRepo.save_state`). ``requirement`` is NULL
+    for a plan over the whole role and the requirement's name for a plan over one gap. The newest row for a
+    ``(profile, role, requirement)`` is the one returned again; ``fresh`` writes a new one. The foreign key follows the
+    profile: a plan goes when its profile is purged or its account deleted, so there is no retention step of its own."""
+
+    __tablename__ = "prepare_plans"
+
+    id: Mapped[str] = mapped_column(String(PLAN_ID_LEN), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"))
+    role_id: Mapped[str] = mapped_column(String(ROLE_ID_LEN))
+    requirement: Mapped[str | None] = mapped_column(String(ROLE_ID_LEN))
+    content: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    state: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    version: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (Index("ix_prepare_plans_profile_id_role_id", "profile_id", "role_id", "requirement"),)
+
+
 __all__ = [
     "BAND_LEN",
     "EMAIL_LEN",
     "HASH_LEN",
     "ID_LEN",
     "NAMING_CONVENTION",
+    "PLAN_ID_LEN",
     "PROVIDER_ID_LEN",
+    "ROLE_ID_LEN",
     "USER_AGENT_LEN",
     "AuthSessionRow",
     "Base",
@@ -750,6 +784,7 @@ __all__ = [
     "OrderRow",
     "PortfolioRow",
     "PostingRow",
+    "PreparePlanRow",
     "ProfileContextRow",
     "ProfileFactsRow",
     "ProfileRow",

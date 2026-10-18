@@ -8,9 +8,12 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { AnimatePresence, motion } from 'motion/react';
 import type { Profile } from '../../shared/types';
 import { actions, useApp } from '../store';
-import { freeAction } from '../lib/prompts';
-import { EASE, initials, useNow } from '../lib/ui';
+import type { Thread } from '../store';
+import { freeAction, requirementAction } from '../lib/prompts';
+import { EASE, NARROW_QUERY, initials, useMediaQuery, useNow } from '../lib/ui';
 import { Brand } from '../components/Brand';
+import { realClient as prepareClient } from '../prepare/api';
+import { PrepareThread } from '../prepare/PrepareThread';
 import { AssistantMessage, UserMessage } from './chat/Message';
 import { Composer } from './chat/Composer';
 import { Rail } from './chat/Rail';
@@ -20,6 +23,18 @@ import '../styles/chat.css';
 
 const FREE_ORIGIN = freeAction().origin;
 const NEAR_BOTTOM = 64;
+
+/** The line a Prepare thread opens with: the role's question, or the gap's, as the graph seeded it. */
+function prepareQuestion(thread: Thread, profile: Profile): string {
+  const p = thread.prepare;
+  const role = p ? profile.roles.find((r) => r.id === p.roleId) : undefined;
+  if (p?.requirement) {
+    const req = role?.requirements.find((q) => q.name === p.requirement);
+    if (role && req) return requirementAction(req, role).question;
+    return `Help me prepare for ${p.requirement} for the ${role?.title ?? thread.origin.caption.split(' · ')[0]} role.`;
+  }
+  return `How do I prepare for the ${role?.title ?? thread.origin.title} role?`;
+}
 
 function Suggestions({ items, onPick, hero = false }: { items: string[]; onPick: (t: string) => void; hero?: boolean }) {
   return (
@@ -52,7 +67,10 @@ export function ChatView({ profile }: { profile: Profile }) {
   const lastUserText = useMemo(() => [...(rawMessages ?? [])].reverse().find((m) => m.role === 'user')?.text, [rawMessages]);
   const firstUserId = messages.find((m) => m.role === 'user')?.id;
   const threadId = thread?.id;
-  const empty = messages.length === 0;
+  const prepare = thread?.prepare;
+  // a Prepare thread is never empty: its question and blocks come first
+  const empty = messages.length === 0 && !prepare;
+  const narrow = useMediaQuery(NARROW_QUERY);
 
   /* ───────────── draft (kept per thread) ───────────── */
 
@@ -76,9 +94,12 @@ export function ChatView({ profile }: { profile: Profile }) {
   const [away, setAway] = useState(false);
   /** An empty thread shows the hero: anchor it to the top (on a short phone its heading would scroll out of view). */
   const emptyRef = useRef(empty);
+  /** A Prepare thread reads from the top too, and its blocks growing must never drag the view to the bottom. */
+  const prepareRef = useRef(!!prepare);
   useLayoutEffect(() => {
     emptyRef.current = empty;
-  }, [empty]);
+    prepareRef.current = !!prepare;
+  }, [empty, prepare]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -109,6 +130,8 @@ export function ChatView({ profile }: { profile: Profile }) {
     const onPointerDown = (e: PointerEvent) => {
       // pressing the scrollbar itself (not content) starts a drag-scroll
       if (e.pointerType === 'mouse' && e.target === el && e.offsetX >= el.clientWidth) dragging = true;
+      // working inside Prepare's blocks (opening a gap, a phase, a panel) is a gesture: the view stays where it is
+      if (e.target instanceof Element && e.target.closest('.pp-root')) stick.current = false;
     };
     const onPointerUp = () => {
       dragging = false;
@@ -148,12 +171,12 @@ export function ChatView({ profile }: { profile: Profile }) {
     };
   }, []);
 
-  // New thread selected: start at the latest message.
+  // New thread selected: start at the latest message (a Prepare thread starts at its first block and is not followed).
   useLayoutEffect(() => {
-    stick.current = true;
+    stick.current = !prepareRef.current;
     setAway(false);
     const el = scrollRef.current;
-    if (el) el.scrollTop = emptyRef.current ? 0 : el.scrollHeight;
+    if (el) el.scrollTop = emptyRef.current || prepareRef.current ? 0 : el.scrollHeight;
   }, [threadId]);
 
   const jumpToLatest = useCallback(() => {
@@ -212,6 +235,32 @@ export function ChatView({ profile }: { profile: Profile }) {
     setRailOpen(false);
   }, []);
 
+  /* ───────────── prepare ───────────── */
+
+  // "Help me with just this" under a gap: a Prepare thread for that one requirement of the role.
+  const onJustThis = useCallback(
+    (name: string) => {
+      const role = prepare ? profile.roles.find((r) => r.id === prepare.roleId) : undefined;
+      const req = role?.requirements.find((q) => q.name === name);
+      if (!role || !req) return;
+      const a = requirementAction(req, role);
+      actions.openChat(a.origin, a.question, { roleId: role.id, requirement: req.name });
+    },
+    [prepare, profile.roles],
+  );
+
+  // Practice · This role, for the plan's role straight from the graph (no posting needed).
+  const onPractice = useCallback(() => {
+    if (prepare) actions.openPractice({ screen: 'setup', kind: 'role', graphRole: prepare.roleId });
+  }, [prepare]);
+
+  const onPlanId = useCallback(
+    (planId: string) => {
+      if (threadId && prepare?.planId !== planId) actions.setThreadPrepare(threadId, { planId });
+    },
+    [threadId, prepare?.planId],
+  );
+
   /* ───────────── suggestions ───────────── */
 
   const suggestions = useMemo(() => {
@@ -219,8 +268,11 @@ export function ChatView({ profile }: { profile: Profile }) {
     return suggestionsFor(origin, profile).filter((s) => !used.has(s.toLowerCase()));
   }, [origin, profile, messages]);
 
-  const showDockSuggestions = !empty && !streaming && suggestions.length > 0;
+  // a Prepare thread's Next actions stand in for the fixed chips
+  const showDockSuggestions = !empty && !streaming && suggestions.length > 0 && !prepare;
   const lastId = messages[messages.length - 1]?.id;
+  // "Jump to latest" is for chat answers; reading the blocks from the top is not being away
+  const showJump = away && messages.length > 0;
 
   return (
     <div className="ch-root">
@@ -297,29 +349,47 @@ export function ChatView({ profile }: { profile: Profile }) {
                       <Suggestions hero items={suggestionsFor(origin, profile)} onPick={submit} />
                     </div>
                   ) : (
-                    messages.map((m) =>
-                      m.role === 'user' ? (
-                        <UserMessage
-                          key={m.id}
-                          text={m.text}
-                          caption={m.id === firstUserId && origin.kind !== 'free' ? `from the graph · ${origin.title}` : undefined}
-                        />
-                      ) : (
-                        <AssistantMessage
-                          key={m.id}
-                          message={m}
-                          sources={okSources}
-                          lines={lines}
-                          onRetry={m.id === lastId && m.status === 'error' ? onRetry : undefined}
-                        />
-                      ),
-                    )
+                    <>
+                      {prepare && thread && (
+                        <>
+                          <UserMessage text={prepareQuestion(thread, profile)} caption={`from the graph · ${origin.title}`} />
+                          <PrepareThread
+                            client={prepareClient}
+                            profileId={profile.id}
+                            roleId={prepare.roleId}
+                            requirement={prepare.requirement}
+                            planId={prepare.planId}
+                            onPlanId={onPlanId}
+                            onJustThis={prepare.requirement ? undefined : onJustThis}
+                            onPractice={onPractice}
+                            narrow={narrow}
+                          />
+                        </>
+                      )}
+                      {messages.map((m) =>
+                        m.role === 'user' ? (
+                          <UserMessage
+                            key={m.id}
+                            text={m.text}
+                            caption={m.id === firstUserId && origin.kind !== 'free' && !prepare ? `from the graph · ${origin.title}` : undefined}
+                          />
+                        ) : (
+                          <AssistantMessage
+                            key={m.id}
+                            message={m}
+                            sources={okSources}
+                            lines={lines}
+                            onRetry={m.id === lastId && m.status === 'error' ? onRetry : undefined}
+                          />
+                        ),
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
               <AnimatePresence>
-                {away && (
+                {showJump && (
                   <motion.div
                     className="ch-jump-wrap"
                     initial={{ opacity: 0, y: 12 }}

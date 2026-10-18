@@ -1,5 +1,5 @@
 """The NDJSON streaming response behind POST /api/analyze, POST /api/chat, POST /api/portfolio, POST /api/match,
-POST /api/match/{id}/resume and POST /api/jobsearch.
+POST /api/match/{id}/resume, POST /api/jobsearch and POST /api/prepare.
 
 `NdjsonResponse(request, events, tag)` writes one `contract.encode_event` line per event as soon as the
 producer yields it, and a blank line (`contract.HEARTBEAT`) after `HEARTBEAT_S` of quiet so an idle proxy does
@@ -41,6 +41,7 @@ from tayyari.contract.events import (
 from tayyari.contract.jobsearch import JOBSEARCH_TERMINAL, JobSearchEvent
 from tayyari.contract.match_api import MATCH_TERMINAL, MatchStreamEvent
 from tayyari.contract.portfolio import PortfolioDoneEvent, PortfolioErrorEvent, PortfolioEvent
+from tayyari.contract.prepare import PREPARE_TERMINAL, PrepareEvent
 from tayyari.core.limits import DISCONNECT_POLL_S, HEARTBEAT_S
 from tayyari.core.logging import get_logger
 
@@ -48,12 +49,12 @@ log = get_logger(__name__)
 
 MEDIA_TYPE = "application/x-ndjson; charset=utf-8"
 CACHE_CONTROL = "no-cache, no-transform"
-NO_STORE_TAGS = frozenset({"portfolio", "match", "jobsearch"})
-"""Streams whose body is personal data a shared cache must never keep (the owner's whole portfolio, a match or a search
-with the person's evidence in it)."""
-StreamEvent = AnalysisEvent | ChatEvent | PortfolioEvent | MatchStreamEvent | JobSearchEvent
-"""Whatever a route streams: the events of an analysis, a chat turn, a portfolio generation, a posting match or a search
-with AI."""
+NO_STORE_TAGS = frozenset({"portfolio", "match", "jobsearch", "prepare"})
+"""Streams whose body is personal data a shared cache must never keep (the owner's whole portfolio, a match, a search or
+a plan with the person's evidence in it)."""
+StreamEvent = AnalysisEvent | ChatEvent | PortfolioEvent | MatchStreamEvent | JobSearchEvent | PrepareEvent
+"""Whatever a route streams: the events of an analysis, a chat turn, a portfolio generation, a posting match, a search
+with AI or a plan for a role."""
 _TERMINAL = (
     DoneEvent,
     ErrorEvent,
@@ -63,6 +64,7 @@ _TERMINAL = (
     PortfolioErrorEvent,
     *MATCH_TERMINAL,
     *JOBSEARCH_TERMINAL,
+    *PREPARE_TERMINAL,
 )
 
 

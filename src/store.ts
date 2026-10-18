@@ -62,12 +62,24 @@ export interface ChatMessage {
   error?: string;
 }
 
+/**
+ * A thread that opens with Prepare's blocks instead of a chat answer: the role (and the one gap, for a plan scoped to
+ * a requirement), and the stored plan's id once the server has sent it, so the thread reopens the same plan.
+ */
+export interface ThreadPrepare {
+  roleId: string;
+  requirement?: string;
+  planId?: string;
+}
+
 export interface Thread {
   id: string;
   origin: ChatOrigin;
   createdAt: number;
   sessionId?: string;
   messages: ChatMessage[];
+  /** Present on a thread seeded from a role or a gap: the blocks come first, chat follow-ups after. */
+  prepare?: ThreadPrepare;
 }
 
 /**
@@ -598,10 +610,11 @@ export const actions = {
   },
 
   /**
-   * Open the chat from a node. Re-opens an existing thread for the same node;
-   * otherwise starts a new thread and sends the seed question.
+   * Open the chat from a node. Re-opens an existing thread for the same node; otherwise starts a new thread and
+   * sends the seed question. With `prepare` (a role, or one gap of a role) the new thread opens with Prepare's
+   * blocks instead: nothing is sent to the chat, and the question shows as the thread's first line.
    */
-  openChat(origin: ChatOrigin, question: string) {
+  openChat(origin: ChatOrigin, question: string, prepare?: Omit<ThreadPrepare, 'planId'>) {
     const existing = state.threads.find(
       // caption carries the role for requirement origins, so the same skill under two roles gets two threads
       (t) =>
@@ -615,9 +628,16 @@ export const actions = {
       set({ view: 'chat', activeThreadId: existing.id });
       return;
     }
-    const thread: Thread = { id: uid(), origin, createdAt: Date.now(), messages: [] };
+    const thread: Thread = { id: uid(), origin, createdAt: Date.now(), messages: [], ...(prepare ? { prepare } : {}) };
     set((s) => ({ view: 'chat', threads: [thread, ...s.threads], activeThreadId: thread.id }));
-    if (question.trim()) void actions.send(thread.id, question);
+    if (!prepare && question.trim()) void actions.send(thread.id, question);
+  },
+
+  /** Keep what Prepare learned about a thread (the stored plan's id), so it reopens the same plan. */
+  setThreadPrepare(threadId: string, patch: Partial<ThreadPrepare>) {
+    set((s) => ({
+      threads: s.threads.map((t) => (t.id === threadId && t.prepare ? { ...t, prepare: { ...t.prepare, ...patch } } : t)),
+    }));
   },
 
   selectThread(id: string) {

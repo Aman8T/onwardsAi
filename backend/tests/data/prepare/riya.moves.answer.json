@@ -1,0 +1,128 @@
+{
+  "moves": [
+    {
+      "have": [
+        {
+          "evidenceIds": ["e5", "e7"],
+          "text": "notes-ai already does embeddings search over your notes and calls OpenAI."
+        },
+        {
+          "evidenceIds": ["e35"],
+          "text": "motion-kit shows you can keep a test suite going: 31 test files."
+        }
+      ],
+      "title": "Add an eval harness and citations to notes-ai",
+      "body": "You turn notes-ai from a demo into a product you can defend: a question set, an eval that scores the answers, citations in every answer, and prompts that are versioned and compared.",
+      "works": ["LLM evals", "RAG & retrieval", "Prompt design"],
+      "phases": [
+        {
+          "title": "Write the question set",
+          "hours": 6,
+          "tasks": [
+            "Collect questions your notes can answer and the answer each should contain",
+            "Mark which note each answer must cite",
+            "Commit the set as a fixture next to the prompts"
+          ],
+          "deliverable": "A fixture of questions with expected answers and citations"
+        },
+        {
+          "title": "Score every answer",
+          "hours": 10,
+          "tasks": [
+            "Write a runner that asks each question and compares the answer with the expected one",
+            "Report a score per question and a total in the terminal",
+            "Run it in GitHub Actions on every push"
+          ],
+          "deliverable": "A passing eval run in CI with a score table"
+        },
+        {
+          "title": "Add citations and fix chunking",
+          "hours": 12,
+          "tasks": [
+            "Return the note and line each answer rests on",
+            "Replace the chunking the TODO names with chunks that keep a heading with its text",
+            "Re-run the eval and keep the chunking that scores best"
+          ],
+          "deliverable": "Answers that cite their notes, and an eval that shows the change"
+        },
+        {
+          "title": "Version the prompts",
+          "hours": 6,
+          "tasks": [
+            "Keep each prompt change as a new file next to the old one",
+            "Run the eval against both and record the scores in the README",
+            "Write up what changed and why"
+          ],
+          "deliverable": "A README section with prompt versions and their eval scores"
+        }
+      ]
+    },
+    {
+      "have": [
+        {
+          "evidenceIds": ["e6"],
+          "text": "Recipe Genie already calls OpenAI through a Supabase Edge Function and returns structured JSON."
+        },
+        {
+          "evidenceIds": ["e3"],
+          "text": "Its UI shows rotating loading text and a retry-less error toast today."
+        }
+      ],
+      "title": "Give Recipe Genie streaming, a retry and a thumbs-down",
+      "body": "You replace the loading text and the dead-end toast with the patterns the role expects: streamed output, a retry that keeps the input, and a rating that is stored.",
+      "works": ["AI UX patterns", "LLM evals"],
+      "phases": [
+        {
+          "title": "Stream the recipe",
+          "hours": 6,
+          "tasks": [
+            "Switch the Edge Function to a streamed response",
+            "Render the recipe as it arrives, with a stop button"
+          ],
+          "deliverable": "A recipe that appears line by line"
+        },
+        {
+          "title": "Retry and rate",
+          "hours": 6,
+          "tasks": [
+            "Add a retry that keeps the pantry list and shows what changed",
+            "Add a thumbs-up and a thumbs-down stored in a Supabase table",
+            "Show the last rating next to the recipe"
+          ],
+          "deliverable": "Ratings in a table you can query"
+        }
+      ]
+    },
+    {
+      "have": [
+        {
+          "evidenceIds": ["e4"],
+          "text": "The Recipe Genie prompt takes dietary filters."
+        }
+      ],
+      "title": "Compare three prompt versions for Recipe Genie",
+      "body": "You write two more versions of the prompt, run the same pantry inputs through all of them, and keep notes on what each version got wrong.",
+      "works": ["Prompt design"],
+      "phases": [
+        {
+          "title": "Write the versions",
+          "hours": 3,
+          "tasks": [
+            "Copy the prompt into a versioned file",
+            "Write a stricter and a shorter version"
+          ],
+          "deliverable": "Three prompt files in the repository"
+        },
+        {
+          "title": "Run and compare",
+          "hours": 4,
+          "tasks": [
+            "Run the same pantry inputs through each version",
+            "Note what each version got wrong in a table in the README"
+          ],
+          "deliverable": "A README table comparing the versions"
+        }
+      ]
+    }
+  ]
+}

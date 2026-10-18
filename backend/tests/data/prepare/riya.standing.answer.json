@@ -1,0 +1,30 @@
+{
+  "headline": "You ship AI features already, in two OpenAI apps; what the role still asks for is proof that their answers are checked and tuned.",
+  "gaps": [
+    {
+      "name": "LLM evals",
+      "evidenceIds": ["e1", "e2"],
+      "why": "notes-ai and Recipe Genie both answer, but nothing checks the answers: no eval harness in your 34 repos, no output rating beyond a favourite heart."
+    },
+    {
+      "name": "AI UX patterns",
+      "evidenceIds": ["e3"],
+      "why": "Recipe Genie shows only rotating loading text and a retry-less error toast; the role expects streaming, a retry and a way to say an answer is wrong."
+    },
+    {
+      "name": "Prompt design",
+      "evidenceIds": ["e4"],
+      "why": "Your Recipe Genie prompt takes dietary filters, but no iteration is shown; the role wants prompts versioned and compared."
+    },
+    {
+      "name": "RAG & retrieval",
+      "evidenceIds": ["e5"],
+      "why": "notes-ai already does embeddings search; its own TODO lists chunking and citations, which is what retrieval rigour means here."
+    },
+    {
+      "name": "LLM API integration",
+      "evidenceIds": ["e6", "e7"],
+      "why": "Recipe Genie calls OpenAI through a Supabase Edge Function with structured JSON, and notes-ai calls it too; the role asks for that at production scale."
+    }
+  ]
+}

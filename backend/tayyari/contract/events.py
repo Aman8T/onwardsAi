@@ -24,6 +24,7 @@ from tayyari.contract.jobsearch import JobSearchEvent
 from tayyari.contract.match_api import MatchStreamEvent
 from tayyari.contract.models import Phase, Profile, ReaderState, SourceKind, _Model
 from tayyari.contract.portfolio import PortfolioEvent
+from tayyari.contract.prepare import PrepareEvent
 from tayyari.core.limits import CHAT_TOOL_DETAIL_MAX_CHARS
 
 LogKind = SourceKind | Literal["sonnet"]
@@ -128,11 +129,14 @@ ChatEventAdapter: TypeAdapter[ChatEvent] = TypeAdapter(ChatEvent)
 _LINE_BREAKS: Final[dict[int, str]] = {code: f"\\u{code:04x}" for code in (0x85, 0x2028, 0x2029)}
 
 
-def encode_event(ev: AnalysisEvent | ChatEvent | PortfolioEvent | MatchStreamEvent | JobSearchEvent) -> bytes:
+def encode_event(
+    ev: AnalysisEvent | ChatEvent | PortfolioEvent | MatchStreamEvent | JobSearchEvent | PrepareEvent,
+) -> bytes:
     """One compact JSON line (UTF-8, not ASCII-escaped, ``None`` fields omitted) ending in ``"\\n"``.
 
-    It also encodes the portfolio stream's events (`contract.portfolio.PortfolioEvent`) and the posting match's
-    (`contract.match_api.MatchStreamEvent`), which share the wire form.
+    It also encodes the portfolio stream's events (`contract.portfolio.PortfolioEvent`), the posting match's
+    (`contract.match_api.MatchStreamEvent`), the search's and the plan's (`contract.prepare.PrepareEvent`), which share
+    the wire form.
     """
     try:
         text = ev.model_dump_json(exclude_none=True)

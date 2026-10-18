@@ -20,6 +20,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | T | Tests, docs, walkthrough steps, `.env.example`, README | each wave | Haiku | committed 03988c7, deployed 2026-10-12 |
 | R1 | Shareable radar card (SVG + OG PNG) | F1 | later | not started |
 | I1 | Evidence-grounded mock interview (practice) | M2, D3 | Opus + Sonnet | committed 659b7d6, deployed 2026-10-17 |
+| P1 | Prepare: "help me prepare" answered as typed blocks, not text | the graph's roles | Opus + Fable | designed 2026-10-18, building |
 | X1 | ESCO + O*NET skill table, canonical skill ids | M2 | later | not started |
 | D1 | Discover: personal, location-aware jobs with direct apply links | M2 | Opus + Sonnet | v1 built 2026-10-16 (employers' own boards, no map); rest in docs/discover-later.md |
 
@@ -425,7 +426,8 @@ models, and what we take and leave. The earlier outline is in `docs/research/ope
   - A work sample's tasks are fixed templates (the six on the canvas); the posting does not fill in details yet.
   - "Add to Prepare" reads "Open Prepare": Prepare cannot take a step from the debrief yet.
   - A "Practised" badge on the graph's skills is not built; Progress lists the best verdict per evidence line instead.
-  - "This role" practises roles from Discover (saved or found); a pasted posting is not a source yet.
+  - "This role" practises roles from Discover (saved or found), and since 2026-10-18 a role of the person's graph
+    (`graphRole`, opened from Prepare); a pasted posting is not a source yet.
   - A fact kept "From you" stays in practice history; it is not yet added to the posting match's facts.
   - The microphone needed `Permissions-Policy: microphone=(self)` (it was `microphone=()`).
 - **Checks:**
@@ -435,6 +437,32 @@ models, and what we take and leave. The earlier outline is in `docs/research/ope
   - a parity test for the contract.
 
 ---
+
+## P1 · Prepare (help me prepare, as blocks)
+
+**Designed 2026-10-18** (canvas https://claude.ai/artifact/QgpVd4MRfnsqZRrPrLRe73, six boards); the user said "Looks good, build it". The ask: "Instead of text focus on interactive UI to not bombard someone with too much information", in the spirit of OpenAI's ChatKit widgets and AG-UI (typed blocks, buttons that send actions, shared state, stop and redirect). Today "How do I prepare for this role?" sends a seeded question to the coach chat, which answers with ~450 words of markdown, a table and an 8-week plan.
+
+**What changes.** For a role (and for one gap of a role) the thread shows four blocks instead of the chat's prose; the composer stays for follow-up questions, which go to the coach chat as today.
+1. **Where you stand:** the role's gaps as bars (current → target from `Profile.roles`), the biggest marked, one "why" line per gap behind a tap with an evidence chip ("From your resume"), and one quiet "Already strong" line. Drawn at once from the graph, before any model answers.
+2. **The one move:** the move that closes most of it, with what the person already has (cited) and the gaps it works on (names only, never a predicted number). Up to three moves, best first, shown one at a time ("Show another move").
+3. **Your plan:** phases (title, hours, two or three tasks, one deliverable); the person picks 3, 6 or 10 hours a week and the weeks are computed in code; one phase open at a time; tasks are checkboxes kept with the plan; a link to what they shipped can be added to a phase (kept; reading it into the graph is a follow-up).
+4. **Next:** buttons, not prompts. Put the plan on my calendar (an .ics file made in the browser), Pick the repo to start from (ranked in code from the stored GitHub digest, nothing fetched), Rewrite my headline for this (one model call, kept only if every name and number is in the cited evidence), Practice (opens Practice; practising a role taken from the graph, rather than from a search, is a follow-up).
+"Read this as text" is written in the browser from the same blocks. No percentage anywhere: the thread header says "closest of your 5 roles", and the seeded question no longer quotes "84% aligned".
+
+**Contract.** `shared/prepare.ts` ⇄ `backend/tayyari/contract/prepare.py` (`tests/unit/contract/test_prepare_parity.py`): `PrepareRequest`, `PreparePlan` (gaps, strong, evidence, moves, state, version, rank and roleCount), `PrepareEvent` (`gaps` → `standing` and `moves` in either order → `done`, or `error`), `PrepareState` (hoursPerWeek, moveIndex, done task keys, links), `PrepareRepos`, `PrepareHeadline`.
+
+**Routes.** `POST /api/prepare` (NDJSON; a stored plan for the same profile, role and requirement streams at once unless `fresh`), `GET /api/prepare/{id}`, `PUT /api/prepare/{id}/state` (compare-and-swap on `version`, 409 when stale), `GET /api/prepare/{id}/repos`, `POST /api/prepare/{id}/headline`. Profile access as every route (`require_profile_access`), the plan must belong to that profile; a guard window `prepare` and a spend reservation for the two paid routes; unlimited accounts skip the counters as elsewhere.
+
+**Model calls** (purposes `prepare.standing`, `prepare.moves`, `prepare.headline`; the chat model; structured output; run `standing` and `moves` at the same time):
+- `standing`: the headline sentence and one why per gap, each citing evidence ids before the text.
+- `moves`: one to three moves with phases; `have` items cite evidence ids; `works` must be gap names.
+- Code checks: cited ids exist; a "why" or `have` without a valid citation is dropped; any digit in model text must appear in the cited evidence or the gap numbers, else that sentence is dropped; `works` filtered to gap names and a move with none is dropped; hours 1–40, at most 5 phases and 4 tasks, lengths clipped. `standing` failing leaves the gaps alone (numbers only); `moves` failing ends the stream with an error and a retry.
+
+**Storage.** Table `prepare_plans` (id, profile_id → profiles cascade, role_id, requirement nullable, content JSON, state JSON, version, created_at, updated_at), migration `0010`, additive.
+
+**Not in this wave:** prepare for a skill, an area, a source or "you" (they stay chat until the blocks are extended to them, as the Anatomy board shows); reading a shipped link into the graph. (Practising a graph role was built alongside, 2026-10-18: Prepare's Practice button opens Practice · This role for the plan's role.)
+
+**Backend built 2026-10-18** (`backend/tayyari/prepare/`, `prompts/prepare.py`, `api/routes/prepare.py`, migration 0010, the `prepare` guard window; documented in `docs/backend.md` § Prepare; golden `tests/data/prepare/riya.prepare.json`). Decisions taken while building: a role with no gap at all is `already_strong` too; `fresh` adds a row and the older plan stays readable by its id; a plan's row follows its profile (FK cascade), so there is no retention step; the `prepare` window counts a written plan and a headline rewrite, nothing else.
 
 ## Follow-ups
 

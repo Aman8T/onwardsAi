@@ -1,0 +1,289 @@
+{
+  "id": "plan_riya_ai_product",
+  "profileId": "riya-demo",
+  "roleId": "ai-product-engineer",
+  "roleTitle": "AI Product Engineer",
+  "scope": "role",
+  "rank": 5,
+  "roleCount": 5,
+  "eta": "~9 months",
+  "createdAt": "2026-10-18T09:12:00Z",
+  "headline": "Your two OpenAI apps prove you can ship with a model. What is missing is evidence that you measured one.",
+  "gaps": [
+    {
+      "name": "LLM API integration",
+      "skillId": "llm-integration",
+      "current": 52,
+      "target": 75,
+      "biggest": false,
+      "why": "notes-ai and Recipe Genie call OpenAI, but both are small apps with one prompt each and no structured retries.",
+      "evidenceIds": ["e1", "e2"]
+    },
+    {
+      "name": "Prompt design",
+      "skillId": "prompt-design",
+      "current": 38,
+      "target": 70,
+      "biggest": false,
+      "why": "Recipe Genie's prompt takes dietary filters, and nothing shows a second version or why it changed.",
+      "evidenceIds": ["e3"]
+    },
+    {
+      "name": "RAG & retrieval",
+      "skillId": "rag-retrieval",
+      "current": 40,
+      "target": 65,
+      "biggest": false,
+      "why": "notes-ai has embeddings search, but its chunking and citations are still a TODO.",
+      "evidenceIds": ["e4"]
+    },
+    {
+      "name": "LLM evals",
+      "skillId": "llm-evals",
+      "current": 12,
+      "target": 65,
+      "biggest": true,
+      "why": "None of your 34 repos has an eval harness, and notes-ai has no tests, so nothing shows how an answer was judged.",
+      "evidenceIds": ["e5", "e6"]
+    },
+    {
+      "name": "AI UX patterns",
+      "skillId": "ai-ux-patterns",
+      "current": 32,
+      "target": 70,
+      "biggest": false,
+      "why": "Recipe Genie shows rotating loading text and a retry-less error toast: the states an AI product needs are not there yet.",
+      "evidenceIds": ["e7"]
+    }
+  ],
+  "strong": [
+    { "name": "React", "current": 90, "target": 85 },
+    { "name": "TypeScript", "current": 86, "target": 80 }
+  ],
+  "evidence": [
+    {
+      "id": "e1",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "LLM API integration",
+      "text": "notes-ai and recipe-genie-web call OpenAI"
+    },
+    {
+      "id": "e2",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "LLM API integration",
+      "text": "Recipe Genie: OpenAI via Supabase Edge Function, structured JSON"
+    },
+    {
+      "id": "e3",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "Prompt design",
+      "text": "Recipe Genie prompt takes dietary filters; no iteration shown"
+    },
+    {
+      "id": "e4",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "RAG & retrieval",
+      "text": "notes-ai: embeddings search, TODO lists chunking and citations"
+    },
+    {
+      "id": "e5",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "LLM evals",
+      "text": "No eval harness in any of 34 repos; notes-ai has no tests"
+    },
+    {
+      "id": "e6",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "LLM evals",
+      "text": "Recipe Genie has no output rating beyond a favourite heart"
+    },
+    {
+      "id": "e7",
+      "sourceId": "lovable-1",
+      "sourceKind": "lovable",
+      "sourceLabel": "your Lovable app",
+      "skill": "AI UX patterns",
+      "text": "Only rotating loading text and a retry-less error toast"
+    },
+    {
+      "id": "e8",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "React",
+      "text": "Rebuilt Kitebird checkout in React; owns 42-component Kite UI"
+    },
+    {
+      "id": "e9",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "React",
+      "text": "motion-kit: 212 stars, 31 test files"
+    },
+    {
+      "id": "e10",
+      "sourceId": "github",
+      "sourceKind": "github",
+      "sourceLabel": "your GitHub",
+      "skill": "TypeScript",
+      "text": "196 of 412 recent commits in TypeScript"
+    },
+    {
+      "id": "e11",
+      "sourceId": "portfolio-1",
+      "sourceKind": "portfolio",
+      "sourceLabel": "your portfolio",
+      "skill": "Experimentation",
+      "text": "3-week A/B test behind a feature flag on checkout"
+    },
+    {
+      "id": "e12",
+      "sourceId": "resume",
+      "sourceKind": "resume",
+      "sourceLabel": "your resume",
+      "skill": "Experimentation",
+      "text": "Checkout conversion +9.4%; won 'Ship It' award"
+    }
+  ],
+  "moves": [
+    {
+      "id": "m1",
+      "title": "Add an eval harness to notes-ai and publish its numbers",
+      "body": "Turn the app you already have into the one repo that shows retrieval, prompts and a judge working together.",
+      "have": [
+        {
+          "text": "notes-ai already calls OpenAI with embeddings search",
+          "evidenceIds": ["e1", "e4"]
+        },
+        {
+          "text": "Structured JSON from a Supabase Edge Function in Recipe Genie",
+          "evidenceIds": ["e2"]
+        },
+        {
+          "text": "motion-kit shows you write tests: 31 test files",
+          "evidenceIds": ["e9"]
+        }
+      ],
+      "works": ["LLM evals", "RAG & retrieval", "Prompt design", "LLM API integration"],
+      "phases": [
+        {
+          "title": "Finish retrieval",
+          "hours": 10,
+          "tasks": [
+            "Implement the chunking and citations notes-ai lists as a TODO",
+            "Add a small labelled set of twenty questions with the right source for each"
+          ],
+          "deliverable": "notes-ai answers with citations on a labelled set"
+        },
+        {
+          "title": "Build the judge",
+          "hours": 12,
+          "tasks": [
+            "Write a judge prompt that scores an answer against its cited source",
+            "Keep two prompt versions and record which one the judge prefers",
+            "Add tests for the judge and the retrieval, in Vitest"
+          ],
+          "deliverable": "A results table in the README, with the judge's scores per prompt version"
+        },
+        {
+          "title": "Make the model fail safely",
+          "hours": 8,
+          "tasks": [
+            "Replace the retry-less error toast with a retry and a visible fallback",
+            "Stream the answer and show which sources were used while it writes"
+          ],
+          "deliverable": "An app that shows its sources and recovers from a failed call"
+        },
+        {
+          "title": "Write it up",
+          "hours": 6,
+          "tasks": ["One post on how you judged the answers, with your numbers", "Link the repo and the post from your resume and graph"],
+          "deliverable": "A post, and a resume line that points to it"
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "title": "Ship an eval-first feature in Recipe Genie",
+      "body": "Add one rated feature to the Lovable app you have users on, and measure it the way you measured checkout.",
+      "have": [
+        {
+          "text": "Recipe Genie runs OpenAI through a Supabase Edge Function",
+          "evidenceIds": ["e2"]
+        },
+        {
+          "text": "You ran a three-week A/B test behind a feature flag on checkout",
+          "evidenceIds": ["e11"]
+        }
+      ],
+      "works": ["LLM evals", "AI UX patterns", "Prompt design"],
+      "phases": [
+        {
+          "title": "Rate the answers",
+          "hours": 6,
+          "tasks": ["Add thumbs up and down with a reason to every generated recipe", "Log the prompt version with each rating"],
+          "deliverable": "A ratings table you can query"
+        },
+        {
+          "title": "Change one thing",
+          "hours": 8,
+          "tasks": ["Write a second prompt version and split traffic behind a flag", "Compare ratings per version after a week"],
+          "deliverable": "A short comparison with real counts"
+        },
+        {
+          "title": "Show the states",
+          "hours": 6,
+          "tasks": ["Design the loading, partial and failed states of a generated recipe", "Add a retry to the error toast"],
+          "deliverable": "Three screens a reviewer can tap through"
+        }
+      ]
+    },
+    {
+      "id": "m3",
+      "title": "Write up the two apps as one case study",
+      "body": "The smallest step: one honest page on what you built with OpenAI, what you did not measure, and what you would measure next.",
+      "have": [{ "text": "Two shipped apps that call OpenAI", "evidenceIds": ["e1"] }],
+      "works": ["LLM API integration", "AI UX patterns"],
+      "phases": [
+        {
+          "title": "Collect",
+          "hours": 3,
+          "tasks": ["List what each app does with the model and where it fails", "Take screenshots of every AI state you have"],
+          "deliverable": "A page of notes"
+        },
+        {
+          "title": "Draft",
+          "hours": 4,
+          "tasks": ["Write the problem, the approach and what was left out", "Keep every number in brackets until you check it"],
+          "deliverable": "A draft with checked numbers"
+        },
+        {
+          "title": "Publish",
+          "hours": 2,
+          "tasks": ["Post it on your portfolio site", "Link it from your resume and graph"],
+          "deliverable": "A case study you can point to"
+        }
+      ]
+    }
+  ],
+  "state": {
+    "hoursPerWeek": 6,
+    "moveIndex": 0,
+    "done": ["m1:0:0"],
+    "links": []
+  },
+  "version": 2
+}

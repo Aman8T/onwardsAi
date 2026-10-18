@@ -19,6 +19,7 @@ from ..ports import (
     MatchRepo,
     PortfolioRepo,
     PostingRepo,
+    PrepareRepo,
     ProfileFactsRepo,
     ProfileRepo,
     SessionRepo,
@@ -35,6 +36,7 @@ from .limits import SqlLimitRepo
 from .llm_calls import SqlLlmCallRepo
 from .match import SqlMatchRepo, SqlPostingRepo, SqlProfileFactsRepo, SqlUserFactRepo
 from .portfolios import SqlPortfolioRepo
+from .prepare import SqlPrepareRepo
 from .profiles import SqlProfileRepo
 from .sessions import SqlSessionRepo
 from .users import SqlUserRepo
@@ -60,6 +62,7 @@ class Repositories:
     discover: DiscoverRepo
     jobsearch: JobSearchRepo
     interview: InterviewRepo
+    prepare: PrepareRepo
 
 
 def build_repositories(db: Database, clock: Clock | None = None) -> Repositories:
@@ -81,6 +84,7 @@ def build_repositories(db: Database, clock: Clock | None = None) -> Repositories
         discover=SqlDiscoverRepo(db, clock),
         jobsearch=SqlJobSearchRepo(db),
         interview=SqlInterviewRepo(db),
+        prepare=SqlPrepareRepo(db),
     )
 
 
@@ -97,6 +101,7 @@ __all__ = [
     "SqlMatchRepo",
     "SqlPortfolioRepo",
     "SqlPostingRepo",
+    "SqlPrepareRepo",
     "SqlProfileFactsRepo",
     "SqlProfileRepo",
     "SqlSessionRepo",

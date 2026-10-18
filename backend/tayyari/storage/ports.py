@@ -954,6 +954,54 @@ class InterviewRepo(Protocol):
         ...
 
 
+# ───────────────────────────── prepare ─────────────────────────────
+
+
+@dataclass(frozen=True, slots=True)
+class StoredPlan:
+    """One plan for a role (`PreparePlanRow`). ``content`` is the `PreparePlan` JSON without ``state`` and ``version``;
+    ``state`` is the `PrepareState` JSON the person changes; ``version`` goes up by one on every state save."""
+
+    id: str
+    profile_id: str
+    role_id: str
+    requirement: str | None
+    content: dict[str, Any]
+    state: dict[str, Any]
+    version: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class PrepareRepo(Protocol):
+    """Plans for roles. Everything is scoped to a profile id: another profile's plan id reads as None."""
+
+    async def create(self, item: StoredPlan) -> None:
+        """Store a new plan (``version`` 1). The profile must exist (the SQL repository enforces it)."""
+        ...
+
+    async def get(self, profile_id: str, plan_id: str) -> StoredPlan | None:
+        """The plan with this id when it belongs to this profile, else None."""
+        ...
+
+    async def find(self, profile_id: str, role_id: str, requirement: str | None) -> StoredPlan | None:
+        """The newest plan of this profile for this role and requirement (None: the whole role), or None."""
+        ...
+
+    async def save_state(
+        self,
+        profile_id: str,
+        plan_id: str,
+        *,
+        state: dict[str, Any],
+        expected_version: int,
+        now: datetime,
+    ) -> bool:
+        """Write ``state`` and ``updated_at`` with ``version`` set to ``expected_version + 1``, only if the stored version
+        is still ``expected_version``. False (and nothing written) when it is not, or the plan is not this profile's."""
+        ...
+
+
 __all__ = [
     "BillingRepo",
     "ChatMessage",
@@ -977,6 +1025,7 @@ __all__ = [
     "PortfolioConflict",
     "PortfolioRepo",
     "PostingRepo",
+    "PrepareRepo",
     "ProfileAccess",
     "ProfileFactsRepo",
     "ProfileNotClaimable",
@@ -994,6 +1043,7 @@ __all__ = [
     "StoredMagicLink",
     "StoredMatch",
     "StoredOrder",
+    "StoredPlan",
     "StoredPortfolio",
     "StoredSearchDoc",
     "StoredSearchRun",

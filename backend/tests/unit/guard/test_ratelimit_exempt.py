@@ -46,6 +46,10 @@ TINY = {
     "interview_global_per_hour": 1,
     "interview_again_per_day": 1,
     "speech_per_minute": 1,
+    "prepare_per_minute": 1,
+    "prepare_per_hour": 1,
+    "prepare_per_day": 1,
+    "prepare_global_per_hour": 1,
 }
 """Every window of every route allows one request."""
 
@@ -60,6 +64,7 @@ ROUTES: list[Route] = [
     "interview",
     "interview_again",
     "speech",
+    "prepare",
 ]
 
 
