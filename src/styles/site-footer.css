@@ -1,0 +1,51 @@
+/*
+ * Site footer (src/components/SiteFooter.tsx): links to every public page, quiet and small.
+ * Tokens and the global primitives only: no colour literals, no shadows, a 1px hairline rule.
+ * Link boxes are 44px tall for touch; the negative inline margin keeps the first word on the column's edge.
+ */
+
+.site-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  margin-top: var(--s8);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--line);
+}
+
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--s1);
+  margin-inline: calc(var(--s2) * -1);
+}
+
+.site-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--s2);
+  border-radius: var(--r-s);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.site-footer-links a:hover {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer-links a:focus-visible {
+  outline: 2px solid var(--accent-ui);
+  outline-offset: 2px;
+}
+
+.site-footer-line {
+  max-width: 60ch;
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  color: var(--text-muted);
+}

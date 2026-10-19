@@ -306,6 +306,15 @@ def test_the_real_index_html_hashes_match_an_independent_extraction() -> None:
     assert inline_script_hashes(html) == tuple(dict.fromkeys(sha(text) for text in plain))
 
 
+def test_structured_data_is_not_hashed_because_the_browser_never_runs_it() -> None:
+    html = (
+        '<script type="application/ld+json">{"@type": "WebSite"}</script>'
+        "<script>boot()</script>"
+        '<script type="module">go()</script>'
+    )
+    assert inline_script_hashes(html) == (sha("boot()"), sha("go()"))
+
+
 # ───────────────────────────── the page policy ─────────────────────────────
 
 

@@ -29,7 +29,8 @@ docs/backend.md            backend architecture, request flows, storage, guard, 
 docs/roadmap.md            build plan: waves, file ownership, feature specs
 docs/research/             market and open-source research
 shared/types.ts, portfolio.ts, auth.ts, billing.ts, match.ts, discover.ts, jobsearch.ts, interview.ts, speech.ts   TS contracts; mirrored by backend/tayyari/contract/*.py
-src/                       frontend: views/ (Onboarding, Analysis, GraphView, ChatView), portfolio/, auth/, billing/, match/, discover/, practice/, light/,
+src/                       frontend: views/ (Onboarding, Analysis, GraphView, ChatView), portfolio/, auth/, billing/, match/, discover/, practice/, prepare/, light/,
+                           site/ (the public SEO pages, rendered to static HTML at build time by scripts/build-pages.tsx; docs/seo.md),
                            components/ (Radar, Popover, Ring...), theme/ (tokens, hue), styles/, store.ts, lib/api.ts
 backend/tayyari/           core · contract · llm · decisions · analysis · chat · portfolio · prompts · ingest ·
                            guard · storage (tables, repos, migrations) · api (app, routes, deps, security) · auth · billing · match · discover · jobsearch · interview · speech · cli · sample
@@ -86,7 +87,7 @@ In the in-app browser pane, `.claude/launch.json` defines `tayyari-api` and `tay
 
 - Vite 6 (Vite 8 has no native binding for the user's Node 21.7): esbuild turns literal `oklch()` into hex but leaves `var()`-based oklch alone; never write literal `in oklch` gradients.
 - The in-app browser pane throttles `requestAnimationFrame` to ~1 Hz when its document is hidden; frame timings there are only valid while the pane is visible. Framer-style pages inside it only re-render after a screenshot forces a paint.
-- Cloudflare in front of FastAPI Cloud blocks Python-urllib's default User-Agent and any client-sent `CF-Connecting-IP`; scripted checks need a custom User-Agent. Unknown paths return the SPA `index.html` with 200.
+- Cloudflare in front of FastAPI Cloud blocks Python-urllib's default User-Agent and any client-sent `CF-Connecting-IP`; scripted checks need a custom User-Agent. Unknown paths are real 404s (`404.html`); only the app's own routes (`APP_ROUTES` in `api/static.py`: /, /match, /discover, /practice, /pricing, /p/, dev/) get the SPA `index.html`.
 - `fastapi deploy` needs `PYTHONUTF8=1` on Windows (cp1252 crash). `npm run deploy` is accepted as `ready_for_build`; the build is live 40–60 s later.
 - Haiku 5.5 thinks adaptively by default; disable thinking for extraction-type calls (`thinking_can_disable` in the model table).
 - `.gitignore` has `/data/` (root only); `backend/tests/data` is tracked.

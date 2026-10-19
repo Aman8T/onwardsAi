@@ -1,0 +1,312 @@
+/*
+ * The public pages (scripts/build-pages.tsx): header, article, footer.
+ *
+ * Shipped as dist/site/site.css, after src/theme/tokens.css and src/styles/global.css in the same file, so every
+ * colour here is a token (light and dark follow the tokens' own media queries) and the primitives (.btn, .panel,
+ * .kicker, .serif) are the app's own. No script runs on these pages, so the field holds the tokens' default hue.
+ *
+ * Reading measure 68ch at 18px; touch targets at least 44px; the same focus ring as the app (global.css).
+ */
+
+.site {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Skip link: off screen until it is focused. */
+.skip {
+  position: absolute;
+  top: var(--s3);
+  left: var(--s4);
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--s4);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-m);
+  color: var(--text);
+  transform: translateY(-300%);
+}
+
+.skip:focus {
+  transform: translateY(0);
+}
+
+/* Header */
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s1) var(--s5);
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding: var(--s3) var(--s5);
+}
+
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 44px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.site-brand-word {
+  font-size: var(--fs-5);
+}
+
+.mark-ring {
+  fill: none;
+  stroke: var(--accent-ui);
+  stroke-width: 1.25;
+}
+
+.mark-dot {
+  fill: var(--text);
+}
+
+.site-nav ul,
+.site-footer ul,
+.crumbs ol,
+.related-grid {
+  padding: 0;
+  list-style: none;
+}
+
+.site-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s1);
+}
+
+.site-nav a,
+.site-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--fs-2);
+  text-decoration: none;
+}
+
+.site-nav a {
+  padding: 0 var(--s3);
+  border-radius: var(--r-m);
+  color: var(--text-muted);
+}
+
+.site-nav a:hover,
+.site-nav a[aria-current='page'] {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* The page */
+.site-main {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--s5);
+}
+
+.site-main:focus {
+  outline: none;
+}
+
+.column {
+  max-width: 68ch;
+  margin-inline: auto;
+  padding-bottom: var(--s8);
+  font-size: var(--fs-4);
+  line-height: var(--lh-body);
+}
+
+.crumbs {
+  padding-top: var(--s3);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.crumbs li + li::before {
+  content: '/';
+  padding-inline: var(--s2);
+  color: var(--line-strong);
+}
+
+.crumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.doc-head {
+  padding-top: var(--s5);
+}
+
+.doc-head h1 {
+  font-size: var(--fs-7);
+  text-wrap: balance;
+}
+
+.lede {
+  margin-top: var(--s4);
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.doc-cta {
+  margin-top: var(--s5);
+}
+
+.site .btn {
+  min-height: 44px;
+  text-decoration: none;
+}
+
+/* Running text */
+.prose p,
+.prose ul,
+.prose ol {
+  margin-top: var(--s4);
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.4em;
+}
+
+.prose li + li {
+  margin-top: var(--s2);
+}
+
+.prose h2,
+.related h2 {
+  margin-top: var(--s8);
+  font-size: var(--fs-6);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--track-tight);
+}
+
+.prose h2 + p,
+.prose h2 + ul,
+.prose h2 + ol {
+  margin-top: var(--s3);
+}
+
+.prose h3 {
+  margin-top: var(--s5);
+  font-size: var(--fs-4);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+}
+
+.prose h3 + p {
+  margin-top: var(--s2);
+}
+
+.prose strong {
+  font-weight: 600;
+}
+
+.callout {
+  margin-top: var(--s4);
+  padding: var(--s4) var(--s5) var(--s5);
+}
+
+.callout ul {
+  margin-top: 0;
+}
+
+/* Related pages */
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--s4);
+  margin-top: var(--s4);
+}
+
+.related-card {
+  display: grid;
+  gap: var(--s1);
+  align-content: start;
+  height: 100%;
+  padding: var(--s4);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color var(--d-fast) var(--ease);
+}
+
+.related-card:hover {
+  border-color: var(--line-strong);
+}
+
+.related-card strong {
+  font-size: var(--fs-3);
+  font-weight: 600;
+}
+
+.related-card span {
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  color: var(--text-muted);
+}
+
+/* Footer */
+.site-footer {
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.site-footer-inner {
+  display: grid;
+  gap: var(--s4);
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding: var(--s6) var(--s5) var(--s7);
+}
+
+.site-footer p {
+  max-width: 62ch;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.site-footer ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0 var(--s4);
+}
+
+@media (max-width: 480px) {
+  .site-header,
+  .site-main,
+  .site-footer-inner {
+    padding-inline: var(--s4);
+  }
+
+  .column {
+    font-size: var(--fs-3);
+  }
+
+  .lede {
+    font-size: var(--fs-4);
+  }
+}

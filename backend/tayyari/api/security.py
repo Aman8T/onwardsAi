@@ -189,8 +189,14 @@ _FIXED_HEADERS: tuple[tuple[str, str], ...] = (
 )
 
 
+_SCRIPT_TYPES: frozenset[str] = frozenset(["", "text/javascript", "application/javascript", "module"])
+"""``type`` values a browser runs. Anything else (``application/ld+json`` structured data) is a data block: never run, so a
+CSP needs no hash for it."""
+
+
 class _InlineScripts(HTMLParser):
-    """Collects the text of every ``<script>`` element that has no ``src`` (the ones a CSP must allow by hash)."""
+    """Collects the text of every ``<script>`` element that has no ``src`` and is run by the browser (the ones a CSP must
+    allow by hash); data blocks such as JSON-LD are skipped."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=False)
@@ -200,7 +206,8 @@ class _InlineScripts(HTMLParser):
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag == "script":
             has_src = any(name == "src" for name, _ in attrs)
-            self._current = None if has_src else []
+            kind = next(((value or "").strip().lower() for name, value in attrs if name == "type"), "")
+            self._current = None if has_src or kind not in _SCRIPT_TYPES else []
 
     def handle_data(self, data: str) -> None:
         if self._current is not None:

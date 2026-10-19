@@ -2,7 +2,7 @@
  * Onboarding: "Connect your sources", in the calm theme (board CalmMain.dc.html).
  * A centred 560px column on the ambient field: kicker, serif headline, subtitle, the sources it
  * reads from, the connect form as one quiet panel (hairline drop zone, link rows, goal, optional
- * context, primary button), the sample link, and three "how it works" steps below.
+ * context, primary button), the sample link, three "how it works" steps below, and the site footer.
  *
  * The ambient field is mounted once in index.html; this view paints no background of its own. The cursor
  * light (src/light) is the one thing Home adds behind the page, and only on fine-pointer, full-motion devices.
@@ -14,6 +14,7 @@ import type { SourceKind } from '../../shared/types';
 import { AccountMenu } from '../auth/AccountMenu';
 import { Brand } from '../components/Brand';
 import { IconArrowRight, IconDoc, IconMinus, IconPlus, IconUpload } from '../components/Icons';
+import { SiteFooter } from '../components/SiteFooter';
 import { CursorLight } from '../light/CursorLight';
 import * as api from '../lib/api';
 import { EASE, NARROW_QUERY, useMediaQuery } from '../lib/ui';
@@ -710,7 +711,14 @@ export function Onboarding() {
               </li>
             ))}
           </ol>
+          <p className="ob-how-more">
+            <a className="btn btn-quiet" href="/how-it-works">
+              Read more about how it works
+            </a>
+          </p>
         </section>
+
+        <SiteFooter />
       </div>
     </div>
   );

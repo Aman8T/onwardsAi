@@ -469,10 +469,22 @@
   color: var(--text-muted);
 }
 
+/* the quiet link to the full page, at the end of the section */
+.ob-how-more {
+  margin-top: var(--s5);
+}
+
+.ob-how-more .btn {
+  padding-inline: 0;
+  font-size: var(--fs-2);
+  text-decoration: none;
+}
+
 /* ───────────── phone ───────────── */
 
 @media (max-width: 760px) {
-  .ob-nav .btn {
+  .ob-nav .btn,
+  .ob-how-more .btn {
     min-height: 44px;
   }
 

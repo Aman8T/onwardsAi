@@ -330,7 +330,7 @@ async def test_the_page_carries_the_csp_with_the_hash_of_its_inline_script(
     script = static_site(tmp_path, monkeypatch)
     async with running_app(make_settings(guard=roomy_guard())) as h:
         index = await h.client.get("/")
-        deep_link = await h.client.get("/profile/abc")
+        deep_link = await h.client.get("/match/abc")  # an app route (unknown paths are real 404s now)
         asset = await h.client.get("/assets/app.js")
     expected = page_csp(inline_script_hashes(f"<script>{script}</script>"))
     assert index.headers["content-security-policy"] == expected

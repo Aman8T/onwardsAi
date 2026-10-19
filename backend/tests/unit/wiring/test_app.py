@@ -104,12 +104,14 @@ async def test_the_web_app_is_served_from_the_static_folder(
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url=BASE_URL) as client:
             index = await client.get("/")
-            deep_link = await client.get("/profile/abc")
+            deep_link = await client.get("/match/abc")
+            unknown = await client.get("/profile/abc")
             asset = await client.get("/assets/app.js")
             health = await client.get("/api/health")
     assert "<title>Tayyari</title>" in index.text
     assert index.headers["cache-control"] == "no-cache"
-    assert deep_link.text == index.text  # client-side routes fall back to index.html
+    assert deep_link.text == index.text  # the app's own client routes fall back to index.html
+    assert (unknown.status_code, unknown.json()) == (404, {"error": "Not found"})  # no 404.html in this build
     assert asset.text == "console.log('hi')"
     assert asset.headers["cache-control"] == "public, max-age=3600"
     assert health.json()["ok"] is True  # the API routes are not shadowed by the web app

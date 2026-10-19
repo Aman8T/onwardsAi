@@ -596,6 +596,10 @@ is the one handed back; `fresh` adds a row and the older plan stays readable by 
   `tests/unit/storage/test_prepare_contract.py`, `tests/unit/guard/test_ratelimit_prepare.py` and
   `tests/unit/contract/test_prepare_parity.py`.
 
+### Serving the web app (`api/static.py`)
+
+`mount_spa` is the last route and answers GET and HEAD from `backend/static` (the build), first match wins: a real file (assets cached for an hour, `.html` files `no-cache`); a page `<path>/index.html`, the generated content pages and `/pricing` when the build has its own, `no-cache`, where a trailing slash is a 308 to the address without it; one of the app's own client routes (`APP_ROUTES`: `/`, `/pricing`, `/match…`, `/discover…`, `/practice…`, `/p/…`, and `/dev/…` on a non-prod server), which gets `index.html` with 200. Anything else gets `404.html` with status 404, or the JSON 404 when the build has no 404.html, and no build at all is the JSON 404 (so is `/404.html` itself). The private routes (match, discover, practice, `/p/`, `/dev/`) send `X-Robots-Tag: noindex`; `/`, `/pricing` and the content pages do not. A path that is not a plain relative address (a leading slash, a backslash, a NUL, a `..` that leaves the build) is never a file. The `/dev/` check reads `app.state.settings`, which `create_app` sets; `/api/*` never reaches this route.
+
 ## Jev decisions framework
 
 ### Decision specifications
