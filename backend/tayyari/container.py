@@ -279,7 +279,7 @@ class Container:
         from tayyari.analysis.service import PipelineAnalysisService
         from tayyari.auth.email import ResendEmailSender
         from tayyari.auth.google import STATE_KEY_NAME
-        from tayyari.auth.service import AuthService
+        from tayyari.auth.service import AUTH_HTTP_HEADERS, AuthService
         from tayyari.billing.entitlements import EntitlementService
         from tayyari.billing.products import below_floor
         from tayyari.billing.razorpay import RazorpayGateway
@@ -422,7 +422,9 @@ class Container:
             if ov.auth is not None:
                 auth = ov.auth
             else:
-                auth_http = httpx2.AsyncClient(timeout=httpx2.Timeout(10.0), transport=ov.auth_transport)
+                auth_http = httpx2.AsyncClient(
+                    timeout=httpx2.Timeout(10.0), transport=ov.auth_transport, headers=AUTH_HTTP_HEADERS
+                )
                 closers.append(("auth_http", auth_http.aclose))
                 mailer = ov.mailer
                 if mailer is None and settings.resend_api_key is not None:

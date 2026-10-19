@@ -71,6 +71,8 @@ class JwksCache:
             ):
                 raise ValueError("not a key set")
             keys = KeySet.import_key_set(cast(Any, body)) if body["keys"] else KeySet([])
+        except httpx2.HTTPStatusError as err:
+            raise JwksError(f"jwks_unavailable:status_{err.response.status_code}") from None
         except Exception as err:
             raise JwksError(f"jwks_unavailable:{type(err).__name__}") from None
         self._keys, self._keys_at = keys, self._clock.monotonic()

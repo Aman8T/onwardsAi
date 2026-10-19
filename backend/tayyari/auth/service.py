@@ -48,6 +48,10 @@ from .supabase import SupabaseError, SupabaseVerifier
 
 log = get_logger(__name__)
 
+#: Sent on every outgoing sign-in call. Providers behind Cloudflare (Supabase among them) may refuse a datacenter
+#: request that carries a bare python HTTP client's User-Agent, which the app saw as ``upstream`` on every bridge.
+AUTH_HTTP_HEADERS: dict[str, str] = {"User-Agent": "Leafout/1.0 (+https://leafout.in)"}
+
 LOCAL_HOSTS: Final = frozenset({"localhost", "127.0.0.1", "::1"})
 SUPABASE_SOURCE: Final = "supabase"
 SUB_WINDOW_S: Final = 86_400
@@ -130,7 +134,9 @@ class AuthService:
         self._http = (
             http
             if http is not None
-            else httpx2.AsyncClient(timeout=httpx2.Timeout(10.0), transport=transport)
+            else httpx2.AsyncClient(
+                timeout=httpx2.Timeout(10.0), transport=transport, headers=AUTH_HTTP_HEADERS
+            )
         )
         self.sessions = SessionService(users, clock, settings.auth)
         self.magic = MagicLinks(

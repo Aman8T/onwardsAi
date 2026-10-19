@@ -202,7 +202,8 @@ class SupabaseVerifier:
             return False
         try:
             keys = await self._jwks.keys()
-        except JwksError:
+        except JwksError as err:
+            log.warning("supabase_upstream", stage="jwks", detail=err.reason)
             raise SupabaseError("upstream") from None
         usable = any(self._usable(key, alg) for key in keys.keys for alg in ALGORITHMS)
         chosen = "jwks" if usable else "user_endpoint"
@@ -221,7 +222,8 @@ class SupabaseVerifier:
         for refresh in (False, True):
             try:
                 keys = await self._jwks.keys(refresh=refresh)
-            except JwksError:
+            except JwksError as err:
+                log.warning("supabase_upstream", stage="jwks", detail=err.reason)
                 raise SupabaseError("upstream") from None
             for key in keys.keys:
                 if key.kid == kid and self._usable(key, alg):
@@ -280,11 +282,13 @@ class SupabaseVerifier:
                 headers={"Authorization": f"Bearer {token}", "apikey": self._publishable_key},
                 timeout=HTTP_TIMEOUT_S,
             )
-        except httpx2.HTTPError:
+        except httpx2.HTTPError as err:
+            log.warning("supabase_upstream", stage="user", detail=type(err).__name__)
             raise SupabaseError("upstream") from None
         if response.status_code in (401, 403, 404):
             raise SupabaseError("revoked")
         if response.status_code != 200:
+            log.warning("supabase_upstream", stage="user", status=response.status_code)
             raise SupabaseError("upstream")
         try:
             body = response.json()
