@@ -41,7 +41,7 @@ from urllib.parse import quote, urlsplit
 
 import anyio.to_thread
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 
 from tayyari.api.security import header_host
 from tayyari.core.settings import Settings
@@ -189,6 +189,60 @@ def other_host_target(request: Request, public_url: str) -> str | None:
     return f"{public_url}{quote(request.url.path)}{query}"
 
 
+# ── Moving from the old address ──────────────────────────────────────────────────────────────────────────────────
+# A browser's localStorage (its profile, recent matches, theme) belongs to the old host and cannot be read on the new
+# one. So the first time a person's browser asks the old host for a page, it gets a tiny moving page instead of the
+# 308: its script reads the known keys and goes on to the same path on the public URL with them in the fragment
+# (`src/lib/importOld.ts` takes them in). A cookie makes later visits plain 308s, and crawlers always get the 308.
+MOVED_COOKIE = "tayyari_moved"
+MOVING_SCRIPT_PATH = "__moving.js"
+_BOT_UA = re.compile(
+    r"bot|crawl|spider|slurp|preview|facebookexternalhit|embedly|whatsapp|linkedin|curl|wget|python", re.I
+)
+
+MOVING_SCRIPT = """(function () {
+  var target = document.documentElement.getAttribute('data-target') || '/';
+  var keys = ['tayyari.v1', 'tayyari.matches.recent', 'tayyari.match.draft', 'tayyari.practice.prefs',
+    'tayyari.scheme', 'tayyari.atmo', 'tayyari.hue0'];
+  var out = {}, found = 0, hash = '';
+  try {
+    for (var i = 0; i < keys.length; i++) {
+      var v = localStorage.getItem(keys[i]);
+      if (v !== null) { out[keys[i]] = v; found++; }
+    }
+  } catch (e) {}
+  if (found) {
+    try {
+      var bytes = new TextEncoder().encode(JSON.stringify(out)), bin = '';
+      for (var j = 0; j < bytes.length; j++) bin += String.fromCharCode(bytes[j]);
+      var packed = encodeURIComponent(btoa(bin));
+      if (packed.length < 1500000) hash = '#leafout-import=' + packed;
+    } catch (e) {}
+  }
+  document.cookie = 'tayyari_moved=1; Max-Age=31536000; Path=/; Secure; SameSite=Lax';
+  location.replace(target + hash);
+})();
+"""
+
+
+def moving_page(target: str) -> str:
+    """The old host's one-time page: carries this browser's saved keys to ``target`` (see above)."""
+    safe = target.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+    return (
+        '<!doctype html><html lang="en" data-target="' + safe + '"><head><meta charset="utf-8">'
+        '<meta name="robots" content="noindex"><title>Moving to Leafout</title>'
+        f'<script src="/{MOVING_SCRIPT_PATH}" defer></script></head>'
+        '<body><p>Tayyari is now Leafout. <a href="' + safe + '">Continue</a></p></body></html>'
+    )
+
+
+def wants_moving_page(request: Request) -> bool:
+    """A real browser that has not moved yet: no ``tayyari_moved`` cookie and not a crawler or script."""
+    if request.cookies.get(MOVED_COOKIE):
+        return False
+    return not _BOT_UA.search(request.headers.get("user-agent") or "")
+
+
 def mount_spa(app: FastAPI, static_dir: Path) -> None:
     """Add the API 404 and the web-app route. Register every other route first (see module doc)."""
     settings: Settings | None = getattr(app.state, "settings", None)
@@ -204,9 +258,16 @@ def mount_spa(app: FastAPI, static_dir: Path) -> None:
 
     @app.api_route("/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)
     async def web_app(request: Request, path: str) -> Response:
+        if path == MOVING_SCRIPT_PATH:
+            return Response(
+                MOVING_SCRIPT, media_type="text/javascript", headers={"Cache-Control": "no-store"}
+            )
         if settings is not None and settings.auth.redirect_other_hosts:
             elsewhere = other_host_target(request, settings.auth.public_url)
             if elsewhere is not None:
+                no_store = {"Cache-Control": "no-store", "X-Robots-Tag": NOINDEX}
+                if request.method == "GET" and wants_moving_page(request):
+                    return HTMLResponse(moving_page(elsewhere), headers=no_store)
                 return RedirectResponse(elsewhere, status_code=308, headers={"Cache-Control": "no-store"})
         answer = await anyio.to_thread.run_sync(locate, static_dir, path, dev)
         if answer.location is not None:

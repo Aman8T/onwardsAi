@@ -1,3 +1,5 @@
+// First: copy over what this browser saved on the old address, before anything reads localStorage.
+import './lib/importOld';
 import { StrictMode, Suspense, lazy } from 'react';
 import type { ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';

@@ -111,3 +111,45 @@ async def test_nothing_next_to_them_is_an_app_route(site: Path, path: str) -> No
     async with client_for(site) as client:
         res = await client.get(f"/{path}")
     assert res.status_code == 404
+
+
+BROWSER = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+
+
+async def test_a_browser_that_has_not_moved_gets_the_moving_page_once(site: Path) -> None:  # noqa: F811
+    async with client_for(site, settings_for()) as client:
+        first = await client.get(
+            "/match/abc?x=1", headers={"host": "tayyari.fastapicloud.dev", "user-agent": BROWSER}
+        )
+        assert first.status_code == 200
+        assert 'data-target="https://app.leafout.in/match/abc?x=1"' in first.text
+        assert '<script src="/__moving.js"' in first.text
+        assert first.headers["x-robots-tag"] == "noindex"
+        moved = await client.get(
+            "/match/abc",
+            headers={"host": "tayyari.fastapicloud.dev", "user-agent": BROWSER, "cookie": "tayyari_moved=1"},
+            follow_redirects=False,
+        )
+        assert moved.status_code == 308
+
+
+async def test_the_moving_script_is_served_on_the_old_host_and_crawlers_get_the_308(site: Path) -> None:  # noqa: F811
+    async with client_for(site, settings_for()) as client:
+        script = await client.get("/__moving.js", headers={"host": "tayyari.fastapicloud.dev"})
+        assert script.status_code == 200 and "leafout-import=" in script.text
+        assert script.headers["content-type"].startswith("text/javascript")
+        bot = await client.get(
+            "/pricing",
+            headers={"host": "tayyari.fastapicloud.dev", "user-agent": "Googlebot/2.1"},
+            follow_redirects=False,
+        )
+        assert bot.status_code == 308
+
+
+async def test_a_quote_in_the_target_cannot_break_out_of_the_attribute(site: Path) -> None:  # noqa: F811
+    async with client_for(site, settings_for()) as client:
+        res = await client.get(
+            '/x"><script>alert(1)</script>',
+            headers={"host": "tayyari.fastapicloud.dev", "user-agent": BROWSER},
+        )
+        assert "<script>alert(1)" not in res.text
