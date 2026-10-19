@@ -20,6 +20,7 @@ from tayyari.core.logging import get_logger
 
 from ..db import Database, rowcount
 from ..ports import (
+    EmailTaken,
     OwnedProfile,
     ProfileNotClaimable,
     ProfileOwnedByAnother,
@@ -47,6 +48,7 @@ _USER_COLUMNS = (
     UserRow.name,
     UserRow.picture_url,
     UserRow.google_sub,
+    UserRow.supabase_sub,
     UserRow.created_at,
     UserRow.last_login_at,
     UserRow.locale,
@@ -73,6 +75,7 @@ def _user(row: Any) -> StoredUser:
         last_login_at=row.last_login_at,
         locale=row.locale,
         currency=row.currency,
+        supabase_sub=row.supabase_sub,
     )
 
 
@@ -211,6 +214,79 @@ class SqlUserRepo:
                 log.info("user_create_raced", kind="email")
         raise AssertionError("unreachable")  # pragma: no cover
 
+    async def sign_in_supabase(
+        self, *, sub: str, email: str | None, email_verified: bool, name: str | None, now: datetime
+    ) -> StoredUser:
+        verified_email = email if email_verified and email else None
+        for attempt in (1, 2):
+            try:
+                async with self._db.session() as s:
+                    # 1. the same Leafout account signing in again
+                    by_sub = (
+                        update(UserRow)
+                        .where(UserRow.supabase_sub == sub)
+                        .values(last_login_at=now, name=func.coalesce(UserRow.name, name))
+                        .returning(*_USER_COLUMNS)
+                    )
+                    row = (await s.execute(by_sub)).one_or_none()
+                    if row is not None:
+                        if verified_email is not None and row.email != verified_email:
+                            # The address changed on the site: follow it unless another account already holds it.
+                            taken = (
+                                await s.execute(select(UserRow.id).where(UserRow.email == verified_email))
+                            ).first()
+                            if taken is None:
+                                await s.execute(
+                                    update(UserRow).where(UserRow.id == row.id).values(email=verified_email)
+                                )
+                                row = (
+                                    await s.execute(select(*_USER_COLUMNS).where(UserRow.id == row.id))
+                                ).one()
+                        return _user(row)
+                    # 2. an account for the verified address (made by Google or an emailed link): link it, once
+                    if verified_email is not None:
+                        linked = (
+                            update(UserRow)
+                            .where(UserRow.email == verified_email, UserRow.supabase_sub.is_(None))
+                            .values(
+                                supabase_sub=sub, last_login_at=now, name=func.coalesce(UserRow.name, name)
+                            )
+                            .returning(*_USER_COLUMNS)
+                        )
+                        row = (await s.execute(linked)).one_or_none()
+                        if row is not None:
+                            return _user(row)
+                        holder = (
+                            await s.execute(select(UserRow.id).where(UserRow.email == verified_email))
+                        ).first()
+                        if holder is not None:
+                            raise EmailTaken(holder.id)
+                    # 3. a new account
+                    new_id = new_user_id()
+                    s.add(
+                        UserRow(
+                            id=new_id,
+                            email=verified_email,
+                            name=name,
+                            picture_url=None,
+                            google_sub=None,
+                            supabase_sub=sub,
+                            created_at=now,
+                            last_login_at=now,
+                            locale=None,
+                            currency=None,
+                        )
+                    )
+                    await s.flush()
+                    row = (await s.execute(select(*_USER_COLUMNS).where(UserRow.id == new_id))).one()
+                    return _user(row)
+            except IntegrityError:
+                # A concurrent first sign-in created the account (or took the address) between our update and our insert.
+                if attempt == 2:
+                    raise
+                log.info("user_create_raced", kind="supabase")
+        raise AssertionError("unreachable")  # pragma: no cover
+
     async def update(
         self, user_id: str, *, name: str | None = None, currency: str | None = None
     ) -> StoredUser | None:
@@ -273,6 +349,9 @@ class SqlUserRepo:
                     last_seen_at=rec.last_seen_at,
                     ip_hash=rec.ip_hash,
                     user_agent=rec.user_agent,
+                    source=rec.source,
+                    supabase_session_id=rec.supabase_session_id,
+                    verified_at=rec.verified_at,
                 )
             )
 
@@ -285,6 +364,9 @@ class SqlUserRepo:
                 AuthSessionRow.last_seen_at,
                 AuthSessionRow.ip_hash,
                 AuthSessionRow.user_agent,
+                AuthSessionRow.source,
+                AuthSessionRow.supabase_session_id,
+                AuthSessionRow.verified_at,
                 *_USER_COLUMNS,
             )
             .join(UserRow, UserRow.id == AuthSessionRow.user_id)
@@ -302,6 +384,9 @@ class SqlUserRepo:
             last_seen_at=row.last_seen_at,
             ip_hash=row.ip_hash,
             user_agent=row.user_agent,
+            source=row.source,
+            supabase_session_id=row.supabase_session_id,
+            verified_at=row.verified_at,
         )
         return session, _user(row)
 
@@ -311,6 +396,11 @@ class SqlUserRepo:
             .where(AuthSessionRow.id == session_id)
             .values(last_seen_at=last_seen_at, expires_at=expires_at)
         )
+        async with self._db.session() as s:
+            await s.execute(stmt)
+
+    async def mark_session_verified(self, session_id: str, verified_at: datetime) -> None:
+        stmt = update(AuthSessionRow).where(AuthSessionRow.id == session_id).values(verified_at=verified_at)
         async with self._db.session() as s:
             await s.execute(stmt)
 

@@ -21,7 +21,24 @@ PHONE_MASK = "[phone]"
 ADDRESS_MASK = "[address]"
 
 SENSITIVE_KEYS: frozenset[str] = frozenset(
-    {"resume", "text", "content", "notes", "message", "state", "prompt", "system", "body", "raw", "excerpt"}
+    {
+        "resume",
+        "text",
+        "content",
+        "notes",
+        "message",
+        "state",
+        "prompt",
+        "system",
+        "body",
+        "raw",
+        "excerpt",
+        "token",
+        "access_token",
+        "refresh_token",
+        "cookie",
+        "authorization",
+    }
 )
 """Log keys whose value is replaced by ``<redacted N chars>`` (matched case-insensitively, exact name)."""
 

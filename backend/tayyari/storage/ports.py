@@ -289,12 +289,21 @@ class ProfileOwnedByAnother(RuntimeError):
     """`UserRepo.claim_profile` was asked for a profile that already belongs to a different account."""
 
 
+class EmailTaken(RuntimeError):
+    """`UserRepo.sign_in_supabase` found the verified email on an account already linked to a different Leafout sign-in.
+    ``user_id`` is that account's id (an internal id, safe to log); nothing was linked or changed."""
+
+    def __init__(self, user_id: str) -> None:
+        super().__init__("email_taken")
+        self.user_id = user_id
+
+
 @dataclass(frozen=True, slots=True)
 class StoredUser:
-    """One account. ``email`` is lower-cased; ``currency`` is ``INR``, ``USD`` or None (not chosen yet)."""
+    """One account. ``email`` is lower-cased, and None for an account made from a phone-only Leafout sign-in; ``currency`` is ``INR``, ``USD`` or None (not chosen yet)."""
 
     id: str
-    email: str
+    email: str | None
     name: str | None
     picture_url: str | None
     google_sub: str | None
@@ -302,6 +311,7 @@ class StoredUser:
     last_login_at: datetime
     locale: str | None
     currency: str | None
+    supabase_sub: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -315,6 +325,11 @@ class StoredAuthSession:
     last_seen_at: datetime
     ip_hash: str | None
     user_agent: str | None
+    source: str | None = None
+    """``supabase`` for a session started from the Leafout site's cookie, None for the app's own sign-ins."""
+    supabase_session_id: str | None = field(default=None, repr=False)
+    verified_at: datetime | None = None
+    """When the site's cookie last vouched for the session (None for a session that does not depend on it)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -372,6 +387,21 @@ class UserRepo(Protocol):
         """Find the account for an email address whose owner just proved it, or create it; records the login."""
         ...
 
+    async def sign_in_supabase(
+        self, *, sub: str, email: str | None, email_verified: bool, name: str | None, now: datetime
+    ) -> StoredUser:
+        """Find the account for a Leafout (Supabase) sign-in and record the login, in one transaction.
+
+        1. By ``supabase_sub``; when ``email_verified`` and the address changed on the site and no other account holds it,
+           the account's email follows.
+        2. Else, only when ``email`` is verified: by email. An account with no ``supabase_sub`` gets this one (it links an
+           account made by Google or an emailed link); one that already has a different ``supabase_sub`` raises `EmailTaken`
+           and nothing is linked.
+        3. Else a new account: ``email`` only when verified (an unverified or missing address leaves it None), ``name`` as
+           given. The phone number is never stored.
+        """
+        ...
+
     async def update(
         self, user_id: str, *, name: str | None = None, currency: str | None = None
     ) -> StoredUser | None:
@@ -399,6 +429,10 @@ class UserRepo(Protocol):
 
     async def delete_session(self, session_id: str) -> bool:
         """End a sign-in; True when it existed."""
+        ...
+
+    async def mark_session_verified(self, session_id: str, verified_at: datetime) -> None:
+        """Record that the Leafout site's cookie vouched for a session again (``auth_sessions.verified_at``)."""
         ...
 
     async def add_magic_link(self, rec: StoredMagicLink) -> None:
@@ -1012,6 +1046,7 @@ __all__ = [
     "DiscoverListing",
     "DiscoverRepo",
     "DiscoverRun",
+    "EmailTaken",
     "InterviewRepo",
     "JobSearchRepo",
     "KvRepo",

@@ -91,6 +91,10 @@ def roomy_guard(**overrides: Any) -> GuardSettings:
         "prepare_per_hour": 1000,
         "prepare_per_day": 1000,
         "prepare_global_per_hour": 0,
+        "auth_bridge_per_minute": 1000,
+        "auth_bridge_per_hour": 1000,
+        "auth_bridge_global_per_hour": 0,
+        "auth_bridge_per_sub_per_day": 1000,
         "daily_ceiling_usd": 1000.0,
     }
     values.update(overrides)

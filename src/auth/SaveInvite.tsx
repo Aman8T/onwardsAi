@@ -11,6 +11,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { useState } from 'react';
 import type { Profile } from '../../shared/types';
 import { EASE } from '../lib/ui';
+import { offersSignIn } from './links';
 import { signInSheet, isSampleProfile, useMe } from './useMe';
 import '../styles/auth.css';
 
@@ -42,7 +43,7 @@ export function SaveInvite({ profile }: { profile: Profile }) {
   const [dismissedIds, setDismissedIds] = useState(readDismissed);
 
   if (!loaded || user || dismissedIds.includes(profile.id) || isSampleProfile(profile.id)) return null;
-  if (!providers.google && !providers.magic) return null;
+  if (!offersSignIn(providers)) return null;
 
   const dismiss = () => {
     const next = [...dismissedIds, profile.id];

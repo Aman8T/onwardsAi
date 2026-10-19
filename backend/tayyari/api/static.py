@@ -14,8 +14,12 @@
                            deep link opens the app
                         4. anything else: ``404.html`` with status 404 and ``no-cache``; the JSON 404 when the
                            build has none. ``/404.html`` itself is a 404 too.
-                        The private routes (match, discover, practice, the published portfolios under /p/, the dev
-                        galleries) send ``X-Robots-Tag: noindex``; "/", "/pricing" and the content pages do not.
+                        The private routes (match, discover, practice, signout, account/delete, the published portfolios under /p/,
+                        the dev galleries) send ``X-Robots-Tag: noindex``; "/", "/pricing" and the content pages do not.
+
+With ``TAYYARI_AUTH__REDIRECT_OTHER_HOSTS`` on, a GET or HEAD for any of these on a host other than the public URL's is a 308 to the
+same path and query on the public URL (the old address keeps working as a pointer; ``/api/*`` is never redirected, so scripts
+that call the API there keep working).
 
 With no web build (no index.html under ``static_dir``) every GET and HEAD is the JSON 404. A path that is not a plain
 relative address (a leading slash, a backslash, a NUL, a ``..`` that leaves the folder) is never a file: it is item 4.
@@ -33,12 +37,13 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import NamedTuple
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import anyio.to_thread
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, RedirectResponse, Response
 
+from tayyari.api.security import header_host
 from tayyari.core.settings import Settings
 
 NOT_FOUND_MESSAGE = "Not found"
@@ -64,6 +69,8 @@ class AppRoute(NamedTuple):
 #   match...           /match, /match/<id>, .../resume, .../cover                          src/match/route.ts
 #   discover...        /discover (its filters are in the query string)                     src/discover/route.ts
 #   practice...        /practice                                                           src/practice/route.ts
+#   signout            /signout, ends the app session, then returns to the Leafout site    src/auth/SignOut.tsx
+#   account/delete     /account/delete, deletion started on the Leafout site (confirm first)  src/auth/
 #   p/...              /p/<publicId>, the published portfolio                              src/main.tsx
 #   dev/...            the galleries /dev/portfolios, /dev/match, /dev/discover, /dev/practice, /dev/prepare:
 #                      rendered by development builds only, so served only on a non-prod server
@@ -73,6 +80,8 @@ APP_ROUTES: tuple[AppRoute, ...] = (
     AppRoute(r"match(?:/.*)?", private=True),
     AppRoute(r"discover(?:/.*)?", private=True),
     AppRoute(r"practice(?:/.*)?", private=True),
+    AppRoute(r"signout/?", private=True),
+    AppRoute(r"account/delete/?", private=True),
     AppRoute(r"p/.*", private=True),
     AppRoute(r"dev/.*", private=True, dev_only=True),
 )
@@ -166,6 +175,20 @@ def locate(static_dir: Path, path: str, dev: bool = False) -> Answer:
     return _not_found(not_found)
 
 
+def other_host_target(request: Request, public_url: str) -> str | None:
+    """Where a page request for another host goes: the same path and query on ``public_url``; None when it is on that host.
+
+    The host is read from ``Host`` and from ``X-Forwarded-Host`` (a proxy may rewrite the first), like the cross-site guard does.
+    """
+    wanted = header_host(urlsplit(public_url).netloc)
+    served = [request.headers.get("host"), *(request.headers.get("x-forwarded-host") or "").split(",")]
+    hosts = [header_host(value) for value in served if value]
+    if wanted is None or not hosts or wanted in hosts:
+        return None
+    query = f"?{request.url.query}" if request.url.query else ""
+    return f"{public_url}{quote(request.url.path)}{query}"
+
+
 def mount_spa(app: FastAPI, static_dir: Path) -> None:
     """Add the API 404 and the web-app route. Register every other route first (see module doc)."""
     settings: Settings | None = getattr(app.state, "settings", None)
@@ -181,6 +204,10 @@ def mount_spa(app: FastAPI, static_dir: Path) -> None:
 
     @app.api_route("/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)
     async def web_app(request: Request, path: str) -> Response:
+        if settings is not None and settings.auth.redirect_other_hosts:
+            elsewhere = other_host_target(request, settings.auth.public_url)
+            if elsewhere is not None:
+                return RedirectResponse(elsewhere, status_code=308, headers={"Cache-Control": "no-store"})
         answer = await anyio.to_thread.run_sync(locate, static_dir, path, dev)
         if answer.location is not None:
             query = f"?{request.url.query}" if request.url.query else ""
@@ -203,5 +230,6 @@ __all__ = [
     "AppRoute",
     "locate",
     "mount_spa",
+    "other_host_target",
     "resolve_static_file",
 ]

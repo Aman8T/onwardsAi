@@ -4,8 +4,8 @@
 
 Order matters in `create_app`: the error handlers and the middlewares first, then the API routes, and
 `mount_spa` last because its catch-all routes would shadow anything registered after them. The middlewares,
-outermost first: the request id, the security headers (so a refusal below carries them too), and the
-cross-site guard. The docs pages are off: this is a private API for the bundled web app.
+outermost first: the request id, the security headers (so a refusal below carries them too), the
+cross-site guard, and the session cookie (which adds ``Set-Cookie`` when a request signed someone in or out). The docs pages are off: this is a private API for the bundled web app.
 
 FastAPI's own OpenTelemetry (`TELEMETRY`) records request traces and metrics; on FastAPI Cloud the metrics reach
 its Metrics dashboard with no setup, and elsewhere nothing is exported until `FASTAPI_OTEL_AUTO_CONFIGURE=true`
@@ -26,6 +26,7 @@ from tayyari.api.errors import install_error_handlers
 from tayyari.api.lifespan import build_lifespan
 from tayyari.api.routes import api_router
 from tayyari.api.security import CrossSiteGuard, SecurityHeadersMiddleware
+from tayyari.api.session_cookie import SessionCookieMiddleware
 from tayyari.api.static import mount_spa
 from tayyari.container import ContainerOverrides
 from tayyari.core.paths import STATIC_DIR
@@ -68,6 +69,7 @@ def create_app(settings: Settings | None = None, *, overrides: ContainerOverride
     app.state.settings = resolved
     install_error_handlers(app)
     # Starlette makes the last middleware added the outermost one.
+    app.add_middleware(SessionCookieMiddleware)
     app.add_middleware(CrossSiteGuard)
     app.add_middleware(SecurityHeadersMiddleware, index_html=STATIC_DIR / "index.html")
     app.add_middleware(RequestIdMiddleware)

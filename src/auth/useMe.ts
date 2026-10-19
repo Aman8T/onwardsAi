@@ -17,15 +17,18 @@ import type { MeEntitlements, MeProfile, MeProviders, MeResponse, MeUser } from 
 import { isUnlimited } from '../billing/format';
 import * as api from '../lib/api';
 import { actions, getState, useApp } from '../store';
+import { currentPath, offersSignIn, signInHref, takeBounce } from './links';
 
 export type MeStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 interface MeState {
   status: MeStatus;
   me: MeResponse | null;
+  /** The site sign-in had to be refreshed and the loop guard refused to send the browser there again. */
+  stuck: boolean;
 }
 
-let state: MeState = { status: 'idle', me: null };
+let state: MeState = { status: 'idle', me: null, stuck: false };
 const listeners = new Set<() => void>();
 
 function set(next: Partial<MeState>) {
@@ -38,7 +41,7 @@ function subscribe(cb: () => void) {
   return () => listeners.delete(cb);
 }
 
-const NO_PROVIDERS: MeProviders = { google: false, magic: false };
+const NO_PROVIDERS: MeProviders = { google: false, magic: false, leafout: false };
 const NO_ENTITLEMENTS: MeEntitlements = { credits: 0, freeMatchAvailable: false };
 
 let inflight: Promise<void> | null = null;
@@ -49,13 +52,46 @@ export function refresh(): Promise<void> {
   if (state.status === 'idle') set({ status: 'loading' });
   inflight = api
     .getMe()
-    .then((me) => set({ status: 'ready', me }))
+    .then((me) => {
+      set({ status: 'ready', me, stuck: me.reauth ? state.stuck : false });
+      sendThroughSiteSignIn(me);
+    })
     .catch(() => set({ status: state.me ? 'ready' : 'error' }))
     .finally(() => {
       inflight = null;
     });
   return inflight;
 }
+
+/**
+ * `reauth`: the app just ended a Leafout-bridged session because the site sign-in must be refreshed. Send the browser
+ * through the site's sign-in with `next` set to this page, unless two such redirects already happened in the last
+ * minute (the loop guard): then stay put and let the page say so.
+ */
+function sendThroughSiteSignIn(me: MeResponse) {
+  if (!me.reauth || me.user) return;
+  const href = signInHref(me, currentPath());
+  if (!href) return;
+  if (takeBounce()) window.location.replace(href);
+  else if (!state.stuck) set({ stuck: true });
+}
+
+// A sign-in or sign-out in another tab: look again when this one comes back into view.
+let watching = false;
+function watchFocus() {
+  if (watching || typeof window === 'undefined') return;
+  watching = true;
+  const again = () => {
+    if (document.visibilityState === 'visible' && state.status !== 'idle') void refresh();
+  };
+  window.addEventListener('focus', again);
+  document.addEventListener('visibilitychange', again);
+}
+
+/** Plain words for a bridge the server refused (`MeResponse.signInIssue`). */
+export const SIGN_IN_ISSUES: Record<string, string> = {
+  email_taken: 'That email already belongs to a Tayyari account that is linked to a different Leafout sign-in. Sign in with the Leafout account you used before.',
+};
 
 /**
  * How the posting match treats the person on this server, from what `/api/me` last said:
@@ -73,7 +109,7 @@ function accessOf(s: MeState): MatchAccess {
   if (!me) return 'unknown';
   if (me.user) return 'account';
   if (me.anonymousMatch === true) return 'anonymous';
-  return me.providers.google || me.providers.magic ? 'sign-in' : 'stuck';
+  return offersSignIn(me.providers) ? 'sign-in' : 'stuck';
 }
 
 /** The same answer for code that is not a component (the match store). */
@@ -111,6 +147,10 @@ export interface MeView {
   anonymousMatch: boolean;
   /** What the match flow does for this person: see `MatchAccess`. */
   matchAccess: MatchAccess;
+  /** The sign-in must be refreshed and the loop guard stopped the redirect: show "We couldn't confirm your sign-in". */
+  stuck: boolean;
+  /** A sentence for a refused bridge (`signInIssue`), when there is one. */
+  issue: string | undefined;
   /** True once the server has answered, whether or not anyone is signed in. */
   loaded: boolean;
   refresh: () => Promise<void>;
@@ -121,6 +161,7 @@ export function useMe(): MeView {
   const snap = useSyncExternalStore(subscribe, () => state);
   useEffect(() => {
     if (state.status === 'idle') void refresh();
+    watchFocus();
   }, []);
   const { me, status } = snap;
   return {
@@ -133,6 +174,8 @@ export function useMe(): MeView {
     providers: me?.providers ?? NO_PROVIDERS,
     anonymousMatch: me?.anonymousMatch === true,
     matchAccess: accessOf(snap),
+    stuck: snap.stuck,
+    issue: me?.signInIssue ? SIGN_IN_ISSUES[me.signInIssue] : undefined,
     loaded: status === 'ready',
     refresh,
     signOut,
@@ -148,6 +191,8 @@ export interface SignInUi {
   reason: SignInReason;
   /** A sentence to show above the form, e.g. after a Google sign-in that did not complete. */
   notice?: string;
+  /** Where the person returns to after signing in through Leafout (a same-origin path); the current page when absent. */
+  next?: string;
   /** Changes every time the sheet is opened, so the form inside starts fresh. */
   opened: number;
 }
@@ -161,8 +206,8 @@ function setUi(next: SignInUi) {
 }
 
 export const signInSheet = {
-  open(reason: SignInReason = 'account', notice?: string) {
-    setUi({ open: true, reason, notice, opened: ui.opened + 1 });
+  open(reason: SignInReason = 'account', notice?: string, next?: string) {
+    setUi({ open: true, reason, notice, next, opened: ui.opened + 1 });
   },
   close() {
     setUi({ ...ui, open: false });

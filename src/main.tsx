@@ -15,6 +15,11 @@ const { pathname } = window.location;
 let Root: ComponentType;
 if (pathname.startsWith('/p/')) {
   Root = lazy(() => import('./portfolio/PublicView').then((m) => ({ default: m.PublicView })));
+} else if (pathname.replace(/\/+$/, '') === '/signout') {
+  // the Leafout hand-off pages are small and need no app shell
+  Root = lazy(() => import('./auth/SignOut').then((m) => ({ default: m.SignOut })));
+} else if (pathname.replace(/\/+$/, '') === '/account/delete') {
+  Root = lazy(() => import('./auth/AccountDelete').then((m) => ({ default: m.AccountDelete })));
 } else if (import.meta.env.DEV && pathname === '/dev/portfolios') {
   Root = lazy(() => import('./portfolio/dev/Gallery').then((m) => ({ default: m.Gallery })));
 } else if (import.meta.env.DEV && pathname === '/dev/match') {

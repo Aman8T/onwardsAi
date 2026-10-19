@@ -406,3 +406,44 @@
     justify-content: center;
   }
 }
+
+/* "We couldn't confirm your sign-in" / a refused bridge: a quiet panel at the top of the page */
+.auth-trouble {
+  position: fixed;
+  top: var(--s4);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  flex-wrap: wrap;
+  max-width: min(32rem, calc(100vw - 32px));
+  padding: var(--s3) var(--s4);
+  font-size: var(--fs-2);
+}
+
+/* the /signout and /account/delete pages */
+.auth-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--s5) 16px;
+}
+
+.auth-page-card {
+  max-width: 28rem;
+  display: grid;
+  gap: var(--s4);
+  padding: var(--s5);
+}
+
+.auth-page-actions {
+  display: flex;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+
+a.auth-item {
+  text-decoration: none;
+}

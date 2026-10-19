@@ -153,6 +153,26 @@ async def test_a_usd_checkout_creates_a_stripe_session_that_returns_to_the_prici
     assert form["line_items[0][price_data][unit_amount]"] == "1900"
 
 
+async def test_a_phone_only_account_checks_out_with_no_prefilled_address(rig: Rig) -> None:
+    """A person who signed in to Leafout with a phone number has no email: nothing is prefilled and nothing is sent."""
+    phone = await rig.fakes.users.sign_in_supabase(
+        sub="0b8c6f1e-3a4d-4e5f-9a1b-2c3d4e5f6a7b",
+        email=None,
+        email_verified=False,
+        name=None,
+        now=rig.clock.now(),
+    )
+    assert phone.email is None
+
+    inr = await rig.service.checkout(phone, "pack3", "INR")
+    usd = await rig.service.checkout(phone, "pass30", "USD")
+
+    assert inr.provider == "razorpay" and inr.prefillEmail is None
+    assert usd.provider == "stripe" and "customer_email" not in rig.stripe_http.requests[0]["form"]
+    view = await rig.service.entitlements_view(phone)
+    assert view.unlimited is None  # no address can be on the unlimited list
+
+
 @pytest.mark.parametrize(
     ("product", "currency", "unset"),
     [

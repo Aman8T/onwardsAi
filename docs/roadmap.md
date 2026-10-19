@@ -23,6 +23,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | P1 | Prepare: "help me prepare" answered as typed blocks, not text | the graph's roles | Opus + Fable | designed 2026-10-18, building |
 | X1 | ESCO + O*NET skill table, canonical skill ids | M2 | later | not started |
 | D1 | Discover: personal, location-aware jobs with direct apply links | M2 | Opus + Sonnet | v1 built 2026-10-16 (employers' own boards, no map); rest in docs/discover-later.md |
+| L1 | Sign in to the app with the Leafout account (the site's Supabase login) | F1, app.leafout.in live | Opus + Sonnet | built 2026-10-19, committed, not yet deployed |
 
 Shared files are edited by one wave at a time, in this order: F1 → M2 → F2 for `storage/tables.py`, `storage/ports.py`, `core/settings.py`, `container.py`, `api/routes/__init__.py`, `api/security.py`, `backend/.env.example`. M1 touches none of them. Dependencies were added by the orchestrator (`authlib`, `reportlab`, `stripe`, `razorpay`; `pypdf` and `python-docx` were already present): no wave edits `pyproject.toml`.
 
@@ -463,6 +464,306 @@ models, and what we take and leave. The earlier outline is in `docs/research/ope
 **Not in this wave:** prepare for a skill, an area, a source or "you" (they stay chat until the blocks are extended to them, as the Anatomy board shows); reading a shipped link into the graph. (Practising a graph role was built alongside, 2026-10-18: Prepare's Practice button opens Practice · This role for the plan's role.)
 
 **Backend built 2026-10-18** (`backend/tayyari/prepare/`, `prompts/prepare.py`, `api/routes/prepare.py`, migration 0010, the `prepare` guard window; documented in `docs/backend.md` § Prepare; golden `tests/data/prepare/riya.prepare.json`). Decisions taken while building: a role with no gap at all is `already_strong` too; `fresh` adds a row and the older plan stays readable by its id; a plan's row follows its profile (FK cascade), so there is no retention step; the `prepare` window counts a written plan and a headline rewrite, nothing else.
+
+## L1 · Sign in to the app with the Leafout account
+
+**Built 2026-10-19; committed, not yet deployed.** Tayyari is becoming Leafout. The marketing site (https://leafout.in, Lovable + TanStack Start, repo `Aman8T/tayyari-career-intelligence`) already signs people in through Lovable Cloud, which is Supabase Auth: email and password, emailed link, Google (managed by Lovable), phone OTP (waiting for an SMS provider) and "Sign in with Lovable". The app moves to https://app.leafout.in. **The user decided that the site's login is the app's login.** The app keeps no sign-in screen of its own. The site and the app are now same-site under `leafout.in`, so a cookie on `.leafout.in` can carry proof of the site's sign-in to the app. The app checks that proof once and then runs its own session, exactly as F1 does after Google or an emailed link.
+
+**Shape in one paragraph.** When the site signs someone in, it writes the Supabase **access token** (never the refresh token) to a `.leafout.in` cookie. On a request that has no `tayyari_session`, the app reads that cookie and checks the token's signature against the project's public keys (JWKS). It then checks the claims and asks Supabase once whether that sign-in is still alive. If all of that passes, the app finds or creates the account and starts its usual 30-day `tayyari_session`. The app never refreshes a Supabase token and never holds a refresh token. Every 24 hours a session made this way has to see a valid site cookie again, so a sign-out on the site reaches the app within a day at most. When the site already has a session, getting a fresh cookie is a quick redirect through the site.
+
+Checked 2026-10-19: the project's `/auth/v1/.well-known/jwks.json` publishes one `ES256` (EC P-256) signing key. Asymmetric verification works today, and no shared secret is needed.
+
+### 1 · The shared cookie (a note for the site repo)
+
+Lovable generates `src/integrations/supabase/client.ts` and `previewAuthStorage.ts`, and both say "do not edit". So the site does not swap the client's storage for `@supabase/ssr` cookie storage. That swap would put the whole session, refresh token included and split into chunks, on the parent domain. Instead the site **mirrors only the access token** into one cookie, from code it owns. Lovable can regenerate its files and nothing breaks.
+
+What the site repo changes:
+
+1. **New module `src/integrations/leafout/sharedCookie.ts`** (a new file, not a generated one):
+   - `writeShared(session)` sets `leafout-access=<session.access_token>; Domain=.leafout.in; Path=/; Secure; SameSite=Lax; Max-Age=<session.expires_at − now>`.
+   - `clearShared()` sets the same name, domain and path with `Max-Age=0`.
+   - Both do nothing unless `location.hostname` is `leafout.in` or ends in `.leafout.in`. Lovable previews and localhost never write it.
+   - If the token is longer than 3,800 bytes, nothing is written and a `shared_cookie_too_large` event is tracked. A Supabase access token is about 1 to 1.5 KB, and a cookie's limit is 4 KB.
+   - The cookie cannot be HttpOnly, because browser code writes it. That is the reason only the short-lived access token goes into it.
+2. **`src/lib/auth.ts`, in `startAuth`'s `onAuthStateChange`.**
+   - On `INITIAL_SESSION`, `SIGNED_IN`, `TOKEN_REFRESHED` and `USER_UPDATED` with a session, call `writeShared`.
+   - On `SIGNED_OUT`, call `clearShared`.
+   - Drop the comment "these sessions never sign anyone in to the Tayyari app", which is no longer true.
+3. **`/signin` takes `next`.**
+   - `next` counts only when `new URL(next).origin === "https://app.leafout.in"` exactly: https, no port, no userinfo. Anything else is ignored and the page behaves as it does today (`/account`).
+   - A valid `next` is kept in `sessionStorage` before any OAuth or emailed-link round trip, because Lovable's managed Google `redirect_uri` stays `/signin`.
+   - When a session exists, whether it was there already or has just been made: `await supabase.auth.getSession()` (this refreshes an expired access token), then `writeShared`, then `location.replace(next)`.
+   - So someone already signed in on the site goes straight back to the app with no click.
+4. **New `/signout` route.**
+   - It runs `await supabase.auth.signOut({ scope: "local" })` (scope is open question 3), then `clearShared()`.
+   - With `?from=app` it then runs `location.replace("https://leafout.in/")`.
+   - Without it, it runs `location.replace("https://app.leafout.in/signout?next=https://leafout.in/")`, so the app's session ends too.
+   - The account page's "Sign out" button and account deletion go through `/signout` instead of calling `signOut()` directly.
+5. **No other subdomain of `leafout.in` hosts third-party or user content.** Any page on a subdomain can set a `.leafout.in` cookie (see Security). Keep DNS free of dangling CNAMEs.
+
+### 2 · Checking the token in the app
+
+**Where.** New `backend/tayyari/auth/supabase.py` (`SupabaseVerifier`, `SupabaseIdentity`, `SupabaseError(reason)`). The JWKS cache is lifted out of `google.py` into `auth/jwks.py`, and Google uses it too. `AuthService.leafout_sign_in(token, *, ip_hash, user_agent) -> SignedIn | None` composes them like `google_finish`. `api.deps.get_auth_context` calls it.
+
+**When.** `get_auth_context` runs the bridge when all of the following hold:
+- the request has no live `tayyari_session`;
+- the request carries the `leafout-access` cookie (`TAYYARI_AUTH__SUPABASE_COOKIE`);
+- Leafout sign-in is configured;
+- the path is under `/api/` and is not a webhook.
+
+It runs at most once per request (the result is cached on the request, like the session). If the bridge succeeds, a session is created and the request goes on as signed in. The cookie is attached by a small pure-ASGI `SessionCookieMiddleware` (new, `api/session_cookie.py`). It adds `Set-Cookie: tayyari_session=…` to the response start when the request state holds a freshly minted token, so streaming routes need no change. If the bridge fails, the request is anonymous, exactly as with no cookie, and it never returns a 401 of its own.
+
+**Checks, in order.** Each has a reason code that goes to the log, never to the person.
+1. Shape: three base64url parts, at most 4,096 characters, and a JSON header and payload (`malformed`).
+2. `alg` is `ES256` or `RS256` (`alg`). `none` and `HS*` are refused before any key is looked up, which shuts the RS/HS confusion attack.
+3. `kid` is in the cached JWKS (`kid_unknown`).
+   - The JWKS comes from `<SUPABASE_URL>/auth/v1/.well-known/jwks.json` through the auth service's `httpx2` client and is cached 6 hours.
+   - An unknown `kid` triggers one refetch, at most every 60 seconds; this follows key rotation.
+   - If the fetch fails, the reason is `upstream`: no session, nothing counted against the person, and the next request tries again.
+   - A key whose `alg` differs from the header's is not used.
+4. Signature (`signature`), with `joserfc`, which is already a dependency.
+5. `iss` equals `<SUPABASE_URL>/auth/v1` exactly (`iss`).
+6. `aud` is `authenticated`, as a string or inside a list (`aud`).
+7. `role` is `authenticated` (`role`), which refuses `anon` and `service_role` tokens.
+8. `exp` is present and later than now − 30 s (`exp`).
+9. `iat` is present and no more than 30 s in the future (`iat`). `now − iat` is at most `TAYYARI_AUTH__SUPABASE_MAX_TOKEN_AGE_S` (default 3600, Supabase's access-token lifetime). This refuses a token minted with a long expiry even if its `exp` is still valid (`too_old`).
+10. `sub` is a UUID (`sub`). `is_anonymous` is not true (`anonymous`), because Supabase anonymous users are not accounts.
+11. **Only when the app is about to start a new session:** call `GET <SUPABASE_URL>/auth/v1/user` with `Authorization: Bearer <token>` and `apikey: <publishable key>`.
+    - Supabase answers only while the token's session exists, which catches a global sign-out or a deleted user (`revoked` on 401 or 403).
+    - The returned `id` must equal `sub` (`mismatch`).
+    - The response gives `email_confirmed_at` and `phone_confirmed_at`, which the JWT does not carry reliably. `user_metadata` can be edited by the person, so the app trusts nothing in it except a display name.
+    - A network error or 5xx gives `upstream`.
+
+**If the project only signed with HS256.** It does not today: see the check above. If it ever did, the JWKS would have no usable key. The app would then rely on step 11 alone for the signature: Supabase itself validates the token, with claims checks 5–10 run on the decoded payload first as a filter. This mode is `TAYYARI_AUTH__SUPABASE_VERIFY=user_endpoint`. The default `auto` picks `jwks` when the JWKS holds an ES256 or RS256 key, else `user_endpoint`, and logs which one it chose at startup. The app never accepts an HS256 token through the JWKS path, and never takes the project's JWT secret as a setting. That secret can mint a token for any user of the project, so holding it in a second service is a risk the user-endpoint path avoids.
+
+**Refresh and expiry.**
+- The app holds no Supabase refresh token and refreshes nothing. The site's client refreshes the access token while a site tab is open and mirrors it each time (`TOKEN_REFRESHED`).
+- The Supabase token is used only to *start* an app session. After that the app's `tayyari_session` carries the person: 30 days, sliding, as F1.
+- **Recheck.** A session started this way is marked `source='supabase'`, `verified_at=now`. When `verified_at` is older than `TAYYARI_AUTH__SUPABASE_RECHECK_HOURS` (24), the next request also looks at the `leafout-access` cookie:
+  - valid, same `sub`: `verified_at` slides, using local checks 1–10 only and no Supabase call;
+  - absent or invalid: the app session ends there, the request is anonymous, `/api/me` says `reauth: true`, and the web app sends the browser through the site's `/signin?next=<this page>`. That is instant when the site still has a session, and a sign-in form when it does not;
+  - valid, different `sub` (someone else signed in on the site in this browser): the old app session ends and a new one is bridged.
+- The same different-`sub` rule applies whenever a valid cookie is seen next to a live session. The site is the source of truth for who is signed in in this browser.
+- Sessions from the app's own Google and emailed-link paths (none in production) are left as they are until they expire.
+
+### 3 · Accounts and linking
+
+`UserRepo.sign_in_supabase(*, sub, email, email_verified, name, now) -> StoredUser`, in one transaction:
+1. Find the account by `users.supabase_sub = sub`.
+   - If found, update `last_login_at`.
+   - If the verified email has changed on the site and no other account holds it, update `email`.
+2. Else, find the account by verified email: `lower(email)`, and only when `email_confirmed_at` is set.
+   - If found and its `supabase_sub` is NULL, set it. This links an F1 account made by Google or by link.
+   - If its `supabase_sub` is already a different value, refuse with `email_taken`: no session, a log line with both account ids, nothing linked.
+3. Else, create an account with `supabase_sub=sub`.
+   - `email` is the verified email, or NULL for a phone-only person or an unverified email.
+   - `name` comes from `user_metadata.full_name` or `name`, clipped to 200 characters. It is cosmetic, so its editability does not matter.
+   - No `picture_url`: the CSP blocks avatar hosts anyway (see Follow-ups).
+
+The Supabase phone number is **never stored**: the app has no use for it. `/api/me` shows such an account as "Signed in with your phone" (`user.email: null`).
+
+**Migration `0011_leafout_identity`** (Alembic, additive):
+- `users.supabase_sub` `String(36)` NULL, with a unique constraint `uq_users_supabase_sub`. This follows the `google_sub` pattern; an identities table is not worth it for one more provider.
+- `auth_sessions.source` `String(16)` NULL (`'supabase'` or NULL for F1 sessions), `auth_sessions.supabase_session_id` `String(36)` NULL (the token's `session_id` claim, for the log and later revocation), and `auth_sessions.verified_at` timestamptz NULL.
+- **`users.email` drops `NOT NULL`**, for phone-only accounts. This relaxes a constraint rather than adding a column. Old code always writes an email, so it is backward compatible, and a rollback is safe while no NULL row exists. It still needs the user's yes (open question 1).
+  - Without that yes: no `DROP NOT NULL`, and a phone-only person sees "Add an email to your Leafout account to use the app", with a link to the site's account page.
+  - `StoredUser.email`, `contract/auth.py` and `shared/auth.ts` (`email: string | null`) follow, and so do the places that assume an email: unlimited-account matching (`is_unlimited(None)` is false), Razorpay prefill, and the account menu.
+
+Ports, the fake in `tests/fakes`, `UserRow` and `AuthSessionRow` gain the fields. `StoredAuthSession` gains `source`, `supabase_session_id` and `verified_at`.
+
+### 4 · Sign-in and sign-out
+
+**Sign in.** Every "Sign in" in the app is an ordinary link:
+- The link is `<TAYYARI_AUTH__SUPABASE_SIGN_IN_URL>?next=<urlencoded https://app.leafout.in + current path>`, where the path goes through `safe_next` and the app origin is `TAYYARI_AUTH__PUBLIC_URL`.
+- It replaces the sign-in sheet's Google button and email field when `providers.leafout` is true. The sheet becomes one line and one button, "Sign in with your Leafout account". This is a small board on the canvas before building (design first).
+- The site returns the browser to `next` with the cookie set. The app's next `/api/me` bridges, and the web app then claims the unclaimed profile in its store, as after F1's sign-in today.
+
+**Sign out in the app.** The account menu's "Sign out" goes to the app's new page `/signout`, a client route added to `APP_ROUTES` in `api/static.py` and marked private.
+- The page sends `POST /api/auth/logout` (same-origin, so `CrossSiteGuard` passes it). That deletes the session and clears `tayyari_session`.
+- It then runs `location.replace(next)`, where `next` may only be `https://leafout.in/signout?from=app` (the default) or `https://leafout.in/`. Any other value falls back to the default.
+- The site's `/signout?from=app` signs out of Supabase, clears `leafout-access`, and lands on `https://leafout.in/`. Both sides have ended.
+
+**Sign out on the site.**
+- The site's `/signout` (no `from`) signs out of Supabase, clears the cookie, and goes to `https://app.leafout.in/signout?next=https://leafout.in/`, which ends the app session and returns.
+- If the tab is closed halfway, the 24-hour recheck ends the app session anyway.
+- A link from elsewhere can sign someone out of the app by opening `/signout`. That is a nuisance, not a takeover, and is accepted.
+
+### 5 · The app's own Google and emailed-link paths
+
+- New setting `TAYYARI_AUTH__OWN_SIGN_IN` (bool, default **false**). While false:
+  - `GoogleOAuth` is not built even when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set;
+  - `MagicLinks.enabled` is false;
+  - `GET /api/auth/google/start` and its callback redirect to `/?auth=google_unavailable`, as they do today without credentials;
+  - `POST /api/auth/magic` answers 404 `{"error": "not_offered"}`, and `GET /api/auth/magic/verify` redirects to `/?auth=link_invalid`.
+- The code stays, so turning the paths back on is one setting. Local development that wants to try them sets it to true. The F1 tests set it to true in their fixtures.
+- `AuthService.providers` becomes a small dataclass `Providers(google, magic, leafout)`. `GET /api/me` reports `providers: {google, magic, leafout, leafoutSignInUrl}`. The URL is `null` unless Leafout sign-in is configured, and the web app builds its sign-in links from it. `MeResponse` also gains `reauth?: true` (see Recheck). The contract changes in both `contract/auth.py` and `shared/auth.ts`.
+- **Anonymous matching.** `MatchSettings.anonymous_allowed` takes `Providers`, and `auto` is true exactly when none of the three is available.
+  - So once the Supabase settings are set in production, `auto` turns anonymous posting match **off**: every `/api/match*` route needs a sign-in, which is now one click for anyone who has a site account.
+  - Matches, answers and profiles made anonymously before are claimed on sign-in through `POST /api/me/claim`, as today.
+  - Setting `TAYYARI_MATCH__ALLOW_ANONYMOUS=true` keeps anonymous matching through a launch period (open question 2).
+  - The startup line `match_anonymous` gains `leafout=`.
+
+### 6 · Security
+
+- **Cookie scope.**
+  - `leafout-access` is on `.leafout.in`, `Secure`, `SameSite=Lax`, `Path=/`, and lives only until the token's `exp`. It holds only an access token: short-lived, and useless without the project's publishable key for anything but this project's APIs, where row-level security applies.
+  - `tayyari_session` **stays host-only** on `app.leafout.in`, with no `Domain` attribute: HttpOnly, Lax, Secure. It never moves to the parent domain, so the site can neither read nor set it.
+  - The app never sets, refreshes or deletes `leafout-access`. Sign-out goes through the site.
+- **CSRF and `CrossSiteGuard`.**
+  - From the browser's point of view, `leafout.in` and `app.leafout.in` are now **same-site**. `SameSite=Lax` therefore no longer protects the app's cookies from requests started by the site's pages or any other `*.leafout.in` page, and those requests carry `Sec-Fetch-Site: same-site`, not `cross-site`.
+  - The guard still refuses them, because its second rule compares the `Origin` host with the served host **exactly** (`leafout.in` ≠ `app.leafout.in`).
+  - That comparison must never be loosened to the registrable domain. `same-site` must never be added to the pass list next to `same-origin`.
+  - Tests pin both (see Tests).
+  - The app keeps answering no CORS preflight, so no site page can read an app response.
+  - GET routes stay free of side effects. The bridge is the one GET-time write, and it can only sign the browser in as the person the cookie already names.
+- **Cookie tossing.** Any page on any `*.leafout.in` subdomain can set `leafout-access`. A hostile subdomain could plant its own token and sign a visitor into the attacker's app account (login CSRF), which the different-`sub` rule would even let replace a live session.
+  - Defence: only the site and the app live under `leafout.in`. No user content, third-party hosting or dangling DNS goes on a subdomain.
+  - Lovable previews are on `lovable.app` and are unaffected.
+  - Logged as `supabase_sub_switched` so a pattern is visible.
+- **Rate limits through `guard`.**
+  - New window `auth_bridge`: per client 10 a minute and 30 an hour, whole service 600 an hour (`TAYYARI_GUARD__AUTH_BRIDGE_PER_MINUTE`, `_PER_HOUR`, `_GLOBAL_PER_HOUR`).
+  - The window is counted only when local checks 1–10 pass and the Supabase user call (step 11) is about to run. That call is the bridge's only network call and write, so a garbage or expired cookie costs CPU and nothing else.
+  - The in-memory bucket sheds first. Over the limit, the request is anonymous rather than a 429, so a page never breaks on it.
+  - A per-`sub` daily counter (`u:sb:<sub hash>`, 50 a day) bounds sessions minted for one person.
+  - Not exempt for unlimited accounts: they are unknown until after the bridge.
+- **Logging never records tokens.**
+  - Log events are `leafout_bridge` (`outcome`, `reason`, `user_id` after success), `leafout_recheck` and `supabase_jwks_refreshed` (key count, `kid`s).
+  - The token, the cookie value, `sub`, the email, the phone and the Supabase `session_id` are never logged. `sub` appears only as an HMAC under the IP-hash key when needed for the per-`sub` counter.
+  - `core.redact.SENSITIVE_KEYS` gains `token`, `access_token`, `refresh_token`, `cookie` and `authorization` as a backstop.
+  - `SupabaseIdentity` and every dataclass holding the token use `field(repr=False)`.
+  - No token ever travels in a query string: the app's sign-in link carries only `next`, and Supabase's own redirects land on the site, not the app. So `_SECRET_IN_QUERY` in `api/app.py` needs no new path, and FastAPI's telemetry spans stay clean. A test checks that the bridge's log output never contains the token, the cookie value, `sub` or the email.
+- **CSP.** Unchanged.
+  - The browser never talks to Supabase from the app. The JWKS fetch and the user call are server-side.
+  - Sign-in and sign-out are top-level navigations to `leafout.in`, which `connect-src`, `form-action 'self'` and `frame-src` do not restrict.
+  - No Supabase or Lovable script, frame or connect host is added.
+- **The old domain `tayyari.fastapicloud.dev`.** The `.leafout.in` cookie is never sent there, so nobody can sign in on it. The app's sign-in links point at the site, whose `next` accepts only `app.leafout.in`, so a sign-in started there lands on the new domain.
+  - New setting `TAYYARI_AUTH__REDIRECT_OTHER_HOSTS` (bool, default false; never on locally). When true, a GET or HEAD for a page (not `/api/*`, not `/api/health`) on a host other than `TAYYARI_AUTH__PUBLIC_URL`'s gets a 308 to the same path and query on the public URL. Shared `/p/` portfolio links keep working.
+  - `/api/*` keeps answering on the old host, anonymously, for any script or skill that calls it.
+  - `TAYYARI_AUTH__PUBLIC_URL` must be set to `https://app.leafout.in` on the cloud. `FASTAPI_PUBLIC_URL` may still name the old host.
+  - A startup warning fires when Leafout sign-in is configured and the public URL's host does not share a parent domain with the sign-in URL's host (`leafout_cookie_domain_mismatch`).
+
+### 7 · Settings
+
+`core/settings.py`, inside `AuthSettings` (`TAYYARI_AUTH__*`):
+
+| Field | Default | Meaning |
+|---|---|---|
+| `supabase_url` | None | The Supabase project URL. Unset means Leafout sign-in is off. Blank keeps the default; the trailing slash is dropped. |
+| `supabase_publishable_key` | None | The project's publishable (anon) key, sent as `apikey` on the user call. It is public (it ships in the site's bundle), so it is plain `str`, not `SecretStr`. It is still a setting, never code. |
+| `supabase_cookie` | `leafout-access` | The shared cookie's name; it must match the site. |
+| `supabase_verify` | `auto` | `auto`, `jwks` or `user_endpoint` (see HS256 above). |
+| `supabase_max_token_age_s` | 3600 | The oldest `iat` accepted. |
+| `supabase_recheck_hours` | 24 | How long a bridged session goes before it must see the site cookie again. |
+| `supabase_sign_in_url` | None | `https://leafout.in/signin`. |
+| `supabase_sign_out_url` | None | `https://leafout.in/signout`. |
+| `own_sign_in` | false | Offer the app's own Google and emailed-link sign-in. |
+| `redirect_other_hosts` | false | 308 page requests on other hosts to the public URL. |
+
+Leafout sign-in is on when `supabase_url`, `supabase_publishable_key` and `supabase_sign_in_url` are all set. It is reported at startup as `leafout_sign_in enabled=… verify=jwks|user_endpoint`. Guard: the three `AUTH_BRIDGE_*` fields above in `GuardSettings`. There are no new secrets.
+
+`backend/.env.example` gains commented lines, with no values:
+
+```
+# Sign in with the Leafout account (the site's Supabase Auth). Unset = off.
+# TAYYARI_AUTH__SUPABASE_URL=
+# TAYYARI_AUTH__SUPABASE_PUBLISHABLE_KEY=
+# TAYYARI_AUTH__SUPABASE_SIGN_IN_URL=
+# TAYYARI_AUTH__SUPABASE_SIGN_OUT_URL=
+# TAYYARI_AUTH__SUPABASE_COOKIE=leafout-access
+# TAYYARI_AUTH__SUPABASE_VERIFY=auto
+# TAYYARI_AUTH__SUPABASE_MAX_TOKEN_AGE_S=3600
+# TAYYARI_AUTH__SUPABASE_RECHECK_HOURS=24
+# TAYYARI_AUTH__OWN_SIGN_IN=false
+# TAYYARI_AUTH__REDIRECT_OTHER_HOSTS=false
+```
+
+The user sets the cloud values themselves (`fastapi cloud env set NAME`). They include `TAYYARI_AUTH__PUBLIC_URL=https://app.leafout.in`.
+
+### 8 · Tests
+
+All without the network. `tests/fakes/supabase.py` provides `FakeSupabase`:
+- an `httpx2.MockTransport` that serves the JWKS and `/auth/v1/user`;
+- an EC P-256 key pair generated per test session (no key is stored in the repository);
+- `mint(**claims)` for good tokens;
+- switches for an empty JWKS, a rotated key, a 401 user call, a 5xx and an `id` mismatch.
+
+- **Unit, `tests/unit/auth/test_supabase.py`.**
+  - A good token gives an identity.
+  - A table-driven **known-bad fixture** (`BAD_TOKENS`) with one row per check, each asserting its reason code:
+    - `alg: none`;
+    - HS256 signed with the public key's bytes (`alg`);
+    - RS256 with an unknown `kid`, and the refetch happening once and throttled;
+    - a known `kid` signed by another key;
+    - a tampered payload;
+    - `iss` of another project, and `iss` missing;
+    - `aud` `anon`, and `aud` missing;
+    - `role` `service_role`, and `role` `anon`;
+    - `exp` past, and `exp` missing;
+    - `iat` in the future;
+    - `iat` older than the maximum age with a still-valid `exp`;
+    - a `sub` that is not a UUID;
+    - `is_anonymous: true`;
+    - a 5,000-character token;
+    - broken base64.
+  - Also: the user call answering 401 (`revoked`), a different `id` (`mismatch`), and a 5xx (`upstream`, nothing counted); `user_endpoint` mode with an empty JWKS; the JWKS cache TTL.
+- **Unit, `tests/unit/auth/test_leafout_sign_in.py`** (fake `UserRepo` and clock):
+  - linking by `sub`; linking by verified email (sets `supabase_sub`);
+  - an unverified email: never links, and the account is created without an email;
+  - `email_taken`; a phone-only account (`email` NULL);
+  - the email updated on change;
+  - recheck: due with no cookie ends the session, due with the same `sub` slides, a different `sub` swaps;
+  - `own_sign_in=false` turns Google and the link off and changes `providers`;
+  - `anonymous_allowed` with `Providers` (auto, true, false);
+  - the bridge's captured log lines contain no token, cookie value, `sub` or email.
+- **Unit, `tests/unit/api/test_security.py` additions.**
+  - `Origin: https://leafout.in` with `Sec-Fetch-Site: same-site` on `POST /api/match` gives 403.
+  - `Origin: https://app.leafout.in` with Host `app.leafout.in` passes.
+  - `same-site` with no `Origin` passes (unchanged behaviour, pinned).
+- **Storage.** The repo against Postgres (`TEST_DATABASE_URL`, skipped without it): `uq_users_supabase_sub`, migration 0011 upgrading on top of 0010, and a NULL email allowed if the user approves that part.
+- **Integration, `tests/integration/test_leafout_sign_in.py`** (the whole app with `FakeSupabase` as transport):
+  - `GET /api/me` with a good `leafout-access` cookie answers with the user and sets `tayyari_session` with host-only, HttpOnly, SameSite=Lax flags, plus Secure in prod;
+  - the next request with that session makes no Supabase call;
+  - a bad token is anonymous with no `Set-Cookie`;
+  - over the `auth_bridge` limit is anonymous;
+  - `POST /api/auth/logout` gives 204 and clears the cookie;
+  - `POST /api/auth/magic` gives 404 with own sign-in off;
+  - a cross-subdomain `POST /api/match` gives 403;
+  - anonymous match is refused with `auto` once Leafout is configured;
+  - the 308 from another host with `redirect_other_hosts`, but not for `/api/*`;
+  - an NDJSON route sets the cookie on its first bridged request.
+- **Frontend.** `npm run check` (types for `MeResponse`). `scripts/walkthrough.md` gains a step: sign in on leafout.in, open app.leafout.in, be signed in, sign out from the app, find both ended. This step can be walked only on the real domains, because localhost cannot share a `.leafout.in` cookie. A local variant uses `*.leafout.test` hosts in the hosts file with a dev certificate, or it is left unverified and said so.
+
+### Waves and files
+
+- **L1a, backend.**
+  - New files: `auth/supabase.py`, `auth/jwks.py`, `api/session_cookie.py`, `tests/fakes/supabase.py`, the tests above, and migration `0011_leafout_identity.py`.
+  - Edited: `auth/service.py`, `auth/google.py` (uses `jwks.py`), `auth/magic.py` (the `enabled` gate), `api/deps.py`, `api/routes/auth.py`, `api/routes/me.py`, `api/static.py` (`/signout` route and the host redirect), `contract/auth.py`, `storage/repos/users.py`, `core/redact.py`.
+  - Shared files, edited by this wave alone: `storage/tables.py`, `storage/ports.py`, `core/settings.py`, `container.py`, `backend/.env.example`, the guard window list.
+  - `api/security.py` gets tests only, no change.
+  - No new dependency: `joserfc` and `httpx2` are already in.
+- **L1b, app frontend**, after the canvas board. Files: `shared/auth.ts`, `src/auth/` (the sign-in sheet becomes a link, `useMe` handles `reauth`, the account menu, a new `SignOut.tsx`), `src/lib/api.ts`, and the router entry for `/signout`.
+- **L1c, site repo.** The note in §1, sent through Lovable or edited in `tayyari-career-intelligence`. It can land first, because the cookie does nothing until the app reads it.
+- Docs: `docs/backend.md` § Sign-in, and `CLAUDE.md` Status, once built.
+
+### 9 · Decisions (2026-10-19)
+
+The user answered the open questions. Where this list and the spec above disagree, the decisions win; the full text is in the scratchpad file `L1-decisions.md`.
+
+1. **Phone-only accounts:** allowed. `users.email` is nullable, and a phone-only person gets an account keyed by `supabase_sub`.
+2. **Anonymous posting match stays on.** `auto` counts only the app's own providers (google, magic). Sign-in is needed only to save or claim, to buy, and for the account itself.
+3. **Site sign-out scope:** `local`.
+4. **Recheck interval:** 24 hours. An explicit sign-out on the site still reaches the app at once, through the cookie rules below.
+5. **Old domain:** `TAYYARI_AUTH__REDIRECT_OTHER_HOSTS` (default false). Pages on the old host get a 308 to the public URL; `/api/*` keeps answering there.
+6. **Sign-in methods:** every site method counts, including "Sign in with Lovable".
+7. **Subdomains:** only the site and the app live under `leafout.in`.
+8. **Design review:** no canvas. A browser review after the build.
+
+**Amendments to §1, §2 and §4.**
+
+- **Shared cookie.** The site sets `leafout-access` from its server, not from page script: HttpOnly, Secure, SameSite=Lax, `Domain=.leafout.in`, `Path=/`, 30 days, refreshed on every write. It still holds the access token only. Safari caps script-written cookies at 7 days, and HttpOnly keeps page scripts from reading the token.
+- **Cookie absent ends the session.** For a session made from the site's cookie, a request with no cookie ends the app session at once. The response is anonymous, with no `reauth` and no redirect. The site deletes the cookie only on explicit sign-out or account deletion, so this is how a site sign-out reaches the app.
+- **Expired token in the identity check.** A valid cookie with a different `sub` replaces the session only when its token is fully valid. An expired token still has its signature checked; if it has expired, the app ends the session and sets `reauth: true`.
+- **Hold cookie (built).** `POST /api/auth/logout` and `DELETE /api/me` set `tayyari_bridge_hold`: host-only, HttpOnly, 600 seconds. It holds the first 32 hex characters of the sha256 of the site token the browser sent. While it matches the current site token, the bridge is skipped, so an old token cannot recreate a session. A new sign-in brings a new token, and it works at once.
 
 ## Follow-ups
 

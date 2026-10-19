@@ -14,7 +14,7 @@ from sqlalchemy import select
 from tayyari.api.app import create_app
 from tayyari.auth.email import ResendEmailSender
 from tayyari.auth.google import STATE_KEY_NAME
-from tayyari.auth.service import AuthService
+from tayyari.auth.service import AuthService, Providers
 from tayyari.container import Container, ContainerOverrides
 from tayyari.core.settings import Settings
 from tayyari.storage.tables import KvRow
@@ -32,10 +32,12 @@ async def build(settings: Settings, **overrides: Any) -> Container:
 
 
 async def test_the_container_builds_an_auth_service_from_the_settings(make_settings: MakeSettings) -> None:
-    container = await build(make_settings(google_client_id="id", google_client_secret="secret"))
+    container = await build(
+        make_settings(google_client_id="id", google_client_secret="secret", auth={"own_sign_in": True})
+    )
     try:
         assert isinstance(container.auth, AuthService)
-        assert container.auth.providers == (True, False)  # test env, no mail key
+        assert container.auth.providers == Providers(True, False, False)  # test env, no mail key
     finally:
         await container.aclose()
 
@@ -43,13 +45,14 @@ async def test_the_container_builds_an_auth_service_from_the_settings(make_setti
 async def test_a_mail_key_builds_the_resend_sender_and_a_local_server_without_one_uses_the_dev_link(
     make_settings: MakeSettings,
 ) -> None:
-    with_key = await build(make_settings(resend_api_key="re_key"))
-    local = await build(make_settings(env="local"))
+    own = {"own_sign_in": True}
+    with_key = await build(make_settings(resend_api_key="re_key", auth=own))
+    local = await build(make_settings(env="local", auth=own))
     try:
         assert isinstance(with_key.auth.magic._mailer, ResendEmailSender)
-        assert with_key.auth.providers == (False, True)
+        assert with_key.auth.providers == Providers(False, True, False)
         assert local.auth.magic._mailer is None and local.auth.magic.dev_mode is True
-        assert local.auth.providers == (False, True)
+        assert local.auth.providers == Providers(False, True, False)
     finally:
         await with_key.aclose()
         await local.aclose()
@@ -57,9 +60,10 @@ async def test_a_mail_key_builds_the_resend_sender_and_a_local_server_without_on
 
 async def test_an_injected_mailer_and_service_are_used_as_given(make_settings: MakeSettings) -> None:
     mailer = FakeMailer()
-    container = await build(make_settings(), mailer=mailer)
+    container = await build(make_settings(auth={"own_sign_in": True}), mailer=mailer)
     try:
-        assert container.auth.magic._mailer is mailer and container.auth.providers == (False, True)
+        assert container.auth.magic._mailer is mailer
+        assert container.auth.providers == Providers(False, True, False)
     finally:
         await container.aclose()
     own = await build(make_settings(), auth=container.auth)

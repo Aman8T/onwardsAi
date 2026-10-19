@@ -8,6 +8,7 @@ import pytest
 from pydantic import SecretStr, ValidationError
 from pydantic_settings import SettingsError
 
+from tayyari.auth.service import Providers
 from tayyari.core import settings as settings_module
 from tayyari.core.dburl import DbConfig
 from tayyari.core.settings import (
@@ -129,22 +130,25 @@ def test_anonymous_matching_is_automatic_by_default_and_the_visitors_daily_allow
     [
         (
             "auto",
-            (False, False),
+            (False, False, False),
             True,
-        ),  # nothing to sign in with: an account is not something a person can get
-        ("auto", (True, False), False),
-        ("auto", (False, True), False),
-        ("auto", (True, True), False),
-        ("true", (False, False), True),
-        ("true", (True, True), True),
-        ("false", (False, False), False),
-        ("false", (True, True), False),
+        ),  # none of the app's own ways to sign in: seeing a gap is free
+        ("auto", (False, False, True), True),  # the Leafout account does not count
+        ("auto", (True, False, False), False),
+        ("auto", (False, True, False), False),
+        ("auto", (True, True, True), False),
+        ("true", (False, False, False), True),
+        ("true", (True, True, True), True),
+        ("false", (False, False, False), False),
+        ("false", (True, True, True), False),
+        ("false", (False, False, True), False),
     ],
 )
 def test_anonymous_matching_resolves_from_the_setting_and_the_sign_in_methods(
-    mode: str, providers: tuple[bool, bool], allowed: bool
+    mode: str, providers: tuple[bool, bool, bool], allowed: bool
 ) -> None:
-    assert MatchSettings(allow_anonymous=mode).anonymous_allowed(providers) is allowed  # type: ignore[arg-type]
+    found = Providers(*providers)
+    assert MatchSettings(allow_anonymous=mode).anonymous_allowed(found) is allowed  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(

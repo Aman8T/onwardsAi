@@ -68,9 +68,11 @@ def start(build_settings: MakeSettings, google_key: Any):  # type: ignore[no-unt
 
     @asynccontextmanager
     async def run(*, google: bool = False, mailer: bool = True, **overrides: Any) -> AsyncIterator[Rig]:
-        values: dict[str, Any] = {"auth": {"public_url": PUBLIC}}
+        # The app's own paths are off by default (the Leafout account is the sign-in); these tests are about them.
+        values: dict[str, Any] = {"auth": {"public_url": PUBLIC, "own_sign_in": True}}
         if google:
             values.update(google_client_id=CLIENT_ID, google_client_secret=CLIENT_SECRET)
+        values["auth"].update(overrides.pop("auth", {}))
         values.update(overrides)
         net, fake_google, fake_mailer, clock = (
             FakeNetwork(),
@@ -173,7 +175,7 @@ async def test_an_anonymous_visitor_gets_the_shape_without_a_user(start: Any) ->
     assert response.json() == {
         "profiles": [],
         "entitlements": {"credits": 0, "freeMatchAvailable": False},
-        "providers": {"google": True, "magic": True},
+        "providers": {"google": True, "magic": True, "leafout": False},
         "anonymousMatch": False,  # a way to sign in exists, so a posting match asks for one
     }
     assert "set-cookie" not in response.headers
@@ -182,11 +184,11 @@ async def test_an_anonymous_visitor_gets_the_shape_without_a_user(start: Any) ->
 @pytest.mark.parametrize(
     ("google", "mailer", "settings", "expected"),
     [
-        (True, True, {}, {"google": True, "magic": True}),
-        (False, True, {}, {"google": False, "magic": True}),
-        (True, False, {}, {"google": True, "magic": False}),
-        (False, False, {}, {"google": False, "magic": False}),
-        (False, False, {"env": "local"}, {"google": False, "magic": True}),  # the dev link
+        (True, True, {}, {"google": True, "magic": True, "leafout": False}),
+        (False, True, {}, {"google": False, "magic": True, "leafout": False}),
+        (True, False, {}, {"google": True, "magic": False, "leafout": False}),
+        (False, False, {}, {"google": False, "magic": False, "leafout": False}),
+        (False, False, {"env": "local"}, {"google": False, "magic": True, "leafout": False}),  # the dev link
     ],
 )
 async def test_providers_report_what_this_server_can_do(

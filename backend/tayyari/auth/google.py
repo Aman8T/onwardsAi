@@ -43,6 +43,8 @@ from joserfc.jwk import KeySet
 from tayyari.core.clock import Clock
 from tayyari.core.logging import get_logger
 
+from .jwks import HTTP_TIMEOUT_S, JWKS_REFETCH_MIN_S, JWKS_TTL_S, JwksCache, JwksError
+
 log = get_logger(__name__)
 
 AUTHORIZE_URL: Final = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -53,12 +55,8 @@ SCOPE: Final = "openid email profile"
 CALLBACK_PATH: Final = "/api/auth/google/callback"
 STATE_COOKIE: Final = "tayyari_oauth"
 STATE_MAX_AGE_S: Final = 600
-JWKS_TTL_S: Final = 6 * 3600
-JWKS_REFETCH_MIN_S: Final = 60
-"""An unknown signing key triggers a refetch of Google's keys, but not more often than this."""
 NEXT_MAX_CHARS: Final = 512
 CLOCK_LEEWAY_S: Final = 60
-HTTP_TIMEOUT_S: Final = 10.0
 
 STATE_KEY_NAME: Final = "auth_state_key"
 """The ``kv`` row holding the HMAC key that signs the state cookie."""
@@ -197,8 +195,7 @@ class GoogleOAuth:
         self._http = http
         self._clock = clock
         self._transport = transport
-        self._keys: KeySet | None = None
-        self._keys_at = 0.0
+        self._jwks = JwksCache(JWKS_URL, http=http, clock=clock)
 
     def _oauth_client(self) -> Any:
         return AsyncOAuth2Client(
@@ -257,19 +254,10 @@ class GoogleOAuth:
         return id_token
 
     async def _key_set(self, *, refresh: bool) -> KeySet:
-        age = self._clock.monotonic() - self._keys_at
-        if self._keys is not None and not refresh and age < JWKS_TTL_S:
-            return self._keys
-        if self._keys is not None and refresh and age < JWKS_REFETCH_MIN_S:
-            return self._keys
         try:
-            response = await self._http.get(JWKS_URL, timeout=HTTP_TIMEOUT_S)
-            response.raise_for_status()
-            keys = KeySet.import_key_set(response.json())
-        except Exception as err:
-            raise GoogleError(f"jwks_unavailable:{type(err).__name__}") from None
-        self._keys, self._keys_at = keys, self._clock.monotonic()
-        return keys
+            return await self._jwks.keys(refresh=refresh)
+        except JwksError as err:
+            raise GoogleError(err.reason) from None
 
     async def _verified_claims(self, id_token: str, nonce: str) -> dict[str, Any]:
         keys = await self._key_set(refresh=False)
@@ -316,6 +304,8 @@ __all__ = [
     "AUTHORIZE_URL",
     "CALLBACK_PATH",
     "ISSUERS",
+    "JWKS_REFETCH_MIN_S",
+    "JWKS_TTL_S",
     "JWKS_URL",
     "STATE_COOKIE",
     "STATE_KEY_NAME",

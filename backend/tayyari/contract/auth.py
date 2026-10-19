@@ -7,7 +7,8 @@ the JSON (``to_dict``), so an anonymous visitor's ``/api/me`` has no ``user`` ke
 
 ``entitlements`` is part of the shape from the start so the web app can render it; until payments exist
 (wave F2) every value is the empty one. ``anonymousMatch`` says whether a visitor with no sign-in may match a posting
-on this server (`MatchSettings.anonymous_allowed`), so the web app knows whether to ask for an account first.
+on this server (`MatchSettings.anonymous_allowed`; true by default only when the app's own providers, Google and the emailed link, are both
+off: the Leafout account does not count), so the web app knows whether to ask for an account first.
 """
 
 # ruff: noqa: N815  (the field names are camelCase on purpose: they are the JSON keys of shared/auth.ts)
@@ -47,7 +48,8 @@ def normalise_email(raw: str) -> str | None:
 
 class MeUser(_Model):
     id: str
-    email: str
+    email: str | None = None
+    """Absent for an account made from a phone-only Leafout sign-in (the app never stores the phone)."""
     name: str | None = None
     pictureUrl: str | None = None
     currency: Currency | None = None
@@ -76,6 +78,15 @@ class MeProviders(_Model):
 
     google: bool
     magic: bool
+    leafout: bool
+    """Sign in with the Leafout account works here (the site's sign-in)."""
+    leafoutSignInUrl: str | None = None
+    """The site's sign-in page; the web app adds ``?next=<this app's URL>``. Absent unless Leafout sign-in is configured."""
+    leafoutSignOutUrl: str | None = None
+    """The site's sign-out page. Absent unless Leafout sign-in is configured."""
+
+
+SignInIssue = Literal["email_taken"]
 
 
 class MeResponse(_Model):
@@ -86,6 +97,12 @@ class MeResponse(_Model):
     entitlements: MeEntitlements
     providers: MeProviders
     anonymousMatch: bool
+    reauth: bool | None = None
+    """True when the app just ended a Leafout-bridged session because the site sign-in must be refreshed. The web app then
+    sends the browser through the site's sign-in with ``next`` set to the current page."""
+    signInIssue: SignInIssue | None = None
+    """A Leafout sign-in was refused: ``email_taken`` means the verified email belongs to an app account already linked to
+    another Leafout sign-in. Shown to the person as plain words."""
 
 
 class MagicLinkRequest(_Model):

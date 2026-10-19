@@ -8,6 +8,7 @@
  * again, so they offer no retry.
  */
 import type { ReactNode } from 'react';
+import { offersSignIn } from '../../auth/links';
 import { signInSheet, useMe } from '../../auth/useMe';
 import { plural } from '../../lib/ui';
 import { canRetry } from '../jobsearch/api';
@@ -74,7 +75,7 @@ export function FailureNote({ failure, hasResults, found, onRetry, onAnalyse }: 
 /** A sign-in is offered only where the server has a way to sign in. */
 function SignInAction({ message }: { message: string }) {
   const { providers } = useMe();
-  if (!providers.google && !providers.magic) return null;
+  if (!offersSignIn(providers)) return null;
   return (
     <button type="button" className="btn btn-primary dc-btn" onClick={() => signInSheet.open('account', message)}>
       Sign in

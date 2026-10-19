@@ -71,8 +71,11 @@ class MagicLinks:
 
     @property
     def enabled(self) -> bool:
-        """Whether signing in by email can work here at all (the sign-in sheet hides the form otherwise)."""
-        return self._mailer is not None or self.dev_mode
+        """Whether signing in by email can work here at all (the sign-in sheet hides the form otherwise).
+
+        Off while the app's own sign-in is off (``TAYYARI_AUTH__OWN_SIGN_IN``, the default): the Leafout site's sign-in is the
+        app's sign-in, and no link is issued."""
+        return self._settings.auth.own_sign_in and (self._mailer is not None or self.dev_mode)
 
     def link_for(self, token: str) -> str:
         return f"{self._settings.auth.public_url}{VERIFY_PATH}?token={quote(token, safe='')}"

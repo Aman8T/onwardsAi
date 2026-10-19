@@ -364,10 +364,13 @@ class UserRow(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
-    email: Mapped[str] = mapped_column(String(EMAIL_LEN))
+    email: Mapped[str | None] = mapped_column(String(EMAIL_LEN))
+    """NULL for an account made from a phone-only Leafout sign-in (the app never stores the phone)."""
     name: Mapped[str | None] = mapped_column(Text)
     picture_url: Mapped[str | None] = mapped_column(Text)
     google_sub: Mapped[str | None] = mapped_column(String(255))
+    supabase_sub: Mapped[str | None] = mapped_column(String(36))
+    """The Leafout (Supabase) user id this account is linked to; unique."""
     created_at: Mapped[datetime] = mapped_column(UtcDateTime)
     last_login_at: Mapped[datetime] = mapped_column(UtcDateTime)
     locale: Mapped[str | None] = mapped_column(String(35))
@@ -376,6 +379,7 @@ class UserRow(Base):
     __table_args__ = (
         UniqueConstraint("email", name="uq_users_email"),
         UniqueConstraint("google_sub", name="uq_users_google_sub"),
+        Index("uq_users_supabase_sub", "supabase_sub", unique=True),
     )
 
 
@@ -391,6 +395,12 @@ class AuthSessionRow(Base):
     last_seen_at: Mapped[datetime] = mapped_column(UtcDateTime)
     ip_hash: Mapped[str | None] = mapped_column(String(HASH_LEN))
     user_agent: Mapped[str | None] = mapped_column(String(USER_AGENT_LEN))
+    source: Mapped[str | None] = mapped_column(String(16))
+    """``supabase`` for a session started from the Leafout site's cookie; NULL for the app's own sign-ins."""
+    supabase_session_id: Mapped[str | None] = mapped_column(String(36))
+    """The token's ``session_id`` claim (kept for later revocation; never logged)."""
+    verified_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    """When the site's cookie last vouched for this session."""
 
     __table_args__ = (
         Index("ix_auth_sessions_user_id", "user_id"),

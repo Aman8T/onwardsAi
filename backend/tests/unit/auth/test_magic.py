@@ -7,6 +7,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 
 from tayyari.auth.magic import LIMIT_WINDOW_S
+from tayyari.auth.service import Providers
 from tayyari.auth.sessions import hash_token
 from tests.fakes.auth import link_in
 from tests.unit.auth.conftest import PUBLIC_URL, MakeAuth
@@ -168,7 +169,7 @@ async def test_a_local_server_without_a_key_returns_the_link_instead_of_emailing
     make_auth: MakeAuth,
 ) -> None:
     rig = make_auth(env="local", mailer=False)
-    assert rig.service.providers == (True, True)
+    assert rig.service.providers == Providers(True, True, False)
     outcome = await rig.service.request_magic_link(EMAIL, None)
 
     assert outcome.issued and outcome.dev_link is not None
@@ -180,7 +181,9 @@ async def test_a_local_server_without_a_key_returns_the_link_instead_of_emailing
 @pytest.mark.parametrize("env", ["test", "prod"])
 async def test_no_other_environment_ever_hands_out_the_link(make_auth: MakeAuth, env: str) -> None:
     rig = make_auth(env=env, mailer=False)
-    assert rig.service.providers == (True, False)  # email sign-in is off: nothing could be sent
+    assert rig.service.providers == Providers(
+        True, False, False
+    )  # email sign-in is off: nothing could be sent
     outcome = await rig.service.request_magic_link(EMAIL, None)
     assert outcome.issued is False and outcome.dev_link is None
     assert rig.fakes.users.links == {}

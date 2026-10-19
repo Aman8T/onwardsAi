@@ -7,12 +7,14 @@
  * the server cannot send mail. Asking for a link never says whether the address has an account; a local server with
  * no mail key also hands back the link (`devLink`), which is shown so the flow can be tried without email.
  *
- * A sign-in that did not complete comes back as `/?auth=<code>`; that code is read once here, removed from the
+ * When the server offers sign-in through the Leafout account (`providers.leafout`) the sheet is one line and one link to it,
+ * and the Google button and email field are not shown. A sign-in that did not complete comes back as `/?auth=<code>`; that code is read once here, removed from the
  * address bar, and shown as a sentence above the form.
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ApiError, requestMagicLink } from '../lib/api';
+import { currentPath, signInHref } from './links';
 import { Sheet } from './Sheet';
 import { signInSheet, useMe, useSignInSheet } from './useMe';
 import type { SignInReason } from './useMe';
@@ -60,7 +62,7 @@ function takeAuthNotice(): string | undefined {
 
 export function SignIn() {
   const ui = useSignInSheet();
-  const { providers, user, loaded } = useMe();
+  const { me, providers, user, loaded, stuck, issue } = useMe();
   const titleId = useId();
 
   // Back from a sign-in that did not complete: open the sheet with the reason.
@@ -75,7 +77,11 @@ export function SignIn() {
   }, [user, ui.open]);
 
   const copy = COPY[ui.reason];
+  // the Leafout link brings the person back to the page they were on (or the one the opener named)
+  const leafoutHref = ui.open ? signInHref(me, ui.next ?? currentPath()) : null;
   return (
+    <>
+      {!user && (stuck || issue) && <SignInTrouble href={signInHref(me, currentPath())} issue={issue} />}
     <Sheet open={ui.open && !user} onClose={signInSheet.close} labelledBy={titleId}>
       <Form
         // a fresh form each time the sheet opens
@@ -84,12 +90,29 @@ export function SignIn() {
         title={copy.title}
         text={copy.text}
         notice={ui.notice}
-        google={providers.google}
-        magic={providers.magic}
+        google={!providers.leafout && providers.google}
+        magic={!providers.leafout && providers.magic}
         loaded={loaded}
         next={NEXT[ui.reason]}
+        leafoutHref={providers.leafout ? leafoutHref : null}
+        leafout={providers.leafout}
       />
     </Sheet>
+    </>
+  );
+}
+
+/** Shown when the site sign-in could not be confirmed (the loop guard stopped the redirect) or a bridge was refused. */
+function SignInTrouble({ href, issue }: { href: string | null; issue?: string }) {
+  return (
+    <aside className="panel auth-trouble" role="status">
+      <p>{issue ?? "We couldn't confirm your sign-in."}</p>
+      {href && (
+        <a className="btn btn-sm" href={href}>
+          Sign in again
+        </a>
+      )}
+    </aside>
   );
 }
 
@@ -102,9 +125,12 @@ interface FormProps {
   magic: boolean;
   loaded: boolean;
   next: string;
+  /** Sign-in through the Leafout account is on; `leafoutHref` is its link (null until the server has given the URL). */
+  leafout: boolean;
+  leafoutHref: string | null;
 }
 
-function Form({ titleId, title, text, notice, google, magic, loaded, next }: FormProps) {
+function Form({ titleId, title, text, notice, google, magic, loaded, next, leafout, leafoutHref }: FormProps) {
   const emailId = useId();
   const hintId = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -113,7 +139,7 @@ function Form({ titleId, title, text, notice, google, magic, loaded, next }: For
   const [phase, setPhase] = useState<'form' | 'sending' | 'sent'>('form');
   const [error, setError] = useState<string | null>(null);
   const [devLink, setDevLink] = useState<string | undefined>();
-  const nothing = loaded && !google && !magic;
+  const nothing = loaded && !google && !magic && !leafout;
 
   // The form is replaced by the confirmation: keep the keyboard inside the dialog.
   useEffect(() => {
@@ -162,6 +188,12 @@ function Form({ titleId, title, text, notice, google, magic, loaded, next }: For
       )}
 
       {nothing && <p className="auth-text">Signing in is not set up on this server yet.</p>}
+
+      {leafout && leafoutHref && (
+        <a className="btn btn-primary auth-google" href={leafoutHref}>
+          Sign in with your Leafout account
+        </a>
+      )}
 
       {google && (
         <a className="btn auth-google" href={`/api/auth/google/start?next=${encodeURIComponent(next)}`}>

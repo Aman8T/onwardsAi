@@ -257,6 +257,82 @@ async def test_the_guard_does_not_touch_other_scopes() -> None:
     assert seen == ["websocket", "lifespan"]
 
 
+# ───────────────────────────── the site and the app are same-site now (Leafout) ─────────────────────────────
+#
+# leafout.in and app.leafout.in share a registrable domain, so SameSite=Lax no longer keeps the site's pages (or any other
+# *.leafout.in page) from sending requests with the app's cookies, and the browser labels them ``same-site``. The guard still
+# refuses them because its Origin rule compares hosts EXACTLY. These tests pin that: the comparison must never be loosened to
+# the registrable domain, and ``same-site`` must never join ``same-origin`` on the pass list.
+
+
+def leafout_guarded() -> tuple[Downstream, httpx.AsyncClient]:
+    inner = Downstream()
+    transport = httpx.ASGITransport(app=CrossSiteGuard(inner))
+    return inner, httpx.AsyncClient(transport=transport, base_url="https://app.leafout.in")
+
+
+async def test_the_sites_own_page_cannot_post_to_the_app() -> None:
+    inner, client = leafout_guarded()
+    async with client:
+        res = await client.post(
+            "/api/match",
+            headers={"origin": "https://leafout.in", "sec-fetch-site": "same-site", "host": "app.leafout.in"},
+        )
+    assert res.status_code == 403 and res.json() == {"error": CROSS_SITE_MESSAGE}
+    assert inner.calls == []
+
+
+@pytest.mark.parametrize(
+    "origin",
+    ["https://leafout.in", "https://www.leafout.in", "https://evil.leafout.in", "https://leafout.in:8443"],
+)
+async def test_no_other_leafout_host_is_trusted_even_when_the_browser_says_same_site(origin: str) -> None:
+    inner, client = leafout_guarded()
+    async with client:
+        for site in ("same-site", None):
+            headers = {"origin": origin, "host": "app.leafout.in"}
+            if site:
+                headers["sec-fetch-site"] = site
+            for method in ("POST", "PUT", "PATCH", "DELETE"):
+                res = await client.request(method, "/api/me", headers=headers)
+                assert res.status_code == 403, (origin, site, method)
+    assert inner.calls == []
+
+
+async def test_the_apps_own_origin_passes_on_its_own_host() -> None:
+    inner, client = leafout_guarded()
+    async with client:
+        res = await client.post(
+            "/api/match", headers={"origin": "https://app.leafout.in", "host": "app.leafout.in"}
+        )
+    assert res.status_code == 200 and inner.calls == [("POST", "/api/match")]
+
+
+async def test_same_site_with_no_origin_still_passes_as_before() -> None:
+    """Pinned, not endorsed: a request with neither header is a script or curl, and a browser always sends ``Origin``
+    on a state-changing request, so there is no browser request that this lets through."""
+    inner, client = leafout_guarded()
+    async with client:
+        res = await client.post("/api/match", headers={"sec-fetch-site": "same-site"})
+    assert res.status_code == 200 and inner.calls == [("POST", "/api/match")]
+
+
+def test_same_site_is_not_on_the_pass_list_and_hosts_are_compared_exactly() -> None:
+    assert (
+        cross_site_reason(
+            headers_of(sec_fetch_site="same-site", origin="https://leafout.in", host="app.leafout.in")
+        )
+        == "origin"
+    )
+    assert cross_site_reason(headers_of(origin="https://app.leafout.in", host="app.leafout.in")) is None
+    assert (
+        cross_site_reason(
+            headers_of(sec_fetch_site="same-origin", origin="https://app.leafout.in", host="app.leafout.in")
+        )
+        is None
+    )
+
+
 # ───────────────────────────── the inline-script hashes ─────────────────────────────
 
 

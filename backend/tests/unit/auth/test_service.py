@@ -7,6 +7,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 
 from tayyari.auth.google import GoogleError, read_state
+from tayyari.auth.service import Providers
 from tests.fakes.auth import link_in
 from tests.unit.auth.conftest import PUBLIC_URL, STATE_KEY, MakeAuth, Rig
 
@@ -167,11 +168,13 @@ def test_the_authorization_redirect_points_back_at_our_callback(make_auth: MakeA
 
 
 def test_providers_say_what_this_server_can_do(make_auth: MakeAuth) -> None:
-    assert make_auth(google=True, mailer=True).service.providers == (True, True)
-    assert make_auth(google=False, mailer=True).service.providers == (False, True)
-    assert make_auth(google=True, mailer=False).service.providers == (True, False)
-    assert make_auth(google=False, mailer=False).service.providers == (False, False)
-    assert make_auth(google=False, mailer=False, env="local").service.providers == (False, True)
+    assert make_auth(google=True, mailer=True).service.providers == Providers(True, True, False)
+    assert make_auth(google=False, mailer=True).service.providers == Providers(False, True, False)
+    assert make_auth(google=True, mailer=False).service.providers == Providers(True, False, False)
+    assert make_auth(google=False, mailer=False).service.providers == Providers(False, False, False)
+    assert make_auth(google=False, mailer=False, env="local").service.providers == Providers(
+        False, True, False
+    )
 
 
 async def test_without_google_credentials_google_sign_in_is_unavailable(make_auth: MakeAuth) -> None:
@@ -184,4 +187,4 @@ async def test_without_google_credentials_google_sign_in_is_unavailable(make_aut
 
 async def test_one_half_of_the_google_credentials_is_not_enough(make_auth: MakeAuth) -> None:
     rig = make_auth(google=False, google_client_id="only-the-id")
-    assert rig.service.providers[0] is False
+    assert rig.service.providers.google is False

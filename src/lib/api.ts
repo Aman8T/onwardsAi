@@ -186,6 +186,12 @@ export async function logout(): Promise<void> {
   if (!res.ok) throw await failure(res);
 }
 
+/** Delete the signed-in account with its profiles, pages and sign-ins (204; the session cookie is cleared by the response). */
+export async function deleteMe(): Promise<void> {
+  const res = await fetch('/api/me', { method: 'DELETE' });
+  if (!res.ok) throw await failure(res);
+}
+
 /** Attach an unowned profile (and its portfolio) to the signed-in account; resolves with the refreshed `/api/me`. */
 export async function claimProfile(profileId: string, signal?: AbortSignal): Promise<MeResponse> {
   const req: ClaimRequest = { profileId };

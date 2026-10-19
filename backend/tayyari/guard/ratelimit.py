@@ -33,6 +33,9 @@ no whole-service counter.
 window per address, no account counter and no whole-service counter: Sarvam's own credits are metered by `speech.meter`.
 ``prepare`` (a plan for a role, "How do I prepare for this role?", and a headline rewritten for it: the two routes that
 call a model) is counted per address and per account like ``interview``, with ``prepare:global:hour``.
+``auth_bridge`` (turning the Leafout site's cookie into an app session) is counted per address only, in a minute and an hour
+window, with ``auth_bridge:global:hour``; it is counted just before Supabase is asked, and over the limit the request is simply
+anonymous (`api.deps`), never a 429.
 
 `shed(route, ip_hash, ip_hash_48)` runs step 1 alone, synchronously, so a route can turn hammering away before it
 reads the request body; it then calls ``check(..., memory=False)`` after validating, so one request takes one
@@ -77,6 +80,7 @@ Route = Literal[
     "interview_again",
     "speech",
     "prepare",
+    "auth_bridge",
 ]
 WindowName = Literal["min", "hour", "day"]
 
@@ -89,6 +93,7 @@ GLOBAL_MATCH_BUCKET = "match:global:hour"
 GLOBAL_JOBSEARCH_BUCKET = "jobsearch:global:hour"
 GLOBAL_INTERVIEW_BUCKET = "interview:global:hour"
 GLOBAL_PREPARE_BUCKET = "prepare:global:hour"
+GLOBAL_AUTH_BRIDGE_BUCKET = "auth_bridge:global:hour"
 SUBNET_LIMIT_FACTOR = 4
 """An IPv6 /48 may use this many times the per-IP limit (a /64 is one household, a /48 is up to 65,536)."""
 
@@ -263,6 +268,8 @@ class RateLimiter:
             limits = (("day", s.interview_again_per_day),)
         elif route == "speech":
             limits = (("min", s.speech_per_minute),)
+        elif route == "auth_bridge":
+            limits = (("min", s.auth_bridge_per_minute), ("hour", s.auth_bridge_per_hour))
         elif route == "prepare":
             limits = (
                 ("min", s.prepare_per_minute),
@@ -309,6 +316,7 @@ class RateLimiter:
             "interview_again": (GLOBAL_INTERVIEW_BUCKET, 0),  # capped by ``interview`` already
             "speech": ("speech:global:hour", 0),  # Sarvam's credits are metered by `speech.meter`, not here
             "prepare": (GLOBAL_PREPARE_BUCKET, s.prepare_global_per_hour),
+            "auth_bridge": (GLOBAL_AUTH_BRIDGE_BUCKET, s.auth_bridge_global_per_hour),
         }
         return rules[route]
 
@@ -460,6 +468,7 @@ class RateLimiter:
 
 __all__ = [
     "GLOBAL_ANALYZE_BUCKET",
+    "GLOBAL_AUTH_BRIDGE_BUCKET",
     "GLOBAL_CHAT_BUCKET",
     "GLOBAL_INTERVIEW_BUCKET",
     "GLOBAL_JOBSEARCH_BUCKET",

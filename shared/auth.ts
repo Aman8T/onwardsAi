@@ -8,8 +8,8 @@
  * An anonymous visitor's `/api/me` has no `user`: absent, not null. `entitlements` is part of the shape from
  * the start so the screens can render it; until payments exist every value is the empty one.
  * `anonymousMatch` is true when a visitor with no sign-in may match a posting on this server (always for everyone,
- * signed in or not): the setting `TAYYARI_MATCH__ALLOW_ANONYMOUS`, which by default is on exactly when the server
- * offers no way to sign in.
+ * signed in or not): the setting `TAYYARI_MATCH__ALLOW_ANONYMOUS`, which by default is on exactly when the app's own
+ * providers (google, magic) are both off. Leafout sign-in does not count.
  */
 
 export type Currency = 'INR' | 'USD';
@@ -19,7 +19,8 @@ export const NAME_MAX_CHARS = 80;
 
 export interface MeUser {
   id: string;
-  email: string;
+  /** Absent for a phone-only account. */
+  email?: string;
   name?: string;
   pictureUrl?: string;
   currency?: Currency;
@@ -46,6 +47,10 @@ export interface MeEntitlements {
 export interface MeProviders {
   google: boolean;
   magic: boolean;
+  /** Sign-in through the Leafout site account is configured; the sheet then offers only that. */
+  leafout: boolean;
+  leafoutSignInUrl?: string;
+  leafoutSignOutUrl?: string;
 }
 
 /** `GET /api/me`, for anonymous visitors and signed-in people alike. */
@@ -54,8 +59,12 @@ export interface MeResponse {
   profiles: MeProfile[];
   entitlements: MeEntitlements;
   providers: MeProviders;
-  /** May a visitor with no sign-in use `/api/match*`? True by default only when `providers` are both false. */
+  /** May a visitor with no sign-in use `/api/match*`? True by default only when the app's own providers (google, magic) are both off. */
   anonymousMatch: boolean;
+  /** True when the app just ended a Leafout-bridged session because the site sign-in must be refreshed: send the browser through the site's sign-in with `next` set to this page. */
+  reauth?: boolean;
+  /** A bridge was refused: the verified email belongs to an app account already linked to another Leafout sign-in. */
+  signInIssue?: 'email_taken';
 }
 
 /** `POST /api/auth/magic`. */

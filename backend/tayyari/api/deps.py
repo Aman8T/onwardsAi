@@ -24,7 +24,19 @@ Who is signed in, for routes that need an account:
 
     get_auth_context(request)   the live sign-in behind the ``tayyari_session`` cookie (`auth.SessionContext`), or
                                 None. Looked up once per request; binds ``user_id`` (never the email) into the log
-                                context. A route that wants the sliding cookie refreshed reads ``.refreshed``.
+                                context. A route that wants the sliding cookie refreshed reads ``.refreshed``. It is also
+                                where the Leafout site's cookie (``leafout-access``) is looked at, on ``/api/`` paths
+                                that are not webhooks and when Leafout sign-in is configured:
+                                  - no session and a cookie: the bridge (`AuthService.leafout_bridge`) starts one; the
+                                    cookie reaches the browser through `api.session_cookie.SessionCookieMiddleware`;
+                                  - a session made that way and the cookie gone, unusable or someone else's, or its
+                                    24-hour recheck due: `AuthService.review_leafout_session` decides (keep, slide, end,
+                                    reauth or swap), see its docstring and the amendments in docs/roadmap.md, section L1;
+                                  - a refused bridge is an anonymous request, never a 401 of its own.
+    suppress_bridge(request)    for sign-out: this request never bridges the Leafout cookie into a session
+    leafout_flags(request)      ``(reauth, sign_in_issue)`` for `GET /api/me` after `get_auth_context` ran: the app just ended
+                                a Leafout-made session whose site sign-in must be refreshed, and/or a bridge was refused
+                                because the verified email belongs to an app account linked to another Leafout sign-in.
     get_current_user(request)   the signed-in account (`StoredUser`), or None for an anonymous visitor
     require_user(request)       the signed-in account, or a 401 `Unauthorized` that the web app turns into the
                                 sign-in sheet
@@ -59,6 +71,7 @@ Whose profile it is, for every route that takes a profile id:
 
 from __future__ import annotations
 
+import hmac
 import re
 import uuid
 from datetime import UTC, datetime
@@ -69,11 +82,13 @@ from starlette.requests import HTTPConnection, Request
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from tayyari.api.lifespan import get_container
-from tayyari.auth.sessions import SessionContext
+from tayyari.api.security import subnet_hash
+from tayyari.api.session_cookie import forget_session, remember_session
+from tayyari.auth.sessions import BRIDGE_HOLD_COOKIE, SessionContext, bridge_hold_value
 from tayyari.contract.requests import RequestContext
 from tayyari.core import context
 from tayyari.core.clock import Clock
-from tayyari.core.errors import NotFound, Unauthorized
+from tayyari.core.errors import NotFound, RateLimited, Unauthorized
 from tayyari.core.hashing import hmac_hex
 from tayyari.core.logging import get_logger
 from tayyari.core.settings import Settings, get_settings
@@ -94,6 +109,10 @@ _REQUEST_ID_UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
 _CONTEXT_KEY = "request_context"
 _AUTH_KEY = "auth_context"
 _UNLIMITED_KEY = "unlimited"
+_REAUTH_KEY = "leafout_reauth"
+_ISSUE_KEY = "leafout_sign_in_issue"
+_NO_BRIDGE_KEY = "leafout_no_bridge"
+_WEBHOOK_PREFIX = "/api/billing/webhooks/"
 _UNSET: Any = object()
 _KEY_CACHE_ATTR = "_ip_hash_key_resolved"
 _WARNED_ATTR = "_ip_hash_key_warned"
@@ -207,20 +226,110 @@ async def get_request_context(request: Request) -> RequestContext:
     return rc
 
 
+def _held(request: Request, cookie: str) -> bool:
+    """True when this browser just signed out or deleted its account and still sends that same old site token."""
+    hold = request.cookies.get(BRIDGE_HOLD_COOKIE)
+    return hold is not None and hmac.compare_digest(hold, bridge_hold_value(cookie))
+
+
+def _bridge_applies(request: Request, container: Container) -> bool:
+    """Whether this request may look at the Leafout cookie: configured, an ``/api/`` path, not a payment webhook."""
+    path = request.url.path
+    return (
+        container.auth.leafout is not None
+        and path.startswith("/api/")
+        and not path.startswith(_WEBHOOK_PREFIX)
+    )
+
+
+async def _bridge(
+    request: Request, container: Container, cookie: str, state: dict[str, Any]
+) -> SessionContext | None:
+    """Turn the Leafout cookie into a session for this request. None when it cannot be (the request is anonymous)."""
+    rc = await get_request_context(request)
+
+    async def gate() -> bool:
+        try:
+            await container.rate_limiter.check(
+                "auth_bridge", rc.ip_hash, subnet_hash(container.ip_hash_key, rc.client_ip)
+            )
+        except RateLimited:
+            return False
+        return True
+
+    result = await container.auth.leafout_bridge(
+        cookie, ip_hash=rc.ip_hash, user_agent=request.headers.get("user-agent"), gate=gate
+    )
+    if result.issue is not None:
+        state[_ISSUE_KEY] = result.issue
+    signed = result.signed_in
+    if signed is None or signed.session is None:
+        return None
+    remember_session(request.scope, signed.token)
+    return SessionContext(user=signed.user, session=signed.session, token=signed.token, refreshed=False)
+
+
+async def _resolve_auth(
+    request: Request, container: Container, state: dict[str, Any]
+) -> SessionContext | None:
+    auth = container.auth
+    settings = container.settings
+    found = await auth.sessions.resolve(request.cookies.get(settings.auth.cookie_name))
+    if state.get(_NO_BRIDGE_KEY) is True or not _bridge_applies(request, container):
+        return found
+    cookie = request.cookies.get(settings.auth.supabase_cookie)
+    if found is None:
+        if not cookie or _held(request, cookie):
+            return None
+        return await _bridge(request, container, cookie, state)
+    review = await auth.review_leafout_session(found, cookie)
+    if review.action == "keep":
+        return found
+    if review.action == "slide":
+        return SessionContext(
+            user=found.user,
+            session=await auth.slide_verified(found.session),
+            token=found.token,
+            refreshed=found.refreshed,
+        )
+    # end, reauth and swap all end this session; the browser's copy of the cookie goes with it.
+    await auth.end_session(found.token)
+    forget_session(request.scope)
+    if review.action == "swap" and cookie:
+        return await _bridge(request, container, cookie, state)
+    if review.action == "reauth":
+        state[_REAUTH_KEY] = True
+    return None
+
+
 async def get_auth_context(request: Request) -> SessionContext | None:
-    """The live sign-in behind the session cookie, or None (no cookie, unknown, expired). Resolved once per request."""
+    """The live sign-in behind the session cookie, or None (no cookie, unknown, expired). Resolved once per request.
+
+    With Leafout sign-in configured this is also where the site's cookie is bridged and reviewed (see the module docstring).
+    """
     state = _state(request.scope)
     cached = state.get(_AUTH_KEY, _UNSET)
     if cached is not _UNSET:
         found: SessionContext | None = cached
         return found
     container = get_container(request)
-    token = request.cookies.get(container.settings.auth.cookie_name)
-    resolved = await container.auth.sessions.resolve(token)
+    resolved = await _resolve_auth(request, container, state)
     state[_AUTH_KEY] = resolved
     if resolved is not None:
         context.user_id.set(resolved.user.id)
     return resolved
+
+
+def suppress_bridge(request: Request) -> None:
+    """Never turn the Leafout cookie into a session on this request (sign-out must not sign anyone in on its way)."""
+    _state(request.scope)[_NO_BRIDGE_KEY] = True
+
+
+def leafout_flags(request: Request) -> tuple[bool, str | None]:
+    """``(reauth, sign_in_issue)`` noted while this request's session was decided (see the module docstring)."""
+    state = _state(request.scope)
+    issue = state.get(_ISSUE_KEY)
+    return state.get(_REAUTH_KEY) is True, issue if isinstance(issue, str) else None
 
 
 async def get_current_user(request: Request) -> User | None:
@@ -242,7 +351,10 @@ async def unlimited(request: Request, container: Container) -> bool:
         return cached
     settings = container.settings
     answer = False
-    if settings.guard.has_unlimited and request.cookies.get(settings.auth.cookie_name):
+    has_cookie = request.cookies.get(settings.auth.cookie_name) or (
+        settings.auth.leafout_enabled and request.cookies.get(settings.auth.supabase_cookie)
+    )
+    if settings.guard.has_unlimited and has_cookie:
         try:
             user = await get_current_user(request)
         except Exception:  # not worth failing the request: the limits apply to anyone we cannot name
@@ -307,11 +419,13 @@ __all__ = [
     "get_auth_context",
     "get_current_user",
     "get_request_context",
+    "leafout_flags",
     "new_request_id",
     "owner_required",
     "require_profile_access",
     "require_user",
     "sanitize_request_id",
+    "suppress_bridge",
     "unlimited",
     "user_or_anonymous",
 ]

@@ -12,6 +12,7 @@ import type { MeEntitlements, MeProfile, MeUser } from '../../shared/auth';
 import { entitlementText } from '../billing/format';
 import { NARROW_QUERY, initials, timeAgo, useMediaQuery } from '../lib/ui';
 import { actions, useApp } from '../store';
+import { offersSignIn } from './links';
 import { Sheet } from './Sheet';
 import { signInSheet, useMe } from './useMe';
 import '../styles/auth.css';
@@ -24,7 +25,7 @@ export function AccountMenu({ className }: { className?: string }) {
   const onPricing = useApp((s) => s.view === 'pricing');
   if (!loaded) return null;
   if (!user) {
-    if (!providers.google && !providers.magic) return null;
+    if (!offersSignIn(providers)) return null;
     return (
       <>
         {/* the plans are open to everyone; the link makes room for the account control on a phone */}
@@ -39,7 +40,7 @@ export function AccountMenu({ className }: { className?: string }) {
       </>
     );
   }
-  return <Account user={user} profiles={profiles} entitlements={entitlements} signOut={signOut} className={className} />;
+  return <Account user={user} profiles={profiles} entitlements={entitlements} signOut={signOut} viaLeafout={providers.leafout} className={className} />;
 }
 
 interface AccountProps {
@@ -47,10 +48,12 @@ interface AccountProps {
   profiles: MeProfile[];
   entitlements: MeEntitlements;
   signOut: () => Promise<void>;
+  /** Signed in through the Leafout account: "Sign out" goes to `/signout`, which ends both sides. */
+  viaLeafout: boolean;
   className?: string;
 }
 
-function Account({ user, profiles, entitlements, signOut, className }: AccountProps) {
+function Account({ user, profiles, entitlements, signOut, viaLeafout, className }: AccountProps) {
   const narrow = useMediaQuery(NARROW_QUERY);
   const currentId = useApp((s) => s.profile?.id);
   const [open, setOpen] = useState(false);
@@ -62,7 +65,7 @@ function Account({ user, profiles, entitlements, signOut, className }: AccountPr
   const menuId = useId();
   const nameId = useId();
 
-  const name = user.name?.trim() || user.email.split('@')[0];
+  const name = user.name?.trim() || user.email?.split('@')[0] || 'Your account';
 
   // A pointer anywhere outside the control closes the dropdown (the sheet has its own scrim).
   useEffect(() => {
@@ -75,7 +78,7 @@ function Account({ user, profiles, entitlements, signOut, className }: AccountPr
   }, [open, narrow]);
 
   // The menu's items, in page order.
-  const menuItems = () => Array.from(menu.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not([disabled])') ?? []);
+  const menuItems = () => Array.from(menu.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? []);
 
   // Opening the dropdown moves focus onto its first item.
   useEffect(() => {
@@ -106,7 +109,7 @@ function Account({ user, profiles, entitlements, signOut, className }: AccountPr
 
   const onMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const list = menuItems();
-    const at = list.indexOf(document.activeElement as HTMLButtonElement);
+    const at = list.indexOf(document.activeElement as HTMLElement);
     const focusAt = (i: number) => list[(i + list.length) % list.length]?.focus();
     switch (e.key) {
       case 'ArrowDown':
@@ -143,7 +146,7 @@ function Account({ user, profiles, entitlements, signOut, className }: AccountPr
         <p className="auth-menu-name" id={nameId}>
           {name}
         </p>
-        <p className="auth-menu-email">{user.email}</p>
+        <p className="auth-menu-email">{user.email ?? 'Signed in with your phone'}</p>
 
         {profiles.length > 0 && (
           <div role={asMenu ? 'group' : undefined} aria-label="Your profiles" className="auth-menu-group">
@@ -186,9 +189,15 @@ function Account({ user, profiles, entitlements, signOut, className }: AccountPr
           {problem}
         </p>
 
-        <button type="button" role={role} tabIndex={asMenu ? -1 : undefined} className="auth-item auth-item-out" disabled={busy !== null} onClick={() => void leave()}>
-          <span className="auth-item-label">{busy === 'out' ? 'Signing out…' : 'Sign out'}</span>
-        </button>
+        {viaLeafout ? (
+          <a role={role} tabIndex={asMenu ? -1 : undefined} className="auth-item auth-item-out" href="/signout">
+            <span className="auth-item-label">Sign out</span>
+          </a>
+        ) : (
+          <button type="button" role={role} tabIndex={asMenu ? -1 : undefined} className="auth-item auth-item-out" disabled={busy !== null} onClick={() => void leave()}>
+            <span className="auth-item-label">{busy === 'out' ? 'Signing out…' : 'Sign out'}</span>
+          </button>
+        )}
       </>
     );
   };

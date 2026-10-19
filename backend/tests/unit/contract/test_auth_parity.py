@@ -61,13 +61,13 @@ def test_an_anonymous_me_has_no_user_key_at_all() -> None:
     body = auth.MeResponse(
         profiles=[],
         entitlements=auth.MeEntitlements(credits=0, freeMatchAvailable=False),
-        providers=auth.MeProviders(google=True, magic=False),
+        providers=auth.MeProviders(google=True, magic=False, leafout=False),
         anonymousMatch=False,
     ).to_dict()
     assert body == {
         "profiles": [],
         "entitlements": {"credits": 0, "freeMatchAvailable": False},
-        "providers": {"google": True, "magic": False},
+        "providers": {"google": True, "magic": False, "leafout": False},
         "anonymousMatch": False,
     }
 

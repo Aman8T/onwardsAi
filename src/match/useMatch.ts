@@ -98,16 +98,29 @@ function readDraft(): MatchState['draft'] {
 }
 
 let draftTimer: ReturnType<typeof setTimeout> | undefined;
+let unsavedDraft: MatchState['draft'] | null = null;
+function storeDraft(draft: MatchState['draft']) {
+  try {
+    if (draft.text || draft.url) localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    else localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* storage blocked: the draft lives for this page only */
+  }
+}
 function writeDraft(draft: MatchState['draft']) {
   clearTimeout(draftTimer);
+  unsavedDraft = draft;
   draftTimer = setTimeout(() => {
-    try {
-      if (draft.text || draft.url) localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-      else localStorage.removeItem(DRAFT_KEY);
-    } catch {
-      /* storage blocked: the draft lives for this page only */
-    }
+    unsavedDraft = null;
+    storeDraft(draft);
   }, 300);
+}
+// Leaving for the sign-in page within the debounce must not lose the pasted posting: the draft is read back on return.
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => {
+    if (unsavedDraft) storeDraft(unsavedDraft);
+    unsavedDraft = null;
+  });
 }
 
 const idleResume = (): ResumeState => ({ status: 'idle', saving: new Set() });

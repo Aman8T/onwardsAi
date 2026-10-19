@@ -612,8 +612,9 @@ class Container:
                 "match_anonymous",
                 allowed=match_anonymous,
                 setting=settings.match.allow_anonymous,
-                google=auth.providers[0],
-                magic=auth.providers[1],
+                google=auth.providers.google,
+                magic=auth.providers.magic,
+                leafout=auth.providers.leafout,
             )
 
             # ── background work: never blocks startup ──

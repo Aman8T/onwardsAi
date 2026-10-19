@@ -14,9 +14,10 @@ live sign-in: no cookie, an unknown or malformed token, an expired session (whic
 from __future__ import annotations
 
 import dataclasses
+import hashlib
 import secrets
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Final
 
 from starlette.responses import Response
@@ -77,9 +78,20 @@ class SessionService:
         return timedelta(days=self._settings.session_days)
 
     async def start(
-        self, user_id: str, *, ip_hash: str | None, user_agent: str | None
+        self,
+        user_id: str,
+        *,
+        ip_hash: str | None,
+        user_agent: str | None,
+        source: str | None = None,
+        supabase_session_id: str | None = None,
+        verified_at: datetime | None = None,
     ) -> tuple[str, StoredAuthSession]:
-        """Sign ``user_id`` in: store a session and return the cookie token (shown once, here) with its row."""
+        """Sign ``user_id`` in: store a session and return the cookie token (shown once, here) with its row.
+
+        ``source="supabase"`` marks a session started from the Leafout site's cookie (``verified_at`` is when that
+        cookie vouched for it); the app's own sign-ins leave all three out.
+        """
         token = new_token()
         now = self._clock.now()
         record = StoredAuthSession(
@@ -90,6 +102,9 @@ class SessionService:
             last_seen_at=now,
             ip_hash=ip_hash,
             user_agent=clip_user_agent(user_agent),
+            source=source,
+            supabase_session_id=supabase_session_id,
+            verified_at=verified_at,
         )
         await self._users.create_session(record)
         return token, record
@@ -118,6 +133,12 @@ class SessionService:
                 session = dataclasses.replace(session, last_seen_at=now, expires_at=expires_at)
                 refreshed = True
         return SessionContext(user=user, session=session, token=token, refreshed=refreshed)
+
+    async def mark_verified(self, session: StoredAuthSession) -> StoredAuthSession:
+        """Slide ``verified_at`` to now (the site's cookie vouched for the session again); the updated row."""
+        now = self._clock.now()
+        await self._users.mark_session_verified(session.id, now)
+        return dataclasses.replace(session, verified_at=now)
 
     async def end(self, token: str | None) -> bool:
         """Sign out: delete the session behind a cookie value. True when there was one."""
@@ -158,15 +179,48 @@ def clear_session_cookie(response: Response, settings: Settings) -> None:
     )
 
 
+BRIDGE_HOLD_COOKIE = "tayyari_bridge_hold"
+BRIDGE_HOLD_SECONDS = 600
+
+
+def bridge_hold_value(site_token: str) -> str:
+    """A short fingerprint of the site's access token, so a hold matches only that exact (stale) token."""
+    return hashlib.sha256(site_token.encode("utf-8")).hexdigest()[:32]
+
+
+def set_bridge_hold(response: Response, site_token: str | None, settings: Settings) -> None:
+    """After sign-out or deletion, refuse to bridge this browser's *current* site token for a few minutes.
+
+    The site clears its ``.leafout.in`` cookie a moment later (its ``/signout`` or ``/account/delete-finish``); until
+    then any request would otherwise turn the old token back into a session. A new sign-in brings a new token, which
+    the hold does not match, so signing back in works at once.
+    """
+    if not site_token:
+        return
+    response.set_cookie(
+        BRIDGE_HOLD_COOKIE,
+        bridge_hold_value(site_token),
+        max_age=BRIDGE_HOLD_SECONDS,
+        path="/",
+        httponly=True,
+        samesite="lax",
+        secure=cookies_are_secure(settings),
+    )
+
+
 __all__ = [
+    "BRIDGE_HOLD_COOKIE",
+    "BRIDGE_HOLD_SECONDS",
     "TOKEN_MAX_CHARS",
     "TOUCH_INTERVAL",
     "SessionContext",
     "SessionService",
+    "bridge_hold_value",
     "clear_session_cookie",
     "clip_user_agent",
     "cookies_are_secure",
     "hash_token",
     "new_token",
+    "set_bridge_hold",
     "set_session_cookie",
 ]

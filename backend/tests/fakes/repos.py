@@ -60,6 +60,7 @@ from tayyari.storage.ports import (
     ChatSession,
     ConsumeOutcome,
     ConsumeSource,
+    EmailTaken,
     MatchListing,
     OpenProfile,
     OwnedProfile,
@@ -686,7 +687,7 @@ class FakePortfolioRepo:
 @dataclass
 class _User:
     id: str
-    email: str
+    email: str | None
     name: str | None
     picture_url: str | None
     google_sub: str | None
@@ -694,6 +695,7 @@ class _User:
     last_login_at: datetime
     locale: str | None
     currency: str | None
+    supabase_sub: str | None = None
 
     def view(self) -> StoredUser:
         return StoredUser(
@@ -706,6 +708,7 @@ class _User:
             last_login_at=self.last_login_at,
             locale=self.locale,
             currency=self.currency,
+            supabase_sub=self.supabase_sub,
         )
 
 
@@ -720,7 +723,7 @@ class FakeUserRepo:
     def _by_email(self, email: str) -> _User | None:
         return next((u for u in self.users.values() if u.email == email), None)
 
-    def _create(self, *, email: str, now: datetime, **fields: Any) -> _User:
+    def _create(self, *, email: str | None, now: datetime, **fields: Any) -> _User:
         user = _User(
             id=secrets.token_hex(16),
             email=email,
@@ -731,6 +734,7 @@ class FakeUserRepo:
             last_login_at=now,
             locale=fields.get("locale"),
             currency=None,
+            supabase_sub=fields.get("supabase_sub"),
         )
         self.users[user.id] = user
         return user
@@ -776,6 +780,29 @@ class FakeUserRepo:
         user.last_login_at = now
         return user.view()
 
+    async def sign_in_supabase(
+        self, *, sub: str, email: str | None, email_verified: bool, name: str | None, now: datetime
+    ) -> StoredUser:
+        await _yield()
+        verified = email if email_verified and email else None
+        user = next((u for u in self.users.values() if u.supabase_sub == sub), None)
+        if user is not None:
+            user.last_login_at = now
+            user.name = user.name or name
+            if verified is not None and user.email != verified and self._by_email(verified) is None:
+                user.email = verified
+            return user.view()
+        if verified is not None:
+            holder = self._by_email(verified)
+            if holder is not None and holder.supabase_sub is None:
+                holder.supabase_sub = sub
+                holder.last_login_at = now
+                holder.name = holder.name or name
+                return holder.view()
+            if holder is not None:
+                raise EmailTaken(holder.id)
+        return self._create(email=verified, now=now, name=name, supabase_sub=sub).view()
+
     async def update(
         self, user_id: str, *, name: str | None = None, currency: str | None = None
     ) -> StoredUser | None:
@@ -805,7 +832,7 @@ class FakeUserRepo:
         ]:
             del self._portfolios.portfolios[pid]
         self.sessions = {k: v for k, v in self.sessions.items() if v.user_id != user_id}
-        self.links = {k: v for k, v in self.links.items() if v.email != user.email}
+        self.links = {k: v for k, v in self.links.items() if user.email is None or v.email != user.email}
         return True
 
     async def create_session(self, rec: StoredAuthSession) -> None:
@@ -827,6 +854,12 @@ class FakeUserRepo:
             self.sessions[session_id] = dataclasses.replace(
                 session, last_seen_at=last_seen_at, expires_at=expires_at
             )
+
+    async def mark_session_verified(self, session_id: str, verified_at: datetime) -> None:
+        await _yield()
+        session = self.sessions.get(session_id)
+        if session is not None:
+            self.sessions[session_id] = dataclasses.replace(session, verified_at=verified_at)
 
     async def delete_session(self, session_id: str) -> bool:
         await _yield()

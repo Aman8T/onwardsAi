@@ -269,6 +269,17 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     - **Without a server,** `/dev/prepare?state=…` holds every state (full, stream, streaming, standing, error,
       refused, thin, requirement, no-github, no-headline, conflict, phone); add `&scheme=dark` for the dark scheme.
 
+19. **Leafout sign-in** (real domains only: localhost cannot share the `.leafout.in` cookie). Sign in on
+    https://leafout.in, then open https://app.leafout.in: you are signed in, with no click.
+    - **Pricing round trip.** Signed out, open `/pricing` on app.leafout.in and press a plan's Buy button: you go to
+      the site's sign-in. After signing in you are back on `/pricing` with the same plan and currency selected, and
+      nothing is charged. Checkout starts only when you press Buy again.
+    - **Sign out.** Sign out from the app's account menu. The app ends its session and the site's sign-out follows.
+      Then open app.leafout.in and leafout.in: both show you signed out.
+    - **Delete.** On the site's account page, choose "Delete my account". The app asks "Also delete your Leafout app
+      data?" and deletes nothing until you confirm. Afterwards the site says "Your account was deleted", and neither
+      app.leafout.in nor leafout.in signs you in.
+
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`), except the
 role's, which Prepare changed on purpose (no percentage).

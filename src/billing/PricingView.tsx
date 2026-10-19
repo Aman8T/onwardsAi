@@ -12,9 +12,10 @@
  * The payment itself is `Checkout.tsx`; Checkout.js is on the page only while this page is.
  */
 import { motion, useReducedMotion } from 'motion/react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Currency, Product } from '../../shared/billing';
 import { AccountMenu } from '../auth/AccountMenu';
+import { SignInLink } from '../auth/SignInLink';
 import { signInSheet, useMe } from '../auth/useMe';
 import { Atmosphere } from '../components/Atmosphere';
 import { Brand } from '../components/Brand';
@@ -23,7 +24,7 @@ import { actions, useApp } from '../store';
 import { CheckoutNotice, isBusy, useCheckout, useCheckoutScript } from './Checkout';
 import { EntitlementChip } from './EntitlementChip';
 import { formatPrice } from './format';
-import { parseCheckoutReturn } from './route';
+import { PRICING_PATH, parseCheckoutReturn, parsePreselect, preselectPath } from './route';
 import { useEntitlements } from './useEntitlements';
 import '../styles/billing.css';
 
@@ -78,17 +79,47 @@ export function PricingView() {
   const checkout = useCheckout({ onSettled: settle, onSignInNeeded: needSignIn });
   const { restore } = checkout;
 
-  // back from Stripe: say what happened, then take the marker out of the address so a reload does not repeat it
+  // what a signed-out visitor chose before signing in: shown selected, never bought without another click
+  const [preselect] = useState(() => parsePreselect(window.location.search));
+  const setCurrency = ent.setCurrency;
   useEffect(() => {
+    if (preselect.currency) setCurrency(preselect.currency);
+    if (!preselect.product && !preselect.currency) return;
     try {
-      const returned = parseCheckoutReturn(window.location.search);
-      if (!returned) return;
-      restore(returned === 'success' ? 'pending' : 'cancelled');
+      const url = new URL(window.location.href);
+      url.searchParams.delete('product');
+      url.searchParams.delete('currency');
+      window.history.replaceState(null, '', url.pathname + url.search);
+    } catch {
+      /* no address bar to read */
+    }
+  }, [preselect, setCurrency]);
+
+  // back from Stripe: say what happened, then take the marker out of the address so a reload does not repeat it.
+  // Signed out (the session did not survive the trip), the page cannot show the plan: it asks to sign in instead.
+  const [paidSignedOut, setPaidSignedOut] = useState(false);
+  const returned = useRef<string | null | undefined>(undefined);
+  if (returned.current === undefined) returned.current = parseCheckoutReturn(window.location.search);
+  const handled = useRef(false);
+  const meLoaded = me.status === 'ready' || me.status === 'error';
+  const signedIn = !!me.user;
+  useEffect(() => {
+    if (handled.current || !returned.current || !meLoaded) return;
+    handled.current = true;
+    if (returned.current === 'success' && !signedIn) setPaidSignedOut(true);
+    else restore(returned.current === 'success' ? 'pending' : 'cancelled');
+    try {
       window.history.replaceState(null, '', window.location.pathname);
     } catch {
       /* no address bar to read */
     }
-  }, [restore]);
+  }, [restore, meLoaded, signedIn]);
+  useEffect(() => {
+    if (signedIn && paidSignedOut) {
+      setPaidSignedOut(false);
+      restore('pending');
+    }
+  }, [signedIn, paidSignedOut, restore]);
 
   // the page title and the heading take focus, like a new screen
   useEffect(() => {
@@ -103,9 +134,19 @@ export function PricingView() {
   const busy = isBusy(checkout.state.phase);
   // INR waits for Checkout.js (a failed load is let through: the click then says so, before any order exists)
   const ready = me.loaded && ent.loaded && !busy && (ent.currency !== 'INR' || script !== 'loading');
+  // the chosen plan takes focus once the page is ready, so Enter completes what was started before sign-in
+  const focused = useRef(false);
+  useEffect(() => {
+    if (!preselect.product || !ready || focused.current) return;
+    focused.current = true;
+    const el = document.getElementById(`bl-buy-${preselect.product}`);
+    el?.focus({ preventScroll: true });
+    el?.scrollIntoView({ block: 'center' });
+  }, [preselect.product, ready]);
   const buy = (product: Product) => {
     if (!me.user) {
-      signInSheet.open('buy');
+      // the choice rides along in `next`, so the page comes back with the plan selected (and still unbought)
+      signInSheet.open('buy', undefined, preselectPath(product, ent.currency));
       return;
     }
     void checkout.start(product, ent.currency);
@@ -162,6 +203,17 @@ export function PricingView() {
             </div>
           )}
 
+          {paidSignedOut && (
+            <div className="bl-notice" role="status" aria-live="polite">
+              <p>Payment received. Sign in to see it.</p>
+              <div className="bl-notice-actions">
+                <SignInLink className="btn btn-primary btn-sm" path={PRICING_PATH} reason="buy">
+                  Sign in
+                </SignInLink>
+              </div>
+            </div>
+          )}
+
           <CheckoutNotice
             state={checkout.state}
             entitlements={{ credits: ent.credits, passUntil: ent.passUntil, freeMatchAvailable: ent.freeMatchAvailable }}
@@ -200,6 +252,7 @@ export function PricingView() {
               enabled={ready}
               onBuy={buy}
               busyHere={busy && checkout.state.product === 'pack3'}
+              selected={preselect.product === 'pack3'}
             />
 
             <Plan
@@ -216,6 +269,7 @@ export function PricingView() {
               enabled={ready}
               onBuy={buy}
               busyHere={busy && checkout.state.product === 'pass30'}
+              selected={preselect.product === 'pass30'}
             />
           </section>
 
@@ -272,13 +326,15 @@ interface PlanProps {
   primary?: boolean;
   enabled: boolean;
   busyHere: boolean;
+  /** Chosen before signing in: marked, and its button takes focus. */
+  selected?: boolean;
   onBuy: (product: Product) => void;
 }
 
-function Plan({ id, kicker, sub, items, price, currency, unit, otherPrice, otherCurrency, cta, primary, enabled, busyHere, onBuy }: PlanProps) {
+function Plan({ id, kicker, sub, items, price, currency, unit, otherPrice, otherCurrency, cta, primary, enabled, busyHere, selected, onBuy }: PlanProps) {
   const onSale = price !== undefined;
   return (
-    <article className={['panel bl-plan', primary && 'is-featured'].filter(Boolean).join(' ')} aria-labelledby={`bl-${id}`}>
+    <article className={['panel bl-plan', (primary || selected) && 'is-featured'].filter(Boolean).join(' ')} aria-labelledby={`bl-${id}`} aria-current={selected ? 'true' : undefined}>
       <header className="bl-plan-head">
         <p className="kicker" id={`bl-${id}`}>
           {kicker}
@@ -300,7 +356,7 @@ function Plan({ id, kicker, sub, items, price, currency, unit, otherPrice, other
       </header>
       <PlanList items={items} />
       <div className="bl-plan-foot">
-        <button type="button" className={['btn', primary && 'btn-primary'].filter(Boolean).join(' ')} disabled={!onSale || !enabled} onClick={() => onBuy(id)}>
+        <button id={`bl-buy-${id}`} type="button" className={['btn', primary && 'btn-primary'].filter(Boolean).join(' ')} disabled={!onSale || !enabled} onClick={() => onBuy(id)}>
           {!onSale ? 'Coming soon' : busyHere ? 'One moment…' : cta}
         </button>
       </div>

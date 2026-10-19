@@ -256,6 +256,11 @@ def test_the_spec_lists_these_sensitive_keys() -> None:
         "body",
         "raw",
         "excerpt",
+        "token",
+        "access_token",
+        "refresh_token",
+        "cookie",
+        "authorization",
     }
 
 

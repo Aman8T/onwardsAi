@@ -23,7 +23,7 @@ import re
 import tempfile
 from functools import cached_property, lru_cache
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 import platformdirs
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr, field_validator
@@ -39,6 +39,7 @@ SynthCache = Literal["off", "system", "system+data"]
 CacheTtl = Literal["5m", "1h"]
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
 AnonymousMatch = Literal["auto", "true", "false"]
+SupabaseVerify = Literal["auto", "jwks", "user_endpoint"]
 
 _CLOUD_MARKERS = ("FASTAPICLOUD_DEPLOYMENT_ID", "FASTAPI_PUBLIC_URL")
 _EMAIL_SEPARATORS = re.compile(r"[,;\s]+")
@@ -192,6 +193,15 @@ class GuardSettings(BaseModel):
     """Spend reserved before a headline is rewritten for a plan's role (one short call of the chat model)."""
     chat_global_per_hour: int = Field(default=600, ge=0)
     """Backstop on chat turns per hour across all clients (shared counter)."""
+    auth_bridge_per_minute: int = Field(default=10, ge=0)
+    auth_bridge_per_hour: int = Field(default=30, ge=0)
+    """Times one client may ask the app to turn the Leafout site's cookie into an app session, per window (0 = not enforced).
+    Counted only when the cookie's token has passed every local check and Supabase is about to be asked; over the limit the
+    request is simply anonymous."""
+    auth_bridge_global_per_hour: int = Field(default=600, ge=0)
+    """Backstop on those sign-ins per hour across all clients (shared counter)."""
+    auth_bridge_per_sub_per_day: int = Field(default=50, ge=0)
+    """Sessions one Leafout account may have started per day (0 = not enforced); keyed by a keyed hash, never the id."""
     chat_streams_per_ip: int = Field(default=2, ge=0)
     """Concurrent chat streams one client may hold open (per replica)."""
     chat_streams_per_process: int = Field(default=24, ge=0)
@@ -288,6 +298,16 @@ def _default_public_url() -> str:
     return _origin(raw) if raw else "http://localhost:5173"
 
 
+class OwnProviders(Protocol):
+    """What `MatchSettings.anonymous_allowed` reads of `auth.service.Providers` (core cannot import it)."""
+
+    @property
+    def google(self) -> bool: ...
+
+    @property
+    def magic(self) -> bool: ...
+
+
 class AuthSettings(BaseModel):
     """Accounts and sign-in: `TAYYARI_AUTH__*`. The Google and Resend credentials are top-level secrets below."""
 
@@ -303,6 +323,30 @@ class AuthSettings(BaseModel):
     """Where the app is reached from outside: the base of the emailed link and of Google's callback URL
     (``<public_url>/api/auth/google/callback``). Default: ``FASTAPI_PUBLIC_URL``, else ``http://localhost:5173``."""
 
+    supabase_url: str | None = None
+    """The Supabase project URL behind the Leafout site's sign-in (``https://<ref>.supabase.co``). Unset: Leafout sign-in is
+    off. Blank counts as unset; a trailing slash is dropped."""
+    supabase_publishable_key: str | None = None
+    """The project's publishable (anon) key, sent as ``apikey`` on the call to Supabase's user endpoint. It is public (it
+    ships in the site's bundle), so it is plain text and not a secret, but it is still a setting and never code."""
+    supabase_cookie: str = "leafout-access"
+    """The name of the cookie on ``.leafout.in`` that carries the site's access token. It must match the site."""
+    supabase_verify: SupabaseVerify = "auto"
+    """How a token's signature is checked: ``jwks`` (the project's public keys), ``user_endpoint`` (Supabase itself
+    validates the token), or ``auto`` (``jwks`` when the project publishes an ES256 or RS256 key, else ``user_endpoint``)."""
+    supabase_max_token_age_s: int = Field(default=3600, ge=60)
+    """The oldest ``iat`` a token may have (Supabase's access-token lifetime). Refuses a token minted with a long expiry."""
+    supabase_recheck_hours: int = Field(default=24, ge=1)
+    """How long a session made from the site's cookie goes before it must see a valid site cookie again."""
+    supabase_sign_in_url: str | None = None
+    """The site's sign-in page (``https://leafout.in/signin``). Setting it is what lets the web app offer the link."""
+    supabase_sign_out_url: str | None = None
+    """The site's sign-out page (``https://leafout.in/signout``)."""
+    own_sign_in: bool = False
+    """Offer the app's own Google and emailed-link sign-in. Off by default: the site's sign-in is the app's sign-in."""
+    redirect_other_hosts: bool = False
+    """308 page requests (not ``/api/*``) on any host other than the public URL's to the same path on the public URL."""
+
     @field_validator("public_url", mode="before")
     @classmethod
     def _tidy_public_url(cls, v: object) -> object:
@@ -312,6 +356,33 @@ class AuthSettings(BaseModel):
                 raise PydanticUseDefault()
             return _origin(v)
         return v
+
+    @field_validator(
+        "supabase_url",
+        "supabase_publishable_key",
+        "supabase_sign_in_url",
+        "supabase_sign_out_url",
+        mode="before",
+    )
+    @classmethod
+    def _blank_is_unset(cls, v: object) -> object:
+        """Blank is unset; a trailing slash is dropped from the project URL and the site's pages."""
+        if isinstance(v, str):
+            cleaned = v.strip()
+            return cleaned.rstrip("/") if cleaned else None
+        return v
+
+    @field_validator("supabase_cookie", "supabase_verify", mode="before")
+    @classmethod
+    def _blank_keeps_the_default(cls, v: object) -> object:
+        if isinstance(v, str) and not v.strip():
+            raise PydanticUseDefault()
+        return v.strip() if isinstance(v, str) else v
+
+    @property
+    def leafout_enabled(self) -> bool:
+        """Sign in with the Leafout account works here: the project URL, its publishable key and the site's sign-in page are set."""
+        return bool(self.supabase_url and self.supabase_publishable_key and self.supabase_sign_in_url)
 
 
 class BillingSettings(BaseModel):
@@ -359,8 +430,8 @@ class MatchSettings(BaseModel):
     """The longest one classification call may take before its stage settles for the honest default (unknown,
     uncertain, the fact's own wording)."""
     allow_anonymous: AnonymousMatch = "auto"
-    """Whether a visitor with no sign-in may match a posting. ``auto``: exactly when this server offers no way to
-    sign in (neither Google nor an emailed link), because then an account is not something a person can get. ``true``:
+    """Whether a visitor with no sign-in may match a posting. ``auto``: exactly when this server offers none of the
+    app's OWN ways to sign in (Google, an emailed link); the Leafout account does not count, because seeing a gap is free. ``true``:
     always. ``false``: never (every `/api/match*` route answers 401 without a session). `anonymous_allowed` resolves it."""
 
     @field_validator("model", "writer_model", mode="before")
@@ -382,11 +453,12 @@ class MatchSettings(BaseModel):
             return v.strip().lower()
         return v
 
-    def anonymous_allowed(self, providers: tuple[bool, bool]) -> bool:
-        """The setting resolved for a server whose sign-in methods are ``providers`` (``(google, magic)``, as
-        `AuthService.providers` reports them): ``auto`` is true exactly when neither is available."""
+    def anonymous_allowed(self, providers: OwnProviders) -> bool:
+        """The setting resolved for a server whose sign-in methods are ``providers`` (`auth.service.Providers`): ``auto`` is
+        true exactly when neither of the app's OWN methods (Google, emailed link) is available. Sign-in with the Leafout
+        account does not count: seeing a gap is free, and only saving, buying and the account itself need a sign-in."""
         if self.allow_anonymous == "auto":
-            return providers == (False, False)
+            return not (providers.google or providers.magic)
         return self.allow_anonymous == "true"
 
 
@@ -781,6 +853,7 @@ class Settings(BaseSettings):
             "jev_model": self.jev.model,
             "github_token": self.github_token is not None,
             "google_oauth": self.google_enabled,
+            "leafout_sign_in": self.auth.leafout_enabled,
             "resend_key": self.resend_api_key is not None,
             "razorpay": self.razorpay_enabled,
             "razorpay_webhooks": self.razorpay_webhooks_enabled,
@@ -812,6 +885,7 @@ __all__ = [
     "LogLevel",
     "MatchSettings",
     "ModelNames",
+    "OwnProviders",
     "RetentionSettings",
     "Settings",
     "SynthCache",

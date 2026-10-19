@@ -12,6 +12,11 @@ the web app can say so on the sign-in sheet. Every redirect target is a path on 
 State-changing methods are covered by the cross-site guard (`api.security.CrossSiteGuard`), the session cookie is
 SameSite=Lax, and the JSON body of ``/magic`` needs ``Content-Type: application/json``.
 
+The app's own Google and emailed-link paths are off unless ``TAYYARI_AUTH__OWN_SIGN_IN`` is set (the Leafout site's sign-in
+is the app's sign-in, see `api.deps`): while off, Google's start and callback redirect to ``/?auth=google_unavailable``,
+``POST /api/auth/magic`` answers 404 ``{"error": "not_offered"}`` and the link's verify redirects to ``/?auth=link_invalid``.
+Logout works either way: it ends the session and clears the cookie.
+
 The emailed link only ever goes to the address that asked for it: the 202 body carries a ``devLink`` on a local server
 with no email key and never anywhere else (`auth.magic.MagicLinks.dev_mode`).
 """
@@ -22,12 +27,17 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.responses import Response
 
-from tayyari.api.deps import get_request_context, unlimited
+from tayyari.api.deps import get_request_context, suppress_bridge, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes._body import read_model
 from tayyari.api.security import subnet_hash
 from tayyari.auth.google import CALLBACK_PATH, STATE_COOKIE, STATE_MAX_AGE_S, GoogleError
-from tayyari.auth.sessions import clear_session_cookie, cookies_are_secure, set_session_cookie
+from tayyari.auth.sessions import (
+    clear_session_cookie,
+    cookies_are_secure,
+    set_bridge_hold,
+    set_session_cookie,
+)
 from tayyari.container import Container
 from tayyari.contract.auth import MagicLinkRequest, MagicLinkResponse
 from tayyari.core.logging import get_logger
@@ -36,6 +46,7 @@ router = APIRouter()
 log = get_logger(__name__)
 
 NO_STORE = {"Cache-Control": "no-store"}
+NOT_OFFERED = "not_offered"
 
 
 def _redirect(location: str) -> RedirectResponse:
@@ -95,6 +106,8 @@ async def google_callback(request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
     await _shed(request, container, rc.ip_hash, rc.client_ip)
+    if container.auth.google is None:
+        return _failed("google_unavailable")
     params = request.query_params
     if params.get("error"):
         # The person said no on Google's page (access_denied) or Google refused: nothing to verify.
@@ -125,6 +138,8 @@ async def request_magic_link(request: Request) -> JSONResponse:
     container = get_container(request)
     rc = await get_request_context(request)
     await _shed(request, container, rc.ip_hash, rc.client_ip)
+    if not container.auth.own_sign_in:
+        return JSONResponse({"error": NOT_OFFERED}, status_code=404, headers=NO_STORE)
     body = await read_model(request, container, MagicLinkRequest)
     outcome = await container.auth.request_magic_link(body.email, rc.ip_hash)
     answer = MagicLinkResponse(ok=True, devLink=outcome.dev_link)
@@ -136,6 +151,8 @@ async def verify_magic_link(request: Request) -> Response:
     container = get_container(request)
     rc = await get_request_context(request)
     await _shed(request, container, rc.ip_hash, rc.client_ip)
+    if not container.auth.own_sign_in:
+        return _failed("link_invalid")
     signed = await container.auth.verify_magic_link(
         request.query_params.get("token", ""),
         ip_hash=rc.ip_hash,
@@ -151,11 +168,15 @@ async def verify_magic_link(request: Request) -> Response:
 @router.post("/api/auth/logout")
 async def logout(request: Request) -> Response:
     container = get_container(request)
+    suppress_bridge(request)  # signing out must never sign the site's cookie in on its way
     rc = await get_request_context(request)
     await _shed(request, container, rc.ip_hash, rc.client_ip)
     await container.auth.sessions.end(request.cookies.get(container.settings.auth.cookie_name))
     response = Response(status_code=204, headers=NO_STORE)
     clear_session_cookie(response, container.settings)
+    set_bridge_hold(
+        response, request.cookies.get(container.settings.auth.supabase_cookie), container.settings
+    )
     return response
 
 

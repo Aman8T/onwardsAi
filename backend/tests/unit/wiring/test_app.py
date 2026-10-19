@@ -17,6 +17,7 @@ from tayyari.api import app as app_module
 from tayyari.api.app import create_app
 from tayyari.api.deps import RequestIdMiddleware
 from tayyari.api.security import CrossSiteGuard, SecurityHeadersMiddleware
+from tayyari.api.session_cookie import SessionCookieMiddleware
 from tayyari.container import ContainerOverrides
 from tayyari.core.settings import Settings
 from tests.unit.wiring.support import BASE_URL, FakeAnalysis, FakeChat
@@ -63,12 +64,14 @@ def test_settings_default_to_the_process_wide_ones(
 
 
 def test_the_middlewares_are_stacked_in_the_agreed_order(make_settings: MakeSettings) -> None:
-    """Outermost first: the request id, then the security headers (so a refusal carries them), then the guard."""
+    """Outermost first: the request id, then the security headers (so a refusal carries them), then the guard, then the
+    session cookie (innermost: it only touches the response start of requests the guard let through)."""
     app = create_app(make_settings())
     assert [m.cls for m in app.user_middleware] == [
         RequestIdMiddleware,
         SecurityHeadersMiddleware,
         CrossSiteGuard,
+        SessionCookieMiddleware,
     ]
 
 

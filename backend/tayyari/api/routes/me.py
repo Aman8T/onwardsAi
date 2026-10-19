@@ -24,11 +24,18 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from starlette.responses import Response
 
-from tayyari.api.deps import User, get_auth_context, get_request_context, require_user, unlimited
+from tayyari.api.deps import (
+    User,
+    get_auth_context,
+    get_request_context,
+    leafout_flags,
+    require_user,
+    unlimited,
+)
 from tayyari.api.lifespan import get_container
 from tayyari.api.routes._body import read_model
 from tayyari.api.security import subnet_hash
-from tayyari.auth.sessions import clear_session_cookie, set_session_cookie
+from tayyari.auth.sessions import clear_session_cookie, set_bridge_hold, set_session_cookie
 from tayyari.billing.entitlements import ZERO
 from tayyari.container import Container
 from tayyari.contract.auth import (
@@ -61,9 +68,16 @@ async def _shed(request: Request, container: Container, ip_hash: str | None, cli
     )
 
 
-async def me_response(container: Container, user: User | None) -> MeResponse:
-    """The `MeResponse` for ``user`` (None: an anonymous visitor)."""
-    google, magic = container.auth.providers
+async def me_response(
+    container: Container, user: User | None, *, reauth: bool = False, sign_in_issue: str | None = None
+) -> MeResponse:
+    """The `MeResponse` for ``user`` (None: an anonymous visitor).
+
+    ``reauth``: the app just ended a session made from the Leafout site's cookie and the site sign-in must be refreshed.
+    ``sign_in_issue``: a Leafout sign-in was refused (``email_taken``).
+    """
+    providers = container.auth.providers
+    auth_settings = container.settings.auth
     profiles: list[MeProfile] = []
     if user is not None:
         owned = await container.repos.users.list_profiles(user.id)
@@ -89,8 +103,16 @@ async def me_response(container: Container, user: User | None) -> MeResponse:
             freeMatchAvailable=summary.free_match_available,
             unlimited=True if is_unlimited else None,
         ),
-        providers=MeProviders(google=google, magic=magic),
+        providers=MeProviders(
+            google=providers.google,
+            magic=providers.magic,
+            leafout=providers.leafout,
+            leafoutSignInUrl=auth_settings.supabase_sign_in_url if providers.leafout else None,
+            leafoutSignOutUrl=auth_settings.supabase_sign_out_url if providers.leafout else None,
+        ),
         anonymousMatch=container.match_anonymous,
+        reauth=True if reauth else None,
+        signInIssue="email_taken" if sign_in_issue == "email_taken" else None,
     )
 
 
@@ -104,7 +126,15 @@ async def get_me(request: Request) -> JSONResponse:
     rc = await get_request_context(request)
     await _shed(request, container, rc.ip_hash, rc.client_ip)
     signed_in = await get_auth_context(request)
-    response = _json(await me_response(container, None if signed_in is None else signed_in.user))
+    reauth, issue = leafout_flags(request)
+    response = _json(
+        await me_response(
+            container,
+            None if signed_in is None else signed_in.user,
+            reauth=reauth,
+            sign_in_issue=issue,
+        )
+    )
     if signed_in is not None and signed_in.refreshed:
         set_session_cookie(response, signed_in.token, container.settings)
     return response
@@ -148,6 +178,10 @@ async def delete_me(request: Request) -> Response:
     await container.repos.users.delete(user.id)
     response = Response(status_code=204, headers=NO_STORE)
     clear_session_cookie(response, container.settings)
+    # The site clears its cookie a moment later; until then, never bridge it back into a fresh empty account.
+    set_bridge_hold(
+        response, request.cookies.get(container.settings.auth.supabase_cookie), container.settings
+    )
     return response
 
 
