@@ -213,9 +213,25 @@ textarea.field {
   min-height: 100dvh;
 }
 
-/* Atmosphere menu (src/components/Atmosphere.tsx) */
+/* Atmosphere menu (src/components/Atmosphere.tsx), with the one-click light/dark switch in front */
 .atmo {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+}
+
+/* src/components/SchemeToggle.tsx: an icon-only button, a full 44 px target */
+.scheme-toggle {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.scheme-toggle:hover {
+  color: var(--text);
 }
 
 .atmo-btn {

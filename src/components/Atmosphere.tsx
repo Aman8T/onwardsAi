@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { CYCLE_MINUTES, useAtmoMode, useScheme } from '../theme/ambient';
+import { SchemeToggle } from './SchemeToggle';
 import type { AtmoMode, SchemeChoice } from '../theme/ambient';
 
 interface Option<T extends string> {
@@ -135,6 +136,7 @@ export function Atmosphere({ className }: { className?: string }) {
 
   return (
     <div ref={wrapRef} className={className ? `atmo ${className}` : 'atmo'}>
+      <SchemeToggle />
       <button
         ref={buttonRef}
         type="button"

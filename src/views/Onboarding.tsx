@@ -13,6 +13,7 @@ import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion/re
 import type { SourceKind } from '../../shared/types';
 import { AccountMenu } from '../auth/AccountMenu';
 import { Brand } from '../components/Brand';
+import { SchemeToggle } from '../components/SchemeToggle';
 import { IconArrowRight, IconDoc, IconMinus, IconPlus, IconUpload } from '../components/Icons';
 import { SiteFooter } from '../components/SiteFooter';
 import { CursorLight } from '../light/CursorLight';
@@ -481,6 +482,7 @@ export function Onboarding() {
             <button type="button" className="btn" onClick={() => void actions.startAnalysis({ sample: true, links: [] })}>
               Try a sample profile
             </button>
+            <SchemeToggle />
             <AccountMenu />
           </nav>
         </header>
