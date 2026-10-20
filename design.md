@@ -33,107 +33,115 @@ These are enforced by `scripts/restraint-check.ts`, not just agreed.
 
 ### 3.1 One hue, fixed lightness and chroma
 
-Every colour in the interface is `oklch(L C var(--h))` with **L and C fixed per role** and only the hue variable. Lightness fixed means WCAG contrast is fixed: dark ink at L .25 on a field at L .97 varies by a few tenths of a ratio point across the entire hue circle. Saturation, not hue, is what reads as excited, so chroma is low everywhere and the hue is free to travel.
+Every colour in the interface is `oklch(L C var(--h))` with **L and C fixed per role** and only the hue variable. Lightness fixed means WCAG contrast is fixed across the entire hue circle. The colour lives in the field (dyed, clearly coloured from the first second) and in tinted surfaces; ink stays near-neutral so reading never depends on the hue.
 
-Six custom properties drive it, registered with `@property` so they are numbers and never transitioned:
+Seven custom properties drive it, registered with `@property` so they are numbers and never transitioned:
 
 | Property | Meaning |
 |---|---|
 | `--h` | the base hue, integer degrees |
 | `--h2`, `--h3` | the side-lobe hues, ≈ `h + 35` and `h − 45`, each breathing ±10° |
+| `--h4` | the fourth lobe, `h + 70` fixed: the field fans across 115° of the wheel, never complementary (no grey mud between lobes) |
 | `--k` | global chroma multiplier: 1, or 0 under "Off" (neutral greys) |
 | `--kw` | warm-sector easing: chroma × 0.75 at hue 85, back to ×1 fifty degrees away (yellow and orange go muddy fastest) |
 | `--kb` | lobe-chroma breath, 0.85…1 |
 
-### 3.2 The roles
+### 3.2 The roles, light ("Dye on paper", 2026-10-20)
+
+The field itself is dyed; panels are pale paper of the same hue laid on top, separated by a lightness step of about .1 and a 1 px line, never a shadow. Design canvas: https://claude.ai/artifact/U8LW9zvPXdYNAT5T769WfU (the "Theme playground" board scrubs every direction and hue).
 
 | Token | L | C (× `--k`) | Hue | Use |
 |---|---|---|---|---|
-| `--bg` | .97 | .012 × `--kw` | h | the field |
-| `--lobe-1` | .90 | .044 × `--kw` × `--kb` | h2 | ambient lobe |
-| `--lobe-2` | .90 | .044 × `--kw` × `--kb` | h3 | ambient lobe |
-| `--lobe-3` | .92 | .034 × `--kw` × `--kb` | h | ambient lobe |
-| `--surface` | .99 | .004 | h | cards, popovers |
-| `--surface-2` | .955 | .016 | h | fields, chips, quiet fills |
-| `--text` | .25 | .02 | h | ink |
-| `--text-muted` | .45 | .03 | h | secondary ink (≥ 4.5:1 on every surface and lobe) |
-| `--text-faint` | .55 | .03 | h | placeholders and disabled only (≥ 3:1; never carries data) |
-| `--accent` | .50 | .08 | h | links, the serif's emphasised line |
-| `--accent-ui` | .55 | .088 | h | focus ring, icons, strokes (≥ 3:1) |
-| `--accent-strong` | .42 | .07 | h | primary button fill (surface text on it ≥ 4.5:1) |
-| `--accent-soft` | .93 | .03 | h | highlighted fills |
-| `--fill` | .55 | .088 / α .12 | h | chart fills |
-| `--grid` | .25 | .02 / α .08 | h | chart rings, dividers |
-| `--line` | .86 | .02 | h | hairlines |
-| `--line-strong` | .60 | .04 | h | emphasised hairlines, dashed drop zones (≥ 3:1) |
-| `--selection` | .88 | .055 | h | text selection |
+| `--bg` | .925 | .03 × `--kw` | h | the field |
+| `--lobe-1`, `--lobe-2` | .845 | .073 × `--kw` × `--kb` | h2, h3 | ambient lobes |
+| `--lobe-3` | .86 | .066 × `--kw` × `--kb` | h | ambient lobe |
+| `--lobe-4` | .875 | .058 × `--kw` × `--kb` | h4 | ambient lobe |
+| `--surface` | .972 | .012 | h | cards, popovers: tinted paper |
+| `--surface-2` | .935 | .029 | h | fields, chips, quiet fills |
+| `--well` | .948 | .022 | h | a recessed well inside a panel (darker than the panel in both schemes) |
+| `--text` | .23 | .03 | h | ink |
+| `--text-muted` | .42 | .042 | h | secondary ink (≥ 4.5:1 on every surface and lobe) |
+| `--text-faint` | .50 | .045 | h | placeholders and disabled only (≥ 3:1; never carries data) |
+| `--accent` | .46 | .075 | h | links, the serif's emphasised line |
+| `--accent-ui` | .50 | .082 | h | focus ring, icons, strokes (≥ 3:1) |
+| `--accent-strong` | .38 | .062 | h | primary button fill (surface text on it ≥ 4.5:1) |
+| `--accent-soft` | .90 | .046 | h | highlighted fills |
+| `--fill` | accent-ui / α .12 (.08, .18) | | h | chart fills |
+| `--grid` | ink / α .08 | | h | chart rings, dividers |
+| `--line` | .87 | .035 | h | hairlines |
+| `--line-strong` | .58 | .06 | h | emphasised hairlines, dashed drop zones (≥ 3:1) |
+| `--selection` | .86 | .066 | h | text selection |
 | `--danger` | .48 | .12 | 25 (fixed) | errors |
 
 ### 3.3 Gamut
 
-Browsers clip out-of-gamut OKLCH instead of mapping it, which bends lightness and hue. The sRGB limit at constant lightness is tightest around cyan (~200°) up to L .75 and around blue (~267°) above that: roughly **C ≤ 0.17·L up to L .75, then .100 at .80, .048 at .90, .014 at .97.** Keep every token at or below 0.93 × that limit, and let `palette-check` sweep all 360 hues to prove it.
+Browsers clip out-of-gamut OKLCH instead of mapping it, which bends lightness and hue. One fixed chroma per role must therefore fit **every** hue at that role's lightness: each token is held at or below 0.97 × the smallest sRGB chroma across the 360 hues at its L (cyan near 200° binds at low L, violet near 270° at high L; for example .073 at L .845, .075 at L .46, .041 at L .25). `palette-check` sweeps all 360 hues to prove it. This is why accent ink cannot be much more saturated than before: at text lightness the cyan hues cap it, so the added colour lives in the field and the surfaces. Display-P3 headroom is not used yet.
 
 ### 3.4 Fallbacks, in order
 
 1. A generated hex palette for one fixed hue, declared before the `@supports (color: oklch(0 0 0))` block, for engines without OKLCH (`npm run emit:fallback`), one block per scheme.
 2. `prefers-reduced-motion: reduce` or `(update: slow)` → the field holds Still.
-3. `prefers-contrast: more` → the lobes are removed; ink goes to L .15 / .35, lines to .70, grid alpha .2 (in dark: ink .97 / .82, lines .48, grid alpha .3).
+3. `prefers-contrast: more` → the lobes are removed; ink goes to L .15 / .33, accent strokes .42, lines to .70, grid alpha .2 (in dark: ink .97 / .85, accent strokes .84, lines .46, grid alpha .3).
 4. `forced-colors: active` → the field is hidden; every token maps to a system colour.
 5. "Off" → `--k: 0`: every chroma collapses to zero, lightness stays.
 
-### 3.5 The dark scheme
+### 3.5 The dark scheme ("Dye by night", 2026-10-20)
 
-The same rules with lightness flipped (canvas https://claude.ai/artifact/TgdnAmEhne9Wrbe6FpnEV6, 2026-10-17). One hue still drives every colour and the field still drifts; only the L and C per role change, so the dark table is proved the same way, once for all 360 hues: ink on any surface ≥ 13:1, secondary ink ≥ 6:1, accent strokes ≥ 5.8:1, `--line-strong` ≥ 4:1, button text on the primary fill ≥ 9:1, no gamut failure. Three things differ in kind: the lobes keep a lower chroma (a saturated lobe on a dark field is a spotlight), the chart fills need more alpha to read over a dark ground, and the primary button becomes a light fill with surface-coloured text, which needs no CSS change because the roles swap while the tokens do not.
+Not the light table inverted: the same structure in another mood. The field carries the dye (L .25 with real chroma, lobes at .33–.36), and the panels are deeper ink pools (.185), so text sits on the calmest, darkest tone and the colour stays in the field around it. There is no near-black, no neutral grey, no neon accent and no glow: the field is a coloured dark, ink is off-white (.92, never pure white), and secondary ink stays ≥ 4.5:1 over every lobe (worst 4.76:1). Elevation reads the other way from light (panels sit *below* the field in lightness), so separation is the 1 px line plus the tone step, never a shadow.
 
-| Token | L | C | Light was |
+| Token | L | C | Light is |
 |---|---|---|---|
-| `--bg` | .16 | .012 × `--kw` | .97 / .012 |
-| `--lobe-1`, `--lobe-2` | .27 | .034 × `--kw` × `--kb` | .90 / .044 |
-| `--lobe-3` | .25 | .026 × `--kw` × `--kb` | .92 / .034 |
-| `--surface` | .20 | .008 | .99 / .004 |
-| `--surface-2` | .245 | .014 | .955 / .016 |
-| `--text` | .93 | .01 | .25 / .02 |
-| `--text-muted` | .72 | .02 | .45 / .03 |
-| `--text-faint` | .62 | .025 | .55 / .03 |
-| `--accent` | .78 | .09 | .50 / .08 |
-| `--accent-ui` | .72 | .10 | .55 / .088 |
-| `--accent-strong` | .80 | .08 | .42 / .07 |
-| `--accent-soft` | .30 | .04 | .93 / .03 |
+| `--bg` | .25 | .041 × `--kw` | .925 / .03 |
+| `--lobe-1`, `--lobe-2` | .36 | .059 × `--kw` × `--kb` | .845 / .073 |
+| `--lobe-3` | .33 | .054 × `--kw` × `--kb` | .86 / .066 |
+| `--lobe-4` | .34 | .05 × `--kw` × `--kb` | .875 / .058 |
+| `--surface` | .185 | .022 | .972 / .012 |
+| `--surface-2` | .235 | .035 | .935 / .029 |
+| `--well` | .15 | .02 | .948 / .022 |
+| `--text` | .92 | .016 | .23 / .03 |
+| `--text-muted` | .75 | .03 | .42 / .042 |
+| `--text-faint` | .66 | .035 | .50 / .045 |
+| `--accent` | .83 | .081 | .46 / .075 |
+| `--accent-ui` | .77 | .113 | .50 / .082 |
+| `--accent-strong` | .85 | .071 | .38 / .062 |
+| `--accent-soft` | .30 | .049 | .90 / .046 |
 | `--fill` / `--fill-2` / `--fill-strong` | accent-ui at α .18 / .12 / .26 | | α .12 / .08 / .18 |
 | `--grid` | ink at α .12 | | α .08 |
-| `--line` | .32 | .02 | .86 / .02 |
-| `--line-strong` | .56 | .04 | .60 / .04 |
-| `--selection` | .38 | .06 | .88 / .055 |
+| `--line` | .30 | .035 | .87 / .035 |
+| `--line-strong` | .56 | .05 | .58 / .06 |
+| `--selection` | .40 | .066 | .86 / .066 |
 | `--danger` | .72 | .12 at hue 25 | .48 / .12 |
 
-**Switching.** The dark table applies under `prefers-color-scheme: dark` unless `<html data-scheme="light">`, and always under `<html data-scheme="dark">`; the Atmosphere menu's second group (System / Light / Dark) writes the attribute, persisted in `localStorage` (`tayyari.scheme`) and applied by the boot script before the first paint. `?scheme=light|dark` pins it for screenshots, like `?h=`. The `<html>` static background and `color-scheme` flip with it. Every scheme selector is wrapped in `:where()` so each has the specificity of `:root` and the file order decides; the dark table exists twice in the sheet (the media query and the attribute) and `palette-check` asserts the copies agree and that dark redefines every light role.
+**Switching.** The dark table applies under `prefers-color-scheme: dark` unless `<html data-scheme="light">`, and always under `<html data-scheme="dark">`; the Atmosphere menu's second group (System / Light / Dark) writes the attribute, persisted in `localStorage` (`tayyari.scheme`) and applied by the boot script before the first paint. `?scheme=light|dark` pins it for screenshots, like `?h=`. The `<html>` static background and `color-scheme` flip with it. Where the engine has view transitions and motion is welcome, a manual switch crossfades the two schemes (opacity, `--d-base`); elsewhere it is instant. Every scheme selector is wrapped in `:where()` so each has the specificity of `:root` and the file order decides; the dark table exists twice in the sheet (the media query and the attribute) and `palette-check` asserts the copies agree and that dark redefines every light role.
 
-**What stays light.** A portfolio page (`.pf-scope`) recomputes the light table from its own hues, so public pages and the Old Newspaper skin keep their palettes in either scheme; the portfolio editor's chrome follows the app. The cursor light runs in dark with its own tuning (§8).
+**What stays light.** A portfolio page (`.pf-scope`) keeps the earlier, paler light table (bg .97, lobes .90 / .044, surface .99) recomputed from its own hues, so public pages and the Old Newspaper skin keep the palettes they were designed against in either scheme; the portfolio editor's chrome follows the app. The cursor's wake runs in both schemes with its own dye tones (§8).
 
 ## 4. The living gradient
 
-**Representation.** One fixed, full-viewport layer (`position: fixed; inset: 0; z-index: −1; contain: strict`) with `background-color: var(--bg)` and three radial lobes:
+**Representation.** One fixed, full-viewport layer (`position: fixed; inset: 0; z-index: −1; contain: strict`) with `background-color: var(--bg)` and four radial lobes that together cover most of the page, mixed `in oklab` where supported (a plain declaration first is the fallback):
 
 ```
-60% 55% at 15% 20%  → lobe-1 fading to its own colour at alpha 0 by 60 %
-55% 50% at 85% 10%  → lobe-2, likewise
-70% 45% at 50% 105% → lobe-3, likewise
+78% 72% at 8% 12%   → lobe-1 fading to its own colour at alpha 0 by 74 %
+72% 66% at 94% 4%   → lobe-2, likewise
+95% 62% at 42% 112% → lobe-3, likewise
+46% 42% at 74% 62%  → lobe-4, by 70 %
 ```
 
 Each lobe fades to *its own colour at alpha 0*, never to a neutral, so no hue swings in the falloff. The `<html>` behind it is a static neutral that never repaints; the view sits above at `z-index: 1`.
 
-**Rate.** 1° every 7 s: a full circle in 42 minutes. At lobe chroma .044 one step is ≈ 0.0016 ΔE — far below the ≈ 0.02 JND and the ≈ 0.16 ΔE/s temporal detection threshold — so no single step can be seen. Over five minutes the lobes move about two JNDs: noticed only in memory.
+**Rate.** 1° every 7 s: a full circle in 42 minutes. At lobe chroma .073 one step is ≈ 0.0026 ΔE — far below the ≈ 0.02 JND and the ≈ 0.16 ΔE/s temporal detection threshold — so no single step can be seen. Over five minutes the lobes move about two JNDs: noticed only in memory.
 
 **Why hue, never lightness or position.** Lightness change has the lowest detection threshold; movement in peripheral vision is noticed before fades. The field changes colour only. Motion *onset* captures attention while ongoing motion does not, so the hue is a pure function of wall-clock time: nothing ever starts.
 
 **Never loops visibly.** Unrelated periods: the hue circle (42 min), the lobe offsets breathing (13 and 11 min), the lobe chroma breathing (17 min). Combined period ≈ 100 h.
 
-**Cost.** Five custom properties written by one `setTimeout` aligned to the 7-second grid; no `requestAnimationFrame`; nothing transitioned. Hidden tabs stop the timer; on return the hue is recomputed from the clock. The maths lives in one dependency-free module (`src/theme/hue.js`):
+**Cost.** Six custom properties written by one `setTimeout` aligned to the 7-second grid; no `requestAnimationFrame`; nothing transitioned. Hidden tabs stop the timer; on return the hue is recomputed from the clock. The maths lives in one dependency-free module (`src/theme/hue.js`):
 
 ```
 h  = floor(h0 + 360 · (now mod 42 min) / 42 min) mod 360
 h2 = h + 35 + 10·sin(2π·now / 13 min)
 h3 = h − 45 − 10·sin(2π·now / 11 min)
+h4 = h + 70
 kw = 1 − 0.25 · max(0, 1 − dist(h, 85) / 50)
 kb = 0.925 + 0.075·sin(2π·now / 17 min)
 ```
@@ -200,21 +208,21 @@ When pages must look different for every person *and* must never break, variety 
 
 **An alternate skin costs no content.** "Old Newspaper" re-renders the same spec: paper L .955 (hue 85), ink L .22, a blackletter nameplate and a thick-thin double rule as the two deliberate print exceptions, columns via `column-width`, and the chart as a printed index with a halftone fill and an AREA / SCORE table. Toggling is a 400 ms drain to paper; `?view=press` makes it shareable.
 
-## 8. Exception one: the cursor light
+## 8. Exception one: the liquid cursor
 
-Home only. A soft field of colour follows the pointer, as the page's way of being quietly aware of the person. It bends "no spatial motion" and "no effects", and it is bounded so that it stays one exception.
+Every screen (2026-10-20; canvas https://claude.ai/artifact/U8LW9zvPXdYNAT5T769WfU, "The cursor as liquid"). A soft drop of dye follows the pointer like a hand moving through coloured liquid: it leans the way you move, stretches and thins with speed, trails a short wake, and settles with at most a small overshoot when you stop. It bends "no spatial motion" and "no effects", and it is bounded so that it stays one exception.
 
-**Why it is allowed.** The motion is the person's own: the field moves only because they moved, so there is no onset that is not theirs. While they are still, only the outline morphs (isoluminant colour change below the detection threshold), and after 45 s it fades and the loop stops. It is not mounted on touch or coarse pointers, under reduced motion or slow updates, under forced colours or more contrast, or with the Atmosphere Off. **In the dark scheme** (2026-10-20) it runs with its own tuning, "light through smoked glass" (`LIGHT.dark` in `src/light/palette.ts`): the body at L .31, C .048 sits a little above the field (.16), about where the dark lobes are, and the heart at L .27, C .028 sits just under the body, so the colour lives in the body and there is no bright core; the light field's pale heart over a body at .89 would have been exactly the core on a darker ground the boundaries below forbid. Chroma stays inside the gamut rule (§3.3), and `palette-check` proves every light ink role on Home keeps its floor over the dark body at all 360 hues. The engine reads the scheme with the field once a second, so a switch of scheme retunes a running light.
+**Why it is allowed.** The motion is the person's own: it moves only because they moved, so there is no onset that is not theirs. Still, it draws nothing: the loop stops and the last frame stays, waking only for the dim at 10 s and the fade to sleep at 45 s. It is not mounted on touch or coarse pointers, under reduced motion or slow updates, under forced colours or more contrast, with the Atmosphere Off, or without WebGL2. It lives under the view (z 0), so opaque panels hide it and it shows in the field around them.
 
-**Luminous without brightness.** The field is at L .97, so "brighter" has nowhere to go; a bright core on a light page is the spotlight everyone has seen. Light through paper does the opposite: a paler, less saturated heart (L .965, C .016) with the colour in the body around it (L .89, C .048), fading with no edge. Lightness never drops below .89, which keeps `text-muted` ≥ 5:1 and large accent text ≥ 3:1 at every hue; the proof uses the same constants the shader is built from.
+**Dye, not light.** Chroma carries it, never brightness, which is what separates it from a spotlight or an "AI glow": in light the head is a touch deeper than the field (L .81, C .11 → tail .86, .08), in dark a touch above it (L .37, C .085 → tail .33, .07), never near white. Overlapping blobs combine as a capped union whose peak is exactly the head's alpha (.8 light, .78 dark), so overlaps cannot brighten. `palette-check` composites the dye at peak alpha over the field and every lobe at all 360 hues, in both schemes, and proves `text` and `text-muted` ≥ 4.5:1 and the accents ≥ 3:1 (worst: muted 4.62 light, 4.59 dark).
 
-**Colour.** `hue = --h + 38·sin(2πt/97 s + travel/2200 px) + 18·sin(2πt/41 s + travel/900 px)`: bounded to ±56° of the field, phase advanced by time and by distance, body 28° further round, chroma eased through yellow–orange like `--kw`.
+**Colour.** Head hue = `--h` + 24° plus a slow wander of at most ±12°; the hue turns −60° from head to tail, blended along the short arc, chroma eased through yellow–orange like `--kw` and fitted to sRGB in the shader the same way the proof does.
 
-**Rendering.** One WebGL2 fragment shader on a canvas at half the viewport (≤ 960×600 texels), fixed between the field and the view, premultiplied alpha, plain source-over (`screen` / `plus-lighter` would wash the field to white). Per pixel: OKLab colour, chroma clipped to sRGB, ±1 LSB triangular dither. Measured on an integrated Intel GPU: ~0.5 ms GPU at half scale, 0.1 ms main thread per frame.
+**Shape and motion** (`LIGHT.wake` in `src/light/palette.ts`). The head is the latest coalesced pointer sample: no smoothing, no input lag. Ten followers are springs in a chain (K 1400 s⁻², damping ratio .72), integrated in ≤ 4 ms substeps so 60 Hz and 120 Hz behave alike. Radius 0.16 × the short side, clamped 90–140 px, tapering 60 % to the tail. Stretch is min(speed / 1600, 1) × .9 along each segment, with thinning across that keeps the area.
 
-**Follow.** Heart with a 35 ms time constant (17 ms at speed): ~30 px behind at 1200 px/s, 4 % of the body's width, invisible on an edgeless shape. The organic trailing lives in the *shape*: direction smoothed over 120 ms, stretch up to 35 % along travel relaxing over 160 ms, the halo trailing part of that stretch. The frame interval is clamped before any division. A watchdog lowers the render scale when frames run long and switches the light off for the session on a third strike.
+**Rendering.** One WebGL2 pass on a half-resolution canvas (≤ 960×600 texels): 11 elliptical gaussians per pixel, scissored to the wake's bounding box, premultiplied alpha, source-over, ±1 LSB triangular dither. Measured in the preview: about 0.2 ms GPU and 0.2 ms main thread per frame. The watchdog lowers the render scale when frames run long and switches the cursor off for the session on a third strike.
 
-**Boundaries.** No ring, no bright core on a darker ground, no outline you can trace, no rhythm, no banding. The cards stay opaque; the light shows around them like a sheet of paper on a lit table.
+**Boundaries.** No ring, no bright core, no outline you can trace, no rhythm, no banding, no additive blending.
 
 ## 9. Exception two: print conventions in the newspaper skin
 
@@ -232,7 +240,7 @@ Only in the Old Newspaper skin: a blackletter nameplate at 56 px or larger, and 
 
 | Script | Proves |
 |---|---|
-| `scripts/palette-check.ts` | every token inside sRGB at all 360 hues and lobe extremes, in both schemes; every contrast pair at its floor, alpha tokens composited over each scheme's field; the dark table's two copies agree and cover every role; the cursor light's body under every text role (both schemes; the heart over the body in light, under it in dark); `--fallback <hue>` emits the hex blocks for both schemes |
+| `scripts/palette-check.ts` | every token inside sRGB at all 360 hues and lobe extremes, in both schemes; every contrast pair at its floor, alpha tokens composited over each scheme's field; the dark table's two copies agree and cover every role; the cursor's dye, composited at peak alpha over the field and every lobe, under every text role (both schemes); `--fallback <hue>` emits the hex blocks for both schemes |
 | `scripts/restraint-check.ts` | the rules in §2, over every `.css/.ts/.tsx` file and `index.html` |
 | `scripts/build-check.ts` | the built bundle still carries `@property --h`, the OKLCH tokens, the dark table under its media query and attribute, the boot script (hue and scheme) before the first stylesheet, the ambient layer, and no `box-shadow` |
 | `scripts/portfolio-parity.tsx` | rendered chart numbers equal the source in every variant, skin and mode (784 renders) |

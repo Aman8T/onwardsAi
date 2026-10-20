@@ -1,7 +1,7 @@
 /*
- * The cursor light (src/light/): one fixed WebGL canvas between the ambient field (z -1) and the view (z 1),
- * mounted by Home only. The one deliberate exception to the no-glow rule — the light itself is drawn by the
- * shader with no CSS effects; this sheet only places the canvas and fades it with the view.
+ * The cursor light (src/light/), the "viscous wake": one fixed WebGL canvas between the ambient field (z -1)
+ * and the view (z 1), mounted once for every screen. The one deliberate exception to the no-effects rule — the
+ * dye is drawn by the shader with no CSS effects; this sheet only places the canvas.
  */
 
 .light-host {
@@ -10,12 +10,6 @@
   z-index: 0;
   pointer-events: none;
   contain: strict;
-  opacity: 1;
-  transition: opacity var(--d-screen) var(--ease);
-}
-
-.light-host.is-leaving {
-  opacity: 0;
 }
 
 /* The engine's own canvas: a half-resolution backing store stretched over the viewport. */

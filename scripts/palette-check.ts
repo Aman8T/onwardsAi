@@ -5,8 +5,8 @@
  * Both schemes: the light table, and the dark table under `prefers-color-scheme: dark`
  * / `[data-scheme='dark']` (whose two copies must agree, and which must redefine
  * every role the light table defines). Alpha tokens are composited over each
- * scheme's own --bg. The cursor light is checked on the light field only: it is
- * not mounted in dark (src/light/CursorLight.tsx).
+ * scheme's own --bg. The cursor light's dye (src/light/palette.ts) is checked in
+ * both schemes, at its peak alpha over the field and every lobe.
  *
  * Zero dependencies. Run with `npx tsx scripts/palette-check.ts`.
  *   --fallback <hue>   print the hex blocks for that hue (the light ':root', then the
@@ -18,7 +18,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { LIGHT, MAX_HUE_OFFSET, warmEasing } from '../src/light/palette';
+import { LIGHT, MAX_WANDER, warmEasing } from '../src/light/palette';
 
 const TOKENS_PATH = resolve(process.cwd(), 'src/theme/tokens.css');
 
@@ -26,7 +26,7 @@ const TOKENS_PATH = resolve(process.cwd(), 'src/theme/tokens.css');
 const GAMUT_TOL = 0.0005;
 
 /** Hue variable each token can reference, or a fixed hue in degrees. */
-type HueRef = 'h' | 'h2' | 'h3' | number;
+type HueRef = 'h' | 'h2' | 'h3' | 'h4' | number;
 
 interface Token {
   name: string;
@@ -56,7 +56,7 @@ type Lin = readonly [number, number, number];
  * var(--h) | var(--h2) | var(--h3) | number.
  */
 const TOKEN_RE =
-  /--([a-z0-9-]+)\s*:\s*oklch\(\s*([\d.]+)\s+(?:([\d.]+)|calc\(\s*([\d.]+)\s*\*\s*var\(--k\)((?:\s*\*\s*var\(--k[wb]\))*)\s*\))\s+(?:var\(--(h[23]?)\)|([\d.]+))\s*(?:\/\s*([\d.]+))?\s*\)/g;
+  /--([a-z0-9-]+)\s*:\s*oklch\(\s*([\d.]+)\s+(?:([\d.]+)|calc\(\s*([\d.]+)\s*\*\s*var\(--k\)((?:\s*\*\s*var\(--k[wb]\))*)\s*\))\s+(?:var\(--(h[234]?)\)|([\d.]+))\s*(?:\/\s*([\d.]+))?\s*\)/g;
 
 /**
  * Reads every oklch token from a stretch of the sheet. The first definition of a
@@ -72,7 +72,7 @@ function parseTokens(css: string): Token[] {
       name,
       L: Number(L),
       C: Number(plainC ?? calcC),
-      hue: hueVar ? (hueVar as 'h' | 'h2' | 'h3') : Number(hueNum),
+      hue: hueVar ? (hueVar as 'h' | 'h2' | 'h3' | 'h4') : Number(hueNum),
       kw: (multipliers ?? '').includes('--kw'),
       kb: (multipliers ?? '').includes('--kb'),
       alpha: alpha === undefined ? 1 : Number(alpha),
@@ -215,6 +215,8 @@ function contrast(a: Lin, b: Lin): number {
 /** Lobe offsets at the extremes of their breath (nominal +35 ± 10 and −45 ± 10). */
 const H2_OFFSETS = [25, 45];
 const H3_OFFSETS = [-35, -55];
+/** The fourth lobe sits at a fixed +70. */
+const H4_OFFSET = 70;
 /** Warm-sector easing range. */
 const KW_RANGE = [0.75, 1];
 /** Lobe-chroma breath range. */
@@ -231,7 +233,9 @@ function variants(t: Token, baseHue: number): Lin[] {
         ? H2_OFFSETS.map((o) => mod360(baseHue + o))
         : t.hue === 'h3'
           ? H3_OFFSETS.map((o) => mod360(baseHue + o))
-          : [t.hue];
+          : t.hue === 'h4'
+            ? [mod360(baseHue + H4_OFFSET)]
+            : [t.hue];
   const kws = t.kw ? KW_RANGE : [1];
   const kbs = t.kb ? KB_RANGE : [1];
   const out: Lin[] = [];
@@ -241,7 +245,7 @@ function variants(t: Token, baseHue: number): Lin[] {
 
 /** A token's nominal colour (offsets +35 / −45, all multipliers 1), as used for the fallback. */
 function nominal(t: Token, baseHue: number): Lin {
-  const h = t.hue === 'h' ? baseHue : t.hue === 'h2' ? mod360(baseHue + 35) : t.hue === 'h3' ? mod360(baseHue - 45) : t.hue;
+  const h = t.hue === 'h' ? baseHue : t.hue === 'h2' ? mod360(baseHue + 35) : t.hue === 'h3' ? mod360(baseHue - 45) : t.hue === 'h4' ? mod360(baseHue + H4_OFFSET) : t.hue;
   return oklchToLinear(t.L, t.C, h);
 }
 
@@ -260,15 +264,21 @@ const PAIRS: Pair[] = [
   { fg: 'text', bg: 'bg', min: 4.5 },
   { fg: 'text', bg: 'surface', min: 4.5 },
   { fg: 'text', bg: 'surface-2', min: 4.5 },
+  // a recessed well inside a panel (the practice room's answer boxes)
+  { fg: 'text', bg: 'well', min: 4.5 },
+  { fg: 'text-muted', bg: 'well', min: 4.5 },
+  { fg: 'text-faint', bg: 'well', min: 3 },
   { fg: 'text', bg: 'lobe-1', min: 4.5 },
   { fg: 'text', bg: 'lobe-2', min: 4.5 },
   { fg: 'text', bg: 'lobe-3', min: 4.5 },
+  { fg: 'text', bg: 'lobe-4', min: 4.5 },
   { fg: 'text-muted', bg: 'bg', min: 4.5 },
   { fg: 'text-muted', bg: 'surface-2', min: 4.5 },
   // Radar numerals and labels (muted) sit over the ambient lobes.
   { fg: 'text-muted', bg: 'lobe-1', min: 4.5 },
   { fg: 'text-muted', bg: 'lobe-2', min: 4.5 },
   { fg: 'text-muted', bg: 'lobe-3', min: 4.5 },
+  { fg: 'text-muted', bg: 'lobe-4', min: 4.5 },
   // --text-faint is for placeholders and disabled text only: it does not reach 4.5:1 anywhere
   // (worst about 3.6:1 over the lobes), so it is held at the 3:1 floor and must not carry data.
   { fg: 'text-faint', bg: 'bg', min: 3 },
@@ -276,6 +286,7 @@ const PAIRS: Pair[] = [
   { fg: 'text-faint', bg: 'lobe-1', min: 3 },
   { fg: 'text-faint', bg: 'lobe-2', min: 3 },
   { fg: 'text-faint', bg: 'lobe-3', min: 3 },
+  { fg: 'text-faint', bg: 'lobe-4', min: 3 },
   { fg: 'accent', bg: 'bg', min: 4.5 },
   { fg: 'surface', bg: 'accent-strong', min: 4.5 },
   { fg: 'danger', bg: 'bg', min: 4.5 },
@@ -284,6 +295,7 @@ const PAIRS: Pair[] = [
   { fg: 'accent-ui', bg: 'lobe-1', min: 3 },
   { fg: 'accent-ui', bg: 'lobe-2', min: 3 },
   { fg: 'accent-ui', bg: 'lobe-3', min: 3 },
+  { fg: 'accent-ui', bg: 'lobe-4', min: 3 },
   { fg: 'line-strong', bg: 'bg', min: 3 },
   // The portfolio's Old Newspaper skin (fixed hue): body ink and secondary ink on paper.
   { fg: 'press-ink', bg: 'press-paper', min: 7 },
@@ -340,58 +352,105 @@ function check(tokens: Token[]): { pairs: PairResult[]; gamut: GamutFailure[]; m
 }
 
 /* ----------------------------------------------------------------------------
- * The cursor light (src/light/palette.ts): its deepest colour under every text
- * role that sits on the bare field on Home. The shader reads the same numbers,
- * so what is proved here is what is drawn. Both schemes: the light field's tone
- * (a pale heart over a body at the floor) and the dark field's (`LIGHT.dark`: a
- * body lifted a little above the field, the heart just under it). In each, the
- * body is the extreme the ink sits against, so the body is what is checked.
+ * The cursor light (src/light/palette.ts): the viscous wake's dye, at its peak
+ * alpha, composited over the field and every lobe, under every text role that
+ * sits on the bare field. The shader reads the same numbers, so what is proved
+ * here is what is drawn. Every pixel of the wake is a weighted blend of the head
+ * and tail tones at hues between them, so the check walks three tones (head,
+ * midway, tail) across the whole hue range: the head's offset and wander down to
+ * the tail's. The peak alpha is the strongest the dye is ever drawn.
  * ------------------------------------------------------------------------- */
 
 /**
- * Foreground roles on the bare field on Home, and the floor each keeps over the light's body.
+ * Foreground roles on the bare field, and the floor each keeps over the dye.
  * --line-strong is not among them: on Home it only draws the drop zone's dashed border and the
  * field underline, both inside the opaque panel the light never shows through.
  */
 const LIGHT_PAIRS: { fg: string; min: number }[] = [
   { fg: 'text', min: 4.5 },
   { fg: 'text-muted', min: 4.5 },
-  // the italic headline line (40–56 px, large text) and the drop-zone icon: the 3:1 floor
+  // the italic headline line (40-56 px, large text) and the drop-zone icon: the 3:1 floor
   { fg: 'accent', min: 3 },
   { fg: 'accent-ui', min: 3 },
 ];
 
-/** The body colours the light can take at a base hue: the wander window in 7° steps, then the halo offset. */
-interface LightTone {
-  bodyL: number;
-  bodyC: number;
+interface DyeTone {
+  head: { L: number; C: number };
+  tail: { L: number; C: number };
 }
 
-function lightBodies(baseHue: number, tone: LightTone): Lin[] {
-  const out: Lin[] = [];
-  for (let off = -MAX_HUE_OFFSET; off <= MAX_HUE_OFFSET; off += 7) {
-    const heartHue = mod360(baseHue + off);
-    out.push(oklchToLinear(tone.bodyL, tone.bodyC * warmEasing(heartHue), mod360(heartHue + LIGHT.haloHueOffset)));
-  }
+/** The dye's samples: three tones across the hue range, in 6 degree steps, plus both ends. */
+function dyeOffsets(): { tone: number; off: number }[] {
+  const hi = LIGHT.wake.hue.head + MAX_WANDER;
+  const lo = LIGHT.wake.hue.head - MAX_WANDER + LIGHT.wake.hue.tail;
+  const out: { tone: number; off: number }[] = [];
+  for (const tone of [0, 0.5, 1]) for (let off = hi; off >= lo - 1e-9; off -= 6) out.push({ tone, off });
+  out.push({ tone: 0, off: lo }, { tone: 1, off: lo }, { tone: 0, off: hi }, { tone: 1, off: hi });
   return out;
 }
 
-function checkLight(tokens: Token[], tone: LightTone): { pairs: PairResult[]; gamut: number[] } {
+/**
+ * The shader's gamut fit, step for step (src/light/shader.ts, oklch()): lightness and hue are kept and chroma
+ * is cut by 0.72 up to four times until the colour is inside sRGB. Returns the fitted colour and the cuts used.
+ */
+function fitToGamut(L: number, C: number, hue: number): { lin: Lin; cuts: number } {
+  let c = C;
+  let lin = oklchToLinear(L, c, hue);
+  let cuts = 0;
+  while (cuts < 4 && !inGamut(lin)) {
+    c *= 0.72;
+    lin = oklchToLinear(L, c, hue);
+    cuts++;
+  }
+  return { lin, cuts };
+}
+
+/** The dye colours (as the shader fits them into sRGB) at a base hue, and the dye composited over every background. */
+function dyeColours(baseHue: number, dye: DyeTone, peak: number, byName: Map<string, Token>, field: Lin[]): { dyes: Lin[]; over: Lin[]; cuts: number } {
+  let cuts = 0;
+  const dyes = dyeOffsets().map(({ tone, off }) => {
+    const hue = mod360(baseHue + off);
+    const L = dye.head.L + (dye.tail.L - dye.head.L) * tone;
+    const C = dye.head.C + (dye.tail.C - dye.head.C) * tone;
+    const fit = fitToGamut(L, C * warmEasing(hue), hue);
+    cuts = Math.max(cuts, fit.cuts);
+    return fit.lin;
+  });
+  // what the dye sits on: the field, and each lobe over the field
+  const backs: Lin[] = [...field];
+  for (const name of ['lobe-1', 'lobe-2', 'lobe-3', 'lobe-4']) {
+    const t = byName.get(name);
+    if (!t) continue;
+    for (const v of variants(t, baseHue)) backs.push(...(t.alpha >= 1 ? [v] : field.map((f) => composite(v, t.alpha, f))));
+  }
+  return { dyes, over: dyes.flatMap((d) => backs.map((b) => composite(d, peak, b))), cuts };
+}
+
+function checkLight(tokens: Token[], dye: DyeTone, peak: number): { pairs: PairResult[]; gamut: number[]; fitted: number; deepest: number } {
   const byName = new Map(tokens.map((t) => [t.name, t]));
   const results: PairResult[] = LIGHT_PAIRS.filter((p) => byName.has(p.fg)).map((p) => ({
     fg: p.fg,
-    bg: 'light-body',
+    bg: 'dye',
     min: p.min,
     worst: Infinity,
     worstHue: -1,
   }));
   const gamut: number[] = [];
+  let fitted = 0;
+  let deepest = 0;
+  const bg = byName.get('bg')!;
   for (let hue = 0; hue < 360; hue++) {
-    const bodies = lightBodies(hue, tone);
-    if (!bodies.every(inGamut)) gamut.push(hue);
+    const field = variants(bg, hue);
+    const { dyes, over, cuts } = dyeColours(hue, dye, peak, byName, field);
+    if (!dyes.every(inGamut)) gamut.push(hue);
+    if (cuts > 0) fitted++;
+    deepest = Math.max(deepest, cuts);
     for (const r of results) {
-      for (const f of variants(byName.get(r.fg)!, hue)) {
-        for (const b of bodies) {
+      const t = byName.get(r.fg)!;
+      // an ink with alpha is measured as seen, over the field
+      const inks = variants(t, hue).flatMap((v) => (t.alpha >= 1 ? [v] : field.map((f) => composite(v, t.alpha, f))));
+      for (const f of inks) {
+        for (const b of over) {
           const ratio = contrast(f, b);
           if (ratio < r.worst) {
             r.worst = ratio;
@@ -401,7 +460,7 @@ function checkLight(tokens: Token[], tone: LightTone): { pairs: PairResult[]; ga
       }
     }
   }
-  return { pairs: results, gamut };
+  return { pairs: results, gamut, fitted, deepest };
 }
 
 /* ----------------------------------------------------------------------------
@@ -530,17 +589,13 @@ function main(): number {
   }
   failed = !reportScheme('dark', dark.tokens) || failed;
 
-  for (const [scheme, table, tone] of [
-    ['light', tokens, LIGHT],
-    ['dark', dark.tokens, LIGHT.dark],
+  for (const [scheme, table, dye, peak] of [
+    ['light', tokens, LIGHT.wake.tone.light, LIGHT.wake.alpha.light],
+    ['dark', dark.tokens, LIGHT.wake.tone.dark, LIGHT.wake.alpha.dark],
   ] as const) {
-    if (tone.heartL > tone.bodyL === (scheme === 'dark')) {
-      failed = true;
-      console.log(`cursor light (${scheme}): the heart must be ${scheme === 'dark' ? 'under' : 'over'} the body`);
-    }
-    const light = checkLight(table, tone);
+    const light = checkLight(table, dye, peak);
     console.log(
-      `cursor light, ${scheme} scheme: body L ${tone.bodyL}, C ${tone.bodyC}, hue within ±${MAX_HUE_OFFSET}° of the field (+${LIGHT.haloHueOffset}° halo)
+      `cursor light, ${scheme} scheme: dye head L ${dye.head.L} C ${dye.head.C}, tail L ${dye.tail.L} C ${dye.tail.C}, peak alpha ${peak}, hue +${LIGHT.wake.hue.head} (wander ${MAX_WANDER}) then ${LIGHT.wake.hue.tail} round
 `,
     );
     printTable(
@@ -553,10 +608,10 @@ function main(): number {
     if (light.gamut.length) {
       failed = true;
       console.log(`
-Light body (${scheme}) out of sRGB gamut at ${light.gamut.length} hue(s), e.g. ${light.gamut.slice(0, 6).join(', ')}`);
+Dye (${scheme}) still out of sRGB after the shader's gamut fit at ${light.gamut.length} hue(s), e.g. ${light.gamut.slice(0, 6).join(', ')}`);
     } else {
       console.log(`
-Light body (${scheme}) inside sRGB at every hue.
+Dye (${scheme}) inside sRGB at every hue after the shader's gamut fit (chroma cut at ${light.fitted} of 360 base hues, at most ${light.deepest} cut(s) of x0.72).
 `);
     }
   }

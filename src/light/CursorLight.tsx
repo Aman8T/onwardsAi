@@ -1,21 +1,20 @@
 /**
- * The cursor light: a soft field of colour that follows the pointer on Home (design canvas "Cursor Light
- * Field", board Main). This component decides whether the light exists at all, mounts the canvas into
- * <body> — between the ambient field (z −1) and the view (z 1), outside the view's own transform — and
- * hands it to the engine. Everything visual is in the engine and the shader; nothing here renders per frame.
+ * The cursor light, the "viscous wake": a head locked to the pointer and a chain of springy, fading dye behind
+ * it. This component decides whether the light exists at all, mounts the canvas into <body> — between the
+ * ambient field (z -1) and the view (z 1), outside the view's own transform — and hands it to the engine.
+ * It is mounted once, in App, for every screen. Everything visual is in the engine and the shader; nothing
+ * here renders per frame.
  *
  * Not mounted at all for touch or coarse pointers, under reduced motion or slow updates, under forced
- * colours or more contrast, or when the Atmosphere is Off: Home is then exactly as it was. In the dark scheme the
- * light runs with its own tuning (`LIGHT.dark` in palette.ts: a body lifted a little above the dark field and a
- * heart just under it, never a bright core), and a switch of scheme retunes it within a second.
+ * colours or more contrast, or when the Atmosphere is Off: the page is then exactly as it was. The dye has a
+ * tone per scheme (`LIGHT.wake.tone` in palette.ts), and a switch of scheme retunes it within a second.
  */
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMediaQuery } from '../lib/ui';
-import { useApp } from '../store';
 import { useAtmoMode } from '../theme/ambient';
 import { createLightEngine } from './engine';
-import type { LightEngine, LightStats } from './engine';
+import type { LightStats } from './engine';
 import { LightStatsOverlay } from './Stats';
 import '../styles/light.css';
 
@@ -52,16 +51,12 @@ export function CursorLight() {
 
 function LightCanvas({ stats }: { stats: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  const engineRef = useRef<LightEngine | null>(null);
   const [snapshot, setSnapshot] = useState<LightStats | null>(null);
-  // Home is leaving when the view changes; AnimatePresence keeps it mounted through the crossfade.
-  const leaving = useApp((s) => s.view) !== 'onboarding';
 
   useEffect(() => {
     const host = ref.current;
     if (!host) return;
     const engine = createLightEngine({ host, readField, onStats: stats ? setSnapshot : undefined });
-    engineRef.current = engine;
     if (stats && engine) {
       window.__light = {
         sweep: (seconds, pxPerSecond) => engine.sweep(seconds, pxPerSecond),
@@ -71,18 +66,13 @@ function LightCanvas({ stats }: { stats: boolean }) {
     }
     return () => {
       engine?.destroy();
-      engineRef.current = null;
       if (window.__light) delete window.__light;
     };
   }, [stats]);
 
-  useEffect(() => {
-    if (leaving) engineRef.current?.retire();
-  }, [leaving]);
-
   return (
     <>
-      <div ref={ref} className={leaving ? 'light-host is-leaving' : 'light-host'} aria-hidden="true" />
+      <div ref={ref} className="light-host" aria-hidden="true" />
       {stats && snapshot && <LightStatsOverlay stats={snapshot} />}
     </>
   );

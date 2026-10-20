@@ -144,7 +144,12 @@ export function setScheme(choice: SchemeChoice): void {
   if (choice === chosenScheme) return;
   chosenScheme = choice;
   writeStorage(SCHEME_KEY, choice);
-  applyScheme();
+  // A short crossfade between the two schemes where the engine has view transitions and motion is welcome;
+  // elsewhere the switch is instant, as before. Boot never animates: boot.js sets the scheme before first paint.
+  const doc = document as Document & { startViewTransition?: (update: () => void) => unknown };
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (typeof doc.startViewTransition === 'function' && !reduce) doc.startViewTransition(applyScheme);
+  else applyScheme();
   notify();
 }
 

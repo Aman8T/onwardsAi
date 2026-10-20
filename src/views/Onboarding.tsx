@@ -16,7 +16,6 @@ import { Brand } from '../components/Brand';
 import { SchemeToggle } from '../components/SchemeToggle';
 import { IconArrowRight, IconDoc, IconMinus, IconPlus, IconUpload } from '../components/Icons';
 import { SiteFooter } from '../components/SiteFooter';
-import { CursorLight } from '../light/CursorLight';
 import * as api from '../lib/api';
 import { EASE, NARROW_QUERY, useMediaQuery } from '../lib/ui';
 import { actions } from '../store';
@@ -461,8 +460,6 @@ export function Onboarding() {
 
   return (
     <div className="ob-root" id="top">
-      {/* the soft light that follows the pointer: Home only, lives behind the page (src/light) */}
-      <CursorLight />
       <div className="wrap ob-wrap">
         <header className="ob-header">
           <span className="ob-brand">

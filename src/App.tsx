@@ -1,6 +1,7 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { Suspense, lazy } from 'react';
 import { SignIn } from './auth/SignIn';
+import { CursorLight } from './light/CursorLight';
 import { useAutoClaim } from './auth/useMe';
 import { useResumeAfterSignIn } from './match/pending';
 import { useApp } from './store';
@@ -79,6 +80,8 @@ export function App() {
       </AnimatePresence>
       {/* the sign-in sheet lives in a portal, outside the animated view frame */}
       <SignIn />
+      {/* the liquid cursor: one mount for every screen, behind the view (src/light) */}
+      <CursorLight />
     </MotionConfig>
   );
 }

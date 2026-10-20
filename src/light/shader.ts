@@ -1,16 +1,20 @@
 /*
- * GLSL ES 3.00 sources for the cursor light. One full-screen triangle; every pixel inside 3.2 radii of
- * the heart computes its own colour in OKLab (Ottosson's matrices), clips chroma to the sRGB gamut, and
- * dithers ±1 LSB before the 8-bit output so the long pastel falloff never bands. The numbers come from
- * palette.ts so the contrast proof in scripts/palette-check.ts measures the same colours.
+ * GLSL ES 3.00 sources for the cursor light's viscous wake. One full-screen triangle (the engine scissors it
+ * to the chain's bounding box); every pixel evaluates the head and ten followers as soft ellipses, joins them
+ * with a capped union (never a sum, so overlaps cannot brighten into a glow), blends their colour by weight
+ * in OKLCH along the short hue arc, clips chroma to the sRGB gamut and dithers ±1 LSB before the 8-bit
+ * output so the long falloff never bands. The numbers come from palette.ts so the contrast proof in
+ * scripts/palette-check.ts measures the same colours.
  */
 import { LIGHT } from './palette';
 
-export const UNIFORMS = ['uCenter', 'uDir', 'uStretch', 'uRadius', 'uTime', 'uPhase', 'uHue', 'uHue2', 'uK', 'uAlpha', 'uSeed', 'uTone'] as const;
+export const UNIFORMS = ['uNodes', 'uDir', 'uStretch', 'uRadius', 'uTime', 'uSeed', 'uAlpha', 'uHue', 'uTone'] as const;
 
 export type Uniform = (typeof UNIFORMS)[number];
 
 const f = (n: number): string => (Number.isInteger(n) ? `${n}.0` : String(n));
+
+const W = LIGHT.wake;
 
 export const VERT = `#version 300 es
 void main() {
@@ -20,47 +24,18 @@ void main() {
 
 export const FRAG = `#version 300 es
 precision highp float;
-uniform vec2 uCenter;    // the heart, backing px, y up
-uniform vec2 uDir;       // unit direction of travel
-uniform float uStretch;  // 0..maxStretch
-uniform float uRadius;   // body radius, backing px
+const int N = ${W.N};
+const int NB = ${W.N + 1};
+uniform vec2 uNodes[NB]; // the head, then the followers; backing px, y up
+uniform vec2 uDir;       // unit direction of travel (y up)
+uniform float uStretch;  // 0..stretch.max
+uniform float uRadius;   // the head's radius, backing px
 uniform float uTime;     // seconds
-uniform float uPhase;    // travel-driven noise phase
-uniform float uHue;      // degrees, the heart
-uniform float uHue2;     // degrees, the body
-uniform float uK;        // chroma multiplier (warm-sector easing)
-uniform float uAlpha;    // 0..1 overall strength
 uniform float uSeed;     // per-session
-uniform vec4 uTone;      // bodyL, heartL, bodyC, heartC: the light field's or the dark field's (palette.ts)
+uniform float uAlpha;    // peak opacity right now (the scheme's peak times the fade)
+uniform float uHue;      // degrees, the head
+uniform vec4 uTone;      // head L, head C, tail L, tail C (palette.ts, the scheme's own)
 out vec4 o;
-
-vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-vec3 permute(vec3 x) { return mod289(((x * 34.0) + 1.0) * x); }
-// 2D simplex noise (Ian McEwan, Ashima Arts; MIT).
-float snoise(vec2 v) {
-  const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
-  vec2 i = floor(v + dot(v, C.yy));
-  vec2 x0 = v - i + dot(i, C.xx);
-  vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-  vec4 x12 = x0.xyxy + C.xxzz;
-  x12.xy -= i1;
-  i = mod289(i);
-  vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
-  vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
-  m = m * m;
-  m = m * m;
-  vec3 x = 2.0 * fract(p * C.www) - 1.0;
-  vec3 h = abs(x) - 0.5;
-  vec3 ox = floor(x + 0.5);
-  vec3 a0 = x - ox;
-  m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
-  vec3 g;
-  g.x = a0.x * x0.x + h.x * x0.y;
-  g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-  return 130.0 * dot(m, g);
-}
-float fbm(vec2 p) { return 0.68 * snoise(p) + 0.32 * snoise(p * 2.1 + 7.3); }
 
 vec3 oklabToLinear(vec3 c) {
   float l_ = c.x + 0.3963377774 * c.y + 0.2158037573 * c.z;
@@ -87,36 +62,55 @@ vec3 oklch(float L, float C, float hueDeg) {
   return linearToSrgb(clamp(lin, 0.0, 1.0));
 }
 float mixHue(float a, float b, float w) { float d = mod(b - a + 540.0, 360.0) - 180.0; return a + d * w; }
+// the warm-sector chroma easing: the same curve as warmEasing() in palette.ts
+float warm(float h) { float d = abs(mod(h - 85.0 + 540.0, 360.0) - 180.0); return 1.0 - 0.25 * max(0.0, 1.0 - d / 50.0); }
 float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 
 void main() {
-  vec2 q = (gl_FragCoord.xy - uCenter) / uRadius;
-  // the field elongates along the direction of travel
-  float along = dot(q, uDir);
-  vec2 perp = q - along * uDir;
-  q = perp + uDir * (along / (1.0 + uStretch));
-  float r = length(q);
-  if (r > 3.2) { o = vec4(0.0); return; }
-  float t = uTime;
-  vec2 s = vec2(uSeed, uSeed * 1.7);
-  // the body, and a wider halo that trails a little behind it; each warped by its own slow noise
-  float n1 = fbm(q * 0.95 + vec2(t * ${f(LIGHT.noise.body[0])}, -t * ${f(LIGHT.noise.body[1])}) + uPhase * 0.6 + s);
-  vec2 qh = q + uDir * uStretch * 0.6;
-  float n2 = fbm(qh * 0.5 - vec2(t * ${f(LIGHT.noise.halo[0])}, t * ${f(LIGHT.noise.halo[1])}) + uPhase * 0.3 + s + 11.0);
-  float rc = r * (1.0 + ${f(LIGHT.noise.warpBody)} * n1);
-  float rh = length(qh) * 0.55 * (1.0 + ${f(LIGHT.noise.warpHalo)} * n2);
-  float body = exp(-rc * rc * 2.0);
-  float halo = exp(-rh * rh * 1.4);
-  float d = clamp(body * 0.78 + halo * 0.5, 0.0, 1.0);
-  // light through paper: the heart is paler and less saturated, the colour sits in the body
-  float w = smoothstep(0.0, 1.0, body);
-  float L = mix(uTone.x, uTone.y, w);
-  float C = mix(uTone.z, uTone.w, w) * uK;
-  float H = mixHue(uHue2, uHue, w);
-  vec3 c = oklch(L, C, H);
+  vec2 p = gl_FragCoord.xy;
+  float miss = 1.0;   // product of (1 - a_i): the union is 1 - miss
+  float wsum = 0.0;
+  float L = 0.0, C = 0.0, H = uHue;
+  float thin = sqrt(1.0 + uStretch);
+  for (int i = 0; i < NB; i++) {
+    float u = float(i) / float(N);
+    float R = uRadius * (1.0 - ${f(W.radius.taper)} * u);
+    vec2 a = uNodes[i];
+    // the blob is a soft ellipse on its segment toward the tail, centred part-way back along it
+    vec2 seg = (i < NB - 1) ? uNodes[i + 1] - a : a - uNodes[i - 1];
+    float sl = length(seg);
+    vec2 ax = sl > 0.01 ? seg / sl : uDir;
+    vec2 c = (i < NB - 1) ? a + seg * ${f(W.centreBack)} : a;
+    float lenF = 1.0 + uStretch + ${f(W.stretch.segment)} * sl / R;
+    vec2 q = (p - c) / R;
+    float al = dot(q, ax);
+    vec2 pe = q - al * ax;
+    float d2 = (al / lenF) * (al / lenF) + dot(pe, pe) * thin * thin;
+    float g = exp(-2.0 * d2);
+    float prof = pow(1.0 - ${f(W.alpha.fall)} * u, ${f(W.alpha.power)}) * (i > 0 ? ${f(W.alpha.follower)} : 1.0);
+    float ai = g * prof;
+    miss *= 1.0 - ai;
+    float hi = uHue + ${f(W.hue.tail)} * u;
+    float Li = mix(uTone.x, uTone.z, u);
+    float Ci = mix(uTone.y, uTone.w, u) * warm(hi);
+    float prev = wsum;
+    wsum += ai;
+    if (wsum > 1e-6) {
+      float k = ai / wsum;
+      L = mix(L, Li, k);
+      C = mix(C, Ci, k);
+      H = prev > 1e-6 ? mixHue(H, hi, k) : hi;
+    }
+  }
+  if (wsum < 2e-3) { o = vec4(0.0); return; } // under half an 8-bit step: nothing to draw
+  // a capped smooth union: x / (1 + x^4)^(1/4), normalised so a full overlap is exactly the peak
+  float U = 1.0 - miss;
+  float cap = 1.189207115 * U / pow(1.0 + U * U * U * U, 0.25);
+  vec3 col = oklch(L, C, H);
   // ±1 LSB triangular dither on colour and alpha, so 8-bit output never bands
-  float dn = (hash(gl_FragCoord.xy + fract(t) * 13.0) + hash(gl_FragCoord.xy * 1.3 + 9.1 + fract(t) * 7.0)) - 1.0;
-  float a = clamp(d * uAlpha + dn / 255.0, 0.0, 1.0);
-  c = clamp(c + dn / 255.0, 0.0, 1.0);
-  o = vec4(c * a, a);
+  float t = fract(uTime);
+  float dn = (hash(gl_FragCoord.xy + t * 13.0 + uSeed) + hash(gl_FragCoord.xy * 1.3 + 9.1 + t * 7.0)) - 1.0;
+  float a = clamp(cap * uAlpha + dn / 255.0, 0.0, 1.0);
+  col = clamp(col + dn / 255.0, 0.0, 1.0);
+  o = vec4(col * a, a);
 }`;

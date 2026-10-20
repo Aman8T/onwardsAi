@@ -545,7 +545,7 @@
   padding: 16px 18px;
   border: var(--hair) solid var(--line);
   border-radius: 12px;
-  background: var(--bg);
+  background: var(--well);
 }
 
 .rm-said {
@@ -592,7 +592,7 @@
 
 .rm-textarea-said {
   min-height: 112px;
-  background: var(--bg);
+  background: var(--well);
 }
 
 .rm-quiet {
@@ -1223,7 +1223,7 @@
 .rm-msg-ai {
   padding: 10px 12px;
   border-radius: 10px;
-  background: var(--bg);
+  background: var(--surface-2);
 }
 
 .rm-off {

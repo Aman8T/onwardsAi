@@ -318,3 +318,10 @@ textarea.field {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* The light/dark switch crossfades through a view transition (ambient.ts setScheme): opacity only, one pass. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--d-base);
+  animation-timing-function: var(--ease);
+}
