@@ -35,6 +35,79 @@
   aspect-ratio: 1;
 }
 
+/* The leaf under the grid (lib/radar.ts radarLeaf): the accent at a whisper, so it reads only to someone looking.
+ * Its veins are the spokes and rings themselves; this is only the blade and the stalk. */
+.radar-leaf-blade {
+  fill: var(--accent-ui);
+  fill-opacity: 0.06;
+  stroke: var(--accent-ui);
+  stroke-opacity: 0.12;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.radar-leaf-stalk {
+  fill: none;
+  stroke: var(--accent-ui);
+  stroke-opacity: 0.12;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.radar-leaf-stalk {
+  stroke-width: 2;
+}
+@media (forced-colors: active) {
+  .radar-leaf {
+    display: none;
+  }
+}
+
+/* Alive, barely: the leaf breathes (a slow scale, so its lobes stay on the spokes) and the data gives a soft double beat
+ * every few seconds. Both scale about the chart's centre and only by 1-2 %; the rings, spokes and labels never move, and
+ * the hit targets are a separate layer. The radar's own exception to "nothing loops" (scripts/restraint-check.ts allowlist);
+ * nothing moves under reduced motion. */
+.radar-leaf,
+.radar-heart {
+  transform-box: view-box;
+  transform-origin: 300px 300px;
+}
+.radar-leaf {
+  animation: radar-breathe 9s ease-in-out infinite;
+}
+.radar-heart {
+  animation: radar-beat 4.8s ease-out infinite;
+}
+@keyframes radar-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
+}
+@keyframes radar-beat {
+  0%,
+  22%,
+  100% {
+    transform: scale(1);
+  }
+  5% {
+    transform: scale(1.018);
+  }
+  10% {
+    transform: scale(1.002);
+  }
+  15% {
+    transform: scale(1.011);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .radar-leaf,
+  .radar-heart {
+    animation: none;
+  }
+}
+
 .radar-ring,
 .radar-spoke {
   fill: none;

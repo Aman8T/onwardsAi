@@ -9,7 +9,8 @@
  *     oklch/oklab/lab/lch/hwb/color) outside src/theme/tokens.css and the favicon line of index.html
  *   - @keyframes that animate paint or layout (box-shadow, filter, background-position,
  *     stroke-dashoffset, offset-distance, width, height, left, top)
- *   - `infinite` animations outside .ch-typing, .ch-caret, .ch-live, .ch-tool.is-busy
+ *   - `infinite` animations outside .ch-typing, .ch-caret, .ch-live, .ch-tool.is-busy, and the radar's leaf and heartbeat
+ *     (.radar-leaf, .radar-heart: a 1-2 % scale, still under reduced motion; the user asked for a radar that feels alive)
  *   - a transition naming a hue property (--h, --h2, --h3, --k, --kw, --kb) or `all`,
  *     which would animate the registered hue properties on every 7 s step
  *   - the old theme files still existing
@@ -20,7 +21,7 @@ import { join, relative, resolve } from 'node:path';
 const ROOT = process.cwd();
 const SCAN_EXTS = new Set(['.css', '.ts', '.tsx']);
 const TOKENS_FILE = 'src/theme/tokens.css';
-const INFINITE_ALLOWLIST = ['.ch-typing', '.ch-caret', '.ch-live', '.ch-tool.is-busy'];
+const INFINITE_ALLOWLIST = ['.ch-typing', '.ch-caret', '.ch-live', '.ch-tool.is-busy', '.radar-leaf', '.radar-heart'];
 const DELETED_FILES = [
   'src/styles/keycap.css',
   'src/styles/graph.css',

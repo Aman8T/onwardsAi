@@ -104,3 +104,43 @@ export function pivotFor(
   }
   return { x: g.cx, y: g.cy };
 }
+
+/**
+ * The leaf the chart is drawn on (design canvas "Leaf radar experiments", quiet whole leaf): a palmate leaf that shares the
+ * chart's geometry: the spokes are its main veins and the rings its cross-veins, so it adds no line of its own inside the
+ * chart. One lobe per axis with its tip just past the rim, a sinus between neighbours; the stalk leaves through the sinus
+ * nearest the bottom, between two spokes, so it never runs along one. Decoration only, and only for three axes or more.
+ */
+export interface RadarLeaf {
+  blade: string;
+  stalk: string;
+}
+
+export function radarLeaf(g: RadarGeom, n: number): RadarLeaf | null {
+  if (n < 3) return null;
+  const half = Math.PI / n;
+  const at = (a: number, r: number) => `${fmt(g.cx + Math.cos(a) * r)} ${fmt(g.cy + Math.sin(a) * r)}`;
+  const tipR = g.r * 1.12;
+  const sinusR = g.r * 0.8;
+  const shoulderR = g.r * 1.04;
+  let blade = '';
+  for (let i = 0; i < n; i++) {
+    const a = angleOf(i, n);
+    if (i === 0) blade = `M ${at(a - half, sinusR)}`;
+    blade += ` Q ${at(a - half * 0.55, shoulderR)} ${at(a, tipR)} Q ${at(a + half * 0.55, shoulderR)} ${at(a + half, sinusR)}`;
+  }
+  // the sinus closest to straight down carries the stalk
+  let stalkAngle = angleOf(0, n) + half;
+  let bestGap = Infinity;
+  for (let i = 0; i < n; i++) {
+    const m = angleOf(i, n) + half;
+    const gap = Math.abs(Math.atan2(Math.sin(m - Math.PI / 2), Math.cos(m - Math.PI / 2)));
+    if (gap < bestGap) {
+      bestGap = gap;
+      stalkAngle = m;
+    }
+  }
+  // it starts at the leaf's edge, so no line of its own crosses the chart
+  const stalk = `M ${at(stalkAngle, sinusR)} Q ${at(stalkAngle - 0.08, g.r * 1.1)} ${at(stalkAngle, g.r * 1.3)}`;
+  return { blade: `${blade} Z`, stalk };
+}

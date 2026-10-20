@@ -20,7 +20,7 @@ import {
   useTransform,
 } from 'motion/react';
 import type { Variants } from 'motion/react';
-import { RADAR_VIEW, angleOf, labelAnchor, pivotFor, pointAt, polygonPath, radarGeom, ringPath } from '../lib/radar';
+import { RADAR_VIEW, angleOf, labelAnchor, pivotFor, pointAt, polygonPath, radarGeom, radarLeaf, ringPath } from '../lib/radar';
 import '../styles/radar.css';
 
 /* ------------------------------------------------------------------ */
@@ -239,8 +239,17 @@ function Layer({ axes, reveal, reduced, hasSecondary, selectedId, hoveredId, rel
 
   const hot = (id: string) => id === hoveredId || id === selectedId;
 
+  const leaf = useMemo(() => radarLeaf(g, n), [n]);
+
   return (
     <>
+      {/* the leaf the chart is drawn on: its veins are the spokes and rings (decoration, barely there until you look) */}
+      {leaf && (
+        <g className="radar-leaf" aria-hidden="true">
+          <path className="radar-leaf-blade" d={leaf.blade} />
+          <path className="radar-leaf-stalk" d={leaf.stalk} />
+        </g>
+      )}
       {RING_LEVELS.map((level) => (
         <path key={level} className="radar-ring" d={ringPath(g, n, level)} />
       ))}
@@ -257,32 +266,35 @@ function Layer({ axes, reveal, reduced, hasSecondary, selectedId, hoveredId, rel
           />
         );
       })}
-      {hasSecondary && (
-        <path ref={path2Ref} className={cx('radar-poly-2', drawFromCentre && 'is-reveal')} d={initialD2} />
-      )}
-      <path ref={pathRef} className={cx('radar-poly', hasSecondary && 'has-target')} d={initialD} />
-      {/* Re-keyed on every values change so the fade restarts after the tween. */}
-      <g key={valuesKey} className="radar-dots" style={{ animationDelay: `${dotsDelayMs}ms` }}>
-        {hasSecondary &&
-          axes.map((a, i) => {
-            if (a.secondary === undefined) return null;
-            const pt = pointAt(g, i, n, a.secondary / 100);
-            return <circle key={a.id} className="radar-dot-2" cx={pt.x} cy={pt.y} r={2.5} />;
+      {/* the data beats softly, like something alive (radar.css .radar-heart; still under reduced motion) */}
+      <g className="radar-heart">
+        {hasSecondary && (
+          <path ref={path2Ref} className={cx('radar-poly-2', drawFromCentre && 'is-reveal')} d={initialD2} />
+        )}
+        <path ref={pathRef} className={cx('radar-poly', hasSecondary && 'has-target')} d={initialD} />
+        {/* Re-keyed on every values change so the fade restarts after the tween. */}
+        <g key={valuesKey} className="radar-dots" style={{ animationDelay: `${dotsDelayMs}ms` }}>
+          {hasSecondary &&
+            axes.map((a, i) => {
+              if (a.secondary === undefined) return null;
+              const pt = pointAt(g, i, n, a.secondary / 100);
+              return <circle key={a.id} className="radar-dot-2" cx={pt.x} cy={pt.y} r={2.5} />;
+            })}
+          {axes.map((a, i) => {
+            const pt = pointAt(g, i, n, a.value / 100);
+            const sel = a.id === selectedId;
+            const rel = relatedIds?.has(a.id) ?? false;
+            return (
+              <circle
+                key={a.id}
+                className={cx('radar-dot', sel && 'is-sel', rel && 'is-rel', dim && !sel && !rel && 'is-dim')}
+                cx={pt.x}
+                cy={pt.y}
+                r={sel ? 4 : 3}
+              />
+            );
           })}
-        {axes.map((a, i) => {
-          const pt = pointAt(g, i, n, a.value / 100);
-          const sel = a.id === selectedId;
-          const rel = relatedIds?.has(a.id) ?? false;
-          return (
-            <circle
-              key={a.id}
-              className={cx('radar-dot', sel && 'is-sel', rel && 'is-rel', dim && !sel && !rel && 'is-dim')}
-              cx={pt.x}
-              cy={pt.y}
-              r={sel ? 4 : 3}
-            />
-          );
-        })}
+        </g>
       </g>
     </>
   );
