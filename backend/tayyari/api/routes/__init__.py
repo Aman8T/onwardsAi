@@ -24,6 +24,8 @@
               GET /api/handoff/{id} (the hand-off, once)
     prepare   POST /api/prepare (NDJSON); GET /api/prepare/{id}; PUT .../state; GET .../repos; POST .../headline
               ("How do I prepare for this role?" as blocks)
+    weekly    GET, PUT /api/weekly/subscription; GET /api/weekly/editions, .../editions/{id}; POST .../editions/preview;
+              GET, POST /api/weekly/unsubscribe?token= (The Leafout Weekly, a personal newspaper)
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.
@@ -50,6 +52,7 @@ from tayyari.api.routes import (
     profile,
     sample,
     speech,
+    weekly,
 )
 
 api_router = APIRouter()
@@ -70,6 +73,7 @@ for _module in (
     speech,
     prepare,
     handoff,
+    weekly,
 ):
     api_router.include_router(_module.router)
 

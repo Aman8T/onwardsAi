@@ -23,6 +23,7 @@ import { useHandoffMessage } from '../lib/useHandoff';
 import { BAND_LABEL } from '../match/model';
 import { readRecent } from '../match/recent';
 import { actions, useApp } from '../store';
+import { WeeklyTile } from '../weekly/WeeklyTile';
 import '../styles/onboarding.css';
 
 /* ───────────────────────── constants ───────────────────────── */
@@ -799,6 +800,7 @@ export function Onboarding() {
                     </span>
                   )}
                 </button>
+                <WeeklyTile />
               </nav>
 
               <section className="panel ob-cell ob-c-how ob-how" aria-labelledby="ob-how-title">

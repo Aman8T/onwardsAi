@@ -10,6 +10,7 @@
     deploy        build the web app, then ``fastapi deploy`` from backend/
     discover-refresh  read employers' own public job boards into the database, once (no key needed)
     discover-worker   the same in a loop, as its own process
+    weekly            The Leafout Weekly by hand: `weekly run` (one scheduler pass), `weekly preview EMAIL` (one reader's edition)
 
 This package is the one place that prints to the terminal. Importing it imports nothing heavy: every command
 module is loaded only when its command runs.

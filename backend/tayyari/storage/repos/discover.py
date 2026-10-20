@@ -215,6 +215,16 @@ class SqlDiscoverRepo:
             rows = (await s.execute(stmt)).all()
         return [_listing(row) for row in rows]
 
+    async def list_open_since(self, since: datetime) -> list[DiscoverListing]:
+        stmt = (
+            select(*_LIST_COLUMNS)
+            .where(DiscoverListingRow.status == "open", DiscoverListingRow.first_seen_at >= since)
+            .order_by(DiscoverListingRow.first_seen_at.desc(), DiscoverListingRow.id)
+        )
+        async with self._db.session() as s:
+            rows = (await s.execute(stmt)).all()
+        return [_listing(row) for row in rows]
+
     async def get(self, listing_id: str) -> DiscoverListing | None:
         stmt = select(*_LIST_COLUMNS, DiscoverListingRow.posting_text).where(
             DiscoverListingRow.id == listing_id

@@ -877,6 +877,10 @@ class DiscoverRepo(Protocol):
         """Every open listing, without its text."""
         ...
 
+    async def list_open_since(self, since: datetime) -> list[DiscoverListing]:
+        """Every open listing first seen at or after ``since``, newest first, without its text."""
+        ...
+
     async def get(self, listing_id: str) -> DiscoverListing | None:
         """The listing with its text, open or closed, or None."""
         ...
@@ -1035,6 +1039,10 @@ class PrepareRepo(Protocol):
         is still ``expected_version``. False (and nothing written) when it is not, or the plan is not this profile's."""
         ...
 
+    async def list_for_profile(self, profile_id: str, limit: int) -> list[StoredPlan]:
+        """This profile's plans, newest first (by ``created_at``), at most ``limit``."""
+        ...
+
 
 # ───────────────────────────── hand-off from the site ─────────────────────────────
 
@@ -1068,6 +1076,123 @@ class HandoffRepo(Protocol):
 
     async def purge_expired(self, now: datetime) -> int:
         """Delete every hand-off whose ``expires_at`` is before ``now``; the number removed."""
+        ...
+
+
+# ───────────────────────────── the Leafout Weekly ─────────────────────────────
+
+
+@dataclass(frozen=True, slots=True)
+class StoredWeeklySubscription:
+    """One account's subscription (`WeeklySubscriptionRow`). ``status`` is ``active``, ``paused`` or ``off``; ``day`` is
+    ``mon`` or ``fri``; ``sections`` are the parts the reader wants; ``unsubscribe_token`` is the secret of the one-click link."""
+
+    user_id: str
+    email: str | None
+    day: str
+    sections: list[str]
+    status: str
+    paused_until: datetime | None
+    unsubscribe_token: str
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class StoredWeeklyEdition:
+    """One edition for one reader and week (`WeeklyEditionRow`). ``payload`` is the `WeeklyEdition` JSON without ``id``,
+    ``createdAt``, ``emailedAt`` and ``readAt``."""
+
+    id: str
+    user_id: str
+    issue: int
+    week_of: date
+    payload: dict[str, Any]
+    created_at: datetime
+    emailed_at: datetime | None = None
+    read_at: datetime | None = None
+
+
+class WeeklyRepo(Protocol):
+    """Subscriptions and editions of The Leafout Weekly, and the small claims that keep two replicas from working on the same
+    reader's week. Everything about an edition is scoped to its reader's user id."""
+
+    async def get_subscription(self, user_id: str) -> StoredWeeklySubscription | None:
+        """The account's subscription, or None when it never subscribed."""
+        ...
+
+    async def get_subscription_by_token(self, token: str) -> StoredWeeklySubscription | None:
+        """The subscription whose unsubscribe token this is, or None."""
+        ...
+
+    async def save_subscription(self, item: StoredWeeklySubscription) -> None:
+        """Insert the subscription or replace the account's (every column but ``user_id`` and ``created_at``)."""
+        ...
+
+    async def unsubscribe_by_token(self, token: str, now: datetime) -> bool:
+        """Set the status of the subscription with this token to ``off`` (and clear ``paused_until``); False when no
+        subscription has the token. Safe to repeat."""
+        ...
+
+    async def due_subscriptions(
+        self, *, day: str, week_of: date, now: datetime, limit: int
+    ) -> list[StoredWeeklySubscription]:
+        """Subscriptions whose reader wants ``day``, that are ``active`` or ``paused`` with ``paused_until`` at or before
+        ``now``, and that have no edition for ``week_of``. At most ``limit``, in user id order."""
+        ...
+
+    async def unsent_editions(
+        self, *, day: str, week_of: date, now: datetime, limit: int
+    ) -> list[tuple[StoredWeeklySubscription, StoredWeeklyEdition]]:
+        """The same subscriptions (with an email address) whose edition for ``week_of`` exists but has not been emailed."""
+        ...
+
+    async def create_edition(self, item: StoredWeeklyEdition) -> bool:
+        """Store a new edition; False (nothing written) when the reader already has one for ``item.week_of``."""
+        ...
+
+    async def get_edition(self, user_id: str, edition_id: str) -> StoredWeeklyEdition | None:
+        """The reader's edition with this id, or None (another reader's id is None too)."""
+        ...
+
+    async def edition_for_week(self, user_id: str, week_of: date) -> StoredWeeklyEdition | None:
+        """The reader's edition for this week, or None."""
+        ...
+
+    async def list_editions(self, user_id: str, limit: int) -> list[StoredWeeklyEdition]:
+        """The reader's editions, newest first (by ``week_of``), at most ``limit``."""
+        ...
+
+    async def next_issue(self, user_id: str) -> int:
+        """1 for a reader with no edition, else the highest issue number plus one."""
+        ...
+
+    async def mark_emailed(self, user_id: str, edition_id: str, now: datetime) -> None:
+        """Set ``emailed_at`` (once; a later call keeps the first time)."""
+        ...
+
+    async def mark_read(self, user_id: str, edition_id: str, now: datetime) -> None:
+        """Set ``read_at`` (once; a later call keeps the first time)."""
+        ...
+
+    async def unread_count(self, user_id: str) -> int:
+        """The reader's editions not yet opened in the app."""
+        ...
+
+    async def claim(
+        self, key: str, week_of: date, *, now: datetime, hold: timedelta, max_tries: int
+    ) -> int | None:
+        """Win the right to work on ``key`` (for example ``compose:<user id>``) for this week: the attempt number (1, 2 ...)
+        for exactly one caller per ``hold``, across replicas, or None when another caller still holds it or ``max_tries``
+        attempts were already made for ``week_of``. Attempts of an earlier week do not count."""
+        ...
+
+    async def paid_this_week(self, week_of: date) -> int:
+        """Editions of the week that were allowed to spend on a model, as counted by `add_paid`."""
+        ...
+
+    async def add_paid(self, week_of: date, now: datetime) -> None:
+        """Count one more edition of the week that spends on a model (a soft counter: two callers at once may both add)."""
         ...
 
 
@@ -1121,9 +1246,12 @@ __all__ = [
     "StoredSearchRun",
     "StoredUser",
     "StoredVariant",
+    "StoredWeeklyEdition",
+    "StoredWeeklySubscription",
     "ToolEvent",
     "UpsertCounts",
     "UserFactRepo",
     "UserRepo",
     "VariantKind",
+    "WeeklyRepo",
 ]

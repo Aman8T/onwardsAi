@@ -333,3 +333,17 @@ async def test_the_runs_are_found_oldest_newest_and_last_good(env: Env) -> None:
 def test_a_listing_is_a_plain_value() -> None:
     first = listing("a")
     assert dataclasses.replace(first, title="x").title == "x" and first.title != "x"
+
+
+async def test_listings_first_seen_since_a_time_are_the_open_ones_newest_first(env: Env) -> None:
+    repo = env.repos.discover
+    t0 = env.clock.now()
+    await repo.upsert_employer("acme", [listing("old")], now=t0 - 20 * DAY)
+    await repo.upsert_employer("acme", [listing("mid")], now=t0 - 5 * DAY)
+    await repo.upsert_employer("acme", [listing("new"), listing("gone")], now=t0 - DAY)
+    await repo.close_missing("acme", {"old", "mid", "new"}, now=t0)
+    fresh = await repo.list_open_since(t0 - 7 * DAY)
+    assert [item.id for item in fresh] == ["new", "mid"]
+    assert all(item.posting_text is None for item in fresh)
+    assert [item.id for item in await repo.list_open_since(t0 - 30 * DAY)] == ["new", "mid", "old"]
+    assert await repo.list_open_since(t0 + DAY) == []

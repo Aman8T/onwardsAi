@@ -47,6 +47,8 @@ def _isolated_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
         monkeypatch.delenv(name, raising=False)
     for name in [n for n in os.environ if n.upper().startswith("TAYYARI_")]:
         monkeypatch.delenv(name, raising=False)
+    # The Leafout Weekly's background loop would email and spend: off unless a test turns it on with its own settings.
+    monkeypatch.setenv("TAYYARI_WEEKLY__ENABLED", "false")
     # Settings() anywhere in the process (get_settings included) must not read the repo's .env files.
     monkeypatch.setitem(Settings.model_config, "env_file", None)
     get_settings.cache_clear()

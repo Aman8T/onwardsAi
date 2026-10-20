@@ -610,6 +610,26 @@ is the one handed back; `fresh` adds a row and the older plan stays readable by 
 
 `mount_spa` is the last route and answers GET and HEAD from `backend/static` (the build), first match wins: a real file (assets cached for an hour, `.html` files `no-cache`); a page `<path>/index.html`, the generated content pages and `/pricing` when the build has its own, `no-cache`, where a trailing slash is a 308 to the address without it; one of the app's own client routes (`APP_ROUTES`: `/`, `/pricing`, `/match…`, `/discover…`, `/practice…`, `/p/…`, and `/dev/…` on a non-prod server), which gets `index.html` with 200. Anything else gets `404.html` with status 404, or the JSON 404 when the build has no 404.html, and no build at all is the JSON 404 (so is `/404.html` itself). The private routes (match, discover, practice, `/p/`, `/dev/`) send `X-Robots-Tag: noindex`; `/`, `/pricing` and the content pages do not. A path that is not a plain relative address (a leading slash, a backslash, a NUL, a `..` that leaves the build) is never a file. The `/dev/` check reads `app.state.settings`, which `create_app` sets; `/api/*` never reaches this route.
 
+### The Leafout Weekly (`weekly/`, roadmap W1)
+
+A personal newspaper, built per reader once a week and stored as one `weekly_editions` row (unique per user and week).
+
+- **Compose** (`weekly/compose.py`): openings from `discover_listings` first seen in the last 7 days (14 when fewer than three), ranked by
+  the code-only quick fit against the reader's newest claimed profile, "can't tell" only when nothing better came in; the lead one gets one
+  judge read (`weekly.judge`, jobsearch's prompt and `verify`). Progress is code over Prepare plans, the newest practice session and the
+  graph's roles. News: up to 3 `search_web` calls (`weekly.news`) restricted to `TAYYARI_WEEKLY__NEWS_DOMAINS`, one structured read
+  (`weekly.news.read`), then `weekly/ground.py` drops any item whose URL was not a search result or whose skill is not on the graph. Tip and
+  quote rotate from a list in code. The paid part sits inside `SpendGuard.reserve(est_weekly_usd)` and a soft weekly cap; without it the
+  edition is built anyway, without news and the read.
+- **News domains must be readable by Anthropic's crawler**: one blocked domain makes the API refuse the whole search
+  (`BLOCKED_NEWS_DOMAINS` in `core/settings.py`, kept out by a test).
+- **Schedule** (`_weekly_loop` in `container.py`, every 15 minutes, `TAYYARI_WEEKLY__ENABLED`): from 06:00 India time on the reader's day,
+  due readers are claimed through `kv` rows so two replicas never both work on one; build, store, then email in batches through Resend with
+  `List-Unsubscribe` one-click headers; a failed try is retried by a later tick up to `max_tries`. Accounts without an email get the stored
+  edition only. Without a Resend key nothing is sent (local runs write the HTML under the data dir).
+- **CLI**: `python -m tayyari.cli weekly run` (one pass now) and `weekly preview <email>` (build and store this week's edition for that
+  account, print the local HTML path).
+
 ## Jev decisions framework
 
 ### Decision specifications

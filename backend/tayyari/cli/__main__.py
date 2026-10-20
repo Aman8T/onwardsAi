@@ -159,6 +159,7 @@ def build_parser() -> argparse.ArgumentParser:
     deploy.add_argument("--skip-build", action="store_true", help="do not run `npm run build:static` first")
 
     _add_discover_commands(commands)
+    _add_weekly_commands(commands)
     _add_eval_commands(commands)
     return parser
 
@@ -207,6 +208,30 @@ def _add_discover_commands(commands: Any) -> None:
         default=None,
         help="read this registry file instead of the bundled employers.json",
     )
+
+
+def _add_weekly_commands(commands: Any) -> None:
+    """``weekly run`` and ``weekly preview``: The Leafout Weekly by hand."""
+    weekly = commands.add_parser(
+        "weekly",
+        help="The Leafout Weekly by hand: one scheduler pass, or one reader's edition",
+        description="`weekly run` does one pass of the scheduler now (build and email what is due; it acts only on a "
+        "reader's day, from 06:00 India time). `weekly preview EMAIL` builds this week's edition for that account "
+        "(one paid run, a few cents, when ANTHROPIC_API_KEY is set), stores it, and writes its email as an HTML file.",
+    )
+    actions = weekly.add_subparsers(dest="weekly_command", metavar="<action>", required=True)
+    actions.add_parser(
+        "run",
+        help="one scheduler pass now",
+        description="Compose and email the editions that are due, exactly as the background loop does every 15 minutes.",
+    )
+    preview = actions.add_parser(
+        "preview",
+        help="build and store this week's edition for an account; print its id and the local HTML path",
+        description="Build this week's edition for the account with this email address (the stored one when it is "
+        "already built), then print its id and the path of its email as an HTML file under the data folder.",
+    )
+    preview.add_argument("email", help="the account's sign-in email address")
 
 
 def _add_eval_commands(commands: Any) -> None:
@@ -396,6 +421,14 @@ def _discover_worker(args: argparse.Namespace) -> int:
     return discover.run_worker(args.every, args.registry)
 
 
+def _weekly(args: argparse.Namespace) -> int:
+    from . import weekly
+
+    if args.weekly_command == "run":
+        return weekly.run_pass()
+    return weekly.run_preview(args.email)
+
+
 def _deploy(args: argparse.Namespace) -> int:
     from . import deploy
 
@@ -458,6 +491,7 @@ _HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "deploy": _deploy,
     "discover-refresh": _discover_refresh,
     "discover-worker": _discover_worker,
+    "weekly": _weekly,
     "export": _export,
     "replay": _replay,
     "eval": _eval,

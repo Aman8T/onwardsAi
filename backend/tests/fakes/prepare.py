@@ -43,6 +43,11 @@ class FakePrepareRepo:
         mine.sort(key=lambda r: (_utc(r.created_at), r.id), reverse=True)
         return copy.deepcopy(mine[0])
 
+    async def list_for_profile(self, profile_id: str, limit: int) -> list[StoredPlan]:
+        mine = [r for r in self.rows.values() if r.profile_id == profile_id]
+        mine.sort(key=lambda r: (_utc(r.created_at), r.id), reverse=True)
+        return [copy.deepcopy(r) for r in mine[:limit]]
+
     async def save_state(
         self,
         profile_id: str,

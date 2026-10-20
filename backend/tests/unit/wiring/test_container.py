@@ -691,3 +691,78 @@ def test_container_overrides_are_frozen() -> None:
     overrides = ContainerOverrides()
     with pytest.raises(dataclasses.FrozenInstanceError):
         overrides.claude = FakeClaudeClient()  # type: ignore[misc]
+
+
+# ───────────────────────────── The Leafout Weekly ─────────────────────────────
+
+
+async def test_the_real_weekly_service_is_built_and_its_loop_is_off_unless_enabled(
+    make_settings: MakeSettings, build: Build
+) -> None:
+    from tayyari.weekly.service import WeeklyService
+
+    container = await build(make_settings())
+    assert isinstance(container.weekly, WeeklyService)
+    assert container.weekly_loop is None and container.weekly.can_send is False
+
+
+async def test_the_weekly_loop_runs_a_pass_when_enabled_and_stops_at_shutdown(
+    make_settings: MakeSettings, build: Build
+) -> None:
+    from tayyari.core.settings import WeeklySettings
+
+    class Counting:
+        passes = 0
+
+        async def run_once(self) -> None:
+            Counting.passes += 1
+
+    settings = make_settings(weekly=WeeklySettings(enabled=True, first_tick_delay_s=0.0, tick_seconds=0.01))
+    container = await build(settings, weekly=Counting())
+    task = container.weekly_loop
+    assert task is not None
+    await eventually(lambda: Counting.passes >= 3)
+    await container.aclose()
+    assert task.cancelled() and container.weekly_loop is None
+
+
+async def test_a_failing_weekly_pass_is_logged_and_the_loop_goes_on(
+    make_settings: MakeSettings, build: Build, container_log: RecordingLog
+) -> None:
+    from tayyari.core.settings import WeeklySettings
+
+    class Flaky:
+        passes = 0
+
+        async def run_once(self) -> None:
+            Flaky.passes += 1
+            if Flaky.passes == 1:
+                raise RuntimeError("boom")
+
+    settings = make_settings(weekly=WeeklySettings(enabled=True, first_tick_delay_s=0.0, tick_seconds=0.01))
+    await build(settings, weekly=Flaky())
+    await eventually(lambda: Flaky.passes >= 2)
+    assert "weekly_loop_failed" in container_log.events("error")
+
+
+async def test_the_weekly_mailer_uses_the_weekly_sender_then_resend_from(
+    make_settings: MakeSettings, build: Build
+) -> None:
+    from tayyari.auth.email import ResendEmailSender
+    from tayyari.core.settings import WeeklySettings
+
+    settings = make_settings(
+        resend_api_key=SecretStr("re_test_not_a_real_key"),
+        resend_from="Tayyari <login@leafout.in>",
+        weekly=WeeklySettings(sender="The Leafout Weekly <weekly@leafout.in>"),
+    )
+    container = await build(settings)
+    mailer = container.weekly._mailer
+    assert isinstance(mailer, ResendEmailSender) and container.weekly.can_send
+    assert mailer._sender == "The Leafout Weekly <weekly@leafout.in>"
+    fallback = await build(
+        make_settings(
+            resend_api_key=SecretStr("re_test_not_a_real_key"), resend_from="Tayyari <login@leafout.in>"
+        )
+    )
+    assert fallback.weekly._mailer._sender == "Tayyari <login@leafout.in>"  # type: ignore[union-attr]

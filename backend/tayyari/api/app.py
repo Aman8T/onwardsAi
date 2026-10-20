@@ -32,8 +32,10 @@ from tayyari.container import ContainerOverrides
 from tayyari.core.paths import STATIC_DIR
 from tayyari.core.settings import Settings, get_settings
 
-# Sign-in links and callbacks carry a one-time secret in the query string, which a span records as `url.query`.
-_SECRET_IN_QUERY = frozenset({"/api/auth/magic/verify", "/api/auth/google/callback"})
+# Sign-in links and callbacks carry a one-time secret in the query string (so does The Leafout Weekly's unsubscribe link), which a span records as `url.query`.
+_SECRET_IN_QUERY = frozenset(
+    {"/api/auth/magic/verify", "/api/auth/google/callback", "/api/weekly/unsubscribe"}
+)
 # A hand-off's id is a one-time secret in the path of its GET (and in the query of the redirect, which is outside /api/).
 _HANDOFF_GET_PREFIX = "/api/handoff/"
 

@@ -39,6 +39,9 @@ Purpose = Literal[
     "prepare.standing",
     "prepare.moves",
     "prepare.headline",
+    "weekly.judge",
+    "weekly.news",
+    "weekly.news.read",
 ]
 """Why a Claude call is made. Stored on every `llm_calls` row and used to script fakes."""
 

@@ -73,6 +73,17 @@ class SqlPrepareRepo:
             row = (await s.execute(stmt)).scalars().first()
         return None if row is None else _item(row)
 
+    async def list_for_profile(self, profile_id: str, limit: int) -> list[StoredPlan]:
+        stmt = (
+            select(PreparePlanRow)
+            .where(PreparePlanRow.profile_id == profile_id)
+            .order_by(PreparePlanRow.created_at.desc(), PreparePlanRow.id.desc())
+            .limit(limit)
+        )
+        async with self._db.session() as s:
+            rows = (await s.execute(stmt)).scalars().all()
+        return [_item(row) for row in rows]
+
     async def save_state(
         self,
         profile_id: str,

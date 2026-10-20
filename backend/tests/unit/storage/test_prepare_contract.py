@@ -209,3 +209,18 @@ async def test_a_plan_needs_its_profile_row_on_a_real_database(any_real_db: Data
     repos = build_repositories(any_real_db)
     with pytest.raises(Exception):  # noqa: B017  (the foreign key refuses it)
         await repos.prepare.create(item("9" * 32, "nobody"))
+
+
+# ───────────────────────── list for a profile (The Leafout Weekly's progress) ─────────────────────────
+
+
+async def test_a_profiles_plans_newest_first_and_only_its_own(repo: PrepareRepo) -> None:
+    a, b, c, other = "a1" * 16, "b1" * 16, "c1" * 16, "d1" * 16
+    await repo.create(item(a, P1, created_at=T0))
+    await repo.create(item(b, P1, role_id="design-engineer", created_at=T0 + timedelta(days=2)))
+    await repo.create(item(c, P1, role_id="senior", created_at=T0 + timedelta(days=1)))
+    await repo.create(item(other, P2, created_at=T0 + timedelta(days=9)))
+    assert [p.id for p in await repo.list_for_profile(P1, 10)] == [b, c, a]
+    assert [p.id for p in await repo.list_for_profile(P1, 1)] == [b]
+    assert [p.id for p in await repo.list_for_profile(P2, 10)] == [other]
+    assert await repo.list_for_profile("e" * 32, 10) == []

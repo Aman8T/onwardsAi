@@ -71,6 +71,7 @@ class AppRoute(NamedTuple):
 #   practice...        /practice                                                           src/practice/route.ts
 #   signout            /signout, ends the app session, then returns to the Leafout site    src/auth/SignOut.tsx
 #   account/delete     /account/delete, deletion started on the Leafout site (confirm first)  src/auth/
+#   weekly/...         /weekly, The Leafout Weekly (the reading room, Manage and the archive)    src/weekly/
 #   p/...              /p/<publicId>, the published portfolio                              src/main.tsx
 #   dev/...            the galleries /dev/portfolios, /dev/match, /dev/discover, /dev/practice, /dev/prepare:
 #                      rendered by development builds only, so served only on a non-prod server
@@ -80,6 +81,7 @@ APP_ROUTES: tuple[AppRoute, ...] = (
     AppRoute(r"match(?:/.*)?", private=True),
     AppRoute(r"discover(?:/.*)?", private=True),
     AppRoute(r"practice(?:/.*)?", private=True),
+    AppRoute(r"weekly(?:/.*)?", private=True),
     AppRoute(r"signout/?", private=True),
     AppRoute(r"account/delete/?", private=True),
     AppRoute(r"p/.*", private=True),

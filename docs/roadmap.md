@@ -765,6 +765,37 @@ The user answered the open questions. Where this list and the spec above disagre
 - **Expired token in the identity check.** A valid cookie with a different `sub` replaces the session only when its token is fully valid. An expired token still has its signature checked; if it has expired, the app ends the session and sets `reauth: true`.
 - **Hold cookie (built).** `POST /api/auth/logout` and `DELETE /api/me` set `tayyari_bridge_hold`: host-only, HttpOnly, 600 seconds. It holds the first 32 hex characters of the sha256 of the site token the browser sent. While it matches the current site token, the bridge is skipped, so an old token cannot recreate a session. A new sign-in brings a new token, and it works at once.
 
+## W1 · The Leafout Weekly (a personal newspaper)
+
+Designed 2026-10-21 (canvas https://claude.ai/artifact/BpwdFiwGf6tHjy7H1VqM12: the edition in the app, the same edition as an email,
+subscribing and the archive). Decided with the user: weekly (Monday from 06:00 India time, Friday as the other choice), email and in-app,
+four sections (openings that fit, your week, news from your field, a tip and a quote), free for signed-in accounts.
+
+**Contract.** `shared/weekly.ts` ⇄ `contract/weekly.py`: `WeeklySubscription`, `WeeklySubscriptionUpdate`, `WeeklyEdition` (jobs with
+cited `met` and `notShown`, progress, news with a cited skill, tip, quote), `WeeklyEditionSummary`, `WeeklyEditionList`.
+
+**Tables** (migration 0013, additive): `weekly_subscriptions` (one per user, unsubscribe token) and `weekly_editions` (payload JSON,
+unique per user and week).
+
+**Composer.** Code chooses and computes; models read and phrase.
+- Openings: listings first seen on employers' own boards in the last 7 days, ranked by the code-only quick fit against the reader's
+  newest graph; the lead one gets one judge read (verbatim posting quotes, cited evidence), the others carry the quick fit's facts.
+- Your week: the newest Prepare plan's week and ticks, the closest role and its ETA as the graph states it, the last practice session.
+- News: up to 3 web searches on the reader's top areas and goal, one structured read into typed slots; a verifier drops any item whose
+  URL was not in the search results or whose skill is not on the graph (known-bad fixture proves it).
+- Tip and quote: a curated list in code, rotated by issue.
+- Spend reserved per edition (`est_weekly_usd`), a weekly cap; when the paid part cannot run, the edition goes out without it.
+
+**Delivery.** A loop beside maintenance claims due subscribers in the database (two replicas never both send), stores the edition,
+emails it through Resend with `List-Unsubscribe` one-click, retries a failed send next tick. Accounts without an email read it in the
+app only. Needs `leafout.in` verified on Resend and `TAYYARI_WEEKLY__SENDER`; until then editions are built and readable in the app.
+
+**Routes.** `GET/PUT /api/weekly/subscription`, `GET /api/weekly/editions`, `GET /api/weekly/editions/{id}`,
+`POST /api/weekly/editions/preview`, `GET|POST /api/weekly/unsubscribe?token=` (token redacted from telemetry).
+
+**Frontend.** `/weekly`: the reading room (the edition as a newspaper page, press fonts and tokens), the subscription panel, the
+archive; a dashboard tile on Home; `/dev/weekly` gallery from fixtures.
+
 ## Follow-ups
 
 Found while writing the documentation wave (2026-10-11). None blocks the landed waves; each is a change for a later wave.

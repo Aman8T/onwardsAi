@@ -1,0 +1,875 @@
+/*
+ * The Leafout Weekly: the paper (EditionPaper), the reading room around it, the subscription panel, the archive, the
+ * Home tile and the dev gallery. The paper is built from the press tokens (paper, ink, rule) and the Old Newspaper
+ * faces; the room, panels and tile use the app's tokens and primitives. Two deliberate bends, both the portfolio
+ * newspaper's: the blackletter nameplate, and the thick-thin double rule built from two 1px bars so no border is
+ * thicker than 1px. No shadows, no blur, no animation: the only motion is the hover tint of a control.
+ *
+ * The paper and the room reflow by their own width (container queries), so they hold in a narrow pane and in the
+ * 390px frame of the dev gallery as well as on a phone: the paper is one column under 760px, the room puts the
+ * panels beside the paper from 1100px.
+ */
+
+/* ───────────── the page ───────────── */
+
+.wk-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--text);
+}
+
+.wk-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  padding: var(--s4) var(--s6);
+  background: var(--bg);
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.wk-header-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  margin-left: auto;
+}
+
+.wk-main {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: var(--s6) var(--s6) var(--s8);
+  container-type: inline-size;
+  container-name: wk;
+}
+
+.wk-room {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s5);
+}
+
+.wk-paper-col {
+  order: 1;
+  min-width: 0;
+}
+
+.wk-side-col {
+  order: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+}
+
+/* never subscribed or signed out: the way in comes before the sample */
+.wk-room--gate .wk-side-col {
+  order: 0;
+}
+
+.wk-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.wk-sample {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.wk-quiet-page {
+  margin: var(--s7) 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.wk-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+}
+
+.wk-notice p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.wk-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s2);
+}
+
+@container wk (min-width: 1100px) {
+  .wk-room {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    align-items: start;
+  }
+
+  .wk-paper-col {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .wk-side-col {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+@container wk (max-width: 760px) {
+  .wk-room {
+    gap: var(--s4);
+  }
+}
+
+@media (max-width: 760px) {
+  .wk-header {
+    padding: var(--s3) var(--s4);
+  }
+
+  .wk-header-kicker {
+    display: none;
+  }
+
+  .wk-main {
+    padding: var(--s4) var(--s4) var(--s7);
+  }
+}
+
+/* ───────────── the paper ───────────── */
+
+.wk-paper {
+  --f-disp: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --f-body: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
+  --f-black: 'UnifrakturMaguntia', 'Old English Text MT', Georgia, serif;
+  container-type: inline-size;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: var(--press-ink);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.55;
+  font-variant-numeric: lining-nums;
+  background-color: var(--press-paper);
+  background-image: radial-gradient(circle at center, var(--press-grain) 0.6px, transparent 0.9px);
+  background-size: 6px 6px;
+  border: 1px solid var(--press-rule);
+}
+
+.wk-paper,
+.wk-paper *,
+.wk-paper *::before,
+.wk-paper *::after {
+  box-sizing: border-box;
+}
+
+.wk-in {
+  padding: 36px 48px;
+}
+
+:where(.wk-paper) :is(h1, h2, h3, p, ul, dl, dd, blockquote) {
+  margin: 0;
+  padding: 0;
+}
+
+:where(.wk-paper) ul {
+  list-style: none;
+}
+
+.wk-paper a {
+  color: var(--press-ink);
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.wk-paper a:hover {
+  color: var(--press-ink-2);
+}
+
+.wk-paper :focus-visible {
+  outline: 2px solid var(--press-ink);
+  outline-offset: 3px;
+}
+
+.wk-ears {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--press-rule);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--press-ink-2);
+}
+
+.wk-name {
+  margin: 12px 0 0;
+  text-align: center;
+  font-family: var(--f-black);
+  font-weight: 400;
+  font-size: clamp(48px, 8cqw, 92px);
+  line-height: 1;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* the thick-thin double rule: two 1px bars with a gap, never a border over 1px */
+.wk-strap,
+.wk-foot {
+  position: relative;
+  border-bottom: 1px solid var(--press-ink);
+}
+
+.wk-strap::before,
+.wk-foot::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-top: 1px solid var(--press-ink);
+  border-bottom: 1px solid var(--press-ink);
+}
+
+.wk-strap {
+  margin: 10px 0 0;
+  padding: 11px 0 7px;
+  text-align: center;
+  font-size: 12.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--press-ink-2);
+}
+
+.wk-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  margin-top: 22px;
+}
+
+.wk-grid--solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.wk-lead {
+  min-width: 0;
+  padding-right: 28px;
+  border-right: 1px solid var(--press-rule);
+}
+
+.wk-grid--solo .wk-lead {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.wk-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding-left: 28px;
+}
+
+.wk-kick {
+  font-family: var(--f-body);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--press-ink-2);
+}
+
+.wk-hl {
+  margin: 6px 0 8px;
+  font-family: var(--f-disp);
+  font-weight: 900;
+  font-size: clamp(30px, 4.2cqw, 46px);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.wk-deck {
+  margin: 0 0 14px;
+  font-family: var(--f-disp);
+  font-style: italic;
+  font-size: clamp(16px, 1.7cqw, 19px);
+  line-height: 1.35;
+  color: var(--press-ink-2);
+}
+
+.wk-dl {
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.wk-cols {
+  columns: 2;
+  column-gap: 26px;
+  column-rule: 1px solid var(--press-rule);
+}
+
+.wk-cols > p {
+  margin: 0 0 10px;
+}
+
+.wk-met {
+  margin: 4px 0 10px;
+  break-inside: avoid;
+}
+
+.wk-met li {
+  padding: 5px 0;
+  border-top: 1px dotted var(--press-rule);
+  font-size: 14px;
+}
+
+.wk-met li b {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wk-cite {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--press-ink-2);
+  overflow-wrap: anywhere;
+}
+
+.wk-apply {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.wk-rule {
+  margin: 20px 0 14px;
+  border-top: 1px solid var(--press-rule);
+}
+
+.wk-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px;
+}
+
+.wk-small-hl {
+  margin: 4px 0 6px;
+  font-family: var(--f-disp);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.wk-small-hl a {
+  text-decoration: none;
+}
+
+.wk-small-hl a:hover {
+  text-decoration: underline;
+}
+
+.wk-p {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.wk-quiet {
+  margin: 0;
+  font-family: var(--f-disp);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--press-ink-2);
+}
+
+.wk-ph {
+  font-style: italic;
+}
+
+.wk-paper .wk-ph {
+  color: var(--press-ink-2);
+}
+
+.wk-box {
+  padding: 14px 16px;
+  border: 1px solid var(--press-ink);
+}
+
+.wk-box-t {
+  margin: 0 0 6px;
+  font-family: var(--f-body);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.wk-box-p {
+  font-size: 14.5px;
+}
+
+.wk-rows {
+  margin: 0;
+}
+
+.wk-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 0;
+  border-top: 1px dotted var(--press-rule);
+  font-size: 14px;
+}
+
+.wk-row dd {
+  text-align: right;
+}
+
+.wk-nudge {
+  margin-top: 8px;
+}
+
+.wk-pull {
+  padding: 10px 0;
+  border-top: 1px solid var(--press-ink);
+  border-bottom: 1px solid var(--press-ink);
+  text-align: center;
+  font-family: var(--f-disp);
+  font-style: italic;
+  font-size: clamp(19px, 2cqw, 24px);
+  line-height: 1.25;
+}
+
+.wk-three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 26px;
+  margin-top: 10px;
+}
+
+.wk-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px 16px;
+  margin-top: 22px;
+  padding: 11px 0 0;
+  border-bottom: 0;
+  font-size: 12.5px;
+  color: var(--press-ink-2);
+}
+
+.wk-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  color: var(--press-ink);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.wk-link:hover {
+  color: var(--press-ink-2);
+}
+
+.wk-paper .wk-link:focus-visible {
+  outline: 2px solid var(--press-ink);
+}
+
+/* one column: a phone, or any narrow pane */
+@container (max-width: 760px) {
+  .wk-in {
+    padding: 20px 18px;
+  }
+
+  .wk-ears {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .wk-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wk-lead {
+    padding-right: 0;
+    border-right: 0;
+  }
+
+  .wk-side {
+    margin-top: 22px;
+    padding-left: 0;
+  }
+
+  .wk-cols {
+    columns: 1;
+  }
+
+  .wk-two,
+  .wk-three {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wk-foot {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* the smallest phones: blackletter is not legible that small, so the nameplate is Playfair, as on the portfolio */
+@container (max-width: 420px) {
+  .wk-name {
+    font-family: var(--f-disp);
+    font-weight: 900;
+    font-size: clamp(34px, 10cqw, 42px);
+    letter-spacing: -0.01em;
+  }
+
+  .wk-strap {
+    letter-spacing: 0.06em;
+  }
+}
+
+/* ───────────── subscription panel and archive ───────────── */
+
+.wk-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s5);
+}
+
+.wk-panel > p,
+.wk-panel > h2 {
+  margin: 0;
+}
+
+.wk-panel-h {
+  font-size: var(--fs-6);
+}
+
+.wk-lede {
+  color: var(--text-muted);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+}
+
+.wk-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+.wk-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.wk-label {
+  padding: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  letter-spacing: var(--track-open);
+}
+
+.wk-panel .field {
+  min-height: 44px;
+}
+
+.wk-panel .field[readonly] {
+  color: var(--text-muted);
+}
+
+.wk-select {
+  cursor: pointer;
+}
+
+.wk-hint {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.wk-sections {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.wk-check {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: 44px;
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+.wk-check input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent-ui);
+}
+
+.wk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s3);
+}
+
+.wk-btn {
+  justify-content: center;
+  min-height: 44px;
+}
+
+.wk-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  border-radius: var(--r-m);
+  background: var(--well);
+}
+
+.wk-confirm p {
+  margin: 0;
+  font-size: var(--fs-2);
+}
+
+.wk-status {
+  margin: 0;
+  min-height: 0;
+  font-size: var(--fs-2);
+  color: var(--accent);
+}
+
+.wk-status:empty {
+  display: none;
+}
+
+.wk-error,
+.wk-warn {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--danger);
+}
+
+.wk-archive-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.wk-archive-head .kicker {
+  margin: 0;
+}
+
+.wk-new {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.wk-archive {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wk-ed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  min-height: 44px;
+  padding: var(--s2) var(--s2);
+  border-top: var(--hair) solid var(--line);
+  color: var(--text);
+  font-size: var(--fs-2);
+  text-decoration: none;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.wk-ed:hover {
+  background: var(--surface-2);
+}
+
+.wk-ed[aria-current='page'] {
+  background: var(--accent-soft);
+}
+
+.wk-ed-t {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.wk-ed-d {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.wk-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-ui);
+}
+
+/* ───────────── the tile on Home ───────────── */
+
+.wk-tile {
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--s2);
+  cursor: default;
+}
+
+.wk-tile:hover {
+  border-color: var(--line);
+}
+
+.wk-tile-name {
+  margin: 0;
+  font-family: 'UnifrakturMaguntia', 'Old English Text MT', Georgia, serif;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.wk-tile-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  margin-top: var(--s1);
+}
+
+.wk-tile-row .btn {
+  min-height: 44px;
+  justify-content: center;
+}
+
+/* ───────────── the dev page ───────────── */
+
+.wk-dev {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--text);
+}
+
+.wk-dev-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  padding: var(--s4) var(--s6);
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.wk-dev-nav {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.wk-dev-navbtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--s3);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.wk-dev-navbtn:hover {
+  color: var(--text);
+}
+
+.wk-dev-navbtn.is-current {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.wk-dev-note {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.wk-dev-note:empty {
+  display: none;
+}
+
+.wk-dev-frame {
+  width: 390px;
+  max-width: 100%;
+  height: 844px;
+  margin: 0 auto;
+  padding: var(--s3);
+  overflow-y: auto;
+  border: var(--hair) solid var(--line-strong);
+  border-radius: var(--r-l);
+  background: var(--bg);
+  container-type: inline-size;
+}
+
+@media (max-width: 760px) {
+  .wk-dev-header {
+    padding: var(--s3) var(--s4);
+  }
+}

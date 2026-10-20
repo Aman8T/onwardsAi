@@ -99,6 +99,9 @@ def roomy_guard(**overrides: Any) -> GuardSettings:
         "handoff_per_hour": 1000,
         "handoff_per_day": 1000,
         "handoff_global_per_hour": 0,
+        "weekly_preview_per_hour": 1000,
+        "weekly_preview_per_day": 1000,
+        "weekly_global_per_hour": 0,
         "daily_ceiling_usd": 1000.0,
     }
     values.update(overrides)

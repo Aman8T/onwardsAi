@@ -18,6 +18,7 @@ from typing import Any
 
 EMAIL_MASK = "[email]"
 PHONE_MASK = "[phone]"
+TOKEN_MASK = "[token]"  # noqa: S105  (a placeholder, not a password)
 ADDRESS_MASK = "[address]"
 
 SENSITIVE_KEYS: frozenset[str] = frozenset(
@@ -62,6 +63,9 @@ _MAX_DEPTH = 4
 _ACCESS_ID_KEYS = ("profile_id", "session_id", "handoff_id")
 _ACCESS_ID_PREFIX = 15  # "sample-" + 8 hex, or 15 hex characters
 _MAX_ADDRESS_LINE = 400
+
+# A secret in a query string (the one-click unsubscribe link of The Leafout Weekly: ``/api/weekly/unsubscribe?token=...``).
+_TOKEN_IN_QUERY = re.compile(r"([?&](?:unsubscribe_)?token=)[^&#\s\"'<>]+", re.IGNORECASE)
 
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63}){1,8}")
 
@@ -148,6 +152,7 @@ def redact_pii(text: str) -> str:
     """Mask emails, phone numbers and likely street-address lines.
 
     - Emails become ``[email]``.
+    - The value of a ``token=`` query parameter becomes ``[token]``.
     - Phone numbers become ``[phone]``: international (``+44 20 7946 0958``), Indian
       (``+91 98765 43210``, ``098765-43210``, ``(080) 2345 6789``) and US (``(415) 555-2671``) styles, 9 to
       15 digits (8 with a leading ``+``). Years, year ranges, ISO and day-month-year dates, and anything
@@ -158,6 +163,8 @@ def redact_pii(text: str) -> str:
     """
     if not text:
         return text
+    if "token=" in text.lower():
+        text = _TOKEN_IN_QUERY.sub(lambda m: m.group(1) + TOKEN_MASK, text)
     if "@" in text:
         text = _EMAIL.sub(EMAIL_MASK, text)
     if not any(c.isdigit() for c in text) and "ddr" not in text.lower():
@@ -213,6 +220,7 @@ __all__ = [
     "EMAIL_MASK",
     "PHONE_MASK",
     "SENSITIVE_KEYS",
+    "TOKEN_MASK",
     "redact_event_dict",
     "redact_pii",
 ]

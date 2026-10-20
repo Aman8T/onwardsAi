@@ -342,3 +342,20 @@ def test_depth_is_bounded() -> None:
         nested = {"level": nested}
     out = run({"event": "e", "tree": nested})
     assert out["tree"] is not None  # no recursion error
+
+
+def test_a_token_in_a_query_string_is_masked() -> None:
+    assert redact_pii("GET /api/weekly/unsubscribe?token=abc_DEF-123&x=1 200") == (
+        "GET /api/weekly/unsubscribe?token=[token]&x=1 200"
+    )
+    assert (
+        redact_pii("https://app.example/x?a=1&token=Zm9v#top")
+        == "https://app.example/x?a=1&token=[token]#top"
+    )
+    assert redact_pii("see ?unsubscribe_token=secret") == "see ?unsubscribe_token=[token]"
+    assert redact_pii("the token= word and ?tokenizer=on") == "the token= word and ?tokenizer=on"
+
+
+def test_a_token_in_a_logged_url_field_is_masked_by_the_processor() -> None:
+    out = run({"event": "request", "url": "https://app.leafout.in/api/weekly/unsubscribe?token=abc123"})
+    assert out["url"] == "https://app.leafout.in/api/weekly/unsubscribe?token=[token]"

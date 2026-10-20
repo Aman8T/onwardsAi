@@ -23,7 +23,7 @@ import re
 import tempfile
 from functools import cached_property, lru_cache
 from pathlib import Path
-from typing import Annotated, Any, Literal, Protocol
+from typing import Annotated, Any, Final, Literal, Protocol
 
 import platformdirs
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr, field_validator
@@ -209,6 +209,16 @@ class GuardSettings(BaseModel):
     (0 = the window is not enforced). Nothing is paid for a hand-off: the limits keep the table and the uploads small."""
     handoff_global_per_hour: int = Field(default=600, ge=0)
     """Backstop on hand-offs per hour across all clients (shared counter)."""
+    weekly_preview_per_hour: int = Field(default=3, ge=0)
+    weekly_preview_per_day: int = Field(default=6, ge=0)
+    """Editions of The Leafout Weekly one signed-in account (and, separately, one client address) may have built on demand
+    ("Read the latest edition first") per window (0 = the window is not enforced). Returning an edition that is already built
+    is not counted: nothing is written by a model for it."""
+    weekly_global_per_hour: int = Field(default=120, ge=0)
+    """Backstop on editions built on demand per hour across all clients (shared counter)."""
+    est_weekly_usd: float = Field(default=0.06, ge=0)
+    """Spend reserved around the paid part of one edition: up to three web searches (a cent each), one structured call for the
+    news and one read of the lead opening."""
     chat_streams_per_ip: int = Field(default=2, ge=0)
     """Concurrent chat streams one client may hold open (per replica)."""
     chat_streams_per_process: int = Field(default=24, ge=0)
@@ -734,6 +744,92 @@ class HandoffSettings(BaseModel):
         return self.allow_localhost if self.allow_localhost is not None else env == "local"
 
 
+BLOCKED_NEWS_DOMAINS: Final = frozenset(
+    {"arstechnica.com", "economictimes.indiatimes.com", "ft.com", "livemint.com", "reuters.com", "thehindu.com",
+     "theverge.com", "wired.com", "zdnet.com"}
+)  # fmt: skip
+"""News sites Anthropic's search crawler cannot read (the API's own answer, 2026-10-21): naming one in `allowed_domains`
+makes the whole web search fail, so the weekly's news domains must leave them out."""
+
+
+class WeeklySettings(BaseModel):
+    """The Leafout Weekly, a personal newspaper built every week from the reader's own graph: `TAYYARI_WEEKLY__*`. No
+    secrets of its own: it uses the Anthropic key, and the Resend key (``RESEND_API_KEY``) the sign-in emails use.
+
+    A background loop wakes every 15 minutes; from 06:00 India time on a subscriber's day it builds that week's edition,
+    stores it and emails it. The paid part of an edition (the news, and one read of the lead opening) is a few cents and
+    is skipped, never failed, when the spend ceiling is reached or ``max_paid_editions_per_week`` is used up.
+    """
+
+    enabled: bool = True
+    """False: no background loop (the routes still work, and `weekly preview` builds an edition by hand)."""
+    sender: str | None = None
+    """``The Leafout Weekly <weekly@leafout.in>``. Unset: ``RESEND_FROM``, then Resend's shared test sender. Not a secret."""
+    app_url: str = "https://app.leafout.in"
+    """Where the links in an email point (``<app_url>/weekly?e=<id>``, the unsubscribe address, Manage)."""
+    unsubscribe_mailto: str | None = None
+    """A mailbox for the ``mailto:`` half of ``List-Unsubscribe``. Unset: the header carries the https address only."""
+    model: str = "claude-haiku-5-5"
+    """The model of the news search, the news slots and the read of the lead opening."""
+    news: bool = True
+    """False: no news section is searched for, whatever the reader chose."""
+    news_searches: int = Field(default=3, ge=1, le=3)
+    news_items: int = Field(default=3, ge=1, le=5)
+    news_domains: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: [
+            "techcrunch.com", "technologyreview.com", "bloomberg.com", "cnbc.com", "hbr.org", "infoq.com",
+            "thenewstack.io", "venturebeat.com", "business-standard.com", "yourstory.com", "inc42.com",
+            "entrackr.com", "medianama.com",
+        ]
+    )  # fmt: skip
+    """The sites a news search may return (reputable tech and business news). ``TAYYARI_WEEKLY__NEWS_DOMAINS`` takes a JSON
+    list or comma-separated domains. Every one must be readable by Anthropic's search crawler: a single blocked domain makes
+    the API refuse the whole search (checked 2026-10-21; arstechnica, economictimes, ft, livemint, reuters, thehindu, theverge,
+    wired and zdnet block it). `BLOCKED_NEWS_DOMAINS` lists them and a test keeps them out."""
+    max_paid_editions_per_week: int = Field(default=500, ge=0)
+    """Editions per week, across all readers, that may spend on a model (0 = none: every edition is built without news and
+    without the read). A soft cap: two replicas can overshoot it by a few."""
+    batch_size: int = Field(default=10, ge=1, le=50)
+    """Emails sent per batch, with `batch_pause_s` between batches."""
+    batch_pause_s: float = Field(default=1.0, ge=0)
+    max_tries: int = Field(default=3, ge=1, le=10)
+    """Times one reader's edition is built or emailed in one week before the loop gives up on it."""
+    concurrency: int = Field(default=4, ge=1, le=16)
+    """Editions composed at once in one pass of the loop."""
+    claim_hold_s: float = Field(default=600.0, gt=0)
+    """How long a reader's week stays claimed by the replica working on it (a failed try is retried by a later tick)."""
+    tick_seconds: float = Field(default=900.0, gt=0)
+    """How often the loop wakes (15 minutes)."""
+    first_tick_delay_s: float = Field(default=30.0, ge=0)
+
+    @field_validator("news_domains", mode="before")
+    @classmethod
+    def _domains_as_list(cls, v: object) -> object:
+        if v is None:
+            return []
+        if isinstance(v, str):
+            text = v.strip()
+            if text.startswith("["):
+                try:
+                    loaded = json.loads(text)
+                except ValueError:
+                    loaded = None
+                v = loaded if isinstance(loaded, list) else text.strip("[]").replace('"', " ")
+            if isinstance(v, str):
+                v = re.split(r"[,;\s]+", v)
+        if isinstance(v, list | tuple | set | frozenset):
+            cleaned = (str(item).strip().strip("\"'").strip().lower() for item in v)
+            return list(dict.fromkeys(item for item in cleaned if item))
+        return v
+
+    @field_validator("sender", "unsubscribe_mailto", mode="before")
+    @classmethod
+    def _blank_is_none(cls, v: object) -> object:
+        if isinstance(v, str):
+            return v.strip() or None
+        return v
+
+
 class Settings(BaseSettings):
     """All configuration, typed. See the module docstring for where values come from."""
 
@@ -824,6 +920,7 @@ class Settings(BaseSettings):
     interview: InterviewSettings = Field(default_factory=InterviewSettings)
     speech: SpeechSettings = Field(default_factory=SpeechSettings)
     handoff: HandoffSettings = Field(default_factory=HandoffSettings)
+    weekly: WeeklySettings = Field(default_factory=WeeklySettings)
 
     synth_hints: bool = False
     """Feed the first-read results to the synthesizer as hints (off: they are stored for comparison only)."""
@@ -942,6 +1039,7 @@ __all__ = [
     "RetentionSettings",
     "Settings",
     "SynthCache",
+    "WeeklySettings",
     "detect_env",
     "get_settings",
     "parse_email_list",

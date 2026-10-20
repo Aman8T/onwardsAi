@@ -89,6 +89,7 @@ from tests.fakes.handoff import FakeHandoffRepo
 from tests.fakes.interview import FakeInterviewRepo
 from tests.fakes.jobsearch import FakeJobSearchRepo
 from tests.fakes.prepare import FakePrepareRepo
+from tests.fakes.weekly import FakeWeeklyRepo
 
 TOUCH_INTERVAL = timedelta(hours=1)
 TOTAL = "total"
@@ -1324,6 +1325,7 @@ class FakeRepositories:
         self.interview = FakeInterviewRepo()
         self.prepare = FakePrepareRepo()
         self.handoff = FakeHandoffRepo()
+        self.weekly = FakeWeeklyRepo()
         self.bundle = Repositories(
             profiles=self.profiles,
             sessions=self.sessions,
@@ -1343,6 +1345,7 @@ class FakeRepositories:
             interview=self.interview,
             prepare=self.prepare,
             handoff=self.handoff,
+            weekly=self.weekly,
         )
 
 

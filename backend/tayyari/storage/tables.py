@@ -786,6 +786,61 @@ class HandoffRow(Base):
     __table_args__ = (Index("ix_handoffs_expires_at", "expires_at"),)
 
 
+# ───────────────────────────── the Leafout Weekly ─────────────────────────────
+
+WEEKLY_TOKEN_LEN = 64
+"""An unsubscribe token: ``secrets.token_urlsafe(32)`` (43 characters)."""
+
+
+class WeeklySubscriptionRow(Base):
+    """One account's subscription to The Leafout Weekly (``status`` ``active``, ``paused`` or ``off``). ``email`` is where the
+    paper goes (the account's own unless the reader gave another; NULL for a phone-only account, which gets the in-app paper
+    only), ``day`` is ``mon`` or ``fri``, ``sections`` the parts the reader wants (a JSON list). ``unsubscribe_token`` is the
+    secret in the one-click link of every email; it is fresh each time the status goes from ``off`` to ``active``. The row goes
+    with its account (ON DELETE CASCADE)."""
+
+    __tablename__ = "weekly_subscriptions"
+
+    user_id: Mapped[str] = mapped_column(
+        String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    email: Mapped[str | None] = mapped_column(String(EMAIL_LEN))
+    day: Mapped[str] = mapped_column(String(3))
+    sections: Mapped[list[str]] = mapped_column(JSONType)
+    status: Mapped[str] = mapped_column(String(8))
+    paused_until: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    unsubscribe_token: Mapped[str] = mapped_column(String(WEEKLY_TOKEN_LEN))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        UniqueConstraint("unsubscribe_token", name="uq_weekly_subscriptions_unsubscribe_token"),
+    )
+
+
+class WeeklyEditionRow(Base):
+    """One edition of The Leafout Weekly for one reader and one week. ``payload`` is the `WeeklyEdition` JSON without ``id``,
+    ``createdAt``, ``emailedAt`` and ``readAt`` (those are the columns); ``week_of`` is the Monday (or Friday) of the week in
+    India, and ``(user_id, week_of)`` is unique, so a week is never built twice for one reader. ``emailed_at`` is set when the
+    email went out, ``read_at`` when the reader opened it in the app. Goes with the account (ON DELETE CASCADE)."""
+
+    __tablename__ = "weekly_editions"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    issue: Mapped[int] = mapped_column(Integer)
+    week_of: Mapped[date] = mapped_column(Date)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    emailed_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    read_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "week_of", name="uq_weekly_editions_user_id_week_of"),
+        Index("ix_weekly_editions_week_of", "week_of"),
+    )
+
+
 __all__ = [
     "BAND_LEN",
     "EMAIL_LEN",
@@ -797,6 +852,7 @@ __all__ = [
     "PROVIDER_ID_LEN",
     "ROLE_ID_LEN",
     "USER_AGENT_LEN",
+    "WEEKLY_TOKEN_LEN",
     "AuthSessionRow",
     "Base",
     "ChatMessageRow",
@@ -830,6 +886,8 @@ __all__ = [
     "UserRow",
     "UtcDateTime",
     "VariantRow",
+    "WeeklyEditionRow",
+    "WeeklySubscriptionRow",
     "as_utc",
     "metadata",
 ]

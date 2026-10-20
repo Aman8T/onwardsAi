@@ -10,6 +10,7 @@ the top-level services (analysis, chat, portfolio) never import each other. The 
 - ``guard`` may import ``storage.ports`` and ``llm.errors`` (it raises the spend-ceiling error), nothing else.
 - ``discover`` is a self-contained service like ``billing``: ``core``, ``contract`` and ``storage.ports`` only.
 - ``jobsearch`` (search with AI) sees what the other model-calling services see, plus ``discover``'s pure parts.
+- ``weekly`` (The Leafout Weekly) sees the same, plus ``jobsearch``'s narrowing and checks and ``auth.email`` (the message type).
 - ``container`` and ``cli`` are composition roots and may import everything; so may ``api``, which builds on them.
 - ``legacy`` and ``canary`` (the replaced app, deleted in Wave 4) stay excluded in case an old checkout has them.
 
@@ -83,6 +84,10 @@ RULES: dict[str, tuple[str, ...]] = {
     "prepare": (*_SERVICES, "match"),
     # the hand-off from the marketing site: a self-contained service like auth; it reaches storage only through its Protocols.
     "handoff": ("core", "contract", "storage.ports"),
+    # The Leafout Weekly sits with the model-calling services: it reuses the job search's narrowing, judge prompt and checks
+    # and Discover's quick fit (no fork), and the email message type of auth (a sender is handed in; it imports no other part of
+    # auth). Nothing imports weekly except api and the container; the spend guard is handed in as a callable, not imported.
+    "weekly": (*_SERVICES, "discover", "jobsearch", "auth.email"),
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",
@@ -101,6 +106,7 @@ RULES: dict[str, tuple[str, ...]] = {
         "speech",
         "prepare",
         "handoff",
+        "weekly",
         "guard",
         "ingest",
         "prompts",

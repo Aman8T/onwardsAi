@@ -1,7 +1,7 @@
 """Sign-in emails, sent through Resend's HTTP API.
 
     POST https://api.resend.com/emails        Authorization: Bearer <RESEND_API_KEY>
-    {"from": ..., "to": [address], "subject": ..., "text": ..., "html": ...}
+    {"from": ..., "to": [address], "subject": ..., "text": ..., "html": ..., "headers": {...}}   (headers only when given)
 
 `EmailSender` is the seam: the container builds a `ResendEmailSender` when ``RESEND_API_KEY`` is set, tests hand in
 a fake, and a local server with no key sends nothing at all (the link is logged and returned instead, see
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import html
 from dataclasses import dataclass, field
-from typing import Final, Protocol
+from typing import Any, Final, Protocol
 
 import httpx2
 
@@ -38,6 +38,8 @@ class EmailMessage:
     subject: str
     text: str = field(repr=False)
     html: str = field(repr=False)
+    headers: dict[str, str] | None = field(default=None, repr=False)
+    """Extra mail headers (The Leafout Weekly's ``List-Unsubscribe``), sent to Resend as its ``headers`` object."""
 
 
 class EmailSender(Protocol):
@@ -53,13 +55,15 @@ class ResendEmailSender:
         self._client = client
 
     async def send(self, message: EmailMessage) -> None:
-        payload = {
+        payload: dict[str, Any] = {
             "from": self._sender,
             "to": [message.to],
             "subject": message.subject,
             "text": message.text,
             "html": message.html,
         }
+        if message.headers:
+            payload["headers"] = dict(message.headers)
         try:
             response = await self._client.post(
                 RESEND_URL,

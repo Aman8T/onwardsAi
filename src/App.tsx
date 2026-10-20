@@ -20,6 +20,8 @@ const MatchRoot = lazy(() => import('./match/MatchRoot').then((m) => ({ default:
 const DiscoverRoot = lazy(() => import('./discover/DiscoverRoot').then((m) => ({ default: m.DiscoverRoot })));
 // Practice the interview (hub, plan, room, debrief, progress) likewise; it needs a profile.
 const PracticeRoot = lazy(() => import('./practice/PracticeRoot').then((m) => ({ default: m.PracticeRoot })));
+// The Leafout Weekly (the reader's personal paper, its subscription and archive) likewise; it needs no profile on screen.
+const WeeklyView = lazy(() => import('./weekly/WeeklyView').then((m) => ({ default: m.WeeklyView })));
 // The pricing page (and Checkout.js, which only it loads) likewise; anyone may open it, signed in or not.
 const PricingView = lazy(() => import('./billing/PricingView').then((m) => ({ default: m.PricingView })));
 
@@ -73,6 +75,11 @@ export function App() {
           {shown === 'practice' && profile && (
             <Suspense fallback={null}>
               <PracticeRoot profile={profile} />
+            </Suspense>
+          )}
+          {shown === 'weekly' && (
+            <Suspense fallback={null}>
+              <WeeklyView />
             </Suspense>
           )}
           {shown === 'pricing' && (

@@ -29,10 +29,15 @@
                                                    two calls of the chat model at once, checked and stored; the guarded
                                                    Claude client and the plan store)
     HandoffService                                (the marketing site's hand-off: a resume and links posted once, taken once)
+    WeeklyService                                 (The Leafout Weekly: subscriptions, editions built from the reader's graph and
+                                                   emailed on their day; the guarded Claude client for the news and the lead's
+                                                   read, the spend guard around them, the mail provider when a key is set)
     match_anonymous                               (may a visitor with no sign-in match a posting: the setting
                                                    resolved against the sign-in methods this server offers)
     maintenance                                   (retention purge, a tracked background task; it keeps
                                                    the bundled sample persona's profile)
+    weekly_loop                                   (every 15 minutes: build and email the editions that are due; a tracked
+                                                   background task, switched by ``weekly.enabled``)
 
 The FastAPI lifespan builds one container per process and `aclose`s it on shutdown. The CLI builds its own
 from the same settings. Tests hand in `ContainerOverrides` to swap any part for a fake; the container closes
@@ -97,6 +102,7 @@ if TYPE_CHECKING:
     from tayyari.prepare.service import PrepareService
     from tayyari.speech.engine import SpeechEngine
     from tayyari.speech.service import SpeechService
+    from tayyari.weekly.service import WeeklyService
 
 log = get_logger(__name__)
 
@@ -129,6 +135,7 @@ class ContainerOverrides:
       tests hand in an ``httpx2.MockTransport`` so a refresh runs without a network.
     - ``jobsearch``, ``interview``, ``prepare``: the job search, practice interview and prepare services themselves.
     - ``handoff``: the marketing-site hand-off service itself.
+    - ``weekly``: The Leafout Weekly service itself (``mailer`` also stands in for its mail provider).
     - ``speech``: the speech service itself. ``speech_engine``: just its engine (the service is still built here, over the
       real ``kv`` budget); giving one switches Sarvam speech on without a ``SARVAM_API_KEY`` (the
       ``TAYYARI_SPEECH__ENABLED`` kill switch still wins). Tests hand in a fake engine; nothing calls Sarvam.
@@ -163,6 +170,7 @@ class ContainerOverrides:
     speech_engine: SpeechEngine | None = None
     prepare: PrepareService | None = None
     handoff: HandoffService | None = None
+    weekly: WeeklyService | None = None
     razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
 
@@ -250,6 +258,9 @@ class Container:
     spend; every Claude call goes through the guarded client."""
     handoff: HandoffService
     """The marketing site's hand-off. The routes count a hand-off in the ``handoff`` window; no model is called."""
+    weekly: WeeklyService
+    """The Leafout Weekly. The routes count an edition built on demand in the ``weekly`` window; the paid part of a build
+    reserves ``est_weekly_usd`` itself; every Claude call goes through the guarded client."""
     rate_limiter: RateLimiter
     spend_guard: SpendGuard
     ip_hash_key: bytes
@@ -258,6 +269,7 @@ class Container:
     jev_active: bool
     """True when decisions go through Jev (it is enabled and has a key, or a client was injected)."""
     maintenance: asyncio.Task[None] | None = None
+    weekly_loop: asyncio.Task[None] | None = None
     _closers: list[tuple[str, _Closer]] = field(default_factory=list, repr=False)
     _closed: bool = field(default=False, repr=False)
 
@@ -302,12 +314,17 @@ class Container:
         from tayyari.portfolio.service import PortfolioService
         from tayyari.prepare.service import PrepareService
         from tayyari.speech.service import SpeechService
+        from tayyari.weekly.compose import EditionComposer
+        from tayyari.weekly.jobs import JobDesk
+        from tayyari.weekly.news import NewsDesk
+        from tayyari.weekly.service import WeeklyService
 
         ov = overrides or ContainerOverrides()
         configure_logging(settings)
         clock: Clock = ov.clock if ov.clock is not None else SystemClock()
         closers: list[tuple[str, _Closer]] = []
         maintenance: asyncio.Task[None] | None = None
+        weekly_loop: asyncio.Task[None] | None = None
         try:
             # ── storage ──
             db = ov.db
@@ -628,6 +645,56 @@ class Container:
                     ttl_seconds=settings.handoff.ttl_seconds,
                 )
 
+            weekly: WeeklyService
+            if ov.weekly is not None:
+                weekly = ov.weekly
+            else:
+                weekly_mailer = ov.mailer
+                if weekly_mailer is None and settings.resend_api_key is not None:
+                    weekly_http = httpx2.AsyncClient(
+                        timeout=httpx2.Timeout(10.0), transport=ov.auth_transport, headers=AUTH_HTTP_HEADERS
+                    )
+                    closers.append(("weekly_http", weekly_http.aclose))
+                    weekly_mailer = ResendEmailSender(
+                        api_key=settings.resend_api_key.get_secret_value(),
+                        sender=settings.weekly.sender or settings.resend_from,
+                        client=weekly_http,
+                    )
+                found_in = discover
+                weekly = WeeklyService(
+                    settings=settings.weekly,
+                    repo=repos.weekly,
+                    users=repos.users,
+                    composer=EditionComposer(
+                        settings=settings.weekly,
+                        jobs=JobDesk(
+                            claude=claude,
+                            settings=settings.weekly,
+                            repo=repos.discover,
+                            registry=lambda: found_in.registry,
+                        ),
+                        news=NewsDesk(claude, settings.weekly),
+                        users=repos.users,
+                        profiles=repos.profiles,
+                        prepare=repos.prepare,
+                        interview=repos.interview,
+                        reserve=spend_guard.reserve,
+                        est_usd=settings.guard.est_weekly_usd,
+                    ),
+                    mailer=weekly_mailer,
+                    clock=clock,
+                    env=settings.env,
+                    data_dir=settings.data_dir,
+                )
+                log.info(
+                    "weekly_ready",
+                    enabled=settings.weekly.enabled,
+                    email="resend" if weekly_mailer is not None else None,
+                    news=settings.weekly.news,
+                    model=settings.weekly.model,
+                    paid_cap=settings.weekly.max_paid_editions_per_week,
+                )
+
             match_anonymous = settings.match.anonymous_allowed(auth.providers)
             log.info(
                 "match_anonymous",
@@ -646,9 +713,13 @@ class Container:
                 maintenance = asyncio.create_task(
                     _maintenance_loop(db, settings, clock, keep), name="tayyari-maintenance"
                 )
+            if settings.weekly.enabled:
+                weekly_loop = asyncio.create_task(_weekly_loop(weekly, settings), name="tayyari-weekly")
         except BaseException:
             if maintenance is not None:
                 maintenance.cancel()
+            if weekly_loop is not None:
+                weekly_loop.cancel()
             await _run_closers(closers)
             raise
 
@@ -677,12 +748,14 @@ class Container:
             speech=speech,
             prepare=prepare,
             handoff=handoff,
+            weekly=weekly,
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,
             ip_hash_key=ip_hash_key,
             analysis_slots=asyncio.Semaphore(settings.concurrency.max_concurrent_analyses),
             jev_active=jev_active,
             maintenance=maintenance,
+            weekly_loop=weekly_loop,
             _closers=closers,
         )
 
@@ -696,10 +769,11 @@ class Container:
         if self._closed:
             return
         self._closed = True
-        task, self.maintenance = self.maintenance, None
-        if task is not None:
-            task.cancel()
-            await asyncio.gather(task, return_exceptions=True)
+        for task in (self.maintenance, self.weekly_loop):
+            if task is not None:
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+        self.maintenance = self.weekly_loop = None
         await _run_closers(self._closers)
 
 
@@ -733,6 +807,20 @@ async def _maintenance_loop(
             log.error("maintenance_failed", exc_info=True)
         # Real time on purpose: a test clock that "sleeps" instantly would turn this into a busy loop.
         await asyncio.sleep(MAINTENANCE_INTERVAL_S)
+
+
+async def _weekly_loop(service: WeeklyService, settings: Settings) -> None:
+    """The Leafout Weekly: every few minutes (15 by default) build and email the editions that are due. Never raises (except
+    cancellation). `WeeklyService.run_once` knows nothing of the schedule: it looks at the India clock itself, claims each
+    reader's week in the database so two replicas never both work on it, and does nothing outside a reader's day."""
+    await asyncio.sleep(settings.weekly.first_tick_delay_s)
+    while True:
+        try:
+            await service.run_once()
+        except Exception:
+            log.error("weekly_loop_failed", exc_info=True)
+        # Real time on purpose, like the maintenance loop: a test clock that "sleeps" instantly would spin.
+        await asyncio.sleep(settings.weekly.tick_seconds)
 
 
 __all__ = ["DRAIN_TIMEOUT_S", "IP_HASH_KEY", "Container", "ContainerOverrides"]

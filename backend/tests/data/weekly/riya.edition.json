@@ -1,0 +1,86 @@
+{
+  "id": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "issue": 3,
+  "weekOf": "2026-10-19",
+  "headline": "Two openings fit your graph this week",
+  "reader": "Riya Kapoor",
+  "place": "Bengaluru, India",
+  "jobs": [
+    {
+      "listingId": "11111111111111111111111111111111",
+      "employer": "Kestrelpay",
+      "title": "Frontend Engineer",
+      "place": "Bengaluru",
+      "applyUrl": "https://job-boards.greenhouse.io/kestrelpay/jobs/11111111",
+      "fit": "looks_close",
+      "met": [
+        {
+          "ask": "Strong experience with React and TypeScript in production",
+          "cite": {
+            "source": "Resume",
+            "text": "Rebuilt Kitebird checkout in React; owns 42-component Kite UI"
+          }
+        }
+      ],
+      "notShown": [
+        "Experience with GraphQL APIs and Apollo Client"
+      ],
+      "note": "You meet 1 of 2 asks."
+    },
+    {
+      "listingId": "22222222222222222222222222222222",
+      "employer": "Nilgirimills",
+      "title": "Design Systems Engineer",
+      "place": "Bengaluru",
+      "applyUrl": "https://job-boards.greenhouse.io/nilgirimills/jobs/22222222",
+      "fit": "looks_close",
+      "met": [],
+      "notShown": [
+        "Kubernetes",
+        "Terraform"
+      ],
+      "note": "You show 3 of the 5 skills it names."
+    },
+    {
+      "listingId": "33333333333333333333333333333333",
+      "employer": "Parcelpoint",
+      "title": "Frontend Engineer",
+      "place": "Bengaluru",
+      "applyUrl": "https://job-boards.greenhouse.io/parcelpoint/jobs/33333333",
+      "fit": "stretch",
+      "met": [],
+      "notShown": [
+        "Elasticsearch",
+        "Kafka",
+        "Kubernetes",
+        "Terraform"
+      ],
+      "note": "You show 1 of the 5 skills it names."
+    }
+  ],
+  "progress": {
+    "closestRole": "Design Engineer",
+    "closestEta": "~2 months",
+    "nudge": "You have not practised an interview in the last 30 days. One short round keeps your answers ready."
+  },
+  "news": [
+    {
+      "headline": "Design systems meet AI components",
+      "publication": "TechCrunch",
+      "date": "2026-10-15",
+      "url": "https://techcrunch.com/2026/10/15/design-systems-go-ai/",
+      "why": "Component libraries are changing, and you maintain one.",
+      "skill": "Design systems"
+    },
+    {
+      "headline": "New accessibility rules for web apps take effect",
+      "publication": "Mint",
+      "url": "https://www.livemint.com/technology/accessibility-law-2026",
+      "why": "Accessibility work is the kind you already show.",
+      "skill": "Accessibility (WCAG)"
+    }
+  ],
+  "tip": "Keep a file of what you finished, one line every Friday. In six months it is your resume, already written.",
+  "quote": "Learn the next thing the job asks for, not the thing everyone is talking about.",
+  "createdAt": "2026-10-19T01:00:00+00:00"
+}

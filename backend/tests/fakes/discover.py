@@ -93,6 +93,14 @@ class FakeDiscoverRepo:
             dataclasses.replace(i, posting_text=None) for i in self.listings.values() if i.status == "open"
         ]
 
+    async def list_open_since(self, since: datetime) -> list[DiscoverListing]:
+        fresh = [
+            dataclasses.replace(i, posting_text=None)
+            for i in self.listings.values()
+            if i.status == "open" and _utc(i.first_seen_at) >= _utc(since)
+        ]
+        return sorted(fresh, key=lambda i: (-_utc(i.first_seen_at).timestamp(), i.id))
+
     async def get(self, listing_id: str) -> DiscoverListing | None:
         return self.listings.get(listing_id)
 

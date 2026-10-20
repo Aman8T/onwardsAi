@@ -56,6 +56,8 @@ EXPECTED_TABLES = {
     "interview_sessions",
     "prepare_plans",
     "handoffs",
+    "weekly_subscriptions",
+    "weekly_editions",
 }
 
 

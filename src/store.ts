@@ -14,8 +14,10 @@ import { DEFAULT_QUERY, discoverPath, isDiscoverPath, mergeQuery, parseDiscoverU
 import type { DiscoverQuery } from './discover/route';
 import { DEFAULT_PRACTICE, isPracticePath, mergePractice, parsePracticeUrl, practicePath } from './practice/route';
 import type { PracticeQuery } from './practice/route';
+import { DEFAULT_WEEKLY, isWeeklyPath, mergeWeekly, parseWeeklyUrl, weeklyPath } from './weekly/route';
+import type { WeeklyQuery } from './weekly/route';
 
-export type View = 'onboarding' | 'analysis' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing' | 'discover' | 'practice';
+export type View = 'onboarding' | 'analysis' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing' | 'discover' | 'practice' | 'weekly';
 
 export interface Signal {
   id: number;
@@ -112,6 +114,8 @@ export interface AppState {
   discoverRoute: DiscoverQuery;
   /** The Practice screen while `view` is 'practice'; mirrored in the address (/practice?…). */
   practiceRoute: PracticeQuery;
+  /** The Leafout Weekly's edition while `view` is 'weekly'; mirrored in the address (/weekly?e=…). */
+  weeklyRoute: WeeklyQuery;
 }
 
 const STORAGE_KEY = 'tayyari.v1';
@@ -142,6 +146,7 @@ function load(): AppState {
     matchRoute: PASTE_ROUTE,
     discoverRoute: DEFAULT_QUERY,
     practiceRoute: DEFAULT_PRACTICE,
+    weeklyRoute: DEFAULT_WEEKLY,
   };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -172,6 +177,9 @@ function fromAddress(s: AppState): AppState {
     // Practice is for someone with a profile on screen too
     const practice = parsePracticeUrl(window.location.pathname, window.location.search);
     if (practice) return s.profile ? { ...s, view: 'practice', practiceRoute: practice } : s;
+    // the Weekly is the signed-in reader's own paper on the server: it needs no profile on screen
+    const weekly = parseWeeklyUrl(window.location.pathname, window.location.search);
+    if (weekly) return { ...s, view: 'weekly', weeklyRoute: weekly };
     const route = parseMatchPath(window.location.pathname);
     return route ? { ...s, view: 'match', matchRoute: route } : s;
   } catch {
@@ -206,6 +214,7 @@ function set(patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) {
   leavePricingAddress();
   leaveDiscoverAddress();
   leavePracticeAddress();
+  leaveWeeklyAddress();
   listeners.forEach((l) => l());
   clearTimeout(persistTimer);
   persistTimer = setTimeout(persist, 250);
@@ -247,6 +256,15 @@ function leavePracticeAddress() {
   }
 }
 
+/** The address reads /weekly only while the Weekly is showing. */
+function leaveWeeklyAddress() {
+  try {
+    if (state.view !== 'weekly' && isWeeklyPath(window.location.pathname)) window.history.replaceState(null, '', '/');
+  } catch {
+    /* no address bar to update */
+  }
+}
+
 // Back and Forward move between match screens, Discover, Practice and the pricing page (and out of them, to where the person came from).
 try {
   window.addEventListener('popstate', () => {
@@ -264,9 +282,14 @@ try {
       set({ view: state.profile ? 'practice' : 'onboarding', practiceRoute: practice });
       return;
     }
+    const weekly = parseWeeklyUrl(window.location.pathname, window.location.search);
+    if (weekly) {
+      set({ view: 'weekly', weeklyRoute: weekly });
+      return;
+    }
     const route = parseMatchPath(window.location.pathname);
     if (route) set({ view: 'match', matchRoute: route });
-    else if (state.view === 'match' || state.view === 'pricing' || state.view === 'discover' || state.view === 'practice') set({ view: state.profile ? 'graph' : 'onboarding' });
+    else if (state.view === 'match' || state.view === 'pricing' || state.view === 'discover' || state.view === 'practice' || state.view === 'weekly') set({ view: state.profile ? 'graph' : 'onboarding' });
   });
 } catch {
   /* not in a browser */
@@ -511,6 +534,21 @@ export const actions = {
       /* no address bar to update */
     }
     set({ view: 'discover', discoverRoute: route });
+  },
+
+  /**
+   * Open The Leafout Weekly's reading room: the latest edition, or the one in `patch.edition`. The address follows; a
+   * `replace` housekeeping move adds no history entry.
+   */
+  openWeekly(patch: Partial<WeeklyQuery> = {}, opts: { replace?: boolean } = {}) {
+    const route = mergeWeekly(state.weeklyRoute, patch);
+    try {
+      const path = weeklyPath(route);
+      if (window.location.pathname + window.location.search !== path) window.history[opts.replace ? 'replaceState' : 'pushState'](null, '', path);
+    } catch {
+      /* no address bar to update */
+    }
+    set({ view: 'weekly', weeklyRoute: route });
   },
 
   /**

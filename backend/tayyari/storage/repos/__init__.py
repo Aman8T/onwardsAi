@@ -26,6 +26,7 @@ from ..ports import (
     SessionRepo,
     UserFactRepo,
     UserRepo,
+    WeeklyRepo,
 )
 from .billing import SqlBillingRepo
 from .decisions import SqlDecisionLogRepo
@@ -42,6 +43,7 @@ from .prepare import SqlPrepareRepo
 from .profiles import SqlProfileRepo
 from .sessions import SqlSessionRepo
 from .users import SqlUserRepo
+from .weekly import SqlWeeklyRepo
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +68,7 @@ class Repositories:
     interview: InterviewRepo
     prepare: PrepareRepo
     handoff: HandoffRepo
+    weekly: WeeklyRepo
 
 
 def build_repositories(db: Database, clock: Clock | None = None) -> Repositories:
@@ -89,6 +92,7 @@ def build_repositories(db: Database, clock: Clock | None = None) -> Repositories
         interview=SqlInterviewRepo(db),
         prepare=SqlPrepareRepo(db),
         handoff=SqlHandoffRepo(db),
+        weekly=SqlWeeklyRepo(db),
     )
 
 
@@ -112,5 +116,6 @@ __all__ = [
     "SqlSessionRepo",
     "SqlUserFactRepo",
     "SqlUserRepo",
+    "SqlWeeklyRepo",
     "build_repositories",
 ]
