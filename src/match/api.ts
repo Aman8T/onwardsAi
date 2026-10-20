@@ -27,7 +27,7 @@ const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
 export const PAYMENT_MESSAGE = "You've used your free posting this month.";
 const RATE_MESSAGE = 'Too many postings right now. Please wait a moment and try again.';
-const TROUBLE_MESSAGE = 'Tayyari is having trouble right now. Please try again in a moment.';
+const TROUBLE_MESSAGE = 'Leafout is having trouble right now. Please try again in a moment.';
 
 const STATUS_OF_CODE: Record<MatchErrorCode, number> = {
   unauthorized: 401,

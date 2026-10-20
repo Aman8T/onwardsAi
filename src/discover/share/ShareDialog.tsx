@@ -36,7 +36,7 @@ export interface ShareDialogProps {
 type Tab = 'referral' | 'link';
 type Draft = { status: 'loading' } | { status: 'ready'; note: ReferralNote } | { status: 'error'; message: string };
 
-const OFFLINE = "We couldn't reach Tayyari. Check your connection and try again.";
+const OFFLINE = "We couldn't reach Leafout. Check your connection and try again.";
 const COPY_FAILED = "Couldn't copy. Select the text and copy it yourself.";
 const SHARE_FAILED = "Couldn't open sharing. Copy the note instead.";
 /** How long "Copied" stays on the page. */

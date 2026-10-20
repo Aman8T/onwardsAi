@@ -762,9 +762,34 @@ class PreparePlanRow(Base):
     __table_args__ = (Index("ix_prepare_plans_profile_id_role_id", "profile_id", "role_id", "requirement"),)
 
 
+HANDOFF_ID_LEN = 64
+"""A hand-off's id: ``secrets.token_urlsafe(24)`` (32 characters)."""
+
+
+class HandoffRow(Base):
+    """A resume, links and a goal posted by the marketing site for the app to take once (``POST /api/handoff``). The id is
+    the visitor's only way back to it (a 192-bit random token carried in the redirect); the row is deleted when it is taken
+    and, once ``expires_at`` has passed, by the next hand-off. No foreign keys: it belongs to no profile or account."""
+
+    __tablename__ = "handoffs"
+
+    id: Mapped[str] = mapped_column(String(HANDOFF_ID_LEN), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    links: Mapped[list[str]] = mapped_column(JSONType)
+    goal: Mapped[str | None] = mapped_column(Text)
+    notes: Mapped[str | None] = mapped_column(Text)
+    resume_name: Mapped[str | None] = mapped_column(String(255))
+    resume_type: Mapped[str | None] = mapped_column(String(100))
+    resume_bytes: Mapped[bytes | None] = mapped_column(LargeBinary)
+
+    __table_args__ = (Index("ix_handoffs_expires_at", "expires_at"),)
+
+
 __all__ = [
     "BAND_LEN",
     "EMAIL_LEN",
+    "HANDOFF_ID_LEN",
     "HASH_LEN",
     "ID_LEN",
     "NAMING_CONVENTION",
@@ -782,6 +807,7 @@ __all__ = [
     "DiscoverListingRow",
     "DiscoverRunRow",
     "EntitlementRow",
+    "HandoffRow",
     "InterviewSessionRow",
     "JSONType",
     "JevCallRow",

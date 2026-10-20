@@ -34,7 +34,7 @@ export function AccountDelete() {
         ) : !user ? (
           <>
             <h1 className="serif">Sign in to continue</h1>
-            <p className="auth-text">Sign in first, and we will ask whether to delete your Tayyari app data.</p>
+            <p className="auth-text">Sign in first, and we will ask whether to delete your Leafout app data.</p>
             <div className="auth-page-actions">
               <SignInLink className="btn btn-primary">Sign in</SignInLink>
               <a className="btn btn-quiet" href={SITE_ACCOUNT_URL}>
@@ -46,7 +46,7 @@ export function AccountDelete() {
           <>
             <h1 className="serif">Also delete your Leafout app data?</h1>
             <p className="auth-text">
-              This removes your Tayyari profiles, portfolios, saved postings and sign-ins from the app. It cannot be undone. Your Leafout account is deleted on the next step.
+              This removes your Leafout profiles, portfolios, saved postings and sign-ins from the app. It cannot be undone. Your Leafout account is deleted on the next step.
             </p>
             <p className="auth-error" role="alert">
               {phase === 'failed' ? 'Your data could not be deleted. Please try again.' : ''}

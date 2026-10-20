@@ -28,6 +28,7 @@
     PrepareService                                ("How do I prepare for this role?": the plan's numbers from the graph,
                                                    two calls of the chat model at once, checked and stored; the guarded
                                                    Claude client and the plan store)
+    HandoffService                                (the marketing site's hand-off: a resume and links posted once, taken once)
     match_anonymous                               (may a visitor with no sign-in match a posting: the setting
                                                    resolved against the sign-in methods this server offers)
     maintenance                                   (retention purge, a tracked background task; it keeps
@@ -88,6 +89,7 @@ if TYPE_CHECKING:
     from tayyari.billing.entitlements import EntitlementService
     from tayyari.billing.service import BillingService
     from tayyari.discover.service import DiscoverService
+    from tayyari.handoff.service import HandoffService
     from tayyari.interview.service import InterviewService
     from tayyari.jobsearch.service import JobSearchService
     from tayyari.match.service import MatchService
@@ -126,6 +128,7 @@ class ContainerOverrides:
     - ``discover_transport``: an ``httpx2`` transport for Discover's reads of employers' boards (and the job search's);
       tests hand in an ``httpx2.MockTransport`` so a refresh runs without a network.
     - ``jobsearch``, ``interview``, ``prepare``: the job search, practice interview and prepare services themselves.
+    - ``handoff``: the marketing-site hand-off service itself.
     - ``speech``: the speech service itself. ``speech_engine``: just its engine (the service is still built here, over the
       real ``kv`` budget); giving one switches Sarvam speech on without a ``SARVAM_API_KEY`` (the
       ``TAYYARI_SPEECH__ENABLED`` kill switch still wins). Tests hand in a fake engine; nothing calls Sarvam.
@@ -159,6 +162,7 @@ class ContainerOverrides:
     speech: SpeechService | None = None
     speech_engine: SpeechEngine | None = None
     prepare: PrepareService | None = None
+    handoff: HandoffService | None = None
     razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
 
@@ -244,6 +248,8 @@ class Container:
     prepare: PrepareService
     """Prepare for a role. The routes count a written plan and a headline rewrite in the ``prepare`` window and reserve
     spend; every Claude call goes through the guarded client."""
+    handoff: HandoffService
+    """The marketing site's hand-off. The routes count a hand-off in the ``handoff`` window; no model is called."""
     rate_limiter: RateLimiter
     spend_guard: SpendGuard
     ip_hash_key: bytes
@@ -288,6 +294,7 @@ class Container:
         from tayyari.chat.service import CoachChatService
         from tayyari.decisions.packs.service_impl import JevDecisionService
         from tayyari.discover.service import DiscoverService
+        from tayyari.handoff.service import HandoffService
         from tayyari.interview.service import InterviewService
         from tayyari.jobsearch.boards import BoardReader
         from tayyari.jobsearch.service import JobSearchService
@@ -609,6 +616,18 @@ class Container:
                 )
                 log.info("prepare_ready", model=settings.chat_model, effort=settings.chat_effort)
 
+            handoff: HandoffService
+            if ov.handoff is not None:
+                handoff = ov.handoff
+            else:
+                handoff = HandoffService(repos.handoff, settings.handoff, env=settings.env, clock=clock)
+                log.info(
+                    "handoff_ready",
+                    origins=len(settings.handoff.origins),
+                    localhost=settings.handoff.localhost_allowed(settings.env),
+                    ttl_seconds=settings.handoff.ttl_seconds,
+                )
+
             match_anonymous = settings.match.anonymous_allowed(auth.providers)
             log.info(
                 "match_anonymous",
@@ -657,6 +676,7 @@ class Container:
             interview=interview,
             speech=speech,
             prepare=prepare,
+            handoff=handoff,
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,
             ip_hash_key=ip_hash_key,

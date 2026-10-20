@@ -92,5 +92,5 @@ export function youAction(profile: Profile): NodeAction {
 }
 
 export function freeAction(): NodeAction {
-  return { cta: 'Ask Tayyari', question: '', origin: { kind: 'free', title: 'Open question', caption: 'Ask anything' } };
+  return { cta: 'Ask Leafout', question: '', origin: { kind: 'free', title: 'Open question', caption: 'Ask anything' } };
 }

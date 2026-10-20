@@ -39,7 +39,7 @@ export interface PrepareScreenProps {
 
 type Load = { status: 'loading' } | { status: 'ready'; prep: RolePrep } | { status: 'error'; message: string };
 
-const OFFLINE = "We couldn't reach Tayyari. Check your connection and try again.";
+const OFFLINE = "We couldn't reach Leafout. Check your connection and try again.";
 
 /** The sentence the person reads for a failed load: the server's own when it sent one. */
 function sentenceOf(err: unknown): string {

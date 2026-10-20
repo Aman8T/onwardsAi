@@ -38,7 +38,7 @@ export function Rail({ profile, origin, threads, activeId, now, open, onToggle, 
         </section>
 
         <section className="ch-sec">
-          <h2 className="kicker">Tayyari can see</h2>
+          <h2 className="kicker">Leafout can see</h2>
           <ul className="ch-see">
             {profile.sources.map((s) => (
               <li key={s.id} className={s.ok ? undefined : 'is-failed'} title={s.ok ? undefined : s.error}>

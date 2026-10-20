@@ -23,12 +23,12 @@ import re
 import tempfile
 from functools import cached_property, lru_cache
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Annotated, Any, Literal, Protocol
 
 import platformdirs
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr, field_validator
 from pydantic_core import PydanticUseDefault
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from .dburl import DbConfig, normalise_database_url
 from .paths import BACKEND_DIR, REPO_ROOT
@@ -202,6 +202,13 @@ class GuardSettings(BaseModel):
     """Backstop on those sign-ins per hour across all clients (shared counter)."""
     auth_bridge_per_sub_per_day: int = Field(default=50, ge=0)
     """Sessions one Leafout account may have started per day (0 = not enforced); keyed by a keyed hash, never the id."""
+    handoff_per_minute: int = Field(default=3, ge=0)
+    handoff_per_hour: int = Field(default=10, ge=0)
+    handoff_per_day: int = Field(default=30, ge=0)
+    """Hand-offs from the marketing site (a resume and links stored for the app to take) one client address may make per window
+    (0 = the window is not enforced). Nothing is paid for a hand-off: the limits keep the table and the uploads small."""
+    handoff_global_per_hour: int = Field(default=600, ge=0)
+    """Backstop on hand-offs per hour across all clients (shared counter)."""
     chat_streams_per_ip: int = Field(default=2, ge=0)
     """Concurrent chat streams one client may hold open (per replica)."""
     chat_streams_per_process: int = Field(default=24, ge=0)
@@ -682,6 +689,51 @@ _SECRET_FIELDS = (
 )
 
 
+class HandoffSettings(BaseModel):
+    """The hand-off from the marketing site (a resume, links and a goal posted to ``/api/handoff``, taken once by the app):
+    `TAYYARI_HANDOFF__*`. No secrets."""
+
+    origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["https://leafout.in", "https://www.leafout.in"]
+    )
+    """The origins a hand-off may come from, compared with the request's ``Origin`` header (or its ``Referer`` when there is
+    none). ``TAYYARI_HANDOFF__ORIGINS`` takes a JSON list or comma-separated origins (``https://leafout.in,https://www.leafout.in``).
+    An empty list refuses every hand-off."""
+    ttl_seconds: int = Field(default=900, ge=30, le=86_400)
+    """How long a stored hand-off waits to be taken (it is deleted when read, and when it has expired, on the next hand-off)."""
+    max_bytes: int = Field(default=10 * 1024 * 1024, ge=1024)
+    """The largest resume file accepted (the analyze upload's limit by default)."""
+    allow_localhost: bool | None = None
+    """Also accept ``http://localhost:<port>`` origins (the site running on a developer's machine). None: only when the app
+    itself runs locally (``env`` is ``local``); never in production unless set to true on purpose."""
+
+    @field_validator("origins", mode="before")
+    @classmethod
+    def _origins_as_list(cls, v: object) -> object:
+        """Comma- or whitespace-separated text (or a JSON list) becomes a list; each origin is trimmed and lower-cased with no
+        trailing slash. Blank entries are dropped."""
+        if v is None:
+            return []
+        if isinstance(v, str):
+            text = v.strip()
+            if text.startswith("["):
+                try:
+                    loaded = json.loads(text)
+                except ValueError:
+                    loaded = None
+                v = loaded if isinstance(loaded, list) else text.strip("[]").replace('"', " ")
+            if isinstance(v, str):
+                v = re.split(r"[,;\s]+", v)
+        if isinstance(v, list | tuple | set | frozenset):
+            cleaned = (str(item).strip().strip("\"'").strip().rstrip("/").lower() for item in v)
+            return list(dict.fromkeys(item for item in cleaned if item))
+        return v
+
+    def localhost_allowed(self, env: Env) -> bool:
+        """Whether ``http://localhost:*`` origins are accepted: the explicit setting, else only when running locally."""
+        return self.allow_localhost if self.allow_localhost is not None else env == "local"
+
+
 class Settings(BaseSettings):
     """All configuration, typed. See the module docstring for where values come from."""
 
@@ -771,6 +823,7 @@ class Settings(BaseSettings):
     jobsearch: JobSearchSettings = Field(default_factory=JobSearchSettings)
     interview: InterviewSettings = Field(default_factory=InterviewSettings)
     speech: SpeechSettings = Field(default_factory=SpeechSettings)
+    handoff: HandoffSettings = Field(default_factory=HandoffSettings)
 
     synth_hints: bool = False
     """Feed the first-read results to the synthesizer as hints (off: they are stored for comparison only)."""

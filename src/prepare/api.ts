@@ -25,8 +25,8 @@ import { ApiError, readNdjson } from '../lib/api';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
-export const TROUBLE = 'Tayyari ran into trouble. Please try again in a moment.';
-export const OFFLINE = "We couldn't reach Tayyari. Check your connection and try again.";
+export const TROUBLE = 'Leafout ran into trouble. Please try again in a moment.';
+export const OFFLINE = "We couldn't reach Leafout. Check your connection and try again.";
 
 const FALLBACK: Record<number, string> = {
   400: "That didn't go through. Please go back and try again.",

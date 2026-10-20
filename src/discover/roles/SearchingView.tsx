@@ -77,7 +77,7 @@ export function SearchingView({ where, steps, jobs, now, ctlOf, onStop, stopRef,
         <section className="dc-live" aria-label="Roles found so far">
           <div>
             {compact && <div className="kicker">First roles</div>}
-            <p className="dc-muted dc-live-line">{compact ? "From Tayyari's employers · the web search adds more" : "First roles from Tayyari's employers · the web search adds more as it finishes"}</p>
+            <p className="dc-muted dc-live-line">{compact ? "From Leafout's employers · the web search adds more" : "First roles from Leafout's employers · the web search adds more as it finishes"}</p>
           </div>
           <ul className="dc-grid" aria-busy="true">
             {jobs.map((job) => (

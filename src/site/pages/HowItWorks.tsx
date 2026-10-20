@@ -4,9 +4,9 @@ export const howItWorks: ContentPage = {
   path: '/how-it-works',
   title: 'How it works: resume to cited skill graph',
   description:
-    'How Tayyari turns a resume, GitHub and public links into an evidence-cited skill graph, then matches job postings, builds a plan and practises interviews.',
-  h1: 'How Tayyari works',
-  lede: 'Tayyari reads what you have actually done and shows it as a skill graph in which every skill cites the line it came from. That graph then drives everything else: the roles you are close to, a check of any job posting, a preparation plan and interview practice.',
+    'How Leafout turns a resume, GitHub and public links into an evidence-cited skill graph, then matches job postings, builds a plan and practises interviews.',
+  h1: 'How Leafout works',
+  lede: 'Leafout reads what you have actually done and shows it as a skill graph in which every skill cites the line it came from. That graph then drives everything else: the roles you are close to, a check of any job posting, a preparation plan and interview practice.',
   blurb: 'From your sources to a cited skill graph, and what you can do with it.',
   cta: { label: 'Try a sample profile', href: '/' },
   software: true,
@@ -29,7 +29,7 @@ export const howItWorks: ContentPage = {
       a: 'No. The resume is the source every profession has, so a nurse, an accountant, a marketer and an engineer go through the same steps. GitHub and deployed apps are extras for people who have them.',
     },
     {
-      q: 'Which AI does Tayyari use?',
+      q: 'Which AI does Leafout use?',
       a: 'Claude models from Anthropic read your sources and phrase the text. A decision model called Jev, from TypeSafe, makes yes/no judgements that are logged with their confidence. Code does all the scoring.',
     },
   ],
@@ -66,13 +66,13 @@ export const howItWorks: ContentPage = {
         <h2>Step 1: what you connect</h2>
         <p>You start with a resume, as a PDF or a Word file. That is enough on its own. Everything else adds evidence and sharpens the graph:</p>
         <ul>
-          <li>a GitHub profile, where Tayyari reads your repositories, their READMEs and their tests;</li>
+          <li>a GitHub profile, where Leafout reads your repositories, their READMEs and their tests;</li>
           <li>apps you have deployed, including apps built with Lovable, which it reads from the public page;</li>
           <li>any public link, such as a portfolio, a blog or a Kaggle profile;</li>
           <li>notes you paste in, for example the About section of a LinkedIn profile.</li>
         </ul>
         <p>
-          Tayyari does not read LinkedIn pages, because LinkedIn blocks automated reading. It asks you to paste the text instead. It also refuses to
+          Leafout does not read LinkedIn pages, because LinkedIn blocks automated reading. It asks you to paste the text instead. It also refuses to
           open addresses on private networks, so a link cannot be used to reach anything it should not.
         </p>
       </section>
@@ -91,7 +91,7 @@ export const howItWorks: ContentPage = {
         <h2>Step 3: the skill graph</h2>
         <p>
           A larger model reads the readers&apos; output together with your resume and builds one graph: four to seven domains, the skills inside
-          each, a score from 0 to 100 for every one, and the evidence behind every score. The score is Tayyari&apos;s reading of your sources, not a
+          each, a score from 0 to 100 for every one, and the evidence behind every score. The score is Leafout&apos;s reading of your sources, not a
           test result.
         </p>
         <p>
@@ -112,12 +112,12 @@ export const howItWorks: ContentPage = {
       <section>
         <h2>Steps 5 to 7: match, prepare, practise</h2>
         <p>
-          <strong>Match.</strong> Paste a job posting. Tayyari reads the posting on its own first, then checks each requirement against your evidence
+          <strong>Match.</strong> Paste a job posting. Leafout reads the posting on its own first, then checks each requirement against your evidence
           and tells you where you stand in words, never as an &quot;ATS score&quot;. It can also build a resume and a cover note from facts you can
           defend. See <a href="/job-match">job match</a>.
         </p>
         <p>
-          <strong>Prepare.</strong> For any role, Tayyari turns the gaps in your graph into one next move and a plan sized to the hours you have each
+          <strong>Prepare.</strong> For any role, Leafout turns the gaps in your graph into one next move and a plan sized to the hours you have each
           week. See <a href="/career-plan">career plan</a>.
         </p>
         <p>
@@ -131,7 +131,7 @@ export const howItWorks: ContentPage = {
         <p>
           Code computes: scores, weights, selection, totals and the bands in a match. Models read, classify and phrase. Whatever a model writes about
           you goes into a typed slot and is checked against the facts it cites. A sentence that is not supported is dropped, or replaced by the fact&apos;s
-          own wording. Numbers are never invented: if a number would help and is missing, Tayyari asks you for it. Job postings
+          own wording. Numbers are never invented: if a number would help and is missing, Leafout asks you for it. Job postings
           and documents are treated as data, and instructions found inside them are reported, not followed.
         </p>
       </section>

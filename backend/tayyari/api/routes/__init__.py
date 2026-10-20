@@ -20,6 +20,8 @@
               DELETE .../sessions/{id} (practice the interview)
     speech    GET /api/speech/status; POST /api/speech/transcribe (raw audio), /api/speech/speak (Sarvam AI speech for
               practice interviews)
+    handoff   POST /api/handoff (multipart form from the marketing site -> 303 to /?handoff=<id> or /?handoff_error=<code>);
+              GET /api/handoff/{id} (the hand-off, once)
     prepare   POST /api/prepare (NDJSON); GET /api/prepare/{id}; PUT .../state; GET .../repos; POST .../headline
               ("How do I prepare for this role?" as blocks)
 
@@ -37,6 +39,7 @@ from tayyari.api.routes import (
     billing,
     chat,
     discover,
+    handoff,
     health,
     interview,
     jobsearch,
@@ -66,6 +69,7 @@ for _module in (
     interview,
     speech,
     prepare,
+    handoff,
 ):
     api_router.include_router(_module.router)
 

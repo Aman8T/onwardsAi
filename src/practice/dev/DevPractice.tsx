@@ -181,7 +181,7 @@ function AroundStage({ id, onNote }: { id: AroundId; onNote: (s: string) => void
         <HubView
           sample={false}
           tracked={tracked}
-          history={{ status: 'error', message: 'Tayyari ran into trouble. Please try again in a moment.', code: 500 }}
+          history={{ status: 'error', message: 'Leafout ran into trouble. Please try again in a moment.', code: 500 }}
           onReload={() => onNote('Gallery: reload.')}
           nav={nav}
         />,

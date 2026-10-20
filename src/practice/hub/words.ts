@@ -15,8 +15,8 @@ export const FIT_PC: Record<AiFitWord, string> = {
 };
 
 /** What the person reads when the server sent no sentence of its own. */
-export const TROUBLE = 'Tayyari ran into trouble. Please try again in a moment.';
-export const OFFLINE = "We couldn't reach Tayyari. Check your connection and try again.";
+export const TROUBLE = 'Leafout ran into trouble. Please try again in a moment.';
+export const OFFLINE = "We couldn't reach Leafout. Check your connection and try again.";
 
 /** Said wherever a screen shows what is kept: nothing leaves this person's account. */
 export const NOTHING_SHARED = 'Nothing here is shared with an employer.';

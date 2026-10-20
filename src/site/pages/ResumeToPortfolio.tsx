@@ -6,7 +6,7 @@ export const resumeToPortfolio: ContentPage = {
   description:
     'Turn a resume into a shareable portfolio page where every statement traces to a line of your sources. Pick a look, edit any text and decide what is public.',
   h1: 'Turn your resume into a portfolio page',
-  lede: 'A portfolio page should show what you did, not what a template invented. Tayyari builds yours from facts copied from your resume and links, writes the copy only from those facts, and lets you decide what is public.',
+  lede: 'A portfolio page should show what you did, not what a template invented. Leafout builds yours from facts copied from your resume and links, writes the copy only from those facts, and lets you decide what is public.',
   blurb: 'A shareable page whose every line traces back to your sources.',
   cta: { label: 'Build my portfolio', href: '/' },
   related: ['/skill-graph', '/how-it-works', '/about'],
@@ -21,7 +21,7 @@ export const resumeToPortfolio: ContentPage = {
     },
     {
       q: 'Can I edit the page?',
-      a: 'Yes. You can choose among the looks Tayyari composes, edit any text, hide a domain and decide whether the page is public. Text you write yourself is plain text and is marked as yours.',
+      a: 'Yes. You can choose among the looks Leafout composes, edit any text, hide a domain and decide whether the page is public. Text you write yourself is plain text and is marked as yours.',
     },
     {
       q: 'Will search engines list my page?',
@@ -89,7 +89,7 @@ export const resumeToPortfolio: ContentPage = {
       <section>
         <h2>Who it is for</h2>
         <p>
-          The page works for any profession. A nurse, an accountant and an engineer start from the same thing, a resume, and Tayyari adds GitHub,
+          The page works for any profession. A nurse, an accountant and an engineer start from the same thing, a resume, and Leafout adds GitHub,
           apps and links when they exist. If your only public proof so far is the resume, the page shows that and no more.
         </p>
       </section>

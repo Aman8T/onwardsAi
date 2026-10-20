@@ -15,6 +15,10 @@
     The host is compared with ``Host`` and with ``X-Forwarded-Host`` (a page cannot set that header
     without a CORS preflight, which the app never answers). Default ports (80, 443) are ignored.
 
+    ``POST /api/handoff`` (the marketing site's form) is exempt too: it is a cross-origin browser POST by design, and the route
+    accepts it only when ``Origin`` (else ``Referer``) is on its own allow-list; a hand-off holds nothing but what the site posted
+    and is read back only with its random id.
+
     The payment webhooks (``/api/billing/webhooks/``) are exempt: they are called by Razorpay's and Stripe's servers,
     carry no cookie, and authenticate with a signature over the raw body that the route checks first. A browser
     that posts there from another site gets nothing but a refused signature.
@@ -63,6 +67,9 @@ log = get_logger(__name__)
 
 CROSS_SITE_MESSAGE = "Cross-site requests are not allowed."
 UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+HANDOFF_PATH = "/api/handoff"
+"""The marketing site's form POST. The site is another origin by design, so the route checks ``Origin`` against its own allow-list
+(`HandoffSettings.origins`) instead of this guard's same-host rule."""
 WEBHOOK_PREFIX = "/api/billing/webhooks/"
 """Server-to-server callbacks of the payment providers: signed, cookie-less, never from a browser page."""
 _DEFAULT_PORTS = frozenset({80, 443})
@@ -147,6 +154,7 @@ class CrossSiteGuard:
             and scope["method"] in UNSAFE_METHODS
             and _is_api_path(scope["path"])
             and not scope["path"].startswith(WEBHOOK_PREFIX)
+            and not (scope["method"] == "POST" and scope["path"] == HANDOFF_PATH)
         ):
             reason = cross_site_reason(Headers(scope=scope))
             if reason is not None:
@@ -334,6 +342,7 @@ class SecurityHeadersMiddleware:
 __all__ = [
     "API_CSP",
     "CROSS_SITE_MESSAGE",
+    "HANDOFF_PATH",
     "HSTS",
     "RAZORPAY_CHECKOUT",
     "RAZORPAY_CONNECT",

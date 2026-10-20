@@ -1,6 +1,6 @@
 /*
  * Onboarding view, calm theme (board CalmMain.dc.html). Class prefix ob-.
- * A centred 560px column on the ambient field (mounted once in index.html, so no background here).
+ * A wide dashboard on the ambient field (mounted once in index.html, so no background here).
  * Tokens only: no colour literals, no shadows, 1px hairlines, depth from tone and space.
  * Primitives come from global.css (.btn, .btn-primary, .btn-quiet, .btn-sm, .field, .chip, .panel,
  * .kicker, .numeral, .serif, .sr-only, .wrap); this file only places them.
@@ -49,27 +49,24 @@
   text-decoration: none;
 }
 
-/* ───────────── the centred column ───────────── */
+/* ───────────── greeting + grid ───────────── */
 
 .ob-main {
-  display: flex;
-  flex-direction: column;
   width: 100%;
-  max-width: var(--col);
-  margin-inline: auto;
-  padding-top: 72px;
+  padding-top: var(--s5);
 }
 
-.ob-hero {
+.ob-greet {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  text-align: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s3) var(--s6);
+  margin-bottom: var(--s5);
 }
 
 .ob-h1 {
-  font-size: clamp(40px, 9vw, 56px);
+  font-size: clamp(40px, 4.6vw, 58px);
   text-wrap: balance;
 }
 
@@ -82,21 +79,42 @@
   color: var(--accent);
 }
 
-.ob-sub {
-  max-width: var(--measure);
-  font-size: var(--fs-4);
-  line-height: var(--lh-body);
-  color: var(--text-muted);
-  text-wrap: pretty;
-}
-
-.ob-reads {
-  margin-top: var(--s3);
-}
-
 .ob-reads-list {
   margin-left: 10px;
   color: var(--text);
+}
+
+.ob-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.ob-cell {
+  min-width: 0;
+}
+
+.ob-c-form {
+  grid-column: span 5;
+}
+.ob-c-graph {
+  grid-column: span 4;
+}
+.ob-c-tiles {
+  grid-column: span 3;
+}
+.ob-c-how {
+  grid-column: span 7;
+}
+.ob-c-recent {
+  grid-column: span 5;
+}
+
+/* the form and the graph card share a row; the tiles stretch to the same height */
+.ob-c-graph,
+.ob-c-tiles {
+  align-self: stretch;
 }
 
 /* ───────────── the form panel ───────────── */
@@ -104,9 +122,8 @@
 .ob-form {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
-  margin-top: var(--s7);
-  padding: var(--s6);
+  gap: var(--s4);
+  padding: var(--s5);
 }
 
 .ob-card-head {
@@ -169,7 +186,7 @@
 
 .ob-form textarea.field {
   height: auto;
-  min-height: 120px;
+  min-height: 96px;
   padding: var(--s3) 14px;
   line-height: var(--lh-body);
   resize: vertical;
@@ -204,9 +221,22 @@
   flex-direction: column;
   align-items: center;
   gap: var(--s2);
-  padding: 28px var(--s5);
+  min-height: 72px;
+  padding: var(--s3) var(--s4);
   border-radius: inherit;
   text-align: center;
+}
+
+.ob-drop-empty {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: var(--s3);
+  row-gap: 2px;
+}
+
+.ob-drop-empty .ob-file-meta {
+  flex-basis: 100%;
 }
 
 .ob-drop-icon {
@@ -417,84 +447,234 @@
   text-align: center;
 }
 
-.ob-sample-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--s2);
-  margin-top: var(--s6);
+.ob-sample-btn {
+  align-self: center;
 }
 
-.ob-sample-wrap .ob-error {
+.ob-handoff {
   margin-top: 0;
+  padding: var(--s3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+}
+
+/* ───────────── your graph ───────────── */
+
+.ob-graph {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s5);
+}
+
+.ob-radar {
+  --radar-max: 340px;
+  --radar-pad: 46px;
+  width: 100%;
+}
+
+.ob-roles {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  list-style: none;
+}
+
+.ob-role {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.ob-role:first-child {
+  border-top: 1px solid var(--line);
+}
+
+.ob-role-title {
+  font-size: var(--fs-2);
+  min-width: 0;
+}
+
+.ob-graph-cta {
+  justify-content: center;
+  min-height: 44px;
+  margin-top: auto;
+}
+
+/* ───────────── tiles ───────────── */
+
+.ob-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.ob-tile {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  min-height: 88px;
+  padding: var(--s3) var(--s4);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--d-fast) var(--ease);
+}
+
+.ob-tile:hover {
+  border-color: var(--line-strong);
+}
+
+.ob-tile-title {
+  font-size: var(--fs-4);
+}
+
+.ob-tile-line {
+  font-size: var(--fs-1);
+  line-height: var(--lh-snug);
+  color: var(--text-muted);
 }
 
 /* ───────────── how it works ───────────── */
 
-.ob-how {
-  max-width: 960px;
-  margin: 72px auto 0;
+.ob-how,
+.ob-recent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s5);
+  scroll-margin-top: 72px;
 }
 
 .ob-how-title {
-  margin-bottom: var(--s5);
   font-weight: 400;
 }
 
 .ob-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s7);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s5);
   padding: 0;
   list-style: none;
-  /* leave the "How it works" heading in view when the nav link scrolls here */
-  scroll-margin-top: 72px;
 }
 
 .ob-step {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-top: 20px;
+  gap: 8px;
+  padding-top: var(--s3);
   border-top: 1px solid var(--line);
 }
 
 .ob-step h3 {
-  font-size: var(--fs-5);
+  font-size: var(--fs-4);
 }
 
 .ob-step p {
-  font-size: var(--fs-2);
+  font-size: var(--fs-1);
   line-height: var(--lh-body);
   color: var(--text-muted);
 }
 
-/* the quiet link to the full page, at the end of the section */
 .ob-how-more {
-  margin-top: var(--s5);
-}
-
-.ob-how-more .btn {
+  align-self: flex-start;
   padding-inline: 0;
   font-size: var(--fs-2);
   text-decoration: none;
+}
+
+/* ───────────── recent ───────────── */
+
+.ob-recent-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  list-style: none;
+}
+
+.ob-recent-list li {
+  border-bottom: 1px solid var(--line);
+}
+
+.ob-recent-list li:first-child {
+  border-top: 1px solid var(--line);
+}
+
+.ob-recent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--s2) 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ob-recent-row:hover .ob-role-title {
+  color: var(--accent);
+}
+
+.ob-recent-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ob-recent-co {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.ob-empty {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+/* ───────────── narrower than a dashboard ───────────── */
+
+@media (max-width: 900px) {
+  .ob-c-form,
+  .ob-c-graph,
+  .ob-c-tiles,
+  .ob-c-how,
+  .ob-c-recent {
+    grid-column: 1 / -1;
+  }
+
+  .ob-tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ob-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ───────────── phone ───────────── */
 
 @media (max-width: 760px) {
   .ob-nav .btn,
-  .ob-how-more .btn {
+  .ob-how-more {
     min-height: 44px;
   }
 
   .ob-main {
-    padding-top: var(--s7);
+    padding-top: var(--s3);
   }
 
-  .ob-form {
-    margin-top: var(--s6);
-    padding: var(--s5);
+  .ob-form,
+  .ob-graph,
+  .ob-how,
+  .ob-recent {
+    padding: var(--s4);
   }
 
   /* 16px keeps iOS from zooming the page when a field is focused */
@@ -502,13 +682,13 @@
     font-size: 16px;
   }
 
-  .ob-how {
-    margin-top: var(--s8);
+  .ob-radar {
+    --radar-pad: 56px;
   }
 
   .ob-steps {
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--s6);
+    gap: var(--s4);
   }
 }
 
@@ -516,5 +696,9 @@
   .ob-nav .btn {
     padding-inline: 10px;
     font-size: var(--fs-1);
+  }
+
+  .ob-tiles {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

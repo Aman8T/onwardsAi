@@ -6,18 +6,18 @@ export const jobMatch: ContentPage = {
   description:
     'Paste a job posting and see every requirement checked against your evidence. Get a resume and cover note built only from facts you can cite. No ATS score.',
   h1: 'Match a job posting against what you can prove',
-  lede: 'Paste a job posting. Tayyari lists what it asks for, checks each requirement against your evidence, and tells you plainly where you are covered, partly covered or have a gap. Then it can build a resume and a cover note from facts you can defend.',
+  lede: 'Paste a job posting. Leafout lists what it asks for, checks each requirement against your evidence, and tells you plainly where you are covered, partly covered or have a gap. Then it can build a resume and a cover note from facts you can defend.',
   blurb: 'Every requirement in a posting checked against your evidence.',
   cta: { label: 'Match a posting', href: '/match' },
   related: ['/skill-graph', '/career-plan', '/mock-interview'],
   faq: [
     {
-      q: 'Does Tayyari give an ATS score?',
-      a: 'No. Nobody outside the vendors knows how a given applicant tracking system scores a resume, so a percentage or a pass/fail per vendor would be invented. Tayyari shows a band in words and checks the things that can be checked.',
+      q: 'Does Leafout give an ATS score?',
+      a: 'No. Nobody outside the vendors knows how a given applicant tracking system scores a resume, so a percentage or a pass/fail per vendor would be invented. Leafout shows a band in words and checks the things that can be checked.',
     },
     {
       q: 'Can I paste a link to a LinkedIn or Naukri posting?',
-      a: 'No. LinkedIn, Naukri, Indeed, Glassdoor, foundit and Shine do not allow automated reading, so Tayyari refuses their links and asks you to paste the posting text. A link to an employer’s own public page can be read.',
+      a: 'No. LinkedIn, Naukri, Indeed, Glassdoor, foundit and Shine do not allow automated reading, so Leafout refuses their links and asks you to paste the posting text. A link to an employer’s own public page can be read.',
     },
     {
       q: 'Will it add skills from the posting to my resume?',
@@ -39,7 +39,7 @@ export const jobMatch: ContentPage = {
         <ul>
           <li>The posting broken into its requirements, each with the words of the posting it came from.</li>
           <li>Each requirement checked against your facts, with the evidence shown next to it.</li>
-          <li>A band in words and a statement of how confident Tayyari is, never a percentage.</li>
+          <li>A band in words and a statement of how confident Leafout is, never a percentage.</li>
           <li>At most three questions about the gaps, must-haves first.</li>
           <li>A resume and a cover note for that posting, built from your cited facts.</li>
         </ul>
@@ -48,13 +48,13 @@ export const jobMatch: ContentPage = {
       <section>
         <h2>The posting is read on its own first</h2>
         <p>
-          Tayyari reads the posting with your profile out of sight, so your resume cannot colour what the posting asked for. Every requirement is
-          kept with a quote from the posting and a strength: must, required, preferred or nice. A requirement Tayyari had to infer rather than find
+          Leafout reads the posting with your profile out of sight, so your resume cannot colour what the posting asked for. Every requirement is
+          kept with a quote from the posting and a strength: must, required, preferred or nice. A requirement Leafout had to infer rather than find
           can never be marked as a must or required.
         </p>
         <p>
           Hard requirements, such as a licence, a degree or the right to work in a country, are checked before anything is scored. Only a clear
-          failure on a serious one blocks a match. If your evidence is silent, Tayyari says &quot;not evidenced, add it if true&quot;, not &quot;no&quot;.
+          failure on a serious one blocks a match. If your evidence is silent, Leafout says &quot;not evidenced, add it if true&quot;, not &quot;no&quot;.
         </p>
       </section>
 
@@ -95,7 +95,7 @@ export const jobMatch: ContentPage = {
       <section>
         <h2>Questions turn gaps into facts</h2>
         <p>
-          For a gap or an unknown, Tayyari asks you a short question. Your answer becomes a fact in your own words, marked &quot;from you&quot;, and
+          For a gap or an unknown, Leafout asks you a short question. Your answer becomes a fact in your own words, marked &quot;from you&quot;, and
           later matches can cite it. Re-checking after you answer is free.
         </p>
       </section>
@@ -108,7 +108,7 @@ export const jobMatch: ContentPage = {
           Numbers are never invented. A missing number becomes a question and a placeholder, [x], and the export stays blocked until you resolve it.
         </p>
         <p>
-          The PDF and Word files use one column, standard headings and plain dates, and Tayyari checks that every verified sentence can be read
+          The PDF and Word files use one column, standard headings and plain dates, and Leafout checks that every verified sentence can be read
           back from the text inside the file. The cover note runs 250 to 400 words, has a plain sentence for each must-have gap, and avoids generic openers.
         </p>
       </section>
@@ -116,7 +116,7 @@ export const jobMatch: ContentPage = {
       <section>
         <h2>Postings are data</h2>
         <p>
-          Whatever is in a posting is treated as text to be read, not as instructions. Tayyari does not follow commands hidden in it, and it does
+          Whatever is in a posting is treated as text to be read, not as instructions. Leafout does not follow commands hidden in it, and it does
           not open links inside it.
         </p>
       </section>

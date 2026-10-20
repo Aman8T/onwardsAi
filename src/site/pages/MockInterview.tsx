@@ -6,7 +6,7 @@ export const mockInterview: ContentPage = {
   description:
     'Practise interviews about your actual work: speak or type, get verdicts that quote your own words and a short list of what to fix. Free while in testing.',
   h1: 'Practise interviews that ask about your actual work',
-  lede: 'A list of generic questions does not prepare you for the ones you will really get, which are about your resume and the role. Tayyari’s practice interview asks about the things you have written down, listens to your answer and tells you which parts held up.',
+  lede: 'A list of generic questions does not prepare you for the ones you will really get, which are about your resume and the role. Leafout’s practice interview asks about the things you have written down, listens to your answer and tells you which parts held up.',
   blurb: 'Four kinds of practice, spoken or typed, with verdicts that quote you.',
   cta: { label: 'Start practising', href: '/practice' },
   related: ['/job-match', '/career-plan', '/skill-graph'],
@@ -21,15 +21,15 @@ export const mockInterview: ContentPage = {
     },
     {
       q: 'Is my voice recording stored?',
-      a: 'Tayyari does not store or log the audio. Each spoken piece is turned into text, and only the text goes into the interview.',
+      a: 'Leafout does not store or log the audio. Each spoken piece is turned into text, and only the text goes into the interview.',
     },
     {
       q: 'Does it judge my personality or confidence?',
-      a: 'No. Personality, culture fit and coachability cannot be read from documents or short answers, so they are not scored. Tayyari looks at what you said about your work and whether you could defend it.',
+      a: 'No. Personality, culture fit and coachability cannot be read from documents or short answers, so they are not scored. Leafout looks at what you said about your work and whether you could defend it.',
     },
     {
       q: 'What does it ask me about?',
-      a: 'Only things in your own evidence, or the posting’s own words for a specific role. A skill that Tayyari rates low is never asked about as if your resume had listed it.',
+      a: 'Only things in your own evidence, or the posting’s own words for a specific role. A skill that Leafout rates low is never asked about as if your resume had listed it.',
     },
   ],
   Body: () => (
@@ -52,7 +52,7 @@ export const mockInterview: ContentPage = {
           </li>
           <li>
             <strong>Work sample.</strong> A small task first, then three questions about your choices. There are templates for frontend, data
-            analysis, marketing, nursing, accounts and teaching, picked from the role or your title. An optional assistant is available, and Tayyari
+            analysis, marketing, nursing, accounts and teaching, picked from the role or your title. An optional assistant is available, and Leafout
             notes how you used it.
           </li>
         </ul>
@@ -61,7 +61,7 @@ export const mockInterview: ContentPage = {
       <section>
         <h2>Speak or type</h2>
         <p>
-          You can answer aloud or in writing. When the server has a speech service configured, Tayyari uses Sarvam AI to turn your speech into text
+          You can answer aloud or in writing. When the server has a speech service configured, Leafout uses Sarvam AI to turn your speech into text
           and to speak the interviewer&apos;s questions. Otherwise it uses your browser&apos;s own speech, and then typing. Your browser asks for
           permission before it uses the microphone.
         </p>
@@ -79,7 +79,7 @@ export const mockInterview: ContentPage = {
           <li>An answer to the easier version of a question is capped at shaky.</li>
           <li>A story needs a situation, an action and a result to count as defended.</li>
           <li>&quot;I don&apos;t know&quot; is recorded as exactly that, with your words quoted.</li>
-          <li>If you say a question gets your resume wrong, Tayyari shows you the line it was based on.</li>
+          <li>If you say a question gets your resume wrong, Leafout shows you the line it was based on.</li>
         </ul>
       </section>
 
@@ -91,7 +91,7 @@ export const mockInterview: ContentPage = {
           between 5 and 120 minutes. The counts and the first thing to work on are worked out by code.
         </p>
         <p>
-          When you defend a point well, Tayyari can keep what you said as a new fact marked &quot;from you&quot;. That fact can then support a
+          When you defend a point well, Leafout can keep what you said as a new fact marked &quot;from you&quot;. That fact can then support a
           later <a href="/job-match">posting match</a>.
         </p>
       </section>

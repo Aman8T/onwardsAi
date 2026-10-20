@@ -124,7 +124,7 @@ export function PricingView() {
   // the page title and the heading take focus, like a new screen
   useEffect(() => {
     const before = document.title;
-    document.title = 'Pricing · Tayyari';
+    document.title = 'Pricing · Leafout';
     heading.current?.focus({ preventScroll: true });
     return () => {
       document.title = before;

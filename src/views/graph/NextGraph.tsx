@@ -245,7 +245,7 @@ export function NextGraph({ profile }: { profile: Profile }) {
           <p className="next-sub">
             {roles.length
               ? 'Alignment is how much of the role you already cover.'
-              : 'Add another source — a GitHub profile or a project link — and Tayyari will map where you could go next.'}
+              : 'Add another source — a GitHub profile or a project link — and Leafout will map where you could go next.'}
           </p>
         </div>
 
@@ -333,7 +333,7 @@ export function NextGraph({ profile }: { profile: Profile }) {
                 ))}
               </ul>
             ) : (
-              <p className="next-why">No specific requirements listed yet — ask and Tayyari will break the role down for you.</p>
+              <p className="next-why">No specific requirements listed yet — ask and Leafout will break the role down for you.</p>
             )}
 
             {reqs.length > 0 && (
@@ -417,7 +417,7 @@ export function NextGraph({ profile }: { profile: Profile }) {
             )}
           </>
         ) : (
-          <p className="next-empty">Next roles appear here once Tayyari has enough evidence.</p>
+          <p className="next-empty">Next roles appear here once Leafout has enough evidence.</p>
         )}
       </section>
 

@@ -134,7 +134,7 @@ export function PublicView() {
   const name = ready?.content.person.name;
   useEffect(() => {
     const before = document.title;
-    document.title = name ? `${name} · Portfolio` : load.kind === 'loading' ? before : 'Portfolio · Tayyari';
+    document.title = name ? `${name} · Portfolio` : load.kind === 'loading' ? before : 'Portfolio · Leafout';
     return () => {
       document.title = before;
     };
@@ -158,7 +158,7 @@ export function PublicView() {
         title="This portfolio isn’t published"
         actions={
           <a className="btn" href="/">
-            Go to Tayyari
+            Go to Leafout
           </a>
         }
       >

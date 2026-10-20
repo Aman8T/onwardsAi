@@ -31,7 +31,7 @@ function Typing({ lines }: { lines: string[] }) {
   }, [lines.length]);
   return (
     <div className="ch-typing" role="status">
-      <span className="sr-only">Tayyari is thinking</span>
+      <span className="sr-only">Leafout is thinking</span>
       <span className="ch-dots" aria-hidden="true">
         <i />
         <i />
@@ -66,13 +66,13 @@ export const AssistantMessage = memo(function AssistantMessage({ message, source
   return (
     <div className="ch-msg ch-msg--ai ch-in">
       <span className="kicker ch-who" aria-hidden="true">
-        Tayyari
+        Leafout
       </span>
       <div className="ch-ai-body">
-        <span className="sr-only">Tayyari: </span>
+        <span className="sr-only">Leafout: </span>
 
         {tools.length > 0 && (
-          <ul className="ch-tools" aria-label="What Tayyari looked up">
+          <ul className="ch-tools" aria-label="What Leafout looked up">
             {tools.map((t, i) => {
               const busy = streaming && !hasText && i === tools.length - 1;
               return (
@@ -93,7 +93,7 @@ export const AssistantMessage = memo(function AssistantMessage({ message, source
         {failed && (
           <div className="ch-error" role="alert">
             <div className="ch-error-text">
-              <strong>{hasText ? 'This answer was cut short.' : 'Tayyari could not finish that answer.'}</strong>
+              <strong>{hasText ? 'This answer was cut short.' : 'Leafout could not finish that answer.'}</strong>
               <span>{(message.error ?? 'Something went wrong.').slice(0, 220)}</span>
             </div>
             {onRetry && (

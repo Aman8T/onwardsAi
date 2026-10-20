@@ -35,7 +35,7 @@ export function Layout({ currentPath, children }: LayoutProps) {
         <header className="site-header">
           <a className="site-brand" href="/">
             <Mark />
-            <span className="serif site-brand-word">Tayyari</span>
+            <span className="serif site-brand-word">Leafout</span>
           </a>
           <nav className="site-nav" aria-label="Main">
             <ul>

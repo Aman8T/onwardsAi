@@ -85,6 +85,7 @@ from tayyari.storage.ports import (
 from tayyari.storage.repos import Repositories
 from tayyari.storage.repos.match import posting_listing_fields
 from tests.fakes.discover import FakeDiscoverRepo
+from tests.fakes.handoff import FakeHandoffRepo
 from tests.fakes.interview import FakeInterviewRepo
 from tests.fakes.jobsearch import FakeJobSearchRepo
 from tests.fakes.prepare import FakePrepareRepo
@@ -1301,7 +1302,7 @@ class FakeBillingRepo:
 
 
 class FakeRepositories:
-    """The fourteen fakes over one shared state; ``bundle`` is the `Repositories` services are constructed with."""
+    """The fakes over one shared state; ``bundle`` is the `Repositories` services are constructed with."""
 
     def __init__(self, clock: Clock | None = None) -> None:
         self._state = _State(clock=clock or SystemClock())
@@ -1322,6 +1323,7 @@ class FakeRepositories:
         self.jobsearch = FakeJobSearchRepo()
         self.interview = FakeInterviewRepo()
         self.prepare = FakePrepareRepo()
+        self.handoff = FakeHandoffRepo()
         self.bundle = Repositories(
             profiles=self.profiles,
             sessions=self.sessions,
@@ -1340,6 +1342,7 @@ class FakeRepositories:
             jobsearch=self.jobsearch,
             interview=self.interview,
             prepare=self.prepare,
+            handoff=self.handoff,
         )
 
 

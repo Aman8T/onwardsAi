@@ -488,3 +488,30 @@ body {
 :root[data-atmo='off'] {
   --k: 0;
 }
+
+/* (g) The vine (src/components/Vine.tsx): a stem down the page's edges and leaves that unfurl as the page scrolls,
+ * for the name. Decoration only, under the view; each leaf turns its own --leaf-o degrees round the field's hue.
+ * Lightness sits with the lobes, chroma inside the gamut rule, so it never reads as a mark or competes with ink. */
+.vine-stem path {
+  stroke: oklch(0.6 0.07 var(--h2) / 0.55);
+}
+.vine-leaf .blade {
+  fill: oklch(0.78 0.085 calc(var(--h) + var(--leaf-o, 0)) / 0.8);
+}
+.vine-leaf .rib {
+  stroke: oklch(0.6 0.07 var(--h2) / 0.5);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-scheme='light'])) .vine-stem path {
+    stroke: oklch(0.55 0.06 var(--h2) / 0.5);
+  }
+  :root:where(:not([data-scheme='light'])) .vine-leaf .blade {
+    fill: oklch(0.42 0.06 calc(var(--h) + var(--leaf-o, 0)) / 0.85);
+  }
+}
+:root:where([data-scheme='dark']) .vine-stem path {
+  stroke: oklch(0.55 0.06 var(--h2) / 0.5);
+}
+:root:where([data-scheme='dark']) .vine-leaf .blade {
+  fill: oklch(0.42 0.06 calc(var(--h) + var(--leaf-o, 0)) / 0.85);
+}

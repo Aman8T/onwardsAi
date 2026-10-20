@@ -31,7 +31,7 @@ import { arr, isObj, isoTime, oneOf, readCite, text } from './read';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
-export const TROUBLE = 'Tayyari ran into trouble. Please try again in a moment.';
+export const TROUBLE = 'Leafout ran into trouble. Please try again in a moment.';
 
 export class RoleApiError extends ApiError {
   /** Seconds the server asks the person to wait (a 429's `Retry-After`), when it gave a number. */

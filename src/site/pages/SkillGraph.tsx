@@ -4,16 +4,16 @@ export const skillGraph: ContentPage = {
   path: '/skill-graph',
   title: 'Skill graph from your resume, with evidence',
   description:
-    'Tayyari shows your skills as a graph where every skill cites the line of your resume, repository or page it came from. Scores are readings, not grades.',
+    'Leafout shows your skills as a graph where every skill cites the line of your resume, repository or page it came from. Scores are readings, not grades.',
   h1: 'Your skills as a graph, each one cited',
-  lede: 'A resume lists skills. A Tayyari skill graph shows them with proof: every skill carries the lines from your resume, GitHub or public pages that support it, so you and anyone you show it to can check.',
+  lede: 'A resume lists skills. A Leafout skill graph shows them with proof: every skill carries the lines from your resume, GitHub or public pages that support it, so you and anyone you show it to can check.',
   blurb: 'Domains and skills with the evidence behind every score.',
   cta: { label: 'Build my skill graph', href: '/' },
   related: ['/how-it-works', '/job-match', '/career-plan'],
   faq: [
     {
       q: 'What does a skill score mean?',
-      a: 'It is Tayyari’s reading of how strongly your sources show the skill, from 0 to 100. It is not a grade, a test result or a comparison with other people, and Tayyari does not quote percentiles.',
+      a: 'It is Leafout’s reading of how strongly your sources show the skill, from 0 to 100. It is not a grade, a test result or a comparison with other people, and Leafout does not quote percentiles.',
     },
     {
       q: 'Where does the evidence for a skill come from?',
@@ -33,7 +33,7 @@ export const skillGraph: ContentPage = {
       <section>
         <h2>What a skill graph is</h2>
         <p>
-          Tayyari reads your resume and any other sources you connect, then groups what it finds into four to seven domains: the main areas of work
+          Leafout reads your resume and any other sources you connect, then groups what it finds into four to seven domains: the main areas of work
           in your own career. Inside each domain are the skills. The domains come from what you have done, not from a fixed list, so a marketer&apos;s
           graph and an engineer&apos;s graph have different axes.
         </p>
@@ -44,7 +44,7 @@ export const skillGraph: ContentPage = {
         <h2>What each skill carries</h2>
         <ul>
           <li>A name and the domain it belongs to.</li>
-          <li>A score from 0 to 100, Tayyari&apos;s reading of how strongly your sources show it.</li>
+          <li>A score from 0 to 100, Leafout&apos;s reading of how strongly your sources show it.</li>
           <li>
             One or more evidence lines, each tagged with where it came from: your resume, your GitHub, an app you built, your portfolio or another
             link you connected.
@@ -72,11 +72,11 @@ export const skillGraph: ContentPage = {
         <h2>How the graph is kept honest</h2>
         <p>
           Before you see the graph, each claim is compared with the text it cites: names, numbers and identifiers have to appear there. A claim that
-          the text does not support is dropped. The scores are a reading by Tayyari, and they are labelled that way. In interview practice, a skill
-          Tayyari rates low is never asked about as if your resume had claimed it.
+          the text does not support is dropped. The scores are a reading by Leafout, and they are labelled that way. In interview practice, a skill
+          Leafout rates low is never asked about as if your resume had claimed it.
         </p>
         <p>
-          Tayyari does not score personality, culture fit or coachability. Those cannot be read from documents, so they are not part of the graph.
+          Leafout does not score personality, culture fit or coachability. Those cannot be read from documents, so they are not part of the graph.
         </p>
       </section>
 

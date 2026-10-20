@@ -2,33 +2,33 @@ import type { ContentPage } from '../types';
 
 export const about: ContentPage = {
   path: '/about',
-  title: 'About Tayyari: who it is for and what it refuses',
+  title: 'About Leafout: who it is for and what it refuses',
   description:
-    'Tayyari helps students in India and working professionals of every profession prove what they have done. It refuses invented numbers, fake scores and scraping.',
-  h1: 'Tayyari doesn’t write claims. It proves them.',
-  lede: 'Tayyari (तैयारी) means preparation. It helps people show what they have actually done, see what a role expects that they cannot yet show, and close the gap with work rather than words.',
-  blurb: 'Who Tayyari is for, what it does, and what it refuses to do.',
+    'Leafout helps students in India and working professionals of every profession prove what they have done. It refuses invented numbers, fake scores and scraping.',
+  h1: 'Leafout doesn’t write claims. It proves them.',
+  lede: 'Leafout is what a plant does when it is ready to grow. It helps people show what they have actually done, see what a role expects that they cannot yet show, and close the gap with work rather than words.',
+  blurb: 'Who Leafout is for, what it does, and what it refuses to do.',
   cta: { label: 'Start with a resume', href: '/' },
   related: ['/how-it-works', '/job-match', '/skill-graph'],
   faq: [
     {
-      q: 'Who is Tayyari for?',
+      q: 'Who is Leafout for?',
       a: 'Students in India, directly and not through their colleges, and working professionals of every profession, in India and elsewhere. A nurse, an accountant, a marketer and an engineer get the same product.',
     },
     {
-      q: 'Does Tayyari write my resume for me?',
+      q: 'Does Leafout write my resume for me?',
       a: 'It builds a resume for a specific posting, but only from facts you can cite. It does not add skills the posting wants and your evidence does not show, and it asks you for any number it is missing instead of inventing one.',
     },
     {
       q: 'How is this different from a keyword optimiser?',
-      a: 'Tayyari does not stuff keywords. A skill reaches a resume only when your evidence supports it, and a gap is written as a gap or left out.',
+      a: 'Leafout does not stuff keywords. A skill reaches a resume only when your evidence supports it, and a gap is written as a gap or left out.',
     },
     {
-      q: 'Does Tayyari scrape LinkedIn?',
+      q: 'Does Leafout scrape LinkedIn?',
       a: 'No. It does not scrape LinkedIn, Naukri or any site that forbids automated access. You can paste text from them, and it can read public pages through guarded requests.',
     },
     {
-      q: 'Is Tayyari finished?',
+      q: 'Is Leafout finished?',
       a: 'No. It is an early product, and some parts, such as interview practice, are free while they are in testing. Planned features, such as a shareable radar card, are not built yet.',
     },
   ],
@@ -42,7 +42,7 @@ export const about: ContentPage = {
           at a famous company.
         </p>
         <p>
-          Tayyari takes the other side of that trade. It does not help you claim more. It helps you prove what you already have, and it shows you
+          Leafout takes the other side of that trade. It does not help you claim more. It helps you prove what you already have, and it shows you
           exactly what a role expects that you cannot yet show.
         </p>
       </section>
@@ -51,7 +51,7 @@ export const about: ContentPage = {
         <h2>Who it is for</h2>
         <ul>
           <li>
-            <strong>Students in India.</strong> Most are unplaced at graduation and are told to pad their resumes and stuff keywords. Tayyari is
+            <strong>Students in India.</strong> Most are unplaced at graduation and are told to pad their resumes and stuff keywords. Leafout is
             built for them directly, and nobody should have to buy a year of anything to find out whether it helps.
           </li>
           <li>
@@ -124,7 +124,7 @@ export const about: ContentPage = {
       <section>
         <h2>Where it stands</h2>
         <p>
-          Tayyari is early. The <a href="/how-it-works">pipeline</a> works end to end, and the parts that are still in testing are marked as such.
+          Leafout is early. The <a href="/how-it-works">pipeline</a> works end to end, and the parts that are still in testing are marked as such.
         </p>
       </section>
     </>

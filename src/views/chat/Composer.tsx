@@ -49,7 +49,7 @@ export function Composer({ value, onChange, onSubmit, onStop, streaming, textare
       }}
     >
       <label htmlFor="ch-ask" className="sr-only">
-        Ask Tayyari
+        Ask Leafout
       </label>
       <textarea
         id="ch-ask"

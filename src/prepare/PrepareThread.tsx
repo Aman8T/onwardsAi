@@ -88,9 +88,9 @@ export function PrepareThread({ client, profileId, roleId, requirement, planId, 
   return (
     <div className={`pp-msg${narrow ? ' is-narrow' : ''}`}>
       <span className="kicker pp-who" aria-hidden="true">
-        Tayyari
+        Leafout
       </span>
-      <span className="sr-only">Tayyari: </span>
+      <span className="sr-only">Leafout: </span>
       <div className={`pp-root${narrow ? ' is-narrow' : ''}`} aria-busy={streaming}>
         {narrow && plan && <JumpBar items={jump} />}
 

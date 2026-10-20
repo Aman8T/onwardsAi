@@ -254,7 +254,7 @@ export function buildPress(
   const brief = shown.has('projects') ? briefOf(content) : [];
   const quoteFact = ownWords(content);
   const quoteText = clean(quoteFact?.title).replace(/^["“”‘’']+|["“”‘’']+$/g, '');
-  const sources = graph.sources.length ? ` · scored by Tayyari from ${sourcesLine(graph)}` : '';
+  const sources = graph.sources.length ? ` · scored by Leafout from ${sourcesLine(graph)}` : '';
 
   return {
     earLeft: year !== undefined ? `Est. ${year}` : undefined,

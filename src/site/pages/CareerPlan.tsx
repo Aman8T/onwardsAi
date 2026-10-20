@@ -6,7 +6,7 @@ export const careerPlan: ContentPage = {
   description:
     'Get four short blocks for any role: where you stand, one move, a plan sized to your hours a week, and next actions. Built from your skill graph.',
   h1: 'How do I prepare for this role?',
-  lede: 'Tayyari answers with a short, structured plan instead of an essay: the gaps between your graph and the role, the one move that closes most of them, a plan sized to the hours you have, and buttons for what to do next.',
+  lede: 'Leafout answers with a short, structured plan instead of an essay: the gaps between your graph and the role, the one move that closes most of them, a plan sized to the hours you have, and buttons for what to do next.',
   blurb: 'Gaps, one move, a plan by hours a week and next actions.',
   cta: { label: 'Start with your skill graph', href: '/' },
   related: ['/skill-graph', '/mock-interview', '/job-match'],
@@ -50,7 +50,7 @@ export const careerPlan: ContentPage = {
       <section>
         <h2>The one move</h2>
         <p>
-          Tayyari proposes the move that closes most of the gap. It lists what you already have that the move builds on, each item cited, and names
+          Leafout proposes the move that closes most of the gap. It lists what you already have that the move builds on, each item cited, and names
           the gaps the move works on. There can be up to three moves, best first, shown one at a time. A move names its gaps and nothing more: it does
           not predict how much it will help.
         </p>
@@ -72,7 +72,7 @@ export const careerPlan: ContentPage = {
         <p>The last block is buttons, not prompts:</p>
         <ul>
           <li>Put the plan on your calendar, as a file made in your browser.</li>
-          <li>Pick the repository to start from, ranked in code from what Tayyari already read of your GitHub, with nothing fetched.</li>
+          <li>Pick the repository to start from, ranked in code from what Leafout already read of your GitHub, with nothing fetched.</li>
           <li>
             Rewrite your headline for this role. It is kept only if every name and number in it is in the evidence it cites.
           </li>

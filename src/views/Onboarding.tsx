@@ -1,24 +1,28 @@
 /**
- * Onboarding: "Connect your sources", in the calm theme (board CalmMain.dc.html).
- * A centred 560px column on the ambient field: kicker, serif headline, subtitle, the sources it
- * reads from, the connect form as one quiet panel (hairline drop zone, link rows, goal, optional
- * context, primary button), the sample link, three "how it works" steps below, and the site footer.
+ * Home as a dashboard (board "Home as a dashboard"). Header, a left-aligned greeting row, then a 12-column grid:
+ * the compact "Build your skill graph" form (span 5), "Your graph" (the person's own top roles, or a small preview
+ * of the sample; span 4), tiles into the other tools (span 3), "How it works" in four columns (span 7) and the
+ * recent posting matches kept on this device (span 5). Under 900px every item takes the full width.
  *
- * The ambient field is mounted once in index.html; this view paints no background of its own. The cursor
- * light (src/light) is the one thing Home adds behind the page, and only on fine-pointer, full-motion devices.
+ * The ambient field is mounted once in index.html and the cursor light lives in App; this view paints neither.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ClipboardEvent, FormEvent, KeyboardEvent } from 'react';
 import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion/react';
-import type { SourceKind } from '../../shared/types';
+import type { Profile, SourceKind } from '../../shared/types';
 import { AccountMenu } from '../auth/AccountMenu';
 import { Brand } from '../components/Brand';
 import { SchemeToggle } from '../components/SchemeToggle';
+import { Radar } from '../components/Radar';
+import type { RadarAxis } from '../components/Radar';
 import { IconArrowRight, IconDoc, IconMinus, IconPlus, IconUpload } from '../components/Icons';
 import { SiteFooter } from '../components/SiteFooter';
 import * as api from '../lib/api';
 import { EASE, NARROW_QUERY, useMediaQuery } from '../lib/ui';
-import { actions } from '../store';
+import { useHandoffMessage } from '../lib/useHandoff';
+import { BAND_LABEL } from '../match/model';
+import { readRecent } from '../match/recent';
+import { actions, useApp } from '../store';
 import '../styles/onboarding.css';
 
 /* ───────────────────────── constants ───────────────────────── */
@@ -167,19 +171,26 @@ const STEPS = [
   {
     n: '01 · Connect',
     title: 'Share what you have',
-    body: 'Drop in a resume and add GitHub, Lovable, a portfolio or any public link. Connect one source or all of them; each one adds evidence.',
+    body: 'Drop in a resume and add GitHub, Lovable, a portfolio or any public link. Each source adds evidence.',
   },
   {
     n: '02 · Analyse',
-    title: 'One reader per source, one synthesis',
-    body: 'A separate reader works through each source, pulling out what you have built and how well. A final pass reconciles them into one graph of your skills, with the evidence behind every score.',
+    title: 'One reader per source',
+    body: 'A separate reader works through each source, then a final pass reconciles them into one graph with the evidence behind every score.',
   },
   {
     n: '03 · Explore',
     title: 'Two graphs, one chat',
-    body: 'See where you stand today and the roles you could grow into next, each as a radar you can open up point by point. Then ask the chat what the gaps mean and what to build to close them.',
+    body: 'See where you stand today and the roles you could grow into next. Ask the chat what the gaps mean and what to build.',
+  },
+  {
+    n: '04 · Apply',
+    title: 'Match, practise, prepare',
+    body: 'Paste a posting to see every requirement against your evidence, rehearse the interview, and plan the weeks to a role.',
   },
 ];
+
+const PREP_NOTE = 'Needs your graph first';
 
 /* ───────────────────────── Resume dropzone ───────────────────────── */
 
@@ -342,6 +353,11 @@ export function Onboarding() {
 
   const [hintScope, animateHint] = useAnimate();
 
+  const profile = useApp((st) => st.profile);
+  const handoffMessage = useHandoffMessage();
+  const recent = useMemo(() => readRecent().slice(0, 4), []);
+  const [sample, setSample] = useState<Profile | null>(null);
+
   // The pre-computed sample is only offered when the server actually has one.
   useEffect(() => {
     let live = true;
@@ -352,6 +368,28 @@ export function Onboarding() {
       live = false;
     };
   }, []);
+
+  // The same pre-computed sample "Open the sample graph" opens, read once for the preview (no AI call).
+  useEffect(() => {
+    if (!hasSample || profile) return;
+    let live = true;
+    api
+      .sampleProfile()
+      .then((p) => {
+        if (live) setSample(p);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [hasSample, profile]);
+
+  const shown = profile ?? sample;
+  const axes = useMemo<RadarAxis[]>(
+    () => (shown ? shown.domains.map((d) => ({ id: d.id, label: d.short || d.name, value: d.score })) : []),
+    [shown],
+  );
+  const topRoles = useMemo(() => (shown ? [...shown.roles].sort((a, b) => b.alignment - a.alignment).slice(0, 3) : []), [shown]);
 
   const pickFile = useCallback((files: FileList | File[]) => {
     const f = files[0];
@@ -453,10 +491,11 @@ export function Onboarding() {
     }
   };
 
-  const scrollToHow = () => {
-    document.getElementById('how')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-  };
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+  const focusForm = () => {
+    document.getElementById('ob-card-title')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    document.getElementById('ob-link')?.focus({ preventScroll: true });
+  };
 
   return (
     <div className="ob-root" id="top">
@@ -466,54 +505,45 @@ export function Onboarding() {
             <Brand tagline={!narrow} onClick={scrollToTop} />
           </span>
           <nav className="ob-nav" aria-label="Primary">
-            <a
-              className="btn btn-quiet"
-              href="#how"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToHow();
-              }}
-            >
+            <a className="btn btn-quiet" href="/how-it-works">
               How it works
             </a>
-            <button type="button" className="btn" onClick={() => void actions.startAnalysis({ sample: true, links: [] })}>
-              Try a sample profile
-            </button>
             <SchemeToggle />
             <AccountMenu />
           </nav>
         </header>
 
         <main className="ob-main">
-          {/* ───── hero: the one entrance (opacity + 8px) ───── */}
-          <motion.section
-            className="ob-hero"
+          <motion.div
             initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: EASE }}
           >
-            <span className="kicker">Built on Claude agents · private POC</span>
-            <h1 className="ob-h1 serif">
-              <span className="ob-h1-line">See where you stand.</span> <span className="ob-h1-line em">Then where you could go.</span>
-            </h1>
-            <p className="ob-sub">
-              Tayyari reads your resume, GitHub, Lovable and any link you share, then maps your skills across domains and the roles you could grow
-              into.
-            </p>
-            <p className="kicker ob-reads">
-              <span className="ob-reads-label">Reads from</span>
-              <span className="ob-reads-list">Resume · GitHub · Lovable · Portfolio · any link</span>
-            </p>
-          </motion.section>
+            <div className="ob-greet">
+              <h1 className="ob-h1 serif">
+                <span className="ob-h1-line">See where you stand.</span> <span className="ob-h1-line em">Then where you could go.</span>
+              </h1>
+              <p className="kicker ob-reads">
+                <span className="ob-reads-label">Reads from</span>
+                <span className="ob-reads-list">Resume · GitHub · Lovable · Portfolio · any link</span>
+              </p>
+            </div>
 
-          {/* ───── connect form ───── */}
-          <form className="panel ob-form" onSubmit={onSubmit} aria-labelledby="ob-card-title" noValidate>
+            <div className="ob-grid">
+              <div className="ob-cell ob-c-form">
+                <form className="panel ob-form" onSubmit={onSubmit} aria-labelledby="ob-card-title" noValidate>
             <div className="ob-card-head">
               <h2 id="ob-card-title" className="ob-card-title serif">
-                Connect your sources
+                Build your skill graph
               </h2>
-              <p className="ob-card-sub">The more you connect, the sharper your graph gets.</p>
+              <p className="ob-card-sub">The more you connect, the sharper it gets.</p>
             </div>
+
+            {handoffMessage && (
+              <p className="ob-error ob-handoff" role="alert">
+                {handoffMessage}
+              </p>
+            )}
 
             <ResumeDrop file={file} error={fileError} onPick={pickFile} onRemove={removeFile} />
 
@@ -637,7 +667,7 @@ export function Onboarding() {
                     <textarea
                       id="ob-notes"
                       className="field"
-                      rows={5}
+                      rows={4}
                       maxLength={8000}
                       placeholder="Your LinkedIn About section, achievements, certifications, anything the links cannot show…"
                       value={notes}
@@ -674,6 +704,9 @@ export function Onboarding() {
                 )}
               </AnimatePresence>
 
+              <button type="button" className="btn btn-quiet ob-sample-btn" onClick={() => void actions.startAnalysis({ sample: true, links: [] })}>
+                Try a sample profile
+              </button>
               <p className="kicker ob-fine">One reader per source runs in parallel, then a single pass reasons over all of it.</p>
             </div>
 
@@ -681,41 +714,136 @@ export function Onboarding() {
               {announce}
             </p>
           </form>
+              </div>
 
-          {hasSample && (
-            <div className="ob-sample-wrap">
-              <button type="button" className="btn btn-quiet" onClick={() => void openSample()} disabled={sampleBusy}>
-                {sampleBusy ? 'Opening the sample…' : 'Open the pre-computed sample instantly'}
-              </button>
-              {sampleError && (
-                <p className="ob-error" role="alert">
-                  {sampleError}
-                </p>
-              )}
+              <section className="panel ob-cell ob-c-graph ob-graph" aria-labelledby="ob-graph-title">
+                <div className="ob-card-head">
+                  <h2 id="ob-graph-title" className="ob-card-title serif">
+                    Your graph
+                  </h2>
+                  <p className="ob-card-sub">
+                    {profile
+                      ? `${profile.person.name}, ${profile.person.currentRole}`
+                      : shown
+                        ? 'A sample profile, so you can see the shape of it.'
+                        : 'Your skills and next roles show here once it is built.'}
+                  </p>
+                </div>
+                {axes.length >= 3 && (
+                  <div className="ob-radar">
+                    <Radar
+                      axes={axes}
+                      axisSetKey={profile ? 'home-mine' : 'home-sample'}
+                      series={{ primary: profile ? 'You' : 'Sample' }}
+                      ariaLabel={`${profile ? 'Your' : 'Sample'} skill radar: ${axes.length} domains`}
+                      tableCaption="Domain scores, 0 to 100"
+                    />
+                  </div>
+                )}
+                {topRoles.length > 0 && (
+                  <ol className="ob-roles" aria-label={profile ? 'Your top roles' : 'Top roles in the sample'}>
+                    {topRoles.map((r) => (
+                      <li key={r.id} className="ob-role">
+                        <span className="ob-role-title">{r.title}</span>
+                        <span className="kicker">{r.eta}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                {profile ? (
+                  <button type="button" className="btn ob-graph-cta" onClick={() => actions.showGraph()}>
+                    Open my graph
+                    <IconArrowRight size={16} strokeWidth={1.75} />
+                  </button>
+                ) : hasSample ? (
+                  <>
+                    <button type="button" className="btn ob-graph-cta" onClick={() => void openSample()} disabled={sampleBusy}>
+                      {sampleBusy ? 'Opening the sample…' : 'Open the sample graph'}
+                      {!sampleBusy && <IconArrowRight size={16} strokeWidth={1.75} />}
+                    </button>
+                    {sampleError && (
+                      <p className="ob-error" role="alert">
+                        {sampleError}
+                      </p>
+                    )}
+                  </>
+                ) : null}
+              </section>
+
+              <nav className="ob-cell ob-c-tiles ob-tiles" aria-label="Tools">
+                <button type="button" className="panel ob-tile" onClick={() => actions.openMatch()}>
+                  <span className="ob-tile-title serif">Check a posting</span>
+                  <span className="ob-tile-line">Paste a posting and see each requirement against your evidence.</span>
+                </button>
+                <button type="button" className="panel ob-tile" onClick={() => actions.openPractice({ screen: 'hub' })}>
+                  <span className="ob-tile-title serif">Practice the interview</span>
+                  <span className="ob-tile-line">Speak or type answers to questions drawn from your own work.</span>
+                </button>
+                <button type="button" className="panel ob-tile" onClick={() => actions.openDiscover()}>
+                  <span className="ob-tile-title serif">Discover jobs</span>
+                  <span className="ob-tile-line">Search employers' own boards for roles that fit you.</span>
+                </button>
+                <button
+                  type="button"
+                  className="panel ob-tile"
+                  onClick={() => (profile ? actions.showGraph() : focusForm())}
+                  aria-describedby={profile ? undefined : 'ob-prep-note'}
+                >
+                  <span className="ob-tile-title serif">Prepare for a role</span>
+                  <span className="ob-tile-line">
+                    {profile ? 'Open a role on your graph and ask how to prepare.' : 'Plan the weeks to a role from your gaps.'}
+                  </span>
+                  {!profile && (
+                    <span className="kicker" id="ob-prep-note">
+                      {PREP_NOTE}
+                    </span>
+                  )}
+                </button>
+              </nav>
+
+              <section className="panel ob-cell ob-c-how ob-how" aria-labelledby="ob-how-title">
+                <h2 className="kicker ob-how-title" id="ob-how-title">
+                  How it works
+                </h2>
+                <ol className="ob-steps" id="how" role="list">
+                  {STEPS.map((s) => (
+                    <li key={s.n} className="ob-step">
+                      <span className="kicker">{s.n}</span>
+                      <h3 className="serif">{s.title}</h3>
+                      <p>{s.body}</p>
+                    </li>
+                  ))}
+                </ol>
+                <a className="btn btn-quiet ob-how-more" href="/how-it-works">
+                  Read more about how it works
+                </a>
+              </section>
+
+              <section className="panel ob-cell ob-c-recent ob-recent" aria-labelledby="ob-recent-title">
+                <h2 className="kicker ob-how-title" id="ob-recent-title">
+                  Recent
+                </h2>
+                {recent.length > 0 ? (
+                  <ul className="ob-recent-list">
+                    {recent.map((m) => (
+                      <li key={m.id}>
+                        <button type="button" className="ob-recent-row" onClick={() => actions.openMatch({ screen: 'match', id: m.id })}>
+                          <span className="ob-recent-text">
+                            <span className="ob-role-title">{m.title}</span>
+                            {m.company && <span className="ob-recent-co">{m.company}</span>}
+                          </span>
+                          <span className="chip">{BAND_LABEL[m.band]}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="ob-empty">Your matches will show here.</p>
+                )}
+              </section>
             </div>
-          )}
+          </motion.div>
         </main>
-
-        {/* ───── how it works ───── */}
-        <section className="ob-how" aria-labelledby="ob-how-title">
-          <h2 className="kicker ob-how-title" id="ob-how-title">
-            How it works
-          </h2>
-          <ol className="ob-steps" id="how" role="list">
-            {STEPS.map((s) => (
-              <li key={s.n} className="ob-step">
-                <span className="kicker">{s.n}</span>
-                <h3 className="serif">{s.title}</h3>
-                <p>{s.body}</p>
-              </li>
-            ))}
-          </ol>
-          <p className="ob-how-more">
-            <a className="btn btn-quiet" href="/how-it-works">
-              Read more about how it works
-            </a>
-          </p>
-        </section>
 
         <SiteFooter />
       </div>

@@ -114,7 +114,7 @@ function SkillsIndex({ domains, variant, graph }: PressIndexArgs) {
       </div>
       <footer className="pgx-foot">
         <p>{footLine(graph, domains)}</p>
-        <p>Scored by Tayyari from {plural(graph.sources.length, 'source', 'sources')}</p>
+        <p>Scored by Leafout from {plural(graph.sources.length, 'source', 'sources')}</p>
       </footer>
     </section>
   );

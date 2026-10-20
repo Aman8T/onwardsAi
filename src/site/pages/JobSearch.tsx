@@ -6,21 +6,21 @@ export const jobSearch: ContentPage = {
   description:
     'Search with AI finds roles on employers’ own Greenhouse and Lever boards and says how you fit in words, not percentages. It never scrapes LinkedIn or Naukri.',
   h1: 'Search with AI: roles from employers’ own boards',
-  lede: 'Tayyari’s job search starts from your skill graph and looks at roles that employers publish on their own hiring boards. Each role is explained in words, with quotes from the posting, and the apply link goes to the employer.',
+  lede: 'Leafout’s job search starts from your skill graph and looks at roles that employers publish on their own hiring boards. Each role is explained in words, with quotes from the posting, and the apply link goes to the employer.',
   blurb: 'Roles from employers’ own boards, with the fit explained in words.',
   cta: { label: 'Search for roles', href: '/discover' },
   related: ['/job-match', '/career-plan', '/skill-graph'],
   faq: [
     {
       q: 'Does it search LinkedIn, Naukri or Indeed?',
-      a: 'No. Those sites do not allow automated reading, so Tayyari does not scrape them. If you find a posting there, paste its text into job match instead.',
+      a: 'No. Those sites do not allow automated reading, so Leafout does not scrape them. If you find a posting there, paste its text into job match instead.',
     },
     {
       q: 'How is the fit shown?',
       a: 'In words, with counts of what the role asks that you show, partly show or do not show. There is no percentage and no score.',
     },
     {
-      q: 'Does Tayyari apply for me?',
+      q: 'Does Leafout apply for me?',
       a: 'No. Each role links to the posting on the employer’s own page or hiring form, and you apply there.',
     },
     {
@@ -37,12 +37,12 @@ export const jobSearch: ContentPage = {
       <section>
         <h2>Where the roles come from</h2>
         <p>
-          A search has two halves that run at once. One reads boards from Tayyari&apos;s own list of employers. The other sends scouts to search the
+          A search has two halves that run at once. One reads boards from Leafout&apos;s own list of employers. The other sends scouts to search the
           web, limited to boards on Greenhouse and Lever, for the city you chose. The first cards appear within a few seconds, while the web half is
           still working.
         </p>
         <p>
-          Tayyari does not scrape LinkedIn, Naukri or any site that forbids automated access. A scout never sees your name or your resume text.
+          Leafout does not scrape LinkedIn, Naukri or any site that forbids automated access. A scout never sees your name or your resume text.
         </p>
       </section>
 
@@ -62,7 +62,7 @@ export const jobSearch: ContentPage = {
           years a role asks for are read by code. The card shows how many of the role&apos;s asks you meet, partly meet or do not show, as counts.
         </p>
         <p>
-          A posting with text aimed at an AI is flagged, and its prep page is built without a model. Tayyari does not invent a score for any role.
+          A posting with text aimed at an AI is flagged, and its prep page is built without a model. Leafout does not invent a score for any role.
         </p>
       </section>
 

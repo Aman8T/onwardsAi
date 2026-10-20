@@ -18,7 +18,7 @@ export function SiteFooter() {
           </a>
         ))}
       </nav>
-      <p className="site-footer-line">Tayyari reads your resume, GitHub and public links and shows your skills as an evidence-cited graph.</p>
+      <p className="site-footer-line">Leafout reads your resume, GitHub and public links and shows your skills as an evidence-cited graph.</p>
     </footer>
   );
 }

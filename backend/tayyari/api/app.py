@@ -34,12 +34,19 @@ from tayyari.core.settings import Settings, get_settings
 
 # Sign-in links and callbacks carry a one-time secret in the query string, which a span records as `url.query`.
 _SECRET_IN_QUERY = frozenset({"/api/auth/magic/verify", "/api/auth/google/callback"})
+# A hand-off's id is a one-time secret in the path of its GET (and in the query of the redirect, which is outside /api/).
+_HANDOFF_GET_PREFIX = "/api/handoff/"
 
 
 def _skip_telemetry(scope: MutableMapping[str, Any]) -> bool:
     """Skip the health probes and the web app's files (so counts and error rates are the API's) and sign-in links."""
     path = str(scope.get("path", ""))
-    return not path.startswith("/api/") or path.startswith("/api/health") or path in _SECRET_IN_QUERY
+    return (
+        not path.startswith("/api/")
+        or path.startswith("/api/health")
+        or path in _SECRET_IN_QUERY
+        or path.startswith(_HANDOFF_GET_PREFIX)
+    )
 
 
 TELEMETRY: TelemetryConfig = {

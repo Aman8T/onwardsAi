@@ -36,6 +36,9 @@ call a model) is counted per address and per account like ``interview``, with ``
 ``auth_bridge`` (turning the Leafout site's cookie into an app session) is counted per address only, in a minute and an hour
 window, with ``auth_bridge:global:hour``; it is counted just before Supabase is asked, and over the limit the request is simply
 anonymous (`api.deps`), never a 429.
+``handoff`` (the marketing site posting a resume and links for the app to take, `POST /api/handoff`) is counted per address
+in all three windows, with ``handoff:global:hour``; nothing is paid for it, the limits keep uploads and the table small. The
+route answers a refusal with a redirect that carries the code ``rate``, never a 429 (it is a browser navigation).
 
 `shed(route, ip_hash, ip_hash_48)` runs step 1 alone, synchronously, so a route can turn hammering away before it
 reads the request body; it then calls ``check(..., memory=False)`` after validating, so one request takes one
@@ -81,6 +84,7 @@ Route = Literal[
     "speech",
     "prepare",
     "auth_bridge",
+    "handoff",
 ]
 WindowName = Literal["min", "hour", "day"]
 
@@ -94,6 +98,7 @@ GLOBAL_JOBSEARCH_BUCKET = "jobsearch:global:hour"
 GLOBAL_INTERVIEW_BUCKET = "interview:global:hour"
 GLOBAL_PREPARE_BUCKET = "prepare:global:hour"
 GLOBAL_AUTH_BRIDGE_BUCKET = "auth_bridge:global:hour"
+GLOBAL_HANDOFF_BUCKET = "handoff:global:hour"
 SUBNET_LIMIT_FACTOR = 4
 """An IPv6 /48 may use this many times the per-IP limit (a /64 is one household, a /48 is up to 65,536)."""
 
@@ -197,6 +202,10 @@ _MESSAGES: dict[tuple[str, str], str] = {
     ("interview", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
     ("interview_again", "day"): "That's enough repeats for today. More in {wait}.",
     ("speech", "min"): "Too many speech requests at once. Please wait {wait}.",
+    ("handoff", "min"): "You're sending quickly. Please wait {wait} and try again.",
+    ("handoff", "hour"): "You've sent a lot from the site this hour. Please try again in {wait}.",
+    ("handoff", "day"): "You've reached today's limit for sending from the site. It resets in {wait}.",
+    ("handoff", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
     ("prepare", "min"): "A plan is already on its way. Please wait {wait} and try again.",
     ("prepare", "hour"): "You've reached the hourly limit for plans. Please try again in {wait}.",
     ("prepare", "day"): "You've reached today's limit for plans. It resets in {wait}.",
@@ -270,6 +279,12 @@ class RateLimiter:
             limits = (("min", s.speech_per_minute),)
         elif route == "auth_bridge":
             limits = (("min", s.auth_bridge_per_minute), ("hour", s.auth_bridge_per_hour))
+        elif route == "handoff":
+            limits = (
+                ("min", s.handoff_per_minute),
+                ("hour", s.handoff_per_hour),
+                ("day", s.handoff_per_day),
+            )
         elif route == "prepare":
             limits = (
                 ("min", s.prepare_per_minute),
@@ -317,6 +332,7 @@ class RateLimiter:
             "speech": ("speech:global:hour", 0),  # Sarvam's credits are metered by `speech.meter`, not here
             "prepare": (GLOBAL_PREPARE_BUCKET, s.prepare_global_per_hour),
             "auth_bridge": (GLOBAL_AUTH_BRIDGE_BUCKET, s.auth_bridge_global_per_hour),
+            "handoff": (GLOBAL_HANDOFF_BUCKET, s.handoff_global_per_hour),
         }
         return rules[route]
 
@@ -470,6 +486,7 @@ __all__ = [
     "GLOBAL_ANALYZE_BUCKET",
     "GLOBAL_AUTH_BRIDGE_BUCKET",
     "GLOBAL_CHAT_BUCKET",
+    "GLOBAL_HANDOFF_BUCKET",
     "GLOBAL_INTERVIEW_BUCKET",
     "GLOBAL_JOBSEARCH_BUCKET",
     "GLOBAL_MATCH_BUCKET",

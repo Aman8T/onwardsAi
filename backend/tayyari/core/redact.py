@@ -59,7 +59,7 @@ _SAFE_KEYS: frozenset[str] = frozenset(
 """Structured fields that never carry user content; ids are skipped so hex runs are never mistaken for phones."""
 
 _MAX_DEPTH = 4
-_ACCESS_ID_KEYS = ("profile_id", "session_id")
+_ACCESS_ID_KEYS = ("profile_id", "session_id", "handoff_id")
 _ACCESS_ID_PREFIX = 15  # "sample-" + 8 hex, or 15 hex characters
 _MAX_ADDRESS_LINE = 400
 

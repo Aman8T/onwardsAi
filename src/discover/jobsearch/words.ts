@@ -71,7 +71,7 @@ export function countsLine(asks: AskCounts): string {
 
 /** "Found on the web · search “Frontend Engineer Bengaluru”" or "From Tayyari's employers". */
 export function provenanceLine(job: Pick<AiJob, 'foundVia' | 'foundBy'>): string {
-  if (job.foundVia === 'tayyari') return "From Tayyari's employers";
+  if (job.foundVia === 'tayyari') return "From Leafout's employers";
   return job.foundBy ? `Found on the web · search “${job.foundBy}”` : 'Found on the web';
 }
 

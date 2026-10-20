@@ -34,7 +34,7 @@ const COPY: Record<SignInReason, { title: string; text: string }> = {
     text: 'Sign in to save your graph and portfolio to your account, and open them again from any device.',
   },
   account: {
-    title: 'Sign in to Tayyari',
+    title: 'Sign in to Leafout',
     text: 'Your graph and portfolio stay with your account. Reading your sources stays open to everyone.',
   },
   buy: {

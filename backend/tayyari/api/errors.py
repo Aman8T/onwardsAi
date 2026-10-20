@@ -107,7 +107,7 @@ def install_error_handlers(app: FastAPI) -> None:
         log.error(
             "unhandled_exception",
             method=request.method,
-            path=request.url.path,
+            path="/api/handoff/…" if request.url.path.startswith("/api/handoff/") else request.url.path,
             exc_info=(type(exc), exc, exc.__traceback__),
         )
         return JSONResponse(

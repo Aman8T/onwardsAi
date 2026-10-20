@@ -67,7 +67,7 @@ export function ProgressView({ history, onReload, nav, onRemoveFact }: ProgressV
         <h1 className="serif pc-title" ref={titleRef} tabIndex={-1}>
           What your practice changes
         </h1>
-        <p className="pc-lede">Practice feeds the rest of Tayyari. {NOTHING_SHARED}</p>
+        <p className="pc-lede">Practice feeds the rest of Leafout. {NOTHING_SHARED}</p>
       </header>
 
       {history.status === 'loading' && (

@@ -278,7 +278,7 @@ export function ChatView({ profile }: { profile: Profile }) {
     <div className="ch-root">
       <div className="ch-wrap">
         <header className="ch-head">
-          <h1 className="sr-only">Tayyari career chat</h1>
+          <h1 className="sr-only">Leafout career chat</h1>
           <div className="ch-head-l">
             <Brand />
             <button type="button" className="btn btn-quiet ch-back" onClick={goGraph} aria-label="Back to graph">
@@ -345,7 +345,7 @@ export function ChatView({ profile }: { profile: Profile }) {
                           </>
                         )}
                       </h2>
-                      <p>Tayyari reads {footnote} before it answers, so every reply is about you, not a generic career.</p>
+                      <p>Leafout reads {footnote} before it answers, so every reply is about you, not a generic career.</p>
                       <Suggestions hero items={suggestionsFor(origin, profile)} onPick={submit} />
                     </div>
                   ) : (

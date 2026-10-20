@@ -10,9 +10,9 @@ export function Footer() {
   return (
     <footer className="pf-footer">
       <span>
-        Skill Graph snapshot · {asOfLabel(graph)} · scored by Tayyari{sources ? ` from ${sources}` : ''}
+        Skill Graph snapshot · {asOfLabel(graph)} · scored by Leafout{sources ? ` from ${sources}` : ''}
       </span>
-      <span>Made with Tayyari</span>
+      <span>Made with Leafout</span>
     </footer>
   );
 }

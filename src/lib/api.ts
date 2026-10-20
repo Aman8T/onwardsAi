@@ -1,5 +1,6 @@
 import type { ClaimRequest, MagicLinkRequest, MagicLinkResponse, MePatch, MeResponse } from '../../shared/auth';
 import type { CheckoutRequest, CheckoutResponse, EntitlementsResponse, VerifyRequest, VerifyResponse } from '../../shared/billing';
+import type { HandoffPayload } from '../../shared/handoff';
 import type {
   Portfolio,
   PortfolioEvent,
@@ -159,6 +160,25 @@ export async function getPublicPreview(profileId: string, signal?: AbortSignal):
 export async function getPublicPortfolio(publicId: string, signal?: AbortSignal): Promise<PublicPortfolio | null> {
   const res = await fetch(`/api/p/${encodeURIComponent(publicId)}`, { signal });
   if (res.status === 404) return null;
+  if (!res.ok) throw await failure(res);
+  return res.json();
+}
+
+/* ───────────────────────── hand-off from the site ───────────────────────── */
+
+/** What the app says when `/?handoff_error=<code>` arrives (the codes of `HandoffErrorCode`): one plain sentence each. */
+export const HANDOFF_ERROR_TEXT: Record<string, string> = {
+  origin: "That hand-off didn't come from leafout.in. Add your resume here instead.",
+  too_large: 'That resume is larger than 10 MB. Add a smaller file here instead.',
+  type: 'Upload your resume as a PDF, DOCX, TXT or Markdown file.',
+  empty: 'The hand-off had no resume and no usable link. Add your resume or a link here.',
+  rate: 'Too many hand-offs just now. Add your resume here, or try again in a minute.',
+};
+
+/** Take what the site handed over (`/?handoff=<id>`). It can be taken once: the server deletes it as it answers, and a missing,
+ *  used or expired id is a 404 (an `ApiError`). */
+export async function takeHandoff(id: string): Promise<HandoffPayload> {
+  const res = await fetch(`/api/handoff/${encodeURIComponent(id)}`);
   if (!res.ok) throw await failure(res);
   return res.json();
 }

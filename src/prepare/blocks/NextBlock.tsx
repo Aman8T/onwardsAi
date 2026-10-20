@@ -125,12 +125,12 @@ function CalendarPanel({ plan, move }: { plan: PreparePlan; move: PrepareMove })
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'tayyari-plan.ics';
+    a.download = 'leafout-plan.ics';
     document.body.appendChild(a);
     a.click();
     a.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setSaved(`Saved tayyari-plan.ics · ${events.length} ${events.length === 1 ? 'block' : 'blocks'}, the first on ${shortDate(events[0].start)}`);
+    setSaved(`Saved leafout-plan.ics · ${events.length} ${events.length === 1 ? 'block' : 'blocks'}, the first on ${shortDate(events[0].start)}`);
   };
 
   return (

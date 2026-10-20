@@ -301,7 +301,7 @@ export const ROOM_STATES: Record<string, () => ReactElement> = {
   'room-silence': room({ session: SESSION_ASKING, ui: { listen: 'listening', silent: true, clock: () => 10 } }),
   'room-dropped': room({
     session: SESSION_Q4,
-    ui: { answer: 'typed', draft: 'I paired with them twice a week', problem: { kind: 'dropped', message: "We couldn't reach Tayyari. Check your connection and try again." } },
+    ui: { answer: 'typed', draft: 'I paired with them twice a week', problem: { kind: 'dropped', message: "We couldn't reach Leafout. Check your connection and try again." } },
   }),
   'room-sending': room({ session: SESSION_ASKING, ui: { listen: 'off', sending: true, draft: ANSWER_S2 } }),
   'room-end': room({ session: SESSION_ASKING, ui: { listen: 'listening', confirmEnd: true, clock: clock42 } }),

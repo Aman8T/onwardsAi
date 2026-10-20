@@ -32,8 +32,8 @@ import { isObj, readDebrief, readHistory, readPlan, readReply, readSession, read
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
-export const TROUBLE = 'Tayyari ran into trouble. Please try again in a moment.';
-export const OFFLINE = "We couldn't reach Tayyari. Check your connection and try again.";
+export const TROUBLE = 'Leafout ran into trouble. Please try again in a moment.';
+export const OFFLINE = "We couldn't reach Leafout. Check your connection and try again.";
 
 export class PracticeApiError extends ApiError {
   /** Seconds the server asks the person to wait (a 429's `Retry-After`), when it gave a number. */

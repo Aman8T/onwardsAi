@@ -153,7 +153,7 @@ export function GraphHeader({ profile }: { profile: Profile }) {
         >
           Practice
         </button>
-        <button type="button" className="btn btn-quiet gv-ask" aria-label="Ask Tayyari" onClick={() => actions.openChat(freeAction().origin, '')}>
+        <button type="button" className="btn btn-quiet gv-ask" aria-label="Ask Leafout" onClick={() => actions.openChat(freeAction().origin, '')}>
           Ask
         </button>
         <NewAnalysis name={name} />

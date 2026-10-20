@@ -1,8 +1,10 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { Suspense, lazy } from 'react';
 import { SignIn } from './auth/SignIn';
+import { Vine } from './components/Vine';
 import { CursorLight } from './light/CursorLight';
 import { useAutoClaim } from './auth/useMe';
+import { useHandoff } from './lib/useHandoff';
 import { useResumeAfterSignIn } from './match/pending';
 import { useApp } from './store';
 import { Onboarding } from './views/Onboarding';
@@ -30,6 +32,8 @@ export function App() {
 
   // a signed-in person's profile on screen is attached to their account as soon as there are both
   useAutoClaim();
+  // a resume or links handed over from leafout.in (/?handoff=<id>): start the same analysis Home would
+  useHandoff();
   // a posting pasted while signed out is matched once they are back signed in
   useResumeAfterSignIn();
 
@@ -82,6 +86,8 @@ export function App() {
       <SignIn />
       {/* the liquid cursor: one mount for every screen, behind the view (src/light) */}
       <CursorLight />
+      {/* the vine along the page's edges, growing with the scroll (the name, drawn) */}
+      <Vine />
     </MotionConfig>
   );
 }

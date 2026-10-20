@@ -38,18 +38,18 @@ export const VERDICT_LABEL: Record<Verdict, string> = {
 
 /** Wherever speech is promised, with the browser's speech. */
 export const PRIVACY_LINE =
-  'Your browser turns your speech into text. Only the text reaches Tayyari, kept for your debrief for 30 days. No audio or video is recorded.';
+  'Your browser turns your speech into text. Only the text reaches Leafout, kept for your debrief for 30 days. No audio or video is recorded.';
 
 /** Where speech is set up: Chrome's recogniser is Google's. */
 export const CHROME_NOTE = "In Chrome, speech-to-text runs on Google's speech service.";
 
 /** The same promise when Sarvam AI writes the words down: the voice leaves the browser for it, and is dropped there. */
 export const PRIVACY_LINE_SARVAM =
-  'Your voice goes to Sarvam AI, an Indian speech service, to be written down. Tayyari keeps only the text, for your debrief, for 30 days, and keeps no audio.';
+  'Your voice goes to Sarvam AI, an Indian speech service, to be written down. Leafout keeps only the text, for your debrief, for 30 days, and keeps no audio.';
 
 /** Away from the room (Practice, the debrief, Progress), true whoever wrote the words down. */
 export const KEPT_LINE =
-  'Tayyari keeps only the text of your answers, for your debrief, for 30 days. No audio or video is kept.';
+  'Leafout keeps only the text of your answers, for your debrief, for 30 days. No audio or video is kept.';
 
 /** Where speech is set up, with Sarvam. */
 export const SARVAM_NOTE = 'Speech by Sarvam AI, made in India for Indian English and Hinglish.';
@@ -82,11 +82,11 @@ export const NO_EMPLOYER = 'Nothing here is shared with an employer.';
 /* ───────────────────────── the edges ───────────────────────── */
 
 export const MIC_BLOCKED = {
-  title: "Tayyari can't hear you.",
+  title: "Leafout can't hear you.",
   body: 'Your browser blocked the microphone. Allow it from the address bar, or type your answers.',
 };
 
-export const NO_SPEECH = "This browser can't turn speech into text. Type your answers, or open Tayyari in Chrome, Edge or Safari.";
+export const NO_SPEECH = "This browser can't turn speech into text. Type your answers, or open Leafout in Chrome, Edge or Safari.";
 
 export const SPEECH_NETWORK = {
   title: "The speech service couldn't be reached.",

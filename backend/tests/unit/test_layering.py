@@ -81,6 +81,8 @@ RULES: dict[str, tuple[str, ...]] = {
     # prepare for a role sits with the model-calling services and reuses the posting match's schema helpers (`schema_of`,
     # `rows_of`; no fork); nothing imports prepare except api and the container.
     "prepare": (*_SERVICES, "match"),
+    # the hand-off from the marketing site: a self-contained service like auth; it reaches storage only through its Protocols.
+    "handoff": ("core", "contract", "storage.ports"),
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",
@@ -98,6 +100,7 @@ RULES: dict[str, tuple[str, ...]] = {
         "interview",
         "speech",
         "prepare",
+        "handoff",
         "guard",
         "ingest",
         "prompts",

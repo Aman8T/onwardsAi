@@ -55,6 +55,7 @@ EXPECTED_TABLES = {
     "jobsearch_runs",
     "interview_sessions",
     "prepare_plans",
+    "handoffs",
 }
 
 

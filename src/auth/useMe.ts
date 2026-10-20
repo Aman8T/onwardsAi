@@ -90,7 +90,7 @@ function watchFocus() {
 
 /** Plain words for a bridge the server refused (`MeResponse.signInIssue`). */
 export const SIGN_IN_ISSUES: Record<string, string> = {
-  email_taken: 'That email already belongs to a Tayyari account that is linked to a different Leafout sign-in. Sign in with the Leafout account you used before.',
+  email_taken: 'That email already belongs to an account linked to a different sign-in. Sign in the way you did before.',
 };
 
 /**

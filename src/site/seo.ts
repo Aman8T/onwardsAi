@@ -6,10 +6,10 @@
 import { DEFAULT_SITE_URL, SITE_PAGES } from './links';
 import type { ContentPage } from './types';
 
-export const SITE_NAME = 'Tayyari';
+export const SITE_NAME = 'Leafout';
 
 /** The line that closes every page's footer and describes the site in structured data. */
-export const SITE_LINE = 'Tayyari reads your resume, GitHub and public links and shows your skills as an evidence-cited graph.';
+export const SITE_LINE = 'Leafout reads your resume, GitHub and public links and shows your skills as an evidence-cited graph.';
 
 /** Search results cut a description near this length; a longer one is rewritten by the engine. */
 export const MAX_DESCRIPTION = 160;
@@ -21,13 +21,13 @@ export interface AppHead {
 }
 
 export const HOME_HEAD: AppHead = {
-  title: 'Tayyari · Evidence-cited skill graph for your career',
+  title: 'Leafout · Evidence-cited skill graph for your career',
   description:
-    'Tayyari reads your resume, GitHub and public links and shows your skills as a graph where every skill cites its source. Then match postings and practise.',
+    'Leafout reads your resume, GitHub and public links and shows your skills as a graph where every skill cites its source. Then match postings and practise.',
 };
 
 export const PRICING_HEAD: AppHead = {
-  title: 'Pricing: pay per posting or by the month · Tayyari',
+  title: 'Pricing: pay per posting or by the month · Leafout',
   description:
     'Your skill graph, next roles and portfolio page are free, with one posting match a month. Pay per posting or by the month. No annual lock-in.',
 };

@@ -1036,6 +1036,41 @@ class PrepareRepo(Protocol):
         ...
 
 
+# ───────────────────────────── hand-off from the site ─────────────────────────────
+
+
+@dataclass(frozen=True, slots=True)
+class StoredHandoff:
+    """What the marketing site posted (`HandoffRow`). ``links`` are already checked http(s) addresses."""
+
+    id: str
+    created_at: datetime
+    expires_at: datetime
+    links: list[str]
+    goal: str | None = None
+    notes: str | None = None
+    resume_name: str | None = None
+    resume_type: str | None = None
+    resume_bytes: bytes | None = field(default=None, repr=False)
+
+
+class HandoffRepo(Protocol):
+    """Hand-offs waiting to be taken. Nothing is ever read twice."""
+
+    async def create(self, item: StoredHandoff) -> None:
+        """Store a new hand-off."""
+        ...
+
+    async def take(self, handoff_id: str) -> StoredHandoff | None:
+        """Delete the hand-off and return it, in one statement (two callers never both get it); None when there is none.
+        An expired row is deleted and returned like any other: the caller judges ``expires_at``."""
+        ...
+
+    async def purge_expired(self, now: datetime) -> int:
+        """Delete every hand-off whose ``expires_at`` is before ``now``; the number removed."""
+        ...
+
+
 __all__ = [
     "BillingRepo",
     "ChatMessage",
@@ -1047,6 +1082,7 @@ __all__ = [
     "DiscoverRepo",
     "DiscoverRun",
     "EmailTaken",
+    "HandoffRepo",
     "InterviewRepo",
     "JobSearchRepo",
     "KvRepo",
@@ -1074,6 +1110,7 @@ __all__ = [
     "SettleStatus",
     "StoredAuthSession",
     "StoredEntitlements",
+    "StoredHandoff",
     "StoredInterview",
     "StoredMagicLink",
     "StoredMatch",

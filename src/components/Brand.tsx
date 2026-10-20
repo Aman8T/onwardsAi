@@ -19,13 +19,13 @@ export function Brand({ onClick, tagline = false, size = 28 }: BrandProps) {
         <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" strokeWidth="1.25" opacity="0.9" />
         <circle cx="10" cy="10" r="1.25" fill="currentColor" />
       </svg>
-      <span className="serif brand-word">Tayyari</span>
+      <span className="serif brand-word">Leafout</span>
       {tagline && <span className="kicker brand-tag">Career intelligence</span>}
     </>
   );
 
   return onClick ? (
-    <button type="button" className="brand" style={style} onClick={onClick} aria-label="Tayyari home">
+    <button type="button" className="brand" style={style} onClick={onClick} aria-label="Leafout home">
       {content}
     </button>
   ) : (

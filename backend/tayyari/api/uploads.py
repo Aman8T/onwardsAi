@@ -40,7 +40,6 @@ import json
 from collections.abc import AsyncIterator
 from contextlib import aclosing, asynccontextmanager
 from dataclasses import dataclass, field
-from pathlib import PurePath
 from typing import TYPE_CHECKING, Any
 from urllib.parse import parse_qsl
 
@@ -50,6 +49,7 @@ from starlette.requests import Request
 
 from tayyari.contract.requests import AnalyzeRequest
 from tayyari.core.errors import AppError, BadRequest, PayloadTooLarge, RateLimited, ServiceUnavailable
+from tayyari.core.files import is_accepted_upload
 from tayyari.core.limits import (
     GOAL_MAX_CHARS,
     KIB,
@@ -63,8 +63,6 @@ from tayyari.core.limits import (
     MAX_UPLOAD_FILES,
     MIB,
     NOTES_MAX_CHARS,
-    UPLOAD_EXTENSIONS,
-    UPLOAD_MIME_TYPES,
 )
 from tayyari.core.logging import get_logger
 from tayyari.core.settings import GuardSettings
@@ -328,13 +326,6 @@ def clean_field(value: object, max_len: int) -> str | None:
     return value.strip()[:max_len] if isinstance(value, str) and value.strip() else None
 
 
-def is_accepted_upload(filename: str, content_type: str | None) -> bool:
-    """A resume file: a known extension, or no extension and a known MIME type."""
-    ext = PurePath(filename).suffix.lower()
-    mime = (content_type or "").split(";", 1)[0].strip().lower()
-    return ext in UPLOAD_EXTENSIONS or (not ext and mime in UPLOAD_MIME_TYPES)
-
-
 def clean_filename(name: str) -> str:
     """The base name only (no directories), without control characters, at most 255 characters."""
     base = name.replace("\\", "/").rsplit("/", 1)[-1]
@@ -579,6 +570,25 @@ def _last(fields: list[tuple[str, str]], name: str) -> str | None:
     return None
 
 
+async def read_upload_form(
+    request: Request,
+    *,
+    limits: UploadLimits = DEFAULT_LIMITS,
+    read_timeout_s: float | None = None,
+    gate: UploadGate | None = None,
+    client_key: str | None = None,
+) -> tuple[list[tuple[str, str]], Upload | None]:
+    """The text fields (in order) and the one resume file of a multipart or urlencoded request, every cap enforced on
+    the streamed bytes and the deadline and `UploadGate` applied as `parse_analyze_form` describes. The file's name and
+    type have been checked (`is_accepted_upload`); what the fields mean is the caller's business."""
+    check_content_length(request, limits.max_body_bytes)
+    async with body_deadline(read_timeout_s):
+        if gate is None:
+            return await _read_form(request, limits)
+        async with gate.reading(client_key) as ticket:
+            return await _read_form(request, limits, ticket)
+
+
 async def parse_analyze_form(
     request: Request,
     *,
@@ -598,13 +608,9 @@ async def parse_analyze_form(
     caller's ``ip_hash``) apply an `UploadGate`: 429 when that client already has an upload being read, 503
     when the process-wide byte budget is spent. All three default to "off", for tests and tools.
     """
-    check_content_length(request, limits.max_body_bytes)
-    async with body_deadline(read_timeout_s):
-        if gate is None:
-            fields, upload = await _read_form(request, limits)
-        else:
-            async with gate.reading(client_key) as ticket:
-                fields, upload = await _read_form(request, limits, ticket)
+    fields, upload = await read_upload_form(
+        request, limits=limits, read_timeout_s=read_timeout_s, gate=gate, client_key=client_key
+    )
 
     sample = _last(fields, "sample") in ("1", "true")
     links = parse_links([value for name, value in fields if name == "links"])
@@ -663,6 +669,7 @@ __all__ = [
     "parse_analyze_form",
     "parse_links",
     "read_json_body",
+    "read_upload_form",
     "require_json_content_type",
     "upload_gate",
 ]

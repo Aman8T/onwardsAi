@@ -52,7 +52,7 @@ const STEPS: [string, string][] = [
 
 /** The line beside the button: what it costs, then how long it takes. */
 const costLine = (noAccount: boolean, showFree: boolean) =>
-  `${noAccount ? 'Free while Tayyari is in preview. No account needed. ' : showFree ? 'Your first posting is free. ' : ''}Takes about 20 seconds.`;
+  `${noAccount ? 'Free while Leafout is in preview. No account needed. ' : showFree ? 'Your first posting is free. ' : ''}Takes about 20 seconds.`;
 
 export function PasteView(props: PasteViewProps) {
   const { draft, onDraft, onSubmit, busy, notice, paywall, onDismissPaywall, blocker, blockerAction, showFree, noAccount = false, recent, roles, onPickRole, onNavigate } = props;

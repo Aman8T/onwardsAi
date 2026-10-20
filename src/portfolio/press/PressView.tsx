@@ -192,7 +192,7 @@ export function PressView(props: PressRenderArgs & { renderIndex: (a: PressIndex
 
         <footer className="pv-foot pv-rise" style={rise()}>
           <span>{page.footer}</span>
-          <span>Made with Tayyari</span>
+          <span>Made with Leafout</span>
         </footer>
       </div>
     </div>
@@ -224,7 +224,7 @@ function SparseFront(props: {
           {lead.headline}
         </h2>
         {lead.deck && <p className="pv-s-deck">{lead.deck}</p>}
-        <p className="pv-s-by">From the Tayyari desk</p>
+        <p className="pv-s-by">From the Leafout desk</p>
       </section>
 
       {(body || index) && (
@@ -260,7 +260,7 @@ function Lead(props: { page: PressPage; id: string; className: string; style: CS
         {lead.headline}
       </h2>
       {lead.deck && <p className="pv-deck">{lead.deck}</p>}
-      <p className="pv-by">From the Tayyari desk</p>
+      <p className="pv-by">From the Leafout desk</p>
     </section>
   );
 }
