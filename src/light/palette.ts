@@ -16,6 +16,14 @@ export const LIGHT = {
   /** OKLCH chroma at the heart and in the body (the ambient lobes use .044). */
   heartC: 0.016,
   bodyC: 0.048,
+  /**
+   * The dark field's own tuning ("light through smoked glass"). The field there is L .16, so a pale heart
+   * would be the bright core on a darker ground the design forbids. Instead the body is lifted only a little
+   * above the field, about where the dark lobes sit, and the heart sits just under it, so the colour is in the
+   * body and nothing glares. Chroma stays inside the design gamut rule (C ≤ .17·L, at most .93 of it); every
+   * light ink role keeps its contrast floor over it (scripts/palette-check.ts).
+   */
+  dark: { heartL: 0.27, bodyL: 0.31, heartC: 0.028, bodyC: 0.048 },
   /** Degrees from the heart's hue to the body's: analogous, like the side lobes. */
   haloHueOffset: 28,
   /**

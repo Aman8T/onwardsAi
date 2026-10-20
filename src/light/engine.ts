@@ -52,7 +52,7 @@ export interface LightEngineOptions {
    */
   host: HTMLElement;
   /** The field's hue and warm easing right now (the caller reads the root's inline style). */
-  readField: () => { h: number; kw: number };
+  readField: () => { h: number; kw: number; dark?: boolean };
   /** Dev only: enables the timer query and the lightness sampler, and receives a snapshot a few times a second. */
   onStats?: (stats: LightStats) => void;
 }
@@ -385,6 +385,8 @@ export function createLightEngine(opts: LightEngineOptions): LightEngine | null 
     gl.uniform1f(U.uK, k);
     gl.uniform1f(U.uAlpha, st.alpha);
     gl.uniform1f(U.uSeed, st.seed);
+    const tone = field.dark ? LIGHT.dark : LIGHT;
+    gl.uniform4f(U.uTone, tone.bodyL, tone.heartL, tone.bodyC, tone.heartC);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     if (dev) {

@@ -6,7 +6,7 @@
  */
 import { LIGHT } from './palette';
 
-export const UNIFORMS = ['uCenter', 'uDir', 'uStretch', 'uRadius', 'uTime', 'uPhase', 'uHue', 'uHue2', 'uK', 'uAlpha', 'uSeed'] as const;
+export const UNIFORMS = ['uCenter', 'uDir', 'uStretch', 'uRadius', 'uTime', 'uPhase', 'uHue', 'uHue2', 'uK', 'uAlpha', 'uSeed', 'uTone'] as const;
 
 export type Uniform = (typeof UNIFORMS)[number];
 
@@ -31,6 +31,7 @@ uniform float uHue2;     // degrees, the body
 uniform float uK;        // chroma multiplier (warm-sector easing)
 uniform float uAlpha;    // 0..1 overall strength
 uniform float uSeed;     // per-session
+uniform vec4 uTone;      // bodyL, heartL, bodyC, heartC: the light field's or the dark field's (palette.ts)
 out vec4 o;
 
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -109,8 +110,8 @@ void main() {
   float d = clamp(body * 0.78 + halo * 0.5, 0.0, 1.0);
   // light through paper: the heart is paler and less saturated, the colour sits in the body
   float w = smoothstep(0.0, 1.0, body);
-  float L = mix(${f(LIGHT.bodyL)}, ${f(LIGHT.heartL)}, w);
-  float C = mix(${f(LIGHT.bodyC)}, ${f(LIGHT.heartC)}, w) * uK;
+  float L = mix(uTone.x, uTone.y, w);
+  float C = mix(uTone.z, uTone.w, w) * uK;
   float H = mixHue(uHue2, uHue, w);
   vec3 c = oklch(L, C, H);
   // ±1 LSB triangular dither on colour and alpha, so 8-bit output never bands

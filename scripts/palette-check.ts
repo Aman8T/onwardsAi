@@ -342,9 +342,10 @@ function check(tokens: Token[]): { pairs: PairResult[]; gamut: GamutFailure[]; m
 /* ----------------------------------------------------------------------------
  * The cursor light (src/light/palette.ts): its deepest colour under every text
  * role that sits on the bare field on Home. The shader reads the same numbers,
- * so what is proved here is what is drawn. Light scheme only: the light is not
- * mounted on the dark field (a pale body there would be the bright core on a
- * darker ground the design forbids, and no ink role could sit on it).
+ * so what is proved here is what is drawn. Both schemes: the light field's tone
+ * (a pale heart over a body at the floor) and the dark field's (`LIGHT.dark`: a
+ * body lifted a little above the field, the heart just under it). In each, the
+ * body is the extreme the ink sits against, so the body is what is checked.
  * ------------------------------------------------------------------------- */
 
 /**
@@ -361,16 +362,21 @@ const LIGHT_PAIRS: { fg: string; min: number }[] = [
 ];
 
 /** The body colours the light can take at a base hue: the wander window in 7° steps, then the halo offset. */
-function lightBodies(baseHue: number): Lin[] {
+interface LightTone {
+  bodyL: number;
+  bodyC: number;
+}
+
+function lightBodies(baseHue: number, tone: LightTone): Lin[] {
   const out: Lin[] = [];
   for (let off = -MAX_HUE_OFFSET; off <= MAX_HUE_OFFSET; off += 7) {
     const heartHue = mod360(baseHue + off);
-    out.push(oklchToLinear(LIGHT.bodyL, LIGHT.bodyC * warmEasing(heartHue), mod360(heartHue + LIGHT.haloHueOffset)));
+    out.push(oklchToLinear(tone.bodyL, tone.bodyC * warmEasing(heartHue), mod360(heartHue + LIGHT.haloHueOffset)));
   }
   return out;
 }
 
-function checkLight(tokens: Token[]): { pairs: PairResult[]; gamut: number[] } {
+function checkLight(tokens: Token[], tone: LightTone): { pairs: PairResult[]; gamut: number[] } {
   const byName = new Map(tokens.map((t) => [t.name, t]));
   const results: PairResult[] = LIGHT_PAIRS.filter((p) => byName.has(p.fg)).map((p) => ({
     fg: p.fg,
@@ -381,7 +387,7 @@ function checkLight(tokens: Token[]): { pairs: PairResult[]; gamut: number[] } {
   }));
   const gamut: number[] = [];
   for (let hue = 0; hue < 360; hue++) {
-    const bodies = lightBodies(hue);
+    const bodies = lightBodies(hue, tone);
     if (!bodies.every(inGamut)) gamut.push(hue);
     for (const r of results) {
       for (const f of variants(byName.get(r.fg)!, hue)) {
@@ -524,22 +530,35 @@ function main(): number {
   }
   failed = !reportScheme('dark', dark.tokens) || failed;
 
-  const light = checkLight(tokens);
-  console.log(
-    `cursor light (light scheme only; not mounted in dark): body L ${LIGHT.bodyL}, C ${LIGHT.bodyC}, hue within ±${MAX_HUE_OFFSET}° of the field (+${LIGHT.haloHueOffset}° halo)\n`,
-  );
-  printTable(
-    light.pairs.map((r) => {
-      const ok = r.worst >= r.min;
-      failed ||= !ok;
-      return [`${r.fg} / ${r.bg}`, r.worst.toFixed(2), String(r.worstHue), r.min.toFixed(1), ok ? 'pass' : 'FAIL'];
-    }),
-  );
-  if (light.gamut.length) {
-    failed = true;
-    console.log(`\nLight body out of sRGB gamut at ${light.gamut.length} hue(s), e.g. ${light.gamut.slice(0, 6).join(', ')}`);
-  } else {
-    console.log('\nLight body inside sRGB at every hue.');
+  for (const [scheme, table, tone] of [
+    ['light', tokens, LIGHT],
+    ['dark', dark.tokens, LIGHT.dark],
+  ] as const) {
+    if (tone.heartL > tone.bodyL === (scheme === 'dark')) {
+      failed = true;
+      console.log(`cursor light (${scheme}): the heart must be ${scheme === 'dark' ? 'under' : 'over'} the body`);
+    }
+    const light = checkLight(table, tone);
+    console.log(
+      `cursor light, ${scheme} scheme: body L ${tone.bodyL}, C ${tone.bodyC}, hue within ±${MAX_HUE_OFFSET}° of the field (+${LIGHT.haloHueOffset}° halo)
+`,
+    );
+    printTable(
+      light.pairs.map((r) => {
+        const ok = r.worst >= r.min;
+        failed ||= !ok;
+        return [`${r.fg} / ${r.bg}`, r.worst.toFixed(2), String(r.worstHue), r.min.toFixed(1), ok ? 'pass' : 'FAIL'];
+      }),
+    );
+    if (light.gamut.length) {
+      failed = true;
+      console.log(`
+Light body (${scheme}) out of sRGB gamut at ${light.gamut.length} hue(s), e.g. ${light.gamut.slice(0, 6).join(', ')}`);
+    } else {
+      console.log(`
+Light body (${scheme}) inside sRGB at every hue.
+`);
+    }
   }
 
   console.log(failed ? '\nFAILED' : '\nOK');

@@ -5,17 +5,15 @@
  * hands it to the engine. Everything visual is in the engine and the shader; nothing here renders per frame.
  *
  * Not mounted at all for touch or coarse pointers, under reduced motion or slow updates, under forced
- * colours or more contrast, when the Atmosphere is Off, or in the dark scheme: Home is then exactly as it
- * was. In dark the light stays off by design, not by accident: its body (L .89) is lighter than the dark
- * field (L .16), which would be the bright core on a darker ground the design forbids, and no dark-scheme
- * ink role could keep its contrast floor over it. A light for the dark field needs its own design pass
- * (palette.ts and the shader are built for the light band only; palette-check proves it there alone).
+ * colours or more contrast, or when the Atmosphere is Off: Home is then exactly as it was. In the dark scheme the
+ * light runs with its own tuning (`LIGHT.dark` in palette.ts: a body lifted a little above the dark field and a
+ * heart just under it, never a bright core), and a switch of scheme retunes it within a second.
  */
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMediaQuery } from '../lib/ui';
 import { useApp } from '../store';
-import { useAtmoMode, useScheme } from '../theme/ambient';
+import { useAtmoMode } from '../theme/ambient';
 import { createLightEngine } from './engine';
 import type { LightEngine, LightStats } from './engine';
 import { LightStatsOverlay } from './Stats';
@@ -27,12 +25,14 @@ function devSwitch(): string | null {
   return new URLSearchParams(window.location.search).get('light');
 }
 
-/** The field's hue and warm easing, from the root's inline style (written by boot.js and ambient.ts). */
-function readField(): { h: number; kw: number } {
-  const style = document.documentElement.style;
-  const h = Number.parseFloat(style.getPropertyValue('--h'));
-  const kw = Number.parseFloat(style.getPropertyValue('--kw'));
-  return { h: Number.isFinite(h) ? h : 250, kw: Number.isFinite(kw) ? kw : 1 };
+/** The field's hue, warm easing and scheme, from the root (written by boot.js and ambient.ts). */
+function readField(): { h: number; kw: number; dark: boolean } {
+  const root = document.documentElement;
+  const h = Number.parseFloat(root.style.getPropertyValue('--h'));
+  const kw = Number.parseFloat(root.style.getPropertyValue('--kw'));
+  const pinned = root.dataset.scheme;
+  const dark = pinned ? pinned === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return { h: Number.isFinite(h) ? h : 250, kw: Number.isFinite(kw) ? kw : 1, dark };
 }
 
 export function CursorLight() {
@@ -42,11 +42,10 @@ export function CursorLight() {
   const forced = useMediaQuery('(forced-colors: active)');
   const moreContrast = useMediaQuery('(prefers-contrast: more)');
   const [, atmo] = useAtmoMode();
-  const [, scheme] = useScheme();
   const dev = devSwitch();
 
   const enabled =
-    fine && !reduced && !slow && !forced && !moreContrast && atmo !== 'off' && scheme !== 'dark' && dev !== 'off' && dev !== 'reduce';
+    fine && !reduced && !slow && !forced && !moreContrast && atmo !== 'off' && dev !== 'off' && dev !== 'reduce';
   if (!enabled) return null;
   return createPortal(<LightCanvas stats={dev === 'stats'} />, document.body);
 }
