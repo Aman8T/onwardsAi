@@ -41,6 +41,7 @@
   position: relative;
   display: flex;
   align-items: flex-end;
+  flex: none;
   gap: 28px;
   min-width: 0;
 }
@@ -104,14 +105,20 @@
 /* Right-hand cluster. */
 .gv-actions {
   display: flex;
+  flex: 1 1 0;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
   min-width: 0;
 }
 
+/* The status yields first: it shrinks to an ellipsis instead of spilling over the Now / Next control. */
 .gv-status {
+  flex: 0 1 auto;
+  min-width: 0;
   margin-right: var(--s3);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
