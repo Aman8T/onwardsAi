@@ -1,7 +1,6 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { Suspense, lazy } from 'react';
 import { SignIn } from './auth/SignIn';
-import { Vine } from './components/Vine';
 import { CursorLight } from './light/CursorLight';
 import { useAutoClaim } from './auth/useMe';
 import { useHandoff } from './lib/useHandoff';
@@ -93,8 +92,6 @@ export function App() {
       <SignIn />
       {/* the liquid cursor: one mount for every screen, behind the view (src/light) */}
       <CursorLight />
-      {/* the vine along the page's edges, growing with the scroll (the name, drawn) */}
-      <Vine />
     </MotionConfig>
   );
 }
