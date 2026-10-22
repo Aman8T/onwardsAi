@@ -6,7 +6,9 @@
                was Shaky can only get better; ``on`` is the first day the best verdict was reached.
     facts      what the person added from their answers ("From you"), with when it was said.
 
-It is read from the stored debriefs alone, so it needs no model and no second copy of the verdicts.
+Given the profile's claim marks (I2, `claim_marks`), the claims are read from them instead, so a claim keeps its verdicts after
+its session's transcript is purged; without them they are read from the stored debriefs, which are the same verdicts while
+the sessions last. Either way no model is called.
 """
 
 from __future__ import annotations
@@ -26,7 +28,7 @@ from tayyari.contract.interview import (
     Verdict,
 )
 from tayyari.core.logging import get_logger
-from tayyari.storage.ports import StoredInterview
+from tayyari.storage.ports import StoredClaimMark, StoredInterview
 
 from .state import RANK, as_utc, read_state
 from .text import fold
@@ -63,8 +65,17 @@ def best_mark(marks: Sequence[ClaimMark]) -> ClaimMark:
     return best
 
 
-def build_history(items: Sequence[StoredInterview], *, left_today: int | None = None) -> PracticeHistory:
-    """The history of ``items`` (a profile's sessions, newest first)."""
+def _verdict(value: str) -> Verdict:
+    return value if value in RANK else "not_assessed"  # type: ignore[return-value]
+
+
+def build_history(
+    items: Sequence[StoredInterview],
+    *,
+    marks: Sequence[StoredClaimMark] | None = None,
+    left_today: int | None = None,
+) -> PracticeHistory:
+    """The history of ``items`` (a profile's sessions, newest first); the claims from ``marks`` (oldest first) when given."""
     sessions: list[SessionSummary] = []
     claims: dict[str, _Claim] = {}
     facts: list[PracticeFact] = []
@@ -117,13 +128,22 @@ def build_history(items: Sequence[StoredInterview], *, left_today: int | None = 
                         date=date,
                     )
                 )
-            if result.kind not in CLAIM_KINDS:
+            if marks is not None or result.kind not in CLAIM_KINDS:
                 continue
             for source in result.sources:
                 if source.origin != "evidence":
                     continue
                 claim = claims.setdefault(fold(source.text), _Claim(source.text, source.source or ""))
                 claim.marks.append(ClaimMark(sessionId=item.id, date=date, verdict=result.verdict))
+    for stored in marks or ():
+        claim = claims.setdefault(stored.claim_key, _Claim(stored.claim_text, stored.source))
+        claim.marks.append(
+            ClaimMark(
+                sessionId=stored.session_id,
+                date=stored.marked_on.isoformat(),
+                verdict=_verdict(stored.verdict),
+            )
+        )
     ordered = sorted(claims.values(), key=lambda c: fold(c.text))
     ordered.sort(key=lambda c: c.marks[-1].date, reverse=True)
     best: list[ClaimBest] = []

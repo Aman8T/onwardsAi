@@ -4,6 +4,9 @@ Same rules as the other contracts: camelCase field names that are the JSON keys,
 (``X | None = None``) exactly when the TypeScript field is ``x?:``, and `tests/unit/contract/test_prepare_parity.py`
 fails when the two drift. Code supplies every number (the gaps from ``Profile.roles``, the weeks from the hours a week);
 the model writes the headline, the "why" lines and the moves, each citing ``PrepareEvidence`` ids, and code checks them.
+
+A plan also shows the Fix steps from practice placed in it (I2, ``practice``): they are stored on the claim's mark
+(`claim_marks`), not in `PrepareState`, so a tick has one home wherever the step went.
 """
 
 # ruff: noqa: N815  (the field names are camelCase on purpose: they are the JSON keys of shared/prepare.ts)
@@ -14,6 +17,7 @@ from typing import Annotated, Final, Literal
 
 from pydantic import Field, field_validator
 
+from tayyari.contract.interview import FixTask
 from tayyari.contract.models import _Model
 
 PrepareScope = Literal["role", "requirement"]
@@ -124,6 +128,15 @@ class PreparePlan(_Model):
     moves: list[PrepareMove]
     state: PrepareState
     version: int
+    practice: list[FixTask] | None = None
+
+
+class PreparePlanSummary(_Model):
+    id: str
+    roleId: str
+    roleTitle: str
+    requirement: str | None = None
+    createdAt: str
 
 
 # ───────────────────────── stream events ─────────────────────────
@@ -233,6 +246,7 @@ __all__ = [
     "PrepareMovesEvent",
     "PreparePhase",
     "PreparePlan",
+    "PreparePlanSummary",
     "PrepareRepo",
     "PrepareRepos",
     "PrepareRequest",

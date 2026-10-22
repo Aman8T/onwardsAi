@@ -17,6 +17,11 @@ each checked against what the person said and the sources they were about.
     fix          only for Shaky and Couldn't defend: a step of at most 200 characters that starts with a verb and says nothing
                  about the person; 5 to 120 minutes; else "Write down one real example for {topic} ...", 15 minutes.
     failure      a model that fails, or a spend ceiling, still gives a debrief: code alone.
+
+A re-drill (I2) adds, in code, each claim's previous mark (``previous``) and how many claims ranked above it ("2 of 3 moved
+up", ``redrill``). A claim that could not be defended twice may get ``softer``: a resume line that says less, at most 160
+characters, starting with a verb, with no brackets and no personality words, whose every name and number is in the answer
+alone (not the resume line, so it cannot restate the claim). One that fails is dropped; no template stands in.
 """
 
 from __future__ import annotations
@@ -33,7 +38,9 @@ from tayyari.contract.interview import (
     Debrief,
     FixStep,
     PlanSlot,
+    PreviousMark,
     Quote,
+    RedrillMoved,
     SayLine,
     SlotKind,
     SlotResult,
@@ -50,7 +57,7 @@ from tayyari.llm.types import CallContext, TextBlock
 from tayyari.prompts.interview import DEBRIEF_SYSTEM, DebriefSlot, build_debrief_prompt
 
 from .sources import YOUR_ANSWER, evidence_labels, evidence_of, source_lines, sources_text
-from .state import SessionState
+from .state import RANK, SessionState, SlotState
 from .text import (
     claims_person,
     clean_quote,
@@ -78,6 +85,7 @@ FIX_MAX_CHARS: Final = 200
 FIX_MIN_MINUTES: Final = 5
 FIX_MAX_MINUTES: Final = 120
 FIX_DEFAULT_MINUTES: Final = 15
+SOFTER_MAX_CHARS: Final = 160
 
 SKIPPED_WHY: Final = "You skipped this one. Not assessed never counts against you."
 NOT_ASKED_WHY: Final = "This one wasn't asked. Not assessed never counts against you."
@@ -103,7 +111,7 @@ DEBRIEF_SCHEMA: Final[dict[str, Any]] = {
             "items": {
                 "type": "object",
                 "additionalProperties": False,
-                "required": ["id", "say", "avoid", "fix"],
+                "required": ["id", "say", "avoid", "fix", "softer"],
                 "properties": {
                     "id": {"type": "string"},
                     "say": {
@@ -127,6 +135,7 @@ DEBRIEF_SCHEMA: Final[dict[str, Any]] = {
                         "required": ["text", "minutes"],
                         "properties": {"text": {"type": "string"}, "minutes": {"type": "integer"}},
                     },
+                    "softer": {"type": "string"},
                 },
             },
         }
@@ -158,9 +167,15 @@ class Written:
     say: SayLine | None = None
     avoid: AvoidLine | None = None
     fix: FixStep | None = None
+    softer: SayLine | None = None
 
 
 # ───────────────────────── outcomes ─────────────────────────
+
+
+def asked_first(slot: PlanSlot, st: SlotState) -> str:
+    """The question a slot opened with: its push for a re-drill that started there, else its question."""
+    return st.push if slot.start == "push" and st.push else st.question
 
 
 def outcomes(state: SessionState) -> list[Outcome]:
@@ -173,13 +188,13 @@ def outcomes(state: SessionState) -> list[Outcome]:
         best = st.best()
         if best is None:
             why = SKIPPED_WHY if st.skipped else UNANSWERED_WHY if st.reached else NOT_ASKED_WHY
-            found.append(Outcome(slot, st.question, "not_assessed", None, why, None, None, answers))
+            found.append(Outcome(slot, asked_first(slot, st), "not_assessed", None, why, None, None, answers))
             continue
         _, result = best
         found.append(
             Outcome(
                 slot=slot,
-                question=st.question,
+                question=asked_first(slot, st),
                 verdict=result.verdict,
                 quote=result.quote,
                 why=result.why,
@@ -283,6 +298,35 @@ def check_fix(raw: object, out: Outcome) -> FixStep:
     return FixStep(text=text, minutes=max(FIX_MIN_MINUTES, min(FIX_MAX_MINUTES, round(minutes))))
 
 
+def say_less(out: Outcome) -> bool:
+    """A re-drilled claim that could not be defended this time either: the one that may get "Or say less"."""
+    last = out.slot.last
+    return last is not None and last.verdict == "couldnt" and out.verdict == "couldnt"
+
+
+def check_softer(raw: object, out: Outcome) -> SayLine | None:
+    """The model's "Or say less" line when it passes every check (see the module docstring), else None."""
+    if not say_less(out) or not isinstance(raw, str):
+        return None
+    inner = tidy(raw).strip('“”"').strip()
+    answer = out.answer_text
+    ok = (
+        bool(inner)
+        and len(inner) <= SOFTER_MAX_CHARS
+        and len(inner.split()) >= SAY_MIN_WORDS
+        and starts_with_verb(inner)
+        and "[" not in inner
+        and "]" not in inner
+        and not claims_person(inner)
+        and not has_personality(inner, answer)
+        and not unsupported(inner, answer)
+        and not inflated(inner, answer)
+    )
+    if not ok:
+        return None
+    return SayLine(text=f"“{inner}”", placeholders=[], sources=[YOUR_ANSWER])
+
+
 def check_written(raw: Mapping[str, Any] | None, outs: Sequence[Outcome]) -> dict[str, Written]:
     """Say, Avoid and Fix for every slot that was assessed, after the checks (see the module docstring)."""
     items: dict[str, Mapping[str, Any]] = {}
@@ -299,6 +343,7 @@ def check_written(raw: Mapping[str, Any] | None, outs: Sequence[Outcome]) -> dic
             say=check_say(item.get("say"), out) or fallback_say(out),
             avoid=check_avoid(item.get("avoid"), out),
             fix=check_fix(item.get("fix"), out) if out.verdict in ("shaky", "couldnt") else None,
+            softer=check_softer(item.get("softer"), out),
         )
     return written
 
@@ -326,6 +371,7 @@ async def write_debrief(
                     verdict=o.verdict,
                     sources=source_lines(o.slot.sources),
                     answers=[(t.at, t.text) for t in o.answers],
+                    say_less=say_less(o),
                 )
                 for o in asked
             ],
@@ -371,6 +417,10 @@ def results_of(outs: Sequence[Outcome], written: Mapping[str, Written]) -> list[
                 fix=lines.fix,
                 story=out.story,
                 newFact=out.new_fact,
+                previous=PreviousMark(verdict=out.slot.last.verdict, on=out.slot.last.on)
+                if out.slot.last is not None
+                else None,
+                softer=lines.softer,
             )
         )
     return results
@@ -419,6 +469,15 @@ def summary_of(state: SessionState, results: Sequence[SlotResult]) -> str | None
     return " ".join(sentences) or None
 
 
+def moved_of(results: Sequence[SlotResult]) -> RedrillMoved | None:
+    """A re-drill's count: of the claims that came back, how many ranked above their previous mark. None for other kinds."""
+    came_back = [r for r in results if r.previous is not None]
+    if not came_back:
+        return None
+    moved = sum(1 for r in came_back if r.previous is not None and RANK[r.verdict] > RANK[r.previous.verdict])
+    return RedrillMoved(moved=moved, of=len(came_back))
+
+
 def minutes_of(turns: Sequence[Turn]) -> int:
     """Whole minutes the interview took: the last turn's second, rounded up, at least 1."""
     return max(1, math.ceil(turns[-1].at / 60)) if turns else 1
@@ -461,6 +520,7 @@ def assemble(
         graphRole=state.graphRole,
         task=state.task,
         work=state.work,
+        redrill=moved_of(results) if state.kind == "redrill" else None,
     )
 
 
@@ -468,12 +528,15 @@ __all__ = [
     "DEBRIEF_SCHEMA",
     "KIND_ORDER",
     "SAY_TEMPLATES",
+    "SOFTER_MAX_CHARS",
     "Outcome",
     "Written",
+    "asked_first",
     "assemble",
     "check_avoid",
     "check_fix",
     "check_say",
+    "check_softer",
     "check_written",
     "counts_of",
     "default_fix",
@@ -481,8 +544,10 @@ __all__ = [
     "first_thing",
     "kept_until",
     "minutes_of",
+    "moved_of",
     "outcomes",
     "results_of",
+    "say_less",
     "summary_of",
     "write_debrief",
 ]

@@ -5,14 +5,19 @@
  * (their own words and what to do instead) and Fix (a step, with its time). A new fact from a Defended answer is offered
  * to be kept as "From you". Every verdict links to the moment it was said.
  *
+ * Re-drill (I2): a claim that came back shows its previous verdict next to today's; a Fix step can go into a Prepare plan
+ * or stay in Practice (the plan of the session's role is chosen first); a claim that could not be defended twice may show
+ * "Or say less", a line built from the answer's own words.
+ *
  * Nothing here adds a claim: every line is the server's, and a line that was not sent is not drawn. A question that was
  * not assessed has no verdict to explain and says that it never counts against the person.
  */
 import { useId, useState } from 'react';
-import type { Debrief, SlotKind, SlotResult, SlotSource } from '../../../shared/interview';
+import type { Debrief, FixTask, SlotKind, SlotResult, SlotSource } from '../../../shared/interview';
+import type { PreparePlanSummary } from '../../../shared/prepare';
 import { VerdictChip } from '../Pips';
-import { SLOT_KIND_LABEL } from '../words';
-import { clock } from '../hub/words';
+import { SLOT_KIND_LABEL, VERDICT_LABEL as VERDICT_WORD } from '../words';
+import { clock, dateOf } from '../hub/words';
 import { RUNG_LABEL, builtFrom, exchangeFor, markPieces, sayPieces, turnOfQuote } from './quote';
 import type { Exchange } from './quote';
 
@@ -33,6 +38,26 @@ export interface CardContext {
   onFact: (slotId: string, add: boolean) => void;
   factBusy: string | null;
   factError: { slotId: string; message: string } | null;
+  /** Where a Fix step can go (I2); absent: the Fix step is a step to read, as before. */
+  fix?: FixPlacing;
+}
+
+/** Putting a debrief's Fix step into a Prepare plan, or keeping it in Practice. */
+export interface FixPlacing {
+  /** The person's plans, newest first. */
+  plans: readonly PreparePlanSummary[];
+  /** The plan offered first: the session's role's, else the newest. */
+  defaultPlanId?: string;
+  /** The steps already placed, by slot. */
+  placed: Readonly<Record<string, FixTask>>;
+  busy: string | null;
+  error: { slotId: string; message: string } | null;
+  /** Place the step of a slot: in a plan, or kept in Practice (no plan). */
+  onPlace: (slotId: string, planId?: string) => void;
+  /** Take it out again. */
+  onUndo: (slotId: string) => void;
+  onOpenPlan: (plan: PreparePlanSummary) => void;
+  onRedrill: () => void;
 }
 
 /** The kind of question, as a chip: told apart by fill and outline, and always in words. */
@@ -253,7 +278,8 @@ function Columns({ result, ctx }: { result: SlotResult; ctx: CardContext }) {
           <>
             <p className="pc-fixtext">{fix.text}</p>
             <p className="pc-muted pc-small">About {fix.minutes} min</p>
-            {ctx.onPrepare && (
+            {ctx.fix && <FixPlace result={result} placing={ctx.fix} />}
+            {!ctx.fix && ctx.onPrepare && (
               <>
                 <button type="button" className="btn btn-sm pc-btn-sm pc-self-start" onClick={ctx.onPrepare}>
                   Open Prepare
@@ -266,6 +292,130 @@ function Columns({ result, ctx }: { result: SlotResult; ctx: CardContext }) {
           <p className="pc-muted">Nothing to fix</p>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ───────────────────────── a Fix step, placed (I2) ───────────────────────── */
+
+const PRACTICE = 'practice';
+
+const planName = (p: PreparePlanSummary) => (p.requirement ? `${p.roleTitle} · ${p.requirement}` : p.roleTitle);
+
+function FixPlace({ result, placing }: { result: SlotResult; placing: FixPlacing }) {
+  const id = useId();
+  const placed = placing.placed[result.slotId];
+  const busy = placing.busy === result.slotId;
+  const error = placing.error?.slotId === result.slotId ? placing.error.message : undefined;
+  const [dest, setDest] = useState<string>(placing.defaultPlanId ?? placing.plans[0]?.id ?? PRACTICE);
+
+  if (placed) {
+    const plan = placed.planId ? placing.plans.find((p) => p.id === placed.planId) : undefined;
+    return (
+      <div className="pc-placed" role="status">
+        <p className="pc-small">
+          {placed.where === 'plan' && plan ? `Added to your plan · ${planName(plan)}` : 'Kept in Practice, on the Re-drill screen'}
+          {placed.doneAt ? ` · done ${dateOf(placed.doneAt)}` : ''}
+        </p>
+        <div className="pc-actions">
+          {plan && (
+            <button type="button" className="btn btn-sm pc-btn-sm" onClick={() => placing.onOpenPlan(plan)}>
+              Open the plan
+            </button>
+          )}
+          {!plan && (
+            <button type="button" className="btn btn-sm pc-btn-sm" onClick={placing.onRedrill}>
+              Open Re-drill
+            </button>
+          )}
+          <button type="button" className="btn btn-quiet btn-sm pc-btn-sm" disabled={busy} onClick={() => placing.onUndo(result.slotId)}>
+            Undo
+          </button>
+        </div>
+        {error && (
+          <p className="pc-danger pc-small" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="pc-place">
+      <label htmlFor={id} className="kicker">
+        Where it goes
+      </label>
+      <select id={id} className="field pc-box pc-select" value={dest} onChange={(e) => setDest(e.target.value)}>
+        {placing.plans.map((p) => (
+          <option key={p.id} value={p.id}>
+            Your plan · {planName(p)}
+          </option>
+        ))}
+        <option value={PRACTICE}>Keep it in Practice</option>
+      </select>
+      <button type="button" className="btn btn-primary btn-sm pc-btn-sm pc-self-start" disabled={busy} onClick={() => placing.onPlace(result.slotId, dest === PRACTICE ? undefined : dest)}>
+        {busy ? 'Adding…' : dest === PRACTICE ? 'Keep it' : 'Add to my plan'}
+      </button>
+      <p className="pc-muted pc-small">{dest === PRACTICE ? 'A short list on the Re-drill screen.' : 'It lands in the week you’re in. Ticking it changes no verdict.'}</p>
+      {error && (
+        <p className="pc-danger pc-small" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ───────────────────────── before and now, and "Or say less" (I2) ───────────────────────── */
+
+function BeforeNow({ result, when }: { result: SlotResult; when: string }) {
+  const previous = result.previous;
+  if (!previous) return null;
+  return (
+    <p className="pc-move" aria-label={`${VERDICT_WORD[previous.verdict]} on ${dateOf(previous.on)}, ${VERDICT_WORD[result.verdict]} ${when}`}>
+      <VerdictChip verdict={previous.verdict} />
+      <span className="pc-muted pc-small">{dateOf(previous.on)}</span>
+      <span className="pc-muted" aria-hidden="true">
+        →
+      </span>
+      <VerdictChip verdict={result.verdict} />
+      <span className="pc-muted pc-small">{when}</span>
+    </p>
+  );
+}
+
+function SayLess({ result }: { result: SlotResult }) {
+  const [copied, setCopied] = useState(false);
+  const softer = result.softer;
+  if (!softer) return null;
+  const plain = softer.text.replace(/^[“"]|[”"]$/g, '');
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(plain);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
+  return (
+    <div className="pc-offer pc-sayless">
+      <div className="kicker">Or say less</div>
+      <p className="pc-offer-text">Twice now this line couldn’t be backed up. If it says more than you did, it’s fine to say less.</p>
+      <div className="pc-offer-fact">
+        <p className="pc-fact">{softer.text}</p>
+        <p>
+          <span className="chip pc-chip-have">From your answer</span>
+        </p>
+      </div>
+      <div className="pc-actions">
+        <button type="button" className="btn btn-sm pc-btn-sm" onClick={() => void copy()}>
+          {copied ? 'Copied' : 'Copy this line'}
+        </button>
+      </div>
+      <p className="pc-muted pc-small" role="status">
+        {copied ? 'Use it in place of the line on your resume.' : 'Built only from what you said, never from the resume line.'}
+      </p>
     </div>
   );
 }
@@ -342,6 +492,7 @@ export function CardBody({ result, ctx, titleId }: { result: SlotResult; ctx: Ca
       <h3 id={titleId} className="serif pc-q">
         {result.question}
       </h3>
+      <BeforeNow result={result} when={dateOf(ctx.debrief.createdAt) || 'today'} />
       <About kind={result.kind} sources={result.sources} />
       <YouSaid result={result} exchange={exchange} ctx={ctx} />
       {result.story && <StoryParts story={result.story} />}
@@ -353,6 +504,7 @@ export function CardBody({ result, ctx, titleId }: { result: SlotResult; ctx: Ca
         </div>
       )}
       {assessed && <Columns result={result} ctx={ctx} />}
+      <SayLess result={result} />
       <FactOffer result={result} ctx={ctx} />
       <div className="pc-card-foot">
         <button type="button" className="btn btn-quiet btn-sm pc-btn-sm" disabled={again} onClick={() => ctx.onAgain(result.slotId)}>

@@ -350,6 +350,7 @@ async def test_the_routes_are_registered(start: Any) -> None:
     mine = {(m, p) for m, p in routes if p.startswith("/api/prepare")}
     assert mine == {
         ("POST", "/api/prepare"),
+        ("GET", "/api/prepare"),
         ("GET", "/api/prepare/{plan_id}"),
         ("PUT", "/api/prepare/{plan_id}/state"),
         ("GET", "/api/prepare/{plan_id}/repos"),

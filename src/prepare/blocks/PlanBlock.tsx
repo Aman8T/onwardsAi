@@ -3,11 +3,30 @@
  * phase open at a time, its tasks as real checkboxes kept with the plan, what they'll have at the end, and a link to
  * what they shipped. Wide: phase pills, then the open phase. Narrow (a phone): a list where the open phase expands
  * in place, as the phone board shows.
+ *
+ * Fix steps from practice (I2, the "Re-drill weak claims" canvas): the steps placed in this plan show first, under "This
+ * week", ticked like any task. Their unticked minutes come out of the current week's hours, so the phases after them move
+ * back when they have to (code does the sum, `phaseSpans`). A ticked step offers "Re-drill it"; ticking changes no verdict.
  */
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
+import type { FixTask } from '../../../shared/interview';
 import type { PrepareLink, PrepareMove, PreparePhase, PrepareState } from '../../../shared/prepare';
-import { hostPath, hourChoices, moveProgress, phaseProgress, phaseSpans, shortDate, taskKey, totalHours, totalWeeks, webUrl } from '../plan';
+import { sentenceOf } from '../api';
+import {
+  currentWeek,
+  hostPath,
+  hourChoices,
+  moveProgress,
+  phaseProgress,
+  phaseSpans,
+  practiceMinutesLeft,
+  shortDate,
+  taskKey,
+  totalHours,
+  totalWeeks,
+  webUrl,
+} from '../plan';
 
 interface PlanProps {
   move: PrepareMove;
@@ -18,14 +37,25 @@ interface PlanProps {
   onHours: (h: number) => void;
   onTask: (key: string, done: boolean) => void;
   onLink: (phaseIndex: number, url: string) => void;
+  /** The Fix steps from practice placed in this plan (I2), and when the plan was made (week 1). */
+  practice?: readonly FixTask[];
+  createdAt?: string;
+  /** Tick or untick one; rejects with the reason when it cannot. */
+  onPracticeTick?: (task: FixTask, done: boolean) => Promise<void>;
+  /** Re-drill what wobbled (after a step is ticked). */
+  onRedrill?: () => void;
 }
 
-export function PlanBlock({ move, state, narrow, phaseIndex, onPhase, onHours, onTask, onLink }: PlanProps) {
+export function PlanBlock({ move, state, narrow, phaseIndex, onPhase, onHours, onTask, onLink, practice = [], createdAt, onPracticeTick, onRedrill }: PlanProps) {
   const h = state.hoursPerWeek;
-  const spans = phaseSpans(move.phases, h);
+  const fixMinutes = practiceMinutesLeft(practice);
+  const week = currentWeek(createdAt ?? '', totalWeeks(move, h, fixMinutes / 60));
+  const extra = fixMinutes > 0 ? { week, hours: fixMinutes / 60 } : undefined;
+  const spans = phaseSpans(move.phases, h, extra);
   const progress = moveProgress(move, state.done);
   const cur = Math.min(phaseIndex, move.phases.length - 1);
-  const summary = `${totalWeeks(move, h)} weeks · ${totalHours(move)} hours in all · ${progress.done} of ${progress.all} done`;
+  const weeks = Math.max(totalWeeks(move, h, fixMinutes / 60), spans.at(-1)?.end ?? 1);
+  const summary = `${weeks} weeks · ${totalHours(move)} hours in all${fixMinutes > 0 ? ` + ${fixMinutes} min of practice fixes` : ''} · ${progress.done} of ${progress.all} done`;
 
   return (
     <section id="pp-plan" className="panel pp-block pp-plan" aria-labelledby="pp-plan-h">
@@ -44,6 +74,8 @@ export function PlanBlock({ move, state, narrow, phaseIndex, onPhase, onHours, o
         </div>
       </div>
       {!narrow && <p className="numeral pp-meta pp-plan-summary">{summary}</p>}
+
+      {practice.length > 0 && <Practice practice={practice} week={week} hours={h} minutes={fixMinutes} onTick={onPracticeTick} onRedrill={onRedrill} />}
 
       {narrow ? (
         <div className="pp-phase-list">
@@ -105,6 +137,79 @@ export function PlanBlock({ move, state, narrow, phaseIndex, onPhase, onHours, o
         </>
       )}
     </section>
+  );
+}
+
+/** "This week · week 2": the Fix steps from practice, first, with what they take out of the week. */
+function Practice({
+  practice,
+  week,
+  hours,
+  minutes,
+  onTick,
+  onRedrill,
+}: {
+  practice: readonly FixTask[];
+  week: number;
+  hours: number;
+  minutes: number;
+  onTick?: (task: FixTask, done: boolean) => Promise<void>;
+  onRedrill?: () => void;
+}) {
+  const headingId = useId();
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<{ id: string; message: string } | null>(null);
+  const tick = async (task: FixTask, done: boolean) => {
+    if (!onTick) return;
+    setBusy(task.id);
+    setError(null);
+    try {
+      await onTick(task, done);
+    } catch (err) {
+      setError({ id: task.id, message: sentenceOf(err) });
+    } finally {
+      setBusy(null);
+    }
+  };
+  const load = minutes > 0 ? `${minutes} min of fixes, the rest on the plan · ${hours} h` : `Fixes done · the week is the plan · ${hours} h`;
+  return (
+    <div className="pp-practice" aria-labelledby={headingId}>
+      <div className="pp-head">
+        <h3 className="pp-h3" id={headingId}>
+          This week · week {week}
+        </h3>
+        <span className="numeral pp-meta">{load}</span>
+      </div>
+      <p className="kicker">From your practice</p>
+      <div className="pp-tasks">
+        {practice.map((t) => {
+          const id = `pp-fix-${t.id}`;
+          const done = !!t.doneAt;
+          return (
+            <div key={t.id} className="pp-task pp-fix">
+              <input id={id} type="checkbox" className="pp-check" checked={done} disabled={!onTick || busy === t.id} onChange={(e) => void tick(t, e.target.checked)} />
+              <label htmlFor={id} className="pp-fix-body">
+                <span className={`pp-task-label${done ? ' is-done' : ''}`}>{t.text}</span>
+                <span className="pp-meta">
+                  From practice on {shortDate(new Date(t.addedAt))} · about {t.minutes} min
+                </span>
+              </label>
+              {done && onRedrill && (
+                <button type="button" className="btn btn-quiet pp-link" onClick={onRedrill}>
+                  Re-drill it
+                </button>
+              )}
+              {error?.id === t.id && (
+                <span className="pp-err-line" role="alert">
+                  {error.message}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="pp-muted pp-link-note">Ticking a step changes no verdict. It puts its claim first in your next re-drill.</p>
+    </div>
   );
 }
 

@@ -183,6 +183,14 @@ function Interviewer({ model, actions, heading }: { model: RoomModel; actions: R
           <p className="rm-muted">{said.text.trim() ? `“${clip(said.text, 320)}”` : ''}</p>
         </div>
       )}
+      {m.shown.back && (
+        <div className="rm-youbox rm-back">
+          <div className="rm-rung">{m.shown.back.line}</div>
+          <p className="rm-muted">
+            “{clip(m.shown.back.claim, 240)}”{m.shown.back.source ? <span className="rm-small"> · {m.shown.back.source}</span> : null}
+          </p>
+        </div>
+      )}
       <div className="rm-line">
         <div className="rm-rung">{m.shown.label}</div>
         {m.shown.lead && !m.gate && <p className="rm-lead">{m.shown.lead}</p>}

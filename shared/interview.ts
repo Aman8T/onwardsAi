@@ -17,12 +17,21 @@
  * Verdicts are words (Defended, Shaky, Couldn't defend, Not assessed), never a score. Not assessed never counts against
  * the person. Nothing here is shared with an employer.
  *
+ * Re-drill (I2, canvas https://claude.ai/artifact/BXiFG9TDUYtLeCACtGxoSu): the claims whose best verdict is Shaky or Couldn't
+ * defend come back, each starting where it wobbled. Code picks them, orders them and sets each one's start rung; a Fix step
+ * from a debrief can go into a Prepare plan or stay in Practice, and ticking it never changes a verdict.
+ *
+ *   GET    /api/interview/redrill?profileId=        RedrillView
+ *   POST   /api/interview/fixes                     FixAdd -> FixTask (idempotent per session and slot: again moves it)
+ *   PATCH  /api/interview/fixes/{id}                FixUpdate -> FixTask
+ *   DELETE /api/interview/fixes/{id}?profileId=
+ *
  * Mirrored by backend/tayyari/contract/interview.py; tests/unit/contract/test_interview_parity.py reads this file and fails
  * when the two drift. Same subset as discover.ts: interfaces, literal unions, `x?:` optionals, `T[]`, inline objects.
  */
 
-/** The four kinds of practice. */
-export type InterviewKind = 'role' | 'resume' | 'stories' | 'work';
+/** The four kinds of practice, and a re-drill of the claims that wobbled. */
+export type InterviewKind = 'role' | 'resume' | 'stories' | 'work' | 'redrill';
 
 /**
  * What one slot is about: an ask of the posting the person shows, a gap (an ask they don't show), a claim on their
@@ -59,6 +68,9 @@ export type StoryPartName = 'situation' | 'action' | 'result' | 'reflection';
 /** How a work sample's material reads: code, a small table (tab-separated rows), or plain lines. */
 export type MaterialKind = 'code' | 'table' | 'text';
 
+/** Where a Fix step went: into a Prepare plan, or kept in Practice. */
+export type FixWhere = 'plan' | 'practice';
+
 /** A role from a search with AI (Discover, or a saved application): the run it was found in and its id. */
 export interface RoleSource {
   runId: string;
@@ -84,6 +96,19 @@ export interface SlotSource {
   source?: string;
 }
 
+/** What a re-drilled claim held at its previous mark: the room's "Back from 16 Oct · Shaky", and what phrasing aims at. */
+export interface SlotLast {
+  verdict: Verdict;
+  /** The day of that mark (ISO date). */
+  on: string;
+  /** The question as it was first asked then. */
+  question: string;
+  /** The verdict's quote of that answer, word for word. */
+  quote?: string;
+  /** The rung that decided it. */
+  rung: Rung;
+}
+
 export interface PlanSlot {
   /** "s1", "s2" ... in plan order. */
   id: string;
@@ -91,6 +116,10 @@ export interface PlanSlot {
   /** A short name for the plan rail ("Performance", "Mentoring"), from the skill the evidence backs or the ask. */
   topic: string;
   sources: SlotSource[];
+  /** Re-drill: the rung the slot opens at, set in code (Shaky → push, Couldn't defend → surface in new words). */
+  start?: Rung;
+  /** Re-drill: the claim's previous mark. */
+  last?: SlotLast;
 }
 
 /** `POST /api/interview/plan` (no model call) and the base of `StartRequest`. */
@@ -104,6 +133,8 @@ export interface PlanRequest {
   /** Default `full`. */
   length?: InterviewLength;
   focus?: InterviewFocus;
+  /** For `redrill`: the claim keys picked on setup (`RedrillClaim.key`), at most 6; absent = code's top 3. */
+  claims?: string[];
 }
 
 export interface InterviewPlan {
@@ -131,6 +162,8 @@ export interface StartRequest {
   focus?: InterviewFocus;
   /** Slot ids from the plan to leave out (at least one slot must remain). */
   skip?: string[];
+  /** For `redrill`: as in `PlanRequest`. */
+  claims?: string[];
 }
 
 /** What the interviewer is saying now. */
@@ -300,6 +333,17 @@ export interface SlotResult {
   /** A fact from the answer that is not on the resume, offered to be kept as "From you". */
   newFact?: string;
   factAdded?: boolean;
+  /** Re-drill: the claim's previous mark, for "Shaky 16 Oct → Defended today". */
+  previous?: PreviousMark;
+  /** Re-drill, only when this and the previous verdict are both Couldn't defend: a line that says less, from the answer's own words. */
+  softer?: SayLine;
+}
+
+/** A claim's mark before this session. */
+export interface PreviousMark {
+  verdict: Verdict;
+  /** ISO date. */
+  on: string;
 }
 
 /** A work sample's check: what a full answer covers, and whether the work or the answers showed it. */
@@ -342,6 +386,13 @@ export interface Debrief {
   graphRole?: GraphRoleSource;
   task?: WorkTask;
   work?: string;
+  /** Re-drill: how many claims ranked above their previous mark ("2 of 3 moved up"), counted in code. */
+  redrill?: RedrillMoved;
+}
+
+export interface RedrillMoved {
+  moved: number;
+  of: number;
 }
 
 /** `GET /api/interview/sessions/{id}?profileId=`: the session, and its debrief once it is done. */
@@ -396,4 +447,69 @@ export interface PracticeHistory {
   facts: PracticeFact[];
   /** Practice interviews left today (free while we test it). */
   leftToday?: number;
+}
+
+/**
+ * A Fix step placed somewhere: into a Prepare plan (`where: 'plan'`, its current week) or kept in Practice. The id is the
+ * claim mark's; the text and minutes are the debrief's, copied by the server. Ticking it never changes a verdict.
+ */
+export interface FixTask {
+  id: string;
+  sessionId: string;
+  slotId: string;
+  /** The evidence line the step is for. */
+  claimText: string;
+  text: string;
+  /** About how long it takes. */
+  minutes: number;
+  where: FixWhere;
+  /** For `plan`. */
+  planId?: string;
+  addedAt: string;
+  doneAt?: string;
+}
+
+/** A claim's latest mark. */
+export interface LastMark {
+  verdict: Verdict;
+  /** ISO date. */
+  on: string;
+  rung: Rung;
+}
+
+/** One claim a re-drill can bring back: its best verdict is Shaky or Couldn't defend and the line is still the person's. */
+export interface RedrillClaim {
+  /** The folded text of the evidence line; what `PlanRequest.claims` names. */
+  key: string;
+  text: string;
+  /** "Resume · line 15", "Story · Behavioural stories". */
+  source: string;
+  best: Verdict;
+  last: LastMark;
+  /** How many sessions asked it. */
+  times: number;
+  /** Where it would open. */
+  start: Rung;
+  fix?: FixTask;
+}
+
+/** `GET /api/interview/redrill?profileId=`: the claims in re-drill order (code's), and the Fix steps kept in Practice. */
+export interface RedrillView {
+  claims: RedrillClaim[];
+  kept: FixTask[];
+  leftToday?: number;
+}
+
+/** `POST /api/interview/fixes`: place a session's Fix step. No `planId` = keep it in Practice. */
+export interface FixAdd {
+  profileId: string;
+  sessionId: string;
+  slotId: string;
+  planId?: string;
+}
+
+/** `PATCH /api/interview/fixes/{id}`: tick or untick. */
+export interface FixUpdate {
+  profileId: string;
+  done: boolean;
 }

@@ -21,9 +21,11 @@ from tayyari.core.settings import InterviewSettings
 from tayyari.interview.service import InterviewService
 from tayyari.jobsearch.brief import Evidence, evidence_lines
 from tayyari.llm.types import CallContext
+from tests.fakes.claim_marks import FakeClaimMarkRepo
 from tests.fakes.claude import FakeClaudeClient
 from tests.fakes.clock import FakeClock
 from tests.fakes.interview import FakeInterviewRepo
+from tests.fakes.prepare import FakePrepareRepo
 
 MODEL = "claude-haiku-5-5"
 CTX = CallContext(purpose="interview.judge", request_id="req-1")
@@ -98,6 +100,8 @@ class Rig:
     clock: FakeClock
     roles: FakeRoles
     settings: InterviewSettings = field(default_factory=InterviewSettings)
+    marks: FakeClaimMarkRepo = field(default_factory=FakeClaimMarkRepo)
+    plans: FakePrepareRepo = field(default_factory=FakePrepareRepo)
 
 
 def make_rig(*, settings: InterviewSettings | None = None, roles: FakeRoles | None = None) -> Rig:
@@ -106,8 +110,12 @@ def make_rig(*, settings: InterviewSettings | None = None, roles: FakeRoles | No
     clock = FakeClock(START)
     lookup = roles if roles is not None else FakeRoles()
     cfg = settings if settings is not None else InterviewSettings()
-    service = InterviewService(claude=claude, settings=cfg, sessions=repo, roles=lookup, clock=clock)
-    return Rig(service, claude, repo, clock, lookup, cfg)
+    marks = FakeClaimMarkRepo()
+    plans = FakePrepareRepo()
+    service = InterviewService(
+        claude=claude, settings=cfg, sessions=repo, marks=marks, roles=lookup, clock=clock, plans=plans
+    )
+    return Rig(service, claude, repo, clock, lookup, cfg, marks, plans)
 
 
 # ───────────────────────── scripted model answers ─────────────────────────

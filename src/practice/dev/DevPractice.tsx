@@ -12,6 +12,7 @@
  *   debrief · debrief-phone · ended-early · debrief-clean          the debrief: wide, on a phone (in a 390 px frame), ended
  *   debrief-work · debrief-fact                                    early, all defended; a work sample; a fact already kept
  *   progress · progress-empty                                      what carries over
+ *   redrill · redrill-empty · redrill-loading · debrief-redrill    re-drill what wobbled, and its debrief (I2)
  *
  * In the room (`roomStates.tsx`): the plan, the room's states, the work sample, the phone's room.
  *
@@ -21,7 +22,7 @@
  */
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import type { Debrief, PracticeHistory } from '../../../shared/interview';
+import type { Debrief, FixTask, PracticeHistory, RedrillView as RedrillData } from '../../../shared/interview';
 import { Brand } from '../../components/Brand';
 import { applicationsKey, useTracker } from '../../discover/applications/tracker';
 import { trackedFixtures } from '../../discover/dev/fixtures';
@@ -31,7 +32,10 @@ import { InjectedNote, LimitNotice, NoTemplateNote, PausedNotice, SampleNotice, 
 import type { PracticeNav } from '../hub/nav';
 import { PracticeHeader } from '../hub/PracticeHeader';
 import type { Load } from '../hub/useLoad';
+import type { FixPlacing } from '../debrief/ResultCard';
 import { ProgressView } from '../progress/ProgressView';
+import { RedrillView } from '../redrill/RedrillView';
+import { DEBRIEF_REDRILL, PLANS, REDRILL_EMPTY, REDRILL_VIEW } from './redrill';
 import { ROOM_STATES } from './roomStates';
 import {
   DEBRIEF,
@@ -68,6 +72,10 @@ const AROUND = [
   ['debrief-fact', 'Fact kept'],
   ['progress', 'Progress'],
   ['progress-empty', 'Progress · nothing yet'],
+  ['redrill', 'Re-drill'],
+  ['redrill-empty', 'Re-drill · nothing wobbled'],
+  ['redrill-loading', 'Re-drill · loading'],
+  ['debrief-redrill', 'Re-drill debrief'],
 ] as const;
 type AroundId = (typeof AROUND)[number][0];
 
@@ -91,6 +99,8 @@ function stubNav(note: (s: string) => void): PracticeNav {
     debrief: (id) => note(`Gallery: opens the debrief of interview ${id}.`),
     hub: () => note('Gallery: opens the hub.'),
     progress: () => note('Gallery: opens "What carries over". See ?state=progress.'),
+    redrill: () => note('Gallery: opens Re-drill what wobbled. See ?state=redrill.'),
+    plan: (roleId) => note(`Gallery: opens the Prepare plan for ${roleId}.`),
     discover: () => note('Gallery: opens Discover, to find a role to practise for.'),
     applications: () => note('Gallery: opens Your applications.'),
     prepare: (role) => note(`Gallery: opens the prep page of role ${role.jobId}.`),
@@ -231,7 +241,85 @@ function AroundStage({ id, onNote }: { id: AroundId; onNote: (s: string) => void
       return page(<ProgressStage initial={HISTORY} nav={nav} onNote={onNote} />);
     case 'progress-empty':
       return page(<ProgressStage initial={HISTORY_EMPTY} nav={nav} onNote={onNote} />);
+    case 'redrill':
+      return page(<RedrillStage initial={REDRILL_VIEW} nav={nav} onNote={onNote} />);
+    case 'redrill-empty':
+      return page(<RedrillStage initial={REDRILL_EMPTY} nav={nav} onNote={onNote} />);
+    case 'redrill-loading':
+      return page(<RedrillStage initial={null} nav={nav} onNote={onNote} />);
+    case 'debrief-redrill':
+      return page(<DebriefStage initial={DEBRIEF_REDRILL} narrow={false} nav={nav} onNote={onNote} placing />);
   }
+}
+
+/** Re-drill on the fixtures: starting says where it goes; a kept Fix step can be ticked and taken out. */
+function RedrillStage({ initial, nav, onNote }: { initial: RedrillData | null; nav: PracticeNav; onNote: (s: string) => void }) {
+  const [view, setView] = useState(initial);
+  const [answer, setAnswer] = useState<'speech' | 'type'>('speech');
+  return (
+    <RedrillView
+      data={view ? { status: 'ready', data: view } : { status: 'loading' }}
+      sample={false}
+      answer={answer}
+      starting={false}
+      onAnswer={setAnswer}
+      onStart={(keys) => onNote(`Gallery: starts a re-drill of ${keys.length} claim${keys.length === 1 ? '' : 's'} and opens its room.`)}
+      onTick={async (task, done) => {
+        await wait(300);
+        const mark = (t: FixTask): FixTask => (t.id === task.id ? { ...t, ...(done ? { doneAt: new Date().toISOString() } : { doneAt: undefined }) } : t);
+        setView((v) => (v ? { ...v, kept: v.kept.map(mark), claims: v.claims.map((c) => (c.fix ? { ...c, fix: mark(c.fix) } : c)) } : v));
+      }}
+      onRemove={async (task) => {
+        await wait(300);
+        setView((v) => (v ? { ...v, kept: v.kept.filter((t) => t.id !== task.id) } : v));
+      }}
+      onReload={() => onNote('Gallery: reload.')}
+      nav={nav}
+    />
+  );
+}
+
+/** Where a re-drill debrief's Fix steps can go, on the fixtures: placing and undoing work, opening a plan says where it goes. */
+function usePlacing(debrief: Debrief, onNote: (s: string) => void): FixPlacing {
+  const [placed, setPlaced] = useState<Record<string, FixTask>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+  return {
+    plans: PLANS,
+    defaultPlanId: PLANS[0].id,
+    placed,
+    busy,
+    error: null,
+    onPlace: (slotId, planId) => {
+      const result = debrief.results.find((r) => r.slotId === slotId);
+      if (!result?.fix) return;
+      setBusy(slotId);
+      void wait(400).then(() => {
+        setBusy(null);
+        setPlaced((p) => ({
+          ...p,
+          [slotId]: {
+            id: `fixture-${slotId}`,
+            sessionId: debrief.sessionId,
+            slotId,
+            claimText: result.sources[0]?.text ?? result.topic,
+            text: result.fix?.text ?? '',
+            minutes: result.fix?.minutes ?? 15,
+            where: planId ? 'plan' : 'practice',
+            ...(planId ? { planId } : {}),
+            addedAt: new Date().toISOString(),
+          },
+        }));
+      });
+    },
+    onUndo: (slotId) =>
+      setPlaced((p) => {
+        const next = { ...p };
+        delete next[slotId];
+        return next;
+      }),
+    onOpenPlan: (plan) => onNote(`Gallery: opens the Prepare plan for ${plan.roleTitle}.`),
+    onRedrill: () => onNote('Gallery: opens Re-drill what wobbled.'),
+  };
 }
 
 function Cards({ children }: { children: ReactNode }) {
@@ -246,10 +334,12 @@ const card = (title: string, body: ReactNode) => (
 );
 
 /** The debrief with its buttons working on the fixture: asking again waits and says where it goes; a fact can be kept and taken back. */
-function DebriefStage({ initial, narrow, nav, onNote }: { initial: Debrief; narrow: boolean; nav: PracticeNav; onNote: (s: string) => void }) {
+function DebriefStage({ initial, narrow, nav, onNote, placing = false }: { initial: Debrief; narrow: boolean; nav: PracticeNav; onNote: (s: string) => void; placing?: boolean }) {
   const [debrief, setDebrief] = useState(initial);
+  const fix = usePlacing(debrief, onNote);
   return (
     <DebriefView
+      {...(placing ? { fix } : {})}
       debrief={debrief}
       narrow={narrow}
       nav={nav}

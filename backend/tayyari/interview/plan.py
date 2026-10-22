@@ -66,7 +66,7 @@ GRAPH_QUOTAS: Final[dict[InterviewFocus | None, dict[SlotKind, int]]] = {
 SHORT_SLOTS: Final = 3
 SHORT_STORIES: Final = 2
 FULL_SLOTS: Final[dict[str, int]] = {"resume": 5, "stories": 4}
-MINUTES_PER_SLOT: Final[dict[str, int]] = {"role": 4, "resume": 3, "stories": 5}
+MINUTES_PER_SLOT: Final[dict[str, int]] = {"role": 4, "resume": 3, "stories": 5, "redrill": 3}
 WORK_EXTRA_MINUTES: Final = 9
 """A work sample is its template's minutes plus about three minutes for each of its three follow-ups."""
 SNIPPET_CHARS: Final = 140
@@ -480,6 +480,9 @@ async def build_plan(profile: Profile, req: PlanRequest, roles: RoleLookup) -> B
     in the person's searches any more), `GraphRoleGone` (nor on their graph) or `NoTemplate` (no work sample for this kind
     of work)."""
     kind = req.kind
+    if kind == "redrill":
+        # a re-drill is planned from the person's claim marks (`redrill.redrill_plan`, through the service), never here
+        raise BadPlan("Re-drill isn't ready yet.")
     if kind == "role" and req.graphRole is not None:
         if req.role is not None:
             raise BadPlan("Choose one role to practise for.")

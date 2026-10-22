@@ -38,6 +38,7 @@ from tayyari.contract.prepare import (
     PrepareMove,
     PrepareMovesEvent,
     PreparePlan,
+    PreparePlanSummary,
     PrepareRepos,
     PrepareRequest,
     PrepareStandingEvent,
@@ -71,6 +72,8 @@ from tayyari.storage.ports import PrepareRepo, ProfileRepo, StoredPlan
 log = get_logger(__name__)
 
 CALL_TIMEOUT_S: Final = 90.0
+PLANS_LISTED: Final = 50
+"""The most plans the "where it goes" picker of a Fix step lists."""
 """The longest one call may take before its stage settles for the honest default."""
 STANDING_MAX_TOKENS: Final = 4000
 MOVES_MAX_TOKENS: Final = 8000
@@ -277,6 +280,24 @@ class PrepareService:
         yield PrepareDoneEvent(plan=final)
 
     # ───────────────────────── reading back and the state ─────────────────────────
+
+    async def summaries(self, profile_id: str) -> list[PreparePlanSummary]:
+        """This profile's plans, newest first, as the "where it goes" picker of a Fix step lists them."""
+        found = await self._repo.list_for_profile(profile_id, PLANS_LISTED)
+        out: list[PreparePlanSummary] = []
+        for stored in found:
+            plan = plan_of(stored)
+            if plan is not None:
+                out.append(
+                    PreparePlanSummary(
+                        id=plan.id,
+                        roleId=plan.roleId,
+                        roleTitle=plan.roleTitle,
+                        requirement=plan.requirement,
+                        createdAt=plan.createdAt,
+                    )
+                )
+        return out
 
     async def get(self, profile_id: str, plan_id: str) -> PreparePlan | None:
         found = await self._repo.get(profile_id, plan_id)

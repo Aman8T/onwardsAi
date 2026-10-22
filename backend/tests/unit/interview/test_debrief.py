@@ -477,7 +477,7 @@ async def test_nothing_assessed_means_no_call() -> None:
 
 def test_the_schema_puts_the_citations_before_the_text_they_support() -> None:
     item = DEBRIEF_SCHEMA["properties"]["slots"]["items"]
-    assert list(item["properties"]) == ["id", "say", "avoid", "fix"] == item["required"]
+    assert list(item["properties"]) == ["id", "say", "avoid", "fix", "softer"] == item["required"]
     assert list(item["properties"]["say"]["properties"]) == ["sources", "text"]
     assert list(item["properties"]["avoid"]["properties"]) == ["quote", "advice"]
     assert list(item["properties"]["fix"]["properties"]) == ["text", "minutes"]

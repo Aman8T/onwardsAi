@@ -762,6 +762,66 @@ class PreparePlanRow(Base):
     __table_args__ = (Index("ix_prepare_plans_profile_id_role_id", "profile_id", "role_id", "requirement"),)
 
 
+# ───────────────────────────── claim marks (I2) ─────────────────────────────
+
+CLAIM_MARK_ID_LEN = 32
+"""A mark's id: ``token_hex(16)``. It is also the id of the mark's Fix step (`FixTask.id`)."""
+CLAIM_KEY_LEN = 400
+"""`contract.interview.CLAIM_KEY_MAX_CHARS`: the folded text of the evidence line."""
+CLAIM_TEXT_LEN = 400
+CLAIM_SOURCE_LEN = 120
+CLAIM_QUESTION_LEN = 200
+CLAIM_QUOTE_LEN = 300
+FIX_TEXT_LEN = 200
+"""`interview.debrief.FIX_MAX_CHARS`."""
+
+
+class ClaimMarkRow(Base):
+    """One judged claim of a finished practice session (I2): the verdict an evidence line got in an ``ask``, ``claim`` or
+    ``story`` slot, the rung that decided it, the question as asked and the verdict's quote. Progress and re-drill read
+    these, so a claim keeps its verdicts after its session's transcript is purged (``interview_sessions`` go at 30 days;
+    a mark has no foreign key to its session). ``(profile_id, session_id, slot_id)`` is unique: a session's marks are
+    written once, and writing them again adds nothing.
+
+    The ``fix_*`` columns are the debrief's Fix step for that slot (NULL when the claim was Defended) and where the person
+    put it: ``fix_plan_id`` (a Prepare plan of the same profile; a plan that is gone reads as Practice) or ``fix_kept``
+    (kept in Practice), when (``fix_added_at``), and when it was ticked (``fix_done_at``). Ticking never changes a verdict.
+    The row goes with its profile (ON DELETE CASCADE), so with the account too."""
+
+    __tablename__ = "claim_marks"
+
+    id: Mapped[str] = mapped_column(String(CLAIM_MARK_ID_LEN), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"))
+    claim_key: Mapped[str] = mapped_column(String(CLAIM_KEY_LEN))
+    claim_text: Mapped[str] = mapped_column(String(CLAIM_TEXT_LEN))
+    source: Mapped[str] = mapped_column(String(CLAIM_SOURCE_LEN))
+    session_id: Mapped[str] = mapped_column(String(ID_LEN))
+    slot_id: Mapped[str] = mapped_column(String(16))
+    session_kind: Mapped[str] = mapped_column(String(16))
+    slot_kind: Mapped[str] = mapped_column(String(16))
+    verdict: Mapped[str] = mapped_column(String(16))
+    rung: Mapped[str] = mapped_column(String(8))
+    question: Mapped[str] = mapped_column(String(CLAIM_QUESTION_LEN))
+    quote: Mapped[str | None] = mapped_column(String(CLAIM_QUOTE_LEN))
+    story: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+    marked_on: Mapped[date] = mapped_column(Date)
+    fix_text: Mapped[str | None] = mapped_column(String(FIX_TEXT_LEN))
+    fix_minutes: Mapped[int | None] = mapped_column(Integer)
+    fix_plan_id: Mapped[str | None] = mapped_column(String(PLAN_ID_LEN))
+    fix_kept: Mapped[bool] = mapped_column(Boolean)
+    fix_added_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    fix_done_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "profile_id", "session_id", "slot_id", name="uq_claim_marks_profile_id_session_id_slot_id"
+        ),
+        Index("ix_claim_marks_profile_id_claim_key", "profile_id", "claim_key"),
+        Index("ix_claim_marks_fix_plan_id", "fix_plan_id"),
+    )
+
+
 HANDOFF_ID_LEN = 64
 """A hand-off's id: ``secrets.token_urlsafe(24)`` (32 characters)."""
 
@@ -843,7 +903,14 @@ class WeeklyEditionRow(Base):
 
 __all__ = [
     "BAND_LEN",
+    "CLAIM_KEY_LEN",
+    "CLAIM_MARK_ID_LEN",
+    "CLAIM_QUESTION_LEN",
+    "CLAIM_QUOTE_LEN",
+    "CLAIM_SOURCE_LEN",
+    "CLAIM_TEXT_LEN",
     "EMAIL_LEN",
+    "FIX_TEXT_LEN",
     "HANDOFF_ID_LEN",
     "HASH_LEN",
     "ID_LEN",
@@ -857,6 +924,7 @@ __all__ = [
     "Base",
     "ChatMessageRow",
     "ChatSessionRow",
+    "ClaimMarkRow",
     "CreditLedgerRow",
     "DecisionLogRow",
     "DecisionStateRow",

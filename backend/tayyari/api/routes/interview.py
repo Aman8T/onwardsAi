@@ -10,7 +10,16 @@
     POST   /api/interview/sessions/{id}/end          `SessionRequest` -> `Debrief` (a done session returns the one it has)
     POST   /api/interview/sessions/{id}/again        `AgainRequest` -> `InterviewSession` (one question of a done interview)
     POST   /api/interview/sessions/{id}/facts        `FactRequest` -> `Debrief` (add what the answer said to the profile, or not)
-    DELETE /api/interview/sessions/{id}?profileId=   204; 404 when there was nothing to delete
+    DELETE /api/interview/sessions/{id}?profileId=   204; 404 when there was nothing to delete (its claim marks go too)
+    GET    /api/interview/redrill?profileId=         `RedrillView` (I2: the claims that wobbled, and the Fix steps kept in
+                                                     Practice; no model call; empty for the shared sample profile)
+    POST   /api/interview/fixes                      `FixAdd` -> `FixTask` (a debrief's Fix step into a plan, or kept)
+    PATCH  /api/interview/fixes/{id}                 `FixUpdate` -> `FixTask` (ticked or unticked)
+    DELETE /api/interview/fixes/{id}?profileId=      204; 404 when the step was not placed
+
+A re-drill is planned and started through the plan and start routes (``kind: "redrill"``): it counts in the ``interview``
+window and reserves spend like any other interview. Placing, ticking and taking out a Fix step call no model and shed in
+the ``chat`` bucket like the other light routes.
 
 A profile is opened exactly as the job search opens it (`api.deps.require_profile_access`): one nobody has claimed or a
 sample run is open to whoever holds its id; a claimed profile only to its owner's session. A session is read back only
@@ -60,8 +69,11 @@ from tayyari.contract.interview import (
     AnswerRequest,
     AssistantRequest,
     FactRequest,
+    FixAdd,
+    FixUpdate,
     PlanRequest,
     PracticeHistory,
+    RedrillView,
     SessionRequest,
     StartRequest,
     WorkSubmit,
@@ -70,6 +82,7 @@ from tayyari.contract.models import Profile
 from tayyari.contract.requests import RequestContext
 from tayyari.core.errors import NotFound
 from tayyari.core.ids import is_valid_id
+from tayyari.interview.errors import FixNotFound, FixPlanNotFound
 from tayyari.llm.types import CallContext, Purpose
 
 router = APIRouter()
@@ -81,8 +94,9 @@ SESSION_NOT_FOUND: Final = (
 """The sentence of the 404 for a session that is gone, is another profile's, or has an id of the wrong shape (the same
 as `tayyari.interview.errors.InterviewNotFound`, which the service raises for an id it cannot find)."""
 NO_STORE: Final = {"Cache-Control": "no-store"}
-PLAN_BODY_MAX_BYTES: Final = 4 * 1024
-"""A plan or start body holds a profile id, a role (two ids) and at most twelve skipped slot ids."""
+PLAN_BODY_MAX_BYTES: Final = 16 * 1024
+"""A plan or start body holds a profile id, a role (two ids), at most twelve skipped slot ids, and for a re-drill at most
+six claim keys of 400 characters (mostly ASCII; a key of escaped characters is refused as too large, never misread)."""
 SMALL_BODY_MAX_BYTES: Final = 2 * 1024
 """A session, repeat or fact request holds a profile id and a slot id."""
 ANSWER_BODY_MAX_BYTES: Final = 48 * 1024
@@ -309,6 +323,58 @@ async def set_interview_fact(session_id: str, request: Request) -> JSONResponse:
     if debrief is None:
         raise NotFound(SESSION_NOT_FOUND)
     return _json(debrief.to_dict())
+
+
+# ───────────────────────── re-drill and Fix steps (I2) ─────────────────────────
+
+
+@router.get("/api/interview/redrill")
+async def redrill_view(request: Request) -> JSONResponse:
+    container, _ = await _begin(request)
+    profile = await _profile(request, container, request.query_params.get("profileId", ""))
+    if container.sample.is_sample_profile(profile.id):
+        # as with the history: everyone shares the sample profile, so nobody's practice is listed for it
+        return _json(RedrillView(claims=[], kept=[]).to_dict())
+    per_day = container.settings.guard.interview_per_day
+    if await unlimited(request, container):
+        per_day = 0
+    view = await container.interview.redrill_view(profile, per_day=per_day if per_day > 0 else None)
+    return _json(view.to_dict())
+
+
+@router.post("/api/interview/fixes")
+async def add_fix(request: Request) -> JSONResponse:
+    container, _ = await _begin(request)
+    body = await read_model(request, container, FixAdd, max_bytes=SMALL_BODY_MAX_BYTES)
+    if not _HEX_ID.fullmatch(body.sessionId):
+        raise FixNotFound()
+    if body.planId is not None and not _HEX_ID.fullmatch(body.planId):
+        raise FixPlanNotFound()
+    profile = await _profile(request, container, body.profileId)
+    task = await container.interview.add_fix(profile, body)
+    return _json(task.to_dict())
+
+
+@router.patch("/api/interview/fixes/{fix_id}")
+async def tick_fix(fix_id: str, request: Request) -> JSONResponse:
+    container, _ = await _begin(request)
+    if not _HEX_ID.fullmatch(fix_id):
+        raise FixNotFound()
+    body = await read_model(request, container, FixUpdate, max_bytes=SMALL_BODY_MAX_BYTES)
+    profile = await _profile(request, container, body.profileId)
+    task = await container.interview.tick_fix(profile, fix_id, done=body.done)
+    return _json(task.to_dict())
+
+
+@router.delete("/api/interview/fixes/{fix_id}")
+async def remove_fix(fix_id: str, request: Request) -> Response:
+    container, _ = await _begin(request)
+    if not _HEX_ID.fullmatch(fix_id):
+        raise FixNotFound()
+    profile = await _profile(request, container, request.query_params.get("profileId", ""))
+    if not await container.interview.remove_fix(profile, fix_id):
+        raise FixNotFound()
+    return Response(status_code=204, headers=NO_STORE)
 
 
 @router.delete("/api/interview/sessions/{session_id}")

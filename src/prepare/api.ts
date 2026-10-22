@@ -11,6 +11,7 @@
  * when the body held none or held a machine code. A request that never reached the server is an `ApiError` with status
  * 0. The calls are an interface (`PrepareClient`) so the dev page can hand the screens a scripted one.
  */
+import type { FixTask, FixUpdate } from '../../shared/interview';
 import type {
   PrepareEvent,
   PrepareHeadline,
@@ -66,7 +67,7 @@ export function sentenceOf(err: unknown): string {
   return err instanceof TypeError ? OFFLINE : TROUBLE;
 }
 
-type Method = 'GET' | 'POST' | 'PUT';
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH';
 
 async function call<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   let res: Response;
@@ -95,6 +96,8 @@ export interface PrepareClient {
   putState(planId: string, update: PrepareStateUpdate, signal?: AbortSignal): Promise<PrepareStateSaved>;
   getRepos(planId: string, profileId: string, signal?: AbortSignal): Promise<PrepareRepos>;
   postHeadline(planId: string, req: PrepareHeadlineRequest, signal?: AbortSignal): Promise<PrepareHeadline>;
+  /** A Fix step from practice placed in the plan, ticked or unticked (`PATCH /api/interview/fixes/{id}`, I2). */
+  tickFix(fixId: string, update: FixUpdate, signal?: AbortSignal): Promise<FixTask>;
 }
 
 const BASE = '/api/prepare';
@@ -122,4 +125,5 @@ export const realClient: PrepareClient = {
   putState: (planId, update, signal) => call('PUT', `${planPath(planId)}/state`, update, signal),
   getRepos: (planId, profileId, signal) => call('GET', withProfile(`${planPath(planId)}/repos`, profileId), undefined, signal),
   postHeadline: (planId, req, signal) => call('POST', `${planPath(planId)}/headline`, req, signal),
+  tickFix: (fixId, update, signal) => call('PATCH', `/api/interview/fixes/${encodeURIComponent(fixId)}`, update, signal),
 };

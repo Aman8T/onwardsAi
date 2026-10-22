@@ -1,0 +1,220 @@
+{
+  "sessionId": "<session>",
+  "kind": "redrill",
+  "title": "Re-drill what wobbled",
+  "createdAt": "2026-10-16T09:13:10+00:00",
+  "minutes": 4,
+  "counts": {
+    "defended": 1,
+    "shaky": 0,
+    "couldnt": 2,
+    "notAssessed": 0
+  },
+  "firstThing": "Design systems. The answer names what was built and what happens when it fails.",
+  "firstSlotId": "s1",
+  "results": [
+    {
+      "slotId": "s1",
+      "kind": "claim",
+      "topic": "Design systems",
+      "question": "Let's take this one again: “Owns Kite UI: 42 components, 3 squads, Storybook”. What was your part, and how did it end?",
+      "sources": [
+        {
+          "origin": "evidence",
+          "text": "Owns Kite UI: 42 components, 3 squads, Storybook",
+          "source": "Resume"
+        }
+      ],
+      "verdict": "couldnt",
+      "quote": {
+        "text": "Someone else on the team owned most of",
+        "at": 70
+      },
+      "why": "The answer names what was built and what happens when it fails.",
+      "say": {
+        "text": "“[What the situation was]. I [what you did myself], and [what changed, with a number you can stand behind].”",
+        "placeholders": [
+          "What the situation was",
+          "what you did myself",
+          "what changed, with a number you can stand behind"
+        ],
+        "sources": []
+      },
+      "fix": {
+        "text": "Write down which parts of the Kite UI visual checks were yours and which were not.",
+        "minutes": 10
+      },
+      "previous": {
+        "verdict": "couldnt",
+        "on": "2026-10-16"
+      },
+      "softer": {
+        "text": "“Ran the visual checks on the Kite UI pull requests”",
+        "placeholders": [],
+        "sources": [
+          "Your answer"
+        ]
+      }
+    },
+    {
+      "slotId": "s2",
+      "kind": "story",
+      "topic": "Figma-to-code",
+      "question": "Let's take this one again: “Pairs with designers on Figma-to-code handoffs”. What was your part, and how did it end?",
+      "sources": [
+        {
+          "origin": "evidence",
+          "text": "Pairs with designers on Figma-to-code handoffs",
+          "source": "Resume"
+        }
+      ],
+      "verdict": "couldnt",
+      "quote": {
+        "text": "I don't remember who I talked to first",
+        "at": 145
+      },
+      "why": "The answer names what was built and what happens when it fails.",
+      "say": {
+        "text": "“On [the project], [what happened]. I [what you did], and [how it ended].”",
+        "placeholders": [
+          "the project",
+          "what happened",
+          "what you did",
+          "how it ended"
+        ],
+        "sources": []
+      },
+      "fix": {
+        "text": "Write down one real example for Figma-to-code: what you did and what changed.",
+        "minutes": 15
+      },
+      "story": {
+        "situation": false,
+        "action": false,
+        "result": false,
+        "reflection": false
+      },
+      "previous": {
+        "verdict": "couldnt",
+        "on": "2026-10-16"
+      }
+    },
+    {
+      "slotId": "s3",
+      "kind": "claim",
+      "topic": "Web performance",
+      "question": "Which part of that was yours, and how did you know it worked?",
+      "sources": [
+        {
+          "origin": "evidence",
+          "text": "Checkout LCP 4.1s to 1.9s at Kitebird",
+          "source": "Resume"
+        }
+      ],
+      "verdict": "defended",
+      "quote": {
+        "text": "checked the traces in the pull request",
+        "at": 190
+      },
+      "why": "The answer names what was built and what happens when it fails.",
+      "say": {
+        "text": "Lead with the result you already have: “Checkout LCP 4.1s to 1.9s at Kitebird”.",
+        "placeholders": [],
+        "sources": [
+          "Resume"
+        ]
+      },
+      "previous": {
+        "verdict": "shaky",
+        "on": "2026-10-16"
+      }
+    }
+  ],
+  "transcript": [
+    {
+      "speaker": "interviewer",
+      "text": "Let's take this one again: “Owns Kite UI: 42 components, 3 squads, Storybook”. What was your part, and how did it end?",
+      "at": 0,
+      "slotId": "s1",
+      "rung": "surface"
+    },
+    {
+      "speaker": "you",
+      "text": "I ran the visual checks on the Kite UI pull requests, but someone else set up the baselines.",
+      "at": 40,
+      "slotId": "s1",
+      "rung": "surface",
+      "mode": "speech"
+    },
+    {
+      "speaker": "interviewer",
+      "text": "What is one thing you did there, in a sentence?",
+      "at": 40,
+      "slotId": "s1",
+      "rung": "floor"
+    },
+    {
+      "speaker": "you",
+      "text": "Someone else on the team owned most of the components.",
+      "at": 70,
+      "slotId": "s1",
+      "rung": "floor",
+      "mode": "speech"
+    },
+    {
+      "speaker": "interviewer",
+      "text": "Let's take this one again: “Pairs with designers on Figma-to-code handoffs”. What was your part, and how did it end?",
+      "at": 70,
+      "slotId": "s2",
+      "rung": "surface"
+    },
+    {
+      "speaker": "you",
+      "text": "We worked through it with the designer over a few calls and it shipped.",
+      "at": 120,
+      "slotId": "s2",
+      "rung": "surface",
+      "mode": "speech"
+    },
+    {
+      "speaker": "interviewer",
+      "text": "What is one thing you did there, in a sentence?",
+      "at": 120,
+      "slotId": "s2",
+      "rung": "floor"
+    },
+    {
+      "speaker": "you",
+      "text": "I don't remember who I talked to first, honestly.",
+      "at": 145,
+      "slotId": "s2",
+      "rung": "floor",
+      "mode": "speech"
+    },
+    {
+      "speaker": "interviewer",
+      "text": "Which part of that was yours, and how did you know it worked?",
+      "at": 145,
+      "slotId": "s3",
+      "rung": "push"
+    },
+    {
+      "speaker": "you",
+      "text": "I loaded the payment script only when the pay step came into view, and checked the traces in the pull request.",
+      "at": 190,
+      "slotId": "s3",
+      "rung": "push",
+      "mode": "speech"
+    },
+    {
+      "speaker": "interviewer",
+      "text": "That's the last question. Thank you. Your debrief is ready.",
+      "at": 190
+    }
+  ],
+  "keptUntil": "2026-11-15",
+  "redrill": {
+    "moved": 1,
+    "of": 3
+  }
+}

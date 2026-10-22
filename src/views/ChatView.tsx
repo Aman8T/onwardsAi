@@ -362,6 +362,7 @@ export function ChatView({ profile }: { profile: Profile }) {
                             onPlanId={onPlanId}
                             onJustThis={prepare.requirement ? undefined : onJustThis}
                             onPractice={onPractice}
+                            onRedrill={() => actions.openPractice({ screen: 'redrill' })}
                             narrow={narrow}
                           />
                         </>

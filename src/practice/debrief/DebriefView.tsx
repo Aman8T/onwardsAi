@@ -16,7 +16,7 @@ import { KIND_LABEL, KEPT_LINE, VERDICT_LABEL } from '../words';
 import { NOTHING_SHARED, dateOf, sentenceOf } from '../hub/words';
 import type { PracticeNav } from '../hub/nav';
 import { FeaturedCard, ResultCard, ResultRow } from './ResultCard';
-import type { CardContext } from './ResultCard';
+import type { CardContext, FixPlacing } from './ResultCard';
 import { TranscriptPanel } from './Transcript';
 import { ChecksPanel, WorkPanel } from './WorkParts';
 import { turnIds } from './quote';
@@ -33,13 +33,21 @@ export interface DebriefViewProps {
   onFact: (slotId: string, add: boolean) => Promise<void>;
   /** Delete the interview and its transcript now. */
   onDelete: () => Promise<void>;
+  /** Where its Fix steps can go (I2); absent: they are steps to read. */
+  fix?: FixPlacing;
 }
 
 const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 const countWord = (n: number) => NUMBER_WORDS[n] ?? String(n);
 
 /** Another kind to suggest at the end: the one that asks about the other half of a person's evidence. */
-const OTHER_KIND: Record<InterviewKind, InterviewKind> = { role: 'resume', resume: 'stories', stories: 'resume', work: 'resume' };
+const OTHER_KIND: Record<InterviewKind, InterviewKind> = {
+  role: 'resume',
+  resume: 'stories',
+  stories: 'resume',
+  work: 'resume',
+  redrill: 'resume',
+};
 
 /** The summary line, with "add what you said to your profile" linked to the new fact it points at. */
 function SummaryLine({ text, factSlot, jump }: { text: string; factSlot: string | undefined; jump: (id: string) => void }) {
@@ -64,7 +72,7 @@ function SummaryLine({ text, factSlot, jump }: { text: string; factSlot: string 
   );
 }
 
-export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete }: DebriefViewProps) {
+export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, fix }: DebriefViewProps) {
   const base = useId();
   const reduced = useReducedMotion() ?? false;
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -146,7 +154,9 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete }:
     onFact: (slotId, add) => void fact(slotId, add),
     factBusy,
     factError,
+    ...(fix ? { fix } : {}),
   };
+  const redrill = debrief.kind === 'redrill';
 
   const factSlot = results.find((r) => r.newFact && !r.factAdded)?.slotId;
   const when = dateOf(debrief.createdAt);
@@ -169,9 +179,15 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete }:
 
   const actions = (
     <div className="pc-actions pc-end">
-      <button type="button" className="btn btn-primary pc-btn" onClick={() => nav.setup(debrief.kind, debrief.role, debrief.graphRole)}>
-        Practise again
-      </button>
+      {redrill ? (
+        <button type="button" className="btn btn-primary pc-btn" onClick={nav.redrill}>
+          Back to Re-drill
+        </button>
+      ) : (
+        <button type="button" className="btn btn-primary pc-btn" onClick={() => nav.setup(debrief.kind, debrief.role, debrief.graphRole)}>
+          Practise again
+        </button>
+      )}
       <button type="button" className="btn pc-btn" onClick={() => nav.setup(other)}>
         Try {KIND_LABEL[other]}
       </button>
@@ -221,7 +237,13 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete }:
               </a>
             ))}
           </div>
+          {debrief.redrill && (
+            <p className="serif pc-moved">
+              {debrief.redrill.moved} of {debrief.redrill.of} moved up
+            </p>
+          )}
           <p className="pc-counts">{countsLine(counts)}</p>
+          {debrief.redrill && <p className="pc-muted pc-small">Your best verdicts in Progress are updated. A worse answer today never lowers one.</p>}
           {debrief.summary && (
             <p className="pc-summary-line">
               <SummaryLine text={debrief.summary} factSlot={factSlot} jump={jump} />

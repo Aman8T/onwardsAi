@@ -1044,6 +1044,92 @@ class PrepareRepo(Protocol):
         ...
 
 
+# ───────────────────────────── claim marks (I2) ─────────────────────────────
+
+
+@dataclass(frozen=True, slots=True)
+class StoredClaimMark:
+    """One judged claim of a finished practice session (`ClaimMarkRow`): an evidence line's verdict in one slot, the rung
+    that decided it, the question as asked, the verdict's quote, and the slot's Fix step with where the person put it.
+    ``fix_plan_id`` set = in that Prepare plan; ``fix_kept`` = kept in Practice; neither = not placed (or no Fix step)."""
+
+    id: str
+    profile_id: str
+    claim_key: str
+    claim_text: str
+    source: str
+    session_id: str
+    slot_id: str
+    session_kind: str
+    slot_kind: str
+    verdict: str
+    rung: str
+    question: str
+    marked_on: date
+    created_at: datetime
+    quote: str | None = None
+    story: dict[str, Any] | None = None
+    fix_text: str | None = None
+    fix_minutes: int | None = None
+    fix_plan_id: str | None = None
+    fix_kept: bool = False
+    fix_added_at: datetime | None = None
+    fix_done_at: datetime | None = None
+
+
+class ClaimMarkRepo(Protocol):
+    """Claim marks. Everything is scoped to a profile id: another profile's mark reads as None and cannot be changed."""
+
+    async def add(self, items: Sequence[StoredClaimMark]) -> int:
+        """Store the marks that are not there yet, by ``(profile_id, session_id, slot_id)``; returns how many were new. A
+        mark already stored is left exactly as it is, its Fix step's place and tick included. The profile must exist."""
+        ...
+
+    async def list_for_profile(self, profile_id: str, limit: int) -> list[StoredClaimMark]:
+        """This profile's marks, oldest first (by ``marked_on``, then ``created_at``, then ``id``), at most ``limit``."""
+        ...
+
+    async def session_ids(self, profile_id: str) -> set[str]:
+        """The sessions of this profile that have marks (so a history read can write the missing ones)."""
+        ...
+
+    async def get(self, profile_id: str, mark_id: str) -> StoredClaimMark | None:
+        """The mark with this id when it is this profile's, else None."""
+        ...
+
+    async def find(self, profile_id: str, session_id: str, slot_id: str) -> StoredClaimMark | None:
+        """This profile's mark for one slot of one session, or None."""
+        ...
+
+    async def place_fix(self, profile_id: str, mark_id: str, *, plan_id: str | None, now: datetime) -> bool:
+        """Put the mark's Fix step in a plan (``plan_id``) or keep it in Practice (None), with ``fix_added_at`` = ``now``.
+        Placing it again moves it; its tick stays. False (nothing written) when the mark is not this profile's or has no
+        Fix step. The plan is not checked here: the service checks it is this profile's."""
+        ...
+
+    async def set_fix_done(self, profile_id: str, mark_id: str, done_at: datetime | None) -> bool:
+        """Tick (``done_at``) or untick (None) the mark's placed Fix step. False when the mark is not this profile's or its
+        Fix step is not placed."""
+        ...
+
+    async def clear_fix(self, profile_id: str, mark_id: str) -> bool:
+        """Take the Fix step out of wherever it is (no plan, not kept, no tick); the step's text stays on the mark. False
+        when the mark is not this profile's or its Fix step was not placed."""
+        ...
+
+    async def fixes_for_plan(self, profile_id: str, plan_id: str) -> list[StoredClaimMark]:
+        """This profile's marks whose Fix step is in this plan, the oldest placed first."""
+        ...
+
+    async def kept_fixes(self, profile_id: str) -> list[StoredClaimMark]:
+        """This profile's marks whose Fix step is kept in Practice, the oldest placed first."""
+        ...
+
+    async def delete_for_session(self, profile_id: str, session_id: str) -> int:
+        """Delete one session's marks (the person deleted the session); returns how many went."""
+        ...
+
+
 # ───────────────────────────── hand-off from the site ─────────────────────────────
 
 
@@ -1200,6 +1286,7 @@ __all__ = [
     "BillingRepo",
     "ChatMessage",
     "ChatSession",
+    "ClaimMarkRepo",
     "ConsumeOutcome",
     "ConsumeSource",
     "DecisionLogRepo",
@@ -1234,6 +1321,7 @@ __all__ = [
     "SettleResult",
     "SettleStatus",
     "StoredAuthSession",
+    "StoredClaimMark",
     "StoredEntitlements",
     "StoredHandoff",
     "StoredInterview",

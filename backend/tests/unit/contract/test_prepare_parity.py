@@ -1,5 +1,6 @@
 """tayyari.contract.prepare must match shared/prepare.ts exactly: the interfaces, the literal union and the stream's event
-union. The TypeScript file imports nothing, so it is read on its own.
+union. The TypeScript file imports `FixTask` from interview.ts, so the two files are read together for shapes, and prepare.ts
+alone for which names it declares.
 """
 
 from __future__ import annotations
@@ -14,13 +15,18 @@ from tayyari.core.paths import REPO_ROOT
 from tests.unit.contract.test_ts_parity import TsTypes, diff, literal_type_of, model_shape, union_classes
 
 PREPARE_TS = REPO_ROOT / "shared" / "prepare.ts"
+INTERVIEW_TS = REPO_ROOT / "shared" / "interview.ts"
 
-if not PREPARE_TS.is_file():
+if not (PREPARE_TS.is_file() and INTERVIEW_TS.is_file()):
     pytest.skip("the frontend sources are not part of this checkout", allow_module_level=True)
 
 
-def _ts() -> TsTypes:
+def _own() -> TsTypes:
     return TsTypes(PREPARE_TS.read_text(encoding="utf-8"))
+
+
+def _ts() -> TsTypes:
+    return TsTypes(INTERVIEW_TS.read_text(encoding="utf-8") + "\n" + PREPARE_TS.read_text(encoding="utf-8"))
 
 
 INTERFACE_MODELS: dict[str, type[BaseModel]] = {
@@ -34,6 +40,7 @@ INTERFACE_MODELS: dict[str, type[BaseModel]] = {
     "PrepareLink": pr.PrepareLink,
     "PrepareState": pr.PrepareState,
     "PreparePlan": pr.PreparePlan,
+    "PreparePlanSummary": pr.PreparePlanSummary,
     "PrepareStateUpdate": pr.PrepareStateUpdate,
     "PrepareStateSaved": pr.PrepareStateSaved,
     "PrepareRepo": pr.PrepareRepo,
@@ -46,7 +53,7 @@ UNIONS = {"PrepareScope": pr.PrepareScope}
 
 
 def test_every_interface_has_a_mirror() -> None:
-    assert set(_ts().interfaces) == set(INTERFACE_MODELS)
+    assert set(_own().interfaces) == set(INTERFACE_MODELS)
 
 
 @pytest.mark.parametrize("name", sorted(INTERFACE_MODELS))
@@ -60,7 +67,7 @@ def test_the_unions_match(name: str) -> None:
 
 
 def test_every_literal_union_is_checked() -> None:
-    assert set(_ts().aliases) == set(UNIONS)
+    assert set(_own().aliases) == set(UNIONS)
 
 
 def test_the_event_union_matches() -> None:

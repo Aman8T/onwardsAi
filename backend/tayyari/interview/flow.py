@@ -7,7 +7,10 @@ A slot has three rungs and at most one of the last two is asked:
     floor     an easier question.              Next slot.
 
 A story slot asks for the part of the story that is missing instead: situation, then action, then result, then (when those
-three are there) what the person would do differently. A work sample's questions ask once. "I don't know" and "skip" go
+three are there) what the person would do differently. A work sample's questions ask once.
+
+A re-drill slot (I2) may open at its push instead (``PlanSlot.start``: the claim was Shaky last time); asked first, the push
+is the slot's question, and an answer that could not be defended still gets the floor. "I don't know" and "skip" go
 straight to the next slot; a dispute or an off-topic answer asks the same line again, once a slot. Every line the
 interviewer says is also a turn of the transcript, at whole seconds since the interview began.
 """
@@ -79,11 +82,17 @@ def _ask(state: SessionState, index: int, at: int, lead: str | None) -> None:
         present(state, InterviewLine(kind="done", text=DONE_TEXT, lead=lead), at)
         return
     st = state.slotStates[index]
+    slot = state.slots[index]
     st.reached = True
+    rung: Rung = "push" if slot.start == "push" and st.push else "surface"
     present(
         state,
         InterviewLine(
-            kind="question", text=st.question, lead=lead, slotId=state.slots[index].id, rung="surface"
+            kind="question",
+            text=st.push if rung == "push" else st.question,
+            lead=lead,
+            slotId=slot.id,
+            rung=rung,
         ),
         at,
     )
@@ -140,7 +149,12 @@ def _rung(state: SessionState) -> Rung:
 
 def follow_up(slot: PlanSlot, st: SlotState, rung: Rung, verdict: str) -> tuple[Rung, str] | None:
     """The next question on the same slot (its rung and text), or None to go on to the next slot."""
-    if slot.kind == "task" or rung != "surface":
+    if slot.kind == "task":
+        return None
+    if rung != "surface":
+        # a re-drill that opened at the push keeps its easier question for an answer that could not be defended
+        if rung == "push" and slot.start == "push" and verdict == "couldnt" and st.floor:
+            return "floor", st.floor
         return None
     if slot.kind == "story":
         if verdict == "couldnt":

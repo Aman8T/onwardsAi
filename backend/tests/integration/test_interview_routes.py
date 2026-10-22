@@ -549,6 +549,10 @@ async def test_the_routes_are_registered(start: Any) -> None:
         ("POST", f"{base}/end"),
         ("POST", f"{base}/again"),
         ("POST", f"{base}/facts"),
+        ("GET", "/api/interview/redrill"),
+        ("POST", "/api/interview/fixes"),
+        ("PATCH", "/api/interview/fixes/{fix_id}"),
+        ("DELETE", "/api/interview/fixes/{fix_id}"),
     }
 
 

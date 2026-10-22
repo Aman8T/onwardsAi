@@ -84,6 +84,7 @@ from tayyari.storage.ports import (
 )
 from tayyari.storage.repos import Repositories
 from tayyari.storage.repos.match import posting_listing_fields
+from tests.fakes.claim_marks import FakeClaimMarkRepo
 from tests.fakes.discover import FakeDiscoverRepo
 from tests.fakes.handoff import FakeHandoffRepo
 from tests.fakes.interview import FakeInterviewRepo
@@ -1324,6 +1325,7 @@ class FakeRepositories:
         self.jobsearch = FakeJobSearchRepo()
         self.interview = FakeInterviewRepo()
         self.prepare = FakePrepareRepo()
+        self.claim_marks = FakeClaimMarkRepo()
         self.handoff = FakeHandoffRepo()
         self.weekly = FakeWeeklyRepo()
         self.bundle = Repositories(
@@ -1344,6 +1346,7 @@ class FakeRepositories:
             jobsearch=self.jobsearch,
             interview=self.interview,
             prepare=self.prepare,
+            claim_marks=self.claim_marks,
             handoff=self.handoff,
             weekly=self.weekly,
         )

@@ -8,12 +8,13 @@
  * Verdicts are words and squares and counts, never a score; nothing here is shared with an employer.
  */
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import type { InterviewKind, PracticeHistory, RoleSource, SessionSummary } from '../../../shared/interview';
+import type { ClaimBest, InterviewKind, PracticeHistory, RoleSource, SessionSummary } from '../../../shared/interview';
+import { plural } from '../../lib/ui';
 import type { TrackedJob } from '../../discover/applications/tracker';
 import { STAGE_LABEL } from '../../discover/applications/tracker';
 import { FIT_WORD, dayLabel } from '../../discover/prepare/words';
 import { PipsLine } from '../Pips';
-import { KIND_LABEL, KEPT_LINE } from '../words';
+import { KIND_BLURB, KIND_LABEL, KEPT_LINE, REDRILL_MAX, REDRILL_MINUTES, REDRILL_SHORT } from '../words';
 import type { PracticeNav } from './nav';
 import { DAILY_INTERVIEWS, ErrorNote, LimitNotice, PausedNotice, SampleNotice, freeLine } from './Notice';
 import { SessionRows } from './SessionRows';
@@ -70,6 +71,10 @@ export function roleChoices(tracked: readonly TrackedJob[], sessions: readonly S
   return [...coming, ...rest];
 }
 
+/** The claims whose best verdict is Shaky or Couldn't defend: what a re-drill can bring back (the re-drill screen asks the
+ * server for the exact list, which also drops a line that is no longer on the resume). */
+export const wobbled = (claims: readonly ClaimBest[]) => claims.filter((c) => c.best === 'shaky' || c.best === 'couldnt');
+
 /* ───────────────────────── the screen ───────────────────────── */
 
 const CARDS: readonly { kind: InterviewKind; blurb: string; built: readonly string[]; length: string; button: string }[] = [
@@ -111,6 +116,7 @@ export function HubView({ sample, tracked, history, unlimited = false, onReload,
   const paused = history.status === 'error' && history.code === 503;
   const coming = useMemo(() => comingUp(tracked, sessions), [tracked, sessions]);
   const choices = useMemo(() => roleChoices(tracked, sessions), [tracked, sessions]);
+  const weak = history.status === 'ready' ? wobbled(history.data.claims) : [];
 
   // the page opens at its title, for a reader who arrived by keyboard or with a screen reader
   useEffect(() => {
@@ -134,10 +140,11 @@ export function HubView({ sample, tracked, history, unlimited = false, onReload,
 
       {coming.length > 0 && <ComingUp rows={coming} limited={limited} nav={nav} />}
 
-      <section className="pc-kinds" aria-label="Four kinds of practice">
+      <section className="pc-kinds" aria-label={weak.length > 0 ? 'Four kinds of practice, and a re-drill' : 'Four kinds of practice'}>
         {CARDS.map((card) => (
           <KindCard key={card.kind} card={card} choices={choices} limited={limited} nav={nav} />
         ))}
+        {weak.length > 0 && <RedrillCard weak={weak} limited={limited} nav={nav} />}
       </section>
 
       <YourPractice history={history} onReload={onReload} nav={nav} paused={paused} />
@@ -265,6 +272,36 @@ function KindCard({ card, choices, limited, nav }: { card: (typeof CARDS)[number
             {card.button}
           </button>
         )}
+      </div>
+    </article>
+  );
+}
+
+/** The fifth card, only when something wobbled: re-drill the claims that were not fully backed up. */
+function RedrillCard({ weak, limited, nav }: { weak: readonly ClaimBest[]; limited: boolean; nav: PracticeNav }) {
+  const ids = useId();
+  const n = Math.min(weak.length, REDRILL_SHORT);
+  return (
+    <article className="panel pc-card pc-card-redrill" aria-labelledby={`${ids}-h`}>
+      <h2 className="serif pc-h3" id={`${ids}-h`}>
+        {KIND_LABEL.redrill}
+      </h2>
+      <p className="pc-muted pc-card-blurb">{KIND_BLURB.redrill}</p>
+      <div className="pc-built">
+        <p className="kicker">Built from</p>
+        <div className="pc-chips">
+          <span className="chip">Your past sessions</span>
+          <span className="chip">Your Fix steps</span>
+        </div>
+      </div>
+      <p className="numeral pc-muted pc-small">
+        {plural(weak.length, 'claim')} wobbled · the top {n} take about {n * REDRILL_MINUTES} min
+        {weak.length > REDRILL_SHORT ? ` · up to ${Math.min(weak.length, REDRILL_MAX)} in one` : ''}
+      </p>
+      <div className="pc-card-go">
+        <button type="button" className="btn btn-primary pc-btn" disabled={limited} onClick={nav.redrill}>
+          Re-drill
+        </button>
       </div>
     </article>
   );

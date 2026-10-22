@@ -9,6 +9,7 @@ from tayyari.core.clock import Clock
 from ..db import Database
 from ..ports import (
     BillingRepo,
+    ClaimMarkRepo,
     DecisionLogRepo,
     DiscoverRepo,
     HandoffRepo,
@@ -29,6 +30,7 @@ from ..ports import (
     WeeklyRepo,
 )
 from .billing import SqlBillingRepo
+from .claim_marks import SqlClaimMarkRepo
 from .decisions import SqlDecisionLogRepo
 from .discover import SqlDiscoverRepo
 from .handoff import SqlHandoffRepo
@@ -67,6 +69,7 @@ class Repositories:
     jobsearch: JobSearchRepo
     interview: InterviewRepo
     prepare: PrepareRepo
+    claim_marks: ClaimMarkRepo
     handoff: HandoffRepo
     weekly: WeeklyRepo
 
@@ -91,6 +94,7 @@ def build_repositories(db: Database, clock: Clock | None = None) -> Repositories
         jobsearch=SqlJobSearchRepo(db),
         interview=SqlInterviewRepo(db),
         prepare=SqlPrepareRepo(db),
+        claim_marks=SqlClaimMarkRepo(db),
         handoff=SqlHandoffRepo(db),
         weekly=SqlWeeklyRepo(db),
     )
@@ -99,6 +103,7 @@ def build_repositories(db: Database, clock: Clock | None = None) -> Repositories
 __all__ = [
     "Repositories",
     "SqlBillingRepo",
+    "SqlClaimMarkRepo",
     "SqlDecisionLogRepo",
     "SqlDiscoverRepo",
     "SqlHandoffRepo",

@@ -1746,3 +1746,8 @@
   border-bottom: 0;
   border-radius: var(--r-l) var(--r-l) 0 0;
 }
+
+/* a re-drilled claim's first line: what came back (I2) */
+.rm-back {
+  margin-bottom: 4px;
+}

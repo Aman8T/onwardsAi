@@ -7,6 +7,7 @@
  *   /practice?screen=room&session=…                        the interview (`room/`; it has a bar of its own, no header)
  *   /practice?screen=debrief&session=…                     what it showed
  *   /practice?screen=progress                              what carries over
+ *   /practice?screen=redrill                               re-drill what wobbled (I2)
  *
  * The plan and the room load on first visit; the hub, the debrief and progress are this folder's. A new screen starts at
  * the top of the page.
@@ -18,6 +19,7 @@ import { DebriefScreen } from './debrief/DebriefScreen';
 import { HubScreen } from './hub/HubScreen';
 import { PracticeHeader } from './hub/PracticeHeader';
 import { ProgressScreen } from './progress/ProgressScreen';
+import { RedrillScreen } from './redrill/RedrillScreen';
 import '../styles/practice.css';
 
 // The plan and the room (speech, the work sample's workspace) load only when a person gets that far.
@@ -62,6 +64,7 @@ export function PracticeRoot({ profile }: { profile: Profile }) {
         )}
         {route.screen === 'debrief' && route.session && <DebriefScreen key={route.session} profile={profile} sessionId={route.session} />}
         {route.screen === 'progress' && <ProgressScreen profile={profile} />}
+        {route.screen === 'redrill' && <RedrillScreen profile={profile} />}
         {route.screen === 'hub' && <HubScreen profile={profile} />}
       </main>
     </div>

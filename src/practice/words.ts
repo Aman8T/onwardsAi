@@ -7,7 +7,7 @@
  * privacy line says what is true (who turns the speech into text, that only text is kept, that nothing is shared with
  * an employer); and nothing here shows a price.
  */
-import type { InterviewKind, PlanSlot, SlotKind, Verdict } from '../../shared/interview';
+import type { InterviewKind, PlanSlot, Rung, SlotKind, Verdict } from '../../shared/interview';
 import type { RoleRequirement } from '../../shared/types';
 import { plural } from '../lib/ui';
 
@@ -19,6 +19,7 @@ export const KIND_LABEL: Record<InterviewKind, string> = {
   resume: 'Defend your resume',
   stories: 'Behavioural stories',
   work: 'Work sample',
+  redrill: 'Re-drill what wobbled',
 };
 
 export const SLOT_KIND_LABEL: Record<SlotKind, string> = {
@@ -185,6 +186,7 @@ export const KIND_BLURB: Record<InterviewKind, string> = {
   resume: 'No posting needed. It picks lines from your resume and asks you to back them up.',
   stories: '“Tell me about a time…”, built from your own experience, with follow-ups that make each story complete.',
   work: 'A small real task for your kind of work, then questions on your choices.',
+  redrill: 'The claims you didn’t fully back up, from all your sessions. Each comes back where it wobbled last time.',
 };
 
 /** The line under the title of a role taken from the person's graph, which has no posting. */
@@ -223,3 +225,38 @@ export const VERDICT_ORDER: readonly Verdict[] = ['defended', 'shaky', 'couldnt'
 
 /** The sentence under a day's limit that is used up: the server's own sentence wins when it sends one. */
 export const LIMIT_USED = "You've used today's practice interviews. They're free while we test them. More tomorrow. Your debriefs stay here.";
+
+/* ───────────────────────── re-drill (I2) ───────────────────────── */
+
+/** `contract.interview.REDRILL_SHORT` and `REDRILL_MAX`: a short re-drill asks the top 3, All at most 6. */
+export const REDRILL_SHORT = 3;
+export const REDRILL_MAX = 6;
+/** About three minutes a claim (the server's own estimate for a re-drill). */
+export const REDRILL_MINUTES = 3;
+
+/** Where a claim opens, after "Starts at". */
+export const START_LABEL: Record<Rung, string> = {
+  surface: 'the opener, in new words',
+  push: 'the follow-up',
+  floor: 'the easier one',
+};
+
+/** "once", "twice", "3 times". */
+export const timesWord = (n: number) => (n <= 1 ? 'once' : n === 2 ? 'twice' : `${n} times`);
+
+/** The four rules a re-drill keeps, as the setup screen says them. */
+export const REDRILL_RULES: readonly { title: string; body: string }[] = [
+  {
+    title: 'It starts where it wobbled',
+    body: "A Shaky claim opens at the follow-up you stumbled on. A Couldn't defend claim is asked from the top again, in new words.",
+  },
+  { title: 'Your Fix steps count', body: "Claims whose Fix step you ticked come first: that's where you have something new to say." },
+  { title: 'Your best answer is kept', body: "Progress keeps your best verdict. A worse answer today doesn't lower it." },
+  { title: 'Judged on your words, as always', body: 'Every verdict quotes what you said. No score, no streak.' },
+];
+
+/** The room's line above a re-drilled claim: "Back from 16 Oct · Shaky". */
+export const backLine = (on: string, verdict: Verdict, day: (d: string) => string) => `Back from ${day(on)} · ${VERDICT_LABEL[verdict]}`;
+
+/** The label above a re-drill's first line when it opens at the follow-up. */
+export const WOBBLED_LABEL = 'Follow-up · where it wobbled';

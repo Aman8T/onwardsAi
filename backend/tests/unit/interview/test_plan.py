@@ -173,6 +173,13 @@ async def test_a_thin_profile_gets_fewer_questions_and_is_told_why() -> None:
     assert short_note(5, 5) is None
 
 
+async def test_a_redrill_is_refused_until_its_planner_lands() -> None:
+    """I2a adds `redrill` to the contract; until I2b brings `interview/redrill.py` it must never fall through to another kind."""
+    with pytest.raises(BadPlan) as refused:
+        await build_plan(SAMPLE, request("redrill"), FakeRoles())
+    assert refused.value.user_message == "Re-drill isn't ready yet."
+
+
 async def test_a_role_that_is_gone_or_not_chosen_is_refused() -> None:
     with pytest.raises(BadPlan) as chosen:
         await build_plan(SAMPLE, request("role", role=None), FakeRoles())

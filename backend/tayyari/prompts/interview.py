@@ -37,6 +37,10 @@ What each kind asks:
 - claim: a line from the resume, GitHub or a page. Ask the person to walk through it and back up its numbers.
 - story: a line about people or action. Ask for a time it happened.
 
+A re-drill slot comes back from an earlier practice. It also shows the last question, the last verdict, a quote of the last answer and where it opens:
+- opens at push (the last answer was shaky): write the push about what that answer left out: what was the person's own part, how it was measured, or how it ended. The push is asked first.
+- opens at surface (the last answer could not be defended): write the question about the same line in new words. Never repeat the last question.
+
 Rules:
 - Say "you". Never use a name for the person.
 - Use only names, tools and numbers that appear in the slot's sources, the posting, the job title or the employer. Add no company, tool, number, date or year of your own.
@@ -104,6 +108,7 @@ For each question, in this order:
    - text: one concrete step of at most 200 characters, starting with a verb, that closes the gap ("Find the pull request behind the LCP change and note the one change that moved it most."). Advice only: never say what the person has done, knows or is.
    - minutes: 5 to 120.
    - For a defended verdict use "" and 0.
+4. softer: only for a question marked "say less: yes" (it could not be defended twice). A resume line that claims no more than the person's answers did: it starts with a verb, has at most 160 characters, and uses only words, names and numbers from the answers ("Ran visual regression checks with Chromatic on Kite UI pull requests"). No brackets. For every other question use "".
 
 Never read the person: no confidence, nervousness, tone, accent, pace, energy, enthusiasm, filler words, fluency or fit. Never praise. Never add a skill or a fact the person did not state.
 
@@ -135,11 +140,22 @@ class SourceLine:
 
 
 @dataclass(frozen=True, slots=True)
+class PhraseLast:
+    """A re-drill slot's previous mark: the question then, its verdict, a quote of the answer, and where it opens now."""
+
+    question: str
+    verdict: str
+    quote: str
+    opens: str
+
+
+@dataclass(frozen=True, slots=True)
 class PhraseSlot:
     id: str
     kind: str
     topic: str
     sources: Sequence[SourceLine]
+    last: PhraseLast | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -153,15 +169,22 @@ class DebriefSlot:
     verdict: str
     sources: Sequence[SourceLine]
     answers: Sequence[tuple[int, str]]
+    say_less: bool = False
 
 
 def _clock(seconds: int) -> str:
     return f"{seconds // 60}:{seconds % 60:02d}"
 
 
-def _slot_lines(slot_id: str, kind: str, topic: str, sources: Sequence[SourceLine]) -> list[str]:
+def _slot_lines(
+    slot_id: str, kind: str, topic: str, sources: Sequence[SourceLine], last: PhraseLast | None = None
+) -> list[str]:
     lines = [f"{slot_id} | kind {kind} | {topic}"]
     lines.extend(f"  - {source.render()}" for source in sources)
+    if last is not None:
+        lines.append(f"  re-drill: opens at {last.opens}; last verdict {last.verdict}")
+        lines.append(f"  last question: {last.question}")
+        lines.append(f'  last answer: "{last.quote}"' if last.quote else "  last answer: (no quote)")
     return lines
 
 
@@ -185,7 +208,8 @@ def build_phrase_prompt(
     if posting_text:
         parts.append(f"<posting>\n{untrusted(posting_text[:posting_chars], 'posting')}\n</posting>")
     body = (
-        "\n".join(line for s in slots for line in _slot_lines(s.id, s.kind, s.topic, s.sources)) or "(none)"
+        "\n".join(line for s in slots for line in _slot_lines(s.id, s.kind, s.topic, s.sources, s.last))
+        or "(none)"
     )
     parts.append(f"<slots>\n{untrusted(body, 'slots')}\n</slots>")
     return "\n\n".join(parts)
@@ -246,6 +270,7 @@ def build_debrief_prompt(*, slots: Sequence[DebriefSlot], title: str) -> str:
             f"  question: {slot.question}",
             *(f"  - {source.render()}" for source in slot.sources),
             *(f'  answer at {_clock(at)}: "{text}"' for at, text in slot.answers),
+            *(["  say less: yes"] if slot.say_less else []),
         ]
         blocks.append("\n".join(lines))
     body = "\n\n".join(blocks) or "(none)"
@@ -279,6 +304,7 @@ __all__ = [
     "JUDGE_SYSTEM",
     "PHRASE_SYSTEM",
     "DebriefSlot",
+    "PhraseLast",
     "PhraseSlot",
     "SourceLine",
     "build_assistant_prompt",

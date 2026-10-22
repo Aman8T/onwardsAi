@@ -78,9 +78,26 @@ class AssistantUnavailable(BadRequest):
     user_message = "The assistant isn't part of this practice."
 
 
+class FixNotFound(NotFound):
+    """No Fix step to place or tick: an unknown question, another profile's, a question that was Defended, or a step that
+    was taken out."""
+
+    code = "interview_fix_not_found"
+    user_message = "That Fix step isn't here any more. Open the debrief again to see its steps."
+
+
+class FixPlanNotFound(NotFound):
+    """The plan a Fix step was to go into is not this profile's (or is gone)."""
+
+    code = "interview_fix_plan_not_found"
+    user_message = "That plan isn't here any more. Pick another plan, or keep the step in Practice."
+
+
 __all__ = [
     "AssistantUnavailable",
     "BadPlan",
+    "FixNotFound",
+    "FixPlanNotFound",
     "GraphRoleGone",
     "InterviewEnded",
     "InterviewMovedOn",

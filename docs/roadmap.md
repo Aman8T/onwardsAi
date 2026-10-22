@@ -21,6 +21,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | R1 | Shareable radar card (SVG + OG PNG) | F1 | later | not started |
 | I1 | Evidence-grounded mock interview (practice) | M2, D3 | Opus + Sonnet | committed 659b7d6, deployed 2026-10-17 |
 | P1 | Prepare: "help me prepare" answered as typed blocks, not text | the graph's roles | Opus + Fable | designed 2026-10-18, building |
+| I2 | Re-drill weak claims, and Fix steps into Prepare | I1, P1 | Opus + Sonnet | designed 2026-10-22, spec written, not started |
 | X1 | ESCO + O*NET skill table, canonical skill ids | M2 | later | not started |
 | D1 | Discover: personal, location-aware jobs with direct apply links | M2 | Opus + Sonnet | v1 built 2026-10-16 (employers' own boards, no map); rest in docs/discover-later.md |
 | L1 | Sign in to the app with the Leafout account (the site's Supabase login) | F1, app.leafout.in live | Opus + Sonnet | built 2026-10-19, committed, not yet deployed |
@@ -464,6 +465,238 @@ models, and what we take and leave. The earlier outline is in `docs/research/ope
 **Not in this wave:** prepare for a skill, an area, a source or "you" (they stay chat until the blocks are extended to them, as the Anatomy board shows); reading a shipped link into the graph. (Practising a graph role was built alongside, 2026-10-18: Prepare's Practice button opens Practice · This role for the plan's role.)
 
 **Backend built 2026-10-18** (`backend/tayyari/prepare/`, `prompts/prepare.py`, `api/routes/prepare.py`, migration 0010, the `prepare` guard window; documented in `docs/backend.md` § Prepare; golden `tests/data/prepare/riya.prepare.json`). Decisions taken while building: a role with no gap at all is `already_strong` too; `fresh` adds a row and the older plan stays readable by its id; a plan's row follows its profile (FK cascade), so there is no retention step; the `prepare` window counts a written plan and a headline rewrite, nothing else.
+
+---
+
+## I2 · Re-drill weak claims, and Fix steps into Prepare
+
+**Designed 2026-10-22; the user said yes the same day.** Canvas https://claude.ai/artifact/BXiFG9TDUYtLeCACtGxoSu, seven boards:
+- re-drill setup (interactive), the re-drill debrief, the phone room;
+- a Fix step joining the plan (interactive), the phone plan;
+- the loop and what's stored, where it shows and the edges.
+
+The research behind it is `docs/research/personalized-learning.md` (top 5, items 1 and 2). Speak's top tier charges for lessons built from your own mistakes, and Final Round has a "Re-drill" of weak spots. Leafout already finds the weak claims and writes a Fix step for each. What's missing is the loop back.
+
+**What changes, for the person:**
+- **Re-drill what wobbled,** a fifth card on the Practice hub. It brings back every claim whose best verdict is Shaky or Couldn't defend, from every session, including sessions older than the 30-day transcript purge.
+  - Each claim starts where it wobbled.
+  - Claims whose Fix step is done come first.
+  - The debrief shows each claim's last verdict next to today's, and the quote that made the difference.
+- **A Fix step goes into the plan.** "Add to my plan" puts a debrief's Fix step into the current week of a Prepare plan, or keeps it in Practice.
+  - It is ticked like any task, and its minutes come out of that week's hours.
+  - Ticking it never changes a verdict; it moves the claim to the front of the next re-drill.
+- **Where it shows:** the hub card (only when something wobbled), a "Re-drill this one" link on each weak row of Progress, and a line in the Weekly's "Your week" (once W1 is live).
+
+**The rules the design holds to:**
+- **Code decides which claims, their order and where each starts.** The model phrases and judges, as in I1, and code checks every line.
+- **Which claims:** a claim is an evidence line asked about in an `ask`, `claim` or `story` slot (`history.CLAIM_KINDS`). It is a candidate when its best verdict is `shaky` or `couldnt`, and its folded text is still one of the profile's evidence lines. A reworded line counts as new; a removed one is dropped, and its verdicts stay in Progress.
+- **Order:**
+  1. a Fix step done since the claim's last mark;
+  2. then `couldnt` before `shaky`;
+  3. then the oldest last mark first;
+  4. then by text.
+- **Length:** Short takes the top 3, the default; All takes up to `REDRILL_MAX` (6). The person can untick any claim. Minutes are `plan_minutes` for that count, as today.
+- **Where it starts:**
+  - A `shaky` claim starts at `push`. A `shaky` story starts at the push for its first missing part, from the stored story parts.
+  - A `couldnt` claim starts at `surface`, in new words. Its phrased surface must not fold to the last question asked.
+  - After a `push` start, a `couldnt` answer still gets the `floor`. Today `flow.follow_up` only follows on from `surface`.
+- **Best verdict counts,** as today: a worse answer never lowers a claim in Progress. "Moved" means today's deciding verdict ranks above the claim's previous mark (`state.RANK`); code counts "2 of 3 moved up".
+- **No score, no streak,** no percentage, and nothing shared with an employer.
+- **A Fix step:**
+  - is copied word for word from the stored debrief by the server. The browser sends only which session and slot.
+  - lands in the plan's current week. Week 1 is the week the plan was made, capped at the plan's last week.
+  - Its unticked minutes are added to that week's load in `src/prepare/plan.ts`, so later phases can move back a week. Code does the sum.
+- **Limits:** a re-drill counts as one practice interview in the `interview` window (3 a day) and reserves spend like a short session. Adding or ticking a Fix step makes no model call and has no window beyond the ordinary per-address limits.
+
+**One difference from the canvas's Loop board:** Fix steps are not stored in `PrepareState`. They live on the claim's mark (below), so a tick has one home, whether the step went to a plan or stayed in Practice. A plan reads its own steps from there, and `PrepareState` doesn't change.
+
+### Contract
+
+`shared/interview.ts` ⇄ `contract/interview.py` and `shared/prepare.ts` ⇄ `contract/prepare.py`, with the parity tests extended. All additions are optional fields or new types.
+
+- `InterviewKind` gains `'redrill'`. Its slots keep their own `kind` (`ask`, `claim` or `story`).
+- `PlanRequest` and `StartRequest` gain `claims?: string[]`: the claim keys picked on setup, at most `REDRILL_MAX` (6), each at most `CLAIM_KEY_MAX_CHARS` (400). When absent, code takes the top `REDRILL_SHORT` (3).
+- `PlanSlot` gains:
+  - `start?: Rung`;
+  - `last?: SlotLast { verdict, on, question, quote?, rung }`: what the claim's previous mark held, used for the room's "Back from 16 Oct · Shaky" line and for phrasing.
+- `SlotResult` gains:
+  - `previous?: PreviousMark { verdict, on }`;
+  - `softer?: SayLine`: "Or say less", only when this and the previous verdict are both `couldnt`.
+- `Debrief` gains `redrill?: RedrillMoved { moved, of }`, computed in code.
+- New types:
+  - `RedrillClaim { key, text, source, best, last: LastMark { verdict, on, rung }, times, start: Rung, fix?: FixTask }`;
+  - `RedrillView { claims: RedrillClaim[], kept: FixTask[], leftToday? }`;
+  - `FixTask { id, sessionId, slotId, claimText, text, minutes, where: FixWhere ('plan' | 'practice'), planId?, addedAt, doneAt? }`. Its `id` is the mark's id;
+  - `FixAdd { profileId, sessionId, slotId, planId? }`: no `planId` means keep it in Practice;
+  - `FixUpdate { profileId, done: boolean }`.
+- `PreparePlan` gains `practice?: FixTask[]`, the plan's own steps.
+- New `PreparePlanSummary { id, roleId, roleTitle, requirement?, createdAt }`, for the "where it goes" picker.
+
+### Storage
+
+**Table `claim_marks`.** Migration `0014_claim_marks.py`, additive. One row per judged claim slot of a finished session. `ClaimMarkRow` in `storage/tables.py`, `ClaimMarkRepo` in `storage/ports.py`, `storage/repos/claim_marks.py`, and a fake in `tests/fakes`.
+
+| Column | Type | Note |
+|---|---|---|
+| `id` | str 32 | `token_hex(16)` |
+| `profile_id` | str, FK `profiles.id` cascade | goes with the profile and the account |
+| `claim_key` | str 400 | `interview.text.fold` of the evidence line |
+| `claim_text`, `source` | str 400, str 120 | as shown ("Resume · line 15") |
+| `session_id`, `slot_id` | str 32, str 8 | no FK: sessions are purged |
+| `session_kind`, `slot_kind` | str 16 | |
+| `verdict` | str 16 | the slot's deciding verdict |
+| `rung` | str 8 | the rung that decided it (`SlotState.best`) |
+| `question` | str 200 | the surface as asked |
+| `quote` | str 300, nullable | the verdict's quote, clipped at a word |
+| `story` | JSON, nullable | story parts, story slots only |
+| `on` | date | the session's day |
+| `fix_text`, `fix_minutes` | str 200, int, nullable | the debrief's Fix step |
+| `fix_plan_id` | str 32, nullable | a plan of the same profile |
+| `fix_kept` | bool | kept in Practice |
+| `fix_added_at`, `fix_done_at` | timestamps, nullable | |
+| `created_at` | timestamp | |
+
+Indexes: unique `(profile_id, session_id, slot_id)`, plus `(profile_id, claim_key)` and `(fix_plan_id)`.
+
+- **Written when a session ends.** The service writes the debrief, then calls `marks.upsert_from(debrief)`, which is idempotent by the unique key. A failure is logged and retried on the next history read; it never fails `end`.
+- **Backfill:** the history read upserts marks for any finished session that has none. Sessions from before this wave get their marks within their 30 days, with no data migration.
+- **Who reads them:**
+  - Progress (`build_history`) reads claims from marks, so a claim older than 30 days keeps its verdicts. The transcript still goes at 30 days.
+  - Deleting a session deletes its marks.
+- **Fix steps:** the debrief's Fix text and minutes are written with the mark, so a step can still be placed after its session is purged.
+  - Placing a step sets only where it is (`fix_plan_id`, or `fix_kept`) and when.
+  - `fix_plan_id` must be a plan of the same profile; the service checks that, not the repository.
+  - If that plan is gone, the plan's view drops the step and the step falls back to Practice.
+- **Repository methods** (`ClaimMarkRepo`, built in I2a):
+  - `add`: insert, skipping a stored `(profile, session, slot)`, and returning how many were new;
+  - reads: `list_for_profile` (oldest first), `session_ids`, `get`, `find`;
+  - placing and ticking: `place_fix` (needs a Fix text, keeps the tick when moved), `set_fix_done` and `clear_fix` (only a placed step);
+  - placed steps, oldest placed first: `fixes_for_plan`, `kept_fixes`;
+  - `delete_for_session`.
+
+### Routes
+
+- `GET /api/interview/redrill?profileId=` returns a `RedrillView`. It makes no model call, and returns empty for the shared sample profile.
+- `POST /api/interview/plan` and `POST /api/interview/sessions` take `kind: 'redrill'` and `claims`. A key that isn't a current candidate is a 400. Starting counts in the `interview` window and reserves spend.
+- `POST /api/interview/fixes` takes a `FixAdd` and returns a `FixTask`.
+  - The text and minutes are read from the stored debrief, or from the mark once the session is purged.
+  - It is idempotent per session and slot: adding again moves the step.
+  - Answers 404 when the session or plan isn't this profile's.
+- `PATCH /api/interview/fixes/{id}` takes a `FixUpdate`; `DELETE /api/interview/fixes/{id}?profileId=` removes the step from wherever it is.
+- `GET /api/prepare/{id}` now carries `practice`.
+- `GET /api/prepare?profileId=` is new and returns `PreparePlanSummary[]`, newest first. It answers only the profile's own plans.
+
+All of these use `require_profile_access`. They are registered in the existing `api/routes/interview.py` and `api/routes/prepare.py`, so `api/routes/__init__.py` doesn't change.
+
+### Prompts
+
+Purposes stay `interview.phrase`, `interview.judge` and `interview.debrief`, on Haiku 5.5, structured, with citations first.
+
+- **`build_phrase_prompt` gains a re-drill block per slot:**
+  - inputs: the last question, the last verdict, and the last quote, fenced as untrusted data (they are the person's own words, but still data);
+  - instructions:
+    - `push` targets what the last answer left out;
+    - for `couldnt`, `surface` asks the same claim in new words.
+  - checks: the existing `check_phrasing` checks, plus "a `couldnt` surface must not fold to the last question". A failing line gets the slot template (`template_lines`, built from the claim's own words), which never repeats the last question word for word.
+- **`interview.judge`:** unchanged.
+- **`build_debrief_prompt`** asks for `softer` only on twice-`couldnt` slots: one line, at most 160 characters, built from the answer's own words.
+  - Checked by `portfolio.ground.unsupported_anchors` against a corpus of **the answer alone**, so it can't restate the resume line's numbers or names unless the person said them.
+  - A failing `softer` is dropped and no template replaces it.
+
+### Checks and tests
+
+- **Pure units, as table tests:**
+  - `interview/redrill.py`: candidate selection, the order, length and caps, the start rung, and a dropped claim whose line left the resume.
+  - `flow.follow_up`: the floor after a `push` start.
+  - The "moved" count.
+  - The current week of a plan, and the weeks with practice minutes (frontend `plan.ts` tests).
+- **Known-bad fixtures, each proving its verifier fires:**
+  - a `couldnt` surface identical to the last question;
+  - a push naming an employer not in the sources;
+  - a `softer` with a number the answer never said;
+  - a last quote holding "ignore previous instructions": the prompt builder test asserts it sits inside the untrusted fence.
+- **Storage:**
+  - marks written once at `end`, a second `end` writing nothing new;
+  - backfill on history read;
+  - a claim surviving a 31-day purge (fake clock);
+  - deleting a session removes its marks;
+  - the account and profile cascades.
+- **Integration, one test per route:**
+  - the happy path;
+  - another profile's session or plan gives 404;
+  - a stale or unknown claim key gives 400;
+  - the `interview` window counts a re-drill;
+  - fixes are idempotent.
+- **Parity tests** for both contracts.
+- **A golden re-drill debrief:** `tests/data/interview/riya.redrill.json`, Riya's three claims from the canvas.
+- **Frontend:** `npm run check`, and `/dev/practice` and `/dev/prepare` gain every state on the canvas boards and the edges board.
+
+### Waves and files
+
+Contract, ports, purposes and route names freeze at the end of I2a. I2b, I2c and I2d then run in parallel.
+
+- **I2a · contract and storage** (Sonnet).
+  - Contract: `contract/interview.py`, `shared/interview.ts`, `contract/prepare.py`, `shared/prepare.ts`.
+  - Storage: migration `0014_claim_marks.py`, `storage/repos/claim_marks.py`, `tests/fakes/claim_marks.py`.
+  - Shared files, edited by this wave alone: `storage/tables.py`, `storage/ports.py`, and the repository bundles (`storage/repos/__init__.py`, `tests/fakes/repos.py`). `container.py` waits for I2b, which is the first wave to hand the repo to a service.
+  - Tests: the parity and repo tests.
+  - **Built 2026-10-22.** `'redrill'` needed placeholder entries wherever every kind is listed:
+    - `KIND_LABEL` and `KIND_BLURB` in `src/practice/words.ts`;
+    - `OTHER_KIND` in `src/practice/debrief/DebriefView.tsx`;
+    - a guard in `interview/plan.build_plan` that refuses `redrill` with "Re-drill isn't ready yet." until I2b replaces it, with a test in `tests/unit/interview/test_plan.py`.
+- **I2b · services and routes** (Opus).
+  - Interview: new `interview/redrill.py` and `interview/marks.py`; edits to `interview/plan.py`, `flow.py`, `phrase.py`, `debrief.py`, `history.py` and `service.py`.
+  - Prompts: `prompts/interview.py`.
+  - Prepare: `prepare/service.py` (reads `practice`, lists plans).
+  - Routes: `api/routes/interview.py`, `api/routes/prepare.py`.
+  - Tests: the unit, known-bad, integration and golden tests above.
+  - **Built 2026-10-22.** New modules: `interview/marks.py` (marks from a debrief, backfill, `FixTask`s) and `interview/redrill.py` (candidates, order, start rung, plan, view; pure). The service gains `redrill_view`, `add_fix`, `tick_fix`, `remove_fix` and `plan_fixes`, and plans and starts `kind: "redrill"` itself; `build_plan` still refuses it. Tests: `test_redrill.py` (pure and known-bad), `test_redrill_service.py`, `test_redrill_golden.py` with `tests/data/interview/redrill.debrief.json`, and `tests/integration/test_redrill_routes.py`.
+  - **Changes from the spec, decided while building:**
+    - A plan's Fix steps are attached in the API layer (`api/routes/prepare.py`, on `GET /api/prepare/{id}` and on a stored plan streamed again), read through `InterviewService.plan_fixes`. The layering test forbids `prepare` importing `interview`. `PrepareService` only gains `summaries`.
+    - An `ask` comes back as a `claim`, because the posting it was asked from is not part of a re-drill.
+    - Marks are written for Not assessed claims too, so Progress shows exactly what it showed before.
+    - The plan and start body limit went from 4 KB to 16 KB, for six claim keys.
+    - New errors: `FixNotFound` and `FixPlanNotFound`, both 404s. Ids that aren't hex are 404s too.
+    - The golden file is named `redrill.debrief.json`, built from the interview tests' persona.
+  - **Not built:** "Use this wording" on "Or say less". `softer` is in the debrief, but no route keeps it as a "From you" fact yet. That waits on the open item below.
+- **I2c · Practice screens** (Sonnet).
+  - New: `src/practice/redrill/`, the setup and its states.
+  - Edited:
+    - the hub card in `hub/HubView.tsx`;
+    - the Progress row link;
+    - the room's "Back from…" line and rung label in `room/`;
+    - the debrief's before → now, Fix destination picker and "Or say less" in `debrief/`;
+    - `src/practice/api.ts`, `route.ts`, `dev/`.
+  - Built against the frozen contract and fixtures.
+- **I2d · Prepare screens** (Sonnet).
+  - `src/prepare/`: the "From your practice" group in the current week, the tick and "Re-drill it", the week math in `plan.ts`, and `api.ts`.
+  - No file shared with I2c.
+- **I2c and I2d built 2026-10-22**:
+  - **Practice:**
+    - a new screen, `/practice?screen=redrill` (`src/practice/redrill/`);
+    - the fifth hub card, shown only when something wobbled;
+    - a "Re-drill" link on each weak Progress row, which opens the screen rather than one claim;
+    - in the room, "Back from 16 Oct · Shaky" above a claim that came back, and "Follow-up · where it wobbled" for a push start.
+  - **The debrief:**
+    - each claim's previous verdict next to today's, and "N of M moved up";
+    - Fix steps placed through a picker of the person's plans, defaulting to the session's role's plan;
+    - "Or say less", with Copy, because there is no route to keep it yet.
+  - **Prepare:** the "This week · week N" group. Week 1 is the week the plan was made. The unticked minutes are added to that week in `phaseSpans`, and a ticked step offers "Re-drill it".
+  - **Galleries:** `/dev/practice` gains `redrill`, `redrill-empty`, `redrill-loading` and `debrief-redrill` (from a copy of the backend's golden fixture). `/dev/prepare` gains `practice` and `practice-phone`.
+  - **Files outside the waves' folders:**
+    - `src/views/ChatView.tsx`, which passes `onRedrill` to the Prepare thread;
+    - the stylesheets `practice.css`, `practice-room.css` and `prepare.css`.
+  - **Not covered:** the screens were checked on fixtures in the dev galleries; no real interview was run end to end with a model.
+- **T · docs** (Haiku): `docs/backend.md` (Practice, Prepare, Storage), `scripts/walkthrough.md` (a new step), `CLAUDE.md` Status.
+- **Later, not in this wave:**
+  - The Weekly's "Your week" line, once W1 is live.
+  - The graph's "Practised" line, the I1 follow-up. It reads the same marks and is now a small change.
+
+Each wave ends with `npm run check:all` green and a report of what was verified and what was not. No commit, deploy or secret until the user says.
+
+**Open for the user:**
+- **"Use this wording" on "Or say less".** In this wave it keeps the line as a fact marked "From you", recording which resume line it replaces. Having the tailored-resume builder prefer it over the original line is a change in `match/`, listed as a follow-up. Decide whether that belongs in this wave.
+- **The "All" cap:** 6 claims (about 18 minutes).
 
 ## L1 · Sign in to the app with the Leafout account
 

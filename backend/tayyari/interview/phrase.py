@@ -9,6 +9,10 @@ the hidden notes of what a full answer covers. Code checks every line and a fail
     posting     text aimed at an AI in the posting (`jobsearch.judge.has_injection`): no call at all, templates only.
     failure     a model that fails, or leaves a slot out, gives the templates for it. An interview never waits on a model.
 
+    re-drill    a slot that comes back (I2, ``PlanSlot.last``) is phrased with its last question, verdict and quote. One that
+                could not be defended opens at a surface in new words: a question that folds to the last one is refused,
+                and its template (`redrill_surface`) is never the last question either.
+
 A work sample's questions come from its template: nothing here runs for it.
 """
 
@@ -25,10 +29,10 @@ from tayyari.llm.claude import ClaudeClient
 from tayyari.llm.errors import ClaudeError
 from tayyari.llm.types import CallContext, TextBlock
 from tayyari.portfolio.ground import Corpus, unsupported_anchors
-from tayyari.prompts.interview import PHRASE_SYSTEM, PhraseSlot, build_phrase_prompt
+from tayyari.prompts.interview import PHRASE_SYSTEM, PhraseLast, PhraseSlot, build_phrase_prompt
 
 from .sources import quote_source, source_lines, sources_text
-from .text import clip_quote, has_injection
+from .text import clip_quote, fold, has_injection
 
 log = get_logger(__name__)
 
@@ -45,6 +49,12 @@ STORY_PARTS: Final[dict[str, str]] = {
     "reflection": "Looking back, what would you do differently?",
 }
 """A story's pushes are chosen by the part the answer is missing, never phrased by the model."""
+
+REDRILL_SURFACES: Final = (
+    "Let's take this one again: “{said}”. What was your part, and how did it end?",
+    "Once more, in other words: on “{said}”, what did you do yourself?",
+)
+"""A re-drill's surface for a claim that could not be defended: asked about the same line, never the last question again."""
 
 PHRASE_SCHEMA: Final[dict[str, Any]] = {
     "type": "object",
@@ -117,6 +127,20 @@ def slot_template(slot: PlanSlot) -> Phrased:
     return template_lines(slot.kind, source.text, posting=source.origin != "role")
 
 
+def new_words(slot: PlanSlot) -> bool:
+    """A re-drill slot that opens at its surface: it must be asked in new words."""
+    return slot.last is not None and slot.start == "surface"
+
+
+def redrill_surface(slot: PlanSlot) -> str:
+    """The plain surface of a re-drill in new words: the first of `REDRILL_SURFACES` that is not the last question."""
+    source = quote_source(slot.sources)
+    said = clip_quote(source.text if source is not None else slot.topic)
+    last = fold(slot.last.question) if slot.last is not None else ""
+    options = [template.format(said=said) for template in REDRILL_SURFACES]
+    return next((q for q in options if fold(q) != last), options[-1])
+
+
 def _line_ok(line: str, corpus: Corpus) -> bool:
     return (
         0 < len(line) <= LINE_MAX_CHARS
@@ -147,6 +171,8 @@ def check_phrasing(
     out: dict[str, Phrased] = {}
     for slot in slots:
         base = slot_template(slot)
+        if new_words(slot):
+            base = replace(base, question=redrill_surface(slot))
         item = items.get(slot.id)
         if item is None:
             count("slot_missing")
@@ -156,7 +182,15 @@ def check_phrasing(
         lines: dict[str, str] = {}
         for name in ("question", "push", "floor"):
             line = tidy(item.get(name))
-            if _line_ok(line, corpus):
+            repeated = (
+                name == "question"
+                and new_words(slot)
+                and slot.last is not None
+                and fold(line) == fold(slot.last.question)
+            )
+            if repeated:
+                count("question_repeated")
+            elif _line_ok(line, corpus):
                 lines[name] = line
             else:
                 count(f"{name}_replaced")
@@ -194,7 +228,18 @@ async def phrase_slots(
         log.warning("interview_phrase_anomaly", anomaly="text aimed at an AI in the posting")
         return {slot.id: slot_template(slot) for slot in slots}
     prompt = build_phrase_prompt(
-        slots=[PhraseSlot(s.id, s.kind, s.topic, source_lines(s.sources)) for s in slots],
+        slots=[
+            PhraseSlot(
+                s.id,
+                s.kind,
+                s.topic,
+                source_lines(s.sources),
+                PhraseLast(s.last.question, s.last.verdict, s.last.quote or "", s.start or "surface")
+                if s.last is not None
+                else None,
+            )
+            for s in slots
+        ],
         title=title,
         employer=employer,
         posting_text=posting_text,
@@ -222,10 +267,13 @@ async def phrase_slots(
 
 __all__ = [
     "PHRASE_SCHEMA",
+    "REDRILL_SURFACES",
     "STORY_PARTS",
     "Phrased",
     "check_phrasing",
+    "new_words",
     "phrase_slots",
+    "redrill_surface",
     "slot_template",
     "template_lines",
 ]

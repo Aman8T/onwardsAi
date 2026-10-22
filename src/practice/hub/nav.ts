@@ -4,7 +4,19 @@
  * that says where each button would go, so a screen can be looked at with no app around it.
  */
 import type { GraphRoleSource, InterviewKind, RoleSource } from '../../../shared/interview';
-import { actions } from '../../store';
+import { roleStanding } from '../../lib/layout';
+import { requirementAction, roleAction } from '../../lib/prompts';
+import { actions, getState } from '../../store';
+
+/** A role's Prepare thread (blocks, not prose), the way the graph opens it; nothing happens when the role is not on the graph. */
+function openPlan(roleId: string, requirement?: string): void {
+  const profile = getState().profile;
+  const role = profile?.roles.find((r) => r.id === roleId);
+  if (!profile || !role) return;
+  const req = requirement ? role.requirements.find((r) => r.name === requirement) : undefined;
+  const a = req ? requirementAction(req, role) : roleAction(role, roleStanding(profile, roleId));
+  actions.openChat(a.origin, a.question, { roleId, ...(req ? { requirement: req.name } : {}) });
+}
 
 export interface PracticeNav {
   /** The plan for a kind, before it starts; `role` names the role of a search with AI it is built from, `graphRole` a
@@ -14,6 +26,10 @@ export interface PracticeNav {
   debrief(sessionId: string): void;
   hub(): void;
   progress(): void;
+  /** Re-drill what wobbled: the claims to bring back. */
+  redrill(): void;
+  /** A Prepare plan (by the role of the person's graph it is for). */
+  plan(roleId: string, requirement?: string): void;
   /** Discover's roles (to find one to practise for). */
   discover(): void;
   applications(): void;
@@ -30,6 +46,8 @@ export const liveNav: PracticeNav = {
   debrief: (session) => actions.openPractice({ screen: 'debrief', session }),
   hub: () => actions.openPractice({ screen: 'hub' }),
   progress: () => actions.openPractice({ screen: 'progress' }),
+  redrill: () => actions.openPractice({ screen: 'redrill' }),
+  plan: (roleId, requirement) => openPlan(roleId, requirement),
   discover: () => actions.openDiscover({ tab: 'roles' }),
   applications: () => actions.openDiscover({ tab: 'applications' }),
   prepare: (role) => actions.openDiscover({ tab: 'prepare', run: role.runId, job: role.jobId }),

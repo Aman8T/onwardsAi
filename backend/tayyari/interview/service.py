@@ -7,7 +7,11 @@
     answer    `router.classify` decides what the turn is. "Say it again", "skip", "I don't know", a dispute and an answer too
               short to judge cost no model call; anything else is judged once (`judge`), and `flow` picks the next line.
     end       the debrief: counts, the first thing to work on and the summary in code; Say, Avoid and Fix from one model call,
-              checked against the person's words; a work sample's checks from one more. Stored, then returned as stored.
+              checked against the person's words; a work sample's checks from one more. Stored, then returned as stored, and
+              its claim marks written (`marks`; a failure there is logged and the next history read writes them).
+    redrill   (I2) the claims that wobbled, from the marks (`redrill`): the view, a plan and a start like any other kind,
+              each slot opening where it wobbled. A debrief's Fix step can be placed in a Prepare plan of the same profile
+              or kept in Practice, ticked and taken out; ticking it never changes a verdict.
 
 Every write is a compare-and-swap through `InterviewRepo.save` (the version goes up by one), so two tabs cannot overwrite
 each other: the loser gets `InterviewMovedOn`. A model that fails while a person answers raises (nothing is recorded, they can
@@ -28,11 +32,15 @@ from tayyari.contract.interview import (
     CheckResult,
     Debrief,
     FactRequest,
+    FixAdd,
+    FixTask,
+    InterviewLength,
     InterviewLine,
     InterviewPlan,
     InterviewSession,
     PlanRequest,
     PracticeHistory,
+    RedrillView,
     SessionView,
     StartRequest,
     WorkSubmit,
@@ -46,7 +54,7 @@ from tayyari.core.text import clip
 from tayyari.llm.claude import ClaudeClient
 from tayyari.llm.errors import ClaudeError
 from tayyari.llm.types import CallContext
-from tayyari.storage.ports import InterviewRepo, StoredInterview
+from tayyari.storage.ports import ClaimMarkRepo, InterviewRepo, PrepareRepo, StoredClaimMark, StoredInterview
 
 from . import flow
 from .assistant import ask_assistant
@@ -55,6 +63,8 @@ from .debrief import Outcome, assemble, check_written, outcomes, write_debrief
 from .errors import (
     AssistantUnavailable,
     BadPlan,
+    FixNotFound,
+    FixPlanNotFound,
     InterviewEnded,
     InterviewMovedOn,
     InterviewNotFound,
@@ -63,8 +73,10 @@ from .errors import (
 )
 from .history import build_history, debrief_of
 from .judge import check_judgement, judge_answer
+from .marks import ensure_marks, fix_task_of, write_marks
 from .phrase import phrase_slots
-from .plan import build_plan, plan_minutes
+from .plan import MINUTES_PER_SLOT, BuiltPlan, build_plan, plan_minutes
+from .redrill import Candidate, candidates, claim_view, redrill_plan, story_push
 from .roles import RoleLookup
 from .router import classify
 from .speech import SpeechContext, SpeechUpcoming, speech_context, upcoming_of
@@ -77,6 +89,8 @@ WORK_CONTEXT_CHARS = 4000
 AGAIN_WORK_MINUTES = 3
 NOT_ENOUGH = "Your profile doesn't have enough to ask about yet. Add a project or a link, then try again."
 SWITCHED_OFF = "Practice is switched off right now."
+MARKS_LIMIT = 5000
+"""The most claim marks one read takes: years of daily practice."""
 
 
 class InterviewService:
@@ -86,14 +100,18 @@ class InterviewService:
         claude: ClaudeClient,
         settings: InterviewSettings,
         sessions: InterviewRepo,
+        marks: ClaimMarkRepo,
         roles: RoleLookup,
         clock: Clock,
+        plans: PrepareRepo | None = None,
     ) -> None:
         self._claude = claude
         self._settings = settings
         self._sessions = sessions
+        self._marks = marks
         self._roles = roles
         self._clock = clock
+        self._plans = plans
 
     @property
     def enabled(self) -> bool:
@@ -107,23 +125,32 @@ class InterviewService:
 
     async def plan(self, profile: Profile, req: PlanRequest) -> InterviewPlan:
         """The plan for a kind of practice. No model call."""
+        if req.kind == "redrill":
+            plan, _ = await self._redrill(profile, req.claims, req.length)
+            return plan
         return (await build_plan(profile, req, self._roles)).plan
 
     async def start(self, profile: Profile, req: StartRequest, ctx: CallContext) -> InterviewSession:
         """Start an interview: the plan, minus the slots the person skipped, phrased once, with its first question asked."""
         self.require_enabled()
-        built = await build_plan(
-            profile,
-            PlanRequest(
-                profileId=profile.id,
-                kind=req.kind,
-                role=req.role,
-                graphRole=req.graphRole,
-                length=req.length,
-                focus=req.focus,
-            ),
-            self._roles,
-        )
+        chosen: dict[str, Candidate] = {}
+        if req.kind == "redrill":
+            redrilled, cands = await self._redrill(profile, req.claims, req.length)
+            built = BuiltPlan(plan=redrilled)
+            chosen = {slot.id: cand for slot, cand in zip(redrilled.slots, cands, strict=True)}
+        else:
+            built = await build_plan(
+                profile,
+                PlanRequest(
+                    profileId=profile.id,
+                    kind=req.kind,
+                    role=req.role,
+                    graphRole=req.graphRole,
+                    length=req.length,
+                    focus=req.focus,
+                ),
+                self._roles,
+            )
         plan = built.plan
         skipped = set(req.skip or [])
         slots = [slot for slot in plan.slots if slot.id not in skipped]
@@ -164,6 +191,10 @@ class InterviewService:
                 )
                 for slot in slots
             ]
+            for slot, st in zip(slots, states, strict=True):
+                # a story that comes back at its push asks for the part its last answer was missing
+                if slot.kind == "story" and slot.start == "push" and slot.id in chosen:
+                    st.push = story_push(chosen[slot.id].last)
         state = SessionState(
             kind=plan.kind,
             title=plan.title,
@@ -345,15 +376,18 @@ class InterviewService:
             checks=checks,
             assistant_use=assistant_use(state.assistant, state.work) if state.kind == "work" else None,
         )
+        stored = debrief.to_dict()
         try:
-            await self._save(item, state, status="done", debrief=debrief.to_dict())
+            await self._save(item, state, status="done", debrief=stored)
         except InterviewMovedOn:
             again = await self._sessions.get(profile.id, session_id)
-            stored = debrief_of(again) if again is not None and again.status == "done" else None
-            if stored is None:
+            found = debrief_of(again) if again is not None and again.status == "done" else None
+            if found is None:
                 raise
-            return stored
+            return found
         log.info("interview_ended", kind=state.kind, counts=debrief.counts.model_dump())
+        done = replace(item, state=state.dump(), status="done", debrief=stored)
+        await write_marks(self._marks, done, debrief, now=self._clock.now())
         return debrief
 
     # ───────────────────────── after the interview ─────────────────────────
@@ -391,14 +425,64 @@ class InterviewService:
         return upcoming_of(state, followups=followups)
 
     async def history(self, profile: Profile, *, per_day: int | None = None) -> PracticeHistory:
-        """The person's practice, newest first, and how many interviews they have left today when ``per_day`` is given."""
+        """The person's practice, newest first, and how many interviews they have left today when ``per_day`` is given. The
+        claims come from the claim marks, so they outlive the sessions' 30 days."""
         items = await self._sessions.list(profile.id, self._settings.history_limit)
-        left: int | None = None
-        if per_day is not None:
-            midnight = as_utc(self._clock.now()).replace(hour=0, minute=0, second=0, microsecond=0)
-            started = sum(1 for i in items if as_utc(i.created_at) >= midnight and not i.state.get("againOf"))
-            left = max(0, per_day - started)
-        return build_history(items, left_today=left)
+        marks = await self._marks_of(profile, items)
+        return build_history(items, marks=marks, left_today=self._left_today(items, per_day))
+
+    # ───────────────────────── re-drill and Fix steps (I2) ─────────────────────────
+
+    async def redrill_view(self, profile: Profile, *, per_day: int | None = None) -> RedrillView:
+        """The claims a re-drill can bring back, in re-drill order, and the Fix steps kept in Practice. No model call."""
+        items = await self._sessions.list(profile.id, self._settings.history_limit)
+        marks = await self._marks_of(profile, items)
+        live = await self._live_plans(profile.id, marks)
+        claims = []
+        for cand in candidates(profile, marks):
+            view = claim_view(cand)
+            claims.append(view.model_copy(update={"fix": _shown(view.fix, live)}) if view.fix else view)
+        kept: list[FixTask] = []
+        for mark in marks:
+            shown = _shown(fix_task_of(mark), live)
+            if shown is not None and shown.where == "practice":
+                kept.append(shown)
+        kept.sort(key=lambda t: (t.addedAt, t.id))
+        return RedrillView(claims=claims, kept=kept, leftToday=self._left_today(items, per_day))
+
+    async def add_fix(self, profile: Profile, req: FixAdd) -> FixTask:
+        """Place a debrief's Fix step: in a Prepare plan of this profile (``planId``) or kept in Practice. Placing it again
+        moves it; its tick stays. The text is the debrief's own, read from the mark."""
+        mark = await self._marks.find(profile.id, req.sessionId, req.slotId)
+        if mark is None:
+            item = await self._sessions.get(profile.id, req.sessionId)
+            if item is not None and item.status == "done":
+                await ensure_marks(self._marks, profile.id, [item], now=self._clock.now())
+                mark = await self._marks.find(profile.id, req.sessionId, req.slotId)
+        if mark is None or mark.fix_text is None:
+            raise FixNotFound()
+        if req.planId is not None and (
+            self._plans is None or await self._plans.get(profile.id, req.planId) is None
+        ):
+            raise FixPlanNotFound()
+        if not await self._marks.place_fix(profile.id, mark.id, plan_id=req.planId, now=self._clock.now()):
+            raise FixNotFound()
+        return await self._task(profile.id, mark.id)
+
+    async def tick_fix(self, profile: Profile, fix_id: str, *, done: bool) -> FixTask:
+        """Tick (or untick) a placed Fix step. It changes no verdict; a ticked step puts its claim first in a re-drill."""
+        if not await self._marks.set_fix_done(profile.id, fix_id, self._clock.now() if done else None):
+            raise FixNotFound()
+        return await self._task(profile.id, fix_id)
+
+    async def remove_fix(self, profile: Profile, fix_id: str) -> bool:
+        """Take a Fix step out of wherever it is; False when it was not placed (or is not this profile's)."""
+        return await self._marks.clear_fix(profile.id, fix_id)
+
+    async def plan_fixes(self, profile_id: str, plan_id: str) -> list[FixTask]:
+        """The Fix steps placed in one Prepare plan of this profile, the oldest placed first."""
+        marks = await self._marks.fixes_for_plan(profile_id, plan_id)
+        return [task for mark in marks if (task := fix_task_of(mark)) is not None]
 
     async def again(self, profile: Profile, session_id: str, slot_id: str) -> InterviewSession:
         """Ask one question of a finished interview again: a new interview of that one slot, with its stored lines. No model
@@ -477,10 +561,52 @@ class InterviewService:
         return updated
 
     async def delete(self, profile: Profile, session_id: str) -> bool:
-        """Delete a session and its debrief now. False when there was none."""
-        return await self._sessions.delete(profile.id, session_id)
+        """Delete a session, its debrief and its claim marks now. False when there was no session."""
+        gone = await self._sessions.delete(profile.id, session_id)
+        if gone:
+            await self._marks.delete_for_session(profile.id, session_id)
+        return gone
 
     # ───────────────────────── helpers ─────────────────────────
+
+    async def _marks_of(self, profile: Profile, items: list[StoredInterview]) -> list[StoredClaimMark]:
+        """The profile's claim marks, oldest first, after writing any a finished session is missing."""
+        await ensure_marks(self._marks, profile.id, items, now=self._clock.now())
+        return await self._marks.list_for_profile(profile.id, MARKS_LIMIT)
+
+    async def _redrill(
+        self, profile: Profile, claims: list[str] | None, length: InterviewLength | None
+    ) -> tuple[InterviewPlan, list[Candidate]]:
+        items = await self._sessions.list(profile.id, self._settings.history_limit)
+        marks = await self._marks_of(profile, items)
+        return redrill_plan(
+            profile, marks, claims=claims, length=length, minutes_per_slot=MINUTES_PER_SLOT["redrill"]
+        )
+
+    async def _live_plans(self, profile_id: str, marks: list[StoredClaimMark]) -> set[str]:
+        """The plan ids Fix steps point at that are still this profile's plans."""
+        live: set[str] = set()
+        if self._plans is None:
+            return live
+        for plan_id in {m.fix_plan_id for m in marks if m.fix_plan_id is not None}:
+            if await self._plans.get(profile_id, plan_id) is not None:
+                live.add(plan_id)
+        return live
+
+    async def _task(self, profile_id: str, mark_id: str) -> FixTask:
+        mark = await self._marks.get(profile_id, mark_id)
+        task = fix_task_of(mark) if mark is not None else None
+        if task is None:
+            raise FixNotFound()
+        return task
+
+    def _left_today(self, items: list[StoredInterview], per_day: int | None) -> int | None:
+        """Interviews left today when there is a daily allowance; a repeat ("ask this one again") is not counted."""
+        if per_day is None:
+            return None
+        midnight = as_utc(self._clock.now()).replace(hour=0, minute=0, second=0, microsecond=0)
+        started = sum(1 for i in items if as_utc(i.created_at) >= midnight and not i.state.get("againOf"))
+        return max(0, per_day - started)
 
     async def _load(self, profile: Profile, session_id: str) -> tuple[StoredInterview, SessionState]:
         item = await self._sessions.get(profile.id, session_id)
@@ -575,6 +701,13 @@ class InterviewService:
             written=check_written(None, outs),
             checks=unassessed(state.checks) if state.kind == "work" else None,
         )
+
+
+def _shown(task: FixTask | None, live: set[str]) -> FixTask | None:
+    """A Fix step as the person sees it: one whose plan is gone reads as kept in Practice."""
+    if task is None or task.where != "plan" or task.planId in live:
+        return task
+    return task.model_copy(update={"where": "practice", "planId": None})
 
 
 __all__ = ["InterviewService"]

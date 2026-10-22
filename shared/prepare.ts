@@ -14,10 +14,17 @@
  *   PUT  /api/prepare/{planId}/state          PrepareStateUpdate -> PrepareStateSaved (409 when `version` is stale)
  *   GET  /api/prepare/{planId}/repos?profileId=   PrepareRepos (computed from the stored GitHub source, no network)
  *   POST /api/prepare/{planId}/headline       PrepareHeadlineRequest -> PrepareHeadline
+ *   GET  /api/prepare?profileId=              PreparePlanSummary[] (newest first; the "where it goes" picker of a Fix step)
+ *
+ * A plan also carries the Fix steps from practice placed in it (`practice`, I2). They are stored on the claim's mark, not in
+ * `PrepareState`; they are ticked through `PATCH /api/interview/fixes/{id}`.
  *
  * Mirrored by backend/tayyari/contract/prepare.py; tests/unit/contract/test_prepare_parity.py reads this file. Same
  * subset as the other contracts: interfaces, literal unions, `x?:` optionals, `T[]`, one discriminated event union.
+ * `FixTask` comes from interview.ts, so the parity test reads the two files together.
  */
+
+import type { FixTask } from './interview';
 
 export type PrepareScope = 'role' | 'requirement';
 
@@ -131,6 +138,17 @@ export interface PreparePlan {
   moves: PrepareMove[];
   state: PrepareState;
   version: number;
+  /** Fix steps from practice placed in this plan (I2), oldest first; they belong to the plan's current week. */
+  practice?: FixTask[];
+}
+
+/** `GET /api/prepare?profileId=`: one plan, for choosing where a Fix step goes. */
+export interface PreparePlanSummary {
+  id: string;
+  roleId: string;
+  roleTitle: string;
+  requirement?: string;
+  createdAt: string;
 }
 
 /** Stream events, in this order: `gaps` at once (code only), then `standing` and `moves` as each model call lands (either

@@ -51,7 +51,7 @@ function inSession(claim: ClaimBest, sessionId: string): Verdict | undefined {
   return marks.reduce<Verdict>((best, m) => (STRENGTH[m.verdict] > STRENGTH[best] ? m.verdict : best), 'not_assessed');
 }
 
-export function ClaimsTable({ history }: { history: Pick<PracticeHistory, 'sessions' | 'claims'> }) {
+export function ClaimsTable({ history, onRedrill }: { history: Pick<PracticeHistory, 'sessions' | 'claims'>; onRedrill?: () => void }) {
   const { columns, clipped } = columnsOf(history);
   const claims = orderClaims(history.claims);
   return (
@@ -88,6 +88,11 @@ export function ClaimsTable({ history }: { history: Pick<PracticeHistory, 'sessi
                   <div className="pc-best">
                     <VerdictChip verdict={claim.best} />
                     {claim.best !== 'not_assessed' && claim.on && <span className="pc-muted pc-small">on {dateOf(claim.on)}</span>}
+                    {onRedrill && (claim.best === 'shaky' || claim.best === 'couldnt') && (
+                      <button type="button" className="pc-link pc-small" aria-label={`Re-drill: ${claim.text}`} onClick={onRedrill}>
+                        Re-drill
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

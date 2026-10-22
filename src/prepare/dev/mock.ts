@@ -139,5 +139,15 @@ export function mockClient(o: MockOptions): PrepareClient {
       headlineCalls++;
       return h;
     },
+
+    async tickFix(fixId, update, signal) {
+      await wait(300, signal);
+      const task = plan.practice?.find((t) => t.id === fixId);
+      if (!task) throw new ApiError("That Fix step isn't here any more. Open the debrief again to see its steps.", 404);
+      const { doneAt: _was, ...rest } = task;
+      const next = update.done ? { ...rest, doneAt: new Date().toISOString() } : rest;
+      plan = { ...plan, practice: plan.practice?.map((t) => (t.id === fixId ? next : t)) };
+      return next;
+    },
   };
 }

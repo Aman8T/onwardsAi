@@ -58,6 +58,7 @@ EXPECTED_TABLES = {
     "handoffs",
     "weekly_subscriptions",
     "weekly_editions",
+    "claim_marks",
 }
 
 

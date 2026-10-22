@@ -12,6 +12,11 @@
                                                    does not have)
     GET  /api/prepare/{planId}/repos?profileId=    `PrepareRepos`, ranked in code from the stored GitHub digest
     POST /api/prepare/{planId}/headline            `PrepareHeadlineRequest` -> `PrepareHeadline` (one model call)
+    GET  /api/prepare?profileId=                   `PreparePlanSummary[]`, newest first (where a Fix step can go, I2)
+
+A plan carries the Fix steps from practice placed in it (``practice``, I2) wherever it is read whole: `GET` by id and a stored
+plan streamed again. They live on the claim marks, so they are read through the interview service here: prepare never
+imports interview (the layering test).
 
 A profile is opened exactly as the job search and the interview open it (`api.deps.require_profile_access`): one nobody
 has claimed or a sample run is open to whoever holds its id; a claimed profile only to its owner's session. A plan is read
@@ -46,7 +51,7 @@ from tayyari.api.routes.analyze import HeldResponse
 from tayyari.api.security import subnet_hash
 from tayyari.container import Container
 from tayyari.contract.models import Profile
-from tayyari.contract.prepare import PrepareHeadlineRequest, PrepareRequest, PrepareStateUpdate
+from tayyari.contract.prepare import PrepareHeadlineRequest, PreparePlan, PrepareRequest, PrepareStateUpdate
 from tayyari.contract.requests import RequestContext
 from tayyari.contract.stored import StoredContext
 from tayyari.core.errors import NotFound
@@ -104,6 +109,12 @@ def _json(data: dict[str, object]) -> JSONResponse:
     return JSONResponse(data, headers=NO_STORE)
 
 
+async def _with_practice(container: Container, plan: PreparePlan) -> PreparePlan:
+    """The plan with the Fix steps placed in it (none: the field stays absent)."""
+    practice = await container.interview.plan_fixes(plan.profileId, plan.id)
+    return plan.model_copy(update={"practice": practice}) if practice else plan
+
+
 async def _shed_light(request: Request, container: Container, rc: RequestContext) -> None:
     container.rate_limiter.shed(
         "chat",
@@ -150,7 +161,7 @@ async def start_prepare(request: Request) -> Response:
     if body.fresh is not True:
         stored = await service.stored(profile.id, plan.roleId, plan.requirement)
         if stored is not None:
-            return NdjsonResponse(request, service.replay(stored), TAG)
+            return NdjsonResponse(request, service.replay(await _with_practice(container, stored)), TAG)
     await _count(request, container, rc)
     held = AsyncExitStack()
     try:
@@ -175,7 +186,18 @@ async def get_plan(plan_id: str, request: Request) -> JSONResponse:
     plan = await container.prepare.get(profile_id, plan_id)
     if plan is None:
         raise PlanNotFound()
-    return _json(plan.to_dict())
+    return _json((await _with_practice(container, plan)).to_dict())
+
+
+@router.get("/api/prepare")
+async def list_plans(request: Request) -> JSONResponse:
+    container = get_container(request)
+    rc = await get_request_context(request)
+    await _shed_light(request, container, rc)
+    profile_id = request.query_params.get("profileId", "")
+    await _access(request, container, profile_id)
+    plans = await container.prepare.summaries(profile_id)
+    return JSONResponse([p.to_dict() for p in plans], headers=NO_STORE)
 
 
 @router.put("/api/prepare/{plan_id}/state")

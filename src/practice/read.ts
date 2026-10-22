@@ -17,23 +17,31 @@ import type {
   ClaimMark,
   Debrief,
   FixStep,
+  FixTask,
   GraphRoleSource,
   InterviewKind,
   InterviewLine,
   InterviewPlan,
   InterviewSession,
+  LastMark,
   LineKind,
   MaterialKind,
   PlanSlot,
   PracticeFact,
   PracticeHistory,
+  PreviousMark,
   Quote,
+  RedrillClaim,
+  RedrillMoved,
+  RedrillView,
   RoleSource,
+  Rung,
   SayLine,
   SessionStatus,
   SessionSummary,
   SessionView,
   SlotKind,
+  SlotLast,
   SlotResult,
   SlotSource,
   Speaker,
@@ -43,6 +51,7 @@ import type {
   VerdictCounts,
   WorkTask,
 } from '../../shared/interview';
+import type { PreparePlanSummary } from '../../shared/prepare';
 
 export const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
@@ -94,10 +103,10 @@ export const list = <T>(raw: unknown, read: (item: unknown) => T | null, max: nu
 
 /* ───────────────────────── the vocabularies ───────────────────────── */
 
-export const KINDS: readonly InterviewKind[] = ['role', 'resume', 'stories', 'work'];
+export const KINDS: readonly InterviewKind[] = ['role', 'resume', 'stories', 'work', 'redrill'];
 export const SLOT_KINDS: readonly SlotKind[] = ['ask', 'gap', 'claim', 'story', 'task'];
 export const VERDICTS: readonly Verdict[] = ['defended', 'shaky', 'couldnt', 'not_assessed'];
-const RUNGS = ['surface', 'push', 'floor'] as const;
+const RUNGS: readonly Rung[] = ['surface', 'push', 'floor'];
 const MODES = ['speech', 'typed'] as const;
 const STATUSES: readonly SessionStatus[] = ['active', 'done'];
 const LINE_KINDS: readonly LineKind[] = ['question', 'followup', 'floor', 'done'];
@@ -137,12 +146,33 @@ export function readSource(raw: unknown): SlotSource | null {
   return { origin, text: quote, ...(source ? { source } : {}) };
 }
 
+/** A re-drill slot's previous mark: its verdict, its day and the question then. */
+function readSlotLast(raw: unknown): SlotLast | undefined {
+  if (!isObj(raw)) return undefined;
+  const verdict = oneOf(VERDICTS, raw.verdict);
+  const on = isoDay(raw.on);
+  const question = text(raw.question, 400);
+  const rung = oneOf(RUNGS, raw.rung);
+  if (!verdict || !on || !question || !rung) return undefined;
+  const quote = text(raw.quote, 400);
+  return { verdict, on, question, rung, ...(quote ? { quote } : {}) };
+}
+
 export function readSlot(raw: unknown): PlanSlot | null {
   if (!isObj(raw)) return null;
   const id = text(raw.id, 16);
   const kind = oneOf(SLOT_KINDS, raw.kind);
   if (!id || !kind) return null;
-  return { id, kind, topic: text(raw.topic, 160) ?? '', sources: list(raw.sources, readSource, MAX_SOURCES) };
+  const start = oneOf(RUNGS, raw.start);
+  const last = readSlotLast(raw.last);
+  return {
+    id,
+    kind,
+    topic: text(raw.topic, 160) ?? '',
+    sources: list(raw.sources, readSource, MAX_SOURCES),
+    ...(start ? { start } : {}),
+    ...(last ? { last } : {}),
+  };
 }
 
 /** The plan, or null when the answer is not one. A plan with no slot is a plan (the screen says there is nothing to ask). */
@@ -318,6 +348,20 @@ function readStory(raw: unknown): StoryParts | undefined {
   return { situation: raw.situation === true, action: raw.action === true, result: raw.result === true, reflection: raw.reflection === true };
 }
 
+function readPrevious(raw: unknown): PreviousMark | undefined {
+  if (!isObj(raw)) return undefined;
+  const verdict = oneOf(VERDICTS, raw.verdict);
+  const on = isoDay(raw.on);
+  return verdict && on ? { verdict, on } : undefined;
+}
+
+function readMoved(raw: unknown): RedrillMoved | undefined {
+  if (!isObj(raw)) return undefined;
+  const moved = whole(raw.moved);
+  const of = whole(raw.of);
+  return moved !== undefined && of !== undefined && moved <= of ? { moved, of } : undefined;
+}
+
 function readResult(raw: unknown): SlotResult | null {
   if (!isObj(raw)) return null;
   const slotId = text(raw.slotId, 16);
@@ -330,6 +374,8 @@ function readResult(raw: unknown): SlotResult | null {
   const fix = readFix(raw.fix);
   const story = readStory(raw.story);
   const newFact = text(raw.newFact, 500);
+  const previous = readPrevious(raw.previous);
+  const softer = readSay(raw.softer);
   return {
     slotId,
     kind,
@@ -346,6 +392,8 @@ function readResult(raw: unknown): SlotResult | null {
     ...(story ? { story } : {}),
     ...(newFact ? { newFact } : {}),
     ...(raw.factAdded === true ? { factAdded: true } : {}),
+    ...(previous ? { previous } : {}),
+    ...(softer ? { softer } : {}),
   };
 }
 
@@ -375,6 +423,7 @@ export function readDebrief(raw: unknown): Debrief | null {
   const task = readTask(raw.task);
   const work = str(raw.work, MAX_WORK);
   const kept = isoDay(raw.keptUntil) ?? (isoTime(raw.keptUntil) ? isoTime(raw.keptUntil)?.slice(0, 10) : undefined);
+  const redrill = readMoved(raw.redrill);
   return {
     sessionId,
     kind,
@@ -394,6 +443,7 @@ export function readDebrief(raw: unknown): Debrief | null {
     ...(graphRole ? { graphRole } : {}),
     ...(task ? { task } : {}),
     ...(work !== undefined ? { work } : {}),
+    ...(redrill ? { redrill } : {}),
   };
 }
 
@@ -467,4 +517,84 @@ export function readHistory(raw: unknown): PracticeHistory | null {
     facts: list(raw.facts, readFact, 200),
     ...(leftToday !== undefined ? { leftToday } : {}),
   };
+}
+
+/* ───────────────────────── re-drill and Fix steps (I2) ───────────────────────── */
+
+const WHERE = ['plan', 'practice'] as const;
+
+/** A Fix step placed in a plan or kept in Practice. A step "in a plan" with no plan id is not one. */
+export function readFixTask(raw: unknown): FixTask | null {
+  if (!isObj(raw)) return null;
+  const id = text(raw.id, 64);
+  const sessionId = text(raw.sessionId, 64);
+  const slotId = text(raw.slotId, 16);
+  const claimText = text(raw.claimText, 1500);
+  const step = text(raw.text, 500);
+  const minutes = whole(raw.minutes, 1);
+  const where = oneOf(WHERE, raw.where);
+  const addedAt = isoTime(raw.addedAt);
+  if (!id || !sessionId || !slotId || !claimText || !step || minutes === undefined || !where || !addedAt) return null;
+  const planId = text(raw.planId, 64);
+  if (where === 'plan' && !planId) return null;
+  const doneAt = isoTime(raw.doneAt);
+  return {
+    id,
+    sessionId,
+    slotId,
+    claimText,
+    text: step,
+    minutes,
+    where,
+    ...(where === 'plan' && planId ? { planId } : {}),
+    addedAt,
+    ...(doneAt ? { doneAt } : {}),
+  };
+}
+
+function readLastMark(raw: unknown): LastMark | undefined {
+  if (!isObj(raw)) return undefined;
+  const verdict = oneOf(VERDICTS, raw.verdict);
+  const on = isoDay(raw.on);
+  const rung = oneOf(RUNGS, raw.rung);
+  return verdict && on && rung ? { verdict, on, rung } : undefined;
+}
+
+function readRedrillClaim(raw: unknown): RedrillClaim | null {
+  if (!isObj(raw)) return null;
+  const key = text(raw.key, 400);
+  const claim = text(raw.text, 1500);
+  const best = oneOf(VERDICTS, raw.best);
+  const last = readLastMark(raw.last);
+  const start = oneOf(RUNGS, raw.start);
+  if (!key || !claim || !best || !last || !start) return null;
+  const fix = readFixTask(raw.fix);
+  return { key, text: claim, source: text(raw.source, 120) ?? '', best, last, times: whole(raw.times, 1) ?? 1, start, ...(fix ? { fix } : {}) };
+}
+
+/** `GET /api/interview/redrill`: the claims in re-drill order (code's, kept as sent) and the steps kept in Practice. */
+export function readRedrillView(raw: unknown): RedrillView | null {
+  if (!isObj(raw) || !Array.isArray(raw.claims)) return null;
+  const leftToday = whole(raw.leftToday);
+  return {
+    claims: list(raw.claims, readRedrillClaim, 200),
+    kept: list(raw.kept, readFixTask, 200),
+    ...(leftToday !== undefined ? { leftToday } : {}),
+  };
+}
+
+function readPlanSummary(raw: unknown): PreparePlanSummary | null {
+  if (!isObj(raw)) return null;
+  const id = text(raw.id, 64);
+  const roleId = text(raw.roleId, 120);
+  const roleTitle = text(raw.roleTitle, 300);
+  const createdAt = isoTime(raw.createdAt);
+  if (!id || !roleId || !roleTitle || !createdAt) return null;
+  const requirement = text(raw.requirement, 120);
+  return { id, roleId, roleTitle, createdAt, ...(requirement ? { requirement } : {}) };
+}
+
+/** `GET /api/prepare?profileId=`: the person's plans, newest first (where a Fix step can go). */
+export function readPlanSummaries(raw: unknown): PreparePlanSummary[] | null {
+  return Array.isArray(raw) ? list(raw, readPlanSummary, 50) : null;
 }

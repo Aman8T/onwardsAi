@@ -89,7 +89,7 @@ export function ProgressView({ history, onReload, nav, onRemoveFact }: ProgressV
             {data.claims.length === 0 ? (
               <p className="pc-muted">Nothing asked yet. Each line of your resume that an interview asks about shows up here, with the best verdict it reached.</p>
             ) : (
-              <ClaimsTable history={data} />
+              <ClaimsTable history={data} onRedrill={nav.redrill} />
             )}
           </section>
 

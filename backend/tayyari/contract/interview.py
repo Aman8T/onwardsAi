@@ -1,4 +1,4 @@
-"""Pydantic mirror of shared/interview.ts: practice the interview (I1).
+"""Pydantic mirror of shared/interview.ts: practice the interview (I1), and re-drilling weak claims (I2).
 
 Same rules as `tayyari.contract.discover`: camelCase field names that are the JSON keys, a field is optional
 (``X | None = None``) exactly when the TypeScript field is ``x?:``, and `tests/unit/contract/test_interview_parity.py`
@@ -8,6 +8,10 @@ What this contract carries (project-soul.md): questions come only from the perso
 the requirements of a role on the person's graph, or a work-sample template; a verdict is a word worked out in code from a quote of the person's own answer that code
 checked, never a score; "Say" lines hold only the person's words and cited evidence, with ``[brackets]`` for what only
 they know; Not assessed never counts against anyone. Nothing here is shared with an employer.
+
+A re-drill (I2) brings back the claims whose best verdict is Shaky or Couldn't defend, each starting where it wobbled; code
+picks them, orders them and sets where each starts. A Fix step from a debrief can go into a Prepare plan or stay in
+Practice (`FixTask`); ticking it never changes a verdict.
 """
 
 # ruff: noqa: N815  (the field names are camelCase on purpose: they are the JSON keys of shared/interview.ts)
@@ -16,11 +20,11 @@ from __future__ import annotations
 
 from typing import Final, Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from tayyari.contract.models import _Model
 
-InterviewKind = Literal["role", "resume", "stories", "work"]
+InterviewKind = Literal["role", "resume", "stories", "work", "redrill"]
 SlotKind = Literal["ask", "gap", "claim", "story", "task"]
 Verdict = Literal["defended", "shaky", "couldnt", "not_assessed"]
 Rung = Literal["surface", "push", "floor"]
@@ -34,6 +38,7 @@ Speaker = Literal["interviewer", "you"]
 StoryPartName = Literal["situation", "action", "result", "reflection"]
 MaterialKind = Literal["code", "table", "text"]
 SourceOrigin = Literal["posting", "evidence", "role"]
+FixWhere = Literal["plan", "practice"]
 
 PROFILE_ID_MAX_CHARS: Final = 64
 RUN_ID_MAX_CHARS: Final = 96
@@ -46,6 +51,22 @@ ANSWER_MAX_CHARS: Final = 6000
 WORK_MAX_CHARS: Final = 20_000
 TEST_NOTE_MAX_CHARS: Final = 2000
 ASSISTANT_MESSAGE_MAX_CHARS: Final = 1000
+SESSION_ID_MAX_CHARS: Final = 64
+PLAN_ID_MAX_CHARS: Final = 64
+"""`contract.prepare.PLAN_ID_MAX_CHARS`."""
+FIX_ID_MAX_CHARS: Final = 64
+CLAIM_KEY_MAX_CHARS: Final = 400
+"""A claim's key: the folded text of its evidence line (`interview.text.fold`)."""
+REDRILL_MAX: Final = 6
+"""The most claims one re-drill asks ("All")."""
+REDRILL_SHORT: Final = 3
+"""How many a short re-drill asks, and the default when no claims are picked."""
+
+
+def _bounded_keys(value: list[str] | None) -> list[str] | None:
+    if value is not None and any(len(key) > CLAIM_KEY_MAX_CHARS for key in value):
+        raise ValueError(f"a claim key is at most {CLAIM_KEY_MAX_CHARS} characters")
+    return value
 
 
 class RoleSource(_Model):
@@ -63,11 +84,21 @@ class SlotSource(_Model):
     source: str | None = None
 
 
+class SlotLast(_Model):
+    verdict: Verdict
+    on: str
+    question: str
+    quote: str | None = None
+    rung: Rung
+
+
 class PlanSlot(_Model):
     id: str
     kind: SlotKind
     topic: str
     sources: list[SlotSource]
+    start: Rung | None = None
+    last: SlotLast | None = None
 
 
 class PlanRequest(_Model):
@@ -77,6 +108,9 @@ class PlanRequest(_Model):
     graphRole: GraphRoleSource | None = None
     length: InterviewLength | None = None
     focus: InterviewFocus | None = None
+    claims: list[str] | None = Field(default=None, max_length=REDRILL_MAX)
+
+    _claim_keys = field_validator("claims")(_bounded_keys)
 
 
 class InterviewPlan(_Model):
@@ -98,6 +132,9 @@ class StartRequest(_Model):
     length: InterviewLength | None = None
     focus: InterviewFocus | None = None
     skip: list[str] | None = Field(default=None, max_length=MAX_SKIP)
+    claims: list[str] | None = Field(default=None, max_length=REDRILL_MAX)
+
+    _claim_keys = field_validator("claims")(_bounded_keys)
 
 
 class InterviewLine(_Model):
@@ -221,6 +258,11 @@ class StoryParts(_Model):
     reflection: bool
 
 
+class PreviousMark(_Model):
+    verdict: Verdict
+    on: str
+
+
 class SlotResult(_Model):
     slotId: str
     kind: SlotKind
@@ -236,6 +278,8 @@ class SlotResult(_Model):
     story: StoryParts | None = None
     newFact: str | None = None
     factAdded: bool | None = None
+    previous: PreviousMark | None = None
+    softer: SayLine | None = None
 
 
 class CheckResult(_Model):
@@ -249,6 +293,11 @@ class VerdictCounts(_Model):
     shaky: int
     couldnt: int
     notAssessed: int
+
+
+class RedrillMoved(_Model):
+    moved: int
+    of: int
 
 
 class Debrief(_Model):
@@ -270,6 +319,7 @@ class Debrief(_Model):
     graphRole: GraphRoleSource | None = None
     task: WorkTask | None = None
     work: str | None = None
+    redrill: RedrillMoved | None = None
 
 
 class SessionView(_Model):
@@ -318,12 +368,69 @@ class PracticeHistory(_Model):
     leftToday: int | None = None
 
 
+# ───────────────────────── re-drill and Fix steps (I2) ─────────────────────────
+
+
+class FixTask(_Model):
+    id: str
+    sessionId: str
+    slotId: str
+    claimText: str
+    text: str
+    minutes: int
+    where: FixWhere
+    planId: str | None = None
+    addedAt: str
+    doneAt: str | None = None
+
+
+class LastMark(_Model):
+    verdict: Verdict
+    on: str
+    rung: Rung
+
+
+class RedrillClaim(_Model):
+    key: str
+    text: str
+    source: str
+    best: Verdict
+    last: LastMark
+    times: int
+    start: Rung
+    fix: FixTask | None = None
+
+
+class RedrillView(_Model):
+    claims: list[RedrillClaim]
+    kept: list[FixTask]
+    leftToday: int | None = None
+
+
+class FixAdd(_Model):
+    profileId: str = Field(max_length=PROFILE_ID_MAX_CHARS)
+    sessionId: str = Field(max_length=SESSION_ID_MAX_CHARS)
+    slotId: str = Field(max_length=SLOT_ID_MAX_CHARS)
+    planId: str | None = Field(default=None, max_length=PLAN_ID_MAX_CHARS)
+
+
+class FixUpdate(_Model):
+    profileId: str = Field(max_length=PROFILE_ID_MAX_CHARS)
+    done: bool
+
+
 __all__ = [
     "ANSWER_MAX_CHARS",
     "ASSISTANT_MESSAGE_MAX_CHARS",
+    "CLAIM_KEY_MAX_CHARS",
+    "FIX_ID_MAX_CHARS",
+    "PLAN_ID_MAX_CHARS",
     "PROFILE_ID_MAX_CHARS",
+    "REDRILL_MAX",
+    "REDRILL_SHORT",
     "ROLE_ID_MAX_CHARS",
     "RUN_ID_MAX_CHARS",
+    "SESSION_ID_MAX_CHARS",
     "SLOT_ID_MAX_CHARS",
     "TEST_NOTE_MAX_CHARS",
     "WORK_MAX_CHARS",
@@ -340,7 +447,11 @@ __all__ = [
     "ClaimMark",
     "Debrief",
     "FactRequest",
+    "FixAdd",
     "FixStep",
+    "FixTask",
+    "FixUpdate",
+    "FixWhere",
     "GraphRoleSource",
     "InterviewFocus",
     "InterviewKind",
@@ -348,13 +459,18 @@ __all__ = [
     "InterviewLine",
     "InterviewPlan",
     "InterviewSession",
+    "LastMark",
     "LineKind",
     "MaterialKind",
     "PlanRequest",
     "PlanSlot",
     "PracticeFact",
     "PracticeHistory",
+    "PreviousMark",
     "Quote",
+    "RedrillClaim",
+    "RedrillMoved",
+    "RedrillView",
     "RoleSource",
     "Rung",
     "SayLine",
@@ -363,6 +479,7 @@ __all__ = [
     "SessionSummary",
     "SessionView",
     "SlotKind",
+    "SlotLast",
     "SlotResult",
     "SlotSource",
     "SourceOrigin",

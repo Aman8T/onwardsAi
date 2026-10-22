@@ -2,6 +2,7 @@
  * Pure helpers over a plan: the numbers code owns (weeks from hours, totals, progress), the labels, the "Read this
  * as text" paragraphs written from the blocks, and the calendar file. Nothing here touches the DOM or the store.
  */
+import type { FixTask } from '../../shared/interview';
 import type { PrepareEvidence, PrepareGap, PrepareMove, PreparePhase, PreparePlan, PrepareState, PrepareStrong } from '../../shared/prepare';
 import { rankLabel } from '../lib/layout';
 
@@ -19,12 +20,23 @@ export interface PhaseSpan {
  * Which weeks each phase takes at `hoursPerWeek`: a phase starts in the week its first hour falls in and ends in the
  * week its last hour falls in, so two phases may share a week when the hours do not divide evenly.
  */
-export function phaseSpans(phases: PreparePhase[], hoursPerWeek: number): PhaseSpan[] {
+export function phaseSpans(phases: PreparePhase[], hoursPerWeek: number, extra?: WeekLoad): PhaseSpan[] {
   const h = Math.max(1, hoursPerWeek);
+  // practice fixes (I2) take their hours at the start of the week they land in, so what comes after moves back
+  const at = extra && extra.hours > 0 ? (Math.max(1, extra.week) - 1) * h : Infinity;
+  let added = false;
   let spent = 0;
   return phases.map((p) => {
+    if (!added && spent >= at && extra) {
+      spent += extra.hours;
+      added = true;
+    }
     const start = Math.floor(spent / h) + 1;
     spent += Math.max(0, p.hours);
+    if (!added && spent > at && extra) {
+      spent += extra.hours;
+      added = true;
+    }
     const end = Math.max(start, Math.ceil(spent / h));
     return {
       start,
@@ -36,7 +48,27 @@ export function phaseSpans(phases: PreparePhase[], hoursPerWeek: number): PhaseS
 
 export const totalHours = (move: PrepareMove): number => move.phases.reduce((a, p) => a + Math.max(0, p.hours), 0);
 
-export const totalWeeks = (move: PrepareMove, hoursPerWeek: number): number => Math.ceil(totalHours(move) / Math.max(1, hoursPerWeek));
+export const totalWeeks = (move: PrepareMove, hoursPerWeek: number, extraHours = 0): number =>
+  Math.ceil((totalHours(move) + Math.max(0, extraHours)) / Math.max(1, hoursPerWeek));
+
+/** Hours that land in one week of the plan, on top of its phases: the unticked Fix steps from practice (I2). */
+export interface WeekLoad {
+  week: number;
+  hours: number;
+}
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** The week of the plan a day falls in: week 1 is the week the plan was made, capped at the plan's last week. */
+export function currentWeek(createdAt: string, weeks: number, now: Date = new Date()): number {
+  const made = Date.parse(createdAt);
+  const n = Number.isFinite(made) ? Math.floor(Math.max(0, now.getTime() - made) / WEEK_MS) + 1 : 1;
+  return Math.max(1, Math.min(n, Math.max(1, weeks)));
+}
+
+/** The minutes of the Fix steps from practice that are not ticked yet. */
+export const practiceMinutesLeft = (practice: readonly FixTask[] | undefined): number =>
+  (practice ?? []).reduce((sum, t) => sum + (t.doneAt ? 0 : Math.max(0, t.minutes)), 0);
 
 /** The key of a task in `PrepareState.done`. */
 export const taskKey = (moveId: string, phaseIndex: number, taskIndex: number): string => `${moveId}:${phaseIndex}:${taskIndex}`;

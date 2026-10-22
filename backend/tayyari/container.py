@@ -584,8 +584,10 @@ class Container:
                     claude=claude,
                     settings=settings.interview,
                     sessions=repos.interview,
+                    marks=repos.claim_marks,
                     roles=jobsearch,
                     clock=clock,
+                    plans=repos.prepare,
                 )
                 log.info(
                     "interview_ready",

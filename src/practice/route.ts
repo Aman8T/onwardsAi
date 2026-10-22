@@ -8,6 +8,7 @@
  *   /practice?screen=room&session=…                               an interview in progress (or carried on after a reload)
  *   /practice?screen=debrief&session=…                            what an interview showed, question by question
  *   /practice?screen=progress                                     what carries over: claims at their best, facts from you
+ *   /practice?screen=redrill                                      re-drill what wobbled: the claims to bring back (I2)
  *
  * A screen keeps only the fields it uses, and a screen without them is the hub. `run` and `job` name a role of a search
  * with AI (`RoleSource`); `graphRole` names a role of the person's graph (`GraphRoleSource`, `Profile.roles[].id`). The
@@ -20,7 +21,7 @@ import type { InterviewKind } from '../../shared/interview';
 
 export const PRACTICE_PATH = '/practice';
 
-export type PracticeScreen = 'hub' | 'setup' | 'room' | 'debrief' | 'progress';
+export type PracticeScreen = 'hub' | 'setup' | 'room' | 'debrief' | 'progress' | 'redrill';
 
 export interface PracticeQuery {
   screen: PracticeScreen;
@@ -38,7 +39,7 @@ export interface PracticeQuery {
 
 export const DEFAULT_PRACTICE: PracticeQuery = { screen: 'hub' };
 
-const SCREENS: readonly PracticeScreen[] = ['hub', 'setup', 'room', 'debrief', 'progress'];
+const SCREENS: readonly PracticeScreen[] = ['hub', 'setup', 'room', 'debrief', 'progress', 'redrill'];
 const KINDS: readonly InterviewKind[] = ['role', 'resume', 'stories', 'work'];
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -72,6 +73,8 @@ function settle(query: PracticeQuery): PracticeQuery {
       return query.session ? { screen: query.screen, session: query.session } : hub;
     case 'progress':
       return { screen: 'progress' };
+    case 'redrill':
+      return { screen: 'redrill' };
     default:
       return hub;
   }

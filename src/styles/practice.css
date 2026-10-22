@@ -1531,3 +1531,156 @@
     min-height: 44px;
   }
 }
+
+/* ───────────── re-drill and Fix steps (I2) ───────────── */
+
+.pc-card-redrill {
+  border-color: var(--accent-ui);
+}
+
+.pc-rd-cols {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.pc-rd-list {
+  flex: 999 1 560px;
+  min-width: 0;
+}
+
+.pc-rd-side {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.pc-rd-order {
+  max-width: 46ch;
+  margin: 0;
+}
+
+.pc-rd-claims,
+.pc-rd-fixes {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-rd-claim,
+.pc-rd-fix {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 14px;
+  padding: 16px 0;
+  border-top: var(--hair) solid var(--line);
+}
+
+.pc-rd-claim.is-off .pc-fact {
+  color: var(--text-faint);
+}
+
+.pc-rd-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 11px 0 0;
+  accent-color: var(--accent-strong);
+}
+
+.pc-rd-body {
+  display: flex;
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.pc-rd-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pc-rd-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  font-size: 13.5px;
+}
+
+.pc-rd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pc-rd-rules {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.pc-rd-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 0;
+  border-top: var(--hair) solid var(--line);
+}
+
+.pc-rd-rule:first-child {
+  border-top: 0;
+}
+
+.pc-rd-rule dd {
+  margin: 0;
+  font-size: 14.5px;
+}
+
+.pc-done {
+  text-decoration: line-through;
+}
+
+.pc-move {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 0;
+}
+
+.pc-moved {
+  margin: 0;
+  font-size: var(--fs-6);
+}
+
+.pc-place,
+.pc-placed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: var(--hair) solid var(--line);
+}
+
+.pc-placed p {
+  margin: 0;
+}
+
+.pc-sayless .pc-offer-fact .pc-fact {
+  font-size: 16px;
+}
+
+.pc-rd-fix .pc-rd-body {
+  flex-basis: 140px;
+}

@@ -18,17 +18,33 @@ import type {
   AssistantRequest,
   Debrief,
   FactRequest,
+  FixAdd,
+  FixTask,
+  FixUpdate,
   InterviewPlan,
   InterviewSession,
   PlanRequest,
   PracticeHistory,
+  RedrillView,
   SessionRequest,
   SessionView,
   StartRequest,
   WorkSubmit,
 } from '../../shared/interview';
+import type { PreparePlanSummary } from '../../shared/prepare';
 import { ApiError } from '../lib/api';
-import { isObj, readDebrief, readHistory, readPlan, readReply, readSession, readSessionView } from './read';
+import {
+  isObj,
+  readDebrief,
+  readFixTask,
+  readHistory,
+  readPlan,
+  readPlanSummaries,
+  readRedrillView,
+  readReply,
+  readSession,
+  readSessionView,
+} from './read';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
@@ -78,7 +94,7 @@ export function isOffline(err: unknown): boolean {
   return err instanceof PracticeApiError && (err.status === 0 || err.status === 502 || err.status === 504);
 }
 
-type Method = 'GET' | 'POST' | 'DELETE';
+type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
 async function call<T>(method: Method, path: string, body: unknown, read: (raw: unknown) => T | null, signal?: AbortSignal): Promise<T> {
   let res: Response;
@@ -170,6 +186,40 @@ export async function deleteSession(id: string, profileId: string): Promise<void
   }
   if (res.ok || res.status === 404) return;
   throw await failure(res);
+}
+
+/* ───────────────────────── re-drill and Fix steps (I2) ───────────────────────── */
+
+/** `GET /api/interview/redrill`: the claims that wobbled, in re-drill order, and the Fix steps kept in Practice. No model. */
+export function fetchRedrill(profileId: string, signal?: AbortSignal): Promise<RedrillView> {
+  return call('GET', withProfile(`${BASE}/redrill`, profileId), undefined, readRedrillView, signal);
+}
+
+/** `POST /api/interview/fixes`: put a debrief's Fix step into a plan (`planId`) or keep it in Practice. Again moves it. */
+export function addFix(req: FixAdd): Promise<FixTask> {
+  return call('POST', `${BASE}/fixes`, req, readFixTask);
+}
+
+/** `PATCH /api/interview/fixes/{id}`: tick or untick. It changes no verdict. */
+export function tickFix(id: string, req: FixUpdate): Promise<FixTask> {
+  return call('PATCH', `${BASE}/fixes/${encodeURIComponent(id)}`, req, readFixTask);
+}
+
+/** `DELETE /api/interview/fixes/{id}`: take the step out of wherever it is. One that is already out counts as taken out. */
+export async function removeFix(id: string, profileId: string): Promise<void> {
+  let res: Response;
+  try {
+    res = await fetch(withProfile(`${BASE}/fixes/${encodeURIComponent(id)}`, profileId), { method: 'DELETE' });
+  } catch {
+    throw new PracticeApiError(OFFLINE, 0);
+  }
+  if (res.ok || res.status === 404) return;
+  throw await failure(res);
+}
+
+/** `GET /api/prepare?profileId=`: the person's Prepare plans, newest first, for "where it goes". */
+export function fetchPlanList(profileId: string, signal?: AbortSignal): Promise<PreparePlanSummary[]> {
+  return call('GET', withProfile('/api/prepare', profileId), undefined, readPlanSummaries, signal);
 }
 
 /** The calls the room and the setup screen make, so a test or the dev page can hand them scripted ones. */

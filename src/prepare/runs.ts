@@ -9,6 +9,7 @@
  */
 import { useSyncExternalStore } from 'react';
 import type { PrepareEvent, PreparePlan, PrepareRequest, PrepareState } from '../../shared/prepare';
+import type { FixTask } from '../../shared/interview';
 import type { PrepareClient } from './api';
 import { isAbort, isStatus, sentenceOf } from './api';
 
@@ -207,6 +208,28 @@ export function updateState(key: string, fn: (s: PrepareState) => PrepareState) 
   if (state === plan.state) return;
   update(entry, { plan: { ...plan, state } });
   scheduleSave(entry, SAVE_DEBOUNCE);
+}
+
+/**
+ * Tick (or untick) a Fix step from practice placed in the plan (I2). It shows at once and is kept on the claim's mark, not
+ * in the plan's state, so it never waits on the state save; a refusal puts it back as it was and rejects with the reason.
+ */
+export async function tickPractice(key: string, fixId: string, done: boolean): Promise<void> {
+  const entry = entries.get(key);
+  const before = entry?.run.plan?.practice?.find((t) => t.id === fixId);
+  if (!entry || !before) return;
+  const put = (task: FixTask) => {
+    const plan = entry.run.plan;
+    if (plan?.practice) update(entry, { plan: { ...plan, practice: plan.practice.map((t) => (t.id === task.id ? task : t)) } });
+  };
+  const { doneAt: _was, ...rest } = before;
+  put(done ? { ...rest, doneAt: new Date().toISOString() } : rest);
+  try {
+    put(await entry.client.tickFix(fixId, { profileId: entry.req.profileId, done }));
+  } catch (err) {
+    put(before);
+    throw err;
+  }
 }
 
 /** Save again after a failure. */

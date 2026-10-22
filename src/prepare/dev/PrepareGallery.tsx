@@ -13,11 +13,13 @@
  *   no-headline          the headline action when no wording passed the check
  *   conflict             the first save is a 409 (another tab saved first); the plan reloads and saves on top
  *   phone                the plan in a 390 px frame: the jump bar, the phone's plan list, sticky actions
+ *   practice · practice-phone   Fix steps from practice in the plan's current week (I2): one ticked, two not
  *
  * The data is `riya.*.json` (the contract's shape, by hand from the sample profile); the orchestrator swaps in the
  * backend's golden fixture later. Buttons that leave the thread say where they would go.
  */
 import { useMemo, useState } from 'react';
+import type { FixTask } from '../../../shared/interview';
 import type { PrepareHeadline, PreparePlan, PrepareRepos } from '../../../shared/prepare';
 import { Brand } from '../../components/Brand';
 import { UserMessage } from '../../views/chat/Message';
@@ -39,6 +41,32 @@ const REPOS = reposJson as unknown as PrepareRepos;
 const HEADLINES = headlinesJson as unknown as PrepareHeadline[];
 const NO_REPOS: PrepareRepos = { github: false, repos: [] };
 
+/** The plan made eight days ago (so this is week 2), with three Fix steps from practice placed in it: one ticked. */
+function withPractice(plan: PreparePlan): PreparePlan {
+  const made = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+  const step = (id: string, slotId: string, claimText: string, text: string, minutes: number, doneAt?: string): FixTask => ({
+    id,
+    sessionId: '0a1b2c3d4e5f60718293a4b5c6d7e8f9',
+    slotId,
+    claimText,
+    text,
+    minutes,
+    where: 'plan',
+    planId: plan.id,
+    addedAt: made,
+    ...(doneAt ? { doneAt } : {}),
+  });
+  return {
+    ...plan,
+    createdAt: made,
+    practice: [
+      step('c0ffee00c0ffee00c0ffee00c0ffee11', 's2', 'Built an LLM evaluation harness with 712 attributes', 'Find the run with the clearest result and note what the judge disagreed on.', 20, new Date().toISOString()),
+      step('c0ffee00c0ffee00c0ffee00c0ffee12', 's4', 'Set up Opik traces for the evaluation pipeline', 'Write two lines on which traces you looked at first, and why.', 15),
+      step('c0ffee00c0ffee00c0ffee00c0ffee13', 's5', 'Kept a worst-model regression gate in CI', "Write down which parts of the gate were yours and which weren't.", 10),
+    ],
+  };
+}
+
 const STATES = [
   ['full', 'Full plan'],
   ['stream', 'Arriving'],
@@ -52,6 +80,8 @@ const STATES = [
   ['no-headline', 'No headline'],
   ['conflict', 'Save conflict'],
   ['phone', 'Phone'],
+  ['practice', 'Fix steps from practice'],
+  ['practice-phone', 'Fix steps · phone'],
 ] as const;
 type StateId = (typeof STATES)[number][0];
 
@@ -106,6 +136,10 @@ function sceneFor(id: StateId): Scene {
       return { ...base, mode: 'conflict' };
     case 'phone':
       return { ...base, narrow: true };
+    case 'practice':
+      return { ...base, plan: withPractice(FULL) };
+    case 'practice-phone':
+      return { ...base, plan: withPractice(FULL), narrow: true };
   }
 }
 
@@ -182,6 +216,7 @@ function Stage({ id, onNote }: { id: StateId; onNote: (s: string) => void }) {
         onPlanId={setPlanId}
         onJustThis={(name) => onNote(`Gallery: opens a thread that prepares for just "${name}" (scope requirement). See ?state=requirement.`)}
         onPractice={() => onNote('Gallery: opens Practice · This role (/practice?screen=setup&kind=role&graphRole=<role id>).')}
+        onRedrill={() => onNote('Gallery: opens Re-drill what wobbled (/practice?screen=redrill).')}
         narrow={scene.narrow}
       />
     </>

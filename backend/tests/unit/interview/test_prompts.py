@@ -169,6 +169,7 @@ def test_every_public_name_is_exported() -> None:
         "JUDGE_SYSTEM",
         "PHRASE_SYSTEM",
         "DebriefSlot",
+        "PhraseLast",
         "PhraseSlot",
         "SourceLine",
         "build_assistant_prompt",

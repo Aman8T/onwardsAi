@@ -7,7 +7,8 @@
  * Nothing here knows about the network, the speech services or the DOM.
  */
 import type { InterviewLine, InterviewSession, LineKind, PlanSlot, Turn } from '../../../shared/interview';
-import { LINE_LABEL, minutesLeft } from '../words';
+import { dayLabel } from '../../discover/prepare/words';
+import { LINE_LABEL, WOBBLED_LABEL, backLine, minutesLeft } from '../words';
 import type { SpeechBy } from '../words';
 
 /** Where listening stands. `waiting` is the interviewer still speaking; `paused` is the person's, or a send that did not go. */
@@ -65,6 +66,8 @@ export interface RoomUi {
 export interface Shown {
   kind: LineKind;
   label: string;
+  /** A re-drilled claim's first line: what came back, and how it went last time ("Back from 16 Oct · Shaky"). */
+  back?: { line: string; claim: string; source?: string };
   /** Said before the question, e.g. "I didn't catch that." */
   lead?: string;
   text: string;
@@ -127,9 +130,17 @@ export function deriveRoom(session: InterviewSession, ui: RoomUi): RoomModel {
   // while the reply to "I don't know" is on its own, the progress stays on the question just answered
   const index = done ? total - 1 : gated ? Math.max(0, session.slotIndex - 1) : Math.min(session.slotIndex, total - 1);
   const slot = gated || done ? undefined : (session.slots.find((s) => s.id === line.slotId) ?? session.slots[index]);
+  // a re-drill's first line of a claim: it says what came back, and a push start says it is where it wobbled
+  const first = !gated && !done && line.kind === 'question' && slot?.last !== undefined;
+  const claim = first ? slot?.sources.find((s) => s.origin === 'evidence') : undefined;
+  const back =
+    first && slot?.last
+      ? { line: backLine(slot.last.on, slot.last.verdict, dayLabel), claim: claim?.text ?? slot.topic, ...(claim?.source ? { source: claim.source } : {}) }
+      : undefined;
+  const label = first && line.rung === 'push' ? WOBBLED_LABEL : LINE_LABEL[line.kind];
   const shown: Shown = gated
     ? { kind: line.kind, label: LINE_LABEL.question, text: line.lead ?? line.text }
-    : { kind: line.kind, label: LINE_LABEL[line.kind], ...(line.lead ? { lead: line.lead } : {}), text: line.text };
+    : { kind: line.kind, label, ...(line.lead ? { lead: line.lead } : {}), text: line.text, ...(back ? { back } : {}) };
   const youSaid = gated ? lastYouTurn(session) : line.kind === 'followup' || line.kind === 'floor' ? lastYouTurn(session, line.slotId) : undefined;
   return {
     ...ui,

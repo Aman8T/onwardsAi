@@ -58,6 +58,15 @@ INTERFACE_MODELS: dict[str, type[BaseModel]] = {
     "ClaimBest": iv.ClaimBest,
     "PracticeFact": iv.PracticeFact,
     "PracticeHistory": iv.PracticeHistory,
+    "SlotLast": iv.SlotLast,
+    "PreviousMark": iv.PreviousMark,
+    "RedrillMoved": iv.RedrillMoved,
+    "FixTask": iv.FixTask,
+    "LastMark": iv.LastMark,
+    "RedrillClaim": iv.RedrillClaim,
+    "RedrillView": iv.RedrillView,
+    "FixAdd": iv.FixAdd,
+    "FixUpdate": iv.FixUpdate,
 }
 
 UNIONS = {
@@ -74,6 +83,7 @@ UNIONS = {
     "Speaker": iv.Speaker,
     "StoryPartName": iv.StoryPartName,
     "MaterialKind": iv.MaterialKind,
+    "FixWhere": iv.FixWhere,
 }
 
 
@@ -169,3 +179,31 @@ def test_a_drifted_typescript_file_is_caught() -> None:
         )
     )
     assert narrowed.shape("Verdict") != ("lit", frozenset(get_args(iv.Verdict)))
+
+
+def test_a_redrill_names_at_most_six_claims_of_bounded_length() -> None:
+    """I2: a re-drill asks at most `REDRILL_MAX` claims, each named by its folded evidence line."""
+    keys = [f"claim {i}" for i in range(iv.REDRILL_MAX)]
+    plan = iv.PlanRequest.model_validate({"profileId": "p", "kind": "redrill", "claims": keys})
+    assert plan.claims == keys
+    assert iv.StartRequest.model_validate({"profileId": "p", "kind": "redrill"}).claims is None
+    with pytest.raises(ValidationError):
+        iv.PlanRequest.model_validate({"profileId": "p", "kind": "redrill", "claims": [*keys, "one more"]})
+    with pytest.raises(ValidationError):
+        iv.StartRequest.model_validate(
+            {"profileId": "p", "kind": "redrill", "claims": ["x" * (iv.CLAIM_KEY_MAX_CHARS + 1)]}
+        )
+    assert iv.REDRILL_SHORT < iv.REDRILL_MAX
+
+
+def test_a_fix_step_request_refuses_overlong_ids() -> None:
+    ok = iv.FixAdd.model_validate({"profileId": "p", "sessionId": "s" * 32, "slotId": "s1"})
+    assert ok.planId is None
+    for bad in (
+        {"profileId": "p", "sessionId": "s" * (iv.SESSION_ID_MAX_CHARS + 1), "slotId": "s1"},
+        {"profileId": "p", "sessionId": "s", "slotId": "s" * (iv.SLOT_ID_MAX_CHARS + 1)},
+        {"profileId": "p", "sessionId": "s", "slotId": "s1", "planId": "x" * (iv.PLAN_ID_MAX_CHARS + 1)},
+    ):
+        with pytest.raises(ValidationError):
+            iv.FixAdd.model_validate(bad)
+    assert iv.FixUpdate.model_validate({"profileId": "p", "done": True}).done is True

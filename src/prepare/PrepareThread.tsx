@@ -20,7 +20,7 @@ import { ReadAsText } from './blocks/ReadAsText';
 import { MoveSkeleton, PlanSkeleton, StandingSkeleton } from './blocks/Skeletons';
 import { Standing } from './blocks/Standing';
 import { evidenceIndex, planText } from './plan';
-import { bindRun, getRun, retrySave, runKey, startRun, stopRun, updateState, usePrepareRun } from './runs';
+import { bindRun, getRun, retrySave, runKey, startRun, stopRun, tickPractice, updateState, usePrepareRun } from './runs';
 import '../styles/prepare.css';
 
 export interface PrepareThreadProps {
@@ -36,11 +36,13 @@ export interface PrepareThreadProps {
   onJustThis?: (requirement: string) => void;
   /** The Practice action. */
   onPractice: () => void;
+  /** Re-drill what wobbled, from a ticked Fix step (I2); absent: no link. */
+  onRedrill?: () => void;
   /** Phone width: the jump bar, the phone's plan list and sticky move actions. */
   narrow: boolean;
 }
 
-export function PrepareThread({ client, profileId, roleId, requirement, planId, onPlanId, onJustThis, onPractice, narrow }: PrepareThreadProps) {
+export function PrepareThread({ client, profileId, roleId, requirement, planId, onPlanId, onJustThis, onPractice, onRedrill, narrow }: PrepareThreadProps) {
   const key = runKey(profileId, roleId, requirement);
   const run = usePrepareRun(key);
 
@@ -134,6 +136,10 @@ export function PrepareThread({ client, profileId, roleId, requirement, planId, 
             narrow={narrow}
             phaseIndex={phaseIndex}
             onPhase={(i) => setPhase({ moveId: move.id, index: i })}
+            {...(plan.practice ? { practice: plan.practice } : {})}
+            createdAt={plan.createdAt}
+            onPracticeTick={(task, done) => tickPractice(key, task.id, done)}
+            {...(onRedrill ? { onRedrill } : {})}
             onHours={(h) => updateState(key, (s) => (s.hoursPerWeek === h ? s : { ...s, hoursPerWeek: h }))}
             onTask={(taskKey, done) =>
               updateState(key, (s) => {
