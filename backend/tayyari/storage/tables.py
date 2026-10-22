@@ -901,8 +901,48 @@ class WeeklyEditionRow(Base):
     )
 
 
+CARD_SLUG_LEN = 12
+"""A card's public link: 12 characters of ``[a-z0-9]`` (``secrets.choice``)."""
+CARD_THEME_LEN = 12
+CARD_VERSION_LEN = 8
+"""The first 8 hex characters of the sha256 of what the card draws."""
+CARD_ROLE_TITLE_LEN = 200
+
+
+class CardSnapshotRow(Base):
+    """One account's radar card (R1): what the card draws, copied from the account's newest profile, and whether it is shared.
+    ``areas`` is ``[{id, name, short, score, roleTarget?}]`` in the graph's order and ``skills`` ``[{id, name, score}]`` (at
+    most three): nothing else of the profile, never evidence. ``slug`` is the public link, NULL while the card is not shared
+    and new each time sharing is turned on; ``version`` changes only when the drawn content does, and names the LinkedIn
+    image; ``updated_at`` moves with it (it is the date printed on the card), so changing the theme or the link leaves it.
+    The row goes with its account (ON DELETE CASCADE), and with the profile it was drawn from."""
+
+    __tablename__ = "card_snapshots"
+
+    user_id: Mapped[str] = mapped_column(
+        String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"))
+    slug: Mapped[str | None] = mapped_column(String(CARD_SLUG_LEN))
+    shared: Mapped[bool] = mapped_column(Boolean)
+    theme: Mapped[str] = mapped_column(String(CARD_THEME_LEN))
+    areas: Mapped[list[dict[str, Any]]] = mapped_column(JSONType)
+    skills: Mapped[list[dict[str, Any]]] = mapped_column(JSONType)
+    role_id: Mapped[str | None] = mapped_column(String(ROLE_ID_LEN))
+    role_title: Mapped[str | None] = mapped_column(String(CARD_ROLE_TITLE_LEN))
+    version: Mapped[str] = mapped_column(String(CARD_VERSION_LEN))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (UniqueConstraint("slug", name="uq_card_snapshots_slug"),)
+
+
 __all__ = [
     "BAND_LEN",
+    "CARD_ROLE_TITLE_LEN",
+    "CARD_SLUG_LEN",
+    "CARD_THEME_LEN",
+    "CARD_VERSION_LEN",
     "CLAIM_KEY_LEN",
     "CLAIM_MARK_ID_LEN",
     "CLAIM_QUESTION_LEN",
@@ -922,6 +962,7 @@ __all__ = [
     "WEEKLY_TOKEN_LEN",
     "AuthSessionRow",
     "Base",
+    "CardSnapshotRow",
     "ChatMessageRow",
     "ChatSessionRow",
     "ClaimMarkRow",

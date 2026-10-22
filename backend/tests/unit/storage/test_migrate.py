@@ -59,6 +59,7 @@ EXPECTED_TABLES = {
     "weekly_subscriptions",
     "weekly_editions",
     "claim_marks",
+    "card_snapshots",
 }
 
 

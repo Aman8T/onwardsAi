@@ -216,6 +216,13 @@ class GuardSettings(BaseModel):
     is not counted: nothing is written by a model for it."""
     weekly_global_per_hour: int = Field(default=120, ge=0)
     """Backstop on editions built on demand per hour across all clients (shared counter)."""
+    card_per_minute: int = Field(default=120, ge=0)
+    card_per_day: int = Field(default=2000, ge=0)
+    """Requests for a shared radar card (``/r/{slug}.svg``, ``/og/{slug}-{version}.png``, ``/u/{slug}``) one client address may
+    make per window (0 = the window is not enforced). Nothing is paid for: the limits stop a client walking through links."""
+    card_global_per_hour: int = Field(default=0, ge=0)
+    """Backstop on those requests per hour across all clients (0 = not enforced: the images are cached for an hour by every
+    proxy in front of them, GitHub's included, and drawing one calls no model)."""
     est_weekly_usd: float = Field(default=0.06, ge=0)
     """Spend reserved around the paid part of one edition: up to three web searches (a cent each), one structured call for the
     news and one read of the lead opening."""
@@ -699,6 +706,15 @@ _SECRET_FIELDS = (
 )
 
 
+class CardSettings(BaseModel):
+    """The radar card (R1): ``TAYYARI_CARD__*``. No secrets."""
+
+    report_email: str = "aman@leafout.in"
+    """Where "Report this card" on a card's public page writes to (a ``mailto:`` link)."""
+    png_cache_size: int = Field(default=256, ge=0)
+    """LinkedIn pictures kept drawn in memory, by link and version (0 = draw every time)."""
+
+
 class HandoffSettings(BaseModel):
     """The hand-off from the marketing site (a resume, links and a goal posted to ``/api/handoff``, taken once by the app):
     `TAYYARI_HANDOFF__*`. No secrets."""
@@ -921,6 +937,7 @@ class Settings(BaseSettings):
     speech: SpeechSettings = Field(default_factory=SpeechSettings)
     handoff: HandoffSettings = Field(default_factory=HandoffSettings)
     weekly: WeeklySettings = Field(default_factory=WeeklySettings)
+    card: CardSettings = Field(default_factory=CardSettings)
 
     synth_hints: bool = False
     """Feed the first-read results to the synthesizer as hints (off: they are stored for comparison only)."""

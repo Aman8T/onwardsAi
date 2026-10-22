@@ -36,6 +36,9 @@ if (pathname.startsWith('/p/')) {
 } else if (import.meta.env.DEV && pathname === '/dev/prepare') {
   // every state of a Prepare thread on stored fixtures: no server, no account
   Root = lazy(() => import('./prepare/dev/PrepareGallery').then((m) => ({ default: m.PrepareGallery })));
+} else if (import.meta.env.DEV && pathname === '/dev/card') {
+  // every state of the radar card's share sheet on stored fixtures: no server, no account
+  Root = lazy(() => import('./card/dev/CardGallery').then((m) => ({ default: m.CardGallery })));
 } else if (import.meta.env.DEV && pathname === '/dev/weekly') {
   // every state of The Leafout Weekly on stored fixtures: no server, no account
   Root = lazy(() => import('./weekly/dev/WeeklyGallery').then((m) => ({ default: m.WeeklyGallery })));

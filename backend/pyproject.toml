@@ -24,6 +24,7 @@ dependencies = [
     "razorpay>=2.0.1",
     "requests>=2.34.2",
     "sarvamai==0.1.37",
+    "resvg-py>=0.5.0",
 ]
 
 # Deliberately no [build-system]: FastAPI Cloud installs the locked dependencies from uv.lock and

@@ -10,6 +10,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { Profile } from '../../../shared/types';
 import { AccountMenu } from '../../auth/AccountMenu';
 import { Atmosphere } from '../../components/Atmosphere';
+import { ShareButton } from '../../card/ShareButton';
 import { Brand } from '../../components/Brand';
 import { EASE, cssVars, plural, timeAgo, useNow } from '../../lib/ui';
 import { freeAction } from '../../lib/prompts';
@@ -153,6 +154,7 @@ export function GraphHeader({ profile }: { profile: Profile }) {
         >
           Practice
         </button>
+        <ShareButton profileId={profile.id} />
         <button type="button" className="btn btn-quiet gv-ask" aria-label="Ask Leafout" onClick={() => actions.openChat(freeAction().origin, '')}>
           Ask
         </button>

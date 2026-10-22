@@ -32,6 +32,8 @@
     WeeklyService                                 (The Leafout Weekly: subscriptions, editions built from the reader's graph and
                                                    emailed on their day; the guarded Claude client for the news and the lead's
                                                    read, the spend guard around them, the mail provider when a key is set)
+    CardService                                   (the radar card: the owner's settings and link, the snapshot drawn from the
+                                                   newest profile; no model)
     match_anonymous                               (may a visitor with no sign-in match a posting: the setting
                                                    resolved against the sign-in methods this server offers)
     maintenance                                   (retention purge, a tracked background task; it keeps
@@ -93,6 +95,8 @@ if TYPE_CHECKING:
     from tayyari.auth.service import AuthService
     from tayyari.billing.entitlements import EntitlementService
     from tayyari.billing.service import BillingService
+    from tayyari.card.png import CardPictures
+    from tayyari.card.service import CardService
     from tayyari.discover.service import DiscoverService
     from tayyari.handoff.service import HandoffService
     from tayyari.interview.service import InterviewService
@@ -136,6 +140,7 @@ class ContainerOverrides:
     - ``jobsearch``, ``interview``, ``prepare``: the job search, practice interview and prepare services themselves.
     - ``handoff``: the marketing-site hand-off service itself.
     - ``weekly``: The Leafout Weekly service itself (``mailer`` also stands in for its mail provider).
+    - ``card``: the radar card service itself.
     - ``speech``: the speech service itself. ``speech_engine``: just its engine (the service is still built here, over the
       real ``kv`` budget); giving one switches Sarvam speech on without a ``SARVAM_API_KEY`` (the
       ``TAYYARI_SPEECH__ENABLED`` kill switch still wins). Tests hand in a fake engine; nothing calls Sarvam.
@@ -171,6 +176,7 @@ class ContainerOverrides:
     prepare: PrepareService | None = None
     handoff: HandoffService | None = None
     weekly: WeeklyService | None = None
+    card: CardService | None = None
     razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
 
@@ -261,6 +267,10 @@ class Container:
     weekly: WeeklyService
     """The Leafout Weekly. The routes count an edition built on demand in the ``weekly`` window; the paid part of a build
     reserves ``est_weekly_usd`` itself; every Claude call goes through the guarded client."""
+    card: CardService
+    """The radar card's owner side. No model is called; the public routes count in the ``card`` window."""
+    card_pictures: CardPictures
+    """The radar card's LinkedIn pictures, drawn by resvg off the event loop and kept in memory by link and version."""
     rate_limiter: RateLimiter
     spend_guard: SpendGuard
     ip_hash_key: bytes
@@ -303,6 +313,8 @@ class Container:
         from tayyari.billing.razorpay import RazorpayGateway
         from tayyari.billing.service import BillingService
         from tayyari.billing.stripe_gw import StripeGateway
+        from tayyari.card.png import CardPictures
+        from tayyari.card.service import CardService
         from tayyari.chat.service import CoachChatService
         from tayyari.decisions.packs.service_impl import JevDecisionService
         from tayyari.discover.service import DiscoverService
@@ -698,6 +710,18 @@ class Container:
                     paid_cap=settings.weekly.max_paid_editions_per_week,
                 )
 
+            card = (
+                ov.card
+                if ov.card is not None
+                else CardService(
+                    profiles=repos.profiles,
+                    users=repos.users,
+                    cards=repos.card,
+                    clock=clock,
+                    public_url=settings.auth.public_url,
+                )
+            )
+
             match_anonymous = settings.match.anonymous_allowed(auth.providers)
             log.info(
                 "match_anonymous",
@@ -714,7 +738,7 @@ class Container:
                 sample_id = sample.sample_profile_id()
                 keep = {sample_id} if sample_id else set()
                 maintenance = asyncio.create_task(
-                    _maintenance_loop(db, settings, clock, keep), name="tayyari-maintenance"
+                    _maintenance_loop(db, settings, clock, keep, card), name="tayyari-maintenance"
                 )
             if settings.weekly.enabled:
                 weekly_loop = asyncio.create_task(_weekly_loop(weekly, settings), name="tayyari-weekly")
@@ -752,6 +776,8 @@ class Container:
             prepare=prepare,
             handoff=handoff,
             weekly=weekly,
+            card=card,
+            card_pictures=CardPictures(settings.card.png_cache_size),
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,
             ip_hash_key=ip_hash_key,
@@ -796,9 +822,14 @@ async def _run_closers(closers: list[tuple[str, _Closer]]) -> None:
 
 
 async def _maintenance_loop(
-    db: Database, settings: Settings, clock: Clock, keep_profile_ids: Collection[str] = ()
+    db: Database,
+    settings: Settings,
+    clock: Clock,
+    keep_profile_ids: Collection[str] = (),
+    card: CardService | None = None,
 ) -> None:
-    """Retention purge shortly after startup and then every few hours. Never raises (except cancellation).
+    """Retention purge shortly after startup and then every few hours, then the radar cards whose account has a newer
+    profile are redrawn (so a shared card follows the graph within a day). Never raises (except cancellation).
 
     ``keep_profile_ids`` are the sample profiles the purge leaves alone (the bundled persona).
     """
@@ -808,6 +839,13 @@ async def _maintenance_loop(
             await run_maintenance(db, settings, clock.now(), keep_profile_ids=keep_profile_ids)
         except Exception:
             log.error("maintenance_failed", exc_info=True)
+        if card is not None:
+            try:
+                moved = await card.refresh_all()
+                if moved:
+                    log.info("cards_refreshed", moved=moved)
+            except Exception:
+                log.error("card_refresh_failed", exc_info=True)
         # Real time on purpose: a test clock that "sleeps" instantly would turn this into a busy loop.
         await asyncio.sleep(MAINTENANCE_INTERVAL_S)
 

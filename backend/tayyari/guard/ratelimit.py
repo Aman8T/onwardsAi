@@ -43,6 +43,10 @@ route answers a refusal with a redirect that carries the code ``rate``, never a 
 ``weekly`` (an edition of The Leafout Weekly built on demand, ``POST /api/weekly/editions/preview``; returning one already built
 is free) is counted per address and per account in an hour and a day window, with ``weekly:global:hour``.
 
+``card`` (a shared radar card's image, picture or page: ``/r/{slug}.svg``, ``/og/{slug}-{version}.png``, ``/u/{slug}``) is
+counted per address in a minute and a day window, with ``card:global:hour`` (off by default); nothing is paid for, the limits
+stop a client walking through links. The random slug is the real defence.
+
 `shed(route, ip_hash, ip_hash_48)` runs step 1 alone, synchronously, so a route can turn hammering away before it
 reads the request body; it then calls ``check(..., memory=False)`` after validating, so one request takes one
 token. Callers that do not know the /48 simply omit ``ip_hash_48``; behaviour is then exactly as before.
@@ -89,6 +93,7 @@ Route = Literal[
     "auth_bridge",
     "handoff",
     "weekly",
+    "card",
 ]
 WindowName = Literal["min", "hour", "day"]
 
@@ -104,6 +109,7 @@ GLOBAL_PREPARE_BUCKET = "prepare:global:hour"
 GLOBAL_AUTH_BRIDGE_BUCKET = "auth_bridge:global:hour"
 GLOBAL_HANDOFF_BUCKET = "handoff:global:hour"
 GLOBAL_WEEKLY_BUCKET = "weekly:global:hour"
+GLOBAL_CARD_BUCKET = "card:global:hour"
 SUBNET_LIMIT_FACTOR = 4
 """An IPv6 /48 may use this many times the per-IP limit (a /64 is one household, a /48 is up to 65,536)."""
 
@@ -219,6 +225,9 @@ _MESSAGES: dict[tuple[str, str], str] = {
     ("weekly", "hour"): "You've asked for a lot of editions this hour. Please try again in {wait}.",
     ("weekly", "day"): "You've reached today's limit for editions. It resets in {wait}.",
     ("weekly", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
+    ("card", "min"): "Too many cards at once. Please wait {wait}.",
+    ("card", "day"): "That's a lot of cards for one day. More in {wait}.",
+    ("card", "global"): "Tayyari is very busy right now. Please try again in {wait}.",
 }
 
 
@@ -296,6 +305,8 @@ class RateLimiter:
             )
         elif route == "weekly":
             limits = (("hour", s.weekly_preview_per_hour), ("day", s.weekly_preview_per_day))
+        elif route == "card":
+            limits = (("min", s.card_per_minute), ("day", s.card_per_day))
         elif route == "prepare":
             limits = (
                 ("min", s.prepare_per_minute),
@@ -345,6 +356,7 @@ class RateLimiter:
             "auth_bridge": (GLOBAL_AUTH_BRIDGE_BUCKET, s.auth_bridge_global_per_hour),
             "handoff": (GLOBAL_HANDOFF_BUCKET, s.handoff_global_per_hour),
             "weekly": (GLOBAL_WEEKLY_BUCKET, s.weekly_global_per_hour),
+            "card": (GLOBAL_CARD_BUCKET, s.card_global_per_hour),
         }
         return rules[route]
 
@@ -497,6 +509,7 @@ class RateLimiter:
 __all__ = [
     "GLOBAL_ANALYZE_BUCKET",
     "GLOBAL_AUTH_BRIDGE_BUCKET",
+    "GLOBAL_CARD_BUCKET",
     "GLOBAL_CHAT_BUCKET",
     "GLOBAL_HANDOFF_BUCKET",
     "GLOBAL_INTERVIEW_BUCKET",

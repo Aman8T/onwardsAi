@@ -50,9 +50,11 @@ from tayyari.contract.auth import (
 )
 from tayyari.core.errors import Conflict, NotFound
 from tayyari.core.ids import is_valid_id
+from tayyari.core.logging import get_logger
 from tayyari.storage.ports import ProfileNotClaimable, ProfileOwnedByAnother
 
 router = APIRouter()
+log = get_logger(__name__)
 
 NO_STORE = {"Cache-Control": "no-store"}
 PROFILE_NOT_FOUND = "Profile not found"
@@ -155,6 +157,11 @@ async def claim_profile(request: Request) -> JSONResponse:
         raise NotFound(PROFILE_NOT_FOUND) from None
     except ProfileOwnedByAnother:
         raise Conflict(PROFILE_TAKEN, code="profile_taken") from None
+    try:
+        # A claimed profile may now be the account's newest: its radar card follows it (a failure never undoes the claim).
+        await container.card.refresh(user.id)
+    except Exception:
+        log.warning("card_refresh_after_claim_failed", exc_info=True)
     return _json(await me_response(container, user))
 
 

@@ -31,6 +31,10 @@ export default defineConfig({
     port: Number(process.env.PORT ?? 5173),
     proxy: {
       '/api': { target: `http://localhost:${API_PORT}`, changeOrigin: true },
+      // the radar card's public addresses (README image, LinkedIn picture, its page), served by the API
+      '/r/': { target: `http://localhost:${API_PORT}`, changeOrigin: true },
+      '/og/': { target: `http://localhost:${API_PORT}`, changeOrigin: true },
+      '/u/': { target: `http://localhost:${API_PORT}`, changeOrigin: true },
     },
   },
 });

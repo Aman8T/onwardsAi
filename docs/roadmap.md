@@ -18,7 +18,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | M2 | Posting-match persistence and routes, guard, entitlement checks | F1, M1 | Sonnet | committed 03988c7, deployed 2026-10-12 |
 | M3 | Posting-match frontend (Paste, Match, Resume, Cover, Pricing, sign-in) | M1 contract (mock data), then M2 | Sonnet | committed 03988c7, deployed 2026-10-12 |
 | T | Tests, docs, walkthrough steps, `.env.example`, README | each wave | Haiku | committed 03988c7, deployed 2026-10-12 |
-| R1 | Shareable radar card (SVG + OG PNG) | F1 | later | not started |
+| R1 | Shareable radar card (SVG + OG PNG) | F1 | Opus + Sonnet | designed 2026-10-23, spec written, not started |
 | I1 | Evidence-grounded mock interview (practice) | M2, D3 | Opus + Sonnet | committed 659b7d6, deployed 2026-10-17 |
 | P1 | Prepare: "help me prepare" answered as typed blocks, not text | the graph's roles | Opus + Fable | designed 2026-10-18, building |
 | I2 | Re-drill weak claims, and Fix steps into Prepare | I1, P1 | Opus + Sonnet | designed 2026-10-22, spec written, not started |
@@ -168,7 +168,7 @@ Each wave ends with: `npm run check:all` green, new tests for every new unit, a 
 
 ## Later waves (specs to be written when reached)
 
-- **R1 · Radar card.** `GET /r/{slug}.svg` from a `card_snapshots` row written when a profile finishes; random revocable slug, no upstream calls, camo-compatible CSP, `/og/{slug}.png` through `resvg-py`, server-rendered `/u/{slug}` landing with OG tags. Research §3.12 has the full design.
+- **R1 · Radar card.** Specified below (R1 · The radar card).
 - **I1 · Grounded mock interview** (designed 2026-10-16; see the I1 section below). Claim ledger from facts + git-history decision signals; slot blueprint allocated by code; Surface/Push/Floor ladders; verdicts Defended/Shaky/Couldn't defend/Not assessed with verbatim-quote checks; Say/Avoid/Fix cards; readiness computed in code. Research §4.7.
 - **X1 · Skills table.** Seed from ESCO digital skills and O*NET software skills; aliases; `pending_review` for LLM-proposed skills; canonical ids on requirements and facts; NCO code crosswalk via ISCO-08 shown on Indian government roles.
 - **Growth.** A thin Claude Code skill calling `/api/match`; `/gh/<username>` zero-upload entry; README-as-landing-page launch kit.
@@ -697,6 +697,195 @@ Each wave ends with `npm run check:all` green and a report of what was verified 
 **Open for the user:**
 - **"Use this wording" on "Or say less".** In this wave it keeps the line as a fact marked "From you", recording which resume line it replaces. Having the tailored-resume builder prefer it over the original line is a change in `match/`, listed as a follow-up. Decide whether that belongs in this wave.
 - **The "All" cap:** 6 claims (about 18 minutes).
+
+## R1 · The radar card (share proof)
+
+**Designed 2026-10-23; the user said yes the same day.** Canvas https://claude.ai/artifact/LG8rk27K2RfG68giTXcoX5, eight boards:
+- the card in a README (interactive), and the card component every board uses;
+- the share sheet from the graph (interactive), and the share sheet on a phone;
+- the LinkedIn image (1200 × 627) and the page the card links to (`/u/{slug}`);
+- themes and edges, and how it is served.
+
+The research is `docs/research/open-source-resume-tools.md` §3.12, the github-readme-stats mechanics. The product reason is `project-soul.md` 6 ("Lets them share proof") and "Distribution is earned, not bought".
+
+**What it is.** A person's skill shape as an image for a GitHub README, and as a large picture when the link is posted on LinkedIn. Both are drawn by code from a snapshot of their graph.
+
+**On the card:**
+- the graph's areas in their fixed order, on the same leaf radar the app draws, each with its 0–100 score;
+- optionally up to three skills the person picks (name and score);
+- optionally one role of their graph, as a lighter dashed outline of what it expects;
+- "Every score rests on cited evidence" and the snapshot's date.
+
+**Never on the card or its page:**
+- evidence text or a resume line;
+- the person's name, email, username or profile id;
+- a rank, percentile or "Top X%" (there is no cohort);
+- a match percentage.
+
+### The rules the design holds to
+
+- **The link.** A random 12-character slug (`[a-z0-9]`, `secrets.choice`), made each time sharing is turned on. "Make a new link" replaces it, and the old one stops at once. It is the only key: never a username, never a profile id.
+- **Who can share.** An account that owns the profile, through `ProfileAccess.user_id`, the same rule as `require_profile_access`. The shared sample cannot share, and neither can an anonymous graph, because nobody could turn it off. Both get a sentence and "Analyse my resume" or "Sign in", never a switch.
+- **One card per account,** drawn from the account's newest owned profile (`users.list_profiles(user, 1)`), because analysing again makes a new profile.
+- **Code computes everything on it.**
+  - The areas, their scores and their order come from `Profile.domains`. A rim label is `Domain.short`, falling back to `name` and clipped at 14 characters.
+  - A role's outline per area is the mean `target` of that role's requirements whose skill sits in the area (by `skillId`, then by skill name). On an axis where the role names nothing, the outline follows the person's own score, so it adds nothing there.
+  - The OG image's headline, "Strongest in {area}", is the highest-scoring area; a tie goes to the first in the graph's order.
+- **Shape rules** (`design.md` §6):
+  - Between 3 and 8 areas the card is a radar on the leaf.
+  - With fewer than 3 it is bars with no leaf.
+  - With more than 8, the 8 highest-scoring areas are kept, in the graph's order.
+- **The README card does not move.** GitHub's proxy and readers expect a still picture, so there is no breathing and no heartbeat. The in-app preview may breathe, like every radar.
+
+### Contract
+
+`shared/card.ts` ⇄ `backend/tayyari/contract/card.py`, with a parity test as for the other contracts.
+
+- Literal unions:
+  - `CardTheme 'light' | 'dark' | 'transparent' | 'match'` (`match` only in settings: the snippet becomes a `<picture>`);
+  - `CardSize 'md' | 'sm'`;
+  - `CardBlocked 'sample' | 'anonymous'`.
+- `CardArea { id, name, short, score, roleTarget? }`: `roleTarget` only when a role is chosen.
+- `CardSkill { id, name, score }`.
+- `CardRole { id, title }`.
+- `CardSettings { shared: boolean; skills: string[] (≤ 3 skill ids); roleId?: string; theme: CardTheme }`.
+- `CardView`, the owner's view:
+  - `{ settings, areas: CardArea[], skillsOffered: CardSkill[] (the top 8 by score), rolesOffered: CardRole[], blocked?: CardBlocked }`;
+  - while shared, also `slug, pageUrl, svgUrl, ogUrl, markdown, updatedAt`.
+- `CardUpdate { profileId, shared, skills, roleId?, theme }`.
+- `CardNewLink { profileId }`.
+
+### Storage
+
+**Table `card_snapshots`.** Migration `0015_card_snapshots.py`, additive. `CardSnapshotRow` in `storage/tables.py`, `CardRepo` in `storage/ports.py`, `storage/repos/card.py`, and a fake in `tests/fakes`.
+
+| Column | Type | Note |
+|---|---|---|
+| `user_id` | str, PK, FK `users.id` cascade | one card per account; it goes with the account |
+| `profile_id` | str, FK `profiles.id` cascade | the profile it was drawn from |
+| `slug` | str 12, unique, nullable | NULL while not shared |
+| `shared` | bool | |
+| `theme` | str 12 | the default when the URL names none |
+| `areas` | JSON | `[{name, short, score, roleTarget?}]` in the graph's order: nothing else from the profile |
+| `skills` | JSON | `[{name, score}]`, at most 3 |
+| `role_id`, `role_title` | str, nullable | |
+| `version` | str 8 | the first 8 hex characters of the sha256 of the drawn content; it names the PNG |
+| `created_at`, `updated_at` | timestamps | |
+
+Indexes: unique `(slug)`.
+
+- **Refreshed in code** (`CardService.refresh(user_id)`):
+  - when the owner changes a setting;
+  - when a profile is claimed by the account (the claim route in `api/routes/me.py`);
+  - when the owner opens `GET /api/card` and their newest profile is not the snapshot's;
+  - by a daily maintenance step for snapshots whose account has a newer profile. That keeps the canvas's "changes within a day".
+- **The version** changes only when the drawn content changes, so a PNG URL stays stable until the shape does.
+- **Retention:** none of its own. It goes with the account; a slug turned off is NULL.
+
+### Routes
+
+**The owner's routes** (`api/routes/card.py`, JSON, `no-store`, `require_profile_access`, and the account must own the profile):
+- `GET /api/card?profileId=` → `CardView`, with `blocked` for the sample or an anonymous profile.
+- `PUT /api/card` `CardUpdate` → `CardView`. It checks that skills are among those offered and the role is on the graph. Turning sharing on makes a slug; turning it off clears it.
+- `POST /api/card/new-link` `CardNewLink` → `CardView`, with a new slug.
+- These shed in the `chat` bucket and call no model.
+
+**Public routes,** answered before the SPA in `api/static.py` (none is an `APP_ROUTE`):
+- `GET /r/{slug}.svg?theme=&size=&compare=`, `image/svg+xml`:
+  - `theme` and `size` override the stored theme and the `md` default;
+  - `compare` is honoured only when it names the stored role;
+  - an unknown or stopped slug, or a slug of the wrong shape, gets a 200 neutral card, "This card isn't shared any more" (5-minute cache);
+  - a failure gets a 200 "The card can't be drawn right now" (10-minute cache).
+- `GET /og/{slug}-{version}.png`, 1200 × 627 `image/png`. A wrong version answers 301 to the current one; an unknown slug gets the neutral image.
+- `GET /u/{slug}`: a server-rendered HTML page with
+  - the card, the areas table and "How this was made";
+  - "See your own skill shape" and "Report this card" (a `mailto:` to `TAYYARI_CARD__REPORT_EMAIL`);
+  - `og:title` "Strongest in {area}", `og:image` the versioned PNG, `twitter:card summary_large_image`, `robots noindex`;
+  - an unknown slug gets a plain 404 page.
+
+**Headers:**
+- SVG and PNG: `Cache-Control: public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400`, an `ETag` from the version (304 on match), and `X-Content-Type-Options: nosniff`.
+- The SVG also carries `Content-Security-Policy: default-src 'none'; img-src data:; style-src 'unsafe-inline'`, mirroring GitHub's image proxy. The middleware's API CSP must not override it (`api/security.py`: `setdefault` already keeps a route's own header; a test proves it).
+- `/u/{slug}`: the page CSP, with no scripts.
+
+**Guard:** a new `card` window per address on the three public routes (120 a minute, 2,000 a day), and `shed` before the slug is read. The random slug is the defence against walking through cards. Unlimited accounts change nothing here: public routes have no account.
+
+### Rendering
+
+- **`card/geometry.py`:** the app's radar geometry in Python, `radarGeom`, `polygonPath`, `ringPath` and `radarLeaf` from `src/lib/radar.ts`, number formatting included.
+  - A parity fixture keeps the two from drifting: `scripts/radar-parity.ts` writes the TypeScript paths for 3 to 8 axes at fixed values into `backend/tests/data/card/radar-paths.json`, and a Python test compares.
+  - The script joins `npm run check`.
+- **`card/svg.py`:** string templates for the `md` (480 × 330) and `sm` (340 × 190) cards and the three themes. The colours are the light and dark tokens' hex values written into the SVG. That needs no exception, because the restraint check scans `src/` only.
+  - Every text node goes through `xml.sax.saxutils.escape`.
+  - Long names are clipped with a per-character width table for the system font stack (github-readme-stats' method).
+  - Fonts: `-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif`. The card holds no `<script>`, `<image>`, `href`, `url(`, `@import` or `@font-face`, and stays under 20 KB.
+- **`card/png.py`:** `resvg-py` (a new dependency, added by the orchestrator) renders the wide 1200 × 627 SVG with one bundled font, Geist (OFL), in `backend/tayyari/card/fonts/`.
+  - It runs in `asyncio.to_thread` and is cached in memory by `(slug, version)` (LRU of 256).
+  - A first render takes about 50 ms, to be measured.
+- **`card/page.py`:** the `/u/{slug}` HTML, a string template with escaping, linking `site/site.css`. The SEO pages' stylesheet already ships.
+
+### Checks and tests
+
+- **Geometry:** the parity fixture, at 3 to 8 axes.
+- **The SVG** (known-bad fixtures and properties):
+  - built from a profile whose evidence lines hold unique markers, no marker appears in the SVG or on `/u`;
+  - an area named `<script>alert(1)</script>` comes out escaped, and the SVG parses as XML;
+  - no forbidden construct (the list under Rendering);
+  - under 20 KB at 8 areas, 3 skills and a role;
+  - no `%`, "rank", "top" or "percentile" in its text;
+  - fewer than 3 areas gives bars and no leaf.
+- **The service:**
+  - the sample and an anonymous profile are refused, and so is another account's profile;
+  - skills outside the offered ones, and a role not on the graph, are a 400;
+  - turning sharing on and off sets and clears the slug, and a new link stops the old one;
+  - the version changes only with content;
+  - a refresh picks up the account's newest profile.
+- **Routes:**
+  - unknown, stopped and malformed slugs all give a 200 neutral SVG;
+  - the headers, and a 304 on an `ETag` match;
+  - `compare` is ignored unless it is the stored role;
+  - the PNG is 1200 × 627, with a 301 from an old version;
+  - `/u` has its OG tags, escaped, and a 404 for an unknown slug;
+  - the `card` window counts.
+- **Frontend:** `npm run check`, and `/dev/card` holds every state of the boards (sheet off and on, each tab, the phone sheet, the sample, anonymous, an error).
+
+### Waves and files
+
+Contract, ports, routes and names freeze at the end of R1a; then R1b and R1c run in parallel.
+
+- **R1a · contract, storage, drawing** (Sonnet, with Opus for `svg.py`):
+  - contract: `contract/card.py`, `shared/card.ts`;
+  - storage: migration `0015`, `storage/repos/card.py`, `tests/fakes/card.py`;
+  - drawing: `card/geometry.py`, `card/svg.py`, `card/service.py`, `scripts/radar-parity.ts` and its fixture;
+  - tests.
+  - Shared files, edited by this wave alone: `storage/tables.py`, `storage/ports.py`, the repository bundles, `container.py`, the layering test (`card` sits with the services and imports nothing model-calling).
+- **R1b · public routes and the PNG** (Sonnet):
+  - `api/routes/card.py` (registered in `api/routes/__init__.py`), the public routes before the SPA in `api/static.py`;
+  - the guard window `card` (`guard/ratelimit.py`, settings, `.env.example`);
+  - `card/png.py`, `card/page.py`, the bundled font;
+  - the claim hook in `api/routes/me.py`, and the maintenance step in `storage/maintenance.py`;
+  - integration tests.
+  - **The orchestrator first adds `resvg-py` to `pyproject.toml`.**
+- **R1c · the share sheet** (Sonnet):
+  - `src/card/`: the sheet and the API client.
+  - The preview: once sharing is on, it is the real SVG (`<img src="/r/{slug}.svg?…">`, same origin, allowed by `img-src 'self'`), so the screen shows exactly what others see. Before that, a token-drawn preview with `components/Radar.tsx`'s geometry.
+  - a "Share my skill shape" button in `views/graph/GraphHeader.tsx`, a bottom sheet under 760 px;
+  - `/dev/card`.
+  - It builds against the frozen contract and fixtures.
+- **T · docs** (Haiku):
+  - `docs/backend.md` (a "Radar card" section, the table, the routes);
+  - `docs/seo.md`: `/u` pages carry `summary_large_image`; the site's own pages are unchanged;
+  - `scripts/walkthrough.md` (a step);
+  - `CLAUDE.md` Status.
+
+Each wave ends with `npm run check:all` green and a report of what was verified and what was not. No commit, deploy or secret until the user says.
+
+**The user's decisions (2026-10-23):**
+- **"Match the page": yes.** The share sheet's theme choice gains "Match the page". The GitHub tab's snippet is then a `<picture>` element: a `<source media="(prefers-color-scheme: dark)">` with `?theme=dark`, and the light card as the `<img>`, wrapped in the link to `/u/{slug}`. GitHub READMEs support this. The stored theme is `match`, which `/r/…svg` draws as light, and the LinkedIn image stays light. `CardTheme` gains `'match'` for settings only; the SVG route still takes `light`, `dark` or `transparent`.
+- **"Report this card"** is `mailto:aman@leafout.in?subject=Report%20card%20{slug}`, with the address in `core/settings.py` (`TAYYARI_CARD__REPORT_EMAIL`, default `aman@leafout.in`) so it can change without a code edit.
+- **Indexing `/u` pages: later.** They ship with `noindex`, revisited once there are cards to judge by.
+
+---
 
 ## L1 · Sign in to the app with the Leafout account
 

@@ -1,0 +1,790 @@
+/*
+ * The radar card: the share sheet (src/card/), the card drawn in the app's colours, and the dev page.
+ * Every class is prefixed "cs-" (and "gv-share" for the graph header's button). Tokens only (src/theme/tokens.css);
+ * depth comes from tone and a 1px hairline, never a shadow; motion is a colour or a short slide on a transform.
+ * Wide screens get a centred dialog, narrow ones (<= 760px) a bottom sheet, the same rule every popover follows.
+ */
+
+/* ───────────── the graph header's button ───────────── */
+
+.gv-share-short {
+  display: none;
+}
+
+/* The header is full: the button shortens before it pushes the Now / Next control around. */
+@media (max-width: 1560px) {
+  .gv-share-long {
+    display: none;
+  }
+
+  .gv-share-short {
+    display: inline;
+  }
+}
+
+@media (max-width: 760px) {
+  .gv-share {
+    min-height: 44px;
+  }
+}
+
+/* ───────────── the dialog (Sheet.tsx puts this class on its panel) ───────────── */
+
+.auth-sheet.cs-sheet {
+  width: min(600px, 100%);
+  max-height: min(92vh, 900px);
+  max-height: min(92dvh, 900px);
+  padding: var(--s5);
+}
+
+/* ───────────── the body ───────────── */
+
+.cs-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+}
+
+.cs-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.cs-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+}
+
+.cs-title {
+  font-size: var(--fs-6);
+  text-wrap: balance;
+}
+
+.cs-close {
+  flex: none;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+
+.cs-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+}
+
+.cs-note,
+.cs-copy,
+.cs-lede {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.cs-fine {
+  font-size: var(--fs-1);
+  color: var(--text-faint);
+  text-wrap: pretty;
+}
+
+.cs-faint {
+  color: var(--text-faint);
+}
+
+.cs-error {
+  font-size: var(--fs-2);
+  color: var(--danger);
+}
+
+.cs-skeleton {
+  height: 200px;
+  border-radius: var(--r-m);
+  background: var(--well);
+}
+
+.cs-blocked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s4);
+  border-radius: var(--r-m);
+  background: var(--well);
+  text-wrap: pretty;
+}
+
+.cs-action {
+  justify-content: center;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.cs-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+/* ───────────── the switch ───────────── */
+
+.cs-switchrow {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) var(--s3);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+}
+
+.cs-switch {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 44px;
+  padding: 0;
+}
+
+.cs-switch[disabled] {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.cs-track {
+  position: relative;
+  width: 52px;
+  height: 30px;
+  border: var(--hair) solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  transition:
+    background-color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.cs-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border: var(--hair) solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  transition:
+    transform var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.cs-switch[aria-checked='true'] .cs-track {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.cs-switch[aria-checked='true'] .cs-knob {
+  transform: translateX(22px);
+  border-color: var(--surface);
+}
+
+.cs-switchtext {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cs-switchline {
+  font-weight: 500;
+}
+
+.cs-sub {
+  font-size: var(--fs-1);
+  color: var(--text-faint);
+}
+
+.cs-saving {
+  flex: none;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.cs-saving:empty {
+  display: none;
+}
+
+/* ───────────── the preview ───────────── */
+
+.cs-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.cs-image {
+  width: 480px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 480 / 330;
+}
+
+.cs-image[data-size='sm'] {
+  width: 340px;
+  aspect-ratio: 340 / 190;
+}
+
+.cs-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 480px;
+  max-width: 100%;
+  height: 330px;
+  padding: 18px;
+  overflow: hidden;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.cs-card[data-size='sm'] {
+  width: 340px;
+  height: 190px;
+  padding: 14px;
+}
+
+.cs-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  font-size: var(--fs-0);
+  color: var(--text-muted);
+}
+
+.cs-card-kicker {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cs-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 0;
+}
+
+.cs-card[data-size='sm'] .cs-card-body {
+  gap: 12px;
+}
+
+.cs-card-chart {
+  flex: none;
+  width: 270px;
+  height: auto;
+  aspect-ratio: 900 / 690;
+}
+
+.cs-card[data-size='sm'] .cs-card-chart {
+  width: 118px;
+  aspect-ratio: 1;
+}
+
+.cs-card-axis {
+  font-family: var(--font-sans);
+  font-size: 27px;
+  fill: var(--text-muted);
+}
+
+.cs-card-rows {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--fs-1);
+  line-height: 1.25;
+}
+
+.cs-card-rows.is-dense {
+  gap: 2px;
+  font-size: var(--fs-0);
+}
+
+.cs-card-rows.is-dense .cs-card-row {
+  padding-bottom: 2px;
+}
+
+.cs-card-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+  padding-bottom: 3px;
+  border-bottom: var(--hair) solid var(--grid);
+}
+
+.cs-card-name {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cs-card-score {
+  font-weight: 600;
+}
+
+.cs-card-bar {
+  flex: 0 0 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--well);
+}
+
+.cs-card-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent-strong);
+}
+
+.cs-card-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding-top: 2px;
+  font-size: var(--fs-0);
+  color: var(--text-muted);
+}
+
+.cs-card-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cs-card-key i {
+  display: inline-block;
+  width: 16px;
+}
+
+.cs-key-now {
+  height: 2px;
+  background: var(--accent-strong);
+}
+
+.cs-key-role {
+  height: 0;
+  border-top: var(--hair) dashed var(--accent-ui);
+}
+
+.cs-card-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cs-card-skill {
+  padding: 3px 8px;
+  border: var(--hair) solid var(--line);
+  border-radius: 999px;
+  font-size: var(--fs-0);
+}
+
+.cs-card-skill .numeral {
+  color: var(--text-muted);
+}
+
+.cs-card-foot {
+  font-size: var(--fs-0);
+  color: var(--text-muted);
+}
+
+/* ───────────── where it goes ───────────── */
+
+.cs-where {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.cs-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.cs-tab {
+  position: relative;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: color var(--d-fast) var(--ease);
+}
+
+.cs-tab:hover,
+.cs-tab[aria-selected='true'] {
+  color: var(--text);
+}
+
+.cs-tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: var(--hair);
+  background: var(--accent-strong);
+}
+
+.cs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding-top: var(--s2);
+  min-width: 0;
+}
+
+.cs-code {
+  max-height: 180px;
+  margin: 0;
+  padding: 12px 14px;
+  overflow: auto;
+  border-radius: var(--r-m);
+  background: var(--well);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: all;
+}
+
+.cs-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-2);
+}
+
+.cs-input:focus {
+  outline: none;
+  border-color: var(--accent-ui);
+}
+
+/* ───────────── what it shows ───────────── */
+
+.cs-details {
+  padding-top: var(--s2);
+  border-top: var(--hair) solid var(--line);
+}
+
+.cs-details > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cs-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding-top: var(--s1);
+}
+
+.cs-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.cs-fieldset > legend {
+  padding: 0 0 var(--s1);
+}
+
+.cs-check {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.cs-check[data-disabled='true'] {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.cs-check input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent-strong);
+}
+
+.cs-fieldrow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.cs-select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-2);
+}
+
+.cs-select:focus {
+  outline: none;
+  border-color: var(--accent-ui);
+}
+
+.cs-end {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding-top: var(--s3);
+  border-top: var(--hair) solid var(--line);
+}
+
+.cs-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+/* ───────────── narrow screens: a bottom sheet ───────────── */
+
+@media (max-width: 760px) {
+  .auth-sheet.cs-sheet {
+    width: 100%;
+    max-height: 90vh;
+    max-height: 90dvh;
+    padding: var(--s3) var(--s4) calc(var(--s5) + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* the grabber: decoration, so it is not in the accessibility tree */
+  .auth-sheet.cs-sheet::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto var(--s3);
+    border-radius: 4px;
+    background: var(--line);
+  }
+
+  .cs-title {
+    font-size: var(--fs-5);
+  }
+
+  .cs-tabs {
+    gap: var(--s2);
+    border-bottom: 0;
+  }
+
+  .cs-tab {
+    flex: 1 1 0;
+    padding: 0 var(--s2);
+    border: var(--hair) solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: var(--fs-1);
+    color: var(--text);
+  }
+
+  .cs-tab[aria-selected='true'] {
+    border-color: var(--accent-ui);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+  }
+
+  .cs-tab[aria-selected='true']::after {
+    display: none;
+  }
+
+  /* 16px keeps iOS from zooming the page when a field is focused */
+  .cs-input,
+  .cs-select {
+    font-size: 16px;
+  }
+}
+
+/* The dev page keeps the narrow layout inside a 390px frame whatever the window is. */
+.cs-body[data-narrow='true'] .cs-title {
+  font-size: var(--fs-5);
+}
+
+.cs-body[data-narrow='true'] .cs-tabs {
+  gap: var(--s2);
+  border-bottom: 0;
+}
+
+.cs-body[data-narrow='true'] .cs-tab {
+  flex: 1 1 0;
+  padding: 0 var(--s2);
+  border: var(--hair) solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: var(--fs-1);
+  color: var(--text);
+}
+
+.cs-body[data-narrow='true'] .cs-tab[aria-selected='true'] {
+  border-color: var(--accent-ui);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.cs-body[data-narrow='true'] .cs-tab[aria-selected='true']::after {
+  display: none;
+}
+
+.cs-body[data-narrow='true'] .cs-input,
+.cs-body[data-narrow='true'] .cs-select {
+  font-size: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-track,
+  .cs-knob,
+  .cs-tab {
+    transition: none;
+  }
+}
+
+/* ───────────── the dev page (/dev/card) ───────────── */
+
+.cs-dev {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.cs-dev-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  padding: var(--s4) var(--s5);
+}
+
+.cs-dev-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.cs-dev-navbtn {
+  min-height: 36px;
+  padding: 0 var(--s3);
+  border: var(--hair) solid transparent;
+  border-radius: 999px;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.cs-dev-navbtn:hover {
+  color: var(--text);
+}
+
+.cs-dev-navbtn.is-current {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.cs-dev-note {
+  flex: 1 1 100%;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.cs-dev-note:empty {
+  display: none;
+}
+
+.cs-dev-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s5);
+  padding: var(--s3) var(--s5) var(--s7);
+}
+
+.cs-dev-behind {
+  display: flex;
+  flex: 999 1 360px;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  padding: var(--s5);
+  border: var(--hair) dashed var(--line-strong);
+  border-radius: var(--r-l);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.cs-dev-sheet {
+  flex: 1 0 440px;
+  min-width: min(440px, 100%);
+  max-width: 600px;
+  padding: var(--s5);
+}
+
+.cs-dev-frame {
+  width: 390px;
+  max-width: 100%;
+  padding: var(--s3) var(--s4) var(--s5);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-l) var(--r-l) 0 0;
+  background: var(--surface);
+}
+
+@media (max-width: 760px) {
+  .cs-dev-header,
+  .cs-dev-main {
+    padding-inline: var(--s4);
+  }
+
+  .cs-dev-frame {
+    width: 100%;
+  }
+}

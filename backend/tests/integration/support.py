@@ -102,6 +102,9 @@ def roomy_guard(**overrides: Any) -> GuardSettings:
         "weekly_preview_per_hour": 1000,
         "weekly_preview_per_day": 1000,
         "weekly_global_per_hour": 0,
+        "card_per_minute": 1000,
+        "card_per_day": 1000,
+        "card_global_per_hour": 0,
         "daily_ceiling_usd": 1000.0,
     }
     values.update(overrides)

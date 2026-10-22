@@ -269,6 +269,56 @@
   color: var(--text-muted);
 }
 
+/* A shared skill shape (/u/<slug>, drawn by backend/tayyari/card/page.py) */
+.shape-card {
+  margin: var(--s5) 0 0;
+}
+
+.shape-card img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.shape-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--s3);
+  font-size: var(--fs-3);
+}
+
+.shape-table th,
+.shape-table td {
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-weight: 400;
+}
+
+.shape-table thead th {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.shape-table td,
+.shape-table thead th + th {
+  text-align: right;
+  padding-left: var(--s4);
+}
+
+.shape-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  list-style: none;
+  padding: 0;
+  margin-top: var(--s3);
+}
+
+.prose .shape-skills li + li {
+  margin-top: 0;
+}
+
 /* Footer */
 .site-footer {
   border-top: 1px solid var(--line);

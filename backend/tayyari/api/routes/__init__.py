@@ -26,6 +26,8 @@
               ("How do I prepare for this role?" as blocks)
     weekly    GET, PUT /api/weekly/subscription; GET /api/weekly/editions, .../editions/{id}; POST .../editions/preview;
               GET, POST /api/weekly/unsubscribe?token= (The Leafout Weekly, a personal newspaper)
+    card      GET, PUT /api/card; POST /api/card/new-link (the radar card's share sheet); public, no account:
+              GET /r/{slug}.svg, /og/{slug}-{version}.png, /u/{slug} (registered here, so before the web app's catch-all)
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.
@@ -39,6 +41,7 @@ from tayyari.api.routes import (
     analyze,
     auth,
     billing,
+    card,
     chat,
     discover,
     handoff,
@@ -74,6 +77,7 @@ for _module in (
     prepare,
     handoff,
     weekly,
+    card,
 ):
     api_router.include_router(_module.router)
 

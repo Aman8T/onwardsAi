@@ -1282,8 +1282,51 @@ class WeeklyRepo(Protocol):
         ...
 
 
+@dataclass(frozen=True, slots=True)
+class StoredCardSnapshot:
+    """One account's radar card (`CardSnapshotRow`). ``areas`` are ``{id, name, short, score, roleTarget?}`` in the graph's
+    order, ``skills`` ``{id, name, score}`` (at most three); ``slug`` is None while the card is not shared; ``version`` is the
+    first 8 hex characters of the sha256 of what the card draws, and ``updated_at`` is when that last changed (the date on
+    the card)."""
+
+    user_id: str
+    profile_id: str
+    slug: str | None
+    shared: bool
+    theme: str
+    areas: list[dict[str, Any]]
+    skills: list[dict[str, Any]]
+    role_id: str | None
+    role_title: str | None
+    version: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class CardRepo(Protocol):
+    """Radar cards, one per account. The slug is the only public key: `get_by_slug` finds a card only while it is shared."""
+
+    async def get(self, user_id: str) -> StoredCardSnapshot | None:
+        """The account's card, or None when it never had one."""
+        ...
+
+    async def get_by_slug(self, slug: str) -> StoredCardSnapshot | None:
+        """The shared card with this slug, or None (an unknown slug, or a card no longer shared)."""
+        ...
+
+    async def save(self, item: StoredCardSnapshot) -> None:
+        """Insert the card or replace the account's (every column but ``user_id`` and ``created_at``). A slug another card
+        already holds raises (the fake a ValueError, SQL an IntegrityError); at 36^12 slugs it does not happen by chance."""
+        ...
+
+    async def list_page(self, after_user_id: str | None, limit: int) -> list[StoredCardSnapshot]:
+        """At most ``limit`` cards in user id order, starting after ``after_user_id`` (the daily refresh walks them)."""
+        ...
+
+
 __all__ = [
     "BillingRepo",
+    "CardRepo",
     "ChatMessage",
     "ChatSession",
     "ClaimMarkRepo",
@@ -1321,6 +1364,7 @@ __all__ = [
     "SettleResult",
     "SettleStatus",
     "StoredAuthSession",
+    "StoredCardSnapshot",
     "StoredClaimMark",
     "StoredEntitlements",
     "StoredHandoff",
