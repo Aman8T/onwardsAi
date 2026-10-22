@@ -107,4 +107,4 @@ Done and deployed: analysis → skill graph → next roles → chat; Resume → 
 - the debrief shows before → now and "N of M moved up";
 - a debrief's Fix step goes into a Prepare plan's current week or stays in Practice.
 
-Not deployed yet: the deploy stopped at FastAPI Cloud's login. Next: the radar card (R1), then the skills table (X1). Leafout sign-in (L1) built 2026-10-19 (the site's Supabase login is the app's login via a `.leafout.in` cookie; see roadmap L1), committed, not deployed yet.
+Deployed 2026-10-23 with its follow-ups (67cfc99: "Practised" on the graph, the Weekly's re-drill nudge); the same deploy took L1 sign-in and the Weekly live, each still off until its secrets are set. Next: the radar card (R1), then the skills table (X1). Leafout sign-in (L1) built 2026-10-19 (the site's Supabase login is the app's login via a `.leafout.in` cookie; see roadmap L1), committed, not deployed yet.
