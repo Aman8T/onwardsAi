@@ -28,23 +28,23 @@ design.md                  the visual system, portable; docs/design-notes.md has
 docs/backend.md            backend architecture, request flows, storage, guard, testing, config
 docs/roadmap.md            build plan: waves, file ownership, feature specs
 docs/research/             market and open-source research
-shared/types.ts, portfolio.ts, auth.ts, billing.ts, match.ts, discover.ts, jobsearch.ts, interview.ts, speech.ts   TS contracts; mirrored by backend/tayyari/contract/*.py
-src/                       frontend: views/ (Onboarding, Analysis, GraphView, ChatView), portfolio/, auth/, billing/, match/, discover/, practice/, prepare/, light/,
+shared/types.ts, portfolio.ts, auth.ts, billing.ts, match.ts, discover.ts, jobsearch.ts, interview.ts, speech.ts, card.ts   TS contracts; mirrored by backend/tayyari/contract/*.py
+src/                       frontend: views/ (Onboarding, Analysis, GraphView, ChatView), portfolio/, auth/, billing/, match/, discover/, practice/, prepare/, card/, light/,
                            site/ (the public SEO pages, rendered to static HTML at build time by scripts/build-pages.tsx; docs/seo.md),
                            components/ (Radar, Popover, Ring...), theme/ (tokens, hue), styles/, store.ts, lib/api.ts
 backend/tayyari/           core · contract · llm · decisions · analysis · chat · portfolio · prompts · ingest ·
-                           guard · storage (tables, repos, migrations) · api (app, routes, deps, security) · auth · billing · match · discover · jobsearch · interview · speech · cli · sample
+                           guard · storage (tables, repos, migrations) · api (app, routes, deps, security) · auth · billing · match · discover · jobsearch · interview · speech · card · cli · sample
 backend/tests/             unit · integration · golden · fakes · data
-scripts/                   palette-check, restraint-check, build-check, portfolio-parity, match-parity, walkthrough.md
+scripts/                   palette-check, restraint-check, build-check, portfolio-parity, match-parity, radar-parity, walkthrough.md
 ```
 
-Layering (enforced by a test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `jobsearch` sits with the model-calling services and may import `discover`'s pure parts; `interview` sits there too and may import `jobsearch`, `discover` and `portfolio`. `storage` depends only on `core` and `contract`. Services depend on Protocols (`storage/ports.py`, `llm` clients) so every unit runs with the fakes in `backend/tests/fakes`.
+Layering (enforced by a test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `auth`, `billing`, `discover` and `card` depend only on `core`, `contract` and `storage.ports`. `jobsearch` sits with the model-calling services and may import `discover`'s pure parts; `interview` sits there too and may import `jobsearch`, `discover` and `portfolio`. `storage` depends only on `core` and `contract`. Services depend on Protocols (`storage/ports.py`, `llm` clients) so every unit runs with the fakes in `backend/tests/fakes`.
 
 ## Run and verify
 
 ```bash
 npm run dev            # API on :8787 with reload + Vite on :5173 (proxies /api)
-npm run check          # typecheck + palette + restraint + build + portfolio parity + match parity (frontend gate)
+npm run check          # typecheck + palette + restraint + build + portfolio parity + match parity + radar parity (frontend gate)
 npm run check:match    # posting-match screens against the stored match fixtures (also inside npm run check)
 npm run test:py        # pytest (unit, integration, golden); npm run lint:py; npm run typecheck:py (mypy strict)
 npm run check:all      # everything above
@@ -97,6 +97,7 @@ In the in-app browser pane, `.claude/launch.json` defines `tayyari-api` and `tay
 - Discover never calls a model; its quick fit is code over a skill vocabulary (`discover/vocab.py`); recalibrate against real listings before changing thresholds.
 - Practice speech: Sarvam AI (server-side SDK, key `SARVAM_API_KEY`, 100 free credits, so a soft daily budget in `TAYYARI_SPEECH__*`) when set, else the browser's Web Speech API, then typing. The app's `Permissions-Policy` must keep `microphone=(self)`, or recording fails silently in production. Sarvam's quick speech-to-text is for pieces under 30 s, so the room cuts answers at pauses. The interviewer's voice plays through Web Audio, because the CSP has no `media-src` for blob URLs. Tests strip `SARVAM_API_KEY` (`tests/conftest.py`).
 - FastAPI's own OpenTelemetry is on (FastAPI ≥ 0.142.2; `TELEMETRY` in `api/app.py`): request spans record the path and query string, and FastAPI Cloud turns on their export. A new route that takes a secret in its query string (a token, an OAuth code) goes into `_SECRET_IN_QUERY` there; FastAPI's own logs stay off because they skip `core.redact`.
+- The radar card's geometry is `src/lib/radar.ts` ported to `backend/tayyari/card/geometry.py`. After changing `radar.ts`, port the change and run `npm run check:radar -- --write`, or `npm run check` fails. The LinkedIn picture is drawn by `resvg-py` with only the bundled Geist (`card/fonts/`), never system fonts; the first draw of a version takes about 240 ms and is then kept in memory.
 - Haiku 5.5 with a server tool and `output_config.format` together skips the tool and answers at once; Search with AI's scouts run unstructured (`ClaudeClient.search_web`) and only its reads are structured. Each web search is $0.01, the main cost of a search with AI.
 
 ## Status (2026-10-14)
@@ -107,4 +108,14 @@ Done and deployed: analysis → skill graph → next roles → chat; Resume → 
 - the debrief shows before → now and "N of M moved up";
 - a debrief's Fix step goes into a Prepare plan's current week or stays in Practice.
 
-Deployed 2026-10-23 with its follow-ups (67cfc99: "Practised" on the graph, the Weekly's re-drill nudge); the same deploy took L1 sign-in and the Weekly live, each still off until its secrets are set. Next: the radar card (R1), then the skills table (X1). Leafout sign-in (L1) built 2026-10-19 (the site's Supabase login is the app's login via a `.leafout.in` cookie; see roadmap L1), committed, not deployed yet.
+Deployed 2026-10-23 with its follow-ups (67cfc99: "Practised" on the graph, the Weekly's re-drill nudge); the same deploy took L1 sign-in and the Weekly live, each still off until its secrets are set.
+
+The radar card (R1, canvas https://claude.ai/artifact/LG8rk27K2RfG68giTXcoX5) built and committed 2026-10-23 (40b7acf), not deployed yet:
+- a person's skill shape as an image, drawn in code from a snapshot of the newest owned graph (`card_snapshots`, migration 0015; no model call);
+- the README card `/r/<slug>.svg` (light, dark, transparent; "Match the page" makes the snippet a `<picture>`), the LinkedIn picture `/og/<slug>-<version>.png` (resvg with bundled Geist) and the `noindex` page `/u/<slug>`;
+- the share sheet from the graph header (`src/card/`), a random 12-character link only while shared, "Make a new link", and a per-address `card` window;
+- `backend/tayyari/card/`, `api/routes/card.py`; the report address is `TAYYARI_CARD__REPORT_EMAIL`.
+
+Leafout sign-in (L1) built 2026-10-19 (the site's Supabase login is the app's login via a `.leafout.in` cookie; see roadmap L1), deployed 2026-10-23 and off until its secrets are set.
+
+Next: the skills table (X1).

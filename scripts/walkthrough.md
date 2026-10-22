@@ -306,6 +306,28 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     - **Without a server,** `/dev/practice?state=redrill`, `redrill-empty`, `redrill-loading` and `debrief-redrill`, and
       `/dev/prepare?state=practice` and `practice-phone`.
 
+21. **The radar card** (no model call; sharing needs a graph your account owns, as in step 12).
+    - **The sheet.** On the graph, "Share my skill shape" in the header ("Share" on narrower screens) opens it; under
+      760 px it is a bottom sheet. On the sample it says sharing needs your own graph and offers "Analyse my resume";
+      on a graph with no account it offers "Sign in". Neither shows a switch.
+    - **Off.** The preview is drawn in the page's colours and says nothing is public until sharing is on.
+    - **On.** Turn the switch on: a link appears, and the preview becomes the real image (`/r/<slug>.svg`), exactly what
+      others see. The GitHub tab shows `[![Skill shape](…/r/<slug>.svg)](…/u/<slug>)`; Copy for GitHub copies it.
+    - **Settings.** Tick up to three skills (a fourth is disabled); pick a role (the card gains a dashed outline and
+      "Senior Frontend Engineer expects"); pick each theme. With "Match the page" the snippet becomes a `<picture>`
+      whose dark source has `?theme=dark`. Reload: every choice is still there.
+    - **New link.** "Make a new link" asks first; afterwards the old `/r/…svg` shows "This card isn't shared any more".
+    - **Off again.** Turn sharing off: the link is gone and the old image shows the same neutral card.
+    - **The page.** Open the LinkedIn tab's link (`/u/<slug>`; served by the API, so on port 8787 locally):
+      "Strongest in …", the card (dark on a dark device), the areas table, "How this was made", "See your own skill
+      shape" and "Report this card". View source: `og:image` is `/og/<slug>-<version>.png`, `twitter:card` is
+      `summary_large_image`, `robots` is `noindex`, and there is no `<script>`. The PNG opens at 1200 × 627; changing
+      its version in the address redirects to the current one.
+    - **Nothing private.** No name, email, evidence line, rank or percentage appears on the card, the picture or the
+      page.
+    - **Without a server,** `/dev/card` and its states (`?state=github`, `github-match`, `linkedin`, `bars`, `many`,
+      `phone`, `sample`, `anonymous`, `fail-put`, `image-failed` …; `?scheme=dark`).
+
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`), except the
 role's, which Prepare changed on purpose (no percentage).

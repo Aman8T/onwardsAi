@@ -58,10 +58,20 @@ For every content page: the file exists; exactly one h1; a canonical link equal 
 
 The CSP hashes every inline `<script>` of `static/index.html`. The Home shell now has one more (the JSON-LD block), so its hash joins the list; a data block is never executed, so the hash is harmless. The content pages have no inline script and need no hash.
 
+## Shared radar cards (`/u/<slug>`)
+
+A person who shares their radar card (R1, `docs/backend.md` "The radar card") gets a page at `/u/<slug>`, rendered by the
+API (`backend/tayyari/card/page.py`), not by this build. It links `/site/site.css` and the same Google Fonts, carries
+`og:title` "Strongest in {area}", `og:image` the versioned 1200 x 627 PNG (`/og/<slug>-<version>.png`) and
+`twitter:card summary_large_image`, so a link posted on LinkedIn shows the large picture. It is **not indexed** for now:
+`<meta name="robots" content="noindex">` and `X-Robots-Tag: noindex` (the user's decision of 2026-10-23, to revisit once there
+are cards to judge by). It is not in the sitemap, and `robots.txt` does not disallow `/u/`, so a crawler can read the
+`noindex`. The site's own pages are unchanged and still use `twitter:card=summary` with no image.
+
 ## Not done yet
 
 - **Per-profile or per-role pages.** Nothing about a person is public except a published portfolio (`/p/*`, `noindex` by design). Pages for roles or skills would need a source of honest text; none exists yet.
-- **An Open Graph image.** The share tags use `twitter:card=summary` with no image. A drawn card (the radar card, R1 in the roadmap, shares its need for `resvg-py`) would let this become `summary_large_image`.
+- **An Open Graph image for the site's own pages.** They use `twitter:card=summary` with no image. The radar card (R1) now draws pictures with `resvg-py` and a bundled Geist (`backend/tayyari/card/png.py`), so a site image could be drawn the same way.
 - **A blog or guides**, and any page that targets a search phrase with text the product cannot back.
 - **Redirects and trailing-slash policy.** Canonicals have no trailing slash; the server decides whether `/how-it-works/` redirects.
 - **Per-page `lastmod`** in the sitemap, and `hreflang` (the site is one language, English).

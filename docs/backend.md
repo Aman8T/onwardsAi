@@ -29,9 +29,10 @@ The package is importable as `backend/tayyari/`, laid out in layers with import 
 | `jobsearch` | JobSearchService, the brief, the harvest, the board reader, the narrowing, the checks | Search with AI: Haiku 5.5 scouts find employers' boards on the web, code reads them and narrows, Haiku reads the shortlist, code checks every quote; reuses `discover`'s pure parts |
 | `interview` | InterviewService, the plan, the router, the judge, the debrief, the work-sample templates | Practice the interview: plans in code from the person's evidence, a role or a template; Haiku 5.5 phrases, judges and writes the debrief; code checks every quote, name and number and decides every verdict |
 | `speech` | SpeechService, SarvamEngine, the meter | Speech for practice interviews through Sarvam AI's SDK: speech-to-text of answer pieces and the interviewer's voice, metered against a soft daily and per-session budget; self-contained like `discover` |
+| `card` | CardService, geometry, svg, png, page | The radar card: a person's skill shape as an image for a README and a LinkedIn post, drawn in code from a snapshot of their graph; no model call |
 | `prepare` | PrepareService, assemble, verify, github | Prepare ("How do I prepare for this role?") as typed blocks: the plan's numbers and evidence from the graph in code, two calls of the chat model at once (where you stand, the moves) checked line by line, a stored plan with the person's state, the repo ranking from the stored GitHub digest, a headline rewrite |
 
-**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `jobsearch` sits with the model-calling services and may also import `discover` (never the other way round). `interview` sits with them too and may import `jobsearch`, `discover` and `portfolio` (nothing but `api` and the container imports it). `prepare` sits with them and reuses the posting match's schema helpers (`match.schemas.schema_of`, `rows_of`), nothing else of `match`. `speech` is self-contained like `discover` (`core`, `contract`, `storage.ports` and the `sarvamai` SDK). `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
+**Layering rule** (enforced by test): `core` < `contract` < `llm` < `decisions` < `analysis`/`chat`/`portfolio`/`match` < `api`. `match` sits with `portfolio`: it reuses the portfolio's line-cited fact extractor and sentence anchors rather than forking them. `auth`, `billing` and `discover` depend only on `core`, `contract` and `storage.ports`. `jobsearch` sits with the model-calling services and may also import `discover` (never the other way round). `interview` sits with them too and may import `jobsearch`, `discover` and `portfolio` (nothing but `api` and the container imports it). `prepare` sits with them and reuses the posting match's schema helpers (`match.schemas.schema_of`, `rows_of`), nothing else of `match`. `speech` is self-contained like `discover` (`core`, `contract`, `storage.ports` and the `sarvamai` SDK). `card` is self-contained too (`core`, `contract`, `storage.ports` and `resvg-py`) and calls no model. `storage` depends only on `core` and `contract`. `guard` depends on `storage.ports`. Services depend on Protocols, so every unit can be tested with fakes.
 
 ## Request flows
 
@@ -668,6 +669,73 @@ is the one handed back; `fresh` adds a row and the older plan stays readable by 
   `tests/unit/storage/test_prepare_contract.py`, `tests/unit/guard/test_ratelimit_prepare.py` and
   `tests/unit/contract/test_prepare_parity.py`.
 
+### The radar card (`/api/card`, `/r`, `/og`, `/u`; R1)
+
+Built 2026-10-23 from the canvas https://claude.ai/artifact/LG8rk27K2RfG68giTXcoX5 and the spec in `docs/roadmap.md` (R1). A
+person's skill shape as an image: for a GitHub README (an SVG), and as the large picture when the link is posted on LinkedIn (a
+PNG). Everything on it is worked out in code from a snapshot of the graph; no model is called.
+
+**What a card holds** (`card_snapshots`, `card/content.py`).
+- One card per account, drawn from its newest owned profile (`users.list_profiles(user, 1)`).
+- The areas in the graph's order with their scores, at most 8 (past 8, the 8 strongest stay, in the graph's order). The rim
+  label is `Domain.short` (else the name), at most 14 characters.
+- Up to three skills the person picks from the 8 strongest, and optionally one role of the graph.
+- The role's level per area is the mean `target` of its requirements whose skill sits in that area (by `skillId`, then by the
+  skill's name); where the role names nothing, it is the person's own score.
+- Never evidence, a name, an email, a username, a profile id, a rank, a percentile or a match percentage (tests prove it).
+- `version` is the first 8 hex characters of the sha256 of what is drawn. `updated_at` moves with it and is the date printed on
+  the card, so changing the theme or the link changes neither.
+
+**The link.** A random 12-character slug of `[a-z0-9]` (`secrets.choice`), made each time sharing is turned on. "Make a new
+link" replaces it and the old one stops at once; turning sharing off sets it to NULL. It is the only public key.
+
+**Who can share** (`card/service.py`). Only an account that owns the profile. The shared sample and an anonymous graph get a
+view with `blocked` (`sample`, `anonymous`) and a 403 on a write; another account's profile is the same 404 as an unknown id.
+
+**Kept current.** `CardService.refresh(user_id)` redraws from the newest profile, keeping the settings (a skill or role the new
+graph lacks is dropped), and writes only when something changed. It runs when the owner changes a setting or opens the sheet,
+after `POST /api/me/claim`, and from the maintenance loop (`refresh_all`, every few hours, for cards whose account has a newer
+profile).
+
+**Drawing.**
+- `card/geometry.py` is `src/lib/radar.ts` in Python. `scripts/radar-parity.ts` writes the app's paths for 1 to 8 axes into
+  `backend/tests/data/card/radar-paths.json`; `tests/unit/card/test_geometry.py` compares byte for byte, and `npm run check`
+  fails when `radar.ts` changes without the fixture (`npm run check:radar -- --write` after porting the change).
+- `card/svg.py` draws the README card (`md` 480 x 330, `sm` 340 x 190; `light`, `dark`, `transparent`), the 1200 x 627 picture
+  and the neutral cards. Fewer than 3 areas are bars with no leaf. The colours are the light and dark tokens written as hex
+  (the restraint check scans `src/` only) and the fonts are the system stack. Every text goes through `card/text.py`: escaped,
+  control characters removed, clipped by a measured width table. No script, image, link, `url(`, `@import` or `@font-face`;
+  nothing moves; under 20 KB.
+- `card/png.py` renders the picture with `resvg-py` and the bundled Geist (`card/fonts/`, SIL OFL 1.1), system fonts skipped,
+  in a worker thread (about 240 ms the first time), and keeps it in memory by slug and version (`TAYYARI_CARD__PNG_CACHE_SIZE`).
+- `card/page.py` is the `/u/{slug}` page: a string template, every value escaped, `/site/site.css`, no script.
+
+**Routes** (`api/routes/card.py`, registered with the API routes, so before the web app's catch-all; none is an `APP_ROUTE`):
+- The owner's, JSON with `Cache-Control: no-store`, shed in the `chat` bucket, opened with `require_profile_access`:
+  - `GET /api/card?profileId=` returns `CardView`;
+  - `PUT /api/card` takes `CardUpdate` (400 for a skill not offered or a role not on the graph);
+  - `POST /api/card/new-link` takes `CardNewLink` (400 when sharing is off).
+- Public, no account, counted per address in the `card` window (`shed`, then the shared counters, before the slug is read):
+  - `GET /r/{slug}.svg?theme=&size=&compare=`: `theme` and `size` override the stored theme (`match` draws light) and `md`;
+    `compare` draws the role only when it names the stored role. Unknown, stopped and malformed links get a 200 neutral card
+    (five minutes' cache); a failure gets a 200 "can't be drawn right now" card (ten minutes).
+  - `GET /og/{slug}-{version}.png`: an old version is a 301 to the current one; an unknown link gets the neutral picture.
+  - `GET /u/{slug}`: `og:title` "Strongest in {area}", `og:image` the versioned PNG, `twitter:card summary_large_image`,
+    `noindex` (meta and `X-Robots-Tag`), its own CSP with `script-src 'none'`, and "Report this card" as a `mailto:` to
+    `TAYYARI_CARD__REPORT_EMAIL`. An unknown link is a plain 404 page.
+- The images carry `Cache-Control: public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400`, an `ETag` from the
+  version and the drawing's options (a match is a 304), and `X-Content-Type-Options: nosniff`. The SVG also carries
+  `Content-Security-Policy: default-src 'none'; img-src data:; style-src 'unsafe-inline'` (the rule GitHub's image proxy uses);
+  the security middleware only sets a CSP where the route set none.
+- In development Vite proxies `/r/`, `/og/` and `/u/` to the API. `/u/` pages are styled only when the API serves them (the
+  dev server does not serve the built `site/site.css`).
+
+**The README snippet.** `[![Skill shape](.../r/{slug}.svg)](.../u/{slug})`, with `?theme=` for dark or transparent and
+`compare={roleId}` when a role is chosen. With the `match` theme it is a `<picture>` whose dark source is `?theme=dark`.
+
+**Tests.** `tests/unit/card/` (geometry parity, the drawings' known-bad fixtures and properties, the service),
+`tests/unit/storage/test_card_contract.py`, `tests/unit/contract/test_card_parity.py`, `tests/integration/test_card_routes.py`.
+
 ### Serving the web app (`api/static.py`)
 
 `mount_spa` is the last route and answers GET and HEAD from `backend/static` (the build), first match wins: a real file (assets cached for an hour, `.html` files `no-cache`); a page `<path>/index.html`, the generated content pages and `/pricing` when the build has its own, `no-cache`, where a trailing slash is a 308 to the address without it; one of the app's own client routes (`APP_ROUTES`: `/`, `/pricing`, `/match…`, `/discover…`, `/practice…`, `/p/…`, and `/dev/…` on a non-prod server), which gets `index.html` with 200. Anything else gets `404.html` with status 404, or the JSON 404 when the build has no 404.html, and no build at all is the JSON 404 (so is `/404.html` itself). The private routes (match, discover, practice, `/p/`, `/dev/`) send `X-Robots-Tag: noindex`; `/`, `/pricing` and the content pages do not. A path that is not a plain relative address (a leading slash, a backslash, a NUL, a `..` that leaves the build) is never a file. The `/dev/` check reads `app.state.settings`, which `create_app` sets; `/api/*` never reaches this route.
@@ -782,6 +850,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 | `jobsearch_docs` | `id` PK (hash of profile, job, kind) | `profile_id`, `job_id`, `kind` (`prep` or `referral`), `created_at`, `body` (JSON) | Migration 0008. `(created_at)`; replaced by a rewrite; purged after 30 days |
 | `interview_sessions` | `id` PK (32 hex) | `profile_id`, `kind`, `status` (`active` or `done`), `created_at`, `updated_at`, `version` (compare-and-swap), `state` (JSON: plan, phrased lines, turns, judgements, work, assistant log), `debrief` (JSON, null until done) | Migration 0009. `(profile_id, created_at)`, `(created_at)`; purged after 30 days |
 | `claim_marks` | `id` PK (32 hex; also the id of its Fix step) | `profile_id` FK cascade, `claim_key` (folded evidence line), `claim_text`, `source`, `session_id`, `slot_id`, `session_kind`, `slot_kind`, `verdict`, `rung`, `question`, `quote` (null), `story` (JSON, null), `marked_on` (date), `fix_text`, `fix_minutes`, `fix_plan_id`, `fix_kept`, `fix_added_at`, `fix_done_at`, `created_at` | Migration 0014. Unique `(profile_id, session_id, slot_id)`; `(profile_id, claim_key)`, `(fix_plan_id)`; no key to its session, so it outlives the 30-day purge; goes with its profile |
+| `card_snapshots` | `user_id` PK, FK users cascade | `profile_id` FK profiles cascade, `slug` (12 characters, unique, NULL while not shared), `shared`, `theme`, `areas` JSON (`{id, name, short, score, roleTarget?}` in the graph's order), `skills` JSON (`{id, name, score}`, at most 3), `role_id`, `role_title` (null), `version` (8 hex), `created_at`, `updated_at` (when what is drawn last changed) | Migration 0015. Unique `(slug)`; one card per account; goes with its account and its profile |
 | `prepare_plans` | `id` PK (32 hex) | `profile_id` FK cascade, `role_id`, `requirement` (null for a plan over the whole role), `content` (JSON: the `PreparePlan` without its state and version), `state` (JSON: hours a week, the move shown, done task keys, links), `version` (compare-and-swap on state saves), `created_at`, `updated_at` | Migration 0010. `(profile_id, role_id, requirement)`; goes with its profile, no retention step of its own |
 
 ### Retention (run at most every 6 hours, from the lifespan; replicas claim each run through a `kv` row, under a Postgres try-lock)
@@ -796,6 +865,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 - **Searches with AI**: `jobsearch_runs` and `jobsearch_docs` rows are deleted 30 days after they were written.
 - **Practice interviews**: `interview_sessions` rows (transcript and debrief) are deleted `TAYYARI_INTERVIEW__RETENTION_DAYS` (30) days after they started.
 - **Claim marks** (`claim_marks`) follow their profile through the foreign key and outlive the session they came from; deleting a session deletes its marks.
+- **Radar cards** (`card_snapshots`) have no window of their own: a card goes with its account or its profile, and a card no longer shared keeps no slug.
 - **Plans** (`prepare_plans`) follow their profile through the foreign key: an anonymous profile's purge and an account's deletion take its plans along; there is no window of their own.
 - **Postings** are never purged yet. Matches, resumes, cover notes, the answers a person gave and profile facts are removed only with their account (`DELETE /api/me`) or their profile. Orders are kept when an account is deleted, with `user_id` cleared.
 
@@ -813,7 +883,7 @@ Migrations live in `storage/migrations/` inside the package. No external `alembi
 
 If migration fails, the transaction rolls back and startup crashes. Readiness checks fail, so the load balancer keeps the old version running.
 
-Revisions 0003 (accounts, and the owner columns on `profiles` and `portfolios`), 0004 (payments), 0005 (posting match), 0006 (anonymous posting match), 0007 (Discover: two new tables, no change to an existing one), 0008 (search with AI), 0009 (practice interviews), 0010 (plans for roles), 0011 (Leafout identity), 0012 (hand-offs), 0013 (the Weekly) and 0014 (claim marks) follow this rule.
+Revisions 0003 (accounts, and the owner columns on `profiles` and `portfolios`), 0004 (payments), 0005 (posting match), 0006 (anonymous posting match), 0007 (Discover: two new tables, no change to an existing one), 0008 (search with AI), 0009 (practice interviews), 0010 (plans for roles), 0011 (Leafout identity), 0012 (hand-offs), 0013 (the Weekly), 0014 (claim marks) and 0015 (radar cards) follow this rule.
 
 **Additive-only rule**: migrations add tables or nullable columns only. No drops, renames, or constraint tightening after revision 0001 (unless a file carries a `# contract-phase` marker). Relaxing a constraint, as 0006 does by dropping `NOT NULL` from `matches.user_id` and `user_facts.user_id`, is allowed: it only widens what the old release also writes, and the old release never reads a row with a NULL owner. 0006 spells the DDL out (`ALTER COLUMN … DROP NOT NULL` on Postgres; on SQLite an edit of the table's SQL in `sqlite_master`) instead of calling `alter_column`, because an Alembic batch rebuild of `matches` on SQLite would cascade into `variants` and delete every stored resume.
 
@@ -838,6 +908,8 @@ Each IP has atomic counters (one `INSERT … ON CONFLICT … RETURNING count` pe
 | | 1 hour | 10 per client, 10 per account | 120 per hour (all clients) |
 | | 1 day | 30 per client, 30 per account | — |
 | `/api/match`, no sign-in | 1 day | 3 per client (`match_anon`, `POST /api/match` only), on top of the rows above | — |
+| `/r`, `/og`, `/u` (the radar card's public addresses, `card`) | 1 min | 120 | off by default (`CARD_GLOBAL_PER_HOUR`) |
+| | 1 day | 2000 | — |
 
 Limits are set by `TAYYARI_GUARD__*_PER_{MINUTE,HOUR,DAY}` and the `*_GLOBAL_PER_HOUR` settings; 0 turns a window off. A posting match is counted for its client address and, separately, for its account (`u:<user id>`); a match started without a sign-in is counted for its client address, and once more against `TAYYARI_GUARD__ANON_MATCH_PER_DAY` (a daily counter only, no in-memory bucket, no whole-service counter: `match` already has those). Re-checks, answers and downloads are not matches and are not counted. For IPv6 clients the same windows apply again to the client's /48 at four times the limit. Magic-link requests are limited per email and per client address (3 per 15 minutes, `TAYYARI_AUTH__MAGIC_PER_EMAIL` and `TAYYARI_AUTH__MAGIC_PER_IP`) through the same `rate_limit_hits` table, not through these windows.
 
@@ -931,6 +1003,8 @@ Accounts, payments and the posting match (names only; the values are never writt
 - **Prepare** has no settings group of its own: it runs on `TAYYARI_CHAT_MODEL` at `TAYYARI_CHAT_EFFORT`. Its limits are guard settings: `PREPARE_PER_MINUTE` 2, `_PER_HOUR` 10, `_PER_DAY` 30 (per address and per account; a plan written and a headline rewritten count, a stored plan handed back does not), `PREPARE_GLOBAL_PER_HOUR` 120, `EST_PREPARE_USD` 0.06 (the two calls of a plan), `EST_PREPARE_HEADLINE_USD` 0.02.
 - **`SARVAM_API_KEY`** (secret, optional) and **`TAYYARI_SPEECH__*`**: `ENABLED` (true), `STT_MODEL` (saaras:v4), `STT_LANGUAGE` (en-IN), `TTS_MODEL` (bulbul:v4-flash), `TTS_SPEAKER` (simran_en_customer), `TTS_LANGUAGE` (en-IN), `TTS_CODEC` (mp3), `TTS_SAMPLE_RATE` (22050), `MAX_SEGMENT_SECONDS` (30), `MAX_SEGMENT_BYTES` (1,500,000), `STT_DAILY_SECONDS` (1800), `TTS_DAILY_CHARS` (6000), `STT_SESSION_SECONDS` (600), `TTS_SESSION_CHARS` (3000), `REQUEST_TIMEOUT_S` (20), `TTS_CACHE_ITEMS` (256), `TTS_PREFETCH` (true: make the interviewer's next lines in the background; needs the cache), `TTS_PREFETCH_FOLLOWUPS` (true: include the current question's follow-up and easier question), `TTS_PREFETCH_CONCURRENCY` (2, 1 to 8: lines made at once across the process). Guard: `SPEECH_PER_MINUTE` 40. Without the key, practice uses the browser's speech.
 - **`TAYYARI_DISCOVER__*`** (no secrets; the boards are public): `ENABLED` (true; false answers 503 `discover_disabled` and fetches nothing), `REFRESH_HOURS` (6, how old the last good run may get before a request starts one), `FETCH_CONCURRENCY` (4), `REQUEST_TIMEOUT_S` (15), `MAX_LISTINGS_PER_EMPLOYER` (300: India listings kept per employer, known cities first, then remote, then the rest, newest first within each), `REGISTRY_PATH` (unset: the registry shipped in `discover/data/employers.json`).
+
+- **`TAYYARI_CARD__*`** (no secrets): `REPORT_EMAIL` (aman@leafout.in, where "Report this card" writes to), `PNG_CACHE_SIZE` (256 LinkedIn pictures kept drawn in memory; 0 draws each time). Its limits are guard settings: `CARD_PER_MINUTE` 120 and `CARD_PER_DAY` 2000 per address, `CARD_GLOBAL_PER_HOUR` 0 (off). The images are cached for an hour by every proxy in front of them, but GitHub's image proxy fetches from a few addresses, so watch the `card` window once many cards are shared.
 
 `backend/.env.example` lists each of these with its default or an empty value.
 

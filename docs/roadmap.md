@@ -18,7 +18,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | M2 | Posting-match persistence and routes, guard, entitlement checks | F1, M1 | Sonnet | committed 03988c7, deployed 2026-10-12 |
 | M3 | Posting-match frontend (Paste, Match, Resume, Cover, Pricing, sign-in) | M1 contract (mock data), then M2 | Sonnet | committed 03988c7, deployed 2026-10-12 |
 | T | Tests, docs, walkthrough steps, `.env.example`, README | each wave | Haiku | committed 03988c7, deployed 2026-10-12 |
-| R1 | Shareable radar card (SVG + OG PNG) | F1 | Opus + Sonnet | designed 2026-10-23, spec written, not started |
+| R1 | Shareable radar card (SVG + OG PNG) | F1 | Opus + Sonnet | designed 2026-10-23; built and committed 2026-10-23 (40b7acf); not deployed |
 | I1 | Evidence-grounded mock interview (practice) | M2, D3 | Opus + Sonnet | committed 659b7d6, deployed 2026-10-17 |
 | P1 | Prepare: "help me prepare" answered as typed blocks, not text | the graph's roles | Opus + Fable | designed 2026-10-18, building |
 | I2 | Re-drill weak claims, and Fix steps into Prepare | I1, P1 | Opus + Sonnet | designed 2026-10-22, spec written, not started |
