@@ -280,6 +280,32 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
       data?" and deletes nothing until you confirm. Afterwards the site says "Your account was deleted", and neither
       app.leafout.in nor leafout.in signs you in.
 
+20. **Re-drill and Fix steps** (a re-drill start makes one Haiku call like any interview; placing and ticking a step
+    make none). Do step 17 first, so a debrief has a Shaky or Couldn't defend claim.
+    - **Practice.** A fifth card, "Re-drill what wobbled", shows only when a claim wobbled. Progress has a "Re-drill"
+      link on each Shaky or Couldn't defend row.
+    - **Re-drill screen** (`/practice?screen=redrill`).
+      - The claims in code's order, each with its last verdict, "Asked once · last on 16 Oct · Starts at the follow-up"
+        (or "the opener, in new words"), and its Fix step: done, or not yet.
+      - Short ticks the top 3, All up to 6, and any claim can be unticked; the summary says "3 claims · about 9 min".
+      - "Start the re-drill" counts as one of the day's interviews.
+      - With nothing wobbled it says so and offers "Back to Practice".
+    - **Room.**
+      - Above a claim that came back: "Back from 16 Oct · Shaky" and the line.
+      - A Shaky claim opens at its follow-up ("Follow-up · where it wobbled"). A Couldn't defend one is asked again in
+        new words, never the last question.
+      - "I'm not sure" at a follow-up start still gets the easier question.
+    - **Debrief.**
+      - "1 of 2 moved up", and each claim shows its previous verdict next to today's.
+      - A claim that could not be defended twice may show "Or say less" with Copy.
+      - A Fix step offers "Where it goes": your plans by name (the session's role first) or "Keep it in Practice". Then
+        "Add to my plan", "Added to your plan · …", Open the plan and Undo.
+    - **Prepare.** The plan shows "This week · week N" with the step under "From your practice". Its minutes appear in
+      the summary ("+ 15 min of practice fixes"), and ticking it shows "Re-drill it". Reload: the tick is still there.
+      Back on the re-drill screen, that claim is now first.
+    - **Without a server,** `/dev/practice?state=redrill`, `redrill-empty`, `redrill-loading` and `debrief-redrill`, and
+      `/dev/prepare?state=practice` and `practice-phone`.
+
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`), except the
 role's, which Prepare changed on purpose (no percentage).

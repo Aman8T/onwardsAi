@@ -680,6 +680,7 @@ class Container:
                         profiles=repos.profiles,
                         prepare=repos.prepare,
                         interview=repos.interview,
+                        marks=repos.claim_marks,
                         reserve=spend_guard.reserve,
                         est_usd=settings.guard.est_weekly_usd,
                     ),

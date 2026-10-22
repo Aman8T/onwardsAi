@@ -35,6 +35,8 @@ export interface PopoverModel {
   summary?: string;
   bullets?: PopoverBullet[];
   foot?: { label: string; value: string };
+  /** What practice showed for a skill ("Shaky on 16 Oct"); it never changes the score. */
+  practised?: string;
   skills?: PopoverSkill[];
   /** Label of the primary action. */
   cta: string;
@@ -97,7 +99,7 @@ export function Popover({
     (autoFocus === 'cta' ? ctaRef : dialogRef).current?.focus({ preventScroll: true });
   }, [model.key, autoFocus]);
 
-  const { score, bullets, skills, foot } = model;
+  const { score, bullets, skills, foot, practised } = model;
   const classes = ['pop', sheet && 'pop-sheet', className].filter(Boolean).join(' ');
   const hidden = sheet ? { opacity: 0, y: 48 } : { opacity: 0, y: 8, scale: 0.98 };
   const shown = sheet ? { opacity: 1, y: 0 } : { opacity: 1, y: 0, scale: 1 };
@@ -157,6 +159,12 @@ export function Popover({
         {foot && (
           <p className="pop-foot">
             <span className="kicker pop-tag">{foot.label}:</span> {foot.value}
+          </p>
+        )}
+
+        {practised && (
+          <p className="pop-foot">
+            <span className="kicker pop-tag">Practised:</span> {practised}
           </p>
         )}
 

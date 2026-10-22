@@ -521,6 +521,68 @@ key never reaches a browser.
 - `tests/integration/test_interview_routes.py`, `tests/unit/storage/test_interview_contract.py`,
   `tests/unit/contract/test_interview_parity.py` and `tests/unit/guard/test_ratelimit_interview.py`.
 
+### Re-drill weak claims, and Fix steps (I2)
+
+Built 2026-10-22 from the canvas https://claude.ai/artifact/BXiFG9TDUYtLeCACtGxoSu and the spec in `docs/roadmap.md` (I2);
+the research behind it is `docs/research/personalized-learning.md`.
+
+**Claim marks** (`interview/marks.py`, table `claim_marks`).
+- **What a mark is.** When a session ends, every `ask`, `claim` or `story` slot whose source is an evidence line (each such
+  slot has exactly one) leaves one mark:
+  - its claim: the evidence line, keyed by `fold(text)`;
+  - the verdict, the rung that decided it, the question as first asked and the verdict's quote;
+  - the story parts;
+  - the slot's Fix step, for Shaky and Couldn't defend.
+- **Written once.** Marks are unique by profile, session and slot. A failed write is logged and never fails `end`. The
+  next history read writes any marks a finished session is missing (`ensure_marks`), which also covers sessions from
+  before this table.
+- **Progress reads claims from the marks** (`build_history(marks=…)`), so a claim keeps its verdicts after its
+  session's transcript is purged. Deleting a session deletes its marks.
+
+**Re-drill** (`interview/redrill.py`, code only).
+- **Which claims.** A claim whose best verdict is Shaky or Couldn't defend, and whose folded text is still one of the
+  profile's evidence lines (`jobsearch.brief.evidence_lines`).
+- **Order:**
+  1. a Fix step ticked since the claim's last mark;
+  2. then Couldn't defend before Shaky;
+  3. then the oldest last mark;
+  4. then the text.
+- **How many.** Short takes the top 3, `full` up to 6, or exactly the keys the person picked (an unknown key is 400).
+  An `ask` comes back as a `claim`, because its posting is not part of a re-drill.
+- **Where each one starts.**
+  - Couldn't defend (the last verdict, or the best one when the last was not judged) starts at `surface`, in new
+    words: a phrased question that folds to the last one is refused, and the `REDRILL_SURFACES` templates are never
+    the last question.
+  - Shaky starts at `push`. A story's push asks for its first missing part.
+  - After a push start, a Couldn't defend answer still gets the floor (`flow.follow_up`).
+- **Phrasing.** The phrase prompt shows each slot's last question, verdict and quote inside the slots' untrusted block.
+- **The debrief adds, in code:**
+  - `previous` on each result, and `redrill {moved, of}` for the claims that ranked above their previous mark;
+  - `softer` ("Or say less"), only for a claim that could not be defended twice. It is at most 160 characters, starts
+    with a verb, has no brackets and no personality words, and every name and number in it must appear in the answer
+    alone (`unsupported`, `inflated` against the answer).
+
+**Routes** (all in `api/routes/interview.py`, opened like the others; a non-hex id is a 404):
+- `GET /api/interview/redrill?profileId=` → `RedrillView`. It makes no model call and is empty for the shared sample.
+- `kind: "redrill"` (with `claims`) on `POST /api/interview/plan` and `/sessions`. It counts in the `interview` window and
+  reserves spend like any interview. The plan and start body limit is 16 KB.
+- `POST /api/interview/fixes` `FixAdd` → `FixTask`. The text is the mark's; the plan must be this profile's
+  (`FixPlanNotFound`); a Defended claim has no step (`FixNotFound`). Adding again moves the step and keeps its tick.
+- `PATCH /api/interview/fixes/{id}` `FixUpdate` → `FixTask`.
+- `DELETE /api/interview/fixes/{id}?profileId=` → 204.
+- A Fix step whose plan is gone reads as kept in Practice.
+
+**In Prepare.** A plan carries its placed steps as `practice` on `GET /api/prepare/{id}` and on a stored plan streamed
+again. The API layer attaches them through `InterviewService.plan_fixes`, because `prepare` may not import `interview`.
+`GET /api/prepare?profileId=` lists the plans (`PreparePlanSummary`, newest first, at most 50) for the debrief's "Where it
+goes".
+
+**Tests.**
+- `tests/unit/interview/test_redrill.py`: pure rules and the known-bad fixtures.
+- `test_redrill_service.py`: the Headout interview, then re-drills and Fix steps.
+- `test_redrill_golden.py`, with `tests/data/interview/redrill.debrief.json`.
+- `tests/integration/test_redrill_routes.py` and `tests/unit/storage/test_claim_marks_contract.py`.
+
 ### Prepare (`/api/prepare*`)
 
 `backend/tayyari/prepare/` is P1 (spec in `docs/roadmap.md`, canvas https://claude.ai/artifact/QgpVd4MRfnsqZRrPrLRe73),
@@ -719,6 +781,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 | `jobsearch_runs` | `id` PK (32 hex) | `profile_id`, `city` (null), `remote`, `created_at`, `result` (JSON: the `JobSearchRun` the person saw), `postings` (JSON: shown postings' text by job id, server-side only) | Migration 0008. `(profile_id, created_at)`, `(created_at)`; purged after 30 days |
 | `jobsearch_docs` | `id` PK (hash of profile, job, kind) | `profile_id`, `job_id`, `kind` (`prep` or `referral`), `created_at`, `body` (JSON) | Migration 0008. `(created_at)`; replaced by a rewrite; purged after 30 days |
 | `interview_sessions` | `id` PK (32 hex) | `profile_id`, `kind`, `status` (`active` or `done`), `created_at`, `updated_at`, `version` (compare-and-swap), `state` (JSON: plan, phrased lines, turns, judgements, work, assistant log), `debrief` (JSON, null until done) | Migration 0009. `(profile_id, created_at)`, `(created_at)`; purged after 30 days |
+| `claim_marks` | `id` PK (32 hex; also the id of its Fix step) | `profile_id` FK cascade, `claim_key` (folded evidence line), `claim_text`, `source`, `session_id`, `slot_id`, `session_kind`, `slot_kind`, `verdict`, `rung`, `question`, `quote` (null), `story` (JSON, null), `marked_on` (date), `fix_text`, `fix_minutes`, `fix_plan_id`, `fix_kept`, `fix_added_at`, `fix_done_at`, `created_at` | Migration 0014. Unique `(profile_id, session_id, slot_id)`; `(profile_id, claim_key)`, `(fix_plan_id)`; no key to its session, so it outlives the 30-day purge; goes with its profile |
 | `prepare_plans` | `id` PK (32 hex) | `profile_id` FK cascade, `role_id`, `requirement` (null for a plan over the whole role), `content` (JSON: the `PreparePlan` without its state and version), `state` (JSON: hours a week, the move shown, done task keys, links), `version` (compare-and-swap on state saves), `created_at`, `updated_at` | Migration 0010. `(profile_id, role_id, requirement)`; goes with its profile, no retention step of its own |
 
 ### Retention (run at most every 6 hours, from the lifespan; replicas claim each run through a `kv` row, under a Postgres try-lock)
@@ -732,6 +795,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 - **Discover listings**: a listing its employer's board stopped listing is deleted 30 days after it was closed. The `discover_runs` log has no retention step yet.
 - **Searches with AI**: `jobsearch_runs` and `jobsearch_docs` rows are deleted 30 days after they were written.
 - **Practice interviews**: `interview_sessions` rows (transcript and debrief) are deleted `TAYYARI_INTERVIEW__RETENTION_DAYS` (30) days after they started.
+- **Claim marks** (`claim_marks`) follow their profile through the foreign key and outlive the session they came from; deleting a session deletes its marks.
 - **Plans** (`prepare_plans`) follow their profile through the foreign key: an anonymous profile's purge and an account's deletion take its plans along; there is no window of their own.
 - **Postings** are never purged yet. Matches, resumes, cover notes, the answers a person gave and profile facts are removed only with their account (`DELETE /api/me`) or their profile. Orders are kept when an account is deleted, with `user_id` cleared.
 
@@ -749,7 +813,7 @@ Migrations live in `storage/migrations/` inside the package. No external `alembi
 
 If migration fails, the transaction rolls back and startup crashes. Readiness checks fail, so the load balancer keeps the old version running.
 
-Revisions 0003 (accounts, and the owner columns on `profiles` and `portfolios`), 0004 (payments), 0005 (posting match), 0006 (anonymous posting match), 0007 (Discover: two new tables, no change to an existing one), 0008 (search with AI), 0009 (practice interviews) and 0010 (plans for roles) follow this rule.
+Revisions 0003 (accounts, and the owner columns on `profiles` and `portfolios`), 0004 (payments), 0005 (posting match), 0006 (anonymous posting match), 0007 (Discover: two new tables, no change to an existing one), 0008 (search with AI), 0009 (practice interviews), 0010 (plans for roles), 0011 (Leafout identity), 0012 (hand-offs), 0013 (the Weekly) and 0014 (claim marks) follow this rule.
 
 **Additive-only rule**: migrations add tables or nullable columns only. No drops, renames, or constraint tightening after revision 0001 (unless a file carries a `# contract-phase` marker). Relaxing a constraint, as 0006 does by dropping `NOT NULL` from `matches.user_id` and `user_facts.user_id`, is allowed: it only widens what the old release also writes, and the old release never reads a row with a NULL owner. 0006 spells the DDL out (`ALTER COLUMN … DROP NOT NULL` on Postgres; on SQLite an edit of the table's SQL in `sqlite_master`) instead of calling `alter_column`, because an Alembic batch rebuild of `matches` on SQLite would cascade into `variants` and delete every stored resume.
 

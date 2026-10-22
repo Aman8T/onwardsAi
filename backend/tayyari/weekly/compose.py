@@ -35,9 +35,11 @@ from tayyari.jobsearch.judge import Verdict
 from tayyari.llm.errors import SpendCeilingReached
 from tayyari.llm.types import CallContext
 from tayyari.storage.ports import (
+    ClaimMarkRepo,
     InterviewRepo,
     PrepareRepo,
     ProfileRepo,
+    StoredClaimMark,
     StoredInterview,
     StoredPlan,
     StoredUser,
@@ -53,6 +55,8 @@ log = get_logger(__name__)
 
 PROFILES_LOOKED_AT: Final = 3
 """A reader's newest profiles whose plans and practice count (they may have analysed again since a plan was written)."""
+MARKS_READ: Final = 2000
+"""The most claim marks read per profile for "ready to re-drill"."""
 COUNT_WORDS: Final = {1: "One", 2: "Two", 3: "Three"}
 NO_PROFILE_HEADLINE: Final = "Add your resume and The Leafout Weekly fills itself in"
 PAYLOAD_KEYS_OUT: Final = ("id", "createdAt", "emailedAt", "readAt")
@@ -112,6 +116,7 @@ class EditionComposer:
         interview: InterviewRepo,
         reserve: Reserve,
         est_usd: float,
+        marks: ClaimMarkRepo | None = None,
     ) -> None:
         self._settings = settings
         self._jobs = jobs
@@ -120,6 +125,7 @@ class EditionComposer:
         self._profiles = profiles
         self._prepare = prepare
         self._interview = interview
+        self._marks = marks
         self._reserve = reserve
         self._est_usd = est_usd
 
@@ -137,11 +143,14 @@ class EditionComposer:
     ) -> WeeklyProgress | None:
         plans: list[StoredPlan] = []
         sessions: list[StoredInterview] = []
+        marks: list[StoredClaimMark] = []
         for pid in profile_ids:
             plans.extend(await self._prepare.list_for_profile(pid, 1))
             sessions.extend(await self._interview.list(pid, 1))
+            if self._marks is not None:
+                marks.extend(await self._marks.list_for_profile(pid, MARKS_READ))
         plan = max(plans, key=lambda p: p.created_at, default=None)
-        return build_progress(plan=plan, roles=profile.roles, sessions=sessions, now=now)
+        return build_progress(plan=plan, roles=profile.roles, sessions=sessions, now=now, marks=marks)
 
     async def _paid(
         self, profile: Profile, picked: Picked | None, want_news: bool, closest: str | None, now: datetime

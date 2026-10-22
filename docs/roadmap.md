@@ -427,7 +427,7 @@ models, and what we take and leave. The earlier outline is in `docs/research/ope
     reading, not the person's words (the live run asked "Your skills list includes RAG and retrieval", which was false).
   - A work sample's tasks are fixed templates (the six on the canvas); the posting does not fill in details yet.
   - "Add to Prepare" reads "Open Prepare": Prepare cannot take a step from the debrief yet.
-  - A "Practised" badge on the graph's skills is not built; Progress lists the best verdict per evidence line instead.
+  - A "Practised" badge on the graph's skills was not built in I1; it came with I2 (2026-10-22) as a line in the skill's popover.
   - "This role" practises roles from Discover (saved or found), and since 2026-10-18 a role of the person's graph
     (`graphRole`, opened from Prepare); a pasted posting is not a source yet.
   - A fact kept "From you" stays in practice history; it is not yet added to the posting match's facts.
@@ -688,9 +688,9 @@ Contract, ports, purposes and route names freeze at the end of I2a. I2b, I2c and
     - the stylesheets `practice.css`, `practice-room.css` and `prepare.css`.
   - **Not covered:** the screens were checked on fixtures in the dev galleries; no real interview was run end to end with a model.
 - **T · docs** (Haiku): `docs/backend.md` (Practice, Prepare, Storage), `scripts/walkthrough.md` (a new step), `CLAUDE.md` Status.
-- **Later, not in this wave:**
-  - The Weekly's "Your week" line, once W1 is live.
-  - The graph's "Practised" line, the I1 follow-up. It reads the same marks and is now a small change.
+- **Later, both built 2026-10-22 after I2c and I2d:**
+  - **The Weekly's "Your week" nudge.** Its first rule is now "You ticked 2 Fix steps last week. Those 2 claims are ready to re-drill." It counts claims whose step was ticked in the last 7 days and that no session has asked since (`weekly/progress.ready_to_redrill`). It appears only when true, and the edition's contract doesn't change.
+  - **The graph's "Practised" line, the I1 follow-up.** A skill's popover on Now shows "Practised: Shaky on 16 Oct": the best verdict among its evidence lines, matched by folded text to the claims of `GET /api/interview/sessions` (`src/practice/practised.ts`). It never changes a score, and the sample profile reads none.
 
 Each wave ends with `npm run check:all` green and a report of what was verified and what was not. No commit, deploy or secret until the user says.
 

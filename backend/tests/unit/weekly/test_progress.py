@@ -9,7 +9,7 @@ import pytest
 
 from tayyari.contract.models import Role
 from tayyari.contract.weekly import WeeklyProgress
-from tayyari.storage.ports import StoredInterview, StoredPlan
+from tayyari.storage.ports import StoredClaimMark, StoredInterview, StoredPlan
 from tayyari.weekly.progress import (
     build_progress,
     choose_nudge,
@@ -17,6 +17,7 @@ from tayyari.weekly.progress import (
     eta_days,
     last_practice,
     plan_progress,
+    ready_to_redrill,
 )
 
 NOW = datetime(2026, 10, 19, 1, 0, tzinfo=UTC)
@@ -240,3 +241,56 @@ def test_a_recent_practice_alone_is_something_to_report() -> None:
     kwargs: dict[str, Any] = {"plan": None, "roles": [], "sessions": [session(1)], "now": NOW}
     built = build_progress(**kwargs)
     assert built is not None and built.to_dict() == {"lastPractice": "2026-10-18"}
+
+
+# ───────────────────────── ready to re-drill (I2) ─────────────────────────
+
+
+def mark(
+    key: str, *, created: datetime, done: datetime | None = None, placed: bool = True
+) -> StoredClaimMark:
+    return StoredClaimMark(
+        id=f"{key}-{created.isoformat()}",
+        profile_id="p",
+        claim_key=key,
+        claim_text=key,
+        source="Resume",
+        session_id=f"s-{created.isoformat()}",
+        slot_id="s1",
+        session_kind="resume",
+        slot_kind="claim",
+        verdict="shaky",
+        rung="push",
+        question="q?",
+        marked_on=created.date(),
+        created_at=created,
+        fix_text="Write down one real example.",
+        fix_minutes=15,
+        fix_kept=placed,
+        fix_added_at=created if placed else None,
+        fix_done_at=done,
+    )
+
+
+def test_a_claim_is_ready_to_redrill_when_its_fix_was_ticked_last_week_and_not_asked_since() -> None:
+    old = NOW - timedelta(days=10)
+    marks = [
+        mark("a", created=old, done=NOW - timedelta(days=2)),  # ready
+        mark("b", created=old, done=NOW - timedelta(days=3)),  # ready
+        mark("c", created=old, done=NOW - timedelta(days=9)),  # ticked too long ago
+        mark("d", created=old, done=NOW - timedelta(days=4)),
+        mark("d", created=NOW - timedelta(days=1)),  # asked again since: not waiting any more
+        mark("e", created=old),  # not ticked
+    ]
+    assert ready_to_redrill(marks, NOW) == 2
+    built = build_progress(plan=None, roles=[], sessions=[session(1)], now=NOW, marks=marks)
+    assert built is not None
+    assert built.nudge == "You ticked 2 Fix steps last week. Those 2 claims are ready to re-drill."
+    one = build_progress(plan=None, roles=[], sessions=[session(1)], now=NOW, marks=marks[:1])
+    assert (
+        one is not None and one.nudge == "You ticked a Fix step last week. That claim is ready to re-drill."
+    )
+
+
+def test_without_a_ticked_fix_the_nudge_is_as_before() -> None:
+    assert choose_nudge(WeeklyProgress(), ready=0) == choose_nudge(WeeklyProgress())

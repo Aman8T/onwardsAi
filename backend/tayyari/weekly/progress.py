@@ -9,6 +9,8 @@ their latest practice interview. No model, no score; every number is a count of 
                 the text is shown as it is, and the lower end of a range is the one compared. A role whose ETA reads as no
                 time at all (or cannot be read) is not compared.
     practice    the date of the newest practice interview within 30 days.
+    re-drill    (I2) the claims whose Fix step was ticked in the last 7 days and that no session has asked since: ready to
+                re-drill. A count of claims, from the claim marks.
     nudge       one suggestion, chosen by the first rule that applies (see `choose_nudge`).
 """
 
@@ -22,11 +24,13 @@ from typing import Any, Final
 
 from tayyari.contract.models import Role
 from tayyari.contract.weekly import WeeklyProgress
-from tayyari.storage.ports import StoredInterview, StoredPlan
+from tayyari.storage.ports import StoredClaimMark, StoredInterview, StoredPlan
 
 from .times import iso_date
 
 PRACTICE_WINDOW: Final = timedelta(days=30)
+TICK_WINDOW: Final = timedelta(days=7)
+"""A Fix step ticked within this long counts for "ready to re-drill"."""
 
 _NUMBER_WORDS: Final = {
     "a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
@@ -127,19 +131,40 @@ def last_practice(sessions: Sequence[StoredInterview], now: datetime) -> str | N
     return iso_date(max(recent)) if recent else None
 
 
+def ready_to_redrill(marks: Sequence[StoredClaimMark], now: datetime) -> int:
+    """How many claims had their Fix step ticked in the last 7 days and have not been asked since (no later mark)."""
+    latest: dict[str, datetime] = {}
+    for m in marks:
+        latest[m.claim_key] = max(latest.get(m.claim_key, m.created_at), m.created_at)
+    ready = {
+        m.claim_key
+        for m in marks
+        if m.fix_done_at is not None
+        and (m.fix_plan_id is not None or m.fix_kept)
+        and now - m.fix_done_at <= TICK_WINDOW
+        and latest[m.claim_key] <= m.fix_done_at
+    }
+    return len(ready)
+
+
 def _steps(count: int) -> str:
     return "1 more step" if count == 1 else f"{count} more steps"
 
 
-def choose_nudge(progress: WeeklyProgress) -> str | None:
+def choose_nudge(progress: WeeklyProgress, *, ready: int = 0) -> str | None:
     """One suggestion for the week from the first rule that applies:
 
+    0. Fix steps ticked last week whose claims have not been asked since: re-drill them (I2);
     1. a plan with steps left this week: tick them;
     2. a plan whose steps this week are all ticked: practise that role out loud;
     3. no practice interview in 30 days: one short round;
     4. no plan but a closest role: open Prepare for it.
     """
     planned, ticked = progress.ticksPlanned or 0, progress.ticksThisWeek or 0
+    if ready == 1:
+        return "You ticked a Fix step last week. That claim is ready to re-drill."
+    if ready > 1:
+        return f"You ticked {ready} Fix steps last week. Those {ready} claims are ready to re-drill."
     if progress.planRole and planned > ticked:
         return f"Tick off {_steps(planned - ticked)} of your {progress.planRole} plan this week."
     if progress.planRole and planned > 0:
@@ -157,6 +182,7 @@ def build_progress(
     roles: Sequence[Role],
     sessions: Sequence[StoredInterview],
     now: datetime,
+    marks: Sequence[StoredClaimMark] = (),
 ) -> WeeklyProgress | None:
     """The progress block, or None when the reader has nothing to report and nothing to be nudged toward."""
     base = (plan_progress(plan, now) if plan is not None else None) or WeeklyProgress()
@@ -169,16 +195,18 @@ def build_progress(
             "lastPractice": practised,
         }
     )
-    nudged = merged.model_copy(update={"nudge": choose_nudge(merged)})
+    nudged = merged.model_copy(update={"nudge": choose_nudge(merged, ready=ready_to_redrill(marks, now))})
     return nudged if nudged.model_dump(exclude_none=True) else None
 
 
 __all__ = [
     "PRACTICE_WINDOW",
+    "TICK_WINDOW",
     "build_progress",
     "choose_nudge",
     "closest_role",
     "eta_days",
     "last_practice",
     "plan_progress",
+    "ready_to_redrill",
 ]

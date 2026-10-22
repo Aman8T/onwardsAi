@@ -25,6 +25,9 @@ import { placePopover, tier, TIER_LABEL } from '../../lib/layout';
 import { domainAction, skillAction, sourceAction, youAction } from '../../lib/prompts';
 import type { NodeAction } from '../../lib/prompts';
 import { EASE, NARROW_QUERY, clamp, plural, useElementSize, useMediaQuery, useTween } from '../../lib/ui';
+import { dayLabel } from '../../discover/prepare/words';
+import { practisedFor, usePractised } from '../../practice/practised';
+import { VERDICT_LABEL } from '../../practice/words';
 import { actions, useApp } from '../../store';
 import '../../styles/now.css';
 
@@ -123,6 +126,8 @@ export function NowGraph({ profile }: { profile: Profile }) {
   const cinematic = firstMount && !reduced;
 
   const M = useMemo(() => buildModel(profile), [profile]);
+  // what practice showed for each skill's evidence lines: a line under the evidence, never a change to the score
+  const practisedIndex = usePractised(profile.id);
   const role = profile.person.currentRole || 'professional';
   const mastery = useTween(profile.mastery.score, { enabled: cinematic });
 
@@ -345,6 +350,13 @@ export function NowGraph({ profile }: { profile: Profile }) {
           badge: TIER_LABEL[tier(s.score)],
           bullets: s.evidence.slice(0, 3).map((ev) => ({ tag: M.anySource.get(ev.sourceId)?.label ?? ev.sourceId, text: ev.text })),
           foot: s.unlocks.length ? { label: 'Unlocks', value: s.unlocks.join(' · ') } : undefined,
+          practised: (() => {
+            const p = practisedFor(
+              s.evidence.map((ev) => ev.text),
+              practisedIndex,
+            );
+            return p ? `${VERDICT_LABEL[p.best]} on ${dayLabel(p.on.slice(0, 10))}` : undefined;
+          })(),
           cta: action.cta,
         },
         action,
@@ -421,7 +433,7 @@ export function NowGraph({ profile }: { profile: Profile }) {
       place: besideCentre,
     };
     // chartSize.width is a dependency on purpose: a new `place` re-places the open popover on resize.
-  }, [sel, M, profile, narrow, wide, chartSize.width, chartRef]);
+  }, [sel, M, profile, narrow, wide, chartSize.width, chartRef, practisedIndex]);
 
   const openAct = (a: NodeAction) => actions.openChat(a.origin, a.question);
 
