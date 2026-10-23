@@ -31,4 +31,4 @@ export const SITE_PAGES: readonly SitePage[] = [
 ];
 
 /** The address the canonical links, the sitemap and share tags use (overridable at build time with SITE_URL). */
-export const DEFAULT_SITE_URL = 'https://tayyari.fastapicloud.dev';
+export const DEFAULT_SITE_URL = 'https://app.leafout.in';
