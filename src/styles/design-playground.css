@@ -1,0 +1,24 @@
+/* Dev design playground (/dev/design). Tokens and primitives only; every class is .dp-prefixed. */
+.dp { min-height: 100vh; }
+.dp-bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding: 12px 16px; display: grid; gap: 10px; }
+.dp-bar-top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.dp-controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-start; }
+.dp-group { display: grid; gap: 4px; }
+.dp-seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.dp-btn { min-height: 44px; }
+.dp-hue { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.dp-range { width: 160px; max-width: 40vw; }
+.dp-small { font-size: 0.8125rem; color: var(--text-muted); }
+.dp-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.dp-tab { min-height: 44px; padding: 0 14px; background: transparent; color: var(--text-muted); border: 1px solid transparent; border-radius: 8px; cursor: pointer; font: inherit; }
+.dp-tab.is-current { color: var(--text); border-color: var(--line); }
+.dp-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dp-note { margin: 0; }
+.dp-stage { display: grid; grid-template-columns: 1fr; }
+.dp-stage.is-compare { grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); }
+.dp-pane { background: var(--bg); color: var(--text); min-width: 0; overflow: auto; }
+.dp-label { margin: 0; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.dp-fail { margin: 16px; padding: 16px; }
+@media (max-width: 760px) {
+  .dp-stage.is-compare { grid-template-columns: 1fr; }
+}

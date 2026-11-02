@@ -11,7 +11,7 @@
  */
 import { createLightGL } from './gl';
 import type { LightGL } from './gl';
-import { LIGHT, wakeRadius, wanderOffset } from './palette';
+import { LIGHT, wakeRadius, wanderOffset, wakePalette, type Look } from './palette';
 import { FRAG, UNIFORMS, VERT } from './shader';
 import type { Uniform } from './shader';
 
@@ -57,7 +57,7 @@ export interface LightEngineOptions {
    */
   host: HTMLElement;
   /** The field's hue and warm easing right now (the caller reads the root's inline style). */
-  readField: () => { h: number; kw: number; dark?: boolean };
+  readField: () => { h: number; kw: number; dark?: boolean; look?: 'today' | 'quiet' };
   /** Dev only: enables the timer query and the lightness sampler, and receives a snapshot a few times a second. */
   onStats?: (stats: LightStats) => void;
 }
@@ -112,6 +112,11 @@ function oklabLightness(r: number, g: number, b: number): number {
   const m = Math.cbrt(0.2119034982 * R + 0.6806995451 * G + 0.1073969566 * B);
   const s = Math.cbrt(0.0883024619 * R + 0.2817188376 * G + 0.6299787005 * B);
   return 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+}
+
+/** The dye tone and peak opacity for a scheme and look (palette.ts; today's look returns LIGHT.wake unchanged). */
+function dyeFor(dark: boolean | undefined, look: Look | undefined) {
+  return wakePalette(look ?? 'today', !!dark);
 }
 
 export function createLightEngine(opts: LightEngineOptions): LightEngine | null {
@@ -418,8 +423,8 @@ export function createLightEngine(opts: LightEngineOptions): LightEngine | null 
       fieldReadAt = now;
     }
     const hue = field.h + WK.hue.head + wanderOffset(T, st.travel);
-    const dye = field.dark ? WK.tone.dark : WK.tone.light;
-    const peak = field.dark ? WK.alpha.dark : WK.alpha.light;
+    const dye = dyeFor(field.dark, field.look);
+    const peak = dye.alpha;
 
     // the chain in backing px, y up, and its bounding box
     nodes[0] = st.tx * texel;

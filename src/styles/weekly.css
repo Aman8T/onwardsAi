@@ -451,6 +451,14 @@
   font-size: 14px;
 }
 
+/* quiet look */
+:root[data-look='quiet'] .wk-row,
+.look-quiet .wk-row {
+  align-items: center;
+  min-height: 44px;
+  padding-block: 8px;
+}
+
 .wk-row dd {
   text-align: right;
 }

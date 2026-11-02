@@ -18,7 +18,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { LIGHT, MAX_WANDER, warmEasing } from '../src/light/palette';
+import { LIGHT, MAX_WANDER, warmEasing, wakePalette } from '../src/light/palette';
 
 const TOKENS_PATH = resolve(process.cwd(), 'src/theme/tokens.css');
 
@@ -109,7 +109,13 @@ function firstTokenBlock(css: string, opener: RegExp): Token[] {
 /** The dark table as the system preference applies it: inside `@media (prefers-color-scheme: dark)`. */
 const DARK_MEDIA_RE = /@media\s*\(\s*prefers-color-scheme\s*:\s*dark\s*\)\s*\{/g;
 /** The dark table as forced by <html data-scheme="dark">. */
-const DARK_FORCED_RE = /:root:where\(\[data-scheme=['"]dark['"]\]\)\s*\{/g;
+const DARK_FORCED_RE = /:root:where\(\[data-scheme=['"]dark['"]\]\)(?:\s*,\s*\.look-today\.scheme-dark)?\s*\{/g;
+
+/** The quiet look (<html data-look="quiet">): light table, dark under the media query, dark forced. */
+const QUIET_LIGHT_RE = /:root:where\(\[data-look=['"]quiet['"]\]\)\s*,\s*\.look-quiet\.scheme-light\s*\{/g;
+const QUIET_DARK_MEDIA_RE = /:root:where\(\[data-look=['"]quiet['"]\]:not\(\[data-scheme=['"]light['"]\]\)\)\s*\{/g;
+const QUIET_DARK_FORCED_RE =
+  /:root:where\(\[data-look=['"]quiet['"]\]\[data-scheme=['"]dark['"]\]\)\s*,\s*\.look-quiet\.scheme-dark\s*\{/g;
 
 const sameToken = (a: Token, b: Token): boolean =>
   a.L === b.L && a.C === b.C && a.hue === b.hue && a.kw === b.kw && a.kb === b.kb && a.alpha === b.alpha;
@@ -127,9 +133,9 @@ interface DarkTable {
 }
 
 /** Reads the dark table, proves its two copies agree and that it redefines every light role. */
-function darkTable(css: string, light: Token[]): DarkTable {
-  const media = firstTokenBlock(css, DARK_MEDIA_RE);
-  const forced = firstTokenBlock(css, DARK_FORCED_RE);
+function darkTable(css: string, light: Token[], mediaRe: RegExp = DARK_MEDIA_RE, forcedRe: RegExp = DARK_FORCED_RE): DarkTable {
+  const media = firstTokenBlock(css, mediaRe);
+  const forced = firstTokenBlock(css, forcedRe);
   const problems: string[] = [];
   if (!media.length) problems.push('no dark table under @media (prefers-color-scheme: dark)');
   if (!forced.length) problems.push("no dark table under :root:where([data-scheme='dark'])");
@@ -312,11 +318,11 @@ interface GamutFailure {
   hue: number;
 }
 
-function check(tokens: Token[]): { pairs: PairResult[]; gamut: GamutFailure[]; missing: string[] } {
+function check(tokens: Token[], pairList: Pair[] = PAIRS): { pairs: PairResult[]; gamut: GamutFailure[]; missing: string[] } {
   const byName = new Map(tokens.map((t) => [t.name, t]));
-  const missing = [...new Set(PAIRS.flatMap((p) => [p.fg, p.bg]))].filter((n) => !byName.has(n));
+  const missing = [...new Set(pairList.flatMap((p) => [p.fg, p.bg]))].filter((n) => !byName.has(n));
   const gamut: GamutFailure[] = [];
-  const results: PairResult[] = PAIRS.filter((p) => byName.has(p.fg) && byName.has(p.bg)).map((p) => ({
+  const results: PairResult[] = pairList.filter((p) => byName.has(p.fg) && byName.has(p.bg)).map((p) => ({
     ...p,
     worst: Infinity,
     worstHue: -1,
@@ -351,6 +357,46 @@ function check(tokens: Token[]): { pairs: PairResult[]; gamut: GamutFailure[]; m
   return { pairs: results, gamut, missing };
 }
 
+/**
+ * The quiet look's pairs: today's, minus --line-strong over --bg. Quiet hairlines (.84 light, .40 dark) are
+ * region edges, not control borders, so the 3:1 non-text floor does not hold for them by design; a control in
+ * the quiet look must be told apart by its --well fill and focus ring (--accent-ui, still held at 3:1).
+ */
+const QUIET_PAIRS: Pair[] = PAIRS.filter((p) => !(p.fg === 'line-strong' && p.bg === 'bg'));
+
+/** Share of the smallest sRGB chroma (over all hues) a quiet role may use. */
+const HEADROOM = 0.97;
+
+/** Largest in-gamut chroma at L and hue (bisection). */
+function maxChroma(L: number, hue: number): number {
+  let lo = 0;
+  let hi = 0.5;
+  for (let i = 0; i < 30; i++) {
+    const mid = (lo + hi) / 2;
+    if (inGamut(oklchToLinear(L, mid, hue))) lo = mid;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/** Quiet roles whose chroma is above HEADROOM x the minimum sRGB chroma across hues at their lightness. */
+function headroomFailures(tokens: Token[]): string[] {
+  const out: string[] = [];
+  const memo = new Map<number, number>();
+  for (const t of tokens) {
+    if (schemeFree(t.name) || t.alpha < 1 && t.name.startsWith('lobe-')) continue;
+    const hues = typeof t.hue === 'number' ? [t.hue] : [...Array(360).keys()];
+    const key = t.L * 1000 + (typeof t.hue === 'number' ? t.hue / 1000 : 0);
+    let floor = memo.get(key);
+    if (floor === undefined) {
+      floor = Math.min(...hues.map((h) => maxChroma(t.L, h)));
+      memo.set(key, floor);
+    }
+    if (t.C > HEADROOM * floor) out.push(`--${t.name}: C ${t.C} at L ${t.L} exceeds ${HEADROOM} x ${floor.toFixed(4)} = ${(HEADROOM * floor).toFixed(4)}`);
+  }
+  return out;
+}
+
 /* ----------------------------------------------------------------------------
  * The cursor light (src/light/palette.ts): the viscous wake's dye, at its peak
  * alpha, composited over the field and every lobe, under every text role that
@@ -373,6 +419,13 @@ const LIGHT_PAIRS: { fg: string; min: number }[] = [
   { fg: 'accent', min: 3 },
   { fg: 'accent-ui', min: 3 },
 ];
+
+/** A spotlight under the wake: OKLCH tone and opacity. */
+interface Spot {
+  L: number;
+  C: number;
+  alpha: number;
+}
 
 interface DyeTone {
   head: { L: number; C: number };
@@ -406,7 +459,14 @@ function fitToGamut(L: number, C: number, hue: number): { lin: Lin; cuts: number
 }
 
 /** The dye colours (as the shader fits them into sRGB) at a base hue, and the dye composited over every background. */
-function dyeColours(baseHue: number, dye: DyeTone, peak: number, byName: Map<string, Token>, field: Lin[]): { dyes: Lin[]; over: Lin[]; cuts: number } {
+function dyeColours(
+  baseHue: number,
+  dye: DyeTone,
+  peak: number,
+  byName: Map<string, Token>,
+  field: Lin[],
+  spot: Spot | null,
+): { dyes: Lin[]; over: Lin[]; cuts: number } {
   let cuts = 0;
   const dyes = dyeOffsets().map(({ tone, off }) => {
     const hue = mod360(baseHue + off);
@@ -423,10 +483,15 @@ function dyeColours(baseHue: number, dye: DyeTone, peak: number, byName: Map<str
     if (!t) continue;
     for (const v of variants(t, baseHue)) backs.push(...(t.alpha >= 1 ? [v] : field.map((f) => composite(v, t.alpha, f))));
   }
-  return { dyes, over: dyes.flatMap((d) => backs.map((b) => composite(d, peak, b))), cuts };
+  // the quiet dark spotlight lifts the field under the wake: text is also measured over it, bare and under the dye
+  if (spot) {
+    const lit = backs.map((b) => composite(oklchToLinear(spot.L, spot.C, 0), spot.alpha, b));
+    backs.push(...lit);
+  }
+  return { dyes, over: dyes.flatMap((d) => backs.map((b) => composite(d, peak, b))).concat(spot ? backs : []), cuts };
 }
 
-function checkLight(tokens: Token[], dye: DyeTone, peak: number): { pairs: PairResult[]; gamut: number[]; fitted: number; deepest: number } {
+function checkLight(tokens: Token[], dye: DyeTone, peak: number, spot: Spot | null = null): { pairs: PairResult[]; gamut: number[]; fitted: number; deepest: number } {
   const byName = new Map(tokens.map((t) => [t.name, t]));
   const results: PairResult[] = LIGHT_PAIRS.filter((p) => byName.has(p.fg)).map((p) => ({
     fg: p.fg,
@@ -441,7 +506,7 @@ function checkLight(tokens: Token[], dye: DyeTone, peak: number): { pairs: PairR
   const bg = byName.get('bg')!;
   for (let hue = 0; hue < 360; hue++) {
     const field = variants(bg, hue);
-    const { dyes, over, cuts } = dyeColours(hue, dye, peak, byName, field);
+    const { dyes, over, cuts } = dyeColours(hue, dye, peak, byName, field, spot);
     if (!dyes.every(inGamut)) gamut.push(hue);
     if (cuts > 0) fitted++;
     deepest = Math.max(deepest, cuts);
@@ -509,6 +574,32 @@ function darkFallbackBlocks(dark: Token[], hue: number): string {
   ].join('\n');
 }
 
+/** The quiet look's tables as the cascade builds them: today's light (for the fixed press tokens) under the quiet ones. */
+function quietTables(css: string, today: Token[]): { light: { own: Token[]; tokens: Token[] }; dark: DarkTable } {
+  const own = firstTokenBlock(css, QUIET_LIGHT_RE);
+  const merged = new Map(today.map((t) => [t.name, t]));
+  for (const t of own) merged.set(t.name, t);
+  const tokens = [...merged.values()];
+  return { light: { own, tokens }, dark: darkTable(css, tokens, QUIET_DARK_MEDIA_RE, QUIET_DARK_FORCED_RE) };
+}
+
+/** The quiet hex blocks for one base hue, laid out like their oklch tables (light, dark media, dark forced). */
+function quietFallbackBlocks(light: Token[], dark: Token[], hue: number): string {
+  return [
+    ":root:where([data-look='quiet']) {",
+    fallbackLines(light, hue, '  '),
+    '}',
+    '@media (prefers-color-scheme: dark) {',
+    "  :root:where([data-look='quiet']:not([data-scheme='light'])) {",
+    fallbackLines(dark, hue, '    '),
+    '  }',
+    '}',
+    ":root:where([data-look='quiet'][data-scheme='dark']) {",
+    fallbackLines(dark, hue, '  '),
+    '}',
+  ].join('\n');
+}
+
 /* ----------------------------------------------------------------------------
  * CLI
  * ------------------------------------------------------------------------- */
@@ -524,8 +615,8 @@ function printTable(rows: string[][]): void {
 }
 
 /** Runs the pair and gamut checks for one scheme's tokens and prints them; returns true when all pass. */
-function reportScheme(scheme: string, tokens: Token[]): boolean {
-  const { pairs, gamut, missing } = check(tokens);
+function reportScheme(scheme: string, tokens: Token[], pairList: Pair[] = PAIRS): boolean {
+  const { pairs, gamut, missing } = check(tokens, pairList);
   let ok = true;
   console.log(`palette-check, ${scheme}: ${tokens.length} tokens, 360 hues\n`);
   printTable(
@@ -576,6 +667,10 @@ function main(): number {
     console.log(fallbackBlock(tokens, hue));
     console.log();
     console.log(darkFallbackBlocks(dark.own, hue));
+    // the quiet look's blocks (selectors scoped to <html data-look="quiet">), same hue
+    const q = quietTables(css, tokens);
+    console.log();
+    console.log(quietFallbackBlocks(q.light.own, q.dark.own, hue));
     return 0;
   }
 
@@ -589,11 +684,50 @@ function main(): number {
   }
   failed = !reportScheme('dark', dark.tokens) || failed;
 
-  for (const [scheme, table, dye, peak] of [
-    ['light', tokens, LIGHT.wake.tone.light, LIGHT.wake.alpha.light],
-    ['dark', dark.tokens, LIGHT.wake.tone.dark, LIGHT.wake.alpha.dark],
+  // The quiet look: its light table, its dark table (two copies), the lobes-equal-bg rule, chroma headroom, the dye.
+  const quiet = quietTables(css, tokens);
+  console.log('=== quiet look (data-look="quiet") ===\n');
+  if (!quiet.light.own.length) {
+    failed = true;
+    console.log('No oklch table found for the quiet light look.\n');
+  }
+  failed = !reportScheme('quiet light', quiet.light.tokens, QUIET_PAIRS) || failed;
+  if (quiet.dark.problems.length) {
+    failed = true;
+    console.log('Quiet dark table:');
+    for (const p of quiet.dark.problems) console.log(`  ${p}`);
+    console.log();
+  }
+  failed = !reportScheme('quiet dark', quiet.dark.tokens, QUIET_PAIRS) || failed;
+  const bgDark = quiet.dark.tokens.find((t) => t.name === 'bg');
+  for (let i = 1; i <= 4; i++) {
+    for (const suffix of ['', '-clear']) {
+      const t = quiet.dark.tokens.find((x) => x.name === `lobe-${i}${suffix}`);
+      if (!t || !bgDark || t.L !== bgDark.L || t.C !== bgDark.C || t.hue !== bgDark.hue || t.kw !== bgDark.kw || t.kb || (suffix === '' ? t.alpha !== 1 : t.alpha !== 0)) {
+        failed = true;
+        console.log(`Quiet dark: --lobe-${i}${suffix} must equal --bg (alpha ${suffix ? 0 : 1}) so the ambient layer draws nothing.`);
+      }
+    }
+  }
+  for (const [scheme, table] of [['light', quiet.light.tokens], ['dark', quiet.dark.tokens]] as const) {
+    const over = headroomFailures(table.filter((t) => quiet[scheme === 'light' ? 'light' : 'dark'].own.some((o) => o.name === t.name)));
+    if (over.length) {
+      failed = true;
+      console.log(`Quiet ${scheme}: chroma above ${HEADROOM} x the minimum sRGB chroma:`);
+      for (const o of over) console.log(`  ${o}`);
+    } else {
+      console.log(`Quiet ${scheme}: every role's chroma is within ${HEADROOM} x the minimum sRGB chroma across hues.`);
+    }
+  }
+  console.log();
+
+  for (const [scheme, table, dye, peak, spot] of [
+    ['light', tokens, LIGHT.wake.tone.light, LIGHT.wake.alpha.light, null],
+    ['dark', dark.tokens, LIGHT.wake.tone.dark, LIGHT.wake.alpha.dark, null],
+    ['quiet light', quiet.light.tokens, wakePalette('quiet', false).head && wakePalette('quiet', false), wakePalette('quiet', false).alpha, wakePalette('quiet', false).spot],
+    ['quiet dark', quiet.dark.tokens, wakePalette('quiet', true), wakePalette('quiet', true).alpha, wakePalette('quiet', true).spot],
   ] as const) {
-    const light = checkLight(table, dye, peak);
+    const light = checkLight(table, dye, peak, spot);
     console.log(
       `cursor light, ${scheme} scheme: dye head L ${dye.head.L} C ${dye.head.C}, tail L ${dye.tail.L} C ${dye.tail.C}, peak alpha ${peak}, hue +${LIGHT.wake.hue.head} (wander ${MAX_WANDER}) then ${LIGHT.wake.hue.tail} round
 `,

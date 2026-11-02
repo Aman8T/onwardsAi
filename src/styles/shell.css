@@ -36,6 +36,13 @@
   border-bottom: var(--hair) solid var(--line);
 }
 
+/* quiet look */
+:root[data-look='quiet'] .gv-header,
+.look-quiet .gv-header {
+  background: var(--bg);
+  border-bottom: 0;
+}
+
 /* Now | Next: two text buttons and one underline that slides between them. */
 .gv-seg {
   position: relative;

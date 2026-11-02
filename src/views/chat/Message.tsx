@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import type { SourceSummary } from '../../../shared/types';
 import type { ChatMessage } from '../../store';
 import { IconRefresh } from '../../components/Icons';
-import { Markdown } from './Markdown';
+import { Markdown } from './MarkdownLazy';
 import { toolText } from './helpers';
 
 /* ───────────── user ───────────── */

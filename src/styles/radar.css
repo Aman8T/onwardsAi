@@ -55,6 +55,41 @@
 .radar-leaf-stalk {
   stroke-width: 2;
 }
+
+/* quiet look */
+:root[data-look='quiet'] .radar-leaf-blade,
+.look-quiet .radar-leaf-blade {
+  fill-opacity: 0.015;
+  stroke-opacity: 0.03;
+}
+
+:root[data-look='quiet'] .radar-leaf-stalk,
+.look-quiet .radar-leaf-stalk {
+  stroke-opacity: 0.03;
+}
+
+:root[data-look='quiet'] .mt-radar .radar-leaf-blade,
+.look-quiet .mt-radar .radar-leaf-blade {
+  fill-opacity: 0.03;
+  stroke-opacity: 0.06;
+}
+
+:root[data-look='quiet'] .mt-radar .radar-leaf-stalk,
+.look-quiet .mt-radar .radar-leaf-stalk {
+  stroke-opacity: 0.06;
+}
+
+:root[data-look='quiet'] .gv-view .radar-leaf-blade,
+.look-quiet .gv-view .radar-leaf-blade {
+  fill-opacity: 0.06;
+  stroke-opacity: 0.12;
+}
+
+:root[data-look='quiet'] .gv-view .radar-leaf-stalk,
+.look-quiet .gv-view .radar-leaf-stalk {
+  stroke-opacity: 0.12;
+}
+
 @media (forced-colors: active) {
   .radar-leaf {
     display: none;

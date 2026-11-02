@@ -98,3 +98,68 @@ export function wakeRadius(width: number, height: number): number {
   const { fraction, min, max } = LIGHT.wake.radius;
   return Math.min(max, Math.max(min, Math.min(width, height) * fraction));
 }
+
+/* ----------------------------------------------------------------------------
+ * Looks. <html data-look="quiet"> selects the quiet look (tokens.css); absent is today's.
+ * ------------------------------------------------------------------------- */
+
+export type Look = 'today' | 'quiet';
+
+/** One end of the dye: OKLCH tone and the opacity it is drawn at. */
+export interface DyeEnd {
+  L: number;
+  C: number;
+  alpha: number;
+}
+
+/** The quiet look's dye. Same shape as the wake's (head to tail); it is a touch lighter on dark than today's. */
+export const QUIET = {
+  tone: {
+    light: { head: { L: 0.8, C: 0.11 }, tail: { L: 0.86, C: 0.08 } },
+    dark: { head: { L: 0.62, C: 0.1 }, tail: { L: 0.55, C: 0.08 } },
+  },
+  /** Head and tail opacity. `peak` is the strongest the dye is ever drawn (the head). */
+  alpha: {
+    light: { head: 0.75, tail: 0.55 },
+    dark: { head: 0.3, tail: 0.21 },
+  },
+  /**
+   * A spotlight under the wake, quiet dark only: white, drawn under the dye at this opacity so the field
+   * lifts a little where the pointer is. null = none.
+   */
+  spot: { dark: { L: 1, C: 0, alpha: 0.1 }, light: null },
+} as const;
+
+/** The spotlight tone for the quiet look in dark (white at alpha .10). */
+export const spot = QUIET.spot.dark;
+
+export interface WakePalette {
+  head: { L: number; C: number };
+  tail: { L: number; C: number };
+  /** Peak opacity at the head (what palette-check measures). */
+  alpha: number;
+  /** Opacity the dye is meant to reach at the tail end (today's look has no separate tail value: = alpha). */
+  tailAlpha: number;
+  /** Spotlight under the wake, or null. */
+  spot: { L: number; C: number; alpha: number } | null;
+}
+
+/**
+ * The wake's palette for a look and scheme. `today` returns exactly the values of LIGHT.wake (tone, alpha),
+ * with tailAlpha = alpha and no spot, so nothing changes for it.
+ */
+export function wakePalette(look: Look, dark: boolean): WakePalette {
+  if (look === 'quiet') {
+    const s = dark ? 'dark' : 'light';
+    return {
+      head: QUIET.tone[s].head,
+      tail: QUIET.tone[s].tail,
+      alpha: QUIET.alpha[s].head,
+      tailAlpha: QUIET.alpha[s].tail,
+      spot: dark ? QUIET.spot.dark : null,
+    };
+  }
+  const tone = dark ? LIGHT.wake.tone.dark : LIGHT.wake.tone.light;
+  const alpha = dark ? LIGHT.wake.alpha.dark : LIGHT.wake.alpha.light;
+  return { head: tone.head, tail: tone.tail, alpha, tailAlpha: alpha, spot: null };
+}

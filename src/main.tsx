@@ -42,6 +42,9 @@ if (pathname.startsWith('/p/')) {
 } else if (import.meta.env.DEV && pathname === '/dev/weekly') {
   // every state of The Leafout Weekly on stored fixtures: no server, no account
   Root = lazy(() => import('./weekly/dev/WeeklyGallery').then((m) => ({ default: m.WeeklyGallery })));
+} else if (import.meta.env.DEV && pathname === '/dev/design') {
+  // the real screens under either look, scheme and hue, alone or side by side, on fixtures: no server, no account
+  Root = lazy(() => import('./dev/design/DesignPlayground').then((m) => ({ default: m.DesignPlayground })));
 } else {
   Root = lazy(() => import('./App').then((m) => ({ default: m.App })));
 }

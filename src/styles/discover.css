@@ -597,6 +597,14 @@
   color: var(--text);
 }
 
+/* quiet look */
+:root[data-look='quiet'] .chip.is-on,
+.look-quiet .chip.is-on {
+  background: var(--fill);
+  border-color: transparent;
+  color: var(--accent-ui);
+}
+
 /* ───────────── how it narrowed it down ───────────── */
 
 .dc-funnel {

@@ -130,6 +130,21 @@ button {
   color: var(--text);
 }
 
+/* quiet look */
+:root[data-look='quiet'] .btn-quiet,
+.look-quiet .btn-quiet,
+:root[data-look='quiet'] .btn-quiet:hover,
+.look-quiet .btn-quiet:hover {
+  background: transparent;
+  border: 0;
+}
+
+:root[data-look='quiet'] .btn-quiet:hover,
+.look-quiet .btn-quiet:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .btn-sm {
   padding: 4px 10px;
   font-size: var(--fs-1);
@@ -168,6 +183,13 @@ textarea.field {
   border-radius: 999px;
   background: var(--surface-2);
   font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+:root[data-look='quiet'] .chip,
+.look-quiet .chip {
+  background: transparent;
+  border: 1px solid var(--line-strong);
   color: var(--text-muted);
 }
 

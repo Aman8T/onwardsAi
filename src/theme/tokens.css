@@ -151,12 +151,104 @@
   --danger: #e6857e;
 }
 
+/* (b3) Hex fallback for hue 250, quiet look (light, dark media, dark forced). Generated — do not edit by hand. */
+:root:where([data-look='quiet']) {
+  --bg: #e1ebf5;
+  --lobe-1: #cbdbed;
+  --lobe-2: #dcdcef;
+  --lobe-3: #d3e8ea;
+  --lobe-4: #e7dbea;
+  --lobe-1-clear: rgba(203, 219, 237, 0);
+  --lobe-2-clear: rgba(220, 220, 239, 0);
+  --lobe-3-clear: rgba(211, 232, 234, 0);
+  --lobe-4-clear: rgba(231, 219, 234, 0);
+  --surface: #e1ebf5;
+  --surface-2: #eaf1f8;
+  --well: #edf2f8;
+  --text: #141b24;
+  --text-muted: #454e58;
+  --text-faint: #606a75;
+  --accent: #355b81;
+  --accent-ui: #3d6690;
+  --accent-strong: #274563;
+  --accent-soft: #cde0f5;
+  --fill: rgba(61, 102, 144, 0.13);
+  --fill-2: rgba(61, 102, 144, 0.085);
+  --fill-strong: rgba(61, 102, 144, 0.19);
+  --grid: rgba(20, 27, 36, 0.08);
+  --line: #d8dfe6;
+  --line-strong: #c3ccd5;
+  --selection: #bfdbf8;
+  --danger: #963d3a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where([data-look='quiet']:not([data-scheme='light'])) {
+    --bg: #0b1015;
+    --lobe-1: #0b1015;
+    --lobe-2: #0b1015;
+    --lobe-3: #0b1015;
+    --lobe-4: #0b1015;
+    --lobe-1-clear: rgba(11, 16, 21, 0);
+    --lobe-2-clear: rgba(11, 16, 21, 0);
+    --lobe-3-clear: rgba(11, 16, 21, 0);
+    --lobe-4-clear: rgba(11, 16, 21, 0);
+    --surface: #151a1f;
+    --surface-2: #1d2228;
+    --well: #070a0e;
+    --text: #e3e8ee;
+    --text-muted: #abb2ba;
+    --text-faint: #9199a2;
+    --accent: #a5cffb;
+    --accent-ui: #8dc3fa;
+    --accent-strong: #b7d8fc;
+    --accent-soft: #192532;
+    --fill: rgba(141, 195, 250, 0.2);
+    --fill-2: rgba(141, 195, 250, 0.13);
+    --fill-strong: rgba(141, 195, 250, 0.28);
+    --grid: rgba(227, 232, 238, 0.12);
+    --line: #30363d;
+    --line-strong: #414951;
+    --selection: #2d445c;
+    --danger: #e6857e;
+  }
+}
+:root:where([data-look='quiet'][data-scheme='dark']) {
+  --bg: #0b1015;
+  --lobe-1: #0b1015;
+  --lobe-2: #0b1015;
+  --lobe-3: #0b1015;
+  --lobe-4: #0b1015;
+  --lobe-1-clear: rgba(11, 16, 21, 0);
+  --lobe-2-clear: rgba(11, 16, 21, 0);
+  --lobe-3-clear: rgba(11, 16, 21, 0);
+  --lobe-4-clear: rgba(11, 16, 21, 0);
+  --surface: #151a1f;
+  --surface-2: #1d2228;
+  --well: #070a0e;
+  --text: #e3e8ee;
+  --text-muted: #abb2ba;
+  --text-faint: #9199a2;
+  --accent: #a5cffb;
+  --accent-ui: #8dc3fa;
+  --accent-strong: #b7d8fc;
+  --accent-soft: #192532;
+  --fill: rgba(141, 195, 250, 0.2);
+  --fill-2: rgba(141, 195, 250, 0.13);
+  --fill-strong: rgba(141, 195, 250, 0.28);
+  --grid: rgba(227, 232, 238, 0.12);
+  --line: #30363d;
+  --line-strong: #414951;
+  --selection: #2d445c;
+  --danger: #e6857e;
+}
+
 /* (c) The living palette, light ("Dye on paper", 2026-10-20). Only hue varies; L and C are fixed per role.
  * The field itself is dyed (lobes at L .845, about the most chroma every hue can hold there); panels are pale
  * paper of the same hue laid on top.
  * `--lobe-N-clear` is each lobe at alpha 0: the ambient layer fades every lobe to its own colour. */
 @supports (color: oklch(0 0 0)) {
-  :root {
+  :root,
+  .look-today.scheme-light {
     --k: 1;
     --bg: oklch(0.925 calc(0.03 * var(--k) * var(--kw)) var(--h));
     --lobe-1: oklch(0.845 calc(0.073 * var(--k) * var(--kw) * var(--kb)) var(--h2));
@@ -180,6 +272,7 @@
     --fill: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.12);
     --fill-2: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.08);
     --fill-strong: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.18);
+    --spot: oklch(1 0 0 / 0); /* the quiet look's spotlight; see (c1b) */
     --grid: oklch(0.23 calc(0.03 * var(--k)) var(--h) / 0.08);
     --line: oklch(0.87 calc(0.035 * var(--k)) var(--h));
     --line-strong: oklch(0.58 calc(0.06 * var(--k)) var(--h));
@@ -249,6 +342,7 @@
       --fill: oklch(0.77 calc(0.113 * var(--k)) var(--h) / 0.18);
       --fill-2: oklch(0.77 calc(0.113 * var(--k)) var(--h) / 0.12);
       --fill-strong: oklch(0.77 calc(0.113 * var(--k)) var(--h) / 0.26);
+      --spot: oklch(1 0 0 / 0);
       --grid: oklch(0.92 calc(0.016 * var(--k)) var(--h) / 0.12);
       --line: oklch(0.3 calc(0.035 * var(--k)) var(--h));
       --line-strong: oklch(0.56 calc(0.05 * var(--k)) var(--h));
@@ -256,7 +350,8 @@
       --danger: oklch(0.72 0.12 25);
     }
   }
-  :root:where([data-scheme='dark']) {
+  :root:where([data-scheme='dark']),
+  .look-today.scheme-dark {
     --bg: oklch(0.25 calc(0.041 * var(--k) * var(--kw)) var(--h));
     --lobe-1: oklch(0.36 calc(0.059 * var(--k) * var(--kw) * var(--kb)) var(--h2));
     --lobe-2: oklch(0.36 calc(0.059 * var(--k) * var(--kw) * var(--kb)) var(--h3));
@@ -279,10 +374,114 @@
     --fill: oklch(0.77 calc(0.113 * var(--k)) var(--h) / 0.18);
     --fill-2: oklch(0.77 calc(0.113 * var(--k)) var(--h) / 0.12);
     --fill-strong: oklch(0.77 calc(0.113 * var(--k)) var(--h) / 0.26);
+    --spot: oklch(1 0 0 / 0);
     --grid: oklch(0.92 calc(0.016 * var(--k)) var(--h) / 0.12);
     --line: oklch(0.3 calc(0.035 * var(--k)) var(--h));
     --line-strong: oklch(0.56 calc(0.05 * var(--k)) var(--h));
     --selection: oklch(0.4 calc(0.066 * var(--k)) var(--h));
+    --danger: oklch(0.72 0.12 25);
+  }
+}
+
+/* (c1b) The "quiet" look (opt-in, <html data-look="quiet">; absent = today's look above, unchanged). A quiet field,
+ * panels that are regions rather than boxes, colour kept for the accent, the fill and the cursor. Same roles, same
+ * hue variables; the light table sits on the field (surface = bg), the dark table makes panels one step LIGHTER than
+ * the field (surface .215 over bg .17) and draws no lobes: every lobe token equals --bg, so the ambient layer paints
+ * a flat field. `.look-quiet.scheme-light|dark` re-declare the tables inside a wrapper (the playground).
+ * Selectors carry :where() so they stay at :root specificity and file order decides: this block comes after
+ * today's tables. The dark table exists twice (media + forced); palette-check asserts the copies agree. */
+@supports (color: oklch(0 0 0)) {
+  :root:where([data-look='quiet']),
+  .look-quiet.scheme-light {
+    --bg: oklch(0.935 calc(0.018 * var(--k) * var(--kw)) var(--h));
+    --lobe-1: oklch(0.885 calc(0.03 * var(--k) * var(--kw) * var(--kb)) var(--h));
+    --lobe-2: oklch(0.9 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h2));
+    --lobe-3: oklch(0.915 calc(0.022 * var(--k) * var(--kw) * var(--kb)) var(--h3));
+    --lobe-4: oklch(0.905 calc(0.025 * var(--k) * var(--kw) * var(--kb)) var(--h4));
+    --lobe-1-clear: oklch(0.885 calc(0.03 * var(--k) * var(--kw) * var(--kb)) var(--h) / 0);
+    --lobe-2-clear: oklch(0.9 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h2) / 0);
+    --lobe-3-clear: oklch(0.915 calc(0.022 * var(--k) * var(--kw) * var(--kb)) var(--h3) / 0);
+    --lobe-4-clear: oklch(0.905 calc(0.025 * var(--k) * var(--kw) * var(--kb)) var(--h4) / 0);
+    --surface: oklch(0.935 calc(0.018 * var(--k) * var(--kw)) var(--h));
+    --surface-2: oklch(0.955 calc(0.012 * var(--k)) var(--h));
+    --well: oklch(0.96 calc(0.01 * var(--k)) var(--h));
+    --text: oklch(0.22 calc(0.02 * var(--k)) var(--h));
+    --text-muted: oklch(0.42 calc(0.02 * var(--k)) var(--h));
+    --text-faint: oklch(0.52 calc(0.022 * var(--k)) var(--h));
+    --accent: oklch(0.46 calc(0.076 * var(--k)) var(--h));
+    --accent-ui: oklch(0.5 calc(0.082 * var(--k)) var(--h));
+    --accent-strong: oklch(0.38 calc(0.063 * var(--k)) var(--h));
+    --accent-soft: oklch(0.9 calc(0.035 * var(--k)) var(--h));
+    --fill: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.13);
+    --fill-2: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.085);
+    --fill-strong: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.19);
+    --grid: oklch(0.22 calc(0.02 * var(--k)) var(--h) / 0.08);
+    --line: oklch(0.9 calc(0.012 * var(--k)) var(--h));
+    --line-strong: oklch(0.84 calc(0.016 * var(--k)) var(--h));
+    --selection: oklch(0.88 calc(0.05 * var(--k)) var(--h));
+    --danger: oklch(0.48 0.12 25);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where([data-look='quiet']:not([data-scheme='light'])) {
+      --bg: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
+      --lobe-1: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
+      --lobe-2: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
+      --lobe-3: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
+      --lobe-4: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
+      --lobe-1-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
+      --lobe-2-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
+      --lobe-3-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
+      --lobe-4-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
+      --surface: oklch(0.215 calc(0.012 * var(--k) * var(--kw)) var(--h));
+      --surface-2: oklch(0.25 calc(0.014 * var(--k)) var(--h));
+      --well: oklch(0.145 calc(0.01 * var(--k)) var(--h));
+      --text: oklch(0.93 calc(0.01 * var(--k)) var(--h));
+      --text-muted: oklch(0.76 calc(0.014 * var(--k)) var(--h));
+      --text-faint: oklch(0.68 calc(0.016 * var(--k)) var(--h));
+      --accent: oklch(0.84 calc(0.076 * var(--k)) var(--h));
+      --accent-ui: oklch(0.8 calc(0.097 * var(--k)) var(--h));
+      --accent-strong: oklch(0.87 calc(0.061 * var(--k)) var(--h));
+      --accent-soft: oklch(0.26 calc(0.03 * var(--k)) var(--h));
+      --fill: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.2);
+      --fill-2: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.13);
+      --fill-strong: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.28);
+    --spot: oklch(1 0 0 / 0.1);
+      --grid: oklch(0.93 calc(0.01 * var(--k)) var(--h) / 0.12);
+      --line: oklch(0.33 calc(0.015 * var(--k)) var(--h));
+      --line-strong: oklch(0.4 calc(0.018 * var(--k)) var(--h));
+      --selection: oklch(0.38 calc(0.05 * var(--k)) var(--h));
+      --danger: oklch(0.72 0.12 25);
+    }
+  }
+  :root:where([data-look='quiet'][data-scheme='dark']),
+  .look-quiet.scheme-dark {
+    --bg: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
+    --lobe-1: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
+    --lobe-2: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
+    --lobe-3: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
+    --lobe-4: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
+    --lobe-1-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
+    --lobe-2-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
+    --lobe-3-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
+    --lobe-4-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
+    --surface: oklch(0.215 calc(0.012 * var(--k) * var(--kw)) var(--h));
+    --surface-2: oklch(0.25 calc(0.014 * var(--k)) var(--h));
+    --well: oklch(0.145 calc(0.01 * var(--k)) var(--h));
+    --text: oklch(0.93 calc(0.01 * var(--k)) var(--h));
+    --text-muted: oklch(0.76 calc(0.014 * var(--k)) var(--h));
+    --text-faint: oklch(0.68 calc(0.016 * var(--k)) var(--h));
+    --accent: oklch(0.84 calc(0.076 * var(--k)) var(--h));
+    --accent-ui: oklch(0.8 calc(0.097 * var(--k)) var(--h));
+    --accent-strong: oklch(0.87 calc(0.061 * var(--k)) var(--h));
+    --accent-soft: oklch(0.26 calc(0.03 * var(--k)) var(--h));
+    --fill: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.2);
+    --fill-2: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.13);
+    --fill-strong: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.28);
+    --spot: oklch(1 0 0 / 0.1);
+    --grid: oklch(0.93 calc(0.01 * var(--k)) var(--h) / 0.12);
+    --line: oklch(0.33 calc(0.015 * var(--k)) var(--h));
+    --line-strong: oklch(0.4 calc(0.018 * var(--k)) var(--h));
+    --selection: oklch(0.38 calc(0.05 * var(--k)) var(--h));
     --danger: oklch(0.72 0.12 25);
   }
 }

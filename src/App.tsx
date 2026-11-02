@@ -2,6 +2,7 @@ import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { Suspense, lazy } from 'react';
 import { SignIn } from './auth/SignIn';
 import { CursorLight } from './light/CursorLight';
+import { Spot } from './light/Spot';
 import { useAutoClaim } from './auth/useMe';
 import { useHandoff } from './lib/useHandoff';
 import { useResumeAfterSignIn } from './match/pending';
@@ -92,6 +93,8 @@ export function App() {
       <SignIn />
       {/* the liquid cursor: one mount for every screen, behind the view (src/light) */}
       <CursorLight />
+      {/* the spotlight under the wake: quiet look in dark only (src/light/Spot.tsx) */}
+      <Spot />
     </MotionConfig>
   );
 }

@@ -267,6 +267,14 @@
   padding: var(--s5) var(--s6);
 }
 
+/* quiet look */
+:root[data-look='quiet'] .mt-panel,
+.look-quiet .mt-panel,
+:root[data-look='quiet'] .mt-trio .mt-panel,
+.look-quiet .mt-trio .mt-panel {
+  padding: 28px;
+}
+
 .mt-panel-head {
   display: flex;
   flex-wrap: wrap;
@@ -826,6 +834,11 @@
   align-items: start;
   padding: 14px 0;
   border-top: var(--hair) solid var(--line);
+}
+
+:root[data-look='quiet'] .mt-tr:not(.mt-tr-head),
+.look-quiet .mt-tr:not(.mt-tr-head) {
+  min-height: 44px;
 }
 
 .mt-tr-head {

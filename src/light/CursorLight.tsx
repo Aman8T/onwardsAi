@@ -13,8 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMediaQuery } from '../lib/ui';
 import { useAtmoMode } from '../theme/ambient';
-import { createLightEngine } from './engine';
-import type { LightStats } from './engine';
+import type { LightEngine, LightStats } from './engine';
 import { LightStatsOverlay } from './Stats';
 import '../styles/light.css';
 
@@ -24,17 +23,32 @@ function devSwitch(): string | null {
   return new URLSearchParams(window.location.search).get('light');
 }
 
-/** The field's hue, warm easing and scheme, from the root (written by boot.js and ambient.ts). */
-function readField(): { h: number; kw: number; dark: boolean } {
+/** The opt-in look on the root (`html[data-look='quiet']`); anything else is today's. */
+export type Look = 'today' | 'quiet';
+
+/** The effective colour scheme, decided one way for the cursor light and the spotlight: the pinned one, else the device's. */
+export function readDark(): boolean {
+  const pinned = document.documentElement.dataset.scheme;
+  return pinned ? pinned === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+export function readLook(): Look {
+  return document.documentElement.dataset.look === 'quiet' ? 'quiet' : 'today';
+}
+
+/** The field's hue, warm easing, scheme and look, from the root (written by boot.js and ambient.ts). */
+function readField(): { h: number; kw: number; dark: boolean; look: Look } {
   const root = document.documentElement;
   const h = Number.parseFloat(root.style.getPropertyValue('--h'));
   const kw = Number.parseFloat(root.style.getPropertyValue('--kw'));
-  const pinned = root.dataset.scheme;
-  const dark = pinned ? pinned === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-  return { h: Number.isFinite(h) ? h : 250, kw: Number.isFinite(kw) ? kw : 1, dark };
+  return { h: Number.isFinite(h) ? h : 250, kw: Number.isFinite(kw) ? kw : 1, dark: readDark(), look: readLook() };
 }
 
-export function CursorLight() {
+/**
+ * Whether the pointer layers (the wake and the spotlight) may exist at all: fine pointer, no reduced motion,
+ * slow updates, forced colours or more contrast, and the Atmosphere not Off (nor the dev `?light=off|reduce`).
+ */
+export function usePointerLayersAllowed(): boolean {
   const fine = useMediaQuery('(hover: hover) and (pointer: fine)');
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)');
   const slow = useMediaQuery('(update: slow)');
@@ -42,11 +56,23 @@ export function CursorLight() {
   const moreContrast = useMediaQuery('(prefers-contrast: more)');
   const [, atmo] = useAtmoMode();
   const dev = devSwitch();
+  return fine && !reduced && !slow && !forced && !moreContrast && atmo !== 'off' && dev !== 'off' && dev !== 'reduce';
+}
 
-  const enabled =
-    fine && !reduced && !slow && !forced && !moreContrast && atmo !== 'off' && dev !== 'off' && dev !== 'reduce';
+export function CursorLight() {
+  const enabled = usePointerLayersAllowed();
   if (!enabled) return null;
-  return createPortal(<LightCanvas stats={dev === 'stats'} />, document.body);
+  return createPortal(<LightCanvas stats={devSwitch() === 'stats'} />, document.body);
+}
+
+/** Runs `fn` after the first paint, when the browser is idle (a short timeout where requestIdleCallback is missing). */
+function afterFirstPaint(fn: () => void): () => void {
+  if (typeof window.requestIdleCallback === 'function') {
+    const id = window.requestIdleCallback(fn, { timeout: 1500 });
+    return () => window.cancelIdleCallback(id);
+  }
+  const id = window.setTimeout(fn, 200);
+  return () => window.clearTimeout(id);
 }
 
 function LightCanvas({ stats }: { stats: boolean }) {
@@ -56,15 +82,26 @@ function LightCanvas({ stats }: { stats: boolean }) {
   useEffect(() => {
     const host = ref.current;
     if (!host) return;
-    const engine = createLightEngine({ host, readField, onStats: stats ? setSnapshot : undefined });
-    if (stats && engine) {
-      window.__light = {
-        sweep: (seconds, pxPerSecond) => engine.sweep(seconds, pxPerSecond),
-        setScale: (scale) => engine.setScale(scale),
-        snapshot: () => engine.snapshot(),
-      };
-    }
+    // The WebGL code (engine, gl, shader) is its own chunk, fetched only now: after the first paint and idle.
+    let cancelled = false;
+    let engine: LightEngine | null = null;
+    const cancelWait = afterFirstPaint(() => {
+      void import('./engine').then(({ createLightEngine }) => {
+        if (cancelled) return;
+        engine = createLightEngine({ host, readField, onStats: stats ? setSnapshot : undefined });
+        const e = engine;
+        if (stats && e) {
+          window.__light = {
+            sweep: (seconds, pxPerSecond) => e.sweep(seconds, pxPerSecond),
+            setScale: (scale) => e.setScale(scale),
+            snapshot: () => e.snapshot(),
+          };
+        }
+      });
+    });
     return () => {
+      cancelled = true;
+      cancelWait();
       engine?.destroy();
       if (window.__light) delete window.__light;
     };

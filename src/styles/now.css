@@ -190,6 +190,12 @@
   text-wrap: balance;
 }
 
+/* quiet look */
+:root[data-look='quiet'] .now-title,
+.look-quiet .now-title {
+  font-size: var(--fs-7);
+}
+
 /* Breadcrumb */
 .now-crumb {
   display: flex;

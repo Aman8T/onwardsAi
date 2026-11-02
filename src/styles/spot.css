@@ -1,0 +1,34 @@
+/*
+ * The spotlight (src/light/Spot.tsx): a soft pool of --spot under the cursor's dye, quiet look in dark only.
+ * Same stacking layer as the ambient field (z -1) but later in the document, so it paints over the field and
+ * under the canvas (z 0) and the view (z 1). The colour is the --spot token; undefined, it is transparent.
+ * Transform is written by script and never transitioned; the only motion is one fade-in when it first appears.
+ */
+
+.spot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 320px;
+  height: 320px;
+  z-index: -1;
+  pointer-events: none;
+  contain: strict;
+  opacity: 0;
+  transform: translate3d(-400px, -400px, 0);
+  background: radial-gradient(closest-side, var(--spot, transparent) 0%, transparent 70%);
+}
+
+.spot.is-on {
+  opacity: 1;
+  animation: spot-in var(--d-base) var(--ease) 1;
+}
+
+@keyframes spot-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
