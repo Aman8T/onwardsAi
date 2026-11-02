@@ -208,6 +208,21 @@ When pages must look different for every person *and* must never break, variety 
 
 **An alternate skin costs no content.** "Old Newspaper" re-renders the same spec: paper L .955 (hue 85), ink L .22, a blackletter nameplate and a thick-thin double rule as the two deliberate print exceptions, columns via `column-width`, and the chart as a printed index with a halftone fill and an AREA / SCORE table. Toggling is a 400 ms drain to paper; `?view=press` makes it shareable.
 
+## 7a. The quiet look (default since 2026-11-03)
+
+`html[data-look='quiet']` (tokens.css block c1b) is the look the app and the static site ship with; the colour scheme follows the device unless the person picks one (no `data-scheme` means System). Panels are lighter than the field in both schemes: that one rule is the look.
+
+| | Light | Dark |
+|---|---|---|
+| Field | L .935, C .018, lobes a quarter strength | L .17, C .012, no lobes (still) |
+| Panel | the field's own colour | L .215, one step lighter than the field |
+| Well | | L .145 |
+| Line | L .90, C .012 | L .33, C .015 |
+| Accent | L .50, C .082 | L .80, C .097 |
+| Cursor dye | L .80, C .11 at .75 | L .62, C .10 at .30 |
+
+In dark, the spotlight (`src/light/Spot.tsx`) is white at 10 % under the wake. Escape hatch: `localStorage tayyari.look = 'today'` or `?look=today` brings back the earlier look; `?look=quiet` pins quiet. `boot.js` writes the attribute before first paint; `setLook` / `useLook` in `theme/ambient.ts` change it at runtime. Compare the two, scheme by scheme and screen by screen, at `/dev/design`.
+
 ## 8. Exception one: the liquid cursor
 
 Every screen (2026-10-20; canvas https://claude.ai/artifact/U8LW9zvPXdYNAT5T769WfU, "The cursor as liquid"). A soft drop of dye follows the pointer like a hand moving through coloured liquid: it leans the way you move, stretches and thins with speed, trails a short wake, and settles with at most a small overshoot when you stop. It bends "no spatial motion" and "no effects", and it is bounded so that it stays one exception.

@@ -118,4 +118,6 @@ The radar card (R1, canvas https://claude.ai/artifact/LG8rk27K2RfG68giTXcoX5) bu
 
 Leafout sign-in (L1) built 2026-10-19 (the site's Supabase login is the app's login via a `.leafout.in` cookie; see roadmap L1), deployed 2026-10-23 and off until its secrets are set.
 
+The quiet look is the default (`data-look`, 29bbd73 plus the change that made it so; `localStorage tayyari.look = 'today'` or `?look=today` is the escape hatch), previewed at `/dev/design`.
+
 Next: the skills table (X1).

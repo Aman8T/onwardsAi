@@ -9,7 +9,7 @@ import { Brand } from '../../components/Brand';
 import { CursorLight } from '../../light/CursorLight';
 import { Spot } from '../../light/Spot';
 import { Screen } from './Screens';
-import { SCREENS, applyHuePin, applyLook, applyScheme, cursorIsOff, readState, reloadWithCursor, writeUrl } from './state';
+import { SCREENS, applyHuePin, applyLook, applyScheme, cursorIsOff, readState, reloadWithCursor, restoreLook, writeUrl } from './state';
 import type { Look, PlaygroundState } from './state';
 import '../../styles/design-playground.css';
 
@@ -52,7 +52,7 @@ export function DesignPlayground() {
   // the first state may come from the address: apply it once
   useEffect(() => {
     applyLook(s.look);
-    return () => applyLook('today');
+    return restoreLook;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

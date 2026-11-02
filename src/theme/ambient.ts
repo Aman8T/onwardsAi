@@ -1,11 +1,11 @@
 /*
  * Ambient — the runtime side of the living gradient.
  *
- * Owns the Drift / Still / Off choice, the Light / Dark / System choice, the ?h=
- * and ?scheme= overrides, the reduced-motion and slow-update fallbacks, and the
+ * Owns the Drift / Still / Off choice, the Light / Dark / System choice, the quiet / today look, the ?h=
+ * ?scheme= and ?look= overrides, the reduced-motion and slow-update fallbacks, and the
  * 7-second stepper that writes the hue custom properties. The only DOM writes
  * anywhere in this module are the five custom properties (through applyHue) and
- * data-atmo / data-scheme on <html>. No requestAnimationFrame: between steps the
+ * data-atmo / data-scheme / data-look on <html>. No requestAnimationFrame: between steps the
  * page produces zero frames.
  */
 import { useSyncExternalStore } from 'react';
@@ -16,6 +16,8 @@ export type AtmoMode = 'drift' | 'still' | 'off';
 export type SchemeChoice = 'light' | 'dark' | 'system';
 /** The scheme in force. */
 export type Scheme = 'light' | 'dark';
+/** The look: quiet is the default; today is the earlier living-gradient look, kept as an escape hatch. */
+export type Look = 'today' | 'quiet';
 
 /** localStorage key for the per-install hue offset (integer degrees). */
 export const HUE0_KEY = 'tayyari.hue0';
@@ -23,6 +25,8 @@ export const HUE0_KEY = 'tayyari.hue0';
 export const MODE_KEY = 'tayyari.atmo';
 /** localStorage key for the chosen scheme. */
 export const SCHEME_KEY = 'tayyari.scheme';
+/** localStorage key for the chosen look. */
+export const LOOK_KEY = 'tayyari.look';
 /** Minutes per full hue circle, for copy that explains the drift. */
 export const CYCLE_MINUTES = PERIOD_MS / 60_000;
 
@@ -153,6 +157,54 @@ export function setScheme(choice: SchemeChoice): void {
   notify();
 }
 
+/* ----------------------------------------------------------------------------
+ * Look
+ * ------------------------------------------------------------------------- */
+
+function isLook(value: string | null): value is Look {
+  return value === 'today' || value === 'quiet';
+}
+
+let chosenLook: Look = ((): Look => {
+  const stored = readStorage(LOOK_KEY);
+  return isLook(stored) ? stored : 'quiet';
+})();
+
+/** The look the person chose (quiet unless they chose today). */
+export function getLook(): Look {
+  return chosenLook;
+}
+
+/** The ?look=today|quiet override for previews and screenshots, or null when absent or not a look. */
+export function forcedLook(): Look | null {
+  const raw = new URLSearchParams(window.location.search).get('look');
+  return isLook(raw) ? raw : null;
+}
+
+/** The look in force: the pinned one, else the chosen one. */
+export function effectiveLook(): Look {
+  return forcedLook() ?? chosenLook;
+}
+
+/** Writes data-look on <html>: quiet is the attribute, today is its absence. The same write boot.js makes before the first paint. */
+function applyLook(): void {
+  if (effectiveLook() === 'quiet') document.documentElement.dataset.look = 'quiet';
+  else delete document.documentElement.dataset.look;
+}
+
+/** Persists and applies a look, then tells subscribers. */
+export function setLook(look: Look): void {
+  if (look === chosenLook) return;
+  chosenLook = look;
+  writeStorage(LOOK_KEY, look);
+  // Same crossfade as setScheme, under the same conditions.
+  const doc = document as Document & { startViewTransition?: (update: () => void) => unknown };
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (typeof doc.startViewTransition === 'function' && !reduce) doc.startViewTransition(applyLook);
+  else applyLook();
+  notify();
+}
+
 const listeners = new Set<() => void>();
 
 /** Subscribes to mode and scheme changes (chosen or effective); returns the unsubscribe. */
@@ -252,6 +304,7 @@ function stopAmbient(): void {
 export function startAmbient(): () => void {
   if (started) return stopAmbient;
   applyScheme();
+  applyLook();
   darkScheme.addEventListener('change', notify);
   if (!CSS.supports('color', 'oklch(0 0 0)')) {
     return () => darkScheme.removeEventListener('change', notify);
@@ -281,4 +334,11 @@ export function useScheme(): [chosen: SchemeChoice, effective: Scheme, set: (cho
   const current = useSyncExternalStore(subscribe, getScheme);
   const effective = useSyncExternalStore(subscribe, effectiveScheme);
   return [current, effective, setScheme];
+}
+
+/** [chosen, effective, set] for the look; a pinned ?look= shows as effective. */
+export function useLook(): [chosen: Look, effective: Look, set: (look: Look) => void] {
+  const current = useSyncExternalStore(subscribe, getLook);
+  const effective = useSyncExternalStore(subscribe, effectiveLook);
+  return [current, effective, setLook];
 }

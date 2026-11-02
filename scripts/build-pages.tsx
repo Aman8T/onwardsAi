@@ -182,7 +182,7 @@ function staticHead(shell: Shell, t: { title: string; description: string; share
 }
 
 function htmlDocument(head: string, body: string): string {
-  return `<!doctype html>\n<html lang="en">\n  <head>\n${head}\n  </head>\n  <body>\n${body}\n  </body>\n</html>\n`;
+  return `<!doctype html>\n<html lang="en" data-look="quiet">\n  <head>\n${head}\n  </head>\n  <body>\n${body}\n  </body>\n</html>\n`;
 }
 
 /* ----------------------------------------------------------------------------

@@ -3,7 +3,7 @@
  *
  *   /dev/design?look=quiet&scheme=dark&h=250&screen=graph&compare=1
  *
- *   look     today | quiet            absent = today (no data-look on <html>)
+ *   look     today | quiet            absent = the default (quiet); today shows the earlier look
  *   scheme   light | dark             absent = System. ambient.ts reads this key itself, so it pins the scheme on load
  *   h        0..359                   absent = the clock's hue (ambient.ts pins it on load, and then holds Still)
  *   screen   home | graph | match | weekly
@@ -11,10 +11,10 @@
  *   light    off                      the cursor light is not mounted (needs a reload, so the bar reloads)
  */
 import { applyHue, hueAt } from '../../theme/hue';
-import { effectiveMode, forcedHue, getHue0, getMode, setMode, setScheme } from '../../theme/ambient';
-import type { SchemeChoice } from '../../theme/ambient';
+import { effectiveMode, forcedHue, getHue0, getLook, getMode, setMode, setScheme } from '../../theme/ambient';
+import type { Look, SchemeChoice } from '../../theme/ambient';
 
-export type Look = 'today' | 'quiet';
+export type { Look };
 export type ScreenId = 'home' | 'graph' | 'match' | 'weekly';
 
 export const SCREENS: readonly (readonly [ScreenId, string])[] = [
@@ -39,7 +39,7 @@ export function readState(fallbackScheme: SchemeChoice): PlaygroundState {
   const scheme = p.get('scheme');
   const screen = p.get('screen');
   return {
-    look: p.get('look') === 'quiet' ? 'quiet' : 'today',
+    look: p.get('look') === 'today' ? 'today' : 'quiet',
     scheme: scheme === 'light' || scheme === 'dark' ? scheme : fallbackScheme,
     hue: forcedHue(),
     screen: isScreen(screen) ? screen : 'home',
@@ -54,7 +54,7 @@ export function writeUrl(s: PlaygroundState): void {
     if (v === null) p.delete(k);
     else p.set(k, v);
   };
-  put('look', s.look === 'quiet' ? 'quiet' : null);
+  put('look', s.look === 'today' ? 'today' : null);
   put('scheme', s.scheme === 'system' ? null : s.scheme);
   put('h', s.hue === null ? null : String(s.hue));
   put('screen', s.screen);
@@ -63,9 +63,15 @@ export function writeUrl(s: PlaygroundState): void {
   window.history.replaceState(null, '', `${window.location.pathname}${q ? `?${q}` : ''}`);
 }
 
+/** Sets the attribute directly (not setLook): the playground previews a look without storing it as the person's choice. */
 export function applyLook(look: Look): void {
   if (look === 'quiet') document.documentElement.dataset.look = 'quiet';
   else delete document.documentElement.dataset.look;
+}
+
+/** Leaving the playground: back to the person's own look (quiet unless they chose today). */
+export function restoreLook(): void {
+  applyLook(getLook());
 }
 
 export function applyScheme(scheme: SchemeChoice): void {

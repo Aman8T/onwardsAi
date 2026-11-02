@@ -73,6 +73,10 @@ Added 2026-10-09, Home only: a soft field of colour follows the pointer (design 
 
 **Boundaries** (canvas board "Where luminous turns tacky"): no ring, no bright core on a darker ground, no outline you can trace, no rhythm, no banding. The form panel stays opaque; the light shows around it like a sheet of paper on a lit table.
 
+## 7a. Why the quiet look (2026-11-03)
+
+Dark looked heavy because its panels were inverted: they sat darker than the field, so every card read as a hole cut into the page. The quiet look steps the other way in both schemes, panel lighter than field, so a card is a sheet resting on the ground and the eye is not pulled down into it. The dark field also went still (no lobes, no drift of lightness): a large dark area with moving colour reads as a screen, not as night, and the slow hue is better spent on the accent and the cursor's dye. Light keeps a quarter of the lobes, enough to avoid a flat sheet. It is the default; `tayyari.look = 'today'` keeps the earlier look reachable.
+
 ## 8. Sources
 
 Colour and calm: Valdez & Mehrabian 1994 (PubMed 7996122); Wilms & Oberfeld 2018 (PubMed 28612080); Elliot 2015 (PMC4383146); Palmer & Schloss 2010 (PMC2889342); Schloss & Palmer 2011 (PMC3037488); Ottosson, "A perceptual color space for image processing"; Evil Martians, "OKLCH in CSS"; CSS-Tricks, "The gray dead zone of gradients"; Keith J. Grant on neutral gradient endpoints.
