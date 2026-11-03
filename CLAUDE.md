@@ -56,6 +56,8 @@ Backend commands run through `uv run --directory backend python -m tayyari.cli <
 
 In the in-app browser pane, `.claude/launch.json` defines `tayyari-api` and `tayyari-web`. The browser walkthrough is `scripts/walkthrough.md`.
 
+**Cloud sessions** (Claude Code on the web) clone `main` from GitHub, so push first. The SessionStart hook in `.claude/settings.json` runs `.claude/hooks/cloud-setup.sh` (`npm ci` when the lock changed, `uv sync` in `backend/`), and does nothing locally. There is no `.env` in the cloud. `npm run check:all` needs no keys, because tests strip them. `npm run smoke` and live runs need `ANTHROPIC_API_KEY` (and `JEV_API_KEY` for Jev) set as network secrets on the cloud environment by the user. Never deploy from a cloud session.
+
 ## Conventions
 
 **Python.** Ruff-formatted, mypy strict on new modules, `from __future__ import annotations`, Pydantic v2 models, async everywhere, structlog via `core.logging.get_logger`. Settings are typed groups in `core/settings.py` (`TAYYARI_<GROUP>__<FIELD>`), documented in `backend/.env.example`. Prompts live in `tayyari/prompts/` as builders; limits in `core/limits.py`. Every Claude call goes through `llm.ClaudeClient` with a `purpose`, and every call is recorded with cost. Rate limits and spend reservations go through `guard`. New tables: a `*Row` in `storage/tables.py`, a Protocol in `storage/ports.py`, a repo in `storage/repos/`, a fake in `tests/fakes`, a migration. New routes: `api/routes/<name>.py` registered in `api/routes/__init__.py`; streaming responses use `api/ndjson.py`.
