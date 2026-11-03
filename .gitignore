@@ -32,3 +32,6 @@ ds-types/
 .design-sync/.cache/
 .design-sync/learnings/
 .design-sync/node_modules
+
+# Local launch-video renders (large)
+/brag-output/

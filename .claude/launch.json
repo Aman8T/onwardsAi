@@ -22,6 +22,12 @@
         "vite"
       ],
       "port": 5173
+    },
+    {
+      "name": "leafout-site",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "node@22.20.0", "C:/Users/luvsh/OneDrive/Desktop/Startup/tayyari-career-intelligence/node_modules/vite/bin/vite.js", "dev", "C:/Users/luvsh/OneDrive/Desktop/Startup/tayyari-career-intelligence", "--port", "5180", "--strictPort"],
+      "port": 5180
     }
   ]
 }
