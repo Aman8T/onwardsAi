@@ -63,7 +63,7 @@ async def test_the_whole_service_backstop_and_an_exempt_account() -> None:
     await limiter.check("weekly", "client000000001", memory=False)
     with pytest.raises(RateLimited) as info:
         await limiter.check("weekly", "client000000002", memory=False)
-    assert info.value.user_message == "Tayyari is very busy right now. Please try again in about an hour."
+    assert info.value.user_message == "Leafout is very busy right now. Please try again in about an hour."
     limiter, fakes, _ = make(weekly_preview_per_hour=1, weekly_preview_per_day=1)
     for _ in range(4):
         limiter.shed("weekly", H, exempt=True)

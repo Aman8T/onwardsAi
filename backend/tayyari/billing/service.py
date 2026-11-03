@@ -46,7 +46,7 @@ log = get_logger(__name__)
 NOT_OFFERED = "That plan is not on sale yet."
 UNAVAILABLE = "Payments are unavailable right now. Please try again in a moment."
 SIGNATURE_REFUSED = "That payment could not be verified."
-BRAND = "Tayyari"
+BRAND = "Leafout"
 
 
 class RazorpayPort(Protocol):

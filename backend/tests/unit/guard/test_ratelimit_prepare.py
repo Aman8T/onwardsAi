@@ -94,7 +94,7 @@ async def test_the_whole_service_backstop_is_hourly() -> None:
     for i in range(2):
         await limiter.check("prepare", f"client{i:011d}", memory=False)
     err = await refused(limiter, "someone-else-0000")
-    assert err.user_message == "Tayyari is very busy right now. Please try again in about an hour."
+    assert err.user_message == "Leafout is very busy right now. Please try again in about an hour."
     clock.advance(3600)
     await limiter.check("prepare", "someone-else-0000", memory=False)
 
@@ -139,7 +139,7 @@ async def test_the_in_memory_shed_uses_the_minute_window() -> None:
         ("min", "A plan is already on its way. Please wait about 2 minutes and try again."),
         ("hour", "You've reached the hourly limit for plans. Please try again in about 2 minutes."),
         ("day", "You've reached today's limit for plans. It resets in about 2 minutes."),
-        ("global", "Tayyari is very busy right now. Please try again in about 2 minutes."),
+        ("global", "Leafout is very busy right now. Please try again in about 2 minutes."),
     ],
 )
 def test_the_sentences_for_a_person_who_hit_a_limit(window: str, text: str) -> None:

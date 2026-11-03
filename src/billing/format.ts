@@ -51,3 +51,23 @@ export function purchaseSummary(product: Product, e: MeEntitlements): string {
   if (product === 'pack3') return `${plural(e.credits, 'posting')} left on your account.`;
   return 'It is on your account now.';
 }
+
+/** Postings a pack holds (`PRODUCTS.pack3` on the server). */
+const PACK_POSTINGS = 3;
+
+/** What one posting costs inside a pack, rounded to a whole major unit ("₹50"), as minor units. */
+export function perPostingMinor(packMinor: number): number {
+  return Math.max(1, Math.round(packMinor / PACK_POSTINGS / 100)) * 100;
+}
+
+/**
+ * The fewest postings in 30 days for which the pass costs less than buying packs, or undefined when it never does
+ * within a reasonable number (or a price is missing). Computed from the live prices, never typed.
+ */
+export function passBreakEven(packMinor: number | undefined, passMinor: number | undefined): number | undefined {
+  if (!packMinor || !passMinor || packMinor <= 0 || passMinor <= 0) return undefined;
+  for (let n = 1; n <= 60; n++) {
+    if (Math.ceil(n / PACK_POSTINGS) * packMinor > passMinor) return n > PACK_POSTINGS ? n : undefined;
+  }
+  return undefined;
+}

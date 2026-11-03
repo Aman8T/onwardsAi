@@ -576,7 +576,7 @@ async def test_the_whole_service_has_an_hourly_backstop_counted_once_per_request
         for n in range(2):
             assert (await rig.prepare(fresh=True, headers=rig.at(f"198.51.100.{n + 1}"))).status_code == 200
         busy = await rig.prepare(fresh=True, headers=rig.at("198.51.100.99"))
-        assert busy.status_code == 429 and busy.json()["error"].startswith("Tayyari is very busy right now.")
+        assert busy.status_code == 429 and busy.json()["error"].startswith("Leafout is very busy right now.")
         counted = [h.count for h in await rig.env.rows(RateLimitHitRow) if h.bucket == "prepare:global:hour"]
         assert counted == [3]
 

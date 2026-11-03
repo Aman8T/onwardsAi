@@ -31,7 +31,7 @@ SESSION_ARGS: dict[str, Any] = {
     "order_id": "o" * 32,
     "user_id": "u" * 32,
     "product": "pack3",
-    "title": "Tayyari: three postings",
+    "title": "Leafout: three postings",
     "amount_minor": 900,
     "currency": "USD",
     "success_url": "https://tayyari.example/pricing?checkout=success",
@@ -62,7 +62,7 @@ async def test_a_one_time_payment_session_is_created_with_our_order_in_it() -> N
     assert form["line_items[0][quantity]"] == "1"
     assert form["line_items[0][price_data][currency]"] == "usd"
     assert form["line_items[0][price_data][unit_amount]"] == "900"
-    assert form["line_items[0][price_data][product_data][name]"] == "Tayyari: three postings"
+    assert form["line_items[0][price_data][product_data][name]"] == "Leafout: three postings"
     assert form["metadata[order_id]"] == "o" * 32 and form["metadata[user_id]"] == "u" * 32
     assert form["metadata[product]"] == "pack3"
 

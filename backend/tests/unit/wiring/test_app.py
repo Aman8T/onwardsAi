@@ -48,7 +48,7 @@ def test_create_app_is_cheap_and_builds_nothing(make_settings: MakeSettings) -> 
 
 def test_the_app_is_named_and_has_no_docs_pages(make_settings: MakeSettings) -> None:
     app = create_app(make_settings())
-    assert app.title == "Tayyari API"
+    assert app.title == "Leafout API"
     assert app.version == tayyari.__version__
     assert app.docs_url is None
     assert app.redoc_url is None
@@ -116,5 +116,5 @@ async def test_the_web_app_is_served_from_the_static_folder(
     assert deep_link.text == index.text  # the app's own client routes fall back to index.html
     assert (unknown.status_code, unknown.json()) == (404, {"error": "Not found"})  # no 404.html in this build
     assert asset.text == "console.log('hi')"
-    assert asset.headers["cache-control"] == "public, max-age=3600"
+    assert asset.headers["cache-control"] == "public, max-age=31536000, immutable"
     assert health.json()["ok"] is True  # the API routes are not shadowed by the web app

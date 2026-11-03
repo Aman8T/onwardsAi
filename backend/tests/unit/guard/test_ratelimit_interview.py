@@ -140,7 +140,7 @@ async def test_the_whole_service_backstop_is_hourly_and_says_tayyari_is_busy() -
     for i in range(2):
         await limiter.check("interview", f"client{i:011d}", memory=False)
     err = await refused(limiter, "interview", "someone-else-0000")
-    assert err.user_message == "Tayyari is very busy right now. Please try again in about an hour."
+    assert err.user_message == "Leafout is very busy right now. Please try again in about an hour."
     clock.advance(3600)
     await limiter.check("interview", "someone-else-0000", memory=False)
 
@@ -235,7 +235,7 @@ async def test_a_repeat_does_not_use_up_an_interview() -> None:
         ),
         ("interview", "hour", FREE + "about 2 minutes."),
         ("interview", "day", FREE + "about 2 minutes."),
-        ("interview", "global", "Tayyari is very busy right now. Please try again in about 2 minutes."),
+        ("interview", "global", "Leafout is very busy right now. Please try again in about 2 minutes."),
         ("interview_again", "day", "That's enough repeats for today. More in about 2 minutes."),
     ],
 )

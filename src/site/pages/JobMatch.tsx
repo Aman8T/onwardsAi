@@ -120,6 +120,21 @@ export const jobMatch: ContentPage = {
           not open links inside it.
         </p>
       </section>
+
+      <section>
+        <h2>Read more</h2>
+        <ul>
+          <li>
+            <a href="https://leafout.in/blog/read-a-job-posting">How to read a job posting, requirement by requirement</a>
+          </li>
+          <li>
+            <a href="https://leafout.in/blog/why-no-ats-score">Why Leafout doesn&apos;t show an ATS score</a>
+          </li>
+        </ul>
+        <p>
+          What a match costs is on the <a href="/pricing">pricing page</a>.
+        </p>
+      </section>
     </>
   ),
 };

@@ -253,8 +253,8 @@ async def test_a_razorpay_checkout_returns_what_checkout_js_needs_and_stores_the
         "amount": 49_900,
         "currency": "INR",
         "keyId": ALL_SECRETS["razorpay_key_id"],
-        "name": "Tayyari",
-        "description": "Tayyari: three postings",
+        "name": "Leafout",
+        "description": "Leafout: three postings",
         "prefillEmail": "ana@example.com",
     }
     (order,) = orders

@@ -8,7 +8,7 @@ and reads; code decides what is open, what is near, what is at the person's leve
 
     brief     the profile read in code: role, years, city, next roles, skills, evidence lines, the scouts' angles
     harvest   board links (Greenhouse, Lever) taken from the search tool's results, never from a model's words
-    boards    the boards read through Discover's polite fetcher, cached for a while; Tayyari's own employers included
+    boards    the boards read through Discover's polite fetcher, cached for a while; Leafout's own employers included
     narrow    code keeps roles in the city or remote in India, of the person's kind, at their level, and ranks them
     judge     Haiku reads batches of the shortlist; every quote is checked against the posting and the profile
     service   the run, streamed as trail steps and jobs

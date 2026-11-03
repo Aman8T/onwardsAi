@@ -16,16 +16,17 @@ counters). The random slug is the only key and the real defence against walking 
     GET /r/{slug}.svg?theme=&size=&compare=   the README card, ``image/svg+xml``. ``theme`` (light, dark, transparent) and
                                               ``size`` (md, sm) override the stored theme (``match`` draws light) and md;
                                               ``compare`` draws the role's outline only when it names the stored role.
-                                              An unknown, stopped or malformed link is a 200 neutral card ("This card
-                                              isn't shared any more", five minutes' cache); a failure is a 200 "can't be
-                                              drawn right now" card (ten minutes).
+                                              An unknown, stopped or malformed link is a 404 whose body is the neutral card
+                                              ("This card isn't shared any more", five minutes' cache); a failure is a 200
+                                              "can't be drawn right now" card (ten minutes).
     GET /og/{slug}-{version}.png              the 1200 x 627 LinkedIn picture; an old version is a 301 to the current one,
-                                              an unknown link the neutral picture.
+                                              an unknown link a 404 with the neutral picture.
     GET /u/{slug}                             the card's page (server-rendered, no script, ``noindex``); an unknown link is
                                               a plain 404 page.
 
 The images are ``public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400`` with an ``ETag`` from the version and
-the drawing's options (a matching ``If-None-Match`` is a 304), ``X-Content-Type-Options: nosniff``, and the SVG carries its
+the drawing's options (a matching ``If-None-Match`` is a 304), ``X-Content-Type-Options: nosniff`` and ``X-Robots-Tag: noindex`` (the images are for embedding, never
+for a search result), and the SVG carries its
 own ``Content-Security-Policy`` (the security middleware keeps a route's header). These paths are registered with the API
 routes, so they are answered before the web app's catch-all and are none of its `APP_ROUTES`.
 """
@@ -134,7 +135,7 @@ async def _count(request: Request, container: Container) -> None:
 
 
 def _image_headers(cache: str, etag: str | None = None) -> dict[str, str]:
-    headers = {"Cache-Control": cache, "X-Content-Type-Options": "nosniff"}
+    headers = {"Cache-Control": cache, "X-Content-Type-Options": "nosniff", "X-Robots-Tag": "noindex"}
     if etag is not None:
         headers["ETag"] = etag
     return headers
@@ -145,14 +146,17 @@ def _matches(request: Request, etag: str) -> bool:
     return any(part.strip() in (etag, f"W/{etag}") for part in sent.split(",")) or sent.strip() == "*"
 
 
-def _svg(body: str, cache: str, etag: str | None = None) -> Response:
+def _svg(body: str, cache: str, etag: str | None = None, status: int = 200) -> Response:
     headers = _image_headers(cache, etag)
     headers["Content-Security-Policy"] = SVG_CSP
-    return Response(body, media_type=SVG_TYPE, headers=headers)
+    return Response(body, status_code=status, media_type=SVG_TYPE, headers=headers)
 
 
 def _notice(kind: Notice, theme: Theme) -> Response:
-    return _svg(notice_svg(kind, theme), STOPPED_CACHE if kind == "stopped" else ERROR_CACHE)
+    """The neutral card: a 404 (with the card's own picture as its body) for an unknown or stopped link, a 200 for a failure."""
+    if kind == "stopped":
+        return _svg(notice_svg(kind, theme), STOPPED_CACHE, status=404)
+    return _svg(notice_svg(kind, theme), ERROR_CACHE)
 
 
 @router.api_route("/r/{name}", methods=["GET", "HEAD"], include_in_schema=False)
@@ -209,6 +213,7 @@ async def _picture_notice(container: Container, kind: Literal["stopped", "error"
     png = await container.card_pictures.notice(kind)
     return Response(
         png,
+        status_code=404 if kind == "stopped" else 200,
         media_type="image/png",
         headers=_image_headers(STOPPED_CACHE if kind == "stopped" else ERROR_CACHE),
     )

@@ -184,7 +184,7 @@ export function useMatch(): MatchState {
 const messageOf = (err: unknown) => (err instanceof Error ? err.message : 'Something went wrong. Please try again.');
 const statusOf = (err: unknown) => (err instanceof MatchApiError ? err.status : 0);
 
-const SIGN_IN_NOTICE = 'Sign in to match a posting. Your first posting is free.';
+const SIGN_IN_NOTICE = 'Sign in to match a posting. One posting a month is free.';
 const NEEDS_ACCOUNT = 'This server needs an account for matching.';
 const NEEDS_ACCOUNT_NO_SIGN_IN = 'This server needs an account for matching, and signing in is not set up on it yet.';
 /** "This server needs an account to open this match." */

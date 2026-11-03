@@ -143,7 +143,7 @@ async def client() -> httpx.AsyncClient:
         ("/big", 413, "Request body too large"),
         ("/limited", 429, "Slow down, please."),
         ("/spend", 503, SPEND_CEILING_MESSAGE),
-        ("/unavailable", 503, "Tayyari is temporarily unavailable. Please try again soon."),
+        ("/unavailable", 503, "Leafout is temporarily unavailable. Please try again soon."),
         ("/teapot", 418, "Public text only."),
     ],
 )
@@ -175,7 +175,7 @@ async def test_spend_ceiling_is_an_app_error_with_the_documented_answer(client: 
     assert issubclass(SpendCeilingReached, AppError)
     res = await client.get("/spend")
     assert res.json() == {
-        "error": "Tayyari has reached today's usage limit. The pre-computed sample profile still works. Try again tomorrow."
+        "error": "Leafout has reached today's usage limit. The pre-computed sample profile still works. Try again tomorrow."
     }
 
 

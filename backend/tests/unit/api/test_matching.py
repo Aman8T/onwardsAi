@@ -74,7 +74,7 @@ def test_an_error_event_carries_the_sentence_never_the_exception_text() -> None:
     [
         ("Meera Nair", "meera-nair-resume.pdf"),
         ("  Zoë Müller-Åberg ", "zoe-muller-aberg-resume.pdf"),
-        ("राहुल शर्मा", "tayyari-resume.pdf"),  # nothing ASCII left: a plain name, never an empty one
+        ("राहुल शर्मा", "leafout-resume.pdf"),  # nothing ASCII left: a plain name, never an empty one
         ('Rob "Bobby" <b>../x', "rob-bobby-b-x-resume.pdf"),
         ("A" * 200, f"{'a' * 40}-resume.pdf"),
     ],

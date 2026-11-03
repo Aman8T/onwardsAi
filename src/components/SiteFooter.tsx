@@ -6,6 +6,14 @@
 import { SITE_PAGES } from '../site/links';
 import '../styles/site-footer.css';
 
+/** The legal and contact pages live on the site (leafout.in), so these are absolute links. */
+const LEGAL_LINKS: readonly { href: string; label: string }[] = [
+  { href: 'https://leafout.in/terms', label: 'Terms' },
+  { href: 'https://leafout.in/privacy', label: 'Privacy' },
+  { href: 'https://leafout.in/refunds', label: 'Refunds' },
+  { href: 'https://leafout.in/contact', label: 'Contact' },
+];
+
 export function SiteFooter() {
   const pages = SITE_PAGES.filter((page) => page.path !== '/');
 
@@ -15,6 +23,13 @@ export function SiteFooter() {
         {pages.map((page) => (
           <a key={page.path} href={page.path}>
             {page.label}
+          </a>
+        ))}
+      </nav>
+      <nav className="site-footer-links" aria-label="Terms and policies">
+        {LEGAL_LINKS.map((link) => (
+          <a key={link.href} href={link.href}>
+            {link.label}
           </a>
         ))}
       </nav>

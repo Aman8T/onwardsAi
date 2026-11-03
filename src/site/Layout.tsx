@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { SITE_PAGES } from './links';
+import { COMPANY_LINKS, OPERATOR_LINE, SITE_PAGES, SUPPORT_EMAIL } from './links';
 import { SITE_LINE } from './seo';
 
 interface LayoutProps {
@@ -8,7 +8,7 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-/** The Tayyari mark: a hairline ring with a centre dot (the app's Brand, as static markup). */
+/** The Leafout mark: a hairline ring with a centre dot (the app's Brand, as static markup). */
 function Mark() {
   return (
     <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">
@@ -66,6 +66,19 @@ export function Layout({ currentPath, children }: LayoutProps) {
                 ))}
               </ul>
             </nav>
+            <nav aria-label="Leafout, the company">
+              <ul>
+                {COMPANY_LINKS.map((l) => (
+                  <li key={l.href}>
+                    <a href={l.href}>{l.label}</a>
+                  </li>
+                ))}
+                <li>
+                  <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+                </li>
+              </ul>
+            </nav>
+            <p>{OPERATOR_LINE}</p>
           </div>
         </footer>
       </div>

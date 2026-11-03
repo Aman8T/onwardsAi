@@ -67,7 +67,7 @@ def create_app(settings: Settings | None = None, *, overrides: ContainerOverride
     """
     resolved = settings if settings is not None else get_settings()
     app = FastAPI(
-        title="Tayyari API",
+        title="Leafout API",
         version=tayyari.__version__,
         docs_url=None,
         redoc_url=None,

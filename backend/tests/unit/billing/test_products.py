@@ -12,6 +12,7 @@ from tayyari.billing.products import (
     PriceBelowFloor,
     below_floor,
     default_currency,
+    format_price,
     is_indian_locale,
     is_indian_timezone,
     on_sale,
@@ -19,6 +20,7 @@ from tayyari.billing.products import (
     price_minor,
     product_def,
 )
+from tayyari.contract.billing import Currency
 from tayyari.core.settings import Settings
 from tests.fakes.billing import ALL_SECRETS, RAZORPAY_KEYS
 
@@ -203,3 +205,21 @@ def test_the_default_currency(
     saved: str | None, language: str | None, zone: str | None, expected: str
 ) -> None:
     assert default_currency(saved=saved, accept_language=language, timezone=zone) == expected
+
+
+@pytest.mark.parametrize(
+    ("amount", "currency", "text"),
+    [
+        (49900, "INR", "\u20b9499"),
+        (900, "USD", "$9"),
+        (1999, "USD", "$19.99"),
+        (100, "INR", "\u20b91"),
+        (100000, "INR", "\u20b91,000"),
+        (12345600, "INR", "\u20b91,23,456"),
+        (1234567800, "INR", "\u20b91,23,45,678"),
+        (123456700, "USD", "$1,234,567"),
+        (0, "INR", "\u20b90"),
+    ],
+)
+def test_format_price_matches_the_pricing_screens_words(amount: int, currency: Currency, text: str) -> None:
+    assert format_price(amount, currency) == text

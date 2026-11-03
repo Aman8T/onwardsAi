@@ -746,3 +746,22 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Touch screens have nothing to drop a file from: say "upload". */
+.ob-drop-touch {
+  display: none;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .ob-drop-fine {
+    display: none;
+  }
+
+  .ob-drop-touch {
+    display: inline;
+  }
+}
+
+.ob-need {
+  color: var(--text);
+}

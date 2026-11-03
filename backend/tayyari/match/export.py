@@ -232,7 +232,7 @@ def _pdf(lines: list[Line], *, title: str, author: str, base: float = 9.6) -> by
         title=title,
         author=author,
         subject="Application document",
-        creator="Tayyari",
+        creator="Leafout",
         invariant=1,
     )
     story: list[Paragraph | Spacer] = [Paragraph(escape(line.text), styles[line.kind]) for line in lines]

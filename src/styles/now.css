@@ -567,3 +567,16 @@
     font-size: 32px;
   }
 }
+
+/* Phone: source chips are a full 44 px target. */
+@media (max-width: 760px) {
+  .now-src {
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .now-dom-num,
+  .now-skill-num {
+    font-size: 13.5px;
+  }
+}

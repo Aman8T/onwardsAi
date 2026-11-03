@@ -109,11 +109,11 @@ def test_blocks_keep_every_legacy_line(
     # Intentional difference 1: the opening line no longer names the person (the name moves to "About the user").
     # Intentional difference 2: the tools are called "web search and web fetch", not WebSearch / WebFetch.
     assert missing == [
-        "You are Tayyari, a candid, specific and warm career coach for Riya. You have already analysed their",
+        "You are Leafout, a candid, specific and warm career coach for Riya. You have already analysed their",
         "- You may use WebSearch / WebFetch sparingly — to pull current, high-quality resources (docs, courses, papers) or to",
     ]
     assert added == [
-        "You are Tayyari, a candid, specific and warm career coach for the user. You have already analysed their",
+        "You are Leafout, a candid, specific and warm career coach for the user. You have already analysed their",
         "- You may use web search and web fetch sparingly — to pull current, high-quality resources (docs, courses, papers) or to",
         "## About the user",
         'Their first name is Riya: address them as "Riya" (sparingly).',
@@ -168,7 +168,7 @@ def test_rules_are_static_and_name_nobody(profile: dict[str, Any]) -> None:
     assert not re.search(
         r"\b(January|February|March|April|June|July|August|September|October|November|December)\b", CHAT_RULES
     )
-    assert CHAT_RULES.startswith("You are Tayyari, a candid, specific and warm career coach for the user.")
+    assert CHAT_RULES.startswith("You are Leafout, a candid, specific and warm career coach for the user.")
 
 
 def test_profile_block_holds_the_graph_the_readers_and_the_excerpts(

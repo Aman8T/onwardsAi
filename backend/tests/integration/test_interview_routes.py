@@ -914,7 +914,7 @@ async def test_the_whole_service_has_an_hourly_backstop(start: Any) -> None:
             assert (await rig.start(headers=rig.at(f"198.51.100.{n + 1}"))).status_code == 200
         busy = await rig.start(headers=rig.at("198.51.100.99"))
         assert busy.status_code == 429
-        assert busy.json()["error"].startswith("Tayyari is very busy right now. Please try again in ")
+        assert busy.json()["error"].startswith("Leafout is very busy right now. Please try again in ")
         assert rig.stub.names().count("start") == 2
         counted = [
             h.count for h in await rig.env.rows(RateLimitHitRow) if h.bucket == "interview:global:hour"

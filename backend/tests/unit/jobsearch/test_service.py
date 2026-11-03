@@ -1,7 +1,7 @@
 """A search with AI end to end over the fakes: scripted Haiku scouts and reads, hand-written boards, Discover's store.
 
 What it proves: the stream's order; that boards come only from the search tool's links (never a recruiter's, never
-fetched twice in a while, Tayyari's own employers from the store); that the read never sees a role of another field, a
+fetched twice in a while, Leafout's own employers from the store); that the read never sees a role of another field, a
 leader's role or one elsewhere; that nothing a model invented reaches a job; that a search carries no name; and how a
 failing scout, a failing read and an injected posting are handled."""
 
@@ -394,7 +394,7 @@ async def test_tayyaris_own_employers_are_read_while_the_web_search_runs(make_ri
     )
     events = await rig.run()
     reads = [e.step.text for e in events if isinstance(e, JobSearchStepEvent) and e.step.stage == "read"]
-    assert reads and "Tayyari's own employers" in reads[0]
+    assert reads and "Leafout's own employers" in reads[0]
     ids = [j.id for j in jobs(events)]
     assert len(ids) == len(set(ids))  # a role is read once, whichever half found it
     judged = "\n".join(c.user_text for c in rig.claude.calls_for("jobsearch.judge"))

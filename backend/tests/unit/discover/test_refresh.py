@@ -93,7 +93,7 @@ async def test_requests_say_who_is_asking_and_carry_no_credentials(
 ) -> None:
     await refresher(repo, boards, clock).run(fixture_registry())
     assert {request.headers["user-agent"] for request in boards.requests} == {USER_AGENT}
-    assert USER_AGENT == "Tayyari/1.0 (+https://tayyari.fastapicloud.dev) job discovery"
+    assert USER_AGENT == "Leafout/1.0 (+https://app.leafout.in) job discovery"
     for request in boards.requests:
         assert "authorization" not in request.headers and "cookie" not in request.headers
 

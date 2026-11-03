@@ -40,7 +40,7 @@ from .registry import Employer, Registry
 
 log = get_logger(__name__)
 
-USER_AGENT: Final = "Tayyari/1.0 (+https://tayyari.fastapicloud.dev) job discovery"
+USER_AGENT: Final = "Leafout/1.0 (+https://app.leafout.in) job discovery"
 GREENHOUSE_URL: Final = "https://boards-api.greenhouse.io/v1/boards/{board}/jobs?content=true"
 LEVER_URL: Final = "https://api.lever.co/v0/postings/{board}?mode=json"
 STALE_RUN: Final = timedelta(minutes=20)

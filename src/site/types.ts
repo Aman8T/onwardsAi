@@ -18,7 +18,7 @@ export interface Cta {
  */
 export interface ContentPage {
   path: string;
-  /** The words before " · Tayyari" in the document title. */
+  /** The words before " · Leafout" in the document title. */
   title: string;
   /** The meta description and the share description: plain text, at most 160 characters. */
   description: string;

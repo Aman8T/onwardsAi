@@ -28,7 +28,7 @@ from tayyari.core.settings import Settings
 
 log = get_logger(__name__)
 
-STARTING_MESSAGE = "Tayyari is starting up. Please try again in a moment."
+STARTING_MESSAGE = "Leafout is starting up. Please try again in a moment."
 
 Lifespan = Callable[[FastAPI], AbstractAsyncContextManager[None]]
 

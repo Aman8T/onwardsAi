@@ -32,3 +32,25 @@ export const SITE_PAGES: readonly SitePage[] = [
 
 /** The address the canonical links, the sitemap and share tags use (overridable at build time with SITE_URL). */
 export const DEFAULT_SITE_URL = 'https://app.leafout.in';
+
+/** The company site, the one home of the legal pages and the blog. Absolute: these are another host. */
+export const COMPANY_URL = 'https://leafout.in';
+
+/** Support address and the operator line, shown in every footer (the site's /contact page carries the same). */
+export const SUPPORT_EMAIL = 'aman@leafout.in';
+export const OPERATOR_LINE = 'Leafout is run by Aman Sharma, India.';
+
+export interface CompanyLink {
+  label: string;
+  href: string;
+}
+
+/** Links from every page to the company site: the legal pages, the blog and the contact page live there, not in the app. */
+export const COMPANY_LINKS: readonly CompanyLink[] = [
+  { label: 'Leafout website', href: `${COMPANY_URL}/` },
+  { label: 'Blog', href: `${COMPANY_URL}/blog` },
+  { label: 'Privacy', href: `${COMPANY_URL}/privacy` },
+  { label: 'Terms', href: `${COMPANY_URL}/terms` },
+  { label: 'Refunds', href: `${COMPANY_URL}/refunds` },
+  { label: 'Contact', href: `${COMPANY_URL}/contact` },
+];

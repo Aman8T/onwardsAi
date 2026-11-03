@@ -115,7 +115,7 @@ class RateLimited(AppError):
 class ServiceUnavailable(AppError):
     status = 503
     code = "service_unavailable"
-    user_message = "Tayyari is temporarily unavailable. Please try again soon."
+    user_message = "Leafout is temporarily unavailable. Please try again soon."
 
 
 class ClientClosed(AppError):

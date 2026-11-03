@@ -102,7 +102,7 @@ STEP_LABELS: Final[dict[ProgressStep, str]] = {
 PROFILE_NOT_FOUND = "We couldn't find that profile. Run the analysis again to build your Skill Graph first."
 PORTFOLIO_NOT_FOUND = "Portfolio not found"
 PAUSED_MESSAGE = (
-    "Portfolio generation is paused for today because Tayyari has reached its daily usage limit. "
+    "Portfolio generation is paused for today because Leafout has reached its daily usage limit. "
     "Your Skill Graph and chat still work. Please try again tomorrow."
 )
 GENERIC_MESSAGE = "Something went wrong while building your portfolio. Please try again."

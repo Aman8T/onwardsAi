@@ -628,7 +628,7 @@ class SpeechSettings(BaseModel):
     Speech-to-text turns each piece of a spoken answer (up to ``max_segment_seconds``, cut at a pause by the browser) into
     text with ``stt_model``; text-to-speech reads the interviewer's lines with ``tts_model`` and ``tts_speaker``. Sarvam
     bills per second of audio and per character of text, so both are metered here against daily and per-session
-    budgets; when one runs out, or the key is unset, the browser's own speech takes over. Tayyari keeps no audio.
+    budgets; when one runs out, or the key is unset, the browser's own speech takes over. Leafout keeps no audio.
     """
 
     enabled: bool = True
@@ -883,7 +883,7 @@ class Settings(BaseSettings):
     )
     resend_api_key: SecretStr | None = Field(default=None, validation_alias=AliasChoices("RESEND_API_KEY"))
     resend_from: str | None = Field(default=None, validation_alias=AliasChoices("RESEND_FROM"))
-    """The sender of sign-in emails, e.g. ``Tayyari <login@example.com>``. Not a secret."""
+    """The sender of sign-in emails, e.g. ``Leafout <login@example.com>``. Not a secret."""
     razorpay_key_id: SecretStr | None = Field(default=None, validation_alias=AliasChoices("RAZORPAY_KEY_ID"))
     razorpay_key_secret: SecretStr | None = Field(
         default=None, validation_alias=AliasChoices("RAZORPAY_KEY_SECRET")

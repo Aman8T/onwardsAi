@@ -7,10 +7,10 @@
               what they can defend. A requirement they do not show, or show below the role's level, is a gap (the biggest
               shortfall first); one they meet is a claim on an evidence line of its own skill (a met requirement whose
               skill has no evidence line is not asked); then a story, from the role's skills first. The requirement's
-              name is a source of origin ``role``: Tayyari's reading of what the role needs, never a posting's words.
+              name is a source of origin ``role``: Leafout's reading of what the role needs, never a posting's words.
     resume   claims on the resume: numbers first, a "Led ..." line, a line from a source that is not the resume (a repo,
               a page), then any other line. Skills the analysis could not evidence are never asked as if the resume
-              listed them: the profile's low-scoring skills are Tayyari's reading, not the person's words.
+              listed them: the profile's low-scoring skills are Leafout's reading, not the person's words.
     stories   "tell me about a time ...", one per evidence line with people or action in it, distinct skills first.
     work      a work-sample template for the family of the person's work, and its three follow-ups.
 

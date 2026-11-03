@@ -206,7 +206,7 @@
 
 .bl-notes {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s5);
 }
 
@@ -222,6 +222,47 @@
 .bl-note p {
   margin: 0;
   text-wrap: pretty;
+}
+
+/* Terms, Privacy, Refunds and Contact: plain links under the plans, 44px tall to touch. */
+.bl-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--s4);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.bl-legal p {
+  margin: 0;
+}
+
+.bl-legal ul {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bl-legal a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--s2);
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bl-legal a:hover {
+  color: var(--text);
+}
+
+.bl-legal a:focus-visible {
+  outline: 2px solid var(--accent-ui);
+  outline-offset: 2px;
 }
 
 /* ───────────── where the payment is ───────────── */
@@ -313,6 +354,11 @@
   .bl-notice .btn,
   .bl-header-end > .btn {
     min-height: 44px;
+  }
+
+  /* Atmosphere made this header wrap to two or three rows; the control stays on the other screens */
+  .bl-atmo {
+    display: none;
   }
 
   /* the signed-out header link makes room for the account control */

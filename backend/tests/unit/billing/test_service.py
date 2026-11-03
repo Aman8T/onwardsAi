@@ -111,8 +111,8 @@ async def test_an_inr_checkout_creates_a_razorpay_order_and_ours(rig: Rig) -> No
     assert (answer.orderId, answer.amount, answer.currency) == ("order_Rzp0001", 49_900, "INR")
     assert (answer.keyId, answer.name, answer.description) == (
         RZP_KEY_ID,
-        "Tayyari",
-        "Tayyari: three postings",
+        "Leafout",
+        "Leafout: three postings",
     )
     assert answer.prefillEmail == "ana@example.com"
 

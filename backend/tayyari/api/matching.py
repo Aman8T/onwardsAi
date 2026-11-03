@@ -109,7 +109,7 @@ _refunds: set[asyncio.Task[bool]] = set()
 
 def _blocked_message(name: str) -> str:
     return (
-        f"{name} does not allow automated reading of its pages, so Tayyari does not open that link. "
+        f"{name} does not allow automated reading of its pages, so Leafout does not open that link. "
         "Open the posting there, copy its text and paste it here instead."
     )
 
@@ -335,7 +335,7 @@ _NOT_FILENAME = re.compile(r"[^a-z0-9]+")
 def download_name(person: str, what: str, extension: str) -> str:
     """``meera-nair-resume.pdf``: the person's name in ASCII, what the file is, and its extension."""
     ascii_name = unicodedata.normalize("NFKD", person).encode("ascii", "ignore").decode("ascii").lower()
-    slug = _NOT_FILENAME.sub("-", ascii_name).strip("-")[:40] or "tayyari"
+    slug = _NOT_FILENAME.sub("-", ascii_name).strip("-")[:40] or "leafout"
     return f"{slug}-{what}.{extension}"
 
 

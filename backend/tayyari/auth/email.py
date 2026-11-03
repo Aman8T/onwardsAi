@@ -22,7 +22,7 @@ from tayyari.core.logging import get_logger
 log = get_logger(__name__)
 
 RESEND_URL: Final = "https://api.resend.com/emails"
-DEFAULT_SENDER: Final = "Tayyari <onboarding@resend.dev>"
+DEFAULT_SENDER: Final = "Leafout <onboarding@resend.dev>"
 """Resend's shared test sender: it only delivers to the address that owns the Resend account. Set RESEND_FROM
 (a sender on a verified domain) to email real people."""
 SEND_TIMEOUT_S: Final = 10.0
@@ -86,9 +86,9 @@ class ResendEmailSender:
 
 def sign_in_message(to: str, link: str, minutes: int) -> EmailMessage:
     """The sign-in email: plain words, one link, no images and no tracking."""
-    subject = "Your Tayyari sign-in link"
+    subject = "Your Leafout sign-in link"
     text = (
-        "Here is your link to sign in to Tayyari:\n\n"
+        "Here is your link to sign in to Leafout:\n\n"
         f"{link}\n\n"
         f"It works once and expires in {minutes} minutes. "
         "If you did not ask for it, you can ignore this email: nobody can sign in without the link."
@@ -96,8 +96,8 @@ def sign_in_message(to: str, link: str, minutes: int) -> EmailMessage:
     safe_link = html.escape(link, quote=True)
     page = (
         '<div style="font-family: Georgia, serif; font-size: 16px; line-height: 1.5; color: #222;">'
-        "<p>Here is your link to sign in to Tayyari.</p>"
-        f'<p><a href="{safe_link}">Sign in to Tayyari</a></p>'
+        "<p>Here is your link to sign in to Leafout.</p>"
+        f'<p><a href="{safe_link}">Sign in to Leafout</a></p>'
         f"<p>It works once and expires in {minutes} minutes. "
         "If you did not ask for it, you can ignore this email: nobody can sign in without the link.</p>"
         "</div>"

@@ -3,7 +3,7 @@
 A run has two halves that run at once, so the first roles show in a few seconds:
 
     plan      `brief.build_brief` (code)
-    near      Tayyari's own employers, read from Discover's store: `narrow.select` (place, kind), their texts, then
+    near      Leafout's own employers, read from Discover's store: `narrow.select` (place, kind), their texts, then
               `narrow.narrow` (level, quick fit), at most ``PHASE_A_READS`` read by Haiku, while the scouts search
     search    one Claude Haiku scout per angle, at once, each with only the web search tool, restricted to employers'
               Greenhouse and Lever sites (`harvest.ALLOWED_DOMAINS`), told the place. A step per scout as it finishes,
@@ -107,7 +107,7 @@ log = get_logger(__name__)
 SCOUT_MAX_TOKENS: Final = 1200
 JUDGE_MAX_TOKENS: Final = 6000
 PHASE_A_READS: Final = 6
-"""Roles from Tayyari's own employers read while the web search runs (the first cards)."""
+"""Roles from Leafout's own employers read while the web search runs (the first cards)."""
 OPEN_LONG: Final = timedelta(days=365)
 """A posting first published longer ago than this is "open over a year"."""
 POSTING_KEEP_CHARS: Final = 20_000
@@ -413,7 +413,7 @@ class JobSearchService:
                 state.emit(
                     self._step(
                         "read",
-                        f"Reading the {_plural(len(shortlist), 'closest role')} from Tayyari's own employers "
+                        f"Reading the {_plural(len(shortlist), 'closest role')} from Leafout's own employers "
                         "while the web search runs.",
                         count=len(shortlist),
                     )
@@ -771,7 +771,7 @@ class JobSearchService:
         scouts = _plural(len(brief.angles), "search", "searches")
         return (
             f"Looking for {roles} roles {where}{_years(brief.years)}: {scouts} on employers' own job sites, "
-            f"up to {searches} queries each, while Tayyari's own employers are read first."
+            f"up to {searches} queries each, while Leafout's own employers are read first."
         )
 
     @staticmethod
@@ -782,12 +782,12 @@ class JobSearchService:
         text = (
             f"Read {_plural(len(ok), 'employer board')} found on the web: {_plural(found, 'open role')} in India."
             if reads
-            else "The searches led to no board beyond Tayyari's own employers."
+            else "The searches led to no board beyond Leafout's own employers."
         )
         if failed:
             text += f" {_plural(failed, 'board')} could not be read."
         if stored:
-            text += f" Tayyari's own employers: {_plural(stored, 'open role')}."
+            text += f" Leafout's own employers: {_plural(stored, 'open role')}."
         return text
 
     @staticmethod

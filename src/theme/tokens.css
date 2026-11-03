@@ -563,6 +563,14 @@
   --col: 560px;
 }
 
+/* Phone floor for secondary text: 12px for kickers, 13.5px for what people read or act on. */
+@media (max-width: 760px) {
+  :root {
+    --fs-0: 12px;
+    --fs-1: 13.5px;
+  }
+}
+
 /* (e) The ambient layer: one fixed paint, three soft lobes, colour only. */
 html {
   /* A static neutral so the root layer never repaints; the ambient div covers it. Native controls follow the scheme. */

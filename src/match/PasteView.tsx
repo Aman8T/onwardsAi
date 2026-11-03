@@ -29,11 +29,11 @@ export interface PasteViewProps {
   blocker?: string;
   /** What to do about the blocker, when there is something to do. */
   blockerAction?: { label: string; run: () => void };
-  /** Say that the first posting is free (a visitor, or a signed-in person with the free one still available; never for an account with no limits). */
+  /** Say that one posting a month is free (a visitor, or a signed-in person with the free one still available; never for an account with no limits). */
   showFree: boolean;
   /**
-   * The server matches without an account and nobody is signed in: say it is free while Tayyari is in preview and that
-   * no account is needed, instead of the first-posting line (there is no allowance to count here).
+   * The server matches without an account and nobody is signed in: say it is free while Leafout is in preview and that
+   * no account is needed, instead of the free-posting line (there is no allowance to count here).
    */
   noAccount?: boolean;
   recent: readonly MatchSummary[];
@@ -52,7 +52,7 @@ const STEPS: [string, string][] = [
 
 /** The line beside the button: what it costs, then how long it takes. */
 const costLine = (noAccount: boolean, showFree: boolean) =>
-  `${noAccount ? 'Free while Leafout is in preview. No account needed. ' : showFree ? 'Your first posting is free. ' : ''}Takes about 20 seconds.`;
+  `${noAccount ? 'Free while Leafout is in preview. No account needed. ' : showFree ? 'One posting a month is free. ' : ''}Takes about 20 seconds.`;
 
 export function PasteView(props: PasteViewProps) {
   const { draft, onDraft, onSubmit, busy, notice, paywall, onDismissPaywall, blocker, blockerAction, showFree, noAccount = false, recent, roles, onPickRole, onNavigate } = props;

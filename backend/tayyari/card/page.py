@@ -30,10 +30,14 @@ PAGE_CSP: Final = (
     "frame-ancestors 'none'"
 )
 """The page's own policy: no script, its own images and stylesheet, the fonts. The middleware keeps a route's header."""
-ICON: Final = (
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6.5' "
-    "fill='none' stroke='%235a77bb' stroke-width='1.5'/%3E%3Ccircle cx='8' cy='8' r='1.75' fill='%232b3040'/%3E%3C/svg%3E"
+ICON_LINKS: Final = (
+    '<link rel="icon" href="/favicon.svg" type="image/svg+xml" />',
+    '<link rel="icon" href="/favicon.ico" sizes="32x32" />',
+    '<link rel="apple-touch-icon" href="/apple-touch-icon.png" />',
 )
+"""The ring-and-dot mark as files the web build emits at the site root (the app's index and content pages link the same ones)."""
+THEME_COLORS: Final = (("#e1ebf5", "light"), ("#0b1015", "dark"))
+"""The quiet look's page background (``--bg`` in ``src/theme/tokens.css``), for the browser's own chrome."""
 SITE_NAME: Final = "Leafout"
 
 
@@ -56,7 +60,11 @@ def _head(title: str, description: str, extra: list[str]) -> str:
         f'<meta name="description" content="{esc(description)}" />',
         '<meta name="robots" content="noindex" />',
         *extra,
-        f'<link rel="icon" href="{ICON}" />',
+        *ICON_LINKS,
+        *(
+            f'<meta name="theme-color" content="{color}" media="(prefers-color-scheme: {scheme})" />'
+            for color, scheme in THEME_COLORS
+        ),
         '<link rel="preconnect" href="https://fonts.googleapis.com" />',
         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
         f'<link href="{FONTS_HREF}" rel="stylesheet" />',

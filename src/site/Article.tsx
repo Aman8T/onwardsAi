@@ -1,5 +1,5 @@
 import { CONTENT_PAGES } from './pages';
-import { labelOf } from './seo';
+import { labelOf, longDate } from './seo';
 import type { ContentPage } from './types';
 
 /** The content page at `path`, or undefined. */
@@ -11,7 +11,7 @@ export function pageAt(path: string): ContentPage | undefined {
  * A content page: breadcrumb, h1 and lede with the one call to action, the page's sections, its questions, and three
  * related pages. Rendered inside `Layout`.
  */
-export function Article({ page }: { page: ContentPage }) {
+export function Article({ page, updated }: { page: ContentPage; /** The day the page's text last changed (ISO), when the build could find it. */ updated?: string }) {
   const related = page.related.map(pageAt).filter((p): p is ContentPage => p !== undefined);
   const Body = page.Body;
   return (
@@ -35,6 +35,11 @@ export function Article({ page }: { page: ContentPage }) {
               {page.cta.label}
             </a>
           </p>
+          {updated && (
+            <p className="doc-updated">
+              Updated <time dateTime={updated}>{longDate(updated)}</time>
+            </p>
+          )}
         </header>
         <div className="prose">
           <Body />

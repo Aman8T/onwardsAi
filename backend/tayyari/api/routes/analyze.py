@@ -38,7 +38,7 @@ from tayyari.core.errors import RateLimited
 router = APIRouter()
 
 TAG = "analyze"
-BUSY_MESSAGE = "Tayyari is busy, try again in a minute."
+BUSY_MESSAGE = "Leafout is busy, try again in a minute."
 BUSY_RETRY_AFTER_S = 30.0
 
 

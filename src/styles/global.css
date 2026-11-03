@@ -347,3 +347,30 @@ textarea.field {
   animation-duration: var(--d-base);
   animation-timing-function: var(--ease);
 }
+
+/* ───────────── Phone ───────────── */
+
+@media (max-width: 760px) {
+  /* 16px keeps iOS from zooming the page when a field is focused. Specificity beats a single-class font-size. */
+  :is(input, textarea, select):not([type='checkbox']):not([type='radio']):not([type='range']) {
+    font-size: 16px;
+  }
+
+  /* Touch targets: the Atmosphere button is a full 44 px. */
+  .atmo-btn {
+    min-height: 44px;
+  }
+
+  /* The sub-screen headers keep the one-tap light/dark toggle and drop the Atmosphere text button, so the
+     header stays one row for the brand and the account control. Drift / Still / Off live on the graph screen. */
+  :is(.mt-header, .dc-header, .pc-header, .bl-header) .atmo-btn {
+    display: none;
+  }
+}
+
+/* Keyboard hints mean nothing on a touch screen. */
+@media (hover: none), (pointer: coarse) {
+  .kbd-hint {
+    display: none;
+  }
+}

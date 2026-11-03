@@ -14,8 +14,8 @@
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { SITE_PAGES } from '../src/site/links';
-import { HOME_HEAD, MAX_DESCRIPTION, PRICING_HEAD, SITE_LINE, absoluteUrl, resolveSiteUrl } from '../src/site/seo';
+import { COMPANY_LINKS, COMPANY_URL, OPERATOR_LINE, SITE_PAGES } from '../src/site/links';
+import { HOME_HEAD, MAX_DESCRIPTION, OG_IMAGE, ORG_ID, PRICING_HEAD, SITE_LINE, absoluteUrl, resolveSiteUrl } from '../src/site/seo';
 import type { AppHead } from '../src/site/seo';
 
 const DIST = resolve(process.cwd(), 'dist');
@@ -55,8 +55,13 @@ function countHueColours(css: string): number {
 const SITE_URL = resolveSiteUrl(process.env.SITE_URL);
 /** Words a content page needs to be more than a stub. */
 const MIN_PAGE_WORDS = 400;
+/** Words the Home and Pricing shells must show a reader that does not run JavaScript (their no-script seed). */
+const MIN_SEED_WORDS = 150;
 /** App routes the pages may link to besides the pages of SITE_PAGES. */
 const APP_PATHS = ['/match', '/practice', '/discover'];
+
+/** Wording that says a feature is not built, for features that are (the radar card and the portfolio preview exist). */
+const NOT_BUILT = /(?:radar card|shareable radar)[^.]{0,80}(?:not built|planned)|(?:not built|planned)[^.]{0,80}(?:radar card|shareable radar)/i;
 
 const decode = (text: string): string =>
   text.replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
@@ -112,6 +117,7 @@ function headChecks(label: string, html: string, path: string, expect?: AppHead)
   const canonical = canonicalOf(html);
   const nodes = structuredData(html);
   const wantCanonical = absoluteUrl(SITE_URL, path);
+  const wantImage = absoluteUrl(SITE_URL, OG_IMAGE.path);
   return [
     { name: `${label}: title`, ok: !!title && (expect === undefined || title === expect.title), detail: title ?? 'no <title>' },
     {
@@ -126,12 +132,35 @@ function headChecks(label: string, html: string, path: string, expect?: AppHead)
         metaContent(html, 'property', 'og:title') === title &&
         metaContent(html, 'property', 'og:description') === description &&
         metaContent(html, 'property', 'og:url') === wantCanonical &&
-        metaContent(html, 'name', 'twitter:card') !== undefined &&
+        metaContent(html, 'name', 'twitter:card') === 'summary_large_image' &&
         metaContent(html, 'name', 'twitter:title') === title,
     },
     {
-      name: `${label}: structured data names the Organization and the WebSite`,
-      ok: typesOf(nodes).includes('Organization') && typesOf(nodes).includes('WebSite'),
+      name: `${label}: share picture (og:image and twitter:image, absolute, with size and alt)`,
+      ok:
+        metaContent(html, 'property', 'og:image') === wantImage &&
+        metaContent(html, 'name', 'twitter:image') === wantImage &&
+        metaContent(html, 'property', 'og:image:width') === String(OG_IMAGE.width) &&
+        metaContent(html, 'property', 'og:image:height') === String(OG_IMAGE.height) &&
+        !!metaContent(html, 'property', 'og:image:alt'),
+      detail: metaContent(html, 'property', 'og:image') ?? 'no og:image',
+    },
+    {
+      name: `${label}: icons, manifest and theme-color (light and dark)`,
+      ok:
+        /<link rel="icon" href="\/favicon\.svg"/.test(html) &&
+        /<link rel="icon" href="\/favicon\.ico"/.test(html) &&
+        /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png"/.test(html) &&
+        /<link rel="manifest" href="\/site\.webmanifest"/.test(html) &&
+        /<meta name="theme-color" content="#[0-9a-f]{6}" media="\(prefers-color-scheme: light\)"/i.test(html) &&
+        /<meta name="theme-color" content="#[0-9a-f]{6}" media="\(prefers-color-scheme: dark\)"/i.test(html),
+    },
+    {
+      name: `${label}: structured data has the company's one Organization and this host's WebSite, published by it`,
+      ok:
+        typesOf(nodes).includes('WebSite') &&
+        (nodes ?? []).some((n) => n['@type'] === 'Organization' && n['@id'] === ORG_ID && n['name'] === 'Leafout' && n['url'] === COMPANY_URL && !!n['logo'] && !!n['email']) &&
+        (nodes ?? []).some((n) => n['@type'] === 'WebSite' && (n['publisher'] as Node | undefined)?.['@id'] === ORG_ID),
       detail: nodes === null ? 'no valid JSON-LD' : typesOf(nodes).join(', '),
     },
   ];
@@ -166,7 +195,7 @@ function contentPageChecks(path: string, seen: { titles: Map<string, string>; de
   const checks: Check[] = [
     ...headChecks(path, html, path),
     { name: `${path}: exactly one h1`, ok: (html.match(/<h1[\s>]/g) ?? []).length === 1 },
-    { name: `${path}: html lang, viewport, and no script file`, ok: html.includes('<html lang="en">') && html.includes('name="viewport"') && !/<script[^>]*\ssrc=/.test(html) },
+    { name: `${path}: html lang, viewport, and no script file`, ok: /<html lang="en(-IN)?"[\s>]/.test(html) && html.includes('data-look="quiet"') && html.includes('name="viewport"') && !/<script[^>]*\ssrc=/.test(html) },
     { name: `${path}: at least ${MIN_PAGE_WORDS} words of text`, ok: words >= MIN_PAGE_WORDS, detail: `${words} words` },
     { name: `${path}: structured data has a BreadcrumbList and a FAQPage`, ok: typesOf(nodes).includes('BreadcrumbList') && typesOf(nodes).includes('FAQPage') },
     {
@@ -175,6 +204,19 @@ function contentPageChecks(path: string, seen: { titles: Map<string, string>; de
       detail: `${questions.length} questions`,
     },
     { name: `${path}: footer line and a link to every page`, ok: pageText.includes(SITE_LINE) && SITE_PAGES.every((p) => html.includes(`<a href="${p.path}"`)) },
+    {
+      name: `${path}: footer links to the company site (privacy, terms, refunds, contact) and names the operator`,
+      ok: COMPANY_LINKS.every((l) => html.includes(`<a href="${l.href}"`)) && pageText.includes(OPERATOR_LINE) && html.includes('href="mailto:aman@leafout.in"'),
+    },
+    { name: `${path}: no price placeholder and no claim that a built feature is not built`, ok: !html.includes('{{') && !NOT_BUILT.test(text), detail: NOT_BUILT.exec(text)?.[0] },
+    {
+      name: `${path}: an Updated line that matches the WebPage dateModified, when there is one`,
+      ok: (() => {
+        const shown = /<time datetime="(\d{4}-\d{2}-\d{2})">/i.exec(html)?.[1];
+        const modified = (nodes ?? []).find((n) => n['@type'] === 'WebPage')?.['dateModified'];
+        return shown === modified && (shown === undefined || /^\d{4}-\d{2}-\d{2}$/.test(shown));
+      })(),
+    },
     { name: `${path}: every internal link goes to a known path`, ok: hrefs.every((h) => known.has(h)), detail: hrefs.filter((h) => !known.has(h)).join(', ') || undefined },
     { name: `${path}: stylesheet link`, ok: html.includes('<link rel="stylesheet" href="/site/site.css" />') },
     { name: `${path}: title not used by another page`, ok: !seen.titles.has(title), detail: seen.titles.get(title) },
@@ -191,6 +233,10 @@ function shellChecks(label: string, file: string, path: string, head: AppHead): 
   if (html === null) return { name: label, ok: false, detail: `dist/${file} is missing` };
   const bootAt = html.indexOf('tayyari.hue0');
   const firstStylesheet = html.search(/<link[^>]*rel="stylesheet"/);
+  const seed = /<noscript>([\s\S]*?)<\/noscript>/.exec(html)?.[1] ?? '';
+  const seedText = decode(seed.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
+  const seedWords = seedText === '' ? 0 : seedText.split(' ').length;
+  const nodes = structuredData(html);
   return group(label, [
     ...headChecks(label, html, path, head),
     {
@@ -203,8 +249,96 @@ function shellChecks(label: string, file: string, path: string, head: AppHead): 
         bootAt < firstStylesheet,
     },
     { name: `${label}: one copy of each generated block`, ok: html.split('<!--seo:begin-->').length === 2 && html.split('<!--seo:noscript:begin-->').length === 2 },
+    {
+      name: `${label}: a no-script seed of at least ${MIN_SEED_WORDS} words with one h1 and links to the company site`,
+      ok: seedWords >= MIN_SEED_WORDS && (seed.match(/<h1[\s>]/g) ?? []).length === 1 && COMPANY_LINKS.every((l) => seed.includes(`<a href="${l.href}"`)),
+      detail: `${seedWords} words`,
+    },
+    {
+      name: `${label}: no wording that calls a built feature unbuilt`,
+      ok: !NOT_BUILT.test(seedText),
+      detail: NOT_BUILT.exec(seedText)?.[0],
+    },
+    {
+      name: `${label}: {{price:...}} placeholders ${path === '/pricing' ? 'for both plans in the text and the FAQ data, never in a head tag' : 'nowhere'}`,
+      ok:
+        path === '/pricing'
+          ? seed.includes('{{price:pack3}}') &&
+            seed.includes('{{price:pass30}}') &&
+            JSON.stringify(nodes ?? []).includes('{{price:pack3}}') &&
+            !/<meta[^>]*\{\{/.test(html) &&
+            !/<title>[^<]*\{\{/.test(html)
+          : !html.includes('{{'),
+    },
   ]);
 }
+
+/** The Pricing shell's FAQPage data matches the questions its no-script body shows, and the body names the refund and renewal rules. */
+function pricingFaqCheck(): Check {
+  const html = readIfExists('pricing/index.html');
+  if (html === null) return { name: 'Pricing shell: FAQ', ok: false, detail: 'dist/pricing/index.html is missing' };
+  const nodes = structuredData(html);
+  const faq = (nodes ?? []).find((n) => n['@type'] === 'FAQPage') as { mainEntity?: { name: string; acceptedAnswer: { text: string } }[] } | undefined;
+  const questions = faq?.mainEntity ?? [];
+  const seed = decode((/<noscript>([\s\S]*?)<\/noscript>/.exec(html)?.[1] ?? '').replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ');
+  return group('Pricing shell: FAQ', [
+    { name: 'FAQPage data with 3 or more questions', ok: questions.length >= 3, detail: `${questions.length} questions` },
+    { name: 'every question and answer is in the no-script body', ok: questions.every((q) => seed.includes(q.name) && seed.includes(q.acceptedAnswer.text)) },
+    { name: 'says nothing renews, names the 7-day refund and delivery', ok: /nothing auto-renews/i.test(seed) && /within 7 days/.test(seed) && /nothing is shipped/.test(seed) },
+  ]);
+}
+
+/** app-shell.html: the app, for the private routes, with no canonical, no structured data, no share tags and a noindex. */
+function privateShellCheck(): Check {
+  const html = readIfExists('app-shell.html');
+  if (html === null) return { name: 'app-shell.html', ok: false, detail: 'dist/app-shell.html is missing' };
+  const bootAt = html.indexOf('tayyari.hue0');
+  const firstStylesheet = html.search(/<link[^>]*rel="stylesheet"/);
+  return group('app-shell.html (private routes)', [
+    { name: 'noindex, no canonical, no JSON-LD, no og tags', ok: html.includes('<meta name="robots" content="noindex" />') && canonicalOf(html) === undefined && !html.includes('ld+json') && !html.includes('og:') },
+    {
+      name: 'still the app (module script, root, boot script first)',
+      ok: /<script type="module"[^>]*src="\/assets\//.test(html) && html.includes('<div id="root"></div>') && bootAt !== -1 && bootAt < firstStylesheet,
+    },
+    { name: 'no seed text', ok: !html.includes('<noscript>') },
+  ]);
+}
+
+function pngSize(file: string): { width: number; height: number } | null {
+  const full = join(DIST, file);
+  if (!existsSync(full)) return null;
+  const b = readFileSync(full);
+  if (b.length < 24 || b.toString('latin1', 1, 4) !== 'PNG') return null;
+  return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) };
+}
+
+/** The files the head links to exist and have the size the tags claim. */
+function assetChecks(): Check {
+  const og = pngSize('og-default.png');
+  const icon = (file: string, size: number) => {
+    const d = pngSize(file);
+    return d !== null && d.width === size && d.height === size;
+  };
+  let manifestOk = false;
+  try {
+    const m = JSON.parse(readIfExists('site.webmanifest') ?? '') as { name?: string; icons?: { src: string }[] };
+    manifestOk = m.name === 'Leafout' && (m.icons ?? []).length >= 2 && (m.icons ?? []).every((i) => existsSync(join(DIST, i.src)));
+  } catch {
+    manifestOk = false;
+  }
+  return group('icons, manifest and share picture', [
+    { name: `og-default.png is ${OG_IMAGE.width} x ${OG_IMAGE.height}`, ok: og !== null && og.width === OG_IMAGE.width && og.height === OG_IMAGE.height, detail: og ? `${og.width} x ${og.height}` : 'missing' },
+    { name: 'apple-touch-icon.png is 180 x 180', ok: icon('apple-touch-icon.png', 180) },
+    { name: 'icon-192.png and icon-512.png', ok: icon('icon-192.png', 192) && icon('icon-512.png', 512) },
+    { name: 'favicon.svg and favicon.ico', ok: (readIfExists('favicon.svg') ?? '').includes('<svg') && existsSync(join(DIST, 'favicon.ico')) },
+    { name: 'site.webmanifest parses and its icons exist', ok: manifestOk },
+  ]);
+}
+
+const today = (): string => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 function pageChecks(): Check[] {
   const seen = { titles: new Map<string, string>(), descriptions: new Map<string, string>() };
@@ -218,13 +352,18 @@ function pageChecks(): Check[] {
   });
 
   checks.push(shellChecks('Home shell', 'index.html', '/', HOME_HEAD), shellChecks('Pricing shell', 'pricing/index.html', '/pricing', PRICING_HEAD));
+  checks.push(pricingFaqCheck(), privateShellCheck(), assetChecks());
 
   const sitemap = readIfExists('sitemap.xml');
   const locs = sitemap === null ? [] : [...sitemap.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => decode(m[1]));
   const wantLocs = SITE_PAGES.map((p) => absoluteUrl(SITE_URL, p.path));
   checks.push({
     name: 'sitemap.xml lists every page, absolute, and nothing else',
-    ok: sitemap !== null && locs.length === wantLocs.length && wantLocs.every((u) => locs.includes(u)),
+    ok:
+      sitemap !== null &&
+      locs.length === wantLocs.length &&
+      wantLocs.every((u) => locs.includes(u)) &&
+      [...sitemap.matchAll(/<lastmod>([^<]*)<\/lastmod>/g)].every((m) => /^\d{4}-\d{2}-\d{2}$/.test(m[1]) && m[1] <= today()),
     detail: sitemap === null ? 'dist/sitemap.xml is missing' : `${locs.length} urls`,
   });
 
@@ -239,6 +378,29 @@ function pageChecks(): Check[] {
       /^Disallow: \/dev\/$/m.test(robots) &&
       robots.includes(`Sitemap: ${SITE_URL}/sitemap.xml`),
     detail: robots === null ? 'dist/robots.txt is missing' : undefined,
+  });
+
+  const aiGroup = robots === null ? '' : (robots.split('\n\n').find((block) => block.includes('User-agent: GPTBot')) ?? '');
+  checks.push({
+    name: 'robots.txt: a group for the AI crawlers that repeats Allow and both Disallows',
+    ok:
+      ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'OAI-SearchBot'].every((bot) => aiGroup.includes(`User-agent: ${bot}`)) &&
+      aiGroup.includes('Allow: /') &&
+      aiGroup.includes('Disallow: /api/') &&
+      aiGroup.includes('Disallow: /dev/'),
+  });
+
+  const llms = readIfExists('llms.txt');
+  checks.push({
+    name: 'llms.txt: an h1, a summary, a link to every page, the company links, no placeholder',
+    ok:
+      llms !== null &&
+      /^# Leafout$/m.test(llms) &&
+      /^> .+/m.test(llms) &&
+      SITE_PAGES.every((p) => llms.includes(`](${absoluteUrl(SITE_URL, p.path)})`)) &&
+      COMPANY_LINKS.every((l) => llms.includes(`](${l.href})`)) &&
+      !llms.includes('{{'),
+    detail: llms === null ? 'dist/llms.txt is missing' : undefined,
   });
 
   const css = readIfExists('site/site.css');

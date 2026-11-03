@@ -110,7 +110,7 @@ def build_chat_system(
     full_name = str(person.get("name") or "")
     name = full_name.split(" ")[0] if full_name and full_name != "You" else None
 
-    return f"""You are Tayyari, a candid, specific and warm career coach for {name or "the user"}. You have already analysed their
+    return f"""You are Leafout, a candid, specific and warm career coach for {name or "the user"}. You have already analysed their
 resume and public work (below): a skill graph of their current role and a map of their most probable next roles. You talk
 like a senior mentor who has read every repo and bullet: direct, generous with specifics, never generic.
 

@@ -29,7 +29,7 @@ export const about: ContentPage = {
     },
     {
       q: 'Is Leafout finished?',
-      a: 'No. It is an early product, and some parts, such as interview practice, are free while they are in testing. Planned features, such as a shareable radar card, are not built yet.',
+      a: 'No. It is an early product. Some parts, such as interview practice, are free while in testing. A portfolio on your own domain is planned and not built yet.',
     },
   ],
   Body: () => (
@@ -77,7 +77,7 @@ export const about: ContentPage = {
             Turns the gaps into a <a href="/career-plan">plan</a>, and lets you <a href="/mock-interview">practise the interview</a> on your own work.
           </li>
           <li>
-            Makes a <a href="/resume-to-portfolio">portfolio page</a> you can share, built from the same evidence.
+            Makes a <a href="/resume-to-portfolio">portfolio page</a> from the same evidence, and a radar card of your skills that you can place in a GitHub or LinkedIn profile.
           </li>
         </ul>
       </section>
@@ -125,6 +125,11 @@ export const about: ContentPage = {
         <h2>Where it stands</h2>
         <p>
           Leafout is early. The <a href="/how-it-works">pipeline</a> works end to end, and the parts that are still in testing are marked as such.
+        </p>
+        <p>
+          The company site is <a href="https://leafout.in">leafout.in</a>. It has the <a href="https://leafout.in/blog">blog</a>, the{' '}
+          <a href="https://leafout.in/privacy">privacy policy</a>, the <a href="https://leafout.in/terms">terms</a> and the{' '}
+          <a href="https://leafout.in/refunds">refund policy</a>.
         </p>
       </section>
     </>

@@ -1,4 +1,4 @@
-"""Typed failures of the LLM layer, each with a message that is safe to show to the person using Tayyari.
+"""Typed failures of the LLM layer, each with a message that is safe to show to the person using Leafout.
 
 Callers branch on the class (or `kind`) instead of parsing English: the legacy `humanize_error` and its
 regexes are gone. `user_message` is written for the UI; `detail` is for logs only (it can hold the
@@ -70,7 +70,7 @@ UNKNOWN_MESSAGE = "Something went wrong while talking to Claude."
 MODEL_UNAVAILABLE_MESSAGE = UNAVAILABLE_MESSAGE
 PERMISSION_MESSAGE = UNAVAILABLE_MESSAGE
 BILLING_MESSAGE = UNAVAILABLE_MESSAGE
-SPEND_CEILING_MESSAGE = "Tayyari has reached today's usage limit. The pre-computed sample profile still works. Try again tomorrow."
+SPEND_CEILING_MESSAGE = "Leafout has reached today's usage limit. The pre-computed sample profile still works. Try again tomorrow."
 
 _REFUSAL_MESSAGES: Mapping[str, str] = {
     "cyber": "Claude declined this request because it looked like a security-sensitive task. Try rephrasing it.",

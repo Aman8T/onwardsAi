@@ -4,8 +4,8 @@ addresses, their headers, and the claim that moves a card to a newer profile. No
     GET  /api/card?profileId=     the view; blocked for the sample and an anonymous graph; 404 for another account's
     PUT  /api/card                sharing on and off; 400 for a skill not offered or a role not on the graph; 403 when blocked
     POST /api/card/new-link       a new link, the old one stops
-    GET  /r/{slug}.svg            the card; a 200 neutral card for unknown, stopped and malformed links; ETag and 304
-    GET  /og/{slug}-{v}.png       1200 x 627; a 301 from an old version; the neutral picture for an unknown link
+    GET  /r/{slug}.svg            the card; a 404 with the neutral card for unknown, stopped and malformed links; ETag and 304
+    GET  /og/{slug}-{v}.png       1200 x 627; a 301 from an old version; a 404 with the neutral picture for an unknown link
     GET  /u/{slug}                share tags, escaped; noindex; a 404 page for an unknown link
 """
 
@@ -115,7 +115,7 @@ async def test_the_owner_shares_and_stops_sharing(start) -> None:  # type: ignor
         off = await rig.shared(ana, shared=False)
         assert "slug" not in off
         stopped = await rig.client.get(path_of(on["svgUrl"]))
-        assert stopped.status_code == 200 and "isn&#x27;t shared" not in stopped.text
+        assert stopped.status_code == 404 and "isn&#x27;t shared" not in stopped.text
         assert "This card isn't shared any more." in stopped.text
         assert (await rig.client.get(path_of(on["pageUrl"]))).status_code == 404
 
@@ -186,7 +186,8 @@ async def test_unknown_stopped_and_malformed_links_get_the_neutral_card(start) -
             "/r/aaaaaaaaaa%21!.svg",
         ):
             response = await rig.client.get(path)
-            assert response.status_code == 200, path
+            assert response.status_code == 404, path
+            assert response.headers["x-robots-tag"] == "noindex"
             assert response.headers["content-type"].startswith("image/svg+xml")
             assert response.headers["cache-control"] == "public, max-age=300"
             assert "This card isn't shared any more." in response.text
@@ -203,6 +204,7 @@ async def test_the_card_headers_etag_and_304(start) -> None:  # type: ignore[no-
         assert response.status_code == 200
         assert response.headers["cache-control"] == IMAGE_CACHE
         assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["x-robots-tag"] == "noindex"
         assert response.headers["content-security-policy"] == SVG_CSP, (
             "the middleware must keep the route's policy"
         )
@@ -242,11 +244,13 @@ async def test_the_picture_is_1200_by_627_and_an_old_version_moves(start) -> Non
         assert png.content[:8] == b"\x89PNG\r\n\x1a\n"
         assert struct.unpack(">II", png.content[16:24]) == (1200, 627)
         assert png.headers["cache-control"] == IMAGE_CACHE
+        assert png.headers["x-robots-tag"] == "noindex"
         slug = view["slug"]
         old = await rig.client.get(f"/og/{slug}-00000000.png", follow_redirects=False)
         assert old.status_code == 301 and old.headers["location"] == path
         unknown = await rig.client.get("/og/zzzzzzzzzzzz-00000000.png")
-        assert unknown.status_code == 200 and unknown.headers["content-type"] == "image/png"
+        assert unknown.status_code == 404 and unknown.headers["content-type"] == "image/png"
+        assert unknown.headers["x-robots-tag"] == "noindex"
         assert unknown.headers["cache-control"] == "public, max-age=300"
 
 
@@ -268,6 +272,10 @@ async def test_the_page_carries_escaped_share_tags_and_no_script(start) -> None:
         assert '<meta name="twitter:card" content="summary_large_image" />' in html
         assert '<meta name="robots" content="noindex" />' in html
         assert page.headers["x-robots-tag"] == "noindex"
+        assert '<link rel="icon" href="/favicon.svg" type="image/svg+xml" />' in html
+        assert '<link rel="icon" href="/favicon.ico" sizes="32x32" />' in html
+        assert '<link rel="apple-touch-icon" href="/apple-touch-icon.png" />' in html
+        assert 'name="theme-color"' in html and "data:image/svg+xml" not in html
         assert page.headers["content-security-policy"] == PAGE_CSP
         assert "mailto:aman@leafout.in?subject=Report%20card%20" in html
         sample = rig.env.container.sample.sample_profile
@@ -282,7 +290,7 @@ async def test_the_page_carries_escaped_share_tags_and_no_script(start) -> None:
 async def test_the_card_window_counts(start) -> None:  # type: ignore[no-untyped-def]
     async with start(card_per_minute=3) as rig:
         codes = [(await rig.client.get("/r/zzzzzzzzzzzz.svg")).status_code for _ in range(5)]
-        assert codes[:3] == [200, 200, 200] and 429 in codes[3:]
+        assert codes[:3] == [404, 404, 404] and 429 in codes[3:]
 
 
 async def test_claiming_a_newer_profile_moves_the_card(start) -> None:  # type: ignore[no-untyped-def]

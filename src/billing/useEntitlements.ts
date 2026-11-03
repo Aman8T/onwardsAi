@@ -7,6 +7,7 @@
  * `prices[currency]` is not on sale and the page says "Coming soon".
  *
  * The currency starts as the server's guess (the saved choice, else INR for an Indian locale or time zone, else USD).
+ * While nothing is on sale in USD, everyone is shown INR and the page hides the currency switch (`usdOffered`).
  * `setCurrency` changes what the page shows at once and, for a signed-in account, saves the choice
  * (`PATCH /api/me`), so the next visit starts there.
  */
@@ -82,6 +83,8 @@ export interface EntitlementsView {
   priced: ProductPrices;
   /** True when at least one plan can be bought in INR (Checkout.js is only worth loading then). */
   razorpayOffered: boolean;
+  /** True when at least one plan can be bought in USD; false means INR is the only currency shown. */
+  usdOffered: boolean;
   setCurrency: (currency: Currency) => void;
   refresh: () => Promise<void>;
 }
@@ -113,7 +116,8 @@ export function useEntitlements(): EntitlementsView {
 
   const { data, status, chosen } = snap;
   const prices = data?.prices ?? BARE;
-  const currency = chosen ?? data?.currency ?? 'USD';
+  const usdOffered = prices.USD.pack3 !== undefined || prices.USD.pass30 !== undefined;
+  const currency: Currency = usdOffered ? (chosen ?? data?.currency ?? 'USD') : 'INR';
   return {
     status,
     loaded: status === 'ready',
@@ -125,6 +129,7 @@ export function useEntitlements(): EntitlementsView {
     prices,
     priced: prices[currency],
     razorpayOffered: prices.INR.pack3 !== undefined || prices.INR.pass30 !== undefined,
+    usdOffered,
     setCurrency,
     refresh: refreshEntitlements,
   };

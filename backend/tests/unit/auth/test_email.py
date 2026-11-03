@@ -36,7 +36,7 @@ async def test_the_message_is_posted_to_resend_with_the_key_as_a_bearer_token() 
     assert posted == {
         "from": "Tayyari <login@tayyari.example>",
         "to": ["ana@example.com"],
-        "subject": "Your Tayyari sign-in link",
+        "subject": "Your Leafout sign-in link",
         "text": message.text,
         "html": message.html,
     }
@@ -81,7 +81,7 @@ async def test_a_non_json_error_body_is_survivable() -> None:
 
 def test_the_message_is_plain_words_and_one_link() -> None:
     message = sign_in_message("ana@example.com", LINK, 15)
-    assert message.subject == "Your Tayyari sign-in link"
+    assert message.subject == "Your Leafout sign-in link"
     assert LINK in message.text and "15 minutes" in message.text and "ignore this email" in message.text
     assert f'href="{LINK}"' in message.html
     assert "<img" not in message.html and "<script" not in message.html  # no images, no tracking

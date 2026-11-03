@@ -11,14 +11,18 @@ from fastapi import FastAPI
 from tayyari.api.errors import install_error_handlers
 from tayyari.api.static import (
     ASSET_CACHE_CONTROL,
+    FILE_CACHE_CONTROL,
     INDEX_CACHE_CONTROL,
     NOINDEX,
     Answer,
+    fill_prices,
     locate,
     mount_spa,
+    private_shell,
     resolve_static_file,
 )
 from tayyari.core.settings import Settings
+from tests.fakes.billing import RAZORPAY_KEYS
 
 INDEX = "<!doctype html><title>Tayyari</title><div id=root></div>"
 PAGE = "<!doctype html><title>How it works</title><h1>How it works</h1>"
@@ -102,8 +106,6 @@ async def test_the_root_is_index_html_and_never_cached(site: Path) -> None:
 @pytest.mark.parametrize(
     ("path", "media"),
     [
-        ("/assets/app-3f9a.js", "javascript"),
-        ("/assets/app-3f9a.css", "text/css"),
         ("/favicon.svg", "image/svg+xml"),
         ("/sample-profile.json", "application/json"),
         ("/robots.txt", "text/plain"),
@@ -114,17 +116,41 @@ async def test_real_files_are_served_with_an_hour_of_caching(site: Path, path: s
     async with client_for(site) as client:
         res = await client.get(path)
     assert res.status_code == 200
-    assert res.headers["cache-control"] == "public, max-age=3600" == ASSET_CACHE_CONTROL
+    assert res.headers["cache-control"] == "public, max-age=3600" == FILE_CACHE_CONTROL
     assert media in res.headers["content-type"]
     assert res.content == (site / path.lstrip("/")).read_bytes()
 
 
-async def test_html_files_requested_by_name_are_never_cached(site: Path) -> None:
+@pytest.mark.parametrize(
+    ("path", "media"),
+    [("/assets/app-3f9a.js", "javascript"), ("/assets/app-3f9a.css", "text/css")],
+)
+async def test_hashed_assets_are_cached_for_a_year_and_immutable(site: Path, path: str, media: str) -> None:
     async with client_for(site) as client:
-        index = await client.get("/index.html")
-        page = await client.get("/how-it-works/index.html")
+        res = await client.get(path)
+    assert res.status_code == 200
+    assert res.headers["cache-control"] == "public, max-age=31536000, immutable" == ASSET_CACHE_CONTROL
+    assert media in res.headers["content-type"]
+    assert res.content == (site / path.lstrip("/")).read_bytes()
+
+
+async def test_a_pages_index_html_is_a_301_to_the_page_and_the_query_survives(site: Path) -> None:
+    async with client_for(site) as client:
+        root = await client.get("/index.html?ref=x", follow_redirects=False)
+        page = await client.get("/how-it-works/index.html", follow_redirects=False)
+        head = await client.head("/index.html", follow_redirects=False)
+        missing = await client.get("/nowhere/index.html", follow_redirects=False)
+    assert root.status_code == 301 and root.headers["location"] == "/?ref=x"
+    assert page.status_code == 301 and page.headers["location"] == "/how-it-works"
+    assert head.status_code == 301 and head.headers["location"] == "/"
+    assert missing.status_code == 404, "no redirect for a page that does not exist"
+
+
+async def test_html_pages_are_never_cached(site: Path) -> None:
+    async with client_for(site) as client:
+        index = await client.get("/")
+        page = await client.get("/how-it-works")
     assert index.text == INDEX and page.text == PAGE
-    assert index.status_code == page.status_code == 200
     assert index.headers["cache-control"] == page.headers["cache-control"] == "no-cache"
 
 
@@ -282,7 +308,7 @@ async def test_head_requests_work(site: Path) -> None:
         asset = await client.head("/assets/app-3f9a.js")
     assert index.status_code == asset.status_code == 200
     assert index.content == b""
-    assert asset.headers["cache-control"] == "public, max-age=3600"
+    assert asset.headers["cache-control"] == "public, max-age=31536000, immutable"
 
 
 async def test_other_methods_are_not_allowed_on_the_web_app(site: Path) -> None:
@@ -438,3 +464,74 @@ def test_locate_answers_a_real_file_with_its_cache_control(site: Path) -> None:
     )
     assert locate(site, "how-it-works/").location == "/how-it-works"
     assert locate(site, "how-it-works").file == (site / "how-it-works" / "index.html").resolve()
+
+
+# ───────────────────────────── private shells and the pricing page ─────────────────────────────
+
+SHELL = (
+    '<!doctype html><html><head><meta charset="utf-8"><title>Leafout</title>'
+    '<meta name="robots" content="index,follow">'
+    '<link rel="canonical" href="https://app.leafout.in/">'
+    '<meta property="og:url" content="https://app.leafout.in/">'
+    '<script type="application/ld+json">{"@type":"WebSite"}</script>'
+    '</head><body><div id="root"></div></body></html>'
+)
+
+
+def test_a_private_shell_loses_its_canonical_structured_data_and_og_url() -> None:
+    shell = private_shell(SHELL)
+    assert "canonical" not in shell and "ld+json" not in shell and "og:url" not in shell
+    assert "index,follow" not in shell
+    assert shell.count('<meta name="robots" content="noindex" />') == 1
+    assert '<div id="root"></div>' in shell and "<title>Leafout</title>" in shell
+    assert private_shell(INDEX) == INDEX, "a fragment with no head is left alone"
+
+
+async def test_private_routes_get_a_shell_with_no_canonical_and_public_ones_keep_theirs(site: Path) -> None:
+    (site / "index.html").write_text(SHELL, encoding="utf-8")
+    async with client_for(site) as client:
+        for path in ("p/abc", "match", "weekly/archive"):
+            res = await client.get(f"/{path}")
+            assert res.status_code == 200 and res.headers["x-robots-tag"] == NOINDEX, path
+            assert 'rel="canonical"' not in res.text and "ld+json" not in res.text, path
+            assert 'content="noindex"' in res.text, path
+        home = await client.get("/")
+    assert home.text == SHELL and "x-robots-tag" not in home.headers
+
+
+PRICING = "<title>Pricing</title><p>Three postings: {{price:pack3}}. A 30-day pass: {{price:pass30}}. {{price:other}}</p>"
+
+
+def billing_settings(**billing: int) -> Settings:
+    return Settings(_env_file=None, env="test", billing=billing, **RAZORPAY_KEYS)
+
+
+async def test_the_pricing_page_gets_the_configured_rupee_prices(site: Path) -> None:
+    (site / "pricing").mkdir()
+    (site / "pricing" / "index.html").write_text(PRICING, encoding="utf-8")
+    settings = billing_settings(pack3_inr=49900, pass30_inr=149900)
+    async with client_for(site, settings) as client:
+        res = await client.get("/pricing")
+        head = await client.head("/pricing")
+    assert res.text == (
+        "<title>Pricing</title><p>Three postings: ₹499. A 30-day pass: ₹1,499. Coming soon</p>"
+    )
+    assert res.headers["cache-control"] == "no-cache" and "x-robots-tag" not in res.headers
+    assert head.status_code == 200 and head.headers["cache-control"] == "no-cache"
+
+
+async def test_a_price_that_is_not_set_reads_coming_soon(site: Path) -> None:
+    (site / "pricing").mkdir()
+    (site / "pricing" / "index.html").write_text(PRICING, encoding="utf-8")
+    async with client_for(site, billing_settings(pack3_inr=49900)) as client:
+        res = await client.get("/pricing")
+    assert "Three postings: ₹499." in res.text and "pass: Coming soon." in res.text
+    assert "{{" not in res.text
+
+
+def test_fill_prices_formats_like_the_pricing_screen_and_needs_a_provider() -> None:
+    page = "{{price:pack3}} | {{price:pass30}}"
+    assert fill_prices(page, billing_settings(pack3_inr=99, pass30_inr=1234567)) == "Coming soon | ₹12,345.67"
+    assert fill_prices(page, billing_settings(pack3_inr=2500000, pass30_inr=100)) == "₹25,000 | ₹1"
+    no_provider = Settings(_env_file=None, env="test", billing={"pack3_inr": 49900})
+    assert fill_prices(page, no_provider) == "Coming soon | Coming soon"

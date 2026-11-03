@@ -276,7 +276,7 @@ export const SEARCH_3: TrailStep = {
 };
 export const BOARDS: TrailStep = {
   stage: 'boards',
-  text: "Read 30 employer boards found on the web: 439 open roles in India. Tayyari's own 51 employers: 1,377 open roles.",
+  text: "Read 30 employer boards found on the web: 439 open roles in India. Leafout's own 51 employers: 1,377 open roles.",
 };
 export const NARROW: TrailStep = { stage: 'narrow', text: 'In Bengaluru or remote in India, your kind of role, within reach of your experience: 12 roles.', count: 12 };
 export const READ: TrailStep = { stage: 'read', text: 'Read 12 postings against your evidence.', count: 12 };

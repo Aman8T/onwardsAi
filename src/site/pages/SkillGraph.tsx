@@ -93,7 +93,7 @@ export const skillGraph: ContentPage = {
             Ask &quot;How do I prepare for this role?&quot; and get a <a href="/career-plan">plan</a> built from the gaps.
           </li>
           <li>
-            Turn it into a <a href="/resume-to-portfolio">portfolio page</a> you can share.
+            Turn it into a <a href="/resume-to-portfolio">portfolio page</a>, or share the radar as a picture for a GitHub or LinkedIn profile.
           </li>
           <li>Select any node and ask the chat to help you prepare for that topic, or to improve your GitHub.</li>
         </ul>

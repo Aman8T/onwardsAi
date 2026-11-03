@@ -96,12 +96,12 @@
 
 .pop-close {
   position: absolute;
-  top: var(--s3);
-  right: var(--s3);
+  top: var(--s1);
+  right: var(--s1);
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   border-radius: var(--r-s);
@@ -236,6 +236,7 @@
   left: 0;
   width: auto;
   max-height: 80vh;
+  max-height: 80dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-bottom: calc(var(--s5) + env(safe-area-inset-bottom, 0px));
@@ -287,4 +288,11 @@ button.brand:hover .brand-mark {
   padding-left: var(--s3);
   border-left: var(--hair) solid var(--line);
   white-space: nowrap;
+}
+
+/* Phone: the wordmark button is a full 44 px target. */
+@media (max-width: 760px) {
+  button.brand {
+    min-height: 44px;
+  }
 }

@@ -1,6 +1,6 @@
 # Backend architecture and deployment
 
-This document describes the Tayyari Python backend: a modular FastAPI application serving the React frontend. The backend is the single source of truth for AI-driven career intelligence, decision logic, persistence, and cost protection.
+This document describes the Leafout (code name Tayyari) Python backend: a modular FastAPI application serving the React frontend. The backend is the single source of truth for AI-driven career intelligence, decision logic, persistence, and cost protection.
 
 ## Module overview
 
@@ -25,7 +25,7 @@ The package is importable as `backend/tayyari/`, laid out in layers with import 
 | `auth` | AuthService, GoogleOAuth, MagicLinks, SessionService, EmailSender | Google sign-in (PKCE, ID-token checks), emailed sign-in links, server-side sessions, Resend email |
 | `billing` | BillingService, EntitlementService, RazorpayGateway, StripeGateway | Products and prices, the consume order, orders, webhooks for INR (Razorpay) and USD (Stripe) |
 | `match` | MatchService and its stages | Posting match: reading a posting, facts, gates, coverage, radar, questions, resume, cover note, export and lint |
-| `discover` | DiscoverService, the refresher, the registry, the quick fit | The board store behind Search with AI: Tayyari's employers' own boards read into listings, plus the parsers, places, vocabulary and quick fit the search reuses; a separate service (own tables, settings and worker) |
+| `discover` | DiscoverService, the refresher, the registry, the quick fit | The board store behind Search with AI: Leafout's employers' own boards read into listings, plus the parsers, places, vocabulary and quick fit the search reuses; a separate service (own tables, settings and worker) |
 | `jobsearch` | JobSearchService, the brief, the harvest, the board reader, the narrowing, the checks | Search with AI: Haiku 5.5 scouts find employers' boards on the web, code reads them and narrows, Haiku reads the shortlist, code checks every quote; reuses `discover`'s pure parts |
 | `interview` | InterviewService, the plan, the router, the judge, the debrief, the work-sample templates | Practice the interview: plans in code from the person's evidence, a role or a template; Haiku 5.5 phrases, judges and writes the debrief; code checks every quote, name and number and decides every verdict |
 | `speech` | SpeechService, SarvamEngine, the meter | Speech for practice interviews through Sarvam AI's SDK: speech-to-text of answer pieces and the interviewer's voice, metered against a soft daily and per-session budget; self-contained like `discover` |
@@ -197,7 +197,7 @@ The posting is stored once per normalised text (`postings`), so a text read befo
 ### Discover's board store (`backend/tayyari/discover/`, `GET /api/discover/cities`)
 
 Since D3 (2026-10-16) Discover is Search with AI. Two things stay in `backend/tayyari/discover/`, as a self-contained
-service. The first is the store of open roles from Tayyari's own employers, which the search reads first. The second is
+service. The first is the store of open roles from Leafout's own employers, which the search reads first. The second is
 the pieces the search reuses: board fetching and parsing, places, the skill vocabulary, the person index and the quick
 fit. The old code-matched list (groups, lenses, lanes, the companies lane, `GET /api/discover` and
 `/api/discover/listings/{id}`) was removed. The deferred items of the first version are in `docs/discover-later.md`.
@@ -275,7 +275,7 @@ in `docs/roadmap.md`, D2 and D3.
 1. **Brief, in code** (`brief.py`). The role, next roles, years and city; the strongest skills; the evidence lines `E1…`
    copied from the profile's own evidence (`evidence_lines`); and up to three angles. Without `remote` there is no
    remote angle.
-2. **Near half: Tayyari's own employers.** They are read from Discover's store, narrowed in code (`narrow.py`: place,
+2. **Near half: Leafout's own employers.** They are read from Discover's store, narrowed in code (`narrow.py`: place,
    then kind, then level, then rank), and up to 6 go to the read. This happens while the scouts search, so the first
    cards show in a few seconds.
 3. **Scouts** (`jobsearch.scout`). One `ClaudeClient.search_web` call per angle, all at once.
@@ -383,7 +383,7 @@ ever sees text. It is free while we test it; the guard windows are the only mete
   "role needs: …" and never as a posting. The title is the role's title; there is no employer summary. An id that is
   not among the profile's roles is `GraphRoleGone` (404). Prepare's "Practice the interview for this role" opens it.
 - **Defend your resume** asks about 5 of the person's evidence lines: two with a number, a "Led …" line, a line from a
-  repository or page, and one more. A low-scoring skill is never asked as if the resume listed it (it is Tayyari's
+  repository or page, and one more. A low-scoring skill is never asked as if the resume listed it (it is Leafout's
   reading, not the person's words).
 - **Behavioural stories** builds 4 stories from evidence lines with people or action in them.
 - **Work sample** uses one of six templates (`tasks.py`: frontend, data analyst, marketing, nursing, accounts,
@@ -717,14 +717,14 @@ profile).
   - `POST /api/card/new-link` takes `CardNewLink` (400 when sharing is off).
 - Public, no account, counted per address in the `card` window (`shed`, then the shared counters, before the slug is read):
   - `GET /r/{slug}.svg?theme=&size=&compare=`: `theme` and `size` override the stored theme (`match` draws light) and `md`;
-    `compare` draws the role only when it names the stored role. Unknown, stopped and malformed links get a 200 neutral card
-    (five minutes' cache); a failure gets a 200 "can't be drawn right now" card (ten minutes).
-  - `GET /og/{slug}-{version}.png`: an old version is a 301 to the current one; an unknown link gets the neutral picture.
+    `compare` draws the role only when it names the stored role. Unknown, stopped and malformed links get a 404 whose body is
+    the neutral card (five minutes' cache); a failure gets a 200 "can't be drawn right now" card (ten minutes).
+  - `GET /og/{slug}-{version}.png`: an old version is a 301 to the current one; an unknown link gets a 404 with the neutral picture.
   - `GET /u/{slug}`: `og:title` "Strongest in {area}", `og:image` the versioned PNG, `twitter:card summary_large_image`,
     `noindex` (meta and `X-Robots-Tag`), its own CSP with `script-src 'none'`, and "Report this card" as a `mailto:` to
     `TAYYARI_CARD__REPORT_EMAIL`. An unknown link is a plain 404 page.
 - The images carry `Cache-Control: public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400`, an `ETag` from the
-  version and the drawing's options (a match is a 304), and `X-Content-Type-Options: nosniff`. The SVG also carries
+  version and the drawing's options (a match is a 304), `X-Content-Type-Options: nosniff` and `X-Robots-Tag: noindex` (every image route, the neutral ones too). The SVG also carries
   `Content-Security-Policy: default-src 'none'; img-src data:; style-src 'unsafe-inline'` (the rule GitHub's image proxy uses);
   the security middleware only sets a CSP where the route set none.
 - In development Vite proxies `/r/`, `/og/` and `/u/` to the API. `/u/` pages are styled only when the API serves them (the
@@ -738,7 +738,7 @@ profile).
 
 ### Serving the web app (`api/static.py`)
 
-`mount_spa` is the last route and answers GET and HEAD from `backend/static` (the build), first match wins: a real file (assets cached for an hour, `.html` files `no-cache`); a page `<path>/index.html`, the generated content pages and `/pricing` when the build has its own, `no-cache`, where a trailing slash is a 308 to the address without it; one of the app's own client routes (`APP_ROUTES`: `/`, `/pricing`, `/match…`, `/discover…`, `/practice…`, `/p/…`, and `/dev/…` on a non-prod server), which gets `index.html` with 200. Anything else gets `404.html` with status 404, or the JSON 404 when the build has no 404.html, and no build at all is the JSON 404 (so is `/404.html` itself). The private routes (match, discover, practice, `/p/`, `/dev/`) send `X-Robots-Tag: noindex`; `/`, `/pricing` and the content pages do not. A path that is not a plain relative address (a leading slash, a backslash, a NUL, a `..` that leaves the build) is never a file. The `/dev/` check reads `app.state.settings`, which `create_app` sets; `/api/*` never reaches this route.
+`mount_spa` is the last route and answers GET and HEAD from `backend/static` (the build), first match wins: a real file (files under `assets/`, which the build names by content hash, are `public, max-age=31536000, immutable`; any other file is cached for an hour; `.html` files are `no-cache`; `index.html` at any level is a 301 to its folder, so `/index.html` is `/`); a page `<path>/index.html`, the generated content pages and `/pricing` when the build has its own, `no-cache`, where a trailing slash is a 308 to the address without it; one of the app's own client routes (`APP_ROUTES`: `/`, `/pricing`, `/match…`, `/discover…`, `/practice…`, `/p/…`, and `/dev/…` on a non-prod server), which gets `index.html` with 200. Anything else gets `404.html` with status 404, or the JSON 404 when the build has no 404.html, and no build at all is the JSON 404 (so is `/404.html` itself). The private routes (match, discover, practice, `/p/`, `/dev/`) send `X-Robots-Tag: noindex` and get the shell without its canonical link, JSON-LD and `og:url` plus a robots `noindex` meta (`private_shell`), so none names Home as its canonical; `/`, `/pricing` and the content pages do not. The pricing page may hold the placeholders `{{price:pack3}}` and `{{price:pass30}}`: on every request `fill_prices` replaces them with the rupee price (`billing.products.format_price`, "₹499", Indian grouping above ₹99,999) when the product is on sale in INR (price set, at least the provider's minimum, Razorpay configured), else "Coming soon"; the page stays `no-cache`. On the old host (`REDIRECT_OTHER_HOSTS`) only a real browser (a Mozilla user agent with Chrome, Safari, Firefox or Edge and none of the crawler, AI-fetcher and script names) asking for a page, not a file, gets the one-time moving page; everything else, `/robots.txt` and `/sitemap.xml` included, is the plain 308. A path that is not a plain relative address (a leading slash, a backslash, a NUL, a `..` that leaves the build) is never a file. The `/dev/` check reads `app.state.settings`, which `create_app` sets; `/api/*` never reaches this route.
 
 ### The Leafout Weekly (`weekly/`, roadmap W1)
 

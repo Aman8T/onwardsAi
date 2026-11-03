@@ -1,13 +1,15 @@
 /**
  * The pricing page (`/pricing`), per the "Free and paid" board of the posting-match canvas: a serif line, a currency
- * switch, three columns (Free, Per posting, Monthly) and three quiet notes.
+ * switch (only while something is on sale in USD), three columns (Free, Per posting, 30 days) and four quiet notes.
  *
  * Anyone can read it. Buying needs an account, so an anonymous visitor's "Buy" opens the sign-in sheet first. A plan
  * whose price is not set on the server (or whose payment provider is not configured) has no price in the response:
  * the page shows "Coming soon" there and no placeholder number, and its button is disabled.
  *
- * "Monthly" is a 30-day pass bought once: it does not renew by itself, there is no subscription to cancel and there is
- * no annual plan (`project-soul.md`: "No annual lock-in"). Lines that name something not built yet say so.
+ * The 30-day pass is bought once: it does not renew by itself, there is no subscription to cancel and there is
+ * no annual plan (`project-soul.md`: "No annual lock-in"). Only a posting match is gated
+ * (`backend/tayyari/billing/entitlements.py`): the graph, Prepare, the radar card and Practice are not, so they are
+ * listed under Free. Lines that name something not built yet say so.
  *
  * The payment itself is `Checkout.tsx`; Checkout.js is on the page only while this page is.
  */
@@ -23,7 +25,7 @@ import { EASE } from '../lib/ui';
 import { actions, useApp } from '../store';
 import { CheckoutNotice, isBusy, useCheckout, useCheckoutScript } from './Checkout';
 import { EntitlementChip } from './EntitlementChip';
-import { formatPrice } from './format';
+import { formatPrice, passBreakEven, perPostingMinor } from './format';
 import { PRICING_PATH, parseCheckoutReturn, parsePreselect, preselectPath } from './route';
 import { useEntitlements } from './useEntitlements';
 import '../styles/billing.css';
@@ -34,23 +36,32 @@ interface Item {
   soon?: boolean;
 }
 
+// What is free is what the server does not gate: only a posting match uses the free posting, a credit or the pass.
 const FREE_ITEMS: Item[] = [
   { text: 'Your skill graph and next roles' },
-  { text: 'A public portfolio page' },
-  { text: 'The radar card for GitHub and LinkedIn', soon: true },
-  { text: 'One posting match a month, with the gap list' },
+  { text: 'A portfolio page built from your resume, with every line cited' },
+  { text: 'The radar card for GitHub and LinkedIn' },
+  { text: 'A prep plan for a role, week by week' },
+  { text: 'Interview practice, free while it is in testing' },
+  { text: 'One posting a month, all the way to a resume and cover note, with PDF and DOCX checked before download' },
 ];
 const PACK_ITEMS: Item[] = [
   { text: 'Everything in Free' },
-  { text: 'Resume and cover note built for each posting' },
-  { text: 'PDF and DOCX, checked before download' },
-  { text: 'Re-check after you close a gap, free' },
+  { text: 'Three more postings, each with its own resume and cover note' },
+  { text: 'They never expire' },
 ];
 const PASS_ITEMS: Item[] = [
-  { text: 'Unlimited postings for 30 days' },
-  { text: 'Mock interviews grounded in your own work', soon: true },
-  { text: 'A prep plan, and your graph updated as you finish it', soon: true },
+  { text: 'Everything in Free' },
+  { text: 'Unlimited postings for 30 days, each with its own resume and cover note' },
   { text: 'Portfolio on your own domain', soon: true },
+];
+
+/** The legal pages live on the site (leafout.in), not in the app. */
+const LEGAL_LINKS: readonly { href: string; label: string }[] = [
+  { href: 'https://leafout.in/terms', label: 'Terms' },
+  { href: 'https://leafout.in/privacy', label: 'Privacy' },
+  { href: 'https://leafout.in/refunds', label: 'Refunds' },
+  { href: 'https://leafout.in/contact', label: 'Contact' },
 ];
 
 const CURRENCIES: { id: Currency; label: string }[] = [
@@ -153,6 +164,11 @@ export function PricingView() {
   };
 
   const other = OTHER[ent.currency];
+  // the comparison is worked out from the live prices of the currency on screen, never typed
+  const packPrice = ent.priced.pack3;
+  const packSub = packPrice !== undefined ? `Three postings, about ${formatPrice(perPostingMinor(packPrice), ent.currency)} each.` : 'Three postings.';
+  const breakEven = passBreakEven(ent.priced.pack3, ent.priced.pass30);
+  const passSub = breakEven !== undefined ? `Cheaper than packs from ${breakEven} postings in 30 days.` : 'Unlimited postings while it runs.';
   const back = () => actions.closePricing();
 
   return (
@@ -165,7 +181,9 @@ export function PricingView() {
               {profile ? 'Back to your graph' : 'Back'}
             </button>
             <EntitlementChip />
-            <Atmosphere />
+            <span className="bl-atmo">
+              <Atmosphere />
+            </span>
             <AccountMenu />
           </div>
         </header>
@@ -181,17 +199,22 @@ export function PricingView() {
             <div className="bl-intro-copy">
               <p className="kicker">Free and paid</p>
               <h1 ref={heading} className="serif bl-title" tabIndex={-1}>
-                Pay per posting, or by the month. Never by the year.
+                Pay when a posting is worth getting right.
               </h1>
-              <p className="bl-lede">The graph, the portfolio and your first match are free. Prices are shown in your currency.</p>
+              <p className="bl-lede">
+                One posting a month is free, all the way to a resume and cover note. Your graph, prep plans, the radar card and interview practice are free too. Pay once for more postings; nothing renews
+                and there is no annual plan.{ent.usdOffered ? ' Prices are shown in your currency.' : ''}
+              </p>
             </div>
-            <div className="bl-seg" role="group" aria-label="Currency">
-              {CURRENCIES.map((c) => (
-                <button key={c.id} type="button" className="bl-seg-btn" aria-pressed={ent.currency === c.id} onClick={() => ent.setCurrency(c.id)}>
-                  {c.label}
-                </button>
-              ))}
-            </div>
+            {ent.usdOffered && (
+              <div className="bl-seg" role="group" aria-label="Currency">
+                {CURRENCIES.map((c) => (
+                  <button key={c.id} type="button" className="bl-seg-btn" aria-pressed={ent.currency === c.id} onClick={() => ent.setCurrency(c.id)}>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
 
           {ent.status === 'error' && (
@@ -228,7 +251,7 @@ export function PricingView() {
                   Free
                 </p>
                 <p className="serif bl-price">{formatPrice(0, ent.currency)}</p>
-                <p className="bl-sub">For as long as you like</p>
+                <p className="bl-sub">For as long as you like. Interview practice is free while it is in testing.</p>
               </header>
               <PlanList items={FREE_ITEMS} />
               <div className="bl-plan-foot">
@@ -241,7 +264,9 @@ export function PricingView() {
             <Plan
               id="pack3"
               kicker="Per posting"
-              sub="A pack of three postings. No expiry."
+              unit="once"
+              sub={packSub}
+              note="Pay once. Three postings, no expiry, no renewal."
               items={PACK_ITEMS}
               price={ent.priced.pack3}
               currency={ent.currency}
@@ -257,9 +282,10 @@ export function PricingView() {
 
             <Plan
               id="pass30"
-              kicker="Monthly"
-              unit="/ 30 days"
-              sub="30 days from purchase. It does not renew by itself. No annual plan."
+              kicker="30 days"
+              unit="once, for 30 days"
+              sub={passSub}
+              note="Pay once. Ends after 30 days. Never renews."
               items={PASS_ITEMS}
               price={ent.priced.pass30}
               currency={ent.currency}
@@ -276,17 +302,41 @@ export function PricingView() {
           <section className="bl-notes" aria-label="Good to know">
             <aside className="panel bl-note">
               <p className="kicker">Students</p>
-              <p>Same prices. Nobody has to buy a year up front to find out if it helps.</p>
+              <p>
+                Same prices. The graph, one posting a month with a resume and cover note, prep plans and interview practice cost nothing.
+                {packPrice !== undefined ? ` A pack of three is ${formatPrice(packPrice, ent.currency)}, once.` : ''} There is no year to commit to.
+              </p>
             </aside>
             <aside className="panel bl-note">
               <p className="kicker">Paying</p>
-              <p>UPI, cards and net banking in India through Razorpay. Cards everywhere else through Stripe. We never see your card details.</p>
+              <p>
+                {ent.usdOffered ? 'UPI, cards and net banking in India through Razorpay. Cards everywhere else through Stripe.' : 'UPI, cards and net banking through Razorpay.'} Every payment
+                is one-time: nothing renews by itself. We never see your card details.
+              </p>
             </aside>
             <aside className="panel bl-note">
               <p className="kicker">What never costs</p>
               <p>Seeing a gap. Answering a question about yourself. Re-checking after you did.</p>
             </aside>
+            <aside className="panel bl-note">
+              <p className="kicker">Refunds and delivery</p>
+              <p>
+                Full refund within 7 days of purchase if you have not used a paid posting from it. A posting that could not be read gives its credit back automatically. It is digital: it is in your
+                account as soon as the payment settles, and nothing is shipped.
+              </p>
+            </aside>
           </section>
+
+          <nav className="bl-legal" aria-label="Terms and policies">
+            <p>By buying you agree to the Terms.</p>
+            <ul>
+              {LEGAL_LINKS.map((l) => (
+                <li key={l.href}>
+                  <a href={l.href}>{l.label}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </motion.main>
       </div>
     </div>
@@ -315,6 +365,8 @@ interface PlanProps {
   id: Product;
   kicker: string;
   sub: string;
+  /** One more quiet line under the sub (what "once" means). */
+  note?: string;
   items: Item[];
   /** Minor units; undefined when the plan is not on sale in this currency. */
   price: number | undefined;
@@ -331,7 +383,7 @@ interface PlanProps {
   onBuy: (product: Product) => void;
 }
 
-function Plan({ id, kicker, sub, items, price, currency, unit, otherPrice, otherCurrency, cta, primary, enabled, busyHere, selected, onBuy }: PlanProps) {
+function Plan({ id, kicker, sub, note, items, price, currency, unit, otherPrice, otherCurrency, cta, primary, enabled, busyHere, selected, onBuy }: PlanProps) {
   const onSale = price !== undefined;
   return (
     <article className={['panel bl-plan', (primary || selected) && 'is-featured'].filter(Boolean).join(' ')} aria-labelledby={`bl-${id}`} aria-current={selected ? 'true' : undefined}>
@@ -348,6 +400,7 @@ function Plan({ id, kicker, sub, items, price, currency, unit, otherPrice, other
           <p className="serif bl-price is-soon">Coming soon</p>
         )}
         <p className="bl-sub">{sub}</p>
+        {note && <p className="bl-sub">{note}</p>}
         {onSale && otherPrice !== undefined && (
           <p className="bl-alt">
             {formatPrice(otherPrice, otherCurrency.id)} {otherCurrency.where}

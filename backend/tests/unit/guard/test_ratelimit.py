@@ -217,7 +217,7 @@ async def test_the_global_backstop_caps_analyses_across_all_clients() -> None:
     for i in range(5):
         await limiter.check("analyze", f"client{i:011d}")
     err = await refused(limiter, "analyze", "someone-else-0000")
-    assert err.user_message == "Tayyari is very busy right now. Please try again in about an hour."
+    assert err.user_message == "Leafout is very busy right now. Please try again in about an hour."
     assert err.status == 429
     assert err.retry_after_s == pytest.approx(3600)
     clock.advance(3600)
@@ -242,7 +242,7 @@ async def test_a_client_over_its_own_limit_does_not_use_up_the_global_budget() -
 async def test_the_global_backstop_text_wording() -> None:
     assert (
         limit_message("analyze", "global", 1800)
-        == "Tayyari is very busy right now. Please try again in about 30 minutes."
+        == "Leafout is very busy right now. Please try again in about 30 minutes."
     )
 
 
@@ -256,7 +256,7 @@ async def test_the_chat_global_backstop_caps_chat_turns_across_all_clients() -> 
     err = await refused(limiter, "chat", "someone-else-0000")
     assert err.status == 429
     assert err.code == "rate_limited"
-    assert err.user_message == "Tayyari is very busy right now. Please try again in about an hour."
+    assert err.user_message == "Leafout is very busy right now. Please try again in about an hour."
     assert err.retry_after_s == pytest.approx(3600)
     assert err.retry_after_header() == "3600"
     assert "chat:global" in (err.detail or "")
@@ -323,7 +323,7 @@ async def test_the_chat_global_backstop_fails_open_with_the_database() -> None:
 def test_the_chat_global_text_wording() -> None:
     assert (
         limit_message("chat", "global", 1800)
-        == "Tayyari is very busy right now. Please try again in about 30 minutes."
+        == "Leafout is very busy right now. Please try again in about 30 minutes."
     )
 
 
@@ -346,7 +346,7 @@ async def test_the_portfolio_global_backstop_caps_portfolios_across_all_clients(
     for i in range(3):
         await limiter.check("portfolio", f"client{i:011d}")
     err = await refused(limiter, "portfolio", "someone-else-0000")
-    assert err.user_message == "Tayyari is very busy right now. Please try again in about an hour."
+    assert err.user_message == "Leafout is very busy right now. Please try again in about an hour."
     assert err.status == 429
     assert err.retry_after_s == pytest.approx(3600)
     clock.advance(3600)
@@ -380,7 +380,7 @@ async def test_a_portfolio_client_over_its_own_limit_does_not_use_up_the_global_
 def test_the_portfolio_global_text_wording() -> None:
     assert (
         limit_message("portfolio", "global", 1800)
-        == "Tayyari is very busy right now. Please try again in about 30 minutes."
+        == "Leafout is very busy right now. Please try again in about 30 minutes."
     )
 
 
@@ -859,7 +859,7 @@ async def test_the_match_global_backstop_caps_postings_across_all_clients() -> N
     for i in range(2):
         await limiter.check("match", f"client{i:011d}")
     err = await refused(limiter, "match", "someone-else-0000")
-    assert err.user_message == "Tayyari is very busy right now. Please try again in about an hour."
+    assert err.user_message == "Leafout is very busy right now. Please try again in about an hour."
     clock.advance(3600)
     await limiter.check("match", "someone-else-0000")
 

@@ -1,0 +1,15 @@
+{
+  "name": "Leafout",
+  "short_name": "Leafout",
+  "description": "Leafout reads your resume, GitHub and public links and shows your skills as an evidence-cited graph.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#e1ebf5",
+  "theme_color": "#e1ebf5",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

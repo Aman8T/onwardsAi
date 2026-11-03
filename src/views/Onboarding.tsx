@@ -21,7 +21,9 @@ import * as api from '../lib/api';
 import { EASE, NARROW_QUERY, useMediaQuery } from '../lib/ui';
 import { useHandoffMessage } from '../lib/useHandoff';
 import { BAND_LABEL } from '../match/model';
+import { isDiscoverPath } from '../discover/route';
 import { readRecent } from '../match/recent';
+import { isPracticePath } from '../practice/route';
 import { actions, useApp } from '../store';
 import { WeeklyTile } from '../weekly/WeeklyTile';
 import '../styles/onboarding.css';
@@ -301,7 +303,12 @@ function ResumeDrop({
                 'Release to add your resume'
               ) : (
                 <>
-                  Drop your resume here or <span className="ob-browse">browse</span>
+                  <span className="ob-drop-fine">
+                    Drop your resume here or <span className="ob-browse">browse</span>
+                  </span>
+                  <span className="ob-drop-touch">
+                    <span className="ob-browse">Upload</span> your resume
+                  </span>
                 </>
               )}
             </span>
@@ -356,6 +363,24 @@ export function Onboarding() {
 
   const profile = useApp((st) => st.profile);
   const handoffMessage = useHandoffMessage();
+
+  // Someone who opened /practice or /discover without a graph lands here: say why, and title the tab for it.
+  const [wanted] = useState<'practice' | 'discover' | null>(() => {
+    try {
+      const path = window.location.pathname;
+      return isPracticePath(path) ? 'practice' : isDiscoverPath(path) ? 'discover' : null;
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    if (!wanted || profile) return;
+    const before = document.title;
+    document.title = wanted === 'practice' ? 'Practice the interview · Leafout' : 'Discover roles · Leafout';
+    return () => {
+      document.title = before;
+    };
+  }, [wanted, profile]);
   const recent = useMemo(() => readRecent().slice(0, 4), []);
   const [sample, setSample] = useState<Profile | null>(null);
 
@@ -537,6 +562,11 @@ export function Onboarding() {
               <h2 id="ob-card-title" className="ob-card-title serif">
                 Build your skill graph
               </h2>
+              {wanted && !profile && (
+                <p className="ob-card-sub ob-need" role="status">
+                  {wanted === 'practice' ? 'Practice' : 'Discover'} uses your skill graph. Build it first, about two minutes.
+                </p>
+              )}
               <p className="ob-card-sub">The more you connect, the sharper it gets.</p>
             </div>
 

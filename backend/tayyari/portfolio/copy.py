@@ -151,7 +151,7 @@ cites: a number of one fact does not belong in a slot that cites another. An exp
 proj:<id> slot its own project.
 3. Claim no seniority the facts do not state. Use led, leads, headed, founded, managed, directed, spearheaded, owned, \
 owns or architected (or any form of them) only when a cited fact uses that word.
-4. Never mention grades, CGPA, email addresses, phone numbers, scores, the Skill Graph or Tayyari.
+4. Never mention grades, CGPA, email addresses, phone numbers, scores, the Skill Graph, Leafout or Tayyari.
 5. Stay inside each slot's character limit. When the facts support less, write less; never pad. Only aboutBody may \
 be empty (empty text, no factIds).
 

@@ -175,6 +175,12 @@
   margin-top: var(--s5);
 }
 
+.doc-updated {
+  margin-top: var(--s3);
+  font-size: var(--fs-2);
+  color: var(--text-faint);
+}
+
 .site .btn {
   min-height: 44px;
   text-decoration: none;

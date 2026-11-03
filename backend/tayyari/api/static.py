@@ -5,8 +5,10 @@
     /api and /api/...   a JSON 404 ``{"error": "Not found"}`` for every method (an unknown API route must
                         never answer with an HTML page)
     /<anything>         GET and HEAD, answered by `locate`, first match wins:
-                        1. a real file under ``static_dir``, cached for an hour (``public, max-age=3600``: the
-                           build's assets are content-hashed); an ``.html`` file is ``no-cache`` instead
+                        1. a real file under ``static_dir``: a file under ``assets/`` (content-hashed by the build) is
+                           cached for a year and ``immutable``, any other file for an hour (``public, max-age=3600``); an
+                           ``.html`` file is ``no-cache`` instead. ``index.html`` itself, at any level, is a 301 to its
+                           folder (``/index.html`` to ``/``): one address per page
                         2. a page, ``<path>/index.html`` (the generated content pages, and /pricing when the build
                            has its own): 200, ``no-cache``. With a trailing slash it is a 308 to the address
                            without one (``/how-it-works/`` to ``/how-it-works``)
@@ -15,7 +17,11 @@
                         4. anything else: ``404.html`` with status 404 and ``no-cache``; the JSON 404 when the
                            build has none. ``/404.html`` itself is a 404 too.
                         The private routes (match, discover, practice, signout, account/delete, the published portfolios under /p/,
-                        the dev galleries) send ``X-Robots-Tag: noindex``; "/", "/pricing" and the content pages do not.
+                        the dev galleries) send ``X-Robots-Tag: noindex`` and their shell has no canonical link, no
+                        structured data and no ``og:url`` (`private_shell`), so none of them points search engines at Home;
+                        "/", "/pricing" and the content pages do not. The built ``pricing/index.html`` may hold the
+                        placeholders ``{{price:pack3}}`` and ``{{price:pass30}}``, which `fill_prices` replaces with the
+                        configured rupee price (or "Coming soon") on every request.
 
 With ``TAYYARI_AUTH__REDIRECT_OTHER_HOSTS`` on, a GET or HEAD for any of these on a host other than the public URL's is a 308 to the
 same path and query on the public URL (the old address keeps working as a pointer; ``/api/*`` is never redirected, so scripts
@@ -44,13 +50,18 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 
 from tayyari.api.security import header_host
+from tayyari.billing.products import PRODUCTS, format_price, on_sale
 from tayyari.core.settings import Settings
 
 NOT_FOUND_MESSAGE = "Not found"
 INDEX_PAGE = "index.html"
 NOT_FOUND_PAGE = "404.html"
 INDEX_CACHE_CONTROL = "no-cache"
-ASSET_CACHE_CONTROL = "public, max-age=3600"
+ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable"
+"""Files under ``assets/``: the build names them by content hash, so a changed file has a new address."""
+FILE_CACHE_CONTROL = "public, max-age=3600"
+"""Every other real file (favicon, robots.txt, sitemap.xml, the content pages' stylesheet): the name does not change."""
+ASSETS_DIR = "assets/"
 NOINDEX = "noindex"
 _API_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
 
@@ -141,8 +152,10 @@ def _not_found(not_found: Path | None) -> Answer:
     return Answer(404, not_found) if not_found is not None else Answer(404)
 
 
-def _cache_control(file: Path) -> str:
-    return INDEX_CACHE_CONTROL if file.suffix.lower() == ".html" else ASSET_CACHE_CONTROL
+def _cache_control(file: Path, path: str) -> str:
+    if file.suffix.lower() == ".html":
+        return INDEX_CACHE_CONTROL
+    return ASSET_CACHE_CONTROL if path.startswith(ASSETS_DIR) else FILE_CACHE_CONTROL
 
 
 def locate(static_dir: Path, path: str, dev: bool = False) -> Answer:
@@ -159,10 +172,17 @@ def locate(static_dir: Path, path: str, dev: bool = False) -> Answer:
         return _not_found(not_found)
     route = _app_route(path, dev=dev)
     private = route is not None and route.private
+    # 0. a page's own index.html is a second address for the page: one 301 to the folder
+    if (path == INDEX_PAGE or path.endswith("/" + INDEX_PAGE)) and resolve_static_file(
+        root, path
+    ) is not None:
+        folder = path[: -len(INDEX_PAGE)].rstrip("/")
+        if not folder or _segments_ok(folder):
+            return Answer(301, location="/" + quote(folder))
     # 1. a real file (the 404 page is not served as a 200 at its own address; it answers as a 404 below)
     target = resolve_static_file(root, path)
     if target is not None and target != not_found and not path.endswith("/"):
-        return Answer(200, target, _cache_control(target), noindex=private)
+        return Answer(200, target, _cache_control(target, path), noindex=private)
     # 2. a page, with or without its trailing slash
     base = path.rstrip("/")
     page = resolve_static_file(root, f"{base}/{INDEX_PAGE}") if base and _segments_ok(base) else None
@@ -199,8 +219,12 @@ def other_host_target(request: Request, public_url: str) -> str | None:
 MOVED_COOKIE = "tayyari_moved"
 MOVING_SCRIPT_PATH = "__moving.js"
 _BOT_UA = re.compile(
-    r"bot|crawl|spider|slurp|preview|facebookexternalhit|embedly|whatsapp|linkedin|curl|wget|python", re.I
+    r"bot|crawl|spider|slurp|preview|facebook|embedly|whatsapp|linkedin|twitter|slack|discord|telegram|skype|pinterest"
+    r"|curl|wget|python|httpx|requests|fetch|scrape|headless|lighthouse|pagespeed|inspection"
+    r"|gpt|claude|anthropic|openai|perplexity|google|bing|duckduck|yandex|baidu|semrush|ahrefs|mj12",
+    re.I,
 )
+_BROWSER_UA = re.compile(r"^Mozilla/\d.*(?:Chrome|Chromium|CriOS|Safari|Firefox|FxiOS|Edg|OPR)", re.I)
 
 MOVING_SCRIPT = """(function () {
   var target = document.documentElement.getAttribute('data-target') || '/';
@@ -239,10 +263,58 @@ def moving_page(target: str) -> str:
 
 
 def wants_moving_page(request: Request) -> bool:
-    """A real browser that has not moved yet: no ``tayyari_moved`` cookie and not a crawler or script."""
+    """A real browser asking for a page that has not moved yet: no ``tayyari_moved`` cookie, a user agent that looks like
+    a browser (Mozilla plus Chrome, Safari, Firefox or Edge) and none of a wide list of crawlers, AI fetchers and scripts,
+    and a path that is a page, not a file (``/robots.txt`` and ``/sitemap.xml`` are always the plain 308)."""
     if request.cookies.get(MOVED_COOKIE):
         return False
-    return not _BOT_UA.search(request.headers.get("user-agent") or "")
+    if "." in request.url.path.rsplit("/", 1)[-1]:
+        return False
+    agent = request.headers.get("user-agent") or ""
+    return bool(_BROWSER_UA.search(agent)) and not _BOT_UA.search(agent)
+
+
+_CANONICAL = re.compile(r"<link\b[^>]*\brel=[\"']canonical[\"'][^>]*>\s*", re.I)
+_JSON_LD = re.compile(
+    r"<script\b[^>]*\btype=[\"']application/ld\+json[\"'][^>]*>.*?</script>\s*", re.I | re.S
+)
+_OG_URL = re.compile(r"<meta\b[^>]*\bproperty=[\"']og:url[\"'][^>]*>\s*", re.I)
+_ROBOTS_META = re.compile(r"<meta\b[^>]*\bname=[\"']robots[\"'][^>]*>\s*", re.I)
+
+
+def private_shell(html: str) -> str:
+    """The app shell for a private route: no canonical link, no structured data, no ``og:url``, and a robots ``noindex`` meta.
+
+    The shell carries Home's head, so left alone a private address would name Home as its canonical. A page with no
+    ``</head>`` (a fragment) is returned with only those removals.
+    """
+    for pattern in (_CANONICAL, _JSON_LD, _OG_URL, _ROBOTS_META):
+        html = pattern.sub("", html)
+    return html.replace("</head>", '<meta name="robots" content="noindex" />\n  </head>', 1)
+
+
+PRICE_PLACEHOLDER = re.compile(r"\{\{price:([a-z0-9]+)\}\}")
+COMING_SOON = "Coming soon"
+
+
+def fill_prices(html: str, settings: Settings) -> str:
+    """Replace ``{{price:pack3}}`` and ``{{price:pass30}}`` with the rupee price on sale, or "Coming soon".
+
+    The same rule as the pricing screen: a product that is not on sale (no price, under the provider's minimum, or Razorpay
+    without its secrets) has no price to print. Any other ``{{price:...}}`` name also reads "Coming soon", so no raw
+    placeholder ever reaches a visitor.
+    """
+
+    def one(found: re.Match[str]) -> str:
+        product = next((key for key in PRODUCTS if key == found.group(1)), None)
+        price = on_sale(settings, product, "INR") if product is not None else None
+        return format_price(price, "INR") if price is not None else COMING_SOON
+
+    return PRICE_PLACEHOLDER.sub(one, html)
+
+
+def _is_pricing_page(path: str, file: Path) -> bool:
+    return path.rstrip("/") == "pricing" and file.name == INDEX_PAGE and file.parent.name == "pricing"
 
 
 def mount_spa(app: FastAPI, static_dir: Path) -> None:
@@ -280,19 +352,31 @@ def mount_spa(app: FastAPI, static_dir: Path) -> None:
         headers = {"Cache-Control": answer.cache_control}
         if answer.noindex:
             headers["X-Robots-Tag"] = NOINDEX
+        if answer.status == 200 and answer.file.suffix.lower() == ".html":
+            pricing = settings is not None and _is_pricing_page(path, answer.file)
+            if answer.noindex or pricing:
+                html = await anyio.to_thread.run_sync(answer.file.read_text, "utf-8")
+                if answer.noindex:
+                    html = private_shell(html)
+                if pricing and settings is not None:
+                    html = fill_prices(html, settings)
+                return HTMLResponse(html, headers=headers)
         return FileResponse(answer.file, status_code=answer.status, headers=headers)
 
 
 __all__ = [
     "APP_ROUTES",
     "ASSET_CACHE_CONTROL",
+    "FILE_CACHE_CONTROL",
     "INDEX_CACHE_CONTROL",
     "NOINDEX",
     "NOT_FOUND_MESSAGE",
     "Answer",
     "AppRoute",
+    "fill_prices",
     "locate",
     "mount_spa",
     "other_host_target",
+    "private_shell",
     "resolve_static_file",
 ]

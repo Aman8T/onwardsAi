@@ -11,7 +11,7 @@ import httpx
 import pytest
 from starlette.requests import Request
 
-from tayyari.api.static import other_host_target
+from tayyari.api.static import other_host_target, wants_moving_page
 from tayyari.core.settings import Settings
 from tests.unit.api.helpers import http_scope
 from tests.unit.api.test_static import INDEX, NOINDEX, client_for, site  # noqa: F401  (site is a fixture)
@@ -153,3 +153,62 @@ async def test_a_quote_in_the_target_cannot_break_out_of_the_attribute(site: Pat
             headers={"host": "tayyari.fastapicloud.dev", "user-agent": BROWSER},
         )
         assert "<script>alert(1)" not in res.text
+
+
+@pytest.mark.parametrize(
+    "agent",
+    [
+        "Mozilla/5.0 ChatGPT-User/1.0",
+        "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0)",
+        "Mozilla/5.0 (compatible; PerplexityBot/1.0)",
+        "Mozilla/5.0 Chrome/130.0 Safari/537.36 Chrome-Lighthouse",
+        "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
+        "Mozilla/5.0 (X11; Linux x86_64) HeadlessChrome/130.0 Safari/537.36",
+        "python-httpx/0.27",
+        "Mozilla/5.0",
+        "",
+    ],
+)
+async def test_only_a_real_browser_gets_the_moving_page(site: Path, agent: str) -> None:  # noqa: F811
+    async with client_for(site, settings_for()) as client:
+        res = await client.get(
+            "/how-it-works",
+            headers={"host": "tayyari.fastapicloud.dev", "user-agent": agent},
+            follow_redirects=False,
+        )
+    assert res.status_code == 308 and res.headers["location"] == f"{PUBLIC}/how-it-works", agent
+
+
+@pytest.mark.parametrize("path", ["/robots.txt", "/sitemap.xml", "/assets/app.js"])
+async def test_files_on_the_old_host_are_always_a_plain_308_even_for_a_browser(site: Path, path: str) -> None:  # noqa: F811
+    async with client_for(site, settings_for()) as client:
+        res = await client.get(
+            path, headers={"host": "tayyari.fastapicloud.dev", "user-agent": BROWSER}, follow_redirects=False
+        )
+    assert res.status_code == 308 and res.headers["location"] == f"{PUBLIC}{path}"
+
+
+@pytest.mark.parametrize(
+    "agent",
+    [
+        BROWSER,
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36 Edg/130.0",
+    ],
+)
+async def test_the_real_browsers_still_get_the_moving_page(site: Path, agent: str) -> None:  # noqa: F811
+    async with client_for(site, settings_for()) as client:
+        res = await client.get("/pricing", headers={"host": "tayyari.fastapicloud.dev", "user-agent": agent})
+    assert res.status_code == 200 and "data-target=" in res.text
+
+
+def test_wants_moving_page_reads_the_cookie_the_agent_and_the_path() -> None:
+    def ask(agent: str, path: str = "/pricing", cookie: str | None = None) -> bool:
+        headers = [("user-agent", agent)] + ([("cookie", cookie)] if cookie else [])
+        return wants_moving_page(Request(http_scope(path=path, method="GET", headers=headers)))
+
+    assert ask(BROWSER)
+    assert not ask(BROWSER, cookie="tayyari_moved=1")
+    assert not ask(BROWSER, path="/robots.txt")
+    assert not ask("Mozilla/5.0 ChatGPT-User/1.0")

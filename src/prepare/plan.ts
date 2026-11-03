@@ -225,7 +225,7 @@ function fold(line: string): string[] {
 
 /** The .ics text: floating local times (the person's own clock), one event a week, `hours` long. */
 export function icsText(events: CalendarEvent[], hours: number, planTitle: string, uidBase: string, now: Date = new Date()): string {
-  const lines: string[] = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Tayyari//Prepare//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+  const lines: string[] = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Leafout//Prepare//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
   const stamp = utc(now);
   for (const e of events) {
     const description = [`${planTitle} · week ${e.week} of ${events.length}`, ...e.tasks.map((t) => `– ${t}`)].join('\n');

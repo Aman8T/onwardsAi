@@ -112,7 +112,10 @@ export function GraphHeader({ profile }: { profile: Profile }) {
             Next
             {tease && <span className="gv-tease" aria-hidden="true" />}
           </span>
-          <span className="kicker gv-seg-sub">{plural(nPaths, 'path')} · press F</span>
+          <span className="kicker gv-seg-sub">
+            {plural(nPaths, 'path')}
+            <span className="kbd-hint"> · press F</span>
+          </span>
         </button>
         {ink && <span className="gv-seg-ink" aria-hidden="true" style={cssVars({ '--ink-x': `${ink.x}px`, '--ink-w': ink.w })} />}
       </nav>

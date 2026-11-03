@@ -227,7 +227,7 @@ class TestChatSystem:
             readers={},
         )
         assert isinstance(result, str)
-        assert "You are Tayyari" in result
+        assert "You are Leafout" in result
         assert "Why they are here" in result
 
     def test_build_chat_system_with_origin_skill(self) -> None:

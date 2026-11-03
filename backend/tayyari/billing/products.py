@@ -36,8 +36,8 @@ class ProductDef:
 
 
 PRODUCTS: Final[Mapping[Product, ProductDef]] = {
-    "pack3": ProductDef("pack3", credits=3, pass_days=0, title="Tayyari: three postings"),
-    "pass30": ProductDef("pass30", credits=0, pass_days=PASS_DAYS, title="Tayyari: 30-day pass"),
+    "pack3": ProductDef("pack3", credits=3, pass_days=0, title="Leafout: three postings"),
+    "pass30": ProductDef("pass30", credits=0, pass_days=PASS_DAYS, title="Leafout: 30-day pass"),
 }
 CURRENCIES: Final[tuple[Currency, ...]] = get_args(Currency)
 PROVIDER_FOR: Final[Mapping[Currency, Provider]] = {"INR": "razorpay", "USD": "stripe"}
@@ -107,6 +107,30 @@ def price_book(settings: Settings) -> PriceBook:
     return PriceBook(INR=prices("INR"), USD=prices("USD"))
 
 
+def _group(whole: int, currency: Currency) -> str:
+    """``1234567`` as "12,34,567" (INR, en-IN) or "1,234,567" (USD, en-US)."""
+    digits = str(whole)
+    if currency != "INR" or len(digits) <= 3:
+        return f"{whole:,}"
+    head, tail = digits[:-3], digits[-3:]
+    pairs: list[str] = []
+    while len(head) > 2:
+        pairs.insert(0, head[-2:])
+        head = head[:-2]
+    return ",".join([head, *pairs, tail] if head else [*pairs, tail])
+
+
+def format_price(amount_minor: int, currency: Currency) -> str:
+    """``49900`` paise as "₹499", ``900`` cents as "$9", ``1999`` as "$19.99": the same words as ``src/billing/format.ts``.
+
+    Amounts are minor units, always integers; a whole amount has no decimals, any other has two.
+    """
+    symbol = "₹" if currency == "INR" else "$"
+    whole, cents = divmod(amount_minor, 100)
+    grouped = _group(whole, currency)
+    return f"{symbol}{grouped}" if cents == 0 else f"{symbol}{grouped}.{cents:02d}"
+
+
 # ───────────────────────── currency ─────────────────────────
 
 _INDIAN_TIMEZONES: Final = ("asia/kolkata", "asia/calcutta")
@@ -170,6 +194,7 @@ __all__ = [
     "ProductDef",
     "below_floor",
     "default_currency",
+    "format_price",
     "is_indian_locale",
     "is_indian_timezone",
     "on_sale",

@@ -332,3 +332,10 @@
     transition: none;
   }
 }
+
+/* Phone: the graph header's buttons are full 44 px targets. */
+@media (max-width: 760px) {
+  .gv-header .btn {
+    min-height: 44px;
+  }
+}

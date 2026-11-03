@@ -4,10 +4,10 @@ export const resumeToPortfolio: ContentPage = {
   path: '/resume-to-portfolio',
   title: 'Resume to portfolio page, built from cited facts',
   description:
-    'Turn a resume into a shareable portfolio page where every statement traces to a line of your sources. Pick a look, edit any text and decide what is public.',
+    'Turn a resume into a portfolio page where every statement traces to a line of your sources. Pick a look, edit any text and keep personal details out.',
   h1: 'Turn your resume into a portfolio page',
-  lede: 'A portfolio page should show what you did, not what a template invented. Leafout builds yours from facts copied from your resume and links, writes the copy only from those facts, and lets you decide what is public.',
-  blurb: 'A shareable page whose every line traces back to your sources.',
+  lede: 'A portfolio page should show what you did, not what a template invented. Leafout builds yours from facts copied from your resume and links, writes the copy only from those facts, and keeps personal details out unless you opt in.',
+  blurb: 'A portfolio page whose every line traces back to your sources.',
   cta: { label: 'Build my portfolio', href: '/' },
   related: ['/skill-graph', '/how-it-works', '/about'],
   faq: [
@@ -21,15 +21,15 @@ export const resumeToPortfolio: ContentPage = {
     },
     {
       q: 'Can I edit the page?',
-      a: 'Yes. You can choose among the looks Leafout composes, edit any text, hide a domain and decide whether the page is public. Text you write yourself is plain text and is marked as yours.',
+      a: 'Yes. You can choose among the looks Leafout composes, edit any text and hide a domain. Text you write yourself is plain text and is marked as yours.',
     },
     {
       q: 'Will search engines list my page?',
-      a: 'Share links ask search engines not to list them, so people reach your page because you sent them the link.',
+      a: 'Not at the moment, because a page cannot be published to a link yet. When it can, share links will ask search engines not to list them, so people reach your page because you sent them the link.',
     },
     {
       q: 'Does it cost anything?',
-      a: 'A public portfolio page is part of the free plan. A portfolio on your own domain is planned and is not built yet.',
+      a: 'A portfolio page built from your resume is part of the free plan. A portfolio on your own domain is planned and is not built yet.',
     },
   ],
   Body: () => (
@@ -75,14 +75,15 @@ export const resumeToPortfolio: ContentPage = {
       </section>
 
       <section>
-        <h2>What is public</h2>
+        <h2>What the public version shows</h2>
         <p>
-          The public page shows only the blocks you have made visible. It carries no profile id and no raw evidence lines, and it leaves out skills
+          Publishing a page to a link is not available yet. This is what the public version, and its preview, shows. It shows only the blocks you have made
+          visible. It carries no profile id and no raw evidence lines, and it leaves out skills
           scored below 45. Email, phone and grades appear only if you opt in, and personal details are scrubbed from the text.
         </p>
         <p>
           The same evidence that fills the page also feeds the radar of your <a href="/skill-graph">skill graph</a>, and the chart on the page is
-          chosen by the shape of your skills. A radar card you can place in a GitHub or LinkedIn profile is planned and is not built yet.
+          chosen by the shape of your skills. From the graph you can also share a radar card, a picture of your skill shape for a GitHub README or a LinkedIn post. It is shared only while you choose, and you can make a new link at any time.
         </p>
       </section>
 

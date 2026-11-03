@@ -423,3 +423,12 @@
     max-width: 76px;
   }
 }
+
+/* Phone: each axis label keeps its look but gets a 44 px touch area around it. */
+@media (max-width: 760px) {
+  .radar-axis::after {
+    content: '';
+    position: absolute;
+    inset: -12px -8px;
+  }
+}

@@ -3,7 +3,7 @@
  * their own tags (Home and Pricing), and the structured-data builders. Pure functions, no browser or Node APIs, so
  * scripts/build-pages.tsx and scripts/build-check.ts can both use them.
  */
-import { DEFAULT_SITE_URL, SITE_PAGES } from './links';
+import { COMPANY_URL, DEFAULT_SITE_URL, SITE_PAGES, SUPPORT_EMAIL } from './links';
 import type { ContentPage } from './types';
 
 export const SITE_NAME = 'Leafout';
@@ -29,8 +29,19 @@ export const HOME_HEAD: AppHead = {
 export const PRICING_HEAD: AppHead = {
   title: 'Pricing: pay per posting or by the month · Leafout',
   description:
-    'Your skill graph, next roles and portfolio page are free, with one posting match a month. Pay per posting or by the month. No annual lock-in.',
+    'Your skill graph and next roles are free, with one posting match a month. Pay per posting or for 30 days, once. Nothing renews, and there is no annual plan.',
 };
+
+/** The share picture: drawn once, served from the app's own files (`public/og-default.png`), the same for every page. */
+export const OG_IMAGE = {
+  path: '/og-default.png',
+  width: 1200,
+  height: 630,
+  alt: 'Leafout: Know where you stand. See where you can go.',
+} as const;
+
+/** The logo of the Organization (a file of the company site, which owns the brand). */
+export const LOGO_URL = `${COMPANY_URL}/icon-512.png`;
 
 /** The title of a content page's document. */
 export function documentTitle(page: Pick<ContentPage, 'title'>): string {
@@ -56,10 +67,11 @@ export function labelOf(path: string): string {
 
 type Ld = Record<string, unknown>;
 
-const orgId = (base: string) => `${base}/#organization`;
+/** One Organization for both properties: the company site owns it, and every page here points at the same id. */
+export const ORG_ID = `${COMPANY_URL}/#organization`;
 
-export function organizationLd(base: string): Ld {
-  return { '@type': 'Organization', '@id': orgId(base), name: SITE_NAME, url: `${base}/`, description: SITE_LINE };
+export function organizationLd(): Ld {
+  return { '@type': 'Organization', '@id': ORG_ID, name: SITE_NAME, url: COMPANY_URL, logo: LOGO_URL, email: SUPPORT_EMAIL };
 }
 
 export function websiteLd(base: string): Ld {
@@ -70,7 +82,7 @@ export function websiteLd(base: string): Ld {
     url: `${base}/`,
     description: SITE_LINE,
     inLanguage: 'en',
-    publisher: { '@id': orgId(base) },
+    publisher: { '@id': ORG_ID },
   };
 }
 
@@ -92,7 +104,7 @@ export function faqLd(faq: ContentPage['faq']): Ld {
   };
 }
 
-/** No `offers`: a price is not stated in structured data until there is one to state. */
+/** No `offers`: the prices are settings of the server, so the static data does not state one. */
 export function softwareLd(base: string): Ld {
   return {
     '@type': 'SoftwareApplication',
@@ -102,13 +114,41 @@ export function softwareLd(base: string): Ld {
     description: SITE_LINE,
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Any (web browser)',
-    publisher: { '@id': orgId(base) },
+    publisher: { '@id': ORG_ID },
   };
 }
 
-/** The structured data of a content page: the site's Organization and WebSite, its breadcrumb, its FAQ, and the product on the page that explains it. */
-export function pageLd(base: string, page: ContentPage): Ld[] {
-  const graph = [organizationLd(base), websiteLd(base), breadcrumbLd(base, page.path), faqLd(page.faq)];
+/** The page itself, with the day its text last changed when that is known. */
+export function webPageLd(base: string, path: string, name: string, modified: string | undefined): Ld {
+  return {
+    '@type': 'WebPage',
+    '@id': `${absoluteUrl(base, path)}#webpage`,
+    url: absoluteUrl(base, path),
+    name,
+    inLanguage: 'en-IN',
+    isPartOf: { '@id': `${base}/#website` },
+    ...(modified ? { dateModified: modified } : {}),
+  };
+}
+
+/** The structured data of a content page: the company's Organization and this host's WebSite, the page, its breadcrumb, its FAQ, and the product on the page that explains it. */
+export function pageLd(base: string, page: ContentPage, modified?: string): Ld[] {
+  const graph = [
+    organizationLd(),
+    websiteLd(base),
+    webPageLd(base, page.path, documentTitle(page), modified),
+    breadcrumbLd(base, page.path),
+    faqLd(page.faq),
+  ];
   if (page.software) graph.push(softwareLd(base));
   return graph;
+}
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/** `2026-11-03` as `3 November 2026`; the text unchanged when it is not a date. */
+export function longDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  const month = m ? MONTHS[Number(m[2]) - 1] : undefined;
+  return m && month ? `${Number(m[3])} ${month} ${m[1]}` : iso;
 }
