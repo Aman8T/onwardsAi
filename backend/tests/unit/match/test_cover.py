@@ -25,6 +25,8 @@ from tayyari.match.cover import (
     is_logistics,
     pick_pairs,
     refusal_suffix,
+    unfinished,
+    voice_problem,
     write_cover,
 )
 from tayyari.match.errors import CoverUnavailable
@@ -153,57 +155,74 @@ def with_coverage(persona: Persona, **changes: tuple[str, int, list[str]]) -> Pe
     return dataclasses.replace(persona, coverage=table)
 
 
-async def test_every_must_and_required_gap_gets_a_plain_sentence_even_when_the_model_forgets() -> None:
+async def test_gaps_stay_on_the_match_page_and_never_reach_the_note_even_when_the_model_writes_one() -> None:
     persona = with_coverage(meera(), **{"Lifecycle_marketing_on_email": ("missing_gap", 0, [])})
     good = js("meera.cover.answer.json")
-    no_gap = {
-        "paragraphs": [
-            p for p in good["paragraphs"] if p["kind"] not in ("gap",) and "CleverTap" not in p["text"]
-        ]
-    }
-    result, _, outcome, _ = await cover(persona, no_gap, no_gap)
-    gaps = gap_requirements(outcome.posting, outcome.result.coverage)
-    assert {g.id for g in gaps} == {"r3", "r7"}
-    paragraph = next(p for p in result.note.paragraphs if p.kind == "gap")
-    assert set(paragraph.requirementIds) == {"r3", "r7"}
-    assert paragraph.text == "The role lists email and customer data platform. I haven't used them yet."
-    assert paragraph.factIds == []
-
-
-async def test_a_gap_paragraph_that_claims_the_skill_is_replaced_by_the_plain_sentence() -> None:
-    good = js("meera.cover.answer.json")
+    plain = para("gap", "I have not yet worked with a customer data platform such as Segment.", [], ["r7"])
     boastful = para(
-        "gap",
-        "I have extensive experience with customer data platforms such as Segment and mParticle.",
-        [],
-        ["r7"],
+        "gap", "I have extensive experience with customer data platforms such as Segment.", [], ["r7"]
     )
-    answer = {"paragraphs": [*[p for p in good["paragraphs"] if p["kind"] != "gap"], boastful]}
-    result, fake, _, _ = await cover(meera(), answer, answer)
-    gap = next(p for p in result.note.paragraphs if p.kind == "gap")
-    assert "extensive" not in gap.text
-    assert (
-        gap.text == "The role lists customer data platform. I haven't used it yet."
-    )  # one term: "it", no article
-    assert gap.requirementIds == ["r7"] and gap.factIds == []
-    assert any("gap sentence must say" in d.reason for d in result.report.dropped)
-    # the refused gap paragraph was asked for once more, and the answer that repeated it was refused again
-    assert result.calls == 2 and len(fake.calls_for("match.cover")) == 2
-
-
-async def test_a_gap_paragraph_may_not_smuggle_in_a_number_or_a_new_claim() -> None:
-    good = js("meera.cover.answer.json")
     answer = {
-        "paragraphs": [
-            *[p for p in good["paragraphs"] if p["kind"] != "gap"],
-            para(
-                "gap", "I have not yet worked with Segment, though I led a team of 40 elsewhere.", [], ["r7"]
-            ),
-        ]
+        "paragraphs": [*[p for p in good["paragraphs"] if "CleverTap" not in p["text"]], plain, boastful]
     }
-    result, _, _, _ = await cover(meera(), answer, answer)
-    gap = next(p for p in result.note.paragraphs if p.kind == "gap")
-    assert "40" not in gap.text
+    result, fake, outcome, _ = await cover(persona, answer, answer)
+    # the gaps are real, and the match page shows them ...
+    assert {g.id for g in gap_requirements(outcome.posting, outcome.result.coverage)} == {"r3", "r7"}
+    # ... but the note is what the person can show: no gap paragraph, no "I have not", no gap term
+    assert "gap" not in kinds(result)
+    text = " ".join(p.text for p in result.note.paragraphs)
+    assert "not yet" not in text and "extensive" not in text and "Segment" not in text
+    assert "Not met" in fake.calls_for("match.cover")[0].user_text
+    assert "(none: write no gap paragraph)" in fake.calls_for("match.cover")[0].user_text
+
+
+@pytest.mark.parametrize(
+    ("text", "reason"),
+    [
+        (
+            "Meera holds a lifecycle programme. The resume records it as an accomplishment.",
+            "talks about the resume, not the work",
+        ),
+        ("Meera led the lifecycle programme at Brightwell Foods.", "speaks of the person by name, not as I"),
+        ("I led the lifecycle programme. I have not yet used Segment.", "says what the person has not done"),
+        (
+            "I write Java daily. My Go knowledge is limited and I am still learning it.",
+            "says what the person has not done",
+        ),
+        (
+            "I use SQL every week, so I would not claim it as a strength yet.",
+            "says what the person has not done",
+        ),
+        ("At Brightwell Foods, handled annual budget of.", "a sentence is not finished"),
+        ("I led the lifecycle programme and.", "a sentence is not finished"),
+        ("I led the lifecycle email programme at Brightwell Foods for 400,000 subscribers.", None),
+    ],
+)
+def test_a_paragraph_speaks_as_the_person_about_the_work_in_whole_sentences(
+    text: str, reason: str | None
+) -> None:
+    assert voice_problem(text, "Meera Nair") == reason
+
+
+def test_a_surname_that_is_also_the_employers_name_is_not_the_third_person() -> None:
+    known = "Systems Engineer at Tata Consultancy Services"
+    text = "At Tata Consultancy Services I moved six SOAP services to REST."
+    assert voice_problem(text, "Ravi Tata", known) is None
+    assert voice_problem("Ravi moved six SOAP services to REST.", "Ravi Tata", known) is not None
+
+
+async def test_a_match_paragraph_in_the_third_person_is_refused_and_asked_for_again() -> None:
+    good = js("meera.cover.answer.json")
+    first = good["paragraphs"][0]
+    third = dict(
+        first, text=first["text"].replace("I am a", "Meera Nair is a", 1).replace(" I was ", " she was ")
+    )
+    result, fake, _, _ = await cover(
+        meera(), {"paragraphs": [third, *good["paragraphs"][1:]]}, {"paragraphs": [first]}
+    )
+    assert result.calls == 2 and len(fake.calls_for("match.cover")) == 2
+    assert [p.text for p in result.note.paragraphs] == [p["text"] for p in good["paragraphs"]]
+    assert not any("Meera" in p.text for p in result.note.paragraphs)
 
 
 async def test_there_is_no_gap_paragraph_when_nothing_must_or_required_is_missing() -> None:
@@ -361,7 +380,7 @@ async def test_a_note_over_400_words_loses_its_last_match_paragraphs() -> None:
 
 async def test_a_short_note_is_asked_for_once_more_and_then_returned_as_it_is() -> None:
     good = js("meera.cover.answer.json")
-    short = {"paragraphs": [good["paragraphs"][1], good["paragraphs"][4], good["paragraphs"][5]]}
+    short = {"paragraphs": [good["paragraphs"][1], good["paragraphs"][4]]}  # one match and the close
     result, fake, _, _ = await cover(meera(), short, good)
     assert result.calls == 2
     assert result.note.wordCount >= COVER_WORDS_MIN
@@ -510,7 +529,7 @@ async def test_a_second_refusal_falls_back_to_the_facts_own_words_and_there_is_n
         ["exp-1.3", "exp-1"],
     )  # cites what it says
     assert "90" not in " ".join(p.text for p in result.note.paragraphs)
-    assert [p.kind for p in result.note.paragraphs] == ["match"] * 4 + ["gap", "close"]
+    assert [p.kind for p in result.note.paragraphs] == ["match"] * 4 + ["close"]
     assert any(d.reason == "written from the fact itself" for d in result.report.dropped)
 
 
@@ -562,12 +581,12 @@ async def test_a_refusal_whose_place_is_filled_elsewhere_costs_no_second_call() 
 
 async def test_a_short_note_with_nothing_to_repair_gets_the_whole_note_asked_once_more() -> None:
     good = js("meera.cover.answer.json")
-    short = {"paragraphs": [good["paragraphs"][1], good["paragraphs"][4], good["paragraphs"][5]]}
+    short = {"paragraphs": [good["paragraphs"][1], good["paragraphs"][4]]}  # one match and the close
     result, fake, _, _ = await cover(
         meera(), short, ClaudeOverloaded()
     )  # a failed retry keeps the first note
     assert result.calls == 2 and len(fake.calls_for("match.cover")) == 2
-    assert [p.text for p in result.note.paragraphs] == [good["paragraphs"][i]["text"] for i in (1, 4, 5)]
+    assert [p.text for p in result.note.paragraphs] == [good["paragraphs"][i]["text"] for i in (1, 4)]
     assert "aim for 280 to 360" in fake.calls_for("match.cover")[1].user_text
 
 
@@ -609,38 +628,6 @@ def test_a_requirement_without_a_term_is_named_by_its_own_text_without_an_added_
     assert len(gap_sentence([long])) < 140 and ".." not in gap_sentence([long])
 
 
-async def test_the_models_own_gap_paragraph_stands_when_it_passes() -> None:
-    result, _, _, _ = await cover(meera(), js("meera.cover.answer.json"))
-    gap = next(p for p in result.note.paragraphs if p.kind == "gap")
-    assert gap.text == "I have not yet worked with a customer data platform such as Segment or mParticle."
-
-
-async def test_three_must_and_required_gaps_become_one_paragraph_with_one_list() -> None:
-    persona = with_coverage(
-        meera(),
-        **{
-            "Lifecycle_marketing_on_email": ("missing_gap", 0, []),
-            "A_proven_A/B_testing": ("missing_gap", 0, []),
-        },
-    )
-    good = js("meera.cover.answer.json")
-    answer = {
-        "paragraphs": [
-            p
-            for p in good["paragraphs"]
-            if p["kind"] != "gap" and not set(p["requirementIds"]) & {"r3", "r4"}
-        ]
-    }
-    result, _, outcome, _ = await cover(persona, answer, answer)
-    assert [g.id for g in gap_requirements(outcome.posting, outcome.result.coverage)] == ["r3", "r4", "r7"]
-    gap = next(p for p in result.note.paragraphs if p.kind == "gap")
-    assert (
-        gap.text == "The role lists email, A/B testing and customer data platform. I haven't used them yet."
-    )
-    assert gap.requirementIds == ["r3", "r4", "r7"] and gap.factIds == []
-    assert sum(1 for p in result.note.paragraphs if p.kind == "gap") == 1
-
-
 # ───────────────────────── the fact's own words ─────────────────────────
 
 
@@ -654,29 +641,45 @@ def test_a_fact_paragraph_is_at_the_org_in_first_person_and_cites_the_fact_and_t
     assert made.factIds == ["exp-1.3", "exp-1"] and made.requirementIds == ["r4"] and made.kind == "match"
 
 
-def test_a_fact_paragraph_without_an_org_is_the_fact_text_alone_and_a_skill_name_is_too_thin() -> None:
+def test_a_fact_that_is_not_a_sentence_and_a_skill_name_give_no_paragraph() -> None:
     book = riya().book()
     ask = requirement("r1", "Owns a component library", ["component library"])
     react, motion = book.get("skill-react"), book.get("proj-1")
     assert react is not None and motion is not None
-    project = fact_paragraph([ask], [react, motion], book)
-    assert project is not None
-    assert project.text.startswith("motion-kit: Spring-physics animation primitives for React")
-    assert project.factIds == ["proj-1"]
+    # "motion-kit: Spring-physics animation primitives ..." is a label, not something the person did: no fragment
+    assert fact_paragraph([ask], [react, motion], book) is None
     assert fact_paragraph([ask], [react], book) is None
     assert fact_paragraph([ask], [], book) is None
 
 
-def test_a_fact_paragraph_from_job_lines_alone_says_what_they_say_without_repeating_the_org() -> None:
+@pytest.mark.parametrize(
+    "bullet",
+    [
+        "Handling patients on mechanical ventilator, BiPAP, CPAP and monitoring ABG reports.",
+        "Redesigned the dispute status API and",
+        "Handled annual budget of",
+    ],
+)
+def test_a_bullet_that_does_not_make_a_whole_first_person_sentence_gives_no_paragraph(bullet: str) -> None:
+    book = meera().book()
+    exp = book.get("exp-1")
+    assert exp is not None
+    fact = Fact(id="exp-1.9", text=bullet, kind="accomplishment", refs=exp.refs, evidenceTier="used")
+    ask = requirement("r1", "Critical care", ["critical care"])
+    made = fact_paragraph([ask], [fact], book)
+    assert made is None or unfinished(made.text) is None
+
+
+def test_a_fact_paragraph_from_job_lines_alone_says_the_role_in_the_first_person() -> None:
     book = meera().book()
     years = requirement("r1", "5+ years of growth marketing", [])
     jobs = [book.get("exp-1"), book.get("exp-2"), book.get("exp-3")]
     made = fact_paragraph([years], [j for j in jobs if j is not None], book)
     assert made is not None
     assert made.text == (
-        "Growth Marketing Manager at Brightwell Foods, Pune (Mar 2023 - Present). "
-        "Performance Marketing Specialist at Pinecrest Media, Mumbai (Jun 2020 - Feb 2023)."
-    )  # two jobs, each already names its org
+        "I work as Growth Marketing Manager at Brightwell Foods. "
+        "I worked as Performance Marketing Specialist at Pinecrest Media."
+    )  # two jobs at most, a whole sentence each
     assert made.factIds == ["exp-1", "exp-2"]
 
 
@@ -689,7 +692,7 @@ async def test_a_short_note_names_the_paragraphs_that_were_refused_and_why_on_it
     note = result.note
     assert result.calls == 2 and len(fake.calls_for("match.cover")) == 2
     assert note.wordCount < COVER_WORDS_MIN
-    assert [p.kind for p in note.paragraphs] == ["match"] * 4 + ["gap", "close"]  # four fact-text paragraphs
+    assert kinds(result)[-1] == "close" and "gap" not in kinds(result)  # fact-text paragraphs, then the close
     assert all(p.factIds and p.text != UNSUPPORTED_R4 for p in note.paragraphs if p.kind == "match")
 
     assert note.lint is not None
@@ -718,3 +721,43 @@ async def test_a_note_that_is_long_enough_after_the_reask_carries_no_lint_note()
 
 def test_the_length_label_is_the_one_the_exporters_lint_uses() -> None:
     assert LABELS["length"] == LENGTH_LABEL
+
+
+# ───────────────────────── a paragraph that another already says ─────────────────────────
+
+
+def test_a_paragraph_that_another_already_says_is_left_out_and_the_first_stays() -> None:
+    from tayyari.contract.match import CoverParagraph
+    from tayyari.match.cover import assemble
+    from tayyari.match.models import Report
+
+    full = CoverParagraph(
+        text="I ran 38 A/B tests on landing pages and checkout nudges. Five winners shipped. That is my practice.",
+        requirementIds=["r4"],
+        factIds=["exp-1.3", "skill-a-b-testing"],
+        kind="match",
+    )
+    again = CoverParagraph(
+        text="At Brightwell Foods, I ran 38 A/B tests on landing pages and checkout nudges.",
+        requirementIds=["r4"],
+        factIds=["exp-1.3", "exp-1"],
+        kind="match",
+    )
+    role = CoverParagraph(
+        text="I work as Growth Marketing Manager at Brightwell Foods.",
+        requirementIds=["r1"],
+        factIds=["exp-1"],
+        kind="match",
+    )
+    longer = CoverParagraph(
+        text="As Growth Marketing Manager at Brightwell Foods I own the paid acquisition budget and the growth review.",
+        requirementIds=["r1"],
+        factIds=["exp-1", "exp-1.2"],
+        kind="match",
+    )
+    report = Report()
+    out = assemble([full, again, role, longer], pairs=[], gaps=[], book=meera().book(), report=report)
+    assert [p.text for p in out if p.kind == "match"] == [full.text, longer.text]
+    assert sum(d.reason == "says what another paragraph already says" for d in report.dropped) == 2
+    twins = assemble([full, full], pairs=[], gaps=[], book=meera().book(), report=Report())
+    assert [p.text for p in twins if p.kind == "match"] == [full.text]

@@ -147,7 +147,7 @@ Paragraph kinds
 Length: the whole body is 280 to 360 words, never under 280. The program drops any paragraph it cannot verify, so a draft near the floor ends up too short. The user message gives the paragraph count and the words for each match paragraph.
 When the message says the program refused some paragraphs, write only those again: one paragraph per entry, in the same order, resting only on the facts listed under it, with their numbers and wording exactly as they stand. Fewer sentences are better than one the facts do not carry.
 
-Voice: first person, calm, specific, plain English; short sentences; verbs, not adjectives.
+Voice: first person ("I"), calm, specific, plain English; short sentences; verbs, not adjectives. Write as the person, never about them: never their name, never "the resume" or "my CV", never what they have not done. Every sentence is whole: a subject, a verb, and an end.
 Never open with "I am writing to apply", "I am writing to express", "I am the perfect candidate", "To whom it may concern" or "I saw your posting": start with the strongest concrete thing the person has done for this job. No puffery, no flattery of the company, no number or name that is not in a cited fact, no greeting and no sign-off (the program adds them).
 
 Respond ONLY through the structured output."""

@@ -49,14 +49,6 @@
     },
     {
       "factIds": [],
-      "requirementIds": [
-        "r7"
-      ],
-      "kind": "gap",
-      "text": "I have not yet worked with a customer data platform such as Segment or mParticle."
-    },
-    {
-      "factIds": [],
       "requirementIds": [],
       "kind": "close",
       "text": "Thank you for your time. I would welcome a conversation about the role."

@@ -19,6 +19,7 @@ The result is a `ResumeVariant`; `export` turns it into files and `lint` reads t
 from __future__ import annotations
 
 import math
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Final
@@ -59,7 +60,7 @@ from tayyari.match.schemas import (
     rows_of,
     schema_of,
 )
-from tayyari.match.text import clip, term_in_corpus
+from tayyari.match.text import clip, fold_text, term_in_corpus, tidy
 from tayyari.match.verify import corpus_of
 from tayyari.portfolio.ground import tokens_of
 from tayyari.prompts.match import (
@@ -332,19 +333,39 @@ def gap_terms(requirements: Sequence[Requirement], coverage: Sequence[Coverage])
     return {t for r in requirements if r.id in cov and cov[r.id].status == "missing_gap" for t in r.terms}
 
 
+def _from_person(fact: Fact) -> bool:
+    return bool(fact.refs) and all(r.source == "user" for r in fact.refs)
+
+
+def names_term(fact: Fact, term: str) -> bool:
+    """Does the text of ``fact`` name ``term`` word for word ("Hindi" in "Languages known: Malayalam, English, Hindi")?"""
+    needle = fold_text(term).strip()
+    if len(needle) < 2:
+        return False
+    return re.search(rf"(?<![a-z0-9+#]){re.escape(needle)}(?![a-z0-9+#])", fold_text(fact.text)) is not None
+
+
+def backs_item(fact: Fact, name: str) -> bool:
+    """Can ``fact`` stand behind a skills item called ``name``? A skill fact of a source can (its name is the graph's);
+    any other fact (a resume line, a certificate, the person's answer) only when its text names the item."""
+    if fact.kind == "skill" and not _from_person(fact):
+        return True
+    return names_term(fact, name)
+
+
 def skill_violations(
     groups: Sequence[SkillGroup],
     book: FactBook,
     requirements: Sequence[Requirement],
     coverage: Sequence[Coverage],
 ) -> list[str]:
-    """Skill items that must not be on the resume: one that names a gap term, or one no skill fact backs."""
+    """Skill items that must not be on the resume: one that names a gap term, or one no fact backs."""
     facts = book.by_id()
     gaps = gap_terms(requirements, coverage)
     bad: list[str] = []
     for group in groups:
         for item in group.items:
-            backed = any(f in facts and facts[f].kind == "skill" for f in item.factIds)
+            backed = any(f in facts and backs_item(facts[f], item.name) for f in item.factIds)
             if not backed or any(same_term(item.name, g) for g in gaps):
                 bad.append(item.name)
     return bad
@@ -381,14 +402,25 @@ def build_skills(
             continue
         for fid in row.factIds:
             fact = facts.get(fid)
-            if fact is None or fact.kind != "skill":
+            if fact is None:
                 continue
-            posting_word = next((t for t in req.terms if same_term(t, fact.text)), None)
-            add(group, posting_word or fact.text, fact)
+            if fact.kind == "skill" and not _from_person(fact):
+                posting_word = next((t for t in req.terms if same_term(t, fact.text)), None)
+                add(group, posting_word or fact.text, fact)
+                continue
+            # a resume line, a certificate or the person's answer: only the posting's terms it names word for word,
+            # never the line or the answer itself
+            for term in req.terms:
+                if names_term(fact, term):
+                    add(group, tidy(term), fact)
     for fact in sorted(
         (f for f in book.facts if f.kind == "skill"), key=lambda f: -relevance.scores.get(f.id, 0)
     ):
-        if relevance.scores.get(fact.id, 0) >= EXTRA_SKILL_RELEVANCE and fact.evidenceTier != "listed":
+        if (
+            relevance.scores.get(fact.id, 0) >= EXTRA_SKILL_RELEVANCE
+            and fact.evidenceTier != "listed"
+            and not _from_person(fact)  # an answer names a skill only through a requirement's term (above)
+        ):
             add("Other skills", fact.text, fact)
     by_group: dict[str, list[SkillItem]] = {}
     for group, item in chosen.values():
@@ -726,11 +758,13 @@ __all__ = [
     "Picked",
     "Relevance",
     "VariantResult",
+    "backs_item",
     "build_skills",
     "compose_variant",
     "draft_context",
     "gap_terms",
     "lexical_relevance",
+    "names_term",
     "score_relevance",
     "select",
     "skill_violations",

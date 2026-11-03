@@ -9,8 +9,13 @@ forked) already returns facts whose text code copied from cited source lines; th
     recorded in ``FactBook.dropped``;
   - splits a job, project or degree into an entry fact plus one ``accomplishment`` fact per bullet, which is the
     unit the resume is built from;
+  - joins a bullet that a PDF wrapped onto the next line back into one fact, so its numbers are not cut off;
   - adds a ``skill`` fact for each skill of the stored graph that is evidenced (score 45 and over) by a line of a
     source, never for a gap skill, with the strongest evidence tier its lines earn;
+  - adds a ``detail`` fact (kind ``cert`` or ``other``) for each resume line no other fact quotes: registrations,
+    licences, languages, notice period, CTC, the size of a hospital, a tools line. The text is the line itself, so it
+    is its own quote. Personal details a hiring decision must not rest on (birth date, sex, marital status, religion,
+    a parent's name) and the declaration are never taken;
   - appends ``user`` facts (answers to gap questions, chat), whose source is the person's own words.
 
 Evidence tiers (strongest first): ``artifact`` when a GitHub or Lovable source backs the fact, ``built`` for a
@@ -46,9 +51,31 @@ MAX_REF_QUOTE: Final = 500
 WINDOW: Final = 6
 """A quote is looked for on one line, then over up to this many wrapped lines."""
 OVERLAP_MIN_TOKENS: Final = 3
+MAX_DETAIL_FACTS: Final = 30
+"""Resume lines no other fact quotes, taken as ``detail`` facts, at most this many (in the order of the resume)."""
+MAX_WRAP_LINES: Final = 3
+"""A bullet is joined with at most this many following lines that continue it."""
 
 _MONTHS: Final = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-_CERT = re.compile(r"certif|licen[sc]e|diploma|nanodegree|chartered|\bcpa\b|\bpmp\b", re.IGNORECASE)
+_CERT = re.compile(
+    r"certif|licen[sc]e|diploma|nanodegree|chartered|\bcpa\b|\bpmp\b|registration|registered|\bcouncil\b",
+    re.IGNORECASE,
+)
+_DANGLING = re.compile(
+    r"(?:\b(?:and|or|of|to|the|a|an|in|for|with|by|from|at|on|as|via|into|than|while|including)|[,(&/-])$",
+    re.IGNORECASE,
+)
+"""A line that ends on one of these does not finish its sentence: the next line continues it."""
+_NOT_FOR_HIRING = re.compile(
+    r"date of birth|\bd\.?\s?o\.?\s?b\b|\bsex\b|gender|marital|religion|\bcaste\b|father'?s|mother'?s|husband'?s|"
+    r"spouse|height|weight|blood group|hereby declare|declaration|signature|^\s*(?:place|date)\s*[:\-]",
+    re.IGNORECASE,
+)
+"""Personal details a hiring decision must not rest on, and the declaration: never a fact."""
+_CONTACT_LINE = re.compile(
+    r"@|https?://|www\.|linkedin\.com|github\.com|(?:\+91[\s-]?)?\b[6-9]\d{4}[\s-]?\d{5}\b|\+\d{1,3}[\s-]?\d",
+    re.IGNORECASE,
+)
 _OUTCOME = re.compile(r"\d")
 _LEAD_MARK = re.compile(r"^\s*(?:[-*+•>]|\d{1,3}[.)])\s+")
 _LIST_PREFIX = re.compile(r"^[\w &/+\-]{2,30}:\s*")
@@ -335,6 +362,7 @@ class _Builder:
             if ref is None:
                 self.drop(f"{pf.id}.{n}: bullet is not a passage of any source")
                 continue
+            highlight, ref = self._unwrapped(highlight, ref)
             bullet_tier: EvidenceTier = "used"
             if ref.source in ("github", "lovable"):
                 bullet_tier = "artifact"
@@ -362,6 +390,71 @@ class _Builder:
                 recency=_recency(pf.end, pf.start, pf.current),
             )
         )
+
+    def _unwrapped(self, text: str, ref: FactRef) -> tuple[str, FactRef]:
+        """``text`` joined with the lines that continue it when a PDF wrapped it ("Redesigned the dispute status API
+        and" + "reduced average response time from 1.8 seconds to 600 ms ..."), with the reference of the whole
+        passage; as it was when nothing continues it."""
+        lines = self.lines.get(ref.docId)
+        if lines is None or not ref.lines:
+            return text, ref
+        raw = lines.src.lines
+        joined, last = text, ref.lines[1]
+        for _ in range(MAX_WRAP_LINES):
+            if last >= len(raw) or not _continues(joined, raw[last]):
+                break
+            joined, last = f"{joined.rstrip()} {raw[last].strip()}", last + 1
+        if joined == text:
+            return text, ref
+        whole = self.ref(ref.docId, joined)
+        return (tidy(joined), whole) if whole is not None else (text, ref)
+
+    # ── resume lines no fact quotes ──
+
+    def detail_facts(self) -> None:
+        """A ``detail`` fact for each resume line (with the lines that continue it) that no fact quotes yet."""
+        made = 0
+        for source_id in self.order:
+            if self.kinds.get(source_id) != "resume" or made >= MAX_DETAIL_FACTS:
+                continue
+            raw = self.lines[source_id].src.lines
+            covered = self._covered(source_id)
+            said = [fold_text(f.text) for f in self.facts]
+            i = 0
+            while i < len(raw) and made < MAX_DETAIL_FACTS:
+                tail_of_quoted = i in covered and _continues(
+                    raw[i - 1], raw[i]
+                )  # the rest of a quoted sentence
+                if i + 1 in covered or tail_of_quoted or not _detail_line(raw[i]):
+                    i += 1
+                    continue
+                text, last = _unmarked(raw[i]), i + 1
+                while last < len(raw) and last - i <= MAX_WRAP_LINES and last + 1 not in covered:
+                    if not _continues(text, raw[last]) or not _detail_line(raw[last]):
+                        break
+                    text, last = f"{text} {raw[last].strip()}", last + 1
+                i = last
+                folded = fold_text(text)
+                if any(folded in s for s in said):
+                    continue
+                ref = self.ref(source_id, text)
+                if ref is None:
+                    continue
+                kind: MatchFactKind = "cert" if _CERT.search(text) else "other"
+                fid = f"line-{short_hash(source_id, length=6)}-{ref.lines[0] if ref.lines else i}"
+                self.add(
+                    Fact(id=fid, text=tidy(text)[:MAX_REF_QUOTE], kind=kind, refs=[ref], evidenceTier=None)
+                )
+                made += 1
+
+    def _covered(self, source_id: str) -> set[int]:
+        """The 1-based lines of ``source_id`` that a fact already quotes."""
+        out: set[int] = set()
+        for fact in self.facts:
+            for ref in fact.refs:
+                if ref.docId == source_id and ref.lines:
+                    out.update(range(ref.lines[0], ref.lines[1] + 1))
+        return out
 
     # ── skills ──
 
@@ -455,6 +548,34 @@ def _unmarked(line: str) -> str:
     return _LEAD_MARK.sub("", line, count=1).strip()
 
 
+def _continues(text: str, next_line: str) -> bool:
+    """Does ``next_line`` carry on the sentence ``text`` ends with (a line a PDF wrapped), rather than start a new one?
+
+    It does when ``text`` stops without ending its sentence and the next line is not a new bullet: it starts in lower
+    case or with a digit, or ``text`` ends on a word like "and" or "of"."""
+    body, nxt = text.rstrip(), next_line.strip()
+    if not body or not nxt or body.endswith((".", "!", "?", ":", ";")) or _LEAD_MARK.match(next_line):
+        return False
+    return nxt[0].islower() or nxt[0].isdigit() or bool(_DANGLING.search(body))
+
+
+def _is_heading(text: str) -> bool:
+    """A section heading ("WORK EXPERIENCE", "Skills:"): no lower-case letters, or a few words ending in a colon."""
+    words = text.split()
+    return (not any(ch.islower() for ch in text) and len(words) <= 6) or (
+        text.endswith(":") and len(words) <= 4
+    )
+
+
+def _detail_line(line: str) -> bool:
+    """Could ``line`` be a detail fact: words, not a heading, contact details or something a hiring decision must not
+    rest on."""
+    text = _unmarked(line)
+    if len(text) < 4 or len(text.split()) < 2 or _is_heading(text):
+        return False
+    return not _NOT_FOR_HIRING.search(text) and not _CONTACT_LINE.search(text)
+
+
 def _has_term(name: str, variants: Sequence[str], raw_line: str, folded_line: str) -> bool:
     if len(name.strip()) <= 2:
         return re.search(rf"(?<![\w+#.&]){re.escape(name.strip())}(?![\w+#&])", raw_line) is not None
@@ -523,6 +644,7 @@ def build_facts(
     for pf in portfolio_facts:
         b.portfolio_fact(pf)
     b.skill_facts()
+    b.detail_facts()
     for fact in user_facts:
         if fact.refs and all(r.source == "user" and r.quote.strip() for r in fact.refs):
             b.add(fact)

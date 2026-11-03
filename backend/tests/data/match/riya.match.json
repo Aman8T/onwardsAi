@@ -1064,6 +1064,166 @@
         }
       ],
       "evidenceTier": "artifact"
+    },
+    {
+      "id": "line-fa32d5-2",
+      "text": "Frontend Engineer · Bengaluru, India",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            2,
+            2
+          ],
+          "quote": "Frontend Engineer · Bengaluru, India"
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-6",
+      "text": "Frontend engineer with 2.4 years of experience building fast, accessible commerce interfaces in React and TypeScript.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            6,
+            6
+          ],
+          "quote": "Frontend engineer with 2.4 years of experience building fast, accessible commerce interfaces in React and TypeScript."
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-13",
+      "text": "D2C commerce startup (home goods), ~40 engineers, storefront + mobile web.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            13,
+            13
+          ],
+          "quote": "D2C commerce startup (home goods), ~40 engineers, storefront + mobile web."
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-33",
+      "text": "Fintech startup building bookkeeping software for small businesses.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            33,
+            33
+          ],
+          "quote": "Fintech startup building bookkeeping software for small businesses."
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-56",
+      "text": "Languages: TypeScript, JavaScript, HTML, CSS, Python (basic), Go (basic)",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            56,
+            56
+          ],
+          "quote": "Languages: TypeScript, JavaScript, HTML, CSS, Python (basic), Go (basic)"
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-57",
+      "text": "Frontend: React, Next.js, Framer Motion, Tailwind CSS, Storybook, Recharts, Redux Toolkit, TanStack Query",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            57,
+            57
+          ],
+          "quote": "Frontend: React, Next.js, Framer Motion, Tailwind CSS, Storybook, Recharts, Redux Toolkit, TanStack Query"
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-58",
+      "text": "Backend: Node.js, Express, tRPC, REST, GraphQL, PostgreSQL, Prisma",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            58,
+            58
+          ],
+          "quote": "Backend: Node.js, Express, tRPC, REST, GraphQL, PostgreSQL, Prisma"
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-60",
+      "text": "Design: Figma, design systems, motion design, accessibility (WCAG 2.1)",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            60,
+            60
+          ],
+          "quote": "Design: Figma, design systems, motion design, accessibility (WCAG 2.1)"
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-61",
+      "text": "Ways of working: code review, mentoring, technical writing, working with PM and design",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            61,
+            61
+          ],
+          "quote": "Ways of working: code review, mentoring, technical writing, working with PM and design"
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-65",
+      "text": "CGPA 8.6 / 10. Final-year project: a real-time collaborative whiteboard in React and WebSockets.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            65,
+            65
+          ],
+          "quote": "CGPA 8.6 / 10. Final-year project: a real-time collaborative whiteboard in React and WebSockets."
+        }
+      ]
     }
   ],
   "result": {
@@ -1316,9 +1476,44 @@
         "group": "Skills",
         "items": [
           {
+            "name": "component library",
+            "factIds": [
+              "exp-1.2"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "WCAG 2.1 AA",
+            "factIds": [
+              "exp-1.4"
+            ],
+            "evidenceTier": "used"
+          },
+          {
             "name": "Accessibility (WCAG)",
             "factIds": [
               "skill-accessibility-wcag"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "Vitest",
+            "factIds": [
+              "proj-1"
+            ],
+            "evidenceTier": "artifact"
+          },
+          {
+            "name": "LCP",
+            "factIds": [
+              "exp-1.1"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "GraphQL",
+            "factIds": [
+              "exp-2.2"
             ],
             "evidenceTier": "used"
           },
@@ -1344,9 +1539,28 @@
             "evidenceTier": "artifact"
           },
           {
+            "name": "Figma",
+            "factIds": [
+              "exp-1.5"
+            ],
+            "evidenceTier": "used"
+          },
+          {
             "name": "Figma-to-code",
             "factIds": [
               "skill-figma-to-code"
+            ],
+            "evidenceTier": "used"
+          }
+        ]
+      },
+      {
+        "group": "Domain",
+        "items": [
+          {
+            "name": "Storybook",
+            "factIds": [
+              "exp-1.2"
             ],
             "evidenceTier": "used"
           }

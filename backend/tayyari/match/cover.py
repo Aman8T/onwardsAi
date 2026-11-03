@@ -1,15 +1,16 @@
-"""The cover note: paragraphs built from (requirement, fact) pairs, with a plain sentence for every gap.
+"""The cover note: paragraphs built from (requirement, fact) pairs. Gaps stay on the match page, never in the note.
 
-One call writes the paragraphs from the strongest covered requirements and the facts that answer them, the list of
-must/required requirements the person does not meet, and the facts the person typed about logistics. The prompt says
-how many paragraphs the note has and asks for 280 to 360 words, so a paragraph that is dropped rarely breaks the
-250-word floor. Code then decides what stands:
+One call writes the paragraphs from the strongest covered requirements and the facts that answer them, and the facts
+the person typed about logistics. The prompt says how many paragraphs the note has and asks for 280 to 360 words, so a
+paragraph that is dropped rarely breaks the 250-word floor. Code then decides what stands:
 
   - a ``match`` paragraph must cite at least one fact and pass the sentence verifier (numbers, names, scope verbs,
-    posting terms);
-  - a ``gap`` paragraph must say "not" about each requirement it names; code adds a plain sentence for every
-    must/required gap the model left out ("The role lists X. I haven't used it yet.", "The role lists X, Y and Z.
-    I haven't used them yet.": the requirement's own wording, no article added);
+    posting terms), speak as the person ("I"), never about them ("Smitha holds", "the resume records"), never say
+    what they have not done, and finish every sentence (`voice_problem`);
+  - no ``gap`` paragraph is written. A requirement the person cannot evidence is left out of the note (the soul allows
+    "written as a gap or left out"): the person sees it on the match page and in "left out on purpose", and the
+    employer reads what the person can show. A missing fact is not proof of absence, so the note never says "I have
+    not". The ``gap`` machinery below (`gap_sentence`, the gap re-ask) stands for a note asked with gaps;
   - a ``logistics`` paragraph exists only when the person typed logistics facts (source ``user``) and cites only those;
   - a ``close`` paragraph makes no claim; a generic one is added when the model wrote none;
   - the generic openers ("I am writing to apply", "I am the perfect candidate", "To whom it may concern", "I saw your
@@ -23,8 +24,9 @@ The call plan is at most two calls, never three:
      nothing was refused but the checked note is under 250 words: the whole note once more, told how short it came out.
 
 A match paragraph that is refused twice (or whose re-ask failed) is replaced by one built from the fact's own words,
-"At <org>, <the fact's text>" (the text alone when no org is known; a skill name alone is too thin and gives
-nothing): never a claim the facts do not carry. The body is at most 400 words (extra match paragraphs are cut from
+"At <org>, I <the fact's text>" when the fact starts with a verb, or "I work as <title> at <org>." from the job
+itself; a fact that cannot be said as a whole first-person sentence ("Handling patients on ...", a bullet cut off by
+the page) gives nothing: never a fragment, and never a claim the facts do not carry. The body is at most 400 words (extra match paragraphs are cut from
 the end). A note that is still under 250 words after all this is returned as it is, honestly short: a short true
 note beats a padded one. When paragraphs were refused for good, the note's ``length`` lint item says which and why
 (`CoverNote.lint`, read back with `refusal_suffix`).
@@ -170,6 +172,57 @@ _IRREGULAR: Final = frozenset(
 )
 
 
+_ABOUT_DOCUMENT = re.compile(r"\b(?:resume|résumé|cv|curriculum vitae)\b", re.IGNORECASE)
+_SAYS_NOT = re.compile(
+    r"\bI (?:have not|haven't|had not|hadn't|do not|don't|did not|didn't|am not|lack|cannot claim)\b|\bnot yet\b|"
+    r"\b(?:would not|wouldn't|won't|cannot|can't) (?:claim|call)\b|\b(?:is|are|remains?) (?:limited|basic)\b|"
+    r"\bstill learning\b|\bnot (?:a|my) strength\b",
+    re.IGNORECASE,
+)
+_DANGLING_END = re.compile(
+    r"\b(?:and|or|of|to|the|a|an|in|for|with|by|from|at|on|as|via|into|than|while|including)$", re.IGNORECASE
+)
+MIN_SENTENCE_WORDS: Final = 3
+
+
+def unfinished(text: str) -> str | None:
+    """The first sentence of ``text`` that is not a whole sentence (too short, or ending on "and", "of", "in" ...)."""
+    for sentence in re.split(r"(?<=[.!?])\s+", tidy(text)):
+        body = sentence.strip().rstrip(".!?").strip()
+        if not body:
+            continue
+        if (
+            len(body.split()) < MIN_SENTENCE_WORDS
+            or _DANGLING_END.search(body)
+            or body.endswith((",", "(", "-"))
+        ):
+            return sentence
+    return None
+
+
+def _has_word(word: str, folded: str) -> bool:
+    return re.search(rf"(?<![a-z0-9]){re.escape(word)}(?![a-z0-9])", folded) is not None
+
+
+def voice_problem(text: str, person: str, known: str = "") -> str | None:
+    """Why ``text`` cannot stand in the person's note, or None: it talks about the document instead of the work, names
+    the person in the third person, says what they have not done, or leaves a sentence unfinished.
+
+    A word of the person's name that ``known`` (the cited facts, the job) also holds is not a sign of the third person:
+    Ravi Tata may well write about Tata Consultancy Services."""
+    folded, context = fold_text(text), fold_text(known)
+    if _ABOUT_DOCUMENT.search(text):
+        return "talks about the resume, not the work"
+    for word in {w for w in fold_text(person).replace(".", " ").split() if len(w) >= 3}:
+        if _has_word(word, folded) and not _has_word(word, context):
+            return "speaks of the person by name, not as I"
+    if _SAYS_NOT.search(text):
+        return "says what the person has not done"
+    if unfinished(text) is not None:
+        return "a sentence is not finished"
+    return None
+
+
 def is_logistics(fact: Fact) -> bool:
     """Is this a fact the person typed about logistics (notice period, relocation, work authorisation ...)?"""
     return (
@@ -312,6 +365,9 @@ def _accept(
         )
         if not check.ok or check.placeholders:
             return refuse("not supported by the facts it cites")
+        problem = voice_problem(text, book.name, " ".join([job, *(f.text for f in cited)]))
+        if problem is not None:
+            return refuse(problem)
         return CoverParagraph(text=text, requirementIds=req_ids, factIds=fact_ids, kind="match")
 
     if row.kind == "gap":
@@ -344,6 +400,11 @@ def _accept(
         check = check_text(text, cited, extra=job, first_person_ok=True, max_words=PARAGRAPH_MAX_WORDS)
         if not check.ok:
             return refuse("not supported by the facts it cites")
+        problem = voice_problem(text, book.name, " ".join([job, *(f.text for f in cited)]))
+        if (
+            problem is not None and problem != "says what the person has not done"
+        ):  # "not before May" is logistics
+            return refuse(problem)
         return CoverParagraph(text=text, requirementIds=[], factIds=[f.id for f in cited], kind="logistics")
 
     check = check_text(text, cited, extra=job, first_person_ok=True, max_words=60, allow_no_facts=True)
@@ -362,42 +423,92 @@ def _org_of(fact: Fact, book: FactBook) -> tuple[str, str] | None:
     return (entry.org, entry.factId) if entry is not None and entry.org else None
 
 
+def _role_sentence(fact: Fact, book: FactBook) -> str | None:
+    """ "I work as <title> at <org>." for a current job, "I worked as ..." for an earlier one, from its book entry."""
+    entry = book.entry(fact.id)
+    if entry is None or not entry.title:
+        return None
+    verb = "work" if entry.current else "worked"
+    title = tidy(entry.title).rstrip(". ")
+    return f"I {verb} as {title}" + (f" at {tidy(entry.org).rstrip('. ')}" if entry.org else "") + "."
+
+
 def fact_paragraph(
     requirements: Sequence[Requirement], facts: Sequence[Fact], book: FactBook
 ) -> CoverParagraph | None:
-    """A match paragraph made of a fact's own words: "At <org>, I led the migration ..." (the text alone when no org
-    is known). It is what stands when the model's paragraph was refused twice.
+    """A match paragraph made of a fact's own words: "At <org>, I led the migration ..." It is what stands when the
+    model's paragraph was refused twice.
 
-    The fact is the first accomplishment or project among ``facts``; when there is none, the job lines (at most two:
-    "Growth Marketing Manager at Brightwell Foods ...") say what the facts can. A bare skill name is too thin and
-    gives None. The org comes with the job's own fact, so the paragraph cites both, and the result is held to the same
-    verifier as a model's paragraph.
+    The fact is the first accomplishment or project among ``facts`` that starts with a verb, so it can be said as a
+    whole first-person sentence; when there is none, the job itself: "I work as <title> at <org>." (at most two jobs).
+    A bullet that starts otherwise ("Handling patients on ...") or is cut off, and a bare skill name, give None:
+    never a fragment. The org comes with the job's own fact, so the paragraph cites both, and the result is held to the
+    same verifier and voice checks as a model's paragraph.
     """
-    chosen = [f for f in facts if f.kind in ("accomplishment", "project")][:1] or [
-        f for f in facts if f.kind == "experience"
-    ][:2]
-    cited: dict[str, Fact] = {f.id: f for f in chosen}
+    spoken_facts = [
+        (f, s)
+        for f in facts
+        if f.kind in ("accomplishment", "project")
+        for s in [first_person(exact_wording(f))]
+        if s is not None and unfinished(s) is None
+    ][:1]
+    cited: dict[str, Fact] = {}
     sentences: list[str] = []
-    for fact in chosen:
-        body = exact_wording(fact)
-        spoken = first_person(body)
-        sentence = spoken or (body if body.endswith((".", "!", "?")) else f"{body}.")
+    for fact, spoken in spoken_facts:
+        cited[fact.id] = fact
+        sentence = spoken
         org = _org_of(fact, book)
         if org is not None and org[1] != fact.id and fold_text(org[0]) not in fold_text(fact.text):
             entry_fact = book.get(org[1])
             if entry_fact is not None:
-                sentence = f"At {org[0]}, {sentence if spoken else _decap(sentence)}"
+                sentence = f"At {org[0]}, {sentence}"
                 cited.setdefault(entry_fact.id, entry_fact)
         sentences.append(sentence)
+    if not sentences:
+        for fact in [f for f in facts if f.kind == "experience"][:2]:
+            said = _role_sentence(fact, book)
+            if said is not None:
+                cited[fact.id] = fact
+                sentences.append(said)
     text = " ".join(sentences)
     if word_count(text) < THIN_WORDS:
         return None
     check = check_text(text, list(cited.values()), first_person_ok=True, max_words=PARAGRAPH_MAX_WORDS)
     if not check.ok or check.placeholders:
         return None
+    if voice_problem(text, book.name, " ".join(f.text for f in cited.values())) is not None:
+        return None
     return CoverParagraph(
         text=text, requirementIds=[r.id for r in requirements], factIds=list(cited), kind="match"
     )
+
+
+_AT_ORG = re.compile(r"^at [^,]{1,80}, ")
+
+
+def _says_again(p: CoverParagraph, q: CoverParagraph) -> bool:
+    """Does ``q`` already say everything ``p`` says: each sentence of ``p`` (an "At <org>," lead aside) is in ``q``, or
+    ``p`` rests only on facts ``q`` cites and is shorter?"""
+    other = fold_text(q.text)
+    sentences = [
+        _AT_ORG.sub("", fold_text(s).strip()) for s in re.split(r"(?<=[.!?])\s+", p.text) if s.strip()
+    ]
+    if sentences and all(s.rstrip(".!? ") in other for s in sentences):
+        return True
+    return bool(p.factIds) and set(p.factIds) <= set(q.factIds) and word_count(p.text) < word_count(q.text)
+
+
+def _without_repeats(matches: Sequence[CoverParagraph], report: Report) -> list[CoverParagraph]:
+    """The match paragraphs without one that another already says (a fact-text paragraph after a refusal often
+    repeats the model's own); of two that say the same, the first stays."""
+    kept: list[CoverParagraph] = []
+    for i, p in enumerate(matches):
+        others = [q for j, q in enumerate(matches) if j != i and (j < i or not _says_again(q, p))]
+        if any(_says_again(p, q) for q in others):
+            report.add("paragraph", clip(p.text, 50), "says what another paragraph already says")
+            continue
+        kept.append(p)
+    return kept
 
 
 def assemble(
@@ -408,9 +519,10 @@ def assemble(
     book: FactBook,
     report: Report,
 ) -> list[CoverParagraph]:
-    """Order and complete the accepted paragraphs: matches, one gap paragraph covering every must/required gap,
-    logistics, a closing line; then cut extra matches until the body fits `COVER_WORDS_MAX`."""
-    matches = [p for p in accepted if p.kind == "match"][:MAX_MATCH_PARAGRAPHS]
+    """Order and complete the accepted paragraphs: matches (none that another one already says), one gap paragraph
+    covering every must/required gap, logistics, a closing line; then cut extra matches until the body fits
+    `COVER_WORDS_MAX`."""
+    matches = _without_repeats([p for p in accepted if p.kind == "match"], report)[:MAX_MATCH_PARAGRAPHS]
     if not matches:
         for pair in pairs[:2]:
             fallback = fact_paragraph([pair.requirement], pair.facts, book)
@@ -683,7 +795,8 @@ async def write_cover(
     pairs = pick_pairs(posting, coverage, book)
     if not pairs:
         raise CoverUnavailable
-    gaps = gap_requirements(posting, coverage)
+    # gaps are left out of the note (see the module docstring); the person sees them on the match page
+    gaps: list[Requirement] = []
     gap_by_id = {r.id: r for r in gaps}
     logistics = [f for f in book.facts if is_logistics(f)]
     logistics_ids = {f.id for f in logistics}
@@ -808,5 +921,7 @@ __all__ = [
     "refusal_suffix",
     "short_note_lint",
     "total_words",
+    "unfinished",
+    "voice_problem",
     "write_cover",
 ]

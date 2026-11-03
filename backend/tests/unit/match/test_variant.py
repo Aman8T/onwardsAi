@@ -511,3 +511,93 @@ async def test_the_composed_resume_is_json_that_round_trips() -> None:
     _, _, result, _ = await composed(riya())
     again = ResumeVariant.from_dict(result.variant.to_dict())
     assert again == result.variant
+
+
+# ───────────────────────── answers, languages and licences in the skills section ─────────────────────────
+
+
+def _req(rid: str, kind: str, terms: list[str]) -> Any:
+    from tayyari.contract.match import Requirement
+
+    text = " and ".join(terms)
+    return Requirement(
+        id=rid, text=text, quote=text, tier="required", kind=kind, provenance="stated", terms=terms
+    )
+
+
+def _covered(rid: str, fact_ids: list[str]) -> Coverage:
+    return Coverage(requirementId=rid, factIds=fact_ids, status="covered", level=3, note="Shown.")
+
+
+def test_an_answer_names_the_postings_term_in_the_skills_never_the_answer_itself() -> None:
+    from tayyari.match.facts import user_fact
+
+    answer = user_fact(
+        "Only basic. I made a small Power BI dashboard for the audit team.", key="m/q-r1", kind="skill"
+    )
+    book = FactBook(name="A B", facts=[answer])
+    reqs = [_req("r1", "tool", ["Power BI"])]
+    groups = build_skills(book, reqs, [_covered("r1", [answer.id])], Relevance(), Report())
+    names = [item.name for g in groups for item in g.items]
+    assert names == ["Power BI"]
+    assert skill_violations(groups, book, reqs, [_covered("r1", [answer.id])]) == []
+
+
+def test_an_answer_that_does_not_name_the_term_adds_nothing_to_the_skills() -> None:
+    from tayyari.match.facts import user_fact
+
+    answer = user_fact("I wrote the low level design and the team reviewed it.", key="m/q-r1", kind="skill")
+    book = FactBook(name="A B", facts=[answer])
+    groups = build_skills(
+        book, [_req("r1", "skill", ["HLD"])], [_covered("r1", [answer.id])], Relevance(), Report()
+    )
+    assert groups == []
+
+
+def test_a_resume_line_backs_the_languages_and_licences_it_names_word_for_word() -> None:
+    languages = Fact(
+        id="line-abc-41",
+        text="Languages known: Malayalam, English, Hindi (little), Tamil (understand)",
+        kind="other",
+        refs=[FactRef(source="resume", docId="resume", lines=[41, 41], quote="Languages known: Malayalam")],
+        evidenceTier=None,
+    )
+    licence = Fact(
+        id="line-abc-6",
+        text="Indian Nursing Council registered",
+        kind="cert",
+        refs=[
+            FactRef(source="resume", docId="resume", lines=[6, 6], quote="Indian Nursing Council registered")
+        ],
+        evidenceTier=None,
+    )
+    book = FactBook(name="S K", facts=[languages, licence])
+    reqs = [
+        _req("r1", "language", ["Kannada", "Hindi", "Malayalam"]),
+        _req("r2", "cert", ["Indian Nursing Council", "KNC"]),
+    ]
+    coverage = [_covered("r1", [languages.id]), _covered("r2", [licence.id])]
+    groups = {
+        g.group: [i.name for i in g.items] for g in build_skills(book, reqs, coverage, Relevance(), Report())
+    }
+    assert groups == {"Languages": ["Hindi", "Malayalam"], "Certifications": ["Indian Nursing Council"]}
+    built = build_skills(book, reqs, coverage, Relevance(), Report())
+    assert skill_violations(built, book, reqs, coverage) == []
+    # an item the line does not name is not backed by it
+    from tayyari.contract.match import SkillGroup, SkillItem
+
+    forged = [
+        SkillGroup(
+            group="Languages", items=[SkillItem(name="Kannada", factIds=[languages.id], evidenceTier=None)]
+        )
+    ]
+    assert skill_violations(forged, book, reqs, coverage) == ["Kannada"]
+
+
+def test_an_answer_never_enters_other_skills_by_its_own_words_however_relevant() -> None:
+    from tayyari.match.facts import user_fact
+
+    answer = user_fact("I made a small Power BI dashboard of open audit queries.", key="m/q-r1", kind="skill")
+    book = FactBook(name="A B", facts=[answer])
+    groups = build_skills(book, [], [], Relevance(scores={answer.id: 100}), Report())
+    assert groups == []

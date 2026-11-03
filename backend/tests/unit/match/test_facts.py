@@ -237,3 +237,126 @@ def test_the_fact_book_is_plain_data_that_round_trips_through_json() -> None:
         again = FactBook.model_validate_json(book.model_dump_json())
         assert again == book
         assert again.entry("exp-1") is not None
+
+
+# ───────────────────────── resume lines no fact quotes (registrations, languages, notice, CTC) ─────────────────────────
+
+NURSE = """SMITHA K. THOMAS
+Staff Nurse (ICU)
+
+REGISTRATION DETAILS
+Kerala Nurses and Midwives Council (KNMC) Registration No: KL 0000123 (valid up to 2028)
+Indian Nursing Council registered
+
+WORK EXPERIENCE
+Staff Nurse, Intensive Care Unit (Medical and Surgical ICU)
+Sunrise Multispeciality Hospital, Kochi (450 bedded private hospital, NABH accredited)
+July 2021 till date (5 years)
+- Handling patients on mechanical ventilator, BiPAP, CPAP and monitoring ABG reports.
+
+Current CTC: 4.2 LPA | Notice Period: 30 days
+
+PERSONAL PROFILE
+Date of Birth: 12/11/1998
+Sex: Female
+Marital status: Married
+Father's Name: K. Thomas
+Languages known: Malayalam, English, Hindi (little), Tamil (understand)
+Mobile: +91 90000 00004
+
+DECLARATION
+I hereby declare that the information furnished above is true.
+Place: Kochi"""
+
+
+def _nurse_book() -> Any:
+    job = _pf(
+        id="exp-1",
+        kind="experience",
+        title="Staff Nurse, Intensive Care Unit (Medical and Surgical ICU)",
+        org="Sunrise Multispeciality Hospital",
+        current=True,
+        highlights=["Handling patients on mechanical ventilator, BiPAP, CPAP and monitoring ABG reports."],
+        sourceRefs=[
+            SourceRef(sourceId="resume", quote="Staff Nurse, Intensive Care Unit (Medical and Surgical ICU)")
+        ],
+    )
+    return build_facts(_profile(), _ctx(NURSE), [job])
+
+
+def test_resume_lines_no_fact_quotes_become_facts_in_their_own_words() -> None:
+    book = _nurse_book()
+    lines = {f.text: f for f in book.facts if f.id.startswith("line-")}
+    assert "Indian Nursing Council registered" in lines
+    assert lines["Indian Nursing Council registered"].kind == "cert"
+    assert any("450 bedded private hospital" in t for t in lines)
+    assert any(t.startswith("Kerala Nurses and Midwives Council (KNMC) Registration") for t in lines)
+    assert "Current CTC: 4.2 LPA | Notice Period: 30 days" in lines
+    assert "Languages known: Malayalam, English, Hindi (little), Tamil (understand)" in lines
+    assert "July 2021 till date (5 years)" in lines
+    for fact in lines.values():  # each is its own quote, on the line it names
+        assert fact.refs[0].quote == fact.text and fact.refs[0].lines is not None
+
+
+def test_personal_details_contact_lines_headings_and_the_declaration_are_never_facts() -> None:
+    texts = " | ".join(f.text for f in _nurse_book().facts)
+    for never in (
+        "Date of Birth",
+        "Sex:",
+        "Marital",
+        "Father's",
+        "+91 90000",
+        "hereby declare",
+        "Place: Kochi",
+        "PERSONAL PROFILE",
+        "REGISTRATION DETAILS",
+    ):
+        assert never not in texts, never
+
+
+def test_a_line_already_quoted_by_a_fact_is_not_taken_twice() -> None:
+    book = _nurse_book()
+    assert not any(f.id.startswith("line-") and "mechanical ventilator" in f.text for f in book.facts)
+    assert not any(
+        f.id.startswith("line-") and f.text.startswith("Staff Nurse, Intensive") for f in book.facts
+    )
+
+
+def test_the_tail_of_a_quoted_sentence_is_not_a_fact_of_its_own() -> None:
+    riya_book = riya().book()
+    assert not any(
+        f.id.startswith("line-") and f.text.startswith("team at Kitebird") for f in riya_book.facts
+    )
+
+
+def test_a_bullet_a_pdf_wrapped_is_joined_with_its_continuation_so_its_numbers_survive() -> None:
+    resume = (
+        "EXPERIENCE\n\nInfosys — Senior Systems Engineer    Pune · Oct 2024 – Present\n"
+        "- Redesigned the dispute status API and\n"
+        "reduced average response time from 1.8 seconds to 600 ms by adding Redis caching.\n"
+        "- Wrote JUnit test cases; improved coverage of the module from 54% to\n"
+        "82%.\n"
+        "- Mentored 2 new joiners."
+    )
+    job = _pf(
+        id="exp-1",
+        kind="experience",
+        title="Senior Systems Engineer",
+        org="Infosys",
+        highlights=[
+            "Redesigned the dispute status API and",
+            "Wrote JUnit test cases; improved coverage of the module from 54% to",
+            "Mentored 2 new joiners.",
+        ],
+        sourceRefs=[SourceRef(sourceId="resume", quote="Infosys — Senior Systems Engineer")],
+    )
+    book = build_facts(_profile(), _ctx(resume), [job])
+    bullets = {f.id: f for f in book.facts if f.kind == "accomplishment"}
+    assert bullets["exp-1.1"].text == (
+        "Redesigned the dispute status API and reduced average response time from 1.8 seconds to 600 ms "
+        "by adding Redis caching."
+    )
+    assert bullets["exp-1.1"].refs[0].lines == [4, 5]
+    assert bullets["exp-1.2"].text.endswith("from 54% to 82%.")
+    assert bullets["exp-1.3"].text == "Mentored 2 new joiners."  # a new bullet is never joined to the last
+    assert not any(f.id.startswith("line-") for f in book.facts if "1.8 seconds" in f.text)

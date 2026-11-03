@@ -810,6 +810,102 @@
         }
       ],
       "evidenceTier": "listed"
+    },
+    {
+      "id": "line-fa32d5-2",
+      "text": "Growth Marketing Manager · Pune, India",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            2,
+            2
+          ],
+          "quote": "Growth Marketing Manager · Pune, India"
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-8",
+      "text": "Six years in food and media marketing, the last three leading channel programmes at Brightwell Foods.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            8,
+            8
+          ],
+          "quote": "Six years in food and media marketing, the last three leading channel programmes at Brightwell Foods."
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-13",
+      "text": "Direct-to-consumer packaged-foods brand, about 120 people, online and quick-commerce.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            13,
+            13
+          ],
+          "quote": "Direct-to-consumer packaged-foods brand, about 120 people, online and quick-commerce."
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-21",
+      "text": "Digital media house with a subscription news app.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            21,
+            21
+          ],
+          "quote": "Digital media house with a subscription news app."
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-27",
+      "text": "Home-baking startup.",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            27,
+            27
+          ],
+          "quote": "Home-baking startup."
+        }
+      ]
+    },
+    {
+      "id": "line-fa32d5-41",
+      "text": "Languages: English, Hindi, Marathi",
+      "kind": "other",
+      "refs": [
+        {
+          "source": "resume",
+          "docId": "resume",
+          "lines": [
+            41,
+            41
+          ],
+          "quote": "Languages: English, Hindi, Marathi"
+        }
+      ]
     }
   ],
   "result": {
@@ -1106,7 +1202,14 @@
           {
             "name": "Meta Ads",
             "factIds": [
-              "skill-meta-ads"
+              "exp-1.2"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "Google Ads",
+            "factIds": [
+              "exp-1.2"
             ],
             "evidenceTier": "used"
           },
@@ -1118,9 +1221,23 @@
             "evidenceTier": "used"
           },
           {
+            "name": "email",
+            "factIds": [
+              "exp-1.1"
+            ],
+            "evidenceTier": "used"
+          },
+          {
+            "name": "WhatsApp",
+            "factIds": [
+              "exp-1.1"
+            ],
+            "evidenceTier": "used"
+          },
+          {
             "name": "CleverTap",
             "factIds": [
-              "skill-clevertap"
+              "exp-1.1"
             ],
             "evidenceTier": "used"
           },
@@ -1434,21 +1551,13 @@
         "kind": "match"
       },
       {
-        "text": "I have not yet worked with a customer data platform such as Segment or mParticle.",
-        "requirementIds": [
-          "r7"
-        ],
-        "factIds": [],
-        "kind": "gap"
-      },
-      {
         "text": "Thank you for your time. I would welcome a conversation about the role.",
         "requirementIds": [],
         "factIds": [],
         "kind": "close"
       }
     ],
-    "wordCount": 313,
+    "wordCount": 298,
     "lint": {
       "items": [
         {
@@ -1467,7 +1576,7 @@
           "id": "length",
           "ok": true,
           "label": "Length is 250 to 400 words",
-          "detail": "313 words."
+          "detail": "298 words."
         },
         {
           "id": "openers",
@@ -1491,7 +1600,7 @@
           "id": "round_trip",
           "ok": true,
           "label": "The text survives extraction",
-          "detail": "All 6 paragraphs read back exactly."
+          "detail": "All 5 paragraphs read back exactly."
         }
       ]
     }

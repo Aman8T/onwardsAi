@@ -8,7 +8,7 @@
     5  build_radar    role expectation per profile domain, from requirement weights (no "Other" axis)
     6  make_questions at most three, must-haves first
     7  compose_variant  the resume from cited facts (relevance, selection, phrasing, verification)
-    8  write_cover    the cover note from (requirement, fact) pairs and a plain sentence per gap
+    8  write_cover    the cover note from (requirement, fact) pairs; gaps stay on the match page, never in the note
     9  export_*       DOCX and PDF, then the lint reads them back
 
 Steps 1 to 6 are `analyse`; 7 to 9 are called one by one, after the person has settled what the match asked. Every
@@ -18,6 +18,8 @@ hands in the cached posting, facts and user facts through the optional ports, or
 Order of effects: the posting is read at the same time as the facts are gathered (they never meet in a prompt); the
 gates and the coverage are checked at the same time; the band, counts, confidence, radar and questions are computed
 afterwards, in code, from the answers. A re-check keeps the radar: the requirements and the graph have not changed.
+A re-checked gate takes the requirements that quote the same sentence of the posting with it (`requirements_of_gates`),
+so an answer that settles "valid KNC or INC registration" as a gate settles it as a requirement too.
 """
 
 from __future__ import annotations
@@ -25,6 +27,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field, replace
+from typing import Final
 
 from tayyari.contract.match import (
     MATCH_VERSION,
@@ -62,9 +65,10 @@ from tayyari.match.ports import FactsCache, PostingCache
 from tayyari.match.posting import PostingResult, clean_posting_text, read_posting
 from tayyari.match.questions import make_questions
 from tayyari.match.radar import build_radar
-from tayyari.match.text import posting_hash
+from tayyari.match.text import fold_text, posting_hash
 from tayyari.match.variant import VariantResult, compose_variant, draft_context
 from tayyari.portfolio.facts import facts_hash
+from tayyari.portfolio.ground import tokens_of
 
 # ───────────────────────── events (the stream of M2 sends these on) ─────────────────────────
 
@@ -305,6 +309,7 @@ class MatchService:
         """
         wanted = set(requirement_ids) if requirement_ids is not None else {r.id for r in posting.requirements}
         wanted_gates = set(gate_ids) if gate_ids is not None else {g.id for g in posting.gates}
+        wanted |= requirements_of_gates(posting, wanted_gates)
         redo = [r for r in posting.requirements if r.id in wanted]
         gates = [g for g in posting.gates if g.id in wanted_gates]
         with call_timeout(self._timeout):
@@ -407,6 +412,34 @@ def _send(emit: Emit | None, event: MatchEvent) -> None:
         emit(event)
 
 
+GATE_OVERLAP: Final = 0.6
+"""Share of the shorter quote's words two quotes must have in common to be the same sentence of the posting."""
+
+
+def _words(text: str) -> set[str]:
+    return {t for t in tokens_of(text) if len(t) > 2}
+
+
+def requirements_of_gates(posting: Posting, gate_ids: Iterable[str]) -> set[str]:
+    """The requirements that quote the same sentence of the posting as one of the gates ``gate_ids``: one quote holds
+    the other, or they share most of their words. Code only; the posting's own wording decides."""
+    gates = [g for g in posting.gates if g.id in set(gate_ids)]
+    out: set[str] = set()
+    for gate in gates:
+        g_folded, g_words = fold_text(gate.quote), _words(gate.quote)
+        for req in posting.requirements:
+            r_folded, r_words = fold_text(req.quote), _words(req.quote)
+            if not r_folded or not g_folded:
+                continue
+            if r_folded in g_folded or g_folded in r_folded:
+                out.add(req.id)
+                continue
+            smaller = min(len(g_words), len(r_words))
+            if smaller >= 2 and len(g_words & r_words) >= GATE_OVERLAP * smaller:
+                out.add(req.id)
+    return out
+
+
 __all__ = [
     "CoverageBatch",
     "Emit",
@@ -420,4 +453,5 @@ __all__ = [
     "QuestionsReady",
     "RadarReady",
     "assemble_result",
+    "requirements_of_gates",
 ]

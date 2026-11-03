@@ -68,7 +68,8 @@ export function CoverView({ posting, facts, coverage, note, matchId, onNavigate,
             Cover note{posting?.company ? ` · ${posting.company}` : ''}
           </h1>
           <p className="mt-lede">
-            Each paragraph pairs one thing the posting asks for with one thing you can show. A gap is said plainly.{' '}
+            Each paragraph pairs one thing the posting asks for with one thing you can show. Your gaps stay on the
+            match page, not in the note.{' '}
             <span className="numeral">{note.wordCount}</span> words{noOpeners ? '. No generic openers.' : '.'}
           </p>
         </div>

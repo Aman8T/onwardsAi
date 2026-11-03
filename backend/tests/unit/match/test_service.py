@@ -22,6 +22,7 @@ from tayyari.match.service import (
     PostingReady,
     QuestionsReady,
     RadarReady,
+    requirements_of_gates,
 )
 from tayyari.portfolio.facts import facts_hash
 from tests.fakes.claude import FakeClaudeClient, StructuredCall
@@ -512,3 +513,68 @@ async def test_a_separate_writer_model_phrases_and_writes_while_the_reader_model
         by_purpose["match.posting"] == by_purpose["match.coverage"] == by_purpose["match.relevance"] == HAIKU
     )
     assert by_purpose["match.phrase"] == by_purpose["match.cover"] == "claude-sonnet-5-5"
+
+
+# ───────────────────────── a gate and the requirement that quotes the same sentence ─────────────────────────
+
+
+def _with_gate_on(posting: Posting, requirement_id: str) -> Posting:
+    """``posting`` with one more gate that quotes the very sentence requirement ``requirement_id`` quotes."""
+    from tayyari.contract.match import Gate
+
+    req = next(r for r in posting.requirements if r.id == requirement_id)
+    gate = Gate(id="g9", question="Are you fluent in English and Hindi?", quote=req.quote, severity=7)
+    return posting.model_copy(update={"gates": [*posting.gates, gate]})
+
+
+async def test_a_gate_takes_the_requirements_that_quote_its_sentence_and_no_others() -> None:
+    _, outcome, _ = await run(meera())
+    posting = _with_gate_on(outcome.posting, "r6")
+    assert requirements_of_gates(posting, ["g9"]) == {"r6"}
+    assert requirements_of_gates(posting, ["g1", "g2", "g3"]) == set()  # their sentences are not requirements
+    assert requirements_of_gates(posting, []) == set()
+
+
+async def test_answering_a_gate_rechecks_the_requirement_that_asks_the_same_thing() -> None:
+    persona = meera()
+    service, outcome, fake = await run(persona)
+    posting = _with_gate_on(outcome.posting, "r6")
+    typed = user_fact("I am fluent in English and Hindi.", key="q-g9", kind="other")
+    asked: list[list[str]] = []
+
+    def gates(call: StructuredCall) -> dict[str, Any]:
+        return {"answers": [{"gateId": "g9", "factIds": [typed.id], "verdict": "pass", "note": "Said so."}]}
+
+    def coverage(call: StructuredCall) -> dict[str, Any]:
+        ids = call.schema["properties"]["rows"]["items"]["properties"]["requirementId"]["enum"]
+        asked.append(ids)
+        return {
+            "rows": [
+                {
+                    "requirementId": "r6",
+                    "factIds": [typed.id],
+                    "status": "covered",
+                    "level": 4,
+                    "note": "In their own words.",
+                    "interviewRisk": "",
+                    "mitigation": "",
+                }
+            ]
+        }
+
+    fake._queues.structured["match.gates"] = []
+    fake._queues.structured["match.coverage"] = []
+    fake.script_structured("match.gates", gates)
+    fake.script_structured("match.coverage", coverage)
+    after = await service.recheck(
+        profile=persona.profile,
+        posting=posting,
+        book=outcome.book.with_facts([typed]),
+        previous=outcome.result,
+        call_ctx=CTX,
+        requirement_ids=[],
+        gate_ids=["g9"],
+    )
+    assert asked == [["r6"]]  # only the gate was answered, and its requirement was checked with it
+    row = next(c for c in after.coverage if c.requirementId == "r6")
+    assert row.status == "covered" and row.factIds == [typed.id]
