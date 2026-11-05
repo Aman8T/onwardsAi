@@ -38,6 +38,18 @@ OUTPUT_SCHEMA: dict[str, Any] = {
 }  # fmt: skip
 
 
+def redact(obj: Any) -> Any:
+    """Drop live-view and CDP URLs (they embed the browser's control credential) from anything we save."""
+    if isinstance(obj, dict):
+        return {k: ("<redacted>" if any(s in k.lower() for s in ("live_view", "liveurl", "cdp")) else redact(v))
+                for k, v in obj.items()}  # fmt: skip
+    if isinstance(obj, list):
+        return [redact(v) for v in obj]
+    if isinstance(obj, str) and ("cdp.browser-use.com" in obj or "live.browser-use.com" in obj):
+        return "<redacted>"
+    return obj
+
+
 def task_text(job: dict[str, Any]) -> str:
     details = "\n".join(f"- {k}: {v}" for k, v in PROFILE.items() if v)
     return f"""Open {job['apply_url']} and fill in the job application form for {job['title']} at {job['company']}.
@@ -48,7 +60,8 @@ press Enter in a field. When the form is filled, stop and return the summary. (S
 Use exactly these applicant details:
 {details}
 
-The resume is the file uploads/{RESUME_NAME} in your workspace: upload it to the resume/CV field.
+The resume is the file uploads/{RESUME_NAME} in your workspace: upload it to the resume/CV field. If the browser's
+upload needs the file in its downloads directory, copy it there first, then upload it.
 Fill every required field and every optional field these details answer. Answer screening questions in one or two plain
 sentences from the details. For required demographic questions choose "decline" / "prefer not to say". Required
 acknowledgement checkboxes may be ticked (test only). If a cookie banner appears, reject non-essential cookies.
@@ -93,6 +106,7 @@ def run(job: dict[str, Any], run_dir: Path, *, model: str = "bu-ultrafast", max_
         after = getattr(page, "next_after", None) or after
         if not getattr(page, "has_more", False):
             break
+    events = redact(events)
     (run_dir / "events.json").write_text(json.dumps(events, indent=2, default=str), encoding="utf-8")
     types: dict[str, int] = {}
     for e in events:
@@ -111,10 +125,10 @@ def run(job: dict[str, Any], run_dir: Path, *, model: str = "bu-ultrafast", max_
     result["browser_id"] = browser_id
     if browser_id:
         try:
-            view = c.browsers.get(browser_id)
-            if view.cdp_url and str(view.status).lower().endswith("active"):
+            view = bu.get_browser(browser_id)
+            if view.get("cdpUrl") and str(view.get("status", "")).lower().endswith("active"):
                 with sync_playwright() as p:
-                    browser = bu.connect(p, view.cdp_url)
+                    browser = bu.connect(p, view["cdpUrl"])
                     context = browser.contexts[0]
                     page = best_page(context) or (context.pages[0] if context.pages else None)
                     if page is not None:
@@ -134,7 +148,7 @@ def run(job: dict[str, Any], run_dir: Path, *, model: str = "bu-ultrafast", max_
             result["scan_error"] = f"{type(exc).__name__}: {str(exc)[:160]}"
         finally:
             try:
-                c.browsers.stop(browser_id)
+                bu.stop_browser(browser_id)
             except Exception:
                 pass
     time.sleep(3)
@@ -148,5 +162,9 @@ def run(job: dict[str, Any], run_dir: Path, *, model: str = "bu-ultrafast", max_
         result["browser_use_usd"] = result["run_cost_usd"]
     result["seconds"] = round(time.monotonic() - started, 1)
     result["anthropic_usd"] = 0.0
-    result["steps"] = sum(n for t, n in types.items() if t.startswith(("tool", "action", "step")))
+    result["steps"] = sum(1 for e in events if e.get("type") == "core.event" and (e.get("data") or {}).get("type") == "step_start")
+    result["llm_requests"] = types.get("llm.request", 0)
+    result["agent_trace"] = [((e.get("data") or {}).get("part") or {}).get("state", {}).get("input", {}).get("code", "")[:200]
+                             for e in events if e.get("type") == "core.event" and (e.get("data") or {}).get("type") == "tool_use"
+                             and ((e.get("data") or {}).get("part") or {}).get("state", {}).get("status") == "running"]  # fmt: skip
     return result

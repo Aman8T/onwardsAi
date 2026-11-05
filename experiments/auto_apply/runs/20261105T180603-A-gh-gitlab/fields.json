@@ -1,0 +1,207 @@
+{
+  "url": "https://job-boards.greenhouse.io/gitlab/jobs/8771512002",
+  "title": "Job Application for Backend Engineer, GitLab Orbit at GitLab",
+  "fields": [
+    {
+      "selector": "[id=\"first_name\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "First Name*",
+      "required": true,
+      "value": "Jordan",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"last_name\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "Last Name*",
+      "required": true,
+      "value": "Testcase",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"email\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "Email*",
+      "required": true,
+      "value": "jordan.testcase@example.com",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"country\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Country",
+      "required": false,
+      "value": "+1",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"phone\"]",
+      "tag": "input",
+      "type": "tel",
+      "name": null,
+      "label": "Phone",
+      "required": false,
+      "value": "+1 555 010 0142",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"resume\"]",
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Resume/CV*",
+      "required": true,
+      "value": "",
+      "accept": ".pdf,.doc,.docx,.txt,.rtf",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"cover_letter\"]",
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Cover Letter",
+      "required": false,
+      "value": "",
+      "accept": ".pdf,.doc,.docx,.txt,.rtf",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_38115715002\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "What is your current country of residence?*",
+      "required": true,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_38115708002\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "LinkedIn Profile",
+      "required": false,
+      "value": "https://example.com/jordan-testcase",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_38115709002\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "What's the name you'd prefer us to use throughout the interview process?",
+      "required": false,
+      "value": "Jordan Testcase",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_38115710002\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Are you subject to any employment agreements and/or post-employment restrictions with your current employer or a past employer?*",
+      "required": true,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_38115711002\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "It is important to us to create an accessible and inclusive interview experience. Please let us know if there are any adjustments we can make to assist you during the hiring and interview process.",
+      "required": false,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_38115712002\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "What is your GitLab username?",
+      "required": false,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_38115713002\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Will you now or in the future require sponsorship for a visa to remain in your current location?*",
+      "required": true,
+      "value": "No",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_38115714002\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Have you previously worked at or consulted for GitLab?*",
+      "required": true,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_38960386002\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Do you reside in the United States or Canada?*",
+      "required": true,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"gender\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Gender",
+      "required": false,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"hispanic_ethnicity\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Are you Hispanic/Latino?",
+      "required": false,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"veteran_status\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Veteran Status",
+      "required": false,
+      "value": "",
+      "frame": 0
+    }
+  ],
+  "blockers": {
+    "captcha_on_page": false,
+    "password_field": false,
+    "submit_texts": [
+      "Apply",
+      "Submit application"
+    ],
+    "resume_name_on_page": false
+  }
+}

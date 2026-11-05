@@ -1,0 +1,103 @@
+{
+  "arm": "B",
+  "model": "claude-sonnet-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 3,
+  "score": {
+    "success": false,
+    "fields_total": 22,
+    "required_total": 13,
+    "required_filled": 4,
+    "mapped_correct": 5,
+    "wrong": [
+      {
+        "label": "Country",
+        "expected": "country",
+        "got": "+1"
+      }
+    ],
+    "missed_required": [
+      "What is your current country of residence?*",
+      "What is your current country of residence?*",
+      "Are you subject to any employment agreements and/or post-employment restrictions",
+      "Are you subject to any employment agreements and/or post-employment restrictions",
+      "Will you now or in the future require sponsorship for a visa to remain in your c",
+      "Will you now or in the future require sponsorship for a visa to remain in your c",
+      "Have you previously worked at or consulted for GitLab?*",
+      "Have you previously worked at or consulted for GitLab?*",
+      "Do you reside in the United States or Canada?*"
+    ],
+    "resume_attached": null,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://job-boards.greenhouse.io/gitlab/jobs/8771512002",
+  "seconds": 201.3,
+  "failure": null,
+  "errors": [
+    "field 7 (What is your current country of residence?*): TimeoutError",
+    "field 11 (Are you subject to any employment agreements and/or post-emp): TimeoutError",
+    "field 15 (Will you now or in the future require sponsorship for a visa): TimeoutError",
+    "field 17 (Have you previously worked at or consulted for GitLab?*): TimeoutError",
+    "field 19 (Do you reside in the United States or Canada?*): TimeoutError",
+    "field 6 (What is your current country of residence?*): TimeoutError",
+    "field 10 (Are you subject to any employment agreements and/or post-emp): TimeoutError",
+    "field 14 (Will you now or in the future require sponsorship for a visa): TimeoutError",
+    "field 16 (Have you previously worked at or consulted for GitLab?*): TimeoutError",
+    "field 18 (Do you reside in the United States or Canada?*): TimeoutError",
+    "field 5 (What is your current country of residence?*): TimeoutError",
+    "field 9 (Are you subject to any employment agreements and/or post-emp): TimeoutError",
+    "field 13 (Will you now or in the future require sponsorship for a visa): TimeoutError",
+    "field 15 (Have you previously worked at or consulted for GitLab?*): TimeoutError",
+    "field 17 (Do you reside in the United States or Canada?*): TimeoutError"
+  ],
+  "steps": 8,
+  "claude_calls": 3,
+  "usage": [
+    {
+      "input_tokens": 2506,
+      "output_tokens": 728,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.012292,
+      "seconds": 5.8,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2727,
+      "output_tokens": 369,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.009144,
+      "seconds": 4.0,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2694,
+      "output_tokens": 354,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.008928,
+      "seconds": 3.7,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.030364,
+  "browser_use_usd": 0.00145,
+  "browser_cost": {
+    "browser": 0.0013333333333333333,
+    "proxy": 0.0001164102926850319,
+    "proxy_mb": 0.5960206985473633
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "label": "gh-gitlab",
+  "ats": "greenhouse",
+  "company": "GitLab",
+  "run_dir": "runs\\20261105T175315-B-gh-gitlab",
+  "wall_seconds": 213.3,
+  "bu_spent_before": 0.005954,
+  "bu_spent_after": 0.007405,
+  "bu_balance_delta": 0.001452,
+  "bu_cost_counted": 0.001452
+}

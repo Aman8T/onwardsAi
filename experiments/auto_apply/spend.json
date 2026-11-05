@@ -1,6 +1,6 @@
 {
-  "browser_use_usd": 0.000333,
-  "anthropic_usd": 0.0,
+  "browser_use_usd": 0.017186,
+  "anthropic_usd": 0.040472,
   "caps": {
     "browser_use_stop_usd": 0.8,
     "anthropic_cap_usd": 2.0
@@ -11,6 +11,63 @@
       "kind": "guard_check",
       "browser_use_usd": 0.0003333333333333333,
       "anthropic_usd": 0
+    },
+    {
+      "at": "2026-11-05T17:56:48+00:00",
+      "kind": "arm_B",
+      "label": "gh-gitlab",
+      "run_dir": "runs\\20261105T175315-B-gh-gitlab",
+      "browser_use_usd": 0.001452,
+      "anthropic_usd": 0.030364,
+      "bu_spent_real_balance": 0.007405
+    },
+    {
+      "at": "2026-11-05T17:58:00+00:00",
+      "kind": "inspect",
+      "label": "gh-gitlab",
+      "browser_use_usd": 0.0003333333333333333,
+      "anthropic_usd": 0
+    },
+    {
+      "at": "2026-11-05T17:58:52+00:00",
+      "kind": "inspect",
+      "label": "gh-gitlab",
+      "browser_use_usd": 0.0003333333333333333,
+      "anthropic_usd": 0
+    },
+    {
+      "at": "2026-11-05T18:01:50+00:00",
+      "kind": "arm_B",
+      "label": "gh-gitlab",
+      "run_dir": "runs\\20261105T180006-B-gh-gitlab",
+      "browser_use_usd": 0.001027,
+      "anthropic_usd": 0.010108,
+      "bu_spent_real_balance": 0.009205
+    },
+    {
+      "at": "2026-11-05T18:03:11+00:00",
+      "kind": "inspect",
+      "label": "gh-gitlab",
+      "browser_use_usd": 0.0003333333333333333,
+      "anthropic_usd": 0
+    },
+    {
+      "at": "2026-11-05T18:04:31+00:00",
+      "kind": "arm_A",
+      "label": "gh-gitlab",
+      "run_dir": "runs\\20261105T180351-A-gh-gitlab",
+      "browser_use_usd": 0.006048,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.01561
+    },
+    {
+      "at": "2026-11-05T18:06:51+00:00",
+      "kind": "arm_A",
+      "label": "gh-gitlab",
+      "run_dir": "runs\\20261105T180603-A-gh-gitlab",
+      "browser_use_usd": 0.007327,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.022951
     }
   ]
 }

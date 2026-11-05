@@ -94,6 +94,27 @@ def credit_usd(bal: dict[str, Any]) -> float | None:
     return None
 
 
+API_V4 = "https://api.browser-use.com/api/v4"
+
+
+def _headers() -> dict[str, str]:
+    return {"X-Browser-Use-API-Key": os.environ["BROWSER_USE_API_KEY"], "Content-Type": "application/json"}
+
+
+def get_browser(browser_id: str) -> dict[str, Any]:
+    """GET /browsers/{id} as plain JSON (the SDK model rejects agent browsers whose extension entries lack runtimeId)."""
+    resp = httpx.get(f"{API_V4}/browsers/{browser_id}", headers=_headers(), timeout=30)
+    resp.raise_for_status()
+    return dict(resp.json())
+
+
+def stop_browser(browser_id: str) -> None:
+    """PATCH /browsers/{id} {"action": "stop"}: ends billing and refunds unused reserved time."""
+    resp = httpx.patch(f"{API_V4}/browsers/{browser_id}", headers=_headers(), json={"action": "stop"}, timeout=30)
+    if resp.status_code not in (200, 409):  # 409/already stopped is fine
+        resp.raise_for_status()
+
+
 @contextlib.contextmanager
 def standalone_browser(c: BrowserUse, ext_id: str, minutes: int, label: str) -> Iterator[Any]:
     """A guarded standalone browser: no CAPTCHA solving, no managed proxy (direct egress), our guard extension.
@@ -105,7 +126,7 @@ def standalone_browser(c: BrowserUse, ext_id: str, minutes: int, label: str) -> 
     finally:
         for attempt in range(3):
             try:
-                c.browsers.stop(b.id)
+                stop_browser(str(b.id))
                 break
             except Exception:
                 time.sleep(2 * (attempt + 1))
@@ -113,16 +134,17 @@ def standalone_browser(c: BrowserUse, ext_id: str, minutes: int, label: str) -> 
 
 def browser_cost(c: BrowserUse, browser_id: str) -> dict[str, float]:
     """browserCost + proxyCost of a (stopped) browser, retried while the final numbers settle."""
-    view = None
+    view: dict[str, Any] = {}
     for _ in range(5):
-        view = c.browsers.get(browser_id)
-        if getattr(view, "finished_at", None):
+        try:
+            view = get_browser(browser_id)
+        except Exception:
+            view = {}
+        if view.get("finishedAt"):
             break
         time.sleep(2)
-    if view is None:
-        return {"browser": 0.0, "proxy": 0.0, "proxy_mb": 0.0}
-    f = lambda name: float(getattr(view, name, 0) or 0)  # noqa: E731
-    return {"browser": f("browser_cost"), "proxy": f("proxy_cost"), "proxy_mb": f("proxy_used_mb")}
+    f = lambda name: float(view.get(name) or 0)  # noqa: E731
+    return {"browser": f("browserCost"), "proxy": f("proxyCost"), "proxy_mb": f("proxyUsedMb")}
 
 
 def connect(playwright: Any, cdp_url: str) -> Any:

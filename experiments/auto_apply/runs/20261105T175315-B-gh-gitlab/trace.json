@@ -1,0 +1,82 @@
+[
+  {
+    "op": "fill",
+    "label": "First Name*",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"first_name\"]",
+    "name": null,
+    "value": "Jordan",
+    "source": "first_name"
+  },
+  {
+    "op": "fill",
+    "label": "Last Name*",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"last_name\"]",
+    "name": null,
+    "value": "Testcase",
+    "source": "last_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email*",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"email\"]",
+    "name": null,
+    "value": "jordan.testcase@example.com",
+    "source": "email"
+  },
+  {
+    "op": "choose",
+    "label": "Country",
+    "type": "combobox",
+    "frame": 0,
+    "selector": "[id=\"country\"]",
+    "name": null,
+    "value": "India",
+    "source": "country"
+  },
+  {
+    "op": "fill",
+    "label": "Phone",
+    "type": "tel",
+    "frame": 0,
+    "selector": "[id=\"phone\"]",
+    "name": null,
+    "value": "+1 555 010 0142",
+    "source": "phone"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Attach",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"resume\"]",
+    "name": null,
+    "value": "",
+    "source": "resume"
+  },
+  {
+    "op": "fill",
+    "label": "What's the name you'd prefer us to use throughout the interview process?",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"question_38115709002\"]",
+    "name": null,
+    "value": "Jordan",
+    "source": "first_name"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Attach",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"cover_letter\"]",
+    "name": null,
+    "value": "",
+    "source": "resume"
+  }
+]

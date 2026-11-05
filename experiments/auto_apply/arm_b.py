@@ -117,7 +117,35 @@ def _pick_in_group(frame: Any, f: dict[str, Any], value: str) -> None:
     frame.locator(f'input[name="{f.get("name")}"]').nth(index).check(force=True, timeout=8000)
 
 
+def choose(page: Any, frame: Any, loc: Any, value: str) -> None:
+    """A react-select style combobox: focus, type, then click the best option of *its own* listbox."""
+    loc.focus(timeout=8000)
+    page.keyboard.press("Control+A")
+    page.keyboard.type(value[:30], delay=25)
+    page.wait_for_timeout(700)
+    ctrl = loc.get_attribute("aria-controls") or ""
+    options = frame.locator(f'[id="{ctrl}"] [role="option"]') if ctrl else frame.locator('[role="option"]:visible')
+    if not options.count():
+        page.keyboard.press("ArrowDown")
+        page.wait_for_timeout(500)
+        ctrl = loc.get_attribute("aria-controls") or ""
+        options = frame.locator(f'[id="{ctrl}"] [role="option"]') if ctrl else frame.locator('[role="option"]:visible')
+    texts = [" ".join(t.split()).lower() for t in options.all_inner_texts()[:300]]
+    want = " ".join(value.split()).lower()
+    pick = next((i for i, t in enumerate(texts) if t == want), None)
+    if pick is None:
+        pick = next((i for i, t in enumerate(texts) if t.startswith(want) or want.startswith(t) and t), None)
+    if pick is None:
+        pick = next((i for i, t in enumerate(texts) if want in t), None)
+    if pick is None:
+        page.keyboard.press("Escape")
+        raise LookupError(f"no option for {value!r} among {texts[:6]}")
+    options.nth(pick).click(timeout=5000)
+
+
 def execute(page: Any, f: dict[str, Any], op: str, value: str, resume: bytes) -> None:
+    if not f.get("selector"):
+        raise LookupError("not an actionable field")
     frame = page.frames[f["frame"]] if f["frame"] < len(page.frames) else page.main_frame
     loc = frame.locator(f["selector"]).first
     if op == "fill":
@@ -137,18 +165,7 @@ def execute(page: Any, f: dict[str, Any], op: str, value: str, resume: bytes) ->
         else:
             loc.check(force=True, timeout=8000)
     elif op == "choose":
-        loc.click(timeout=8000)
-        loc.fill(value[:40], timeout=8000)
-        page.wait_for_timeout(900)
-        options = frame.locator('[role="option"]')
-        match = options.filter(has_text=re.compile(re.escape(value[:25]), re.I))
-        if match.count():
-            match.first.click(timeout=5000)
-        elif options.count() == 1:
-            options.first.click(timeout=5000)
-        else:
-            page.keyboard.press("Escape")
-            raise LookupError(f"no option for {value!r}")
+        choose(page, frame, loc, value)
     elif op == "upload_resume":
         loc.set_input_files(files=[{"name": RESUME_NAME, "mimeType": "application/pdf", "buffer": resume}],
                             timeout=10000)  # fmt: skip

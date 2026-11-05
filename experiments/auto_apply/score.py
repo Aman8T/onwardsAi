@@ -39,6 +39,8 @@ def key_for(field: dict[str, Any]) -> str | None:
     if field["type"] in ("checkbox", "radio", "checkbox-group"):
         return None
     label = (field["label"] or "").lower().rstrip("* ").strip()
+    if len(label) > 50:
+        return None  # a long label is a screening question, not a personal-detail field
     for pattern, key in RULES:
         if re.search(pattern, label):
             return key
@@ -58,6 +60,8 @@ def correct(key: str, value: str) -> bool:
     if key in ("cover_letter",):
         return len(v) >= 20
     if key in ("location", "city", "country"):
+        if key == "country" and v.startswith("+"):  # a phone-number country picker shows the dial code
+            return PROFILE["phone"].startswith(v.split()[0])
         return any(part.lower() in v.lower() for part in (PROFILE["city"], PROFILE["country"]))
     if not expected:
         return True  # nothing expected (e.g. linkedin): any value, or none, is fine

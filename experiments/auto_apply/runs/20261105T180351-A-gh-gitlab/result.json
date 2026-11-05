@@ -1,0 +1,142 @@
+{
+  "arm": "A",
+  "model": "bu-ultrafast",
+  "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+  "session_id": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+  "agent_seconds": 26.6,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "core.event": 31,
+    "llm.request": 8,
+    "llm.response": 8,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "",
+    "fields": [
+      {
+        "label": "First Name",
+        "status": "filled",
+        "value": "Jordan"
+      },
+      {
+        "label": "Last Name",
+        "status": "filled",
+        "value": "Testcase"
+      },
+      {
+        "label": "Email",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Phone country code",
+        "status": "filled",
+        "value": "+1"
+      },
+      {
+        "label": "Phone",
+        "status": "filled",
+        "value": "+1 555 010 0142"
+      },
+      {
+        "label": "Resume/CV",
+        "status": "failed",
+        "value": "Upload failed; file not attached (browser requires file in downloads directory)"
+      },
+      {
+        "label": "Cover Letter",
+        "status": "skipped",
+        "value": "Not entered"
+      },
+      {
+        "label": "Current country of residence",
+        "status": "filled",
+        "value": "India"
+      },
+      {
+        "label": "LinkedIn Profile",
+        "status": "skipped",
+        "value": "Not provided"
+      },
+      {
+        "label": "Preferred interview name",
+        "status": "filled",
+        "value": "Jordan Testcase"
+      },
+      {
+        "label": "Employment agreements/restrictions",
+        "status": "skipped",
+        "value": "Not answered"
+      },
+      {
+        "label": "Interview adjustments",
+        "status": "filled",
+        "value": "No adjustments needed."
+      },
+      {
+        "label": "GitLab username",
+        "status": "skipped",
+        "value": "Not provided"
+      },
+      {
+        "label": "Visa sponsorship",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "Previously worked/consulted for GitLab",
+        "status": "skipped",
+        "value": "Not answered"
+      },
+      {
+        "label": "Reside in US or Canada",
+        "status": "skipped",
+        "value": "Not answered"
+      },
+      {
+        "label": "Other application fields",
+        "status": "skipped",
+        "value": "Not entered; form not fully completed"
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 56830,
+    "output": 920
+  },
+  "run_cost_usd": 0.005608,
+  "browser_id": "21409f1d-1e25-4fbc-a524-542895c80456",
+  "scan_error": "ValidationError: 1 validation error for BrowserSessionView\nextensions.0.runtimeId\n  Field required [type=missing, input_value={'id': 'b7cb8cf4-0c3c-464...gc', 'version': '1.0.0'",
+  "session_cost": {
+    "llm_cost_usd": 0.005608,
+    "browser_cost_usd": 0.000333,
+    "proxy_cost_usd": 0.0,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.005941
+  },
+  "browser_use_usd": 0.005941,
+  "seconds": 31.9,
+  "anthropic_usd": 0.0,
+  "steps": 0,
+  "label": "gh-gitlab",
+  "ats": "greenhouse",
+  "company": "GitLab",
+  "run_dir": "runs\\20261105T180351-A-gh-gitlab",
+  "wall_seconds": 40.1,
+  "bu_spent_before": 0.009562,
+  "bu_spent_after": 0.01561,
+  "bu_balance_delta": 0.006048,
+  "bu_cost_counted": 0.006048
+}

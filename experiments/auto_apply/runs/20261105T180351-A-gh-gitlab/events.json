@@ -1,0 +1,1103 @@
+[
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203371,
+    "ts": "2026-11-05T18:03:54.718817Z",
+    "type": "run.created",
+    "data": {
+      "model": "bu-ultrafast",
+      "session_id": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "is_free_tier": false,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "browser_settings": {
+        "record": false,
+        "profile_id": null,
+        "custom_proxy": false,
+        "extension_ids": [
+          "b7cb8cf4-0c3c-4641-8605-52cca638c7b3"
+        ],
+        "allow_resizing": null,
+        "proxy_country_code": null,
+        "browser_screen_width": null,
+        "browser_screen_height": null,
+        "profile_storage_generation": ""
+      }
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203376,
+    "ts": "2026-11-05T18:03:54.750094Z",
+    "type": "run.dispatching",
+    "data": {
+      "transport": "agentcore"
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203390,
+    "ts": "2026-11-05T18:03:55.072707Z",
+    "type": "browser.ready",
+    "data": {
+      "live_view_url": "<redacted>",
+      "browser_session_id": "21409f1d-1e25-4fbc-a524-542895c80456"
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203429,
+    "ts": "2026-11-05T18:03:55.409836Z",
+    "type": "run.dispatched",
+    "data": {
+      "transport": "agentcore",
+      "browser_session_id": "21409f1d-1e25-4fbc-a524-542895c80456"
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203431,
+    "ts": "2026-11-05T18:03:55.417451Z",
+    "type": "worker.started",
+    "data": {
+      "core_agent": "bu-pi",
+      "session_id": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "cold_process": true,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "invocation_index": 1,
+      "prewarmed_process": false,
+      "invocation_received_unix_ms": 1793901835390,
+      "process_age_at_invocation_ms": 4726.808775,
+      "runtime_session_header_present": true
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203452,
+    "ts": "2026-11-05T18:03:55.656313Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901835584
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203453,
+    "ts": "2026-11-05T18:03:55.658819Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 2,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "14190",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203624,
+    "ts": "2026-11-05T18:03:57.987375Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000781",
+      "charge_usd": "0.000937",
+      "is_own_key": false,
+      "input_tokens": 2951,
+      "output_tokens": 43,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2948,
+      "cached_input_tokens": 0
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203633,
+    "ts": "2026-11-05T18:03:58.133343Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "page = await tabs.open('https://job-boards.greenhouse.io/gitlab/jobs/8771512002'); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_21DeFGSBrECRsyBHH9l3fVIX|fc_063b9aa01bc61509016aecc50d9cec87d191bdc79aff6e5fbc"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901838001
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203718,
+    "ts": "2026-11-05T18:03:59.000930Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "page = await tabs.open('https://job-boards.greenhouse.io/gitlab/jobs/8771512002'); await bu.state();"
+          },
+          "output": "[state] Job Application for Backend Engineer, GitLab Orbit at GitLab | https://job-boards.greenhouse.io/gitlab/jobs/8771512002\n[64] link \"GitLab Logo\"\n## Backend Engineer, GitLab Orbit\nRemote, Canada; Remote, United States\n[32] button \"Apply\"\nGitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.\nThe same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems.\n[76] link \"Co-create the future with us\"\nas we build technology that transforms how the world develops software.\n* Fortune 500\u00ae is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.\nAs an Intermediate Backend Engineer on the GitLab Orbit team, you'll help build and operate a graph data service that supports GitLab Duo agents, analytics, and architecture-level features across GitLab.com, Dedicated, and Self-Managed deployments. You'll join a Rust-first team that values clear ownership, thoughtful system design, and rigorous thinking about data and reliability.\nThe Knowledge Graph service is a Rust backend that builds a property graph from GitLab\u2019s software development lifecycle (SDLC) and code data. It uses ClickHouse, NATS JetStream, and the Data Insights Platform. It exposes secure graph queries and MCP tools used by AI agents and product features. In this role, you\u2019ll deliver features and improvements in well-scoped areas, learn the broader architecture, and contribute to reliability, observability, and operational readiness.\n... 114 lines cut here (bu.state({max: 30000}) or page.evaluate)\nAn \"Armed forces service medal veteran\" means a veteran who, while serving on active duty in the U.S. military, ground, naval or air service, participated in a United States military operation for which an Armed Forces service medal was awarded pursuant to Executive Order 12985.\nVeteran Status\nSelect...\n[25] combobox \"Veteran Status\" collapsed\n[1422] button \"Toggle flyout\"\n[1426] button \"Submit application\"\nPowered by\n[1430] link \"Greenhouse logo\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_21DeFGSBrECRsyBHH9l3fVIX|fc_063b9aa01bc61509016aecc50d9cec87d191bdc79aff6e5fbc"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901838992
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203719,
+    "ts": "2026-11-05T18:03:59.015040Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901838995
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203722,
+    "ts": "2026-11-05T18:03:59.017113Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 4,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "17600",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203723,
+    "ts": "2026-11-05T18:03:59.026057Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901839006
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203891,
+    "ts": "2026-11-05T18:04:00.900680Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000272",
+      "charge_usd": "0.000326",
+      "is_own_key": false,
+      "input_tokens": 3626,
+      "output_tokens": 44,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 11,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 675,
+      "cached_input_tokens": 2948
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203895,
+    "ts": "2026-11-05T18:04:00.919647Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(32); await bu.state({max:30000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_ynRTJmlZfaTJu7i9AtTyc5g9|fc_063b9aa01bc61509016aecc510bb8887d1840325ee4f7d49a5"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901840914
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203921,
+    "ts": "2026-11-05T18:04:01.169917Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(32); await bu.state({max:30000});"
+          },
+          "output": "[ok] click [32] button \"Apply\" -> page changed\n[state] Job Application for Backend Engineer, GitLab Orbit at GitLab | https://job-boards.greenhouse.io/gitlab/jobs/8771512002\n[64] link \"GitLab Logo\"\n## Backend Engineer, GitLab Orbit\nRemote, Canada; Remote, United States\n[32] button \"Apply\"\nGitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.\nThe same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems.\n[76] link \"Co-create the future with us\"\nas we build technology that transforms how the world develops software.\n* Fortune 500\u00ae is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.\nAs an Intermediate Backend Engineer on the GitLab Orbit team, you'll help build and operate a graph data service that supports GitLab Duo agents, analytics, and architecture-level features across GitLab.com, Dedicated, and Self-Managed deployments. You'll join a Rust-first team that values clear ownership, thoughtful system design, and rigorous thinking about data and reliability.\nThe Knowledge Graph service is a Rust backend that builds a property graph from GitLab\u2019s software development lifecycle (SDLC) and code data. It uses ClickHouse, NATS JetStream, and the Data Insights Platform. It exposes secure graph queries and MCP tools used by AI agents and product features. In this role, you\u2019ll deliver features and improvements in well-scoped areas, learn the broader architecture, and contribute to reliability, observability, and operational readiness.\nIn your first year, you\u2019ll take clear ownership of specific components or features (for example, parts of the SDLC indexing pipeline or query paths). You\u2019ll help reduce single points of failure with better tests and runbooks, and you\u2019ll help the team ship analytical services that are easier to maintain and evolve over time.\nWhat you\u2019ll do\nImplement and iterate on backend features in the Rust-based Knowledge Graph service, including changes to the query engine, SDLC and code indexing flows, and API endpoints (including MCP endpoints) under guidance from senior and staff engineers.\nMaintain integrations between Knowledge Graph and the rest of the GitLab platform, working in areas that touch GitLab Rails, the Data Insights Platform (Siphon, NATS, ClickHouse), and GitLab Duo Agent Platform.\nContribute to system design discussions by proposing options, raising questions, and documenting decisions, with a focus on reliability, scalability, and maintainability for analytical graph workloads.\nImprove the operational maturity of the service by adding or enhancing metrics, logging, runbooks, alerts, and small readiness tasks, and by participating in on-call rotation as appropriate for your level and experience.\nCollaborate asynchronously with product, data, infrastructure, security, and AI counterparts to clarify requirements, align on scope, and ship features safely for customers and sustainably for the team.\nUse AI-assisted development workflows responsibly (for example, using Knowledge Graph-backed agents and internal Duo tooling), and share what works with the team while keeping a strong focus on code quality and correctness.\nParticipate in code reviews, knowledge-sharing sessions, and pairing to both learn from others and help maintain consistent standards across the codebase.\nContribute across the stack when needed, including occasional Ruby work for Rails integration and authorization paths, or small frontend changes related to Knowledge Graph features (for example, Software Architecture Map UI plumbing).\nWhat you\u2019ll bring\nProfessional experience building and maintaining backend systems in production, with an understanding of reliability, maintainability, and how to support services over time (for example, incident response and follow-ups).\nProficiency in at least one modern backend language and strong interest in Rust, with either prior Rust experience or clear evidence you can ramp quickly and deliver in a Rust-first, performance-sensitive codebase.\nSome exposure to distributed data or analytics systems (for example, OLAP databases, Kafka- or NATS-style messaging, or change data capture (CDC) pipelines), or strong motivation to develop those skills in this role.\nInterest in graph data modeling and query patterns (property graphs, multi-step (n-hop) traversals, aggregations), and willingness to learn the tools and concepts used in Knowledge Graph over time.\nPractical experience (or strong interest) using AI tools in day-to-day development, along with a thoughtful approach to validating outputs and integrating AI into your workflow.\nA language-agnostic mindset and evidence that you can pick up new languages and frameworks as needed (for example, Ruby, Go, or TypeScript/Vue where the work touches adjacent systems).\nSolid fundamentals in system design for your level, including the ability to reason about trade-offs, ask good questions, and align your implementation work with documented architectural decisions.\nComfort working in a low-process, high-ownership environment where you take responsibility for your work, refine problem statements with teammates, and communicate progress clearly in writing across time zones in an all-remote team.\nAbout the team\nGitLab Orbit sits within the Data Engineering organization. We work closely with partners across AI (Duo Agent Platform), analytics, infrastructure and delivery, and security because our work spans many parts of the platform.\nWe collaborate asynchronously rather than following a feature factory model. A key challenge for us right now is scaling sustainably as usage grows and team members take time off. That includes hardening multi-tenant behavior. At the same time, we're bringing Knowledge Graph to\nThe base salary range for this role\u2019s listed level is currently for residents of the United States only. This range is intended to reflect the role's base salary rate in locations throughout the US. Grade level and salary ranges are determined through interviews and a review of education, experience, knowledge, skills, abilities of the applicant, equity with other team members, alignment with market data, and geographic location. The base salary range does not include any bonuses, equity, or benefits. See more information on our\n[118] link \"benefits\"\nand\n[120] link \"equity\"\n. Sales roles are also eligible for incentive pay targeted at up to 100% of the offered base salary.\nUnited States Salary Range\n$115,200 - $162,000 USD\n## How GitLab Supports Full-Time Employees\n[131] link \"Benefits to support your health, finances, and well-being\"\n[133] link \"Flexible Paid Time Off\"\n[135] link \"Team Member Resource Groups\"\n[137] link \"Equity Compensation & Employee Stock Purchase Plan\"\n[139] link \"Growth and Development Fund\"\n[141] link \"Parental Leave\"\nPlease note that we welcome interest from candidates with varying levels of experience; many successful candidates do not meet every single requirement. Additionally, studies have shown that people from\n[143] link \"underrepresented groups\"\nare less likely to apply to a job unless they meet every single qualification. If you're excited about this role, please apply and allow our recruiters to assess your application.\nCountry Hiring Guidelines: GitLab hires new team members in countries around the world. All of our roles are remote, however some roles may carry specific location-based eligibility requirements. Our Talent Acquisition team can help answer any questions about location after starting the recruiting process.\nPrivacy Policy: Please review our\n[149] link \"Recruitment Privacy Policy.\"\nYour privacy is important to us.\nGitLab is proud to be an equal opportunity workplace and is an affirmative action employer. GitLab\u2019s policies and practices relating to recruitment, employment, career development and advancement, promotion, and retirement are based solely on merit, regardless of race, color, religion, ancestry, sex (including pregnancy, lactation, sexual orientation, gender identity, or gender expression), national origin, age, citizenship, marital status, mental or physical disability, genetic information (including family medical history), discharge status from the military, protected veteran status (which includes disabled veterans, recently separated veterans, active duty wartime or campaign badge veterans, and Armed Forces service medal veterans), or any other basis protected by law. GitLab will not tolerate discrimination or harassment based on any of these characteristics. See also\n[151] link \"GitLab\u2019s EEO Policy\"\nand\n[152] link \"EEO is the Law\"\n. If you have a disability or special need that requires\n[153] link \"accommodation\"\n, please let us know during the\n[154] link \"recruiting process\"\n.\n## Apply for this job\n*\nindicates a required field\n[4] textbox \"First Name\" focused\n[5] textbox \"Last Name\"\n[6] textbox \"Email\"\nPhone\n[7] combobox \"Country\" collapsed\n[203] button \"Toggle flyout\"\n[8] textbox \"Phone\"\nResume/CV *\n[1221] button \"Attach\"\n[26] file \"Attach\" = \"No file chosen\"\n[1227] button \"Enter manually\"\nEnter manually\nAccepted file types: pdf, doc, docx, txt, rtf\nCover Letter\n[1236] button \"Attach\"\n[27] file \"Attach\" = \"No file chosen\"\n[1242] button \"Enter manually\"\nEnter manually\nAccepted file types: pdf, doc, docx, txt, rtf\nWhat is your current country of residence?\nSelect...\n[9] combobox \"What is your current country of residence?\" collapsed\n[1261] button \"Toggle flyout\"\n[11] textbox \"LinkedIn Profile\"\n[12] textbox \"What's the name you'd prefer us to use throughout the interview process?\"\nAre you subject to any employment agreements and/or post-employment restrictions with your current employer or a past employer?\nSelect...\n[13] combobox \"Are you subject to any employment agreements and/or post-employment restrictions with your current employer or a past employer?\" collapsed\n[1290] button \"Toggle flyout\"\n[15] textbox \"It is important to us to create an accessible and inclusive interview experience. Please let us know if there are any adjustments we can make to assis\u2026\"\n[16] textbox \"What is your GitLab username?\"\nWill you now or in the future require sponsorship for a visa to remain in your current location?\nSelect...\n[17] combobox \"Will you now or in the future require sponsorship for a visa to remain in your current location?\" collapsed\n[1319] button \"Toggle flyout\"\nHave you previously worked at or consulted for GitLab?\nSelect...\n[19] combobox \"Have you previously worked at or consulted for GitLab?\" collapsed\n[1338] button \"Toggle flyout\"\nDo you reside in the United States or Canada?\nSelect...\n[21] combobox \"Do you reside in the United States or Canada?\" collapsed\n[1357] button \"Toggle flyout\"\n## Voluntary Self-Identification\nFor government reporting purposes, we ask candidates to respond to the below self-identification survey. Completion of the form is entirely voluntary. Whatever your decision, it will not be considered in the hiring process or thereafter. Any information that you do provide will be r\n[Truncated. Full captured output: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/083fbd31-8310-4ac6-8de9-3c546d02102d.txt]",
+          "status": "completed"
+        },
+        "callID": "call_ynRTJmlZfaTJu7i9AtTyc5g9|fc_063b9aa01bc61509016aecc510bb8887d1840325ee4f7d49a5"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901841161
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203923,
+    "ts": "2026-11-05T18:04:01.180567Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 7,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "31966",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203924,
+    "ts": "2026-11-05T18:04:01.182628Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901841165
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455203925,
+    "ts": "2026-11-05T18:04:01.195059Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901841173
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204282,
+    "ts": "2026-11-05T18:04:04.870482Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000924",
+      "charge_usd": "0.001109",
+      "is_own_key": false,
+      "input_tokens": 6174,
+      "output_tokens": 214,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 25,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2548,
+      "cached_input_tokens": 3623
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204284,
+    "ts": "2026-11-05T18:04:04.883455Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(4,'Jordan'); await bu.type(5,'Testcase'); await bu.type(6,'jordan.testcase@example.com'); await bu.type(7,'India'); await bu.type(8,'+1 555 010 0142'); await page.cdp('DOM.setFileInputFiles',{backendNodeId:26,files:['/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.type(9,'India'); await bu.type(11,'https://example.com/jordan-testcase'); await bu.type(12,'Jordan Testcase'); await bu.type(15,'No adjustments needed.'); await bu.type(17,'No'); await bu.state({max:20000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_DeWWWGQHjtyvgnjBFJQlxC6g|fc_063b9aa01bc61509016aecc514660c87d1893f0e6a898d8e0d"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901844877
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204422,
+    "ts": "2026-11-05T18:04:05.947184Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(4,'Jordan'); await bu.type(5,'Testcase'); await bu.type(6,'jordan.testcase@example.com'); await bu.type(7,'India'); await bu.type(8,'+1 555 010 0142'); await page.cdp('DOM.setFileInputFiles',{backendNodeId:26,files:['/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.type(9,'India'); await bu.type(11,'https://example.com/jordan-testcase'); await bu.type(12,'Jordan Testcase'); await bu.type(15,'No adjustments needed.'); await bu.type(17,'No'); await bu.state({max:20000});"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: [ok] type [4] textbox \"First Name\" = \"Jordan\" -> page changed\n[ok] type [5] textbox \"Last Name\" = \"Testcase\" -> page changed\n[ok] type [6] textbox \"Email\" = \"jordan.testcase@example.com\" -> page changed\n[ok] type [7] combobox \"Country\" = \"India\" -> page changed\n[ok] type [8] textbox \"Phone\" = \"+1 555 010 0142\" -> page changed\n[state] Job Application for Backend Engineer, GitLab Orbit at GitLab | https://job-boards.greenhouse.io/gitlab/jobs/8771512002\n[64] link \"GitLab Logo\"\n## Backend Engineer, GitLab Orbit\nRemote, Canada; Remote, United States\n[32] button \"Apply\"\nGitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.\nThe same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems.\n[76] link \"Co-create the future with us\"\nas we build technology that transforms how the world develops software.\n* Fortune 500\u00ae is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.\nAs an Intermediate Backend Engineer on the GitLab Orbit team, you'll help build and operate a graph data service that supports GitLab Duo agents, analytics, and architecture-level features across GitLab.com, Dedicated, and Self-Managed deployments. You'll join a Rust-first team that values clear ownership, thoughtful system design, and rigorous thinking about data and reliability.\nThe Knowledge Graph service is a Rust backend that builds a property graph from GitLab\u2019s software development lifecycle (SDLC) and code data. It uses ClickHouse, NATS JetStream, and the Data Insights Platform. It exposes secure graph queries and MCP tools used by AI agents and product features. In this role, you\u2019ll deliver features and improvements in well-scoped areas, learn the broader architecture, and contribute to reliability, observability, and operational readiness.\n... 116 lines cut here (bu.state({max: 30000}) or page.evaluate)\nAn \"Armed forces service medal veteran\" means a veteran who, while serving on active duty in the U.S. military, ground, naval or air service, participated in a United States military operation for which an Armed Forces service medal was awarded pursuant to Executive Order 12985.\nVeteran Status\nSelect...\n[25] combobox \"Veteran Status\" collapsed\n[1422] button \"Toggle flyout\"\n[1426] button \"Submit application\"\nPowered by\n[1430] link \"Greenhouse logo\"\n[/state]\n\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/1659a313-699d-45f1-b104-eba2a66a9689.txt",
+          "status": "error"
+        },
+        "callID": "call_DeWWWGQHjtyvgnjBFJQlxC6g|fc_063b9aa01bc61509016aecc514660c87d1893f0e6a898d8e0d"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901845940
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204424,
+    "ts": "2026-11-05T18:04:05.955136Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901845944
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204428,
+    "ts": "2026-11-05T18:04:05.962040Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 10,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "39015",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204429,
+    "ts": "2026-11-05T18:04:05.964376Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901845951
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204649,
+    "ts": "2026-11-05T18:04:08.257801Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000492",
+      "charge_usd": "0.000590",
+      "is_own_key": false,
+      "input_tokens": 7429,
+      "output_tokens": 54,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 24,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1255,
+      "cached_input_tokens": 6171
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204650,
+    "ts": "2026-11-05T18:04:08.269681Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(require('fs').readdirSync('uploads'));"
+          },
+          "status": "running"
+        },
+        "callID": "call_N7Hx4cbFyxDYIW09N8FdEKc3|fc_063b9aa01bc61509016aecc518192c87d197aadc487801b4ab"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901848263
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204651,
+    "ts": "2026-11-05T18:04:08.279235Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(require('fs').readdirSync('uploads'));"
+          },
+          "output": "[ 'jordan_testcase_test_resume.pdf' ]\n",
+          "status": "completed"
+        },
+        "callID": "call_N7Hx4cbFyxDYIW09N8FdEKc3|fc_063b9aa01bc61509016aecc518192c87d197aadc487801b4ab"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901848272
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204652,
+    "ts": "2026-11-05T18:04:08.286049Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901848274
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204654,
+    "ts": "2026-11-05T18:04:08.294133Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901848285
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204655,
+    "ts": "2026-11-05T18:04:08.293955Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 13,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "41263",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204773,
+    "ts": "2026-11-05T18:04:10.160715Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000242",
+      "charge_usd": "0.000290",
+      "is_own_key": false,
+      "input_tokens": 7504,
+      "output_tokens": 74,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 18,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 75,
+      "cached_input_tokens": 7426
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204776,
+    "ts": "2026-11-05T18:04:10.172739Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const fs=require('fs'); const p=await artifact('Jordan_Testcase_TEST_RESUME.pdf',fs.readFileSync('uploads/jordan_testcase_test_resume.pdf')); console.log(p);"
+          },
+          "status": "running"
+        },
+        "callID": "call_mUXy0YHQUAK3VAUlwCHleOBg|fc_063b9aa01bc61509016aecc519f1c887d18fdebf49bc5fe9ce"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901850167
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204777,
+    "ts": "2026-11-05T18:04:10.182987Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const fs=require('fs'); const p=await artifact('Jordan_Testcase_TEST_RESUME.pdf',fs.readFileSync('uploads/jordan_testcase_test_resume.pdf')); console.log(p);"
+          },
+          "output": "/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Jordan_Testcase_TEST_RESUME.pdf\n",
+          "status": "completed"
+        },
+        "callID": "call_mUXy0YHQUAK3VAUlwCHleOBg|fc_063b9aa01bc61509016aecc519f1c887d18fdebf49bc5fe9ce"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901850178
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204778,
+    "ts": "2026-11-05T18:04:10.191526Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901850180
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204779,
+    "ts": "2026-11-05T18:04:10.204273Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901850191
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204780,
+    "ts": "2026-11-05T18:04:10.201952Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 16,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "43600",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204870,
+    "ts": "2026-11-05T18:04:11.468418Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000205",
+      "charge_usd": "0.000246",
+      "is_own_key": false,
+      "input_tokens": 7623,
+      "output_tokens": 25,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 119,
+      "cached_input_tokens": 7501
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204871,
+    "ts": "2026-11-05T18:04:11.484644Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state({max:30000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_vYVWENe6ncjLqH5Wx6PcRH4i|fc_063b9aa01bc61509016aecc51b479487d1bda2a3ab96c8bce8"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901851479
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204877,
+    "ts": "2026-11-05T18:04:11.620105Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state({max:30000});"
+          },
+          "output": "[state] Job Application for Backend Engineer, GitLab Orbit at GitLab | https://job-boards.greenhouse.io/gitlab/jobs/8771512002\n[64] link \"GitLab Logo\"\n## Backend Engineer, GitLab Orbit\nRemote, Canada; Remote, United States\n[32] button \"Apply\"\nGitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.\nThe same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems.\n[76] link \"Co-create the future with us\"\nas we build technology that transforms how the world develops software.\n* Fortune 500\u00ae is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.\nAs an Intermediate Backend Engineer on the GitLab Orbit team, you'll help build and operate a graph data service that supports GitLab Duo agents, analytics, and architecture-level features across GitLab.com, Dedicated, and Self-Managed deployments. You'll join a Rust-first team that values clear ownership, thoughtful system design, and rigorous thinking about data and reliability.\nThe Knowledge Graph service is a Rust backend that builds a property graph from GitLab\u2019s software development lifecycle (SDLC) and code data. It uses ClickHouse, NATS JetStream, and the Data Insights Platform. It exposes secure graph queries and MCP tools used by AI agents and product features. In this role, you\u2019ll deliver features and improvements in well-scoped areas, learn the broader architecture, and contribute to reliability, observability, and operational readiness.\nIn your first year, you\u2019ll take clear ownership of specific components or features (for example, parts of the SDLC indexing pipeline or query paths). You\u2019ll help reduce single points of failure with better tests and runbooks, and you\u2019ll help the team ship analytical services that are easier to maintain and evolve over time.\nWhat you\u2019ll do\nImplement and iterate on backend features in the Rust-based Knowledge Graph service, including changes to the query engine, SDLC and code indexing flows, and API endpoints (including MCP endpoints) under guidance from senior and staff engineers.\nMaintain integrations between Knowledge Graph and the rest of the GitLab platform, working in areas that touch GitLab Rails, the Data Insights Platform (Siphon, NATS, ClickHouse), and GitLab Duo Agent Platform.\nContribute to system design discussions by proposing options, raising questions, and documenting decisions, with a focus on reliability, scalability, and maintainability for analytical graph workloads.\nImprove the operational maturity of the service by adding or enhancing metrics, logging, runbooks, alerts, and small readiness tasks, and by participating in on-call rotation as appropriate for your level and experience.\nCollaborate asynchronously with product, data, infrastructure, security, and AI counterparts to clarify requirements, align on scope, and ship features safely for customers and sustainably for the team.\nUse AI-assisted development workflows responsibly (for example, using Knowledge Graph-backed agents and internal Duo tooling), and share what works with the team while keeping a strong focus on code quality and correctness.\nParticipate in code reviews, knowledge-sharing sessions, and pairing to both learn from others and help maintain consistent standards across the codebase.\nContribute across the stack when needed, including occasional Ruby work for Rails integration and authorization paths, or small frontend changes related to Knowledge Graph features (for example, Software Architecture Map UI plumbing).\nWhat you\u2019ll bring\nProfessional experience building and maintaining backend systems in production, with an understanding of reliability, maintainability, and how to support services over time (for example, incident response and follow-ups).\nProficiency in at least one modern backend language and strong interest in Rust, with either prior Rust experience or clear evidence you can ramp quickly and deliver in a Rust-first, performance-sensitive codebase.\nSome exposure to distributed data or analytics systems (for example, OLAP databases, Kafka- or NATS-style messaging, or change data capture (CDC) pipelines), or strong motivation to develop those skills in this role.\nInterest in graph data modeling and query patterns (property graphs, multi-step (n-hop) traversals, aggregations), and willingness to learn the tools and concepts used in Knowledge Graph over time.\nPractical experience (or strong interest) using AI tools in day-to-day development, along with a thoughtful approach to validating outputs and integrating AI into your workflow.\nA language-agnostic mindset and evidence that you can pick up new languages and frameworks as needed (for example, Ruby, Go, or TypeScript/Vue where the work touches adjacent systems).\nSolid fundamentals in system design for your level, including the ability to reason about trade-offs, ask good questions, and align your implementation work with documented architectural decisions.\nComfort working in a low-process, high-ownership environment where you take responsibility for your work, refine problem statements with teammates, and communicate progress clearly in writing across time zones in an all-remote team.\nAbout the team\nGitLab Orbit sits within the Data Engineering organization. We work closely with partners across AI (Duo Agent Platform), analytics, infrastructure and delivery, and security because our work spans many parts of the platform.\nWe collaborate asynchronously rather than following a feature factory model. A key challenge for us right now is scaling sustainably as usage grows and team members take time off. That includes hardening multi-tenant behavior. At the same time, we're bringing Knowledge Graph to\nThe base salary range for this role\u2019s listed level is currently for residents of the United States only. This range is intended to reflect the role's base salary rate in locations throughout the US. Grade level and salary ranges are determined through interviews and a review of education, experience, knowledge, skills, abilities of the applicant, equity with other team members, alignment with market data, and geographic location. The base salary range does not include any bonuses, equity, or benefits. See more information on our\n[118] link \"benefits\"\nand\n[120] link \"equity\"\n. Sales roles are also eligible for incentive pay targeted at up to 100% of the offered base salary.\nUnited States Salary Range\n$115,200 - $162,000 USD\n## How GitLab Supports Full-Time Employees\n[131] link \"Benefits to support your health, finances, and well-being\"\n[133] link \"Flexible Paid Time Off\"\n[135] link \"Team Member Resource Groups\"\n[137] link \"Equity Compensation & Employee Stock Purchase Plan\"\n[139] link \"Growth and Development Fund\"\n[141] link \"Parental Leave\"\nPlease note that we welcome interest from candidates with varying levels of experience; many successful candidates do not meet every single requirement. Additionally, studies have shown that people from\n[143] link \"underrepresented groups\"\nare less likely to apply to a job unless they meet every single qualification. If you're excited about this role, please apply and allow our recruiters to assess your application.\nCountry Hiring Guidelines: GitLab hires new team members in countries around the world. All of our roles are remote, however some roles may carry specific location-based eligibility requirements. Our Talent Acquisition team can help answer any questions about location after starting the recruiting process.\nPrivacy Policy: Please review our\n[149] link \"Recruitment Privacy Policy.\"\nYour privacy is important to us.\nGitLab is proud to be an equal opportunity workplace and is an affirmative action employer. GitLab\u2019s policies and practices relating to recruitment, employment, career development and advancement, promotion, and retirement are based solely on merit, regardless of race, color, religion, ancestry, sex (including pregnancy, lactation, sexual orientation, gender identity, or gender expression), national origin, age, citizenship, marital status, mental or physical disability, genetic information (including family medical history), discharge status from the military, protected veteran status (which includes disabled veterans, recently separated veterans, active duty wartime or campaign badge veterans, and Armed Forces service medal veterans), or any other basis protected by law. GitLab will not tolerate discrimination or harassment based on any of these characteristics. See also\n[151] link \"GitLab\u2019s EEO Policy\"\nand\n[152] link \"EEO is the Law\"\n. If you have a disability or special need that requires\n[153] link \"accommodation\"\n, please let us know during the\n[154] link \"recruiting process\"\n.\n## Apply for this job\n*\nindicates a required field\n[4] textbox \"First Name\" = \"Jordan\"\n[5] textbox \"Last Name\" = \"Testcase\"\n[6] textbox \"Email\" = \"jordan.testcase@example.com\"\nPhone\nCountry\n+ 1\n[7] combobox \"Country\" collapsed\n[203] button \"Toggle flyout\"\n[8] textbox \"Phone\" = \"+1 555 010 0142\" focused\nResume/CV *\n[1221] button \"Attach\"\n[26] file \"Attach\" = \"No file chosen\"\n[1227] button \"Enter manually\"\nEnter manually\nAccepted file types: pdf, doc, docx, txt, rtf\nCover Letter\n[1236] button \"Attach\"\n[27] file \"Attach\" = \"No file chosen\"\n[1242] button \"Enter manually\"\nEnter manually\nAccepted file types: pdf, doc, docx, txt, rtf\nWhat is your current country of residence?\nSelect...\n[9] combobox \"What is your current country of residence?\" collapsed\n[1261] button \"Toggle flyout\"\n[11] textbox \"LinkedIn Profile\"\n[12] textbox \"What's the name you'd prefer us to use throughout the interview process?\"\nAre you subject to any employment agreements and/or post-employment restrictions with your current employer or a past employer?\nSelect...\n[13] combobox \"Are you subject to any employment agreements and/or post-employment restrictions with your current employer or a past employer?\" collapsed\n[1290] button \"Toggle flyout\"\n[15] textbox \"It is important to us to create an accessible and inclusive interview experience. Please let us know if there are any adjustments we can make to assis\u2026\"\n[16] textbox \"What is your GitLab username?\"\nWill you now or in the future require sponsorship for a visa to remain in your current location?\nSelect...\n[17] combobox \"Will you now or in the future require sponsorship for a visa to remain in your current location?\" collapsed\n[1319] button \"Toggle flyout\"\nHave you previously worked at or consulted for GitLab?\nSelect...\n[19] combobox \"Have you previously worked at or consulted for GitLab?\" collapsed\n[1338] button \"Toggle flyout\"\nDo you reside in the United States or Canada?\nSelect...\n[21] combobox \"Do you reside in the United States or Canada?\" collapsed\n[1357] button \"Toggle flyout\"\n## Voluntary Self-Identification\nFor government reporting purposes, we ask candidates to respond to the below self-identification survey. Completion of the form is entirely voluntary. Whatever your decision, it will not be considered in the hiring process or thereafter. Any \n[Truncated. Full captured output: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/18d2519e-092a-4408-bbcd-cb220865c29b.txt]",
+          "status": "completed"
+        },
+        "callID": "call_vYVWENe6ncjLqH5Wx6PcRH4i|fc_063b9aa01bc61509016aecc51b479487d1bda2a3ab96c8bce8"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901851613
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204879,
+    "ts": "2026-11-05T18:04:11.627721Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901851616
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204880,
+    "ts": "2026-11-05T18:04:11.637137Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 18,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "56274",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455204881,
+    "ts": "2026-11-05T18:04:11.638659Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901851629
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205113,
+    "ts": "2026-11-05T18:04:15.149115Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000938",
+      "charge_usd": "0.001126",
+      "is_own_key": false,
+      "input_tokens": 10162,
+      "output_tokens": 150,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 58,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2539,
+      "cached_input_tokens": 7620
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205114,
+    "ts": "2026-11-05T18:04:15.162403Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(9,'India'); await bu.type(12,'Jordan Testcase'); await bu.type(15,'No adjustments needed.'); await bu.type(17,'No'); await page.cdp('DOM.setFileInputFiles',{backendNodeId:26,files:['Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state({max:3000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_sn94sDlpIKHq23KFw8BER7Tx|fc_063b9aa01bc61509016aecc51edc6887d185f0fa1683b1c161"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901855157
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205169,
+    "ts": "2026-11-05T18:04:15.950158Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(9,'India'); await bu.type(12,'Jordan Testcase'); await bu.type(15,'No adjustments needed.'); await bu.type(17,'No'); await page.cdp('DOM.setFileInputFiles',{backendNodeId:26,files:['Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state({max:3000});"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: [ok] type [9] combobox \"What is your current country of residence?\" = \"India\" -> page changed\n[ok] type [12] textbox \"What's the name you'd prefer us to use throughout the interv\u2026\" = \"Jordan Testcase\" -> page changed\n[ok] type [15] textbox \"It is important to us to create an accessible and inclusive \u2026\" = \"No adjustments needed.\" -> page changed\n[ok] type [17] combobox \"Will you now or in the future require sponsorship for a visa\u2026\" = \"No\" -> page changed\n[state] Job Application for Backend Engineer, GitLab Orbit at GitLab | https://job-boards.greenhouse.io/gitlab/jobs/8771512002\n[64] link \"GitLab Logo\"\n## Backend Engineer, GitLab Orbit\nRemote, Canada; Remote, United States\n[32] button \"Apply\"\nGitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.\nThe same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems.\n[76] link \"Co-create the future with us\"\nas we build technology that transforms how the world develops software.\n* Fortune 500\u00ae is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.\nAs an Intermediate Backend Engineer on the GitLab Orbit team, you'll help build and operate a graph data service that supports GitLab Duo agents, analytics, and architecture-level features across GitLab.com, Dedicated, and Self-Managed deployments. You'll join a Rust-first team that values clear ownership, thoughtful system design, and rigorous thinking about data and reliability.\nThe Knowledge Graph service is a Rust backend that builds a property graph from GitLab\u2019s software development lifecycle (SDLC) and code data. It uses ClickHouse, NATS JetStream, and the Data Insights Platform. It exposes secure graph queries and MCP tools used by AI agents and product features. In this role, you\u2019ll deliver features and improvements in well-scoped areas, learn the broader architecture, and contribute to reliability, observability, and operational readiness.\n... 119 lines cut here (bu.state({max: 30000}) or page.evaluate)\nAn \"Armed forces service medal veteran\" means a veteran who, while serving on active duty in the U.S. military, ground, naval or air service, participated in a United States military operation for which an Armed Forces service medal was awarded pursuant to Executive Order 12985.\nVeteran Status\nSelect...\n[25] combobox \"Veteran Status\" collapsed\n[1422] button \"Toggle flyout\"\n[1426] button \"Submit application\"\nPowered by\n[1430] link \"Greenhouse logo\"\n[/state]\n\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/88fd83ff-6817-4bfc-a089-0cf262fd6812.txt",
+          "status": "error"
+        },
+        "callID": "call_sn94sDlpIKHq23KFw8BER7Tx|fc_063b9aa01bc61509016aecc51edc6887d185f0fa1683b1c161"
+      },
+      "type": "tool_use",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901855941
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205170,
+    "ts": "2026-11-05T18:04:15.968301Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901855945
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205173,
+    "ts": "2026-11-05T18:04:15.969449Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 21,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "64179",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205174,
+    "ts": "2026-11-05T18:04:15.977954Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901855956
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205347,
+    "ts": "2026-11-05T18:04:18.234296Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000820",
+      "charge_usd": "0.000984",
+      "is_own_key": false,
+      "input_tokens": 11361,
+      "output_tokens": 316,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1199,
+      "cached_input_tokens": 10159
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205348,
+    "ts": "2026-11-05T18:04:18.259374Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901858253
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205351,
+    "ts": "2026-11-05T18:04:18.290285Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "text": "{\"fields\":[{\"label\":\"First Name\",\"value\":\"Jordan\",\"status\":\"filled\"},{\"label\":\"Last Name\",\"value\":\"Testcase\",\"status\":\"filled\"},{\"label\":\"Email\",\"value\":\"jordan.testcase@example.com\",\"status\":\"filled\"},{\"label\":\"Phone country code\",\"value\":\"+1\",\"status\":\"filled\"},{\"label\":\"Phone\",\"value\":\"+1 555 010 0142\",\"status\":\"filled\"},{\"label\":\"Resume/CV\",\"value\":\"Upload failed; file not attached (browser requires file in downloads directory)\",\"status\":\"failed\"},{\"label\":\"Cover Letter\",\"value\":\"Not entered\",\"status\":\"skipped\"},{\"label\":\"Current country of residence\",\"value\":\"India\",\"status\":\"filled\"},{\"label\":\"LinkedIn Profile\",\"value\":\"Not provided\",\"status\":\"skipped\"},{\"label\":\"Preferred interview name\",\"value\":\"Jordan Testcase\",\"status\":\"filled\"},{\"label\":\"Employment agreements/restrictions\",\"value\":\"Not answered\",\"status\":\"skipped\"},{\"label\":\"Interview adjustments\",\"value\":\"No adjustments needed.\",\"status\":\"filled\"},{\"label\":\"GitLab username\",\"value\":\"Not provided\",\"status\":\"skipped\"},{\"label\":\"Visa sponsorship\",\"value\":\"No\",\"status\":\"filled\"},{\"label\":\"Previously worked/consulted for GitLab\",\"value\":\"Not answered\",\"status\":\"skipped\"},{\"label\":\"Reside in US or Canada\",\"value\":\"Not answered\",\"status\":\"skipped\"},{\"label\":\"Other application fields\",\"value\":\"Not entered; form not fully completed\",\"status\":\"skipped\"}],\"blocked\":\"\",\"submit_button_seen\":true}",
+        "time": {
+          "end": 1793901858283
+        },
+        "type": "text"
+      },
+      "type": "text",
+      "sessionID": "e52e32f6-5292-4eb8-b78a-dc02bc98adb4",
+      "timestamp": 1793901858283
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205376,
+    "ts": "2026-11-05T18:04:18.559795Z",
+    "type": "outputs.promoted",
+    "data": {
+      "failed": false,
+      "skipped": 0,
+      "promoted": 2,
+      "rejected": 0,
+      "upload_errors": 0
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205379,
+    "ts": "2026-11-05T18:04:18.569850Z",
+    "type": "state.promoted",
+    "data": {
+      "failed": false,
+      "harness": "bu-ultrafast",
+      "promoted": 1
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205381,
+    "ts": "2026-11-05T18:04:18.619940Z",
+    "type": "run.completed",
+    "data": {
+      "context": {
+        "chars": 58631,
+        "tokens": 13245,
+        "maxChars": 1000000,
+        "maxTokens": 212500,
+        "compactionFailures": 0
+      }
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205382,
+    "ts": "2026-11-05T18:04:18.641423Z",
+    "type": "browser.released",
+    "data": {
+      "status": "kept_alive",
+      "timeout_at": "2026-11-05T22:03:54.838353+00:00",
+      "browser_session_id": "21409f1d-1e25-4fbc-a524-542895c80456"
+    }
+  },
+  {
+    "run_id": "a8875682-0fa3-40dd-a06c-559a938824e8",
+    "id": 455205384,
+    "ts": "2026-11-05T18:04:18.658360Z",
+    "type": "worker.session_released",
+    "data": {}
+  }
+]

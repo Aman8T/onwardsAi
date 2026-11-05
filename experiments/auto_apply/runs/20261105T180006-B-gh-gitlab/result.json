@@ -1,0 +1,64 @@
+{
+  "arm": "B",
+  "model": "claude-sonnet-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 1,
+  "score": {
+    "success": false,
+    "fields_total": 18,
+    "required_total": 8,
+    "required_filled": 8,
+    "mapped_correct": 7,
+    "wrong": [
+      {
+        "label": "Are you subject to any employment agreements and/or post-employment restrictions",
+        "expected": "current_company",
+        "got": "No"
+      },
+      {
+        "label": "Will you now or in the future require sponsorship for a visa to remain in your c",
+        "expected": "location",
+        "got": "No"
+      }
+    ],
+    "missed_required": [],
+    "resume_attached": false,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://job-boards.greenhouse.io/gitlab/jobs/8771512002",
+  "seconds": 92.1,
+  "failure": null,
+  "errors": [],
+  "steps": 12,
+  "claude_calls": 1,
+  "usage": [
+    {
+      "input_tokens": 2254,
+      "output_tokens": 560,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.010108,
+      "seconds": 5.2,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.010108,
+  "browser_use_usd": 0.000799,
+  "browser_cost": {
+    "browser": 0.0006666666666666666,
+    "proxy": 0.000132070854306221,
+    "proxy_mb": 0.6762027740478516
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "label": "gh-gitlab",
+  "ats": "greenhouse",
+  "company": "GitLab",
+  "run_dir": "runs\\20261105T180006-B-gh-gitlab",
+  "wall_seconds": 103.3,
+  "bu_spent_before": 0.008178,
+  "bu_spent_after": 0.009205,
+  "bu_balance_delta": 0.001027,
+  "bu_cost_counted": 0.001027
+}
