@@ -164,7 +164,18 @@ def run(job: dict[str, Any], run_dir: Path, *, model: str = "bu-ultrafast", max_
     result["anthropic_usd"] = 0.0
     result["steps"] = sum(1 for e in events if e.get("type") == "core.event" and (e.get("data") or {}).get("type") == "step_start")
     result["llm_requests"] = types.get("llm.request", 0)
-    result["agent_trace"] = [((e.get("data") or {}).get("part") or {}).get("state", {}).get("input", {}).get("code", "")[:200]
-                             for e in events if e.get("type") == "core.event" and (e.get("data") or {}).get("type") == "tool_use"
-                             and ((e.get("data") or {}).get("part") or {}).get("state", {}).get("status") == "running"]  # fmt: skip
+    result["agent_trace"] = agent_trace(events)
     return result
+
+
+def agent_trace(events: list[dict[str, Any]]) -> list[str]:
+    """The agent's tool calls (its JavaScript actions), tolerant of any event shape."""
+    out = []
+    for e in events:
+        data = e.get("data") if isinstance(e.get("data"), dict) else {}
+        part = data.get("part") if isinstance(data.get("part"), dict) else {}
+        state = part.get("state") if isinstance(part.get("state"), dict) else {}
+        inp = state.get("input") if isinstance(state.get("input"), dict) else {}
+        if e.get("type") == "core.event" and data.get("type") == "tool_use" and state.get("status") == "running":
+            out.append(str(inp.get("code", ""))[:200])
+    return out

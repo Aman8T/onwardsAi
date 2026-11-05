@@ -1,0 +1,27 @@
+{
+  "arm": "A",
+  "model": "bu-fast",
+  "version": "v2",
+  "label": "ab-linear",
+  "ats": "ashby",
+  "company": "Linear",
+  "run_dir": "runs\\20261105T190017-A-ab-linear",
+  "failure": "harness crashed after the run (result not written); reconstructed from saved scan",
+  "score": {
+    "success": true,
+    "fields_total": 14,
+    "required_total": 10,
+    "required_filled": 10,
+    "mapped_correct": 4,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": true,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "browser_use_usd": 0.010223,
+  "bu_cost_counted": 0.010223,
+  "anthropic_usd": 0.0,
+  "reconstructed": true,
+  "steps": 23
+}

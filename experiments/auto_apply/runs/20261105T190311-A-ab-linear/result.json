@@ -1,0 +1,185 @@
+{
+  "arm": "A",
+  "model": "bu-fast",
+  "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+  "session_id": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+  "agent_seconds": 205.8,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "core.event": 147,
+    "llm.request": 37,
+    "llm.response": 37,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "",
+    "fields": [
+      {
+        "label": "Autofill from resume \u2014 Choose File",
+        "status": "skipped",
+        "value": "No file chosen (left unused; the separate Resume field was used for the requested CV upload)"
+      },
+      {
+        "label": "Name*",
+        "status": "filled",
+        "value": "Jordan Testcase"
+      },
+      {
+        "label": "Email*",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Resume*",
+        "status": "failed",
+        "value": "Jordan_Testcase_TEST_RESUME.pdf \u2014 upload attempted, but the page displayed \u201cfailed to upload\u201d"
+      },
+      {
+        "label": "Cover letter*",
+        "status": "filled",
+        "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted."
+      },
+      {
+        "label": "Github *",
+        "status": "filled",
+        "value": "Not provided (no GitHub username was included in the supplied details)"
+      },
+      {
+        "label": "LinkedIn",
+        "status": "skipped",
+        "value": "Left blank; no LinkedIn URL was supplied"
+      },
+      {
+        "label": "X",
+        "status": "skipped",
+        "value": "Left blank; no X URL was supplied"
+      },
+      {
+        "label": "Are you based in a EU or equivalent timezone?",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "What country are you based in?*",
+        "status": "filled",
+        "value": "India"
+      },
+      {
+        "label": "Notice Period*",
+        "status": "filled",
+        "value": "30 days"
+      },
+      {
+        "label": "What would you want to work on? Tell us about the features you would want to implement in your first month.*",
+        "status": "filled",
+        "value": "In my first month, I\u2019d learn Linear\u2019s product and engineering workflows, then identify a focused full-stack improvement that helps teams work more effectively. I\u2019d bring my experience building Python and TypeScript services and owning CI for an internal analytics product."
+      },
+      {
+        "label": "Tell us of a time you had to put your PM hat on to solve a complex product problem.*",
+        "status": "filled",
+        "value": "I don\u2019t have a specific complex product story in the details provided. My background includes building and running services for an internal analytics product at Example Labs and maintaining a Django app and test suite at Sample Systems."
+      },
+      {
+        "label": "What are you extremely good at? What could you teach the team?*",
+        "status": "filled",
+        "value": "I\u2019m strong at building and operating Python and TypeScript services, and I\u2019ve owned a CI pipeline. I could share practical approaches to reliable services, maintainable tests, and CI."
+      },
+      {
+        "label": "Has someone at Linear referred you for this role? If so, please include their name here:",
+        "status": "skipped",
+        "value": "Left blank; no referral name was supplied"
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 454242,
+    "output": 12338
+  },
+  "run_cost_usd": 0.016303,
+  "browser_id": "fe206221-1297-40c0-92eb-9f5ca3c21d20",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": true,
+    "fields_total": 14,
+    "required_total": 10,
+    "required_filled": 10,
+    "mapped_correct": 4,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": true,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application",
+  "session_cost": {
+    "llm_cost_usd": 0.016303,
+    "browser_cost_usd": 0.001333,
+    "proxy_cost_usd": 0.000389,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.018026
+  },
+  "browser_use_usd": 0.018026,
+  "seconds": 229.7,
+  "anthropic_usd": 0.0,
+  "steps": 37,
+  "llm_requests": 37,
+  "agent_trace": [
+    "page = await tabs.open('https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application'); await bu.state();",
+    "await bu.state();",
+    "const fs = require('fs'); console.log(fs.existsSync('uploads/Jordan_Testcase_TEST_RESUME.pdf'), process.cwd());",
+    "console.log(fs.readdirSync('.')); console.log(fs.existsSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads'));",
+    "console.log(fs.readdirSync('uploads'));",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/uploads/jordan_testcase_test_resume.pdf']}); await bu.state();",
+    "console.log(fs.readdirSync('downloads'),fs.readdirSync('Downloads'));",
+    "await bu.state();",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();",
+    "console.log(fs.realpathSync('downloads'),fs.realpathSync('Downloads'),fs.statSync('downloads/Jordan_Testcase_TEST_RESUME.pdf').size);",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:['Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/Downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();",
+    "await bu.type(170,'Jordan Testcase'); await bu.type(175,'jordan.testcase@example.com'); await bu.type(197,'This is a test application from a fictional profile used to check form filling. It must not b",
+    "console.log({home:process.env.HOME,tmp:process.env.TMPDIR,entries:fs.readdirSync(process.env.HOME||'/root')});",
+    "console.log({home:process.env.HOME,tmp:process.env.TMPDIR,cwd:process.cwd()});",
+    "console.log(fs.readdirSync('.browser-use')); console.log(fs.readdirSync('/mnt')); console.log(fs.readdirSync('/tmp').slice(0,30));",
+    "console.log(fs.readdirSync('/'));",
+    "console.log(fs.readdirSync('/home'));",
+    "for(const p of ['/home/worker','/home/worker/Downloads','/home/worker/downloads','/tmp/downloads','/mnt/data/downloads']){try{console.log(p,fs.readdirSync(p).slice(0,20))}catch(e){console.log(p,e.code",
+    "const uploadedCopy=await artifact('jordan-testcase-resume.pdf',fs.readFileSync('uploads/jordan_testcase_test_resume.pdf')); console.log(uploadedCopy);",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[uploadedCopy]}); await bu.state();",
+    "await page.cdp('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:process.cwd()+'/downloads'}); await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/downloads/Jor",
+    "console.log(await page.evaluate(()=>[...document.querySelectorAll('input[type=file]')].map((x,i)=>({i,name:x.name,accept:x.accept,required:x.required,outer:x.outerHTML.slice(0,300)}))));",
+    "console.log(['Jordan_Testcase_TEST_RESUME.pdf','downloads/Jordan_Testcase_TEST_RESUME.pdf','uploads/jordan_testcase_test_resume.pdf'].map(p=>[p,fs.statSync(p).size,require('crypto').createHash('sha256",
+    "const pdfB64=fs.readFileSync('uploads/jordan_testcase_test_resume.pdf').toString('base64'); await page.evaluate((b64)=>{const a=document.querySelectorAll('input[type=file]')[1];const bytes=Uint8Array.",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:['downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();",
+    "await bu.state(); console.log(await page.evaluate(()=>[...document.querySelectorAll('[role=alert], [data-sonner-toast]')].map(x=>x.innerText)));",
+    "console.log(await page.cdp('Browser.getVersion',{})); console.log(await page.cdp('Browser.getBrowserCommandLine',{}));",
+    "console.log(fs.readFileSync('.uploads-manifest.json','utf8').slice(0,2000));",
+    "console.log(Object.keys(page)); console.log(await tabs.list());",
+    "await page.cdp('Network.enable',{}); const respP=browser.waitFor('Network.responseReceived',{sessionId:page.sessionId,timeoutMs:15000}); const b64Again=fs.readFileSync('uploads/jordan_testcase_test_re",
+    "await bu.state();",
+    "console.log(await page.evaluate(()=>performance.getEntriesByType('resource').slice(-20).map(x=>({name:x.name,initiatorType:x.initiatorType,duration:x.duration}))));",
+    "console.log(await page.evaluate(()=>performance.getEntriesByType('resource').filter(x=>/FileUpload|upload|ashbycdn|s3/.test(x.name)).map(x=>({name:x.name,initiatorType:x.initiatorType,responseStatus:x",
+    "console.log(fs.readFileSync('uploads/jordan_testcase_test_resume.pdf').toString('latin1',0,400));",
+    "await page.evaluate(()=>{window.__uploadDebug=[];const f=window.fetch.bind(window);window.fetch=async(...a)=>{const r=await f(...a);if(String(a[0]).includes('FileUpload')){let t='';try{t=await r.clone"
+  ],
+  "version": "v2",
+  "label": "ab-linear",
+  "ats": "ashby",
+  "company": "Linear",
+  "run_dir": "runs\\20261105T190311-A-ab-linear",
+  "wall_seconds": 237.2,
+  "bu_spent_before": 0.326677,
+  "bu_spent_after": 0.266509,
+  "bu_balance_delta": -0.060168,
+  "bu_cost_counted": 0.018026
+}

@@ -1,0 +1,154 @@
+{
+  "arm": "A",
+  "model": "bu-ultrafast",
+  "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+  "session_id": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+  "agent_seconds": 27.2,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "worker.started": 1,
+    "run.dispatched": 1,
+    "llm.request": 10,
+    "core.event": 38,
+    "llm.response": 10,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "",
+    "fields": [
+      {
+        "label": "Name*",
+        "status": "filled",
+        "value": "Jordan Testcase"
+      },
+      {
+        "label": "Email*",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Resume*",
+        "status": "failed",
+        "value": "Not uploaded. Browser required the file in its downloads directory, and upload was unsuccessful."
+      },
+      {
+        "label": "Cover letter*",
+        "status": "filled",
+        "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted."
+      },
+      {
+        "label": "Github *",
+        "status": "filled",
+        "value": "Not provided"
+      },
+      {
+        "label": "LinkedIn",
+        "status": "filled",
+        "value": "Not provided"
+      },
+      {
+        "label": "X",
+        "status": "filled",
+        "value": "Not provided"
+      },
+      {
+        "label": "Are you based in a EU or equivalent timezone?",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "What country are you based in?*",
+        "status": "filled",
+        "value": "India"
+      },
+      {
+        "label": "Notice Period*",
+        "status": "filled",
+        "value": "30 days"
+      },
+      {
+        "label": "What would you want to work on? Tell us about the features you would want to implement in your first month.*",
+        "status": "filled",
+        "value": "In my first month, I would learn the product and customer workflows, then identify a focused improvement to analytics and reliability. I have built Python and TypeScript services and owned CI."
+      },
+      {
+        "label": "Tell us of a time you had to put your PM hat on to solve a complex product problem.*",
+        "status": "filled",
+        "value": "My provided background notes do not describe a specific product problem or PM decision, so I cannot give a factual example."
+      },
+      {
+        "label": "What are you extremely good at? What could you teach the team?*",
+        "status": "filled",
+        "value": "I am experienced in building and operating Python and TypeScript services and maintaining CI pipelines; I can share those practices."
+      },
+      {
+        "label": "Has someone at Linear referred you for this role? If so, please include their name here:",
+        "status": "skipped",
+        "value": ""
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 71024,
+    "output": 1639
+  },
+  "run_cost_usd": 0.006645,
+  "browser_id": "edda7cdb-1eaf-45fa-b7cc-2d86e2389477",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 14,
+    "required_total": 10,
+    "required_filled": 9,
+    "mapped_correct": 5,
+    "wrong": [],
+    "missed_required": [
+      "Resume"
+    ],
+    "resume_attached": false,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application",
+  "session_cost": {
+    "llm_cost_usd": 0.006645,
+    "browser_cost_usd": 0.000333,
+    "proxy_cost_usd": 0.0,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.006978
+  },
+  "browser_use_usd": 0.006978,
+  "seconds": 47.2,
+  "anthropic_usd": 0.0,
+  "steps": 10,
+  "llm_requests": 10,
+  "agent_trace": [
+    "page = await tabs.open('https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application'); await bu.state();",
+    "await screenshot()",
+    "await bu.state(); const s=await page.snapshot(); console.log(s.nodes);",
+    "const fs=require('fs'); console.log(fs.existsSync('uploads/Jordan_Testcase_TEST_RESUME.pdf'),process.cwd());",
+    "console.log(fs.readdirSync('uploads'));",
+    "const b=await page.cdp('DOM.getDocument',{}); const d=b.root; const ins=await page.evaluate(()=>[...document.querySelectorAll('input,textarea')].map(x=>({tag:x.tagName,type:x.type,name:x.name,placehol",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/uploads/jordan_testcase_test_resume.pdf']}); await bu.type(170,'Jordan Testcase'); await bu.type(175,'jordan.testcase@e",
+    "await bu.type(170,'Jordan Testcase'); await bu.type(175,'jordan.testcase@example.com'); await bu.type(197,'This is a test application from a fictional profile used to check form filling. It must not b"
+  ],
+  "version": "v2",
+  "label": "ab-linear",
+  "ats": "ashby",
+  "company": "Linear",
+  "run_dir": "runs\\20261105T184120-A-ab-linear",
+  "wall_seconds": 52.8,
+  "bu_spent_before": 0.084335,
+  "bu_spent_after": 0.09133,
+  "bu_balance_delta": 0.006995,
+  "bu_cost_counted": 0.006995
+}

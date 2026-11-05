@@ -1,0 +1,63 @@
+{
+  "arm": "B",
+  "model": "claude-sonnet-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 1,
+  "score": {
+    "success": true,
+    "fields_total": 10,
+    "required_total": 6,
+    "required_filled": 6,
+    "mapped_correct": 4,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": null,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://careers.bunq.com/positions/ios-developer-4",
+  "seconds": 71.3,
+  "failure": null,
+  "errors": [],
+  "steps": 11,
+  "claude_calls": 2,
+  "usage": [
+    {
+      "input_tokens": 1703,
+      "output_tokens": 32,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.003726,
+      "seconds": 1.6,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2209,
+      "output_tokens": 350,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.007918,
+      "seconds": 2.8,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.011644,
+  "browser_use_usd": 0.000668,
+  "browser_cost": {
+    "browser": 0.0006666666666666666,
+    "proxy": 1.631118357181549e-06,
+    "proxy_mb": 0.008351325988769531
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "version": "v2",
+  "label": "cu-recruitee-bunq",
+  "ats": "custom",
+  "company": "bunq",
+  "run_dir": "runs\\20261105T184001-B-cu-recruitee-bunq",
+  "wall_seconds": 76.5,
+  "bu_spent_before": 0.083666,
+  "bu_spent_after": 0.084335,
+  "bu_balance_delta": 0.000668,
+  "bu_cost_counted": 0.000668
+}

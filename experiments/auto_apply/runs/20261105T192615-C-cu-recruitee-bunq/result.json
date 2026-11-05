@@ -1,0 +1,16 @@
+{
+  "arm": "C",
+  "failure": "crashed: ConnectError: [WinError 10054] An existing connection was forcibly closed by the remote host",
+  "browser_use_usd": 0.0,
+  "anthropic_usd": 0.0,
+  "version": "v2",
+  "label": "cu-recruitee-bunq",
+  "ats": "custom",
+  "company": "bunq",
+  "run_dir": "runs\\20261105T192615-C-cu-recruitee-bunq",
+  "wall_seconds": 5.3,
+  "bu_spent_before": 0.33007,
+  "bu_spent_after": 0.33007,
+  "bu_balance_delta": 0.0,
+  "bu_cost_counted": 0.0
+}

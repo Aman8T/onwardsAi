@@ -1,0 +1,127 @@
+{
+  "url": "https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040/application",
+  "title": "Mobile Engineer, Android @ Ramp",
+  "fields": [
+    {
+      "selector": "body > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > input:nth-of-type(1)",
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Name",
+      "required": false,
+      "value": "",
+      "accept": "application/pdf,.pdf,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.oasis.opendocument.text,.odt,application/rtf,.rtf,text/plain,.txt,text/markdown,.md",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"_systemfield_name\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "_systemfield_name",
+      "label": "Name",
+      "required": true,
+      "value": "Jordan Testcase",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"_systemfield_email\"]",
+      "tag": "input",
+      "type": "email",
+      "name": "_systemfield_email",
+      "label": "Email",
+      "required": true,
+      "value": "jordan.testcase@example.com",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"_systemfield_resume\"]",
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Resume",
+      "required": true,
+      "value": "Jordan_Testcase_TEST_RESUME.pdf",
+      "accept": "application/pdf,.pdf,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.oasis.opendocument.text,.odt,application/rtf,.rtf,text/plain,.txt,text/markdown,.md,image/*,video/*,audio/*",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"phone\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "phone",
+      "label": "Phone",
+      "required": true,
+      "value": "+1 555 010 0142",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"cover_letter\"]",
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Cover Letter",
+      "required": false,
+      "value": "",
+      "accept": "application/pdf,.pdf,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.oasis.opendocument.text,.odt,application/rtf,.rtf,text/plain,.txt,text/markdown,.md,image/*,video/*,audio/*",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_18831815002\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "question_18831815002",
+      "label": "LinkedIn Profile",
+      "required": false,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_23641585002\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "question_23641585002",
+      "label": "Github",
+      "required": false,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_23341706002\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "question_23341706002",
+      "label": "Please provide a link to the App Store and/or personal portfolio showcasing your top 1-2 app(s)!",
+      "required": true,
+      "value": "https://example.com/jordan-testcase",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_22072318002\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "question_22072318002",
+      "label": "Please share some details about your proudest Android feature in 2 to 3 sentences. What made it challenging and what was the impact?",
+      "required": true,
+      "value": "I have no Android-specific feature to cite; my proudest work was building and running Python and TypeScript services for an internal analytics product and owning its CI pipeline. It was challenging because of reliability needs, and it improved the team's delivery speed.",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_22639844002\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "question_22639844002",
+      "label": "Have you contributed to a mobile app(s) and/or several features that reached a large number of users? Please describe.",
+      "required": true,
+      "value": "I have not shipped a large-scale mobile app. I have built and maintained web services and a Django web app with a full test suite at Example Labs and Sample Systems.",
+      "frame": 0
+    }
+  ],
+  "blockers": {
+    "captcha_on_page": true,
+    "password_field": false,
+    "submit_texts": [
+      "Submit Application"
+    ],
+    "resume_name_on_page": true
+  }
+}

@@ -1,0 +1,132 @@
+[
+  {
+    "op": "fill",
+    "label": "First Name*",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"first_name\"]",
+    "name": null,
+    "value": "Jordan",
+    "source": "first_name"
+  },
+  {
+    "op": "fill",
+    "label": "Last Name*",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"last_name\"]",
+    "name": null,
+    "value": "Testcase",
+    "source": "last_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email*",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"email\"]",
+    "name": null,
+    "value": "jordan.testcase@example.com",
+    "source": "email"
+  },
+  {
+    "op": "choose",
+    "label": "Country*",
+    "type": "combobox",
+    "frame": 0,
+    "selector": "[id=\"country\"]",
+    "name": null,
+    "value": "India",
+    "source": "country"
+  },
+  {
+    "op": "fill",
+    "label": "Phone*",
+    "type": "tel",
+    "frame": 0,
+    "selector": "[id=\"phone\"]",
+    "name": null,
+    "value": "+1 555 010 0142",
+    "source": "phone"
+  },
+  {
+    "op": "choose",
+    "label": "Location (City)*",
+    "type": "combobox",
+    "frame": 0,
+    "selector": "[id=\"candidate-location\"]",
+    "name": null,
+    "value": "Pune",
+    "source": "city"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Resume/CV*",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"resume\"]",
+    "name": null,
+    "value": "",
+    "source": "resume"
+  },
+  {
+    "op": "fill",
+    "label": "Would you like to include your LinkedIn profile, personal website or blog?",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"question_70006080\"]",
+    "name": null,
+    "value": "https://example.com/jordan-testcase",
+    "source": "website"
+  },
+  {
+    "op": "fill",
+    "label": "How did you hear about this job?*",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"question_70006081\"]",
+    "name": null,
+    "value": "Company careers page",
+    "source": "how_heard"
+  },
+  {
+    "op": "choose",
+    "label": "Do you currently live or are you willing to relocate to the job\u2019s location?*",
+    "type": "combobox",
+    "frame": 0,
+    "selector": "[id=\"question_70006082\"]",
+    "name": null,
+    "value": "Yes",
+    "source": "location Pune, India; answer yes"
+  },
+  {
+    "op": "choose",
+    "label": "Do you now or will you in the future require immigration sponsorship to work at Cloudflare?*",
+    "type": "combobox",
+    "frame": 0,
+    "selector": "[id=\"question_70006083\"]",
+    "name": null,
+    "value": "No",
+    "source": "needs_sponsorship"
+  },
+  {
+    "op": "check",
+    "label": "Acknowledge/Confirm",
+    "type": "checkbox",
+    "frame": 0,
+    "selector": "[id=\"question_70006084[]_757098101\"]",
+    "name": "question_70006084[]",
+    "value": "checked",
+    "source": "acknowledgement"
+  },
+  {
+    "op": "choose",
+    "label": "Do you currently live or are you willing to relocate to the job\u2019s location?*",
+    "type": "combobox",
+    "frame": 0,
+    "selector": "[id=\"question_70006082\"]",
+    "name": null,
+    "value": "Yes",
+    "source": "Applicant lives in Pune, India; job location answer chosen as Yes (test)"
+  }
+]

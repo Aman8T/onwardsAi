@@ -1,0 +1,197 @@
+{
+  "url": "https://job-boards.greenhouse.io/cloudflare/jobs/8300518",
+  "title": "Job Application for Capacity Engineer at Cloudflare",
+  "fields": [
+    {
+      "selector": "[id=\"first_name\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "First Name*",
+      "required": true,
+      "value": "Jordan",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"last_name\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "Last Name*",
+      "required": true,
+      "value": "Testcase",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"email\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "Email*",
+      "required": true,
+      "value": "jordan.testcase@example.com",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"country\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Country*",
+      "required": true,
+      "value": "+1",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"phone\"]",
+      "tag": "input",
+      "type": "tel",
+      "name": null,
+      "label": "Phone*",
+      "required": true,
+      "value": "(555) 010-0142",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"candidate-location\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Location (City)*",
+      "required": true,
+      "value": "Pune, Maharashtra, India",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"resume\"]",
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Resume/CV*",
+      "required": true,
+      "value": "",
+      "accept": ".pdf,.doc,.docx,.txt,.rtf",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"cover_letter\"]",
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Cover Letter",
+      "required": false,
+      "value": "",
+      "accept": ".pdf,.doc,.docx,.txt,.rtf",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"cover_letter_text\"]",
+      "tag": "textarea",
+      "type": "textarea",
+      "name": null,
+      "label": "Enter manually",
+      "required": false,
+      "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted.",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_70006079\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "Legal Name (if different than above)",
+      "required": false,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_70006080\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "Would you like to include your LinkedIn profile, personal website or blog?",
+      "required": false,
+      "value": "https://example.com/jordan-testcase",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_70006081\"]",
+      "tag": "input",
+      "type": "text",
+      "name": null,
+      "label": "How did you hear about this job?*",
+      "required": true,
+      "value": "Company careers page",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_70006082\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Do you currently live or are you willing to relocate to the job\u2019s location?*",
+      "required": true,
+      "value": "I do not live and not willing to relocate to this job's location.",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_70006083\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Do you now or will you in the future require immigration sponsorship to work at Cloudflare?*",
+      "required": true,
+      "value": "No",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"question_70006084[]_757098101\"]",
+      "tag": "input",
+      "type": "checkbox",
+      "name": "question_70006084[]",
+      "label": "Acknowledge/Confirm",
+      "required": true,
+      "value": "checked",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"gender\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Gender",
+      "required": false,
+      "value": "Decline To Self Identify",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"hispanic_ethnicity\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Are you Hispanic/Latino?",
+      "required": false,
+      "value": "Decline To Self Identify",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"veteran_status\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Veteran Status",
+      "required": false,
+      "value": "I don't wish to answer",
+      "frame": 0
+    }
+  ],
+  "blockers": {
+    "captcha_on_page": false,
+    "password_field": false,
+    "submit_texts": [
+      "Apply",
+      "Submit application"
+    ],
+    "resume_name_on_page": false
+  }
+}

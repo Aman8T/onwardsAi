@@ -1,0 +1,2228 @@
+[
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455601566,
+    "ts": "2026-11-05T19:16:59.350446Z",
+    "type": "run.created",
+    "data": {
+      "model": "bu-fast",
+      "session_id": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "is_free_tier": false,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "browser_settings": {
+        "record": false,
+        "profile_id": null,
+        "custom_proxy": false,
+        "extension_ids": [
+          "fd5fbf23-0393-4707-95ab-91cf0b4c4bfc"
+        ],
+        "allow_resizing": null,
+        "proxy_country_code": null,
+        "browser_screen_width": null,
+        "browser_screen_height": null,
+        "profile_storage_generation": ""
+      }
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455601569,
+    "ts": "2026-11-05T19:16:59.374515Z",
+    "type": "run.dispatching",
+    "data": {
+      "transport": "agentcore"
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455601597,
+    "ts": "2026-11-05T19:16:59.688489Z",
+    "type": "browser.ready",
+    "data": {
+      "live_view_url": "<redacted>",
+      "browser_session_id": "d72f544b-4d2b-417d-90e3-26d7e5934bde"
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455601609,
+    "ts": "2026-11-05T19:16:59.954007Z",
+    "type": "run.dispatched",
+    "data": {
+      "transport": "agentcore",
+      "browser_session_id": "d72f544b-4d2b-417d-90e3-26d7e5934bde"
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455601612,
+    "ts": "2026-11-05T19:16:59.963712Z",
+    "type": "worker.started",
+    "data": {
+      "core_agent": "bu-pi",
+      "session_id": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "cold_process": true,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "invocation_index": 1,
+      "prewarmed_process": false,
+      "invocation_received_unix_ms": 1793906219934,
+      "process_age_at_invocation_ms": 4704.901743,
+      "runtime_session_header_present": true
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455601649,
+    "ts": "2026-11-05T19:17:00.835406Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 2,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "14267",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455601650,
+    "ts": "2026-11-05T19:17:00.837873Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906220650
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455601783,
+    "ts": "2026-11-05T19:17:02.453289Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000402",
+      "charge_usd": "0.000482",
+      "is_own_key": false,
+      "input_tokens": 2971,
+      "output_tokens": 62,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 18,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2968,
+      "cached_input_tokens": 0
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455601785,
+    "ts": "2026-11-05T19:17:02.473673Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.goto('https://careers.bunq.com/o/ios-developer-4/c/new'); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_WQCCJtgCv3XZCyQ6S8rIiuml|fc_08ede1a2f3236fb3016aecd62e30ac87d180b6d4a7725333cd"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906222459
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602012,
+    "ts": "2026-11-05T19:17:04.991792Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.goto('https://careers.bunq.com/o/ios-developer-4/c/new'); await bu.state();"
+          },
+          "output": "[state] iOS Developer at bunq | bunq Careers | https://careers.bunq.com/positions/ios-developer-4\n[67] link \"Skip to main content\"\n[70] link \"bunq home\"\n[80] button \"Discover bunq\" collapsed\n[85] link \"How we Hire\"\n[88] button \"Offices\" collapsed\n[106] link \"Open Positions\"\n## iOS Developer\nHybrid Location: Amsterdam\n## Ready to get shit done?\nAt bunq, we're not just building a banking app; we're reshaping how people around the world experience financial freedom. As a (Senior) iOS Developer, you\u2019ll be instrumental in crafting and maintaining cutting-edge mobile applications that elevate our users' banking journeys. Collaborate with our dynamic team to deliver a seamless, innovative, and user-friendly experience on the iOS platform.\nTake Ownership\nDevelop and maintain scalable iOS architecture, ensuring efficiency and a seamless user experience using Swift and iOS SDK.\nIntegrate and optimize REST APIs, managing authentication, error handling, and data flow for smooth performance.\nEnhance CI/CD and testing automation, maintaining fast release cycles and ensuring robust app quality.\nDevelop new features and fix bugs proactively, keeping performance sharp and delivering a seamless experience for our user.\n## This challenge is perfect for you if\nProficiency in Swift, Objective-C, and SwiftUI to build intuitive, high-performance interfaces.\nExperience in designing scalable and secure network layers using REST APIs & authentication.\nFamiliarity with CI/CD pipelines and automated testing for implementing continuous testing strategies.\nExpertise in state management and UI frameworks to create fluid, responsive applications using UIKit or SwiftUI.\nFluency in English to effectively communicate in a global team and ensure collaboration and clarity across all project stages.\nAll new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace\nCurious to see how we make life easy? - try the\n[179] link \"bunq app\"\n, it only takes 5 minutes to sign up.\nYour space to perform\nWe give you the space and the tools you need to succeed \ud83d\udcaa\ud83c\udffc\n\ud83e\udd1f Great, international colleagues who share your mindset\n\ud83d\udc69\u200d\ud83d\udcbb Hybrid setup: after 3 months in-office, work 2 days remote, 3 days in-office weekly.\n\ud83e\uddf3 Digital Nomad Program: After your first year, enjoy up to 20 days per year to work while traveling, combining flexibility with strong team collaboration\n... 69 lines cut here (bu.state({max: 30000}) or page.evaluate)\n[506] button \"Reject non-essential\"\n[510] link \"\u00a9 2026 bunq (opens in new tab)\"\n[512] link \"Imprint (opens in new tab)\"\n[513] link \"Website Terms (opens in new tab)\"\n[514] link \"Privacy Statement (opens in new tab)\"\n[515] link \"Accessibility Statement (opens in new tab)\"\n[516] link \"Cookie Statement (opens in new tab)\"\n[517] link \"Sitemap (opens in new tab)\"\n[522] link \"bunq on Instagram (opens in new tab)\"\n[529] link \"bunq on X (opens in new tab)\"\n[534] link \"bunq on YouTube (opens in new tab)\"\n[540] link \"bunq on LinkedIn (opens in new tab)\"\n[545] link \"bunq on Facebook (opens in new tab)\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_WQCCJtgCv3XZCyQ6S8rIiuml|fc_08ede1a2f3236fb3016aecd62e30ac87d180b6d4a7725333cd"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906224983
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602016,
+    "ts": "2026-11-05T19:17:05.002100Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 5,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "19666",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602017,
+    "ts": "2026-11-05T19:17:05.004466Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906224986
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602018,
+    "ts": "2026-11-05T19:17:05.019516Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906224994
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602184,
+    "ts": "2026-11-05T19:17:07.234002Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000153",
+      "charge_usd": "0.000184",
+      "is_own_key": false,
+      "input_tokens": 3776,
+      "output_tokens": 45,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 17,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 805,
+      "cached_input_tokens": 2968
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602185,
+    "ts": "2026-11-05T19:17:07.248859Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(506); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_0zNgtGTKNSd39oVxWPtBGkS8|fc_08ede1a2f3236fb3016aecd633194087d181a7965e8a846fa7"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906227242
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602204,
+    "ts": "2026-11-05T19:17:07.429228Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(506); await bu.state();"
+          },
+          "output": "[ok] click [506] button \"Reject non-essential\" -> page changed\n[state] iOS Developer at bunq | bunq Careers | https://careers.bunq.com/positions/ios-developer-4\n[67] link \"Skip to main content\"\n[70] link \"bunq home\"\n[80] button \"Discover bunq\" collapsed\n[85] link \"How we Hire\"\n[88] button \"Offices\" collapsed\n[106] link \"Open Positions\"\n## iOS Developer\nHybrid Location: Amsterdam\n## Ready to get shit done?\nAt bunq, we're not just building a banking app; we're reshaping how people around the world experience financial freedom. As a (Senior) iOS Developer, you\u2019ll be instrumental in crafting and maintaining cutting-edge mobile applications that elevate our users' banking journeys. Collaborate with our dynamic team to deliver a seamless, innovative, and user-friendly experience on the iOS platform.\nTake Ownership\nDevelop and maintain scalable iOS architecture, ensuring efficiency and a seamless user experience using Swift and iOS SDK.\nIntegrate and optimize REST APIs, managing authentication, error handling, and data flow for smooth performance.\nEnhance CI/CD and testing automation, maintaining fast release cycles and ensuring robust app quality.\nDevelop new features and fix bugs proactively, keeping performance sharp and delivering a seamless experience for our user.\n## This challenge is perfect for you if\nProficiency in Swift, Objective-C, and SwiftUI to build intuitive, high-performance interfaces.\nExperience in designing scalable and secure network layers using REST APIs & authentication.\nFamiliarity with CI/CD pipelines and automated testing for implementing continuous testing strategies.\nExpertise in state management and UI frameworks to create fluid, responsive applications using UIKit or SwiftUI.\nFluency in English to effectively communicate in a global team and ensure collaboration and clarity across all project stages.\nAll new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace\nCurious to see how we make life easy? - try the\n[179] link \"bunq app\"\n, it only takes 5 minutes to sign up.\nYour space to perform\nWe give you the space and the tools you need to succeed \ud83d\udcaa\ud83c\udffc\n\ud83e\udd1f Great, international colleagues who share your mindset\n\ud83d\udc69\u200d\ud83d\udcbb Hybrid setup: after 3 months in-office, work 2 days remote, 3 days in-office weekly.\n\ud83e\uddf3 Digital Nomad Program: After your first year, enjoy up to 20 days per year to work while traveling, combining flexibility with strong team collaboration\n... 67 lines cut here (bu.state({max: 30000}) or page.evaluate)\n[506] button \"Reject non-essential\"\n[510] link \"\u00a9 2026 bunq (opens in new tab)\"\n[512] link \"Imprint (opens in new tab)\"\n[513] link \"Website Terms (opens in new tab)\"\n[514] link \"Privacy Statement (opens in new tab)\"\n[515] link \"Accessibility Statement (opens in new tab)\"\n[516] link \"Cookie Statement (opens in new tab)\"\n[517] link \"Sitemap (opens in new tab)\"\n[522] link \"bunq on Instagram (opens in new tab)\"\n[529] link \"bunq on X (opens in new tab)\"\n[534] link \"bunq on YouTube (opens in new tab)\"\n[540] link \"bunq on LinkedIn (opens in new tab)\"\n[545] link \"bunq on Facebook (opens in new tab)\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_0zNgtGTKNSd39oVxWPtBGkS8|fc_08ede1a2f3236fb3016aecd633194087d181a7965e8a846fa7"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906227418
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602212,
+    "ts": "2026-11-05T19:17:07.466272Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906227424
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602215,
+    "ts": "2026-11-05T19:17:07.475107Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 8,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "25103",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602216,
+    "ts": "2026-11-05T19:17:07.480535Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906227453
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602413,
+    "ts": "2026-11-05T19:17:10.243134Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000160",
+      "charge_usd": "0.000192",
+      "is_own_key": false,
+      "input_tokens": 4581,
+      "output_tokens": 43,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 16,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 805,
+      "cached_input_tokens": 3773
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602414,
+    "ts": "2026-11-05T19:17:10.259086Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state({max:30000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_HD7VHQczibGrgIFFt2OGCjD7|fc_08ede1a2f3236fb3016aecd6360dbc87d1b25d8b6bbead7759"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906230255
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602422,
+    "ts": "2026-11-05T19:17:10.368332Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state({max:30000});"
+          },
+          "output": "[state] iOS Developer at bunq | bunq Careers | https://careers.bunq.com/positions/ios-developer-4\n[67] link \"Skip to main content\"\n[70] link \"bunq home\"\n[80] button \"Discover bunq\" collapsed\n[85] link \"How we Hire\"\n[88] button \"Offices\" collapsed\n[106] link \"Open Positions\"\n## iOS Developer\nHybrid Location: Amsterdam\n## Ready to get shit done?\nAt bunq, we're not just building a banking app; we're reshaping how people around the world experience financial freedom. As a (Senior) iOS Developer, you\u2019ll be instrumental in crafting and maintaining cutting-edge mobile applications that elevate our users' banking journeys. Collaborate with our dynamic team to deliver a seamless, innovative, and user-friendly experience on the iOS platform.\nTake Ownership\nDevelop and maintain scalable iOS architecture, ensuring efficiency and a seamless user experience using Swift and iOS SDK.\nIntegrate and optimize REST APIs, managing authentication, error handling, and data flow for smooth performance.\nEnhance CI/CD and testing automation, maintaining fast release cycles and ensuring robust app quality.\nDevelop new features and fix bugs proactively, keeping performance sharp and delivering a seamless experience for our user.\n## This challenge is perfect for you if\nProficiency in Swift, Objective-C, and SwiftUI to build intuitive, high-performance interfaces.\nExperience in designing scalable and secure network layers using REST APIs & authentication.\nFamiliarity with CI/CD pipelines and automated testing for implementing continuous testing strategies.\nExpertise in state management and UI frameworks to create fluid, responsive applications using UIKit or SwiftUI.\nFluency in English to effectively communicate in a global team and ensure collaboration and clarity across all project stages.\nAll new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace\nCurious to see how we make life easy? - try the\n[179] link \"bunq app\"\n, it only takes 5 minutes to sign up.\nYour space to perform\nWe give you the space and the tools you need to succeed \ud83d\udcaa\ud83c\udffc\n\ud83e\udd1f Great, international colleagues who share your mindset\n\ud83d\udc69\u200d\ud83d\udcbb Hybrid setup: after 3 months in-office, work 2 days remote, 3 days in-office weekly.\n\ud83e\uddf3 Digital Nomad Program: After your first year, enjoy up to 20 days per year to work while traveling, combining flexibility with strong team collaboration\n\ud83d\ude80 We reward tenure with a dedicated travel budget: \u20ac1.5k after 2 years and \u20ac3k after 4 years to visit another core office.\n\ud83d\udcda We support growth with bunq Academy and \u20ac1500 annual learning budget\n\ud83d\udeb4 Massive discount with Urban Sports Club \ud83d\udcaa\n\ud83d\ude8c Travel expenses are covered whether you come walking or by bike, bus or car (though we prefer green choices \ud83c\udf33)\n\ud83d\udcbb A MacBook so you can Get Shit Done with us\n\ud83e\udd66 Delicious lunches from our fabulous in-house chefs with vegan and vegetarian options\n\ud83d\udcb0 An optional pension plan with monthly contribution from bunq\n\ud83d\udcb8 Monthly contribution to your phone and internet bills\n\ud83c\udf7b Friday drinks and other celebrations - bunq style\n[201] button \"Apply now\"\n[204] button \"Share this job\"\nLocation: Amsterdam Working hours: 40 hours per week Department: Technology\n## How we hire\n[236] link \"Learn more\"\n## Related Positions\n[249] link\n## SOS Hotline Support Guide\n[267] link\n## Payment Investigations Expert\n[285] link\n## Chargebacks Expert\n[303] link\n## Technology Risk Officer\n[320] link\n## (Senior) Legal Counsel\n[337] link\n## Copywriting Intern\n[355] link \"Explore all positions\"\n## Life at bunq\n## Discover bunq\n[374] link \"Learn more: Discover bunq\"\n## Our culture\n[384] link \"Learn more: Our culture\"\n## Our people\n[394] link \"Learn more: Our people\"\n## Get started with bunq\nDownload the app and start banking in minutes.\n## For You\n[419] link \"Personal Use Cases (opens in new tab)\"\n[421] link \"Personal Plans (opens in new tab)\"\n[423] link \"Personal Features (opens in new tab)\"\n[425] link \"Personal Comparisons (opens in new tab)\"\n[427] link \"Personal Cards (opens in new tab)\"\n## For Business\n[433] link \"Business Use Cases (opens in new tab)\"\n[435] link \"Business Plans (opens in new tab)\"\n[437] link \"Business Features (opens in new tab)\"\n[439] link \"Business Comparisons (opens in new tab)\"\n[441] link \"Business Cards (opens in new tab)\"\n## Discover\n[447] link \"Blog (opens in new tab)\"\n[449] link \"Learning Hub (opens in new tab)\"\n[451] link \"Reviews (opens in new tab)\"\n[453] link \"tricount (opens in new tab)\"\n## About Us\n[459] link \"Press (opens in new tab)\"\n[461] link \"Careers (opens in new tab)\"\n[463] link \"Security (opens in new tab)\"\n[465] link \"Sustainability (opens in new tab)\"\n[467] link \"About (opens in new tab)\"\n[474] button \"Cookie settings\"\n[510] link \"\u00a9 2026 bunq (opens in new tab)\"\n[512] link \"Imprint (opens in new tab)\"\n[513] link \"Website Terms (opens in new tab)\"\n[514] link \"Privacy Statement (opens in new tab)\"\n[515] link \"Accessibility Statement (opens in new tab)\"\n[516] link \"Cookie Statement (opens in new tab)\"\n[517] link \"Sitemap (opens in new tab)\"\n[522] link \"bunq on Instagram (opens in new tab)\"\n[529] link \"bunq on X (opens in new tab)\"\n[534] link \"bunq on YouTube (opens in new tab)\"\n[540] link \"bunq on LinkedIn (opens in new tab)\"\n[545] link \"bunq on Facebook (opens in new tab)\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_HD7VHQczibGrgIFFt2OGCjD7|fc_08ede1a2f3236fb3016aecd6360dbc87d1b25d8b6bbead7759"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906230363
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602423,
+    "ts": "2026-11-05T19:17:10.374933Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906230366
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602424,
+    "ts": "2026-11-05T19:17:10.380184Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 11,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "32790",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602425,
+    "ts": "2026-11-05T19:17:10.384754Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906230372
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602644,
+    "ts": "2026-11-05T19:17:13.124754Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000240",
+      "charge_usd": "0.000288",
+      "is_own_key": false,
+      "input_tokens": 5954,
+      "output_tokens": 44,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 11,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1373,
+      "cached_input_tokens": 4578
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602646,
+    "ts": "2026-11-05T19:17:13.134517Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(201); await bu.state({max:30000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_GwF6p7GYbAqy2BC0oVQNUFHE|fc_08ede1a2f3236fb3016aecd638f5d087d1a509e73e1630493e"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906233130
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602668,
+    "ts": "2026-11-05T19:17:13.498695Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(201); await bu.state({max:30000});"
+          },
+          "output": "[ok] click [201] button \"Apply now\" -> page changed\n[state] iOS Developer at bunq | bunq Careers | https://careers.bunq.com/positions/ios-developer-4\n*[810] dialog \"Nice to meet you!\"\n*[807] button \"Close\" focused\n## Nice to meet you!\nTell us who you are by filling the form below.\n*[848] textbox \"What is your full name?\"\n*[858] textbox \"What is your email?\"\nWhat is your phone number?\n*[880] button \"Country code: Netherlands +31\" collapsed\n*[881] textbox \"What is your phone number?\"\n*[890] textbox \"What country do you currently live in?\"\n\ud83d\udca1 Each country has different rules for eligibility to work without requiring sponsorship.\n\ud83c\uddf3\ud83c\uddf1 Netherlands : You must be a Dutch/EU/EEA/Swiss citizen, or hold a valid Dutch residence permit with full work rights (e.g., refugee status, spousal visa, or permanent residence). For this role, we are able to sponsor visas in a few other situations, so feel free to apply. \ud83c\udf08\n*[934] combobox \"Which visa situation fits you best?\" = \"Select an option\" collapsed\n\ud83d\udca1 Important Info: At bunq, our working language is English. Fluency in both writing and speaking English is a must for all roles in all locations.\n*[972] combobox \"How do you assess your writing and speaking English skills?\" = \"Select an option\" collapsed\n\ud83d\udca1 If successful in the hiring process, the contractual arrangement would look like this: \ud83c\uddf3\ud83c\uddf1 Netherlands: A first contract of 9 months, extended with a second contract of 12 months, followed by an indefinite contract. \ud83d\udca1 For the first 3 months, all new hires are required to be in the office 5 days a week to complete the onboarding process, get to know everyone, and immerse themselves in the culture of bunq. After that, the work arrangement will be hybrid, with 3 days in the office and 2 days working from home.\n\ud83d\udca1 Our standard working hours are from 09:00 to 18:00. This ensures that everyone is available and can rely on each other during this time.\n*[1020] combobox \"Do you agree and confirm with the above mentioned terms (contract duration, hybrid way of working, and standard working hours)?\" = \"Select an option\" collapsed\n*[1026] textbox \"What are your salary expectations? (gross, annual, in EUR)\"\nPlease double check if the salary expectations is the yearly gross amount, in EUR\nHave you previously worked at bunq? (required)\n*[1038] radio \"Yes\" unchecked\nYes\n*[1042] radio \"No\" unchecked\nNo\nAll new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace\n*[1091] combobox \"How do you usually approach your work, its impact, and solving challenges?\" = \"Select an option\" collapsed\n*[1124] combobox \"Which of the following statements best describes your approach to using AI in a professional context?\" = \"Select an option\" collapsed\n*[1157] combobox \"How would you rate your practical proficiency with Swift code for iOS apps?\" = \"Select an option\" collapsed\nCan you read Objective-C implementations and translate them into Swift using modern best practices? (required)\n*[1163] radio \"Yes\" unchecked\nYes\n*[1167] radio \"No\" unchecked\nNo\n*[1208] combobox \"How familiar and practiced are you with iOS development in a CI pipeline?\" = \"Select an option\" collapsed\nCan you assess legacy UI components and reconstruct them following modern SwiftUI development standards? (required)\n*[1214] radio \"Yes\" unchecked\nYes\n*[1218] radio \"No\" unchecked\nNo\n*[1271] combobox \"How did you first hear about this role?\" = \"Select an option\" collapsed\n*[1278] checkbox \"I have read and accept the Recruitment Privacy Policy\" unchecked\nI have read and accept the\n*[1277] link \"Recruitment Privacy Policy (opens in new tab)\"\n*[1282] button \"Submit Now\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_GwF6p7GYbAqy2BC0oVQNUFHE|fc_08ede1a2f3236fb3016aecd638f5d087d1a509e73e1630493e"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906233493
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602670,
+    "ts": "2026-11-05T19:17:13.507797Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906233496
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602671,
+    "ts": "2026-11-05T19:17:13.519797Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906233509
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455602675,
+    "ts": "2026-11-05T19:17:13.520451Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 14,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "38689",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603267,
+    "ts": "2026-11-05T19:17:20.199418Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000399",
+      "charge_usd": "0.000479",
+      "is_own_key": false,
+      "input_tokens": 6906,
+      "output_tokens": 440,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 297,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 952,
+      "cached_input_tokens": 5951
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603268,
+    "ts": "2026-11-05T19:17:20.220799Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>{let d=document.querySelector('[role=dialog]'); return [...d.querySelectorAll('input,select,textarea,button,[role=combobox]')].map((e,i)=>({i,tag:e.tagName,type:e.type,role:e.getAttribute('role'),name:e.name,id:e.id,placeholder:e.placeholder,aria:e.getAttribute('aria-label'),required:e.required,options:e.tagName==='SELECT'?[...e.options].map(o=>({text:o.text,value:o.value})):undefined,text:e.innerText?.slice(0,150)}));}));"
+          },
+          "status": "running"
+        },
+        "callID": "call_99FvkyUESfySiGmxDLaaxjkt|fc_08ede1a2f3236fb3016aecd63fbaf087d186f496093148e2dc"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906240214
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603269,
+    "ts": "2026-11-05T19:17:20.240023Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>{let d=document.querySelector('[role=dialog]'); return [...d.querySelectorAll('input,select,textarea,button,[role=combobox]')].map((e,i)=>({i,tag:e.tagName,type:e.type,role:e.getAttribute('role'),name:e.name,id:e.id,placeholder:e.placeholder,aria:e.getAttribute('aria-label'),required:e.required,options:e.tagName==='SELECT'?[...e.options].map(o=>({text:o.text,value:o.value})):undefined,text:e.innerText?.slice(0,150)}));}));"
+          },
+          "output": "[\n  {\n    i: 0,\n    tag: 'BUTTON',\n    type: 'button',\n    role: null,\n    name: '',\n    id: '',\n    aria: 'Close',\n    text: ''\n  },\n  {\n    i: 1,\n    tag: 'INPUT',\n    type: 'text',\n    role: null,\n    name: 'website',\n    id: 'job-application-honeypot-r2b',\n    placeholder: '',\n    aria: null,\n    required: false,\n    text: ''\n  },\n  {\n    i: 2,\n    tag: 'INPUT',\n    type: 'text',\n    role: null,\n    name: 'name',\n    id: 'input-name-r2c',\n    placeholder: 'Emily Clark',\n    aria: null,\n    required: true,\n    text: ''\n  },\n  {\n    i: 3,\n    tag: 'INPUT',\n    type: 'email',\n    role: null,\n    name: 'email',\n    id: 'input-email-r2e',\n    placeholder: 'emily@bunq.com',\n    aria: null,\n    required: true,\n    text: ''\n  },\n  {\n    i: 4,\n    tag: 'INPUT',\n    type: 'hidden',\n    role: null,\n    name: 'phone',\n    id: '',\n    placeholder: '',\n    aria: null,\n    required: false,\n    text: ''\n  },\n  {\n    i: 5,\n    tag: 'BUTTON',\n    type: 'button',\n    role: null,\n    name: '',\n    id: '',\n    aria: 'Country code: Netherlands +31',\n    text: '+31'\n  },\n  {\n    i: 6,\n    tag: 'INPUT',\n    type: 'tel',\n    role: null,\n    name: '',\n    id: 'input-phone-r2g',\n    placeholder: '+31313133131',\n    aria: null,\n    required: true,\n    text: ''\n  },\n  {\n    i: 7,\n    tag: 'INPUT',\n    type: 'text',\n    role: null,\n    name: 'q_4413534',\n    id: 'input-q_4413534-r2i',\n    placeholder: 'Type your answer',\n    aria: null,\n    required: true,\n    text: ''\n  },\n  {\n    i: 8,\n    tag: 'DIV',\n    role: 'combobox',\n    id: '',\n    aria: null,\n    text: 'Select an option'\n  },\n  {\n    i: 9,\n    tag: 'SELECT',\n    type: 'select-one',\n    role: null,\n    name: 'q_4413536',\n    id: 'input-q_4413536-r2k',\n    aria: null,\n    required: true,\n    options: [ [Object], [Object], [Object], [Object], [Object] ],\n    text: 'Select an option\\n' +\n      'NL: I am a EU/EEA/Swiss citizen\\n' +\n      'NL: I am on a spousal visa / search year visa / under the reduced salary criterion\\n' +\n      'NL: I require visa'\n  },\n  {\n    i: 10,\n    tag: 'DIV',\n    role: 'combobox',\n    id: '',\n    aria: null,\n    text: 'Select an option'\n  },\n  {\n    i: 11,\n    tag: 'SELECT',\n    type: 'select-one',\n    role: null,\n    name: 'q_4413538',\n    id: 'input-q_4413538-r2n',\n    aria: null,\n    required: true,\n    options: [ [Object], [Object], [Object], [Object], [Object], [Object] ],\n    text: 'Select an option\\n' +\n      'Beginner\\n' +\n      'Intermediate\\n' +\n      'Upper Intermediate\\n' +\n      'Advanced\\n' +\n      'Native'\n  },\n  {\n    i: 12,\n    tag: 'DIV',\n    role: 'combobox',\n    id: '',\n    aria: null,\n    text: 'Select an option'\n  },\n  {\n    i: 13,\n    tag: 'SELECT',\n    type: 'select-one',\n    role: null,\n    name: 'q_4413540',\n    id: 'input-q_4413540-r2q',\n    aria: null,\n    required: true,\n    options: [ [Object], [Object], [Object], [Object], [Object] ],\n    text: 'Select an option\\n' +\n      'Yes, I agree with the proposed setup.\\n' +\n      'No, I do not agree with the initial in-office and then hybrid setup\\n' +\n      'No, I do not agree with the'\n  },\n  {\n    i: 14,\n    tag: 'INPUT',\n    type: 'text',\n    role: null,\n    name: 'q_4413541',\n    id: 'input-q_4413541-r2t',\n    placeholder: 'Type your answer',\n    aria: null,\n    required: true,\n    text: ''\n  },\n  {\n    i: 15,\n    tag: 'INPUT',\n    type: 'radio',\n    role: null,\n    name: 'q_4413543',\n    id: 'input-radio-group-true-0',\n    placeholder: '',\n    aria: null,\n    required: false,\n    text: ''\n  },\n  {\n    i: 16,\n    tag: 'INPUT',\n    type: 'radio',\n    role: null,\n    name: 'q_4413543',\n    id: 'input-radio-group-false-1',\n    placeholder: '',\n    aria: null,\n    required: false,\n    text: ''\n  },\n  {\n    i: 17,\n    tag: 'DIV',\n    role: 'combobox',\n    id: '',\n    aria: null,\n    text: 'Select an option'\n  },\n  {\n    i: 18,\n    tag: 'SELECT',\n    type: 'select-one',\n    role: null,\n    name: 'q_4413545',\n    id: 'input-q_4413545-r30',\n    aria: null,\n    required: true,\n    options: [\n      [Object], [Object],\n      [Object], [Object],\n      [Object], [Object],\n      [Object], [Object]\n    ],\n    text: 'Select an option\\n' +\n      'I don\u2019t have formal work experience yet, but I\u2019ve practiced through studies or small projects\\n' +\n      'I successfully handle defined tasks, fo'\n  },\n  {\n    i: 19,\n    tag: 'DIV',\n    role: 'combobox',\n    id: '',\n    aria: null,\n    text: 'Select an option'\n  },\n  {\n    i: 20,\n    tag: 'SELECT',\n    type: 'select-one',\n    role: null,\n    name: 'q_4413546',\n    id: 'input-q_4413546-r33',\n    aria: null,\n    required: true,\n    options: [ [Object], [Object], [Object], [Object], [Object] ],\n    text: 'Select an option\\n' +\n      'I have limited to no experience with AI tools and am not yet convinced of their practical benefits in a work environment.\\n' +\n      'I consisten'\n  },\n  {\n    i: 21,\n    tag: 'DIV',\n    role: 'combobox',\n    id: '',\n    aria: null,\n    text: 'Select an option'\n  },\n  {\n    i: 22,\n    tag: 'SELECT',\n    type: 'select-one',\n    role: null,\n    name: 'q_4413547',\n    id: 'input-q_4413547-r36',\n    aria: null,\n    required: true,\n    options: [ [Object], [Object], [Object], [Object], [Object] ],\n    text: 'Select an option\\n' +\n      'No experience - I haven\u2019t used it in a work setting.\\n' +\n      'Basic - I can perform simple tasks with templates or guidance.\\n' +\n      'Intermediate - I '\n  },\n  {\n    i: 23,\n    tag: 'INPUT',\n    type: 'radio',\n    role: null,\n    name: 'q_4413554',\n    id: 'input-radio-group-true-0',\n    placeholder: '',\n    aria: null,\n    required: false,\n    text: ''\n  },\n  {\n    i: 24,\n    tag: 'INPUT',\n    type: 'radio',\n    role: null,\n    name: 'q_4413554',\n    id: 'input-radio-group-false-1',\n    placeholder: '',\n    aria: null,\n    required: false,\n    text: ''\n  },\n  {\n    i: 25,\n    tag: 'DIV',\n    role: 'combobox',\n    id: '',\n    aria: null,\n    text: 'Select an option'\n  },\n  {\n    i: 26,\n    tag: 'SELECT',\n    type: 'select-one',\n    role: null,\n    name: 'q_4413548',\n    id: 'input-q_4413548-r3a',\n    aria: null,\n    required: true,\n    options: [ [Object], [Object], [Object], [Object], [Object], [Object] ],\n    text: 'Select an option\\n' +\n      'Not familiar - I am enthusiastic to start learning about it.\\n' +\n      'Theoretical - I know the basics but have little hands-on experience.\\n' +\n      'App'\n  },\n  {\n    i: 27,\n    tag: 'INPUT',\n    type: 'radio',\n    role: null,\n    name: 'q_4413556',\n    id: 'input-radio-group-true-0',\n    placeholder: '',\n    aria: null,\n    required: false,\n    text: ''\n  },\n  {\n    i: 28,\n    tag: 'INPUT',\n    type: 'radio',\n    role: null,\n    name: 'q_4413556',\n    id: 'input-radio-group-false-1',\n    placeholder: '',\n    aria: null,\n    required: false,\n    text: ''\n  },\n  {\n    i: 29,\n    tag: 'DIV',\n    role: 'combobox',\n    id: '',\n    aria: null,\n    text: 'Select an option'\n  },\n  {\n    i: 30,\n    tag: 'SELECT',\n    type: 'select-one',\n    role: null,\n    name: 'q_4413551',\n    id: 'input-q_4413551-r3e',\n    aria: null,\n    required: true,\n    options: [\n      [Object], [Object],\n      [Object], [Object],\n      [Object], [Object],\n      [Object], [Object],\n      [Object], [Object]\n    ],\n    text: 'Select an option\\n' +\n      \"I found it myself on bunq's careers website\\n\" +\n      'A current bunq employee told me about it\\n' +\n      'A former bunq employee referred me\\n' +\n      'A bunq recrui'\n  },\n  {\n    i: 31,\n    tag: 'INPUT',\n    type: 'checkbox',\n    role: null,\n    name: 'privacy',\n    id: 'job-application-privacy-r2b',\n    placeholder: '',\n    aria: null,\n    required: false,\n    text: ''\n  },\n  {\n    i: 32,\n    tag: 'BUTTON',\n    type: 'submit',\n    role: null,\n    name: '',\n    id: 'section-form-job-application-cta-submit',\n    aria: null,\n    text: 'Submit Now'\n  }\n]\n",
+          "status": "completed"
+        },
+        "callID": "call_99FvkyUESfySiGmxDLaaxjkt|fc_08ede1a2f3236fb3016aecd63fbaf087d186f496093148e2dc"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906240231
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603270,
+    "ts": "2026-11-05T19:17:20.252315Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906240234
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603272,
+    "ts": "2026-11-05T19:17:20.252584Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 17,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "53822",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603273,
+    "ts": "2026-11-05T19:17:20.263950Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906240241
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603533,
+    "ts": "2026-11-05T19:17:22.983781Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000549",
+      "charge_usd": "0.000659",
+      "is_own_key": false,
+      "input_tokens": 9855,
+      "output_tokens": 223,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 33,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2949,
+      "cached_input_tokens": 6903
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603534,
+    "ts": "2026-11-05T19:17:23.004699Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>{let d=document.querySelector('[role=dialog]'); return {selects:[...d.querySelectorAll('select')].map(e=>({name:e.name,label:e.closest('label')?.innerText||e.parentElement?.parentElement?.innerText,options:[...e.options].map(o=>({text:o.text,value:o.value}))})),questions:[...d.querySelectorAll('input[type=radio]')].map(e=>({name:e.name,group:e.closest('fieldset')?.innerText||e.parentElement?.parentElement?.innerText})),texts:[...d.querySelectorAll('input:not([type=radio]):not([type=hidden]):not([type=checkbox])')].map(e=>({name:e.name,label:e.parentElement?.parentElement?.innerText}))};}));"
+          },
+          "status": "running"
+        },
+        "callID": "call_bhkvt6RSAo521yiTTFhQR0yq|fc_08ede1a2f3236fb3016aecd64272e887d1af92fcbeb37d8a75"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906242996
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603535,
+    "ts": "2026-11-05T19:17:23.020687Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>{let d=document.querySelector('[role=dialog]'); return {selects:[...d.querySelectorAll('select')].map(e=>({name:e.name,label:e.closest('label')?.innerText||e.parentElement?.parentElement?.innerText,options:[...e.options].map(o=>({text:o.text,value:o.value}))})),questions:[...d.querySelectorAll('input[type=radio]')].map(e=>({name:e.name,group:e.closest('fieldset')?.innerText||e.parentElement?.parentElement?.innerText})),texts:[...d.querySelectorAll('input:not([type=radio]):not([type=hidden]):not([type=checkbox])')].map(e=>({name:e.name,label:e.parentElement?.parentElement?.innerText}))};}));"
+          },
+          "output": "{\n  selects: [\n    {\n      name: 'q_4413536',\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'NL: I am a EU/EEA/Swiss citizen\\n' +\n        'NL: I am on a spousal visa / search year visa / under the reduced salary criterion\\n' +\n        'NL: I require visa sponsorship and I am under 29 years of age\\n' +\n        'NL: I require visa sponsorship and I am over 29 years of age',\n      options: [Array]\n    },\n    {\n      name: 'q_4413538',\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'Beginner\\n' +\n        'Intermediate\\n' +\n        'Upper Intermediate\\n' +\n        'Advanced\\n' +\n        'Native',\n      options: [Array]\n    },\n    {\n      name: 'q_4413540',\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'Yes, I agree with the proposed setup.\\n' +\n        'No, I do not agree with the initial in-office and then hybrid setup\\n' +\n        'No, I do not agree with the contract duration / setup\\n' +\n        'No, I do not agree with the working hours setup',\n      options: [Array]\n    },\n    {\n      name: 'q_4413545',\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'I don\u2019t have formal work experience yet, but I\u2019ve practiced through studies or small projects\\n' +\n        'I successfully handle defined tasks, follow processes, and ask for guidance when needed\\n' +\n        'I work mostly on my own, support team goals, and deal with common issues\\n' +\n        'I deliver projects from start to finish, tie my work to team results, and suggest fixes\\n' +\n        'I turn bigger goals into initiatives, improve how we work, and prevent problems\\n' +\n        'I lead projects across teams, align people, and create tools that help others solve problems faster\\n' +\n        'I redesign systems across departments, focus on long-term goals, and drive strategic change',\n      options: [Array]\n    },\n    {\n      name: 'q_4413546',\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'I have limited to no experience with AI tools and am not yet convinced of their practical benefits in a work environment.\\n' +\n        'I consistently use AI tools to improve my personal efficiency, validate the quality of my own work, and build simple automations for my individual tasks.\\n' +\n        'I proactively improve team efficiency by designing, building, and maintaining multi-step automated workflows, and I actively share these solutions with my team.\\n' +\n        'I strategically redesign core operations by architecting scalable AI systems, coaching others to raise their AI skills, and identifying work that can be entirely eliminated by AI.',\n      options: [Array]\n    },\n    {\n      name: 'q_4413547',\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'No experience - I haven\u2019t used it in a work setting.\\n' +\n        'Basic - I can perform simple tasks with templates or guidance.\\n' +\n        'Intermediate - I work independently on common tasks and solve moderate problems.\\n' +\n        'Advanced - I design solutions, optimise performance, and mentor others.',\n      options: [Array]\n    },\n    {\n      name: 'q_4413548',\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'Not familiar - I am enthusiastic to start learning about it.\\n' +\n        'Theoretical - I know the basics but have little hands-on experience.\\n' +\n        'Applied - I have applied this knowledge in projects or operations.\\n' +\n        'Advanced - I have led implementations, designed processes, taught others.\\n' +\n        'Subject-matter expert - I am the go-to-person for complex issues.',\n      options: [Array]\n    },\n    {\n      name: 'q_4413551',\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        \"I found it myself on bunq's careers website\\n\" +\n        'A current bunq employee told me about it\\n' +\n        'A former bunq employee referred me\\n' +\n        'A bunq recruiter reached out to me\\n' +\n        'A job portal (LinkedIn, Glassdoor, Indeed, Google Jobs)\\n' +\n        'A social media post (LinkedIn, Instagram, Facebook, YouTube, X)\\n' +\n        'News or media coverage\\n' +\n        'At an event where bunq was present\\n' +\n        'Through my university (ad, newsletter, event)',\n      options: [Array]\n    }\n  ],\n  questions: [\n    {\n      name: 'q_4413543',\n      group: 'Have you previously worked at bunq?*\\n(required)\\nYes\\nNo'\n    },\n    {\n      name: 'q_4413543',\n      group: 'Have you previously worked at bunq?*\\n(required)\\nYes\\nNo'\n    },\n    {\n      name: 'q_4413554',\n      group: 'Can you read Objective-C implementations and translate them into Swift using modern best practices?*\\n' +\n        '(required)\\n' +\n        'Yes\\n' +\n        'No'\n    },\n    {\n      name: 'q_4413554',\n      group: 'Can you read Objective-C implementations and translate them into Swift using modern best practices?*\\n' +\n        '(required)\\n' +\n        'Yes\\n' +\n        'No'\n    },\n    {\n      name: 'q_4413556',\n      group: 'Can you assess legacy UI components and reconstruct them following modern SwiftUI development standards?*\\n' +\n        '(required)\\n' +\n        'Yes\\n' +\n        'No'\n    },\n    {\n      name: 'q_4413556',\n      group: 'Can you assess legacy UI components and reconstruct them following modern SwiftUI development standards?*\\n' +\n        '(required)\\n' +\n        'Yes\\n' +\n        'No'\n    }\n  ],\n  texts: [\n    {\n      name: 'website',\n      label: 'Website\\n' +\n        'What is your full name?\\n' +\n        '*\\n' +\n        'What is your email?\\n' +\n        '*\\n' +\n        'What is your phone number?\\n' +\n        '*\\n' +\n        '+31\\n' +\n        'What country do you currently live in?\\n' +\n        '*\\n' +\n        '\\n' +\n        '\ud83d\udca1 Each country has different rules for eligibility to work without requiring sponsorship.\\n' +\n        '\\n' +\n        '\\n' +\n        '\ud83c\uddf3\ud83c\uddf1 Netherlands: You must be a Dutch/EU/EEA/Swiss citizen, or hold a valid Dutch residence permit with full work rights (e.g., refugee status, spousal visa, or permanent residence).\\n' +\n        '\\n' +\n        'For this role, we are able to sponsor visas in a few other situations, so feel free to apply.\u00a0\ud83c\udf08\\n' +\n        '\\n' +\n        'Which visa situation fits you best?\\n' +\n        '*\\n' +\n        'Select an option\\n' +\n        'Select an option\\n' +\n        'NL: I am a EU/EEA/Swiss citizen\\n' +\n        'NL: I am on a spousal visa / search year visa / under the reduced salary criterion\\n' +\n        'NL: I require visa sponsorship and I am under 29 years of age\\n' +\n        'NL: I require visa sponsorship and I am over 29 years of age\\n' +\n        '\\n' +\n        '\ud83d\udca1 Important Info: At bunq, our working language is English. Fluency in both writing and speaking English is a must for all roles in all locations.\\n' +\n        '\\n' +\n        'How do you assess your writing and speaking English skills?\\n' +\n        '*\\n' +\n        'Select an option\\n' +\n        'Select an option\\n' +\n        'Beginner\\n' +\n        'Intermediate\\n' +\n        'Upper Intermediate\\n' +\n        'Advanced\\n' +\n        'Native\\n' +\n        '\\n' +\n        '\ud83d\udca1 If successful in the hiring process, the contractual arrangement would look like this:\u00a0\\n' +\n        '\\n' +\n        '\ud83c\uddf3\ud83c\uddf1 Netherlands: A first contract of 9 months, extended with a second contract of 12 months, followed by an indefinite contract.\u00a0\\n' +\n        '\\n' +\n        '\ud83d\udca1 For the first 3 months, all new hires are required to be in the office 5 days a week to complete the onboarding process, get to know everyone, and immerse\u00a0themselves in the culture of bunq. After that, the work arrangement will be hybrid, with 3 days in the office and 2 days working from home.\\n' +\n        '\\n' +\n        '\\n' +\n        '\ud83d\udca1 Our standard working hours are from 09:00 to 18:00. This ensures that everyone is available and can rely on each other during this time.\\n' +\n        '\\n' +\n        '\\n' +\n        'Do you agree and confirm with the above mentioned terms (contract duration, hybrid way of working, and standard working hours)?\\n' +\n        '*\\n' +\n        'Select an option\\n' +\n        'Select an option\\n' +\n        'Yes, I agree with the proposed setup.\\n' +\n        'No, I do not agree with the initial in-office and then hybrid setup\\n' +\n        'No, I do not agree with the contract duration / setup\\n' +\n        'No, I do not agree with the working hours setup\\n' +\n        'What are your salary expectations? (gross, annual, in EUR)\\n' +\n        '*\\n' +\n        '\\n' +\n        'Please double check if the salary expectations is the yearly gross amount, in EUR!\\n' +\n        '\\n' +\n        'Have you previously worked at bunq?*\\n' +\n        '(required)\\n' +\n        'Yes\\n' +\n        'No\\n' +\n        '\\n' +\n        'All new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace\\n' +\n        '\\n' +\n        'How do you usually approach your work, its impact, and solving challenges?\\n' +\n        '*\\n' +\n        'Select an option\\n' +\n        'Select an option\\n' +\n        'I don\u2019t have formal work experience yet, but I\u2019ve practiced through studies or small projects\\n' +\n        'I successfully handle defined tasks, follow processes, and ask for guidance when needed\\n' +\n        'I work mostly on my own, support team goals, and deal with common issues\\n' +\n        'I deliver projects from start to finish, tie my work to team results, and suggest fixes\\n' +\n        'I turn bigger goals into initiatives, improve how we work, and prevent problems\\n' +\n        'I lead projects across teams, align people, and create tools that help others solve problems faster\\n' +\n        'I redesign systems across departments, focus on long-term goals, and drive strategic change\\n' +\n        'Which of the following statements best describes your approach to using AI in a professional context?\\n' +\n        '*\\n' +\n        'Select an option\\n' +\n        'Select an option\\n' +\n        'I have limited to no experience with AI tools and am not yet convinced of their practical benefits in a work environment.\\n' +\n        'I consistently use AI tools to improve my personal efficiency, validate the quality of my own work, and build simple automations for my individual tasks.\\n' +\n        'I proactively improve team efficiency by designing, building, and maintaining multi-step automated workflows, and I actively share these solutions with my team.\\n' +\n        'I strategically redesign core operations by architecting scalable AI systems, coaching others to raise their AI skills, and identifying work that can be entirely eliminated by AI.\\n' +\n        'How would you rate your practical proficiency with Swift code for iOS apps?\\n' +\n        '*\\n' +\n        'Select an option\\n' +\n        'Select an option\\n' +\n        'No experience - I haven\u2019t used it in a work setting.\\n' +\n        'Basic - I can perform simple tasks with templates or guidance.\\n' +\n        'Intermediate - I work independently on common tasks and solve moderate problems.\\n' +\n        'Advanced - I design solutions, optimise performance, and mentor others.\\n' +\n        'Can you read Objective-C implementations and translate them into Swift using modern best practices?*\\n' +\n        '(required)\\n' +\n        'Yes\\n' +\n        'No\\n' +\n        'How familiar and practiced are you with iOS development in a CI pipeline?\\n' +\n        '*\\n' +\n        'Select an option\\n' +\n        'Select an option\\n' +\n        'Not familiar - I am enthusiastic to start learning about it.\\n' +\n        'Theoretical - I know the basics but have little hands-on experience.\\n' +\n        'Applied - I have applied this knowledge in projects or operations.\\n' +\n        'Advanced - I have led implementations, designed processes, taught others.\\n' +\n        'Subject-matter expert - I am the go-to-person for complex issues.\\n' +\n        'C\n[Truncated. Full captured output: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/d434e82d-1af6-49b5-91f0-b7a866315813.txt]",
+          "status": "completed"
+        },
+        "callID": "call_bhkvt6RSAo521yiTTFhQR0yq|fc_08ede1a2f3236fb3016aecd64272e887d1af92fcbeb37d8a75"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906243014
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603536,
+    "ts": "2026-11-05T19:17:23.027228Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906243017
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603537,
+    "ts": "2026-11-05T19:17:23.039554Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906243031
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603538,
+    "ts": "2026-11-05T19:17:23.040464Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 20,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "69803",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603990,
+    "ts": "2026-11-05T19:17:28.763332Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000723",
+      "charge_usd": "0.000868",
+      "is_own_key": false,
+      "input_tokens": 13080,
+      "output_tokens": 442,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 386,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 3225,
+      "cached_input_tokens": 9852
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455603992,
+    "ts": "2026-11-05T19:17:28.775854Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(848,'Jordan Testcase'); await bu.type(858,'jordan.testcase@example.com'); await bu.click(880); await bu.state({max:10000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_t6Mh0ZVrUK3Zt0g9WkaHC60d|fc_08ede1a2f3236fb3016aecd64884d887d18a878a9efbb5accb"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906248769
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604033,
+    "ts": "2026-11-05T19:17:29.487713Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(848,'Jordan Testcase'); await bu.type(858,'jordan.testcase@example.com'); await bu.click(880); await bu.state({max:10000});"
+          },
+          "output": "[ok] type [848] textbox \"What is your full name?\" = \"Jordan Testcase\" -> page changed\n[ok] type [858] textbox \"What is your email?\" = \"jordan.testcase@example.com\" -> page changed\n[ok] click [880] button \"Country code: Netherlands +31\" -> page changed\n[state] iOS Developer at bunq | bunq Careers | https://careers.bunq.com/positions/ios-developer-4\n[810] dialog \"Nice to meet you!\"\n[807] button \"Close\"\n## Nice to meet you!\nTell us who you are by filling the form below.\n[848] textbox \"What is your full name?\" = \"Jordan Testcase\"\n[858] textbox \"What is your email?\" = \"jordan.testcase@example.com\"\nWhat is your phone number?\n[880] button \"Country code: Netherlands +31\" expanded\n[881] textbox \"What is your phone number?\"\n*[4334] searchbox \"Search countries\" focused\n*[4335] listbox \"Countries\"\n*[4138] option \"Netherlands +31\" selected\n*[4139] option \"Belgium +32\"\n*[4140] option \"Germany +49\"\n*[4141] option \"France +33\"\n*[4142] option \"Spain +34\"\n*[4143] option \"Italy +39\"\n*[4144] option \"Portugal +351\"\n*[4145] option \"Poland +48\"\n*[4146] option \"Slovakia +421\"\n*[4147] option \"Bulgaria +359\"\n*[4148] option \"Austria +43\"\n*[4149] option \"Ireland +353\"\n*[4150] option \"United States +1\"\n*[4151] option \"Afghanistan +93\"\n*[4152] option \"Albania +355\"\n*[4153] option \"Algeria +213\"\n*[4154] option \"Andorra +376\"\n*[4155] option \"Angola +244\"\n*[4156] option \"Antigua and Barbuda +1\"\n*[4157] option \"Argentina +54\"\n*[4158] option \"Armenia +374\"\n*[4159] option \"Australia +61\"\n*[4160] option \"Azerbaijan +994\"\n*[4161] option \"Bahamas +1\"\n*[4162] option \"Bahrain +973\"\n*[4163] option \"Bangladesh +880\"\n*[4164] option \"Barbados +1\"\n*[4165] option \"Belarus +375\"\n*[4166] option \"Belize +501\"\n*[4167] option \"Benin +229\"\n*[4168] option \"Bhutan +975\"\n*[4169] option \"Bolivia +591\"\n*[4170] option \"Bosnia and Herzegovina +387\"\n*[4171] option \"Botswana +267\"\n*[4172] option \"Brazil +55\"\n*[4173] option \"Brunei +673\"\n*[4174] option \"Burkina Faso +226\"\n*[4175] option \"Burundi +257\"\n*[4176] option \"Cabo Verde +238\"\n*[4177] option \"Cambodia +855\"\n*[4178] option \"Cameroon +237\"\n*[4179] option \"Canada +1\"\n*[4180] option \"Central African Republic +236\"\n*[4181] option \"Chad +235\"\n*[4182] option \"Chile +56\"\n*[4183] option \"China +86\"\n*[4184] option \"Colombia +57\"\n*[4185] option \"Comoros +269\"\n*[4186] option \"Congo (Congo-Brazzaville) +242\"\n*[4187] option \"Costa Rica +506\"\n*[4188] option \"Croatia +385\"\n*[4189] option \"Cuba +53\"\n*[4190] option \"Cyprus +357\"\n*[4191] option \"Czech Republic +420\"\n*[4192] option \"Democratic Republic of the Congo +243\"\n*[4193] option \"Denmark +45\"\n*[4194] option \"Djibouti +253\"\n*[4195] option \"Dominica +1\"\n*[4196] option \"Dominican Republic +1\"\n*[4197] option \"Ecuador +593\"\n*[4198] option \"Egypt +20\"\n*[4199] option \"El Salvador +503\"\n*[4200] option \"Equatorial Guinea +240\"\n*[4201] option \"Eritrea +291\"\n*[4202] option \"Estonia +372\"\n*[4203] option \"Eswatini +268\"\n*[4204] option \"Ethiopia +251\"\n*[4205] option \"Fiji +679\"\n*[4206] option \"Finland +358\"\n*[4207] option \"Gabon +241\"\n*[4208] option \"Gambia +220\"\n*[4209] option \"Georgia +995\"\n*[4210] option \"Ghana +233\"\n*[4211] option \"Greece +30\"\n*[4212] option \"Grenada +1\"\n*[4213] option \"Guatemala +502\"\n*[4214] option \"Guinea +224\"\n*[4215] option \"Guinea-Bissau +245\"\n*[4216] option \"Guyana +592\"\n*[4217] option \"Haiti +509\"\n*[4218] option \"Holy See +39\"\n*[4219] option \"Honduras +504\"\n*[4220] option \"Hungary +36\"\n*[4221] option \"Iceland +354\"\n*[4222] option \"India +91\"\n*[4223] option \"Indonesia +62\"\n*[4224] option \"Iran +98\"\n*[4225] option \"Iraq +964\"\n*[4226] option \"Israel +972\"\n*[4227] option \"Ivory Coast +225\"\n*[4228] option \"Jamaica +1\"\n*[4229] option \"Japan +81\"\n*[4230] option \"Jordan +962\"\n*[4231] option \"Kazakhstan +7\"\n*[4232] option \"Kenya +254\"\n*[4233] option \"Kiribati +686\"\n*[4234] option \"Kuwait +965\"\n*[4235] option \"Kyrgyzstan +996\"\n*[4236] option \"Laos +856\"\n*[4237] option \"Latvia +371\"\n*[4238] option \"Lebanon +961\"\n*[4239] option \"Lesotho +266\"\n*[4240] option \"Liberia +231\"\n*[4241] option \"Libya +218\"\n*[4242] option \"Liechtenstein +423\"\n*[4243] option \"Lithuania +370\"\n*[4244] option \"Luxembourg +352\"\n*[4245] option \"Madagascar +261\"\n*[4246] option \"Malawi +265\"\n*[4247] option \"Malaysia +60\"\n*[4248] option \"Maldives +960\"\n*[4249] option \"Mali +223\"\n*[4250] option \"Malta +356\"\n*[4251] option \"Marshall Islands +692\"\n*[4252] option \"Mauritania +222\"\n*[4253] option \"Mauritius +230\"\n*[4254] option \"Mexico +52\"\n*[4255] option \"Micronesia +691\"\n*[4256] option \"Moldova +373\"\n*[4257] option \"Monaco +377\"\n*[4258] option \"Mongolia +976\"\n*[4259] option \"Montenegro +382\"\n*[4260] option \"Morocco +212\"\n*[4261] option \"Mozambique +258\"\n*[4262] option \"Myanmar +95\"\n*[4263] option \"Namibia +264\"\n*[4264] option \"Nauru +674\"\n*[4265] option \"Nepal +977\"\n*[4266] option \"New Zealand +64\"\n*[4267] option \"Nicaragua +505\"\n*[4268] option \"Niger +227\"\n*[4269] option \"Nigeria +234\"\n*[4270] option \"North Korea +850\"\n*[4271] option \"North Macedonia +389\"\n*[4272] option \"Norway +47\"\n*[4273] option \"Oman +968\"\n*[4274] option \"Pakistan +92\"\n*[4275] option \"Palau +680\"\n*[4276] option \"Palestine +970\"\n*[4277] option \"Panama +507\"\n*[4278] option \"Papua New Guinea +675\"\n*[4279] option \"Paraguay +595\"\n*[4280] option \"Peru +51\"\n*[4281] option \"Philippines +63\"\n*[4282] option \"Qatar +974\"\n*[4283] option \"Romania +40\"\n*[4284] option \"Russia +7\"\n*[4285] option \"Rwanda +250\"\n*[4286] option \"Saint Kitts and Nevis +1\"\n*[4287] option \"Saint Lucia +1\"\n*[4288] option \"Saint Vincent and the Grenadines +1\"\n*[4289] option \"Samoa +685\"\n*[4290] option \"San Marino +378\"\n*[4291] option \"Sao Tome and Principe +239\"\n*[4292] option \"Saudi Arabia +966\"\n*[4293] option \"Senegal +221\"\n*[4294] option \"Serbia +381\"\n*[4295] option \"Seychelles +248\"\n*[4296] option \"Sierra Leone +232\"\n*[4297] option \"Singapore +65\"\n*[4298] option \"Slovenia +386\"\n*[4299] option \"Solomon Islands +677\"\n*[4300] option \"Somalia +252\"\n*[4301] option \"South Africa +27\"\n*[4302] option \"South Korea +82\"\n*[4303] option \"South Sudan +211\"\n*[4304] option \"Sri Lanka +94\"\n*[4305] option \"Sudan +249\"\n*[4306] option \"Suriname +597\"\n*[4307] option \"Sweden +46\"\n*[4308] option \"Switzerland +41\"\n*[4309] option \"Syria +963\"\n*[4310] option \"Taiwan +886\"\n*[4311] option \"Tajikistan +992\"\n*[4312] option \"Tanzania +255\"\n*[4313] option \"Thailand +66\"\n*[4314] option \"Timor-Leste +670\"\n*[4315] option \"Togo +228\"\n*[4316] option \"Tonga +676\"\n*[4317] option \"Trinidad and Tobago +1\"\n*[4318] option \"Tunisia +216\"\n*[4319] option \"Turkey +90\"\n*[4320] option \"Turkmenistan +993\"\n*[4321] option \"Tuvalu +688\"\n*[4322] option \"Uganda +256\"\n*[4323] option \"Ukraine +380\"\n*[4324] option \"United Arab Emirates +971\"\n*[4325] option \"United Kingdom +44\"\n*[4326] option \"Uruguay +598\"\n*[4327] option \"Uzbekistan +998\"\n*[4328] option \"Vanuatu +678\"\n*[4329] option \"Venezuela +58\"\n*[4330] option \"Vietnam +84\"\n*[4331] option \"Yemen +967\"\n*[4332] option \"Zambia +260\"\n*[4333] option \"Zimbabwe +263\"\n[890] textbox \"What country do you currently live in?\"\n\ud83d\udca1 Each country has different rules for eligibility to work without requiring sponsorship.\n\ud83c\uddf3\ud83c\uddf1 Netherlands : You must be a Dutch/EU/EEA/Swiss citizen, or hold a valid Dutch residence permit with full work rights (e.g., refugee status, spousal visa, or permanent residence). For this role, we are able to sponsor visas in a few other situations, so feel free to apply. \ud83c\udf08\n[934] combobox \"Which visa situation fits you best?\" = \"Select an option\" collapsed\n\ud83d\udca1 Important Info: At bunq, our working language is English. Fluency in both writing and speaking English is a must for all roles in all locations.\n[972] combobox \"How do you assess your writing and speaking English skills?\" = \"Select an option\" collapsed\n\ud83d\udca1 If successful in the hiring process, the contractual arrangement would look like this: \ud83c\uddf3\ud83c\uddf1 Netherlands: A first contract of 9 months, extended with a second contract of 12 months, followed by an indefinite contract. \ud83d\udca1 For the first 3 months, all new hires are required to be in the office 5 days a week to complete the onboarding process, get to know everyone, and immerse themselves in the culture of bunq. After that, the work arrangement will be hybrid, with 3 days in the office and 2 days working from home.\n\ud83d\udca1 Our standard working hours are from 09:00 to 18:00. This ensures that everyone is available and can rely on each other during this time.\n[1020] combobox \"Do you agree and confirm with the above mentioned terms (contract duration, hybrid way of working, and standard working hours)?\" = \"Select an option\" collapsed\n[1026] textbox \"What are your salary expectations? (gross, annual, in EUR)\"\nPlease double check if the salary expectations is the yearly gross amount, in EUR\nHave you previously worked at bunq? (required)\n[1038] radio \"Yes\" unchecked\nYes\n[1042] radio \"No\" unchecked\nNo\nAll new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace\n[1091] combobox \"How do you usually approach your work, its impact, and solving challenges?\" = \"Select an option\" collapsed\n[1124] combobox \"Which of the following statements best describes your approach to using AI in a professional context?\" = \"Select an option\" collapsed\n[1157] combobox \"How would you rate your practical proficiency with Swift code for iOS apps?\" = \"Select an option\" collapsed\nCan you read Objective-C implementations and translate them into Swift using modern best practices? (required)\n[1163] radio \"Yes\" unchecked\nYes\n[1167] radio \"No\" unchecked\nNo\n[1208] combobox \"How familiar and practiced are you with iOS development in a CI pipeline?\" = \"Select an option\" collapsed\nCan you assess legacy UI components and reconstruct them following modern SwiftUI development standards? (required)\n[1214] radio \"Yes\" unchecked\nYes\n[1218] radio \"No\" unchecked\nNo\n[1271] combobox \"How did you first hear about this role?\" = \"Select an option\" collapsed\n[1278] checkbox \"I have read and accept the Recruitment Privacy Policy\" unchecked\nI have read and accept the\n[1277] link \"Recruitment Privacy Policy (opens in new tab)\"\n[1282] button \"Submit Now\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_t6Mh0ZVrUK3Zt0g9WkaHC60d|fc_08ede1a2f3236fb3016aecd64884d887d18a878a9efbb5accb"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906249478
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604035,
+    "ts": "2026-11-05T19:17:29.498033Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906249482
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604036,
+    "ts": "2026-11-05T19:17:29.503789Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906249488
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604037,
+    "ts": "2026-11-05T19:17:29.501079Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 23,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "87890",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604231,
+    "ts": "2026-11-05T19:17:31.841281Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000661",
+      "charge_usd": "0.000793",
+      "is_own_key": false,
+      "input_tokens": 16734,
+      "output_tokens": 147,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 94,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 3654,
+      "cached_input_tokens": 13077
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604235,
+    "ts": "2026-11-05T19:17:31.863228Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(4150); await bu.type(881,'5550100142'); await bu.type(890,'India'); await bu.state({max:10000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_Ba45IZGTI2odfnGE2uloKh08|fc_08ede1a2f3236fb3016aecd64ba07087d1b1750af4162a16dc"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906251854
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604283,
+    "ts": "2026-11-05T19:17:32.448936Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(4150); await bu.type(881,'5550100142'); await bu.type(890,'India'); await bu.state({max:10000});"
+          },
+          "output": "[ok] click [4150] option \"United States +1\" -> page changed\n[ok] type [881] textbox \"What is your phone number?\" = \"5550100142\" -> page changed\n[ok] type [890] textbox \"What country do you currently live in?\" = \"India\" -> page changed\n[state] iOS Developer at bunq | bunq Careers | https://careers.bunq.com/positions/ios-developer-4\n[810] dialog \"Nice to meet you!\"\n[807] button \"Close\"\n## Nice to meet you!\nTell us who you are by filling the form below.\n[848] textbox \"What is your full name?\" = \"Jordan Testcase\"\n[858] textbox \"What is your email?\" = \"jordan.testcase@example.com\"\nWhat is your phone number?\n[880] button \"Country code: United States +1\" collapsed\n[881] textbox \"What is your phone number?\" = \"5550100142\"\n[890] textbox \"What country do you currently live in?\" = \"India\" focused\n\ud83d\udca1 Each country has different rules for eligibility to work without requiring sponsorship.\n\ud83c\uddf3\ud83c\uddf1 Netherlands : You must be a Dutch/EU/EEA/Swiss citizen, or hold a valid Dutch residence permit with full work rights (e.g., refugee status, spousal visa, or permanent residence). For this role, we are able to sponsor visas in a few other situations, so feel free to apply. \ud83c\udf08\n[934] combobox \"Which visa situation fits you best?\" = \"Select an option\" collapsed\n\ud83d\udca1 Important Info: At bunq, our working language is English. Fluency in both writing and speaking English is a must for all roles in all locations.\n[972] combobox \"How do you assess your writing and speaking English skills?\" = \"Select an option\" collapsed\n\ud83d\udca1 If successful in the hiring process, the contractual arrangement would look like this: \ud83c\uddf3\ud83c\uddf1 Netherlands: A first contract of 9 months, extended with a second contract of 12 months, followed by an indefinite contract. \ud83d\udca1 For the first 3 months, all new hires are required to be in the office 5 days a week to complete the onboarding process, get to know everyone, and immerse themselves in the culture of bunq. After that, the work arrangement will be hybrid, with 3 days in the office and 2 days working from home.\n\ud83d\udca1 Our standard working hours are from 09:00 to 18:00. This ensures that everyone is available and can rely on each other during this time.\n[1020] combobox \"Do you agree and confirm with the above mentioned terms (contract duration, hybrid way of working, and standard working hours)?\" = \"Select an option\" collapsed\n[1026] textbox \"What are your salary expectations? (gross, annual, in EUR)\"\nPlease double check if the salary expectations is the yearly gross amount, in EUR\nHave you previously worked at bunq? (required)\n[1038] radio \"Yes\" unchecked\nYes\n[1042] radio \"No\" unchecked\nNo\nAll new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace\n[1091] combobox \"How do you usually approach your work, its impact, and solving challenges?\" = \"Select an option\" collapsed\n[1124] combobox \"Which of the following statements best describes your approach to using AI in a professional context?\" = \"Select an option\" collapsed\n[1157] combobox \"How would you rate your practical proficiency with Swift code for iOS apps?\" = \"Select an option\" collapsed\nCan you read Objective-C implementations and translate them into Swift using modern best practices? (required)\n[1163] radio \"Yes\" unchecked\nYes\n[1167] radio \"No\" unchecked\nNo\n[1208] combobox \"How familiar and practiced are you with iOS development in a CI pipeline?\" = \"Select an option\" collapsed\nCan you assess legacy UI components and reconstruct them following modern SwiftUI development standards? (required)\n[1214] radio \"Yes\" unchecked\nYes\n[1218] radio \"No\" unchecked\nNo\n[1271] combobox \"How did you first hear about this role?\" = \"Select an option\" collapsed\n[1278] checkbox \"I have read and accept the Recruitment Privacy Policy\" unchecked\nI have read and accept the\n[1277] link \"Recruitment Privacy Policy (opens in new tab)\"\n[1282] button \"Submit Now\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_Ba45IZGTI2odfnGE2uloKh08|fc_08ede1a2f3236fb3016aecd64ba07087d1b1750af4162a16dc"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906252441
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604285,
+    "ts": "2026-11-05T19:17:32.461669Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 26,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "95105",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604286,
+    "ts": "2026-11-05T19:17:32.463839Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906252444
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604287,
+    "ts": "2026-11-05T19:17:32.476234Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906252450
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604917,
+    "ts": "2026-11-05T19:17:41.194088Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000699",
+      "charge_usd": "0.000839",
+      "is_own_key": false,
+      "input_tokens": 17870,
+      "output_tokens": 779,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 690,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1136,
+      "cached_input_tokens": 16731
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604919,
+    "ts": "2026-11-05T19:17:41.207100Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(1026,'Negotiable'); await bu.type(1091,'I deliver projects from start to finish, tie my work to team results, and suggest fixes'); await bu.type(1271,\"I found it myself on bunq's careers website\"); await bu.click(1278); await bu.state({max:15000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_0Sfu1RTZNwlvbZckSyJ6rJiV|fc_08ede1a2f3236fb3016aecd654cca887d196099057b9360eb8"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906261201
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604984,
+    "ts": "2026-11-05T19:17:42.012093Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(1026,'Negotiable'); await bu.type(1091,'I deliver projects from start to finish, tie my work to team results, and suggest fixes'); await bu.type(1271,\"I found it myself on bunq's careers website\"); await bu.click(1278); await bu.state({max:15000});"
+          },
+          "output": "Error: click [1278] checkbox \"I have read and accept the Recruitment Privacy Policy\" failed: Target covered by [4840] option \"I found it myself on bunq's careers website\"; nothing was clicked\n    at AxHelpers.act (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/ax.js:478:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous>:1:213\nState reset: false. Actions may already have happened.\nPartial output: [ok] type [1026] textbox \"What are your salary expectations? (gross, annual, in EUR)\" = \"Negotiable\" -> page changed\n[ok] type [1091] combobox \"How do you usually approach your work, its impact, and solvi\u2026\" = \"I deliver projects from start to finish, tie my work to team\u2026\" (field now shows \"\") -> page changed\n[ok] type [1271] combobox \"How did you first hear about this role?\" = \"I found it myself on bunq's careers website\" (field now shows \"\") -> page changed\n[state] iOS Developer at bunq | bunq Careers | https://careers.bunq.com/positions/ios-developer-4\n[810] dialog \"Nice to meet you!\"\n[807] button \"Close\"\n## Nice to meet you!\nTell us who you are by filling the form below.\n[848] textbox \"What is your full name?\" = \"Jordan Testcase\"\n[858] textbox \"What is your email?\" = \"jordan.testcase@example.com\"\nWhat is your phone number?\n[880] button \"Country code: United States +1\" collapsed\n[881] textbox \"What is your phone number?\" = \"5550100142\"\n[890] textbox \"What country do you currently live in?\" = \"India\"\n\ud83d\udca1 Each country has different rules for eligibility to work without requiring sponsorship.\n\ud83c\uddf3\ud83c\uddf1 Netherlands : You must be a Dutch/EU/EEA/Swiss citizen, or hold a valid Dutch residence permit with full work rights (e.g., refugee status, spousal visa, or permanent residence). For this role, we are able to sponsor visas in a few other situations, so feel free to apply. \ud83c\udf08\n[934] combobox \"Which visa situation fits you best?\" = \"Select an option\" collapsed\n\ud83d\udca1 Important Info: At bunq, our working language is English. Fluency in both writing and speaking English is a must for all roles in all locations.\n[972] combobox \"How do you assess your writing and speaking English skills?\" = \"Select an option\" collapsed\n\ud83d\udca1 If successful in the hiring process, the contractual arrangement would look like this: \ud83c\uddf3\ud83c\uddf1 Netherlands: A first contract of 9 months, extended with a second contract of 12 months, followed by an indefinite contract. \ud83d\udca1 For the first 3 months, all new hires are required to be in the office 5 days a week to complete the onboarding process, get to know everyone, and immerse themselves in the culture of bunq. After that, the work arrangement will be hybrid, with 3 days in the office and 2 days working from home.\n\ud83d\udca1 Our standard working hours are from 09:00 to 18:00. This ensures that everyone is available and can rely on each other during this time.\n[1020] combobox \"Do you agree and confirm with the above mentioned terms (contract duration, hybrid way of working, and standard working hours)?\" = \"Select an option\" collapsed\n[1026] textbox \"What are your salary expectations? (gross, annual, in EUR)\" = \"Negotiable\"\nPlease double check if the salary expectations is the yearly gross amount, in EUR\nHave you previously worked at bunq? (required)\n[1038] radio \"Yes\" unchecked\nYes\n[1042] radio \"No\" unchecked\nNo\n... 20 lines cut here (bu.state({max: 30000}) or page.evaluate)\n*[4843] option \"A bunq recruiter reached out to me\"\n*[4844] option \"A job portal (LinkedIn, Glassdoor, Indeed, Google Jobs)\"\n*[4845] option \"A social media post (LinkedIn, Instagram, Facebook, YouTube, X)\"\n*[4846] option \"News or media coverage\"\n*[4847] option \"At an event where bunq was present\"\n*[4848] option \"Through my university (ad, newsletter, event)\"\n[1278] checkbox \"I have read and accept the Recruitment Privacy Policy\" unchecked\nI have read and accept the\n[1277] link \"Recruitment Privacy Policy (opens in new tab)\"\n[1282] button \"Submit Now\"\n[/state]\n\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/41a87471-486c-4630-ac9c-eddc74370314.txt",
+          "status": "error"
+        },
+        "callID": "call_0Sfu1RTZNwlvbZckSyJ6rJiV|fc_08ede1a2f3236fb3016aecd654cca887d196099057b9360eb8"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906262004
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604986,
+    "ts": "2026-11-05T19:17:42.024760Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906262007
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604991,
+    "ts": "2026-11-05T19:17:42.035586Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 30,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "112191",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455604992,
+    "ts": "2026-11-05T19:17:42.046200Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906262020
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605277,
+    "ts": "2026-11-05T19:17:45.524985Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000445",
+      "charge_usd": "0.000534",
+      "is_own_key": false,
+      "input_tokens": 19719,
+      "output_tokens": 69,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 42,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1849,
+      "cached_input_tokens": 17867
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605278,
+    "ts": "2026-11-05T19:17:45.545001Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state({max:12000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_MrMg9kO7U8VBnBgHp1zb5zwG|fc_08ede1a2f3236fb3016aecd6595c7087d1946e7abdbdd086c1"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906265541
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605285,
+    "ts": "2026-11-05T19:17:45.652948Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state({max:12000});"
+          },
+          "output": "[state] iOS Developer at bunq | bunq Careers | https://careers.bunq.com/positions/ios-developer-4\n[810] dialog \"Nice to meet you!\"\n[807] button \"Close\"\n## Nice to meet you!\nTell us who you are by filling the form below.\n[848] textbox \"What is your full name?\" = \"Jordan Testcase\"\n[858] textbox \"What is your email?\" = \"jordan.testcase@example.com\"\nWhat is your phone number?\n[880] button \"Country code: United States +1\" collapsed\n[881] textbox \"What is your phone number?\" = \"5550100142\"\n[890] textbox \"What country do you currently live in?\" = \"India\"\n\ud83d\udca1 Each country has different rules for eligibility to work without requiring sponsorship.\n\ud83c\uddf3\ud83c\uddf1 Netherlands : You must be a Dutch/EU/EEA/Swiss citizen, or hold a valid Dutch residence permit with full work rights (e.g., refugee status, spousal visa, or permanent residence). For this role, we are able to sponsor visas in a few other situations, so feel free to apply. \ud83c\udf08\n[934] combobox \"Which visa situation fits you best?\" = \"Select an option\" collapsed\n\ud83d\udca1 Important Info: At bunq, our working language is English. Fluency in both writing and speaking English is a must for all roles in all locations.\n[972] combobox \"How do you assess your writing and speaking English skills?\" = \"Select an option\" collapsed\n\ud83d\udca1 If successful in the hiring process, the contractual arrangement would look like this: \ud83c\uddf3\ud83c\uddf1 Netherlands: A first contract of 9 months, extended with a second contract of 12 months, followed by an indefinite contract. \ud83d\udca1 For the first 3 months, all new hires are required to be in the office 5 days a week to complete the onboarding process, get to know everyone, and immerse themselves in the culture of bunq. After that, the work arrangement will be hybrid, with 3 days in the office and 2 days working from home.\n\ud83d\udca1 Our standard working hours are from 09:00 to 18:00. This ensures that everyone is available and can rely on each other during this time.\n[1020] combobox \"Do you agree and confirm with the above mentioned terms (contract duration, hybrid way of working, and standard working hours)?\" = \"Select an option\" collapsed\n[1026] textbox \"What are your salary expectations? (gross, annual, in EUR)\" = \"Negotiable\"\nPlease double check if the salary expectations is the yearly gross amount, in EUR\nHave you previously worked at bunq? (required)\n[1038] radio \"Yes\" unchecked\nYes\n[1042] radio \"No\" unchecked\nNo\nAll new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace\n[1091] combobox \"How do you usually approach your work, its impact, and solving challenges?\" = \"Select an option\" collapsed\n[1124] combobox \"Which of the following statements best describes your approach to using AI in a professional context?\" = \"Select an option\" collapsed\n[1157] combobox \"How would you rate your practical proficiency with Swift code for iOS apps?\" = \"Select an option\" collapsed\nCan you read Objective-C implementations and translate them into Swift using modern best practices? (required)\n[1163] radio \"Yes\" unchecked\nYes\n[1167] radio \"No\" unchecked\nNo\n[1208] combobox \"How familiar and practiced are you with iOS development in a CI pipeline?\" = \"Select an option\" collapsed\nCan you assess legacy UI components and reconstruct them following modern SwiftUI development standards? (required)\n[1214] radio \"Yes\" unchecked\nYes\n[1218] radio \"No\" unchecked\nNo\n[1271] combobox \"How did you first hear about this role?\" = \"Select an option\" expanded focused\n[4849] listbox\n[4840] option \"I found it myself on bunq's careers website\"\n[4841] option \"A current bunq employee told me about it\"\n[4842] option \"A former bunq employee referred me\"\n[4843] option \"A bunq recruiter reached out to me\"\n[4844] option \"A job portal (LinkedIn, Glassdoor, Indeed, Google Jobs)\"\n[4845] option \"A social media post (LinkedIn, Instagram, Facebook, YouTube, X)\"\n[4846] option \"News or media coverage\"\n[4847] option \"At an event where bunq was present\"\n[4848] option \"Through my university (ad, newsletter, event)\"\n[1278] checkbox \"I have read and accept the Recruitment Privacy Policy\" unchecked\nI have read and accept the\n[1277] link \"Recruitment Privacy Policy (opens in new tab)\"\n[1282] button \"Submit Now\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_MrMg9kO7U8VBnBgHp1zb5zwG|fc_08ede1a2f3236fb3016aecd6595c7087d1946e7abdbdd086c1"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906265648
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605288,
+    "ts": "2026-11-05T19:17:45.666680Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906265651
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605289,
+    "ts": "2026-11-05T19:17:45.667071Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 33,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "119543",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605290,
+    "ts": "2026-11-05T19:17:45.672984Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906265656
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605537,
+    "ts": "2026-11-05T19:17:48.380068Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000385",
+      "charge_usd": "0.000462",
+      "is_own_key": false,
+      "input_tokens": 20866,
+      "output_tokens": 88,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 47,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1147,
+      "cached_input_tokens": 19716
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605538,
+    "ts": "2026-11-05T19:17:48.390062Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(4840); await bu.click(1091); await bu.state({max:12000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_wRoDUAqWuei8pRJudVOctNlQ|fc_08ede1a2f3236fb3016aecd65c30e887d18ee05e41c01ab696"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906268386
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605561,
+    "ts": "2026-11-05T19:17:48.865717Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(4840); await bu.click(1091); await bu.state({max:12000});"
+          },
+          "output": "[ok] click [4840] option \"I found it myself on bunq's careers website\" -> page changed\n[ok] click [1091] combobox \"How do you usually approach your work, its impact, and solvi\u2026\" -> page changed\n[state] iOS Developer at bunq | bunq Careers | https://careers.bunq.com/positions/ios-developer-4\n[810] dialog \"Nice to meet you!\"\n[807] button \"Close\"\n## Nice to meet you!\nTell us who you are by filling the form below.\n[848] textbox \"What is your full name?\" = \"Jordan Testcase\"\n[858] textbox \"What is your email?\" = \"jordan.testcase@example.com\"\nWhat is your phone number?\n[880] button \"Country code: United States +1\" collapsed\n[881] textbox \"What is your phone number?\" = \"5550100142\"\n[890] textbox \"What country do you currently live in?\" = \"India\"\n\ud83d\udca1 Each country has different rules for eligibility to work without requiring sponsorship.\n\ud83c\uddf3\ud83c\uddf1 Netherlands : You must be a Dutch/EU/EEA/Swiss citizen, or hold a valid Dutch residence permit with full work rights (e.g., refugee status, spousal visa, or permanent residence). For this role, we are able to sponsor visas in a few other situations, so feel free to apply. \ud83c\udf08\n[934] combobox \"Which visa situation fits you best?\" = \"Select an option\" collapsed\n\ud83d\udca1 Important Info: At bunq, our working language is English. Fluency in both writing and speaking English is a must for all roles in all locations.\n[972] combobox \"How do you assess your writing and speaking English skills?\" = \"Select an option\" collapsed\n\ud83d\udca1 If successful in the hiring process, the contractual arrangement would look like this: \ud83c\uddf3\ud83c\uddf1 Netherlands: A first contract of 9 months, extended with a second contract of 12 months, followed by an indefinite contract. \ud83d\udca1 For the first 3 months, all new hires are required to be in the office 5 days a week to complete the onboarding process, get to know everyone, and immerse themselves in the culture of bunq. After that, the work arrangement will be hybrid, with 3 days in the office and 2 days working from home.\n\ud83d\udca1 Our standard working hours are from 09:00 to 18:00. This ensures that everyone is available and can rely on each other during this time.\n[1020] combobox \"Do you agree and confirm with the above mentioned terms (contract duration, hybrid way of working, and standard working hours)?\" = \"Select an option\" collapsed\n[1026] textbox \"What are your salary expectations? (gross, annual, in EUR)\" = \"Negotiable\"\nPlease double check if the salary expectations is the yearly gross amount, in EUR\nHave you previously worked at bunq? (required)\n[1038] radio \"Yes\" unchecked\nYes\n[1042] radio \"No\" unchecked\nNo\nAll new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace\n[1091] combobox \"How do you usually approach your work, its impact, and solving challenges?\" = \"Select an option\" expanded focused\n*[4891] listbox\n*[4884] option \"I don\u2019t have formal work experience yet, but I\u2019ve practiced through studies or small projects\"\n*[4885] option \"I successfully handle defined tasks, follow processes, and ask for guidance when needed\"\n*[4886] option \"I work mostly on my own, support team goals, and deal with common issues\"\n*[4887] option \"I deliver projects from start to finish, tie my work to team results, and suggest fixes\"\n*[4888] option \"I turn bigger goals into initiatives, improve how we work, and prevent problems\"\n*[4889] option \"I lead projects across teams, align people, and create tools that help others solve problems faster\"\n*[4890] option \"I redesign systems across departments, focus on long-term goals, and drive strategic change\"\n[1124] combobox \"Which of the following statements best describes your approach to using AI in a professional context?\" = \"Select an option\" collapsed\n[1157] combobox \"How would you rate your practical proficiency with Swift code for iOS apps?\" = \"Select an option\" collapsed\nCan you read Objective-C implementations and translate them into Swift using modern best practices? (required)\n[1163] radio \"Yes\" unchecked\nYes\n[1167] radio \"No\" unchecked\nNo\n[1208] combobox \"How familiar and practiced are you with iOS development in a CI pipeline?\" = \"Select an option\" collapsed\nCan you assess legacy UI components and reconstruct them following modern SwiftUI development standards? (required)\n[1214] radio \"Yes\" unchecked\nYes\n[1218] radio \"No\" unchecked\nNo\n[1271] combobox \"How did you first hear about this role?\" = \"I found it myself on bunq's careers website\" collapsed\n[1278] checkbox \"I have read and accept the Recruitment Privacy Policy\" unchecked\nI have read and accept the\n[1277] link \"Recruitment Privacy Policy (opens in new tab)\"\n[1282] button \"Submit Now\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_wRoDUAqWuei8pRJudVOctNlQ|fc_08ede1a2f3236fb3016aecd65c30e887d18ee05e41c01ab696"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906268830
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605564,
+    "ts": "2026-11-05T19:17:48.880365Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 36,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "127394",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605565,
+    "ts": "2026-11-05T19:17:48.883040Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906268861
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605566,
+    "ts": "2026-11-05T19:17:48.893951Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906268869
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605691,
+    "ts": "2026-11-05T19:17:50.923049Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000413",
+      "charge_usd": "0.000496",
+      "is_own_key": false,
+      "input_tokens": 22111,
+      "output_tokens": 97,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 56,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1245,
+      "cached_input_tokens": 20863
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605692,
+    "ts": "2026-11-05T19:17:50.932942Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(4887); await bu.click(1278); await bu.state({max:10000});"
+          },
+          "status": "running"
+        },
+        "callID": "call_QKMY1r5xrAHgJlRwJxJcqEtk|fc_08ede1a2f3236fb3016aecd65ec30087d1a3871c5f97a4a3f7"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906270929
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605720,
+    "ts": "2026-11-05T19:17:51.240473Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(4887); await bu.click(1278); await bu.state({max:10000});"
+          },
+          "output": "[ok] click [4887] option \"I deliver projects from start to finish, tie my work to team\u2026\" -> page changed\n[ok] click [1278] checkbox \"I have read and accept the Recruitment Privacy Policy\" -> page changed\n[state] iOS Developer at bunq | bunq Careers | https://careers.bunq.com/positions/ios-developer-4\n[810] dialog \"Nice to meet you!\"\n[807] button \"Close\"\n## Nice to meet you!\nTell us who you are by filling the form below.\n[848] textbox \"What is your full name?\" = \"Jordan Testcase\"\n[858] textbox \"What is your email?\" = \"jordan.testcase@example.com\"\nWhat is your phone number?\n[880] button \"Country code: United States +1\" collapsed\n[881] textbox \"What is your phone number?\" = \"5550100142\"\n[890] textbox \"What country do you currently live in?\" = \"India\"\n\ud83d\udca1 Each country has different rules for eligibility to work without requiring sponsorship.\n\ud83c\uddf3\ud83c\uddf1 Netherlands : You must be a Dutch/EU/EEA/Swiss citizen, or hold a valid Dutch residence permit with full work rights (e.g., refugee status, spousal visa, or permanent residence). For this role, we are able to sponsor visas in a few other situations, so feel free to apply. \ud83c\udf08\n[934] combobox \"Which visa situation fits you best?\" = \"Select an option\" collapsed\n\ud83d\udca1 Important Info: At bunq, our working language is English. Fluency in both writing and speaking English is a must for all roles in all locations.\n[972] combobox \"How do you assess your writing and speaking English skills?\" = \"Select an option\" collapsed\n\ud83d\udca1 If successful in the hiring process, the contractual arrangement would look like this: \ud83c\uddf3\ud83c\uddf1 Netherlands: A first contract of 9 months, extended with a second contract of 12 months, followed by an indefinite contract. \ud83d\udca1 For the first 3 months, all new hires are required to be in the office 5 days a week to complete the onboarding process, get to know everyone, and immerse themselves in the culture of bunq. After that, the work arrangement will be hybrid, with 3 days in the office and 2 days working from home.\n\ud83d\udca1 Our standard working hours are from 09:00 to 18:00. This ensures that everyone is available and can rely on each other during this time.\n[1020] combobox \"Do you agree and confirm with the above mentioned terms (contract duration, hybrid way of working, and standard working hours)?\" = \"Select an option\" collapsed\n[1026] textbox \"What are your salary expectations? (gross, annual, in EUR)\" = \"Negotiable\"\nPlease double check if the salary expectations is the yearly gross amount, in EUR\nHave you previously worked at bunq? (required)\n[1038] radio \"Yes\" unchecked\nYes\n[1042] radio \"No\" unchecked\nNo\nAll new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace\n[1091] combobox \"How do you usually approach your work, its impact, and solving challenges?\" = \"I deliver projects from start to finish, tie my work to team results, and suggest fixes\" collapsed\n[4891] listbox\n[4884] option \"I don\u2019t have formal work experience yet, but I\u2019ve practiced through studies or small projects\"\n[4885] option \"I successfully handle defined tasks, follow processes, and ask for guidance when needed\"\n[4886] option \"I work mostly on my own, support team goals, and deal with common issues\"\n[4887] option \"I deliver projects from start to finish, tie my work to team results, and suggest fixes\"\n[4888] option \"I turn bigger goals into initiatives, improve how we work, and prevent problems\"\n[4889] option \"I lead projects across teams, align people, and create tools that help others solve problems faster\"\n[4890] option \"I redesign systems across departments, focus on long-term goals, and drive strategic change\"\n[1124] combobox \"Which of the following statements best describes your approach to using AI in a professional context?\" = \"Select an option\" collapsed\n[1157] combobox \"How would you rate your practical proficiency with Swift code for iOS apps?\" = \"Select an option\" collapsed\nCan you read Objective-C implementations and translate them into Swift using modern best practices? (required)\n[1163] radio \"Yes\" unchecked\nYes\n[1167] radio \"No\" unchecked\nNo\n[1208] combobox \"How familiar and practiced are you with iOS development in a CI pipeline?\" = \"Select an option\" collapsed\nCan you assess legacy UI components and reconstruct them following modern SwiftUI development standards? (required)\n[1214] radio \"Yes\" unchecked\nYes\n[1218] radio \"No\" unchecked\nNo\n[1271] combobox \"How did you first hear about this role?\" = \"I found it myself on bunq's careers website\" collapsed\n[1278] checkbox \"I have read and accept the Recruitment Privacy Policy\" checked focused\nI have read and accept the\n[1277] link \"Recruitment Privacy Policy (opens in new tab)\"\n[1282] button \"Submit Now\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_QKMY1r5xrAHgJlRwJxJcqEtk|fc_08ede1a2f3236fb3016aecd65ec30087d1a3871c5f97a4a3f7"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906271233
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605729,
+    "ts": "2026-11-05T19:17:51.260414Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906271236
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605731,
+    "ts": "2026-11-05T19:17:51.268195Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 39,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "135011",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455605733,
+    "ts": "2026-11-05T19:17:51.273515Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906271248
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606437,
+    "ts": "2026-11-05T19:18:00.981487Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000689",
+      "charge_usd": "0.000827",
+      "is_own_key": false,
+      "input_tokens": 23377,
+      "output_tokens": 618,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 559,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1266,
+      "cached_input_tokens": 22108
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606438,
+    "ts": "2026-11-05T19:18:01.000839Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await require('node:fs/promises').readdir('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads'));"
+          },
+          "status": "running"
+        },
+        "callID": "call_FKJgvm2SxoGX29k2dQ2bNYY3|fc_08ede1a2f3236fb3016aecd668b02087d1a820d184dc9c977f"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906280995
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606439,
+    "ts": "2026-11-05T19:18:01.011869Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await require('node:fs/promises').readdir('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads'));"
+          },
+          "output": "[ 'jordan_testcase_test_resume.pdf' ]\n",
+          "status": "completed"
+        },
+        "callID": "call_FKJgvm2SxoGX29k2dQ2bNYY3|fc_08ede1a2f3236fb3016aecd668b02087d1a820d184dc9c977f"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906281003
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606442,
+    "ts": "2026-11-05T19:18:01.030727Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 43,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "147471",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606444,
+    "ts": "2026-11-05T19:18:01.031763Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906281006
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606445,
+    "ts": "2026-11-05T19:18:01.042856Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906281018
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606682,
+    "ts": "2026-11-05T19:18:04.165369Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000408",
+      "charge_usd": "0.000490",
+      "is_own_key": false,
+      "input_tokens": 24016,
+      "output_tokens": 189,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 112,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 639,
+      "cached_input_tokens": 23374
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606685,
+    "ts": "2026-11-05T19:18:04.177771Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const fs=await import('node:fs/promises'); const p='/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/jordan_testcase_test_resume.pdf'; console.log((await fs.stat(p)).size);"
+          },
+          "status": "running"
+        },
+        "callID": "call_s4TZlcjpGVDQQB0p8n69FcwE|fc_08ede1a2f3236fb3016aecd66bc3f487d1b7a3d0423389924c"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906284171
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606688,
+    "ts": "2026-11-05T19:18:04.189149Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const fs=await import('node:fs/promises'); const p='/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/jordan_testcase_test_resume.pdf'; console.log((await fs.stat(p)).size);"
+          },
+          "output": "969\n",
+          "status": "completed"
+        },
+        "callID": "call_s4TZlcjpGVDQQB0p8n69FcwE|fc_08ede1a2f3236fb3016aecd66bc3f487d1b7a3d0423389924c"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906284179
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606691,
+    "ts": "2026-11-05T19:18:04.203144Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 46,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "150926",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606693,
+    "ts": "2026-11-05T19:18:04.205383Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906284181
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455606696,
+    "ts": "2026-11-05T19:18:04.219022Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906284192
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607022,
+    "ts": "2026-11-05T19:18:08.284249Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000319",
+      "charge_usd": "0.000383",
+      "is_own_key": false,
+      "input_tokens": 24217,
+      "output_tokens": 106,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 33,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 201,
+      "cached_input_tokens": 24013
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607023,
+    "ts": "2026-11-05T19:18:08.295278Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const cp=await import('node:child_process'); try{console.log(cp.execSync(`pdftotext '${p}' -`,{encoding:'utf8'}))}catch(e){console.log('pdf extraction unavailable',e.message.slice(0,180))}"
+          },
+          "status": "running"
+        },
+        "callID": "call_OAbGGjoY0Eg9Q6xP96SEblsA|fc_08ede1a2f3236fb3016aecd670046487d1be299f8b68ad8364"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906288291
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607024,
+    "ts": "2026-11-05T19:18:08.312976Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const cp=await import('node:child_process'); try{console.log(cp.execSync(`pdftotext '${p}' -`,{encoding:'utf8'}))}catch(e){console.log('pdf extraction unavailable',e.message.slice(0,180))}"
+          },
+          "output": "TEST RESUME - FICTIONAL PERSON - DO NOT PROCESS\nJordan Testcase\njordan.testcase@example.com | +1 555 010 0142 | Pune, India\nExperience\nSoftware Engineer, Example Labs (2022 - now)\nJunior Developer, Sample Systems (2021 - 2022)\nEducation\nB.Tech in Computer Science, Example Institute of Technology, 2021\n\n\f\n",
+          "status": "completed"
+        },
+        "callID": "call_OAbGGjoY0Eg9Q6xP96SEblsA|fc_08ede1a2f3236fb3016aecd670046487d1be299f8b68ad8364"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906288308
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607025,
+    "ts": "2026-11-05T19:18:08.319282Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906288311
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607026,
+    "ts": "2026-11-05T19:18:08.329707Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906288317
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607027,
+    "ts": "2026-11-05T19:18:08.329744Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 49,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "153654",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607514,
+    "ts": "2026-11-05T19:18:13.662968Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000528",
+      "charge_usd": "0.000634",
+      "is_own_key": false,
+      "input_tokens": 24416,
+      "output_tokens": 522,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 328,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 199,
+      "cached_input_tokens": 24214
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607515,
+    "ts": "2026-11-05T19:18:13.673162Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>{const d=document.querySelector('[role=dialog]'); return {files:[...d.querySelectorAll('input[type=file]')].length, entries:[...d.querySelectorAll('input:not([type=hidden]),select')].map(e=>({type:e.type||e.tagName,name:e.name,required:e.required,value:e.type==='radio'?e.checked:e.type==='checkbox'?e.checked:e.value,aria:e.getAttribute('aria-label'),placeholder:e.placeholder,label:e.closest('label')?.innerText?.trim()||e.parentElement?.parentElement?.innerText?.trim()?.slice(0,160)})),submitSeen:[...d.querySelectorAll('button')].some(b=>/submit|send|apply|finish/i.test(b.innerText)), validity:d.querySelector('form')?.checkValidity()};}));"
+          },
+          "status": "running"
+        },
+        "callID": "call_jU1FzIR8tlVJCZF2WAko4MAT|fc_08ede1a2f3236fb3016aecd6744fd487d1b0b970b4efbecc3c"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906293669
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607518,
+    "ts": "2026-11-05T19:18:13.691565Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>{const d=document.querySelector('[role=dialog]'); return {files:[...d.querySelectorAll('input[type=file]')].length, entries:[...d.querySelectorAll('input:not([type=hidden]),select')].map(e=>({type:e.type||e.tagName,name:e.name,required:e.required,value:e.type==='radio'?e.checked:e.type==='checkbox'?e.checked:e.value,aria:e.getAttribute('aria-label'),placeholder:e.placeholder,label:e.closest('label')?.innerText?.trim()||e.parentElement?.parentElement?.innerText?.trim()?.slice(0,160)})),submitSeen:[...d.querySelectorAll('button')].some(b=>/submit|send|apply|finish/i.test(b.innerText)), validity:d.querySelector('form')?.checkValidity()};}));"
+          },
+          "output": "{\n  files: 0,\n  entries: [\n    {\n      type: 'text',\n      name: 'website',\n      required: false,\n      value: '',\n      aria: null,\n      placeholder: '',\n      label: 'Website\\n' +\n        'What is your full name?\\n' +\n        '*\\n' +\n        'What is your email?\\n' +\n        '*\\n' +\n        'What is your phone number?\\n' +\n        '*\\n' +\n        '+1\\n' +\n        'What country do you currently live in?\\n' +\n        '*\\n' +\n        '\\n' +\n        '\ud83d\udca1 Each country has different '\n    },\n    {\n      type: 'text',\n      name: 'name',\n      required: true,\n      value: 'Jordan Testcase',\n      aria: null,\n      placeholder: 'Emily Clark',\n      label: ''\n    },\n    {\n      type: 'email',\n      name: 'email',\n      required: true,\n      value: 'jordan.testcase@example.com',\n      aria: null,\n      placeholder: 'emily@bunq.com',\n      label: ''\n    },\n    {\n      type: 'tel',\n      name: '',\n      required: true,\n      value: '5550100142',\n      aria: null,\n      placeholder: '+31313133131',\n      label: '+1'\n    },\n    {\n      type: 'text',\n      name: 'q_4413534',\n      required: true,\n      value: 'India',\n      aria: null,\n      placeholder: 'Type your answer',\n      label: ''\n    },\n    {\n      type: 'select-one',\n      name: 'q_4413536',\n      required: true,\n      value: '',\n      aria: null,\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'NL: I am a EU/EEA/Swiss citizen\\n' +\n        'NL: I am on a spousal visa / search year visa / under the reduced salary criterion\\n' +\n        'NL: I requi'\n    },\n    {\n      type: 'select-one',\n      name: 'q_4413538',\n      required: true,\n      value: '',\n      aria: null,\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'Beginner\\n' +\n        'Intermediate\\n' +\n        'Upper Intermediate\\n' +\n        'Advanced\\n' +\n        'Native'\n    },\n    {\n      type: 'select-one',\n      name: 'q_4413540',\n      required: true,\n      value: '',\n      aria: null,\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'Yes, I agree with the proposed setup.\\n' +\n        'No, I do not agree with the initial in-office and then hybrid setup\\n' +\n        'No, I do not agree w'\n    },\n    {\n      type: 'text',\n      name: 'q_4413541',\n      required: true,\n      value: 'Negotiable',\n      aria: null,\n      placeholder: 'Type your answer',\n      label: ''\n    },\n    {\n      type: 'radio',\n      name: 'q_4413543',\n      required: false,\n      value: false,\n      aria: null,\n      placeholder: '',\n      label: 'Yes'\n    },\n    {\n      type: 'radio',\n      name: 'q_4413543',\n      required: false,\n      value: false,\n      aria: null,\n      placeholder: '',\n      label: 'No'\n    },\n    {\n      type: 'select-one',\n      name: 'q_4413545',\n      required: true,\n      value: 'I deliver projects from start to finish, tie my work to team results, and suggest fixes',\n      aria: null,\n      label: 'I deliver projects from start to finish, tie my work to team results, and suggest fixes\\n' +\n        'Select an option\\n' +\n        'I don\u2019t have formal work experience yet, but I\u2019ve pract'\n    },\n    {\n      type: 'select-one',\n      name: 'q_4413546',\n      required: true,\n      value: '',\n      aria: null,\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'I have limited to no experience with AI tools and am not yet convinced of their practical benefits in a work environment.\\n' +\n        'I co'\n    },\n    {\n      type: 'select-one',\n      name: 'q_4413547',\n      required: true,\n      value: '',\n      aria: null,\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'No experience - I haven\u2019t used it in a work setting.\\n' +\n        'Basic - I can perform simple tasks with templates or guidance.\\n' +\n        'Intermedia'\n    },\n    {\n      type: 'radio',\n      name: 'q_4413554',\n      required: false,\n      value: false,\n      aria: null,\n      placeholder: '',\n      label: 'Yes'\n    },\n    {\n      type: 'radio',\n      name: 'q_4413554',\n      required: false,\n      value: false,\n      aria: null,\n      placeholder: '',\n      label: 'No'\n    },\n    {\n      type: 'select-one',\n      name: 'q_4413548',\n      required: true,\n      value: '',\n      aria: null,\n      label: 'Select an option\\n' +\n        'Select an option\\n' +\n        'Not familiar - I am enthusiastic to start learning about it.\\n' +\n        'Theoretical - I know the basics but have little hands-on experien'\n    },\n    {\n      type: 'radio',\n      name: 'q_4413556',\n      required: false,\n      value: false,\n      aria: null,\n      placeholder: '',\n      label: 'Yes'\n    },\n    {\n      type: 'radio',\n      name: 'q_4413556',\n      required: false,\n      value: false,\n      aria: null,\n      placeholder: '',\n      label: 'No'\n    },\n    {\n      type: 'select-one',\n      name: 'q_4413551',\n      required: true,\n      value: \"I found it myself on bunq's careers website\",\n      aria: null,\n      label: \"I found it myself on bunq's careers website\\n\" +\n        'Select an option\\n' +\n        \"I found it myself on bunq's careers website\\n\" +\n        'A current bunq employee told me about it\\n' +\n        'A former bunq '\n    },\n    {\n      type: 'checkbox',\n      name: 'privacy',\n      required: false,\n      value: true,\n      aria: null,\n      placeholder: '',\n      label: 'Website\\n' +\n        'What is your full name?\\n' +\n        '*\\n' +\n        'What is your email?\\n' +\n        '*\\n' +\n        'What is your phone number?\\n' +\n        '*\\n' +\n        '+1\\n' +\n        'What country do you currently live in?\\n' +\n        '*\\n' +\n        '\\n' +\n        '\ud83d\udca1 Each country has different '\n    }\n  ],\n  submitSeen: true,\n  validity: false\n}\n",
+          "status": "completed"
+        },
+        "callID": "call_jU1FzIR8tlVJCZF2WAko4MAT|fc_08ede1a2f3236fb3016aecd6744fd487d1b0b970b4efbecc3c"
+      },
+      "type": "tool_use",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906293687
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607521,
+    "ts": "2026-11-05T19:18:13.699723Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906293690
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607525,
+    "ts": "2026-11-05T19:18:13.717735Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906293704
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455607527,
+    "ts": "2026-11-05T19:18:13.718162Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 52,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "166625",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455609011,
+    "ts": "2026-11-05T19:18:32.308887Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.001382",
+      "charge_usd": "0.001658",
+      "is_own_key": false,
+      "input_tokens": 26505,
+      "output_tokens": 1753,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 1062,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2089,
+      "cached_input_tokens": 24413
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455609014,
+    "ts": "2026-11-05T19:18:32.328030Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906312324
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455609017,
+    "ts": "2026-11-05T19:18:32.364719Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "text": "{\"fields\":[{\"label\":\"What is your full name?\",\"value\":\"Jordan Testcase\",\"status\":\"filled\"},{\"label\":\"What is your email?\",\"value\":\"jordan.testcase@example.com\",\"status\":\"filled\"},{\"label\":\"Phone country code\",\"value\":\"United States +1 (matches supplied phone number)\",\"status\":\"filled\"},{\"label\":\"What is your phone number?\",\"value\":\"5550100142 (with selected +1 country code: +1 555 010 0142)\",\"status\":\"filled\"},{\"label\":\"What country do you currently live in?\",\"value\":\"India\",\"status\":\"filled\"},{\"label\":\"Which visa situation fits you best?\",\"value\":\"Not selected. The form's choices were Netherlands-specific (EU/EEA/Swiss citizen, certain Dutch visa statuses, or requiring sponsorship); none can be accurately selected from the supplied details, which say needs_sponsorship: No.\",\"status\":\"skipped\"},{\"label\":\"How do you assess your writing and speaking English skills?\",\"value\":\"Not selected; no English proficiency level was provided.\",\"status\":\"skipped\"},{\"label\":\"Do you agree and confirm with the contract duration, hybrid setup, and working hours?\",\"value\":\"Not selected; agreement to these terms was not provided.\",\"status\":\"skipped\"},{\"label\":\"What are your salary expectations? (gross, annual, in EUR)\",\"value\":\"Negotiable\",\"status\":\"filled\"},{\"label\":\"Have you previously worked at bunq?\",\"value\":\"Not selected; prior bunq employment was not specified.\",\"status\":\"skipped\"},{\"label\":\"How do you usually approach your work, its impact, and solving challenges?\",\"value\":\"I deliver projects from start to finish, tie my work to team results, and suggest fixes\",\"status\":\"filled\"},{\"label\":\"Which statement best describes your approach to using AI professionally?\",\"value\":\"Not selected; no AI-use details were provided.\",\"status\":\"skipped\"},{\"label\":\"How would you rate your practical proficiency with Swift code for iOS apps?\",\"value\":\"Not selected; no Swift/iOS proficiency details were provided.\",\"status\":\"skipped\"},{\"label\":\"Can you read Objective-C implementations and translate them into Swift?\",\"value\":\"Not selected; no Objective-C experience details were provided.\",\"status\":\"skipped\"},{\"label\":\"How familiar and practiced are you with iOS development in a CI pipeline?\",\"value\":\"Not selected; the supplied work history mentions ownership of a CI pipeline, but does not establish iOS CI experience.\",\"status\":\"skipped\"},{\"label\":\"Can you assess legacy UI components and reconstruct them using modern SwiftUI?\",\"value\":\"Not selected; no SwiftUI experience details were provided.\",\"status\":\"skipped\"},{\"label\":\"How did you first hear about this role?\",\"value\":\"I found it myself on bunq's careers website\",\"status\":\"filled\"},{\"label\":\"Recruitment Privacy Policy acknowledgement\",\"value\":\"Checked (test-only, as authorized).\",\"status\":\"filled\"},{\"label\":\"Resume/CV upload\",\"value\":\"No upload field or file input was present in the form, so the supplied PDF could not be attached.\",\"status\":\"skipped\"},{\"label\":\"Other supplied details (location city, work history, education, website, demographics, cover letter, etc.)\",\"value\":\"No corresponding fields appeared in the application form.\",\"status\":\"skipped\"}],\"blocked\":\"\",\"submit_button_seen\":true}",
+        "time": {
+          "end": 1793906312361
+        },
+        "type": "text"
+      },
+      "type": "text",
+      "sessionID": "06535896-d4e7-4801-ba6e-81885a29423e",
+      "timestamp": 1793906312361
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455609038,
+    "ts": "2026-11-05T19:18:32.612077Z",
+    "type": "outputs.promoted",
+    "data": {
+      "failed": false,
+      "skipped": 0,
+      "promoted": 1,
+      "rejected": 0,
+      "upload_errors": 0
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455609039,
+    "ts": "2026-11-05T19:18:32.625207Z",
+    "type": "state.promoted",
+    "data": {
+      "failed": false,
+      "harness": "bu-fast",
+      "promoted": 1
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455609041,
+    "ts": "2026-11-05T19:18:32.687661Z",
+    "type": "run.completed",
+    "data": {
+      "context": {
+        "chars": 114528,
+        "tokens": 28262,
+        "maxChars": 1000000,
+        "maxTokens": 212500,
+        "compactionFailures": 0
+      }
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455609046,
+    "ts": "2026-11-05T19:18:32.753190Z",
+    "type": "browser.released",
+    "data": {
+      "status": "kept_alive",
+      "timeout_at": "2026-11-05T23:16:59.400176+00:00",
+      "browser_session_id": "d72f544b-4d2b-417d-90e3-26d7e5934bde"
+    }
+  },
+  {
+    "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+    "id": 455609049,
+    "ts": "2026-11-05T19:18:32.762469Z",
+    "type": "worker.session_released",
+    "data": {}
+  }
+]

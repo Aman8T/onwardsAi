@@ -1,0 +1,54 @@
+{
+  "arm": "B",
+  "model": "claude-sonnet-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 1,
+  "score": {
+    "success": true,
+    "fields_total": 19,
+    "required_total": 9,
+    "required_filled": 9,
+    "mapped_correct": 6,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": true,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://job-boards.greenhouse.io/gitlab/jobs/8771512002",
+  "seconds": 92.6,
+  "failure": null,
+  "errors": [],
+  "steps": 12,
+  "claude_calls": 1,
+  "usage": [
+    {
+      "input_tokens": 2489,
+      "output_tokens": 550,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.010478,
+      "seconds": 4.0,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.010478,
+  "browser_use_usd": 0.000668,
+  "browser_cost": {
+    "browser": 0.0006666666666666666,
+    "proxy": 1.6253441572189331e-06,
+    "proxy_mb": 0.008321762084960938
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "version": "v2",
+  "label": "gh-gitlab",
+  "ats": "greenhouse",
+  "company": "GitLab",
+  "run_dir": "runs\\20261105T183022-B-gh-gitlab",
+  "wall_seconds": 103.5,
+  "bu_spent_before": 0.077444,
+  "bu_spent_after": 0.078116,
+  "bu_balance_delta": 0.000672,
+  "bu_cost_counted": 0.000672
+}

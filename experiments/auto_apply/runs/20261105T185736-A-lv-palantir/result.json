@@ -1,0 +1,218 @@
+{
+  "arm": "A",
+  "model": "bu-fast",
+  "run_id": "4519e76f-d4f2-4c3b-adac-957f3a8ce1d7",
+  "session_id": "7e391dfc-e3a1-4a1d-b61f-29e0be59d34e",
+  "agent_seconds": 134.4,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "llm.request": 35,
+    "core.event": 139,
+    "llm.response": 35,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "empty",
+    "fields": [
+      {
+        "label": "Resume/CV (required)",
+        "status": "failed",
+        "value": "Not uploaded. Attempted to attach the provided Jordan_Testcase_TEST_RESUME.pdf, but the browser rejected each available workspace/download path with \u201cFiles must exist in the downloads directory.\u201d"
+      },
+      {
+        "label": "Full name (required)",
+        "status": "filled",
+        "value": "Jordan Testcase"
+      },
+      {
+        "label": "Email (required)",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Phone",
+        "status": "filled",
+        "value": "+1 555 010 0142"
+      },
+      {
+        "label": "Current location (required)",
+        "status": "filled",
+        "value": "Pune, Maharashtra, IND (selected location suggestion corresponding to Pune, India)"
+      },
+      {
+        "label": "Current company",
+        "status": "filled",
+        "value": "Example Labs"
+      },
+      {
+        "label": "LinkedIn URL",
+        "status": "skipped",
+        "value": ""
+      },
+      {
+        "label": "GitHub URL",
+        "status": "skipped",
+        "value": ""
+      },
+      {
+        "label": "Portfolio URL",
+        "status": "filled",
+        "value": "https://example.com/jordan-testcase"
+      },
+      {
+        "label": "Language Skill(s) (required)",
+        "status": "filled",
+        "value": "Choose not to disclose"
+      },
+      {
+        "label": "Preferred Name",
+        "status": "filled",
+        "value": "Jordan Testcase"
+      },
+      {
+        "label": "Name Pronunciation",
+        "status": "skipped",
+        "value": ""
+      },
+      {
+        "label": "Legally authorized to work in the country for which you are applying? (required)",
+        "status": "filled",
+        "value": "Yes"
+      },
+      {
+        "label": "Will you now or in the future require sponsorship? (required)",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "University currently attending or last attended (required)",
+        "status": "filled",
+        "value": "Other - School Not Listed; the provided school name is included in Additional Information"
+      },
+      {
+        "label": "How did you hear about this opportunity? (required)",
+        "status": "filled",
+        "value": "Palantir Website (closest available option to Company careers page)"
+      },
+      {
+        "label": "Favorite project or proudest accomplishment; why?",
+        "status": "filled",
+        "value": "I built and ran Python and TypeScript services for an internal analytics product and owned its CI pipeline, which I am proud of because it combined reliable operations with useful analytics."
+      },
+      {
+        "label": "Why do you want to work at Palantir?",
+        "status": "filled",
+        "value": "I am interested in bringing my experience building reliable services and improving operational workflows to support an effective, well-coordinated team at Palantir."
+      },
+      {
+        "label": "AI notetaker consent (required)",
+        "status": "filled",
+        "value": "No, I do not consent"
+      },
+      {
+        "label": "Are you a Singapore citizen? (required)",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "Are you a Singapore permanent resident? (required)",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "Additional Information",
+        "status": "filled",
+        "value": "Work history: Software Engineer at Example Labs (2022 to now): built and ran Python and TypeScript services for an internal analytics product, owned its CI pipeline. Junior Developer at Sample Systems (2021 to 2022): maintained a Django web app and wrote its test suite. Current title: Software Engineer. Experience: 4 years. Education: B.Tech in Computer Science, Example Institute of Technology, 2021. Notice period: 30 days. Salary expectation: Negotiable. Cover letter: This is a test application from a fictional profile used to check form filling. It must not be submitted."
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 585986,
+    "output": 9769
+  },
+  "run_cost_usd": 0.017552,
+  "browser_id": "ea67e49c-116b-4b07-af08-100f1a6cb629",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 22,
+    "required_total": 10,
+    "required_filled": 10,
+    "mapped_correct": 6,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": false,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.lever.co/palantir/6ed76ce8-4156-4b60-b120-403538bd66cd/apply",
+  "session_cost": {
+    "llm_cost_usd": 0.017552,
+    "browser_cost_usd": 0.001,
+    "proxy_cost_usd": 4e-06,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.018556
+  },
+  "browser_use_usd": 0.018556,
+  "seconds": 154.9,
+  "anthropic_usd": 0.0,
+  "steps": 35,
+  "llm_requests": 35,
+  "agent_trace": [
+    "await page.goto('https://jobs.lever.co/palantir/6ed76ce8-4156-4b60-b120-403538bd66cd/apply'); await bu.state()",
+    "await bu.click(107); await bu.state({max:30000})",
+    "const fs=require('fs'); console.log(fs.existsSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/Jordan_Testcase_TEST_RESUME.pdf')); console.log(await page.evaluate(()=>Array.from(docume",
+    "const fs=require('fs'); console.log('resume exists',fs.existsSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/Jordan_Testcase_TEST_RESUME.pdf')); console.log(await page.evaluate(()=>A",
+    "const fs=require('fs'); console.log(fs.existsSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/Jordan_Testcase_TEST_RESUME.pdf'));",
+    "console.log(fs.readdirSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f',{withFileTypes:true}).map(x=>x.name))",
+    "console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('select')).map(s=>Array.from(s.options).map(o=>o.text).filter(t=>t.includes('Other (School')||t.includes('Company Careers')||t.",
+    "console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('select')).map(s=>({options:Array.from(s.options).map(o=>o.text).filter(t=>/other|career|palantir/i.test(t))}))))",
+    "await bu.type(5,'Jordan Testcase'); await bu.type(6,'jordan.testcase@example.com'); await bu.type(7,'+1 555 010 0142'); await bu.type(8,'Pune, India'); await bu.type(9,'Example Labs'); await bu.type(1",
+    "await page.cdp('DOM.getDocument',{}).then(r=>r.root.nodeId).then(async id=>{const n=await page.cdp('DOM.querySelector',{nodeId:id,selector:'input[type=file]'}); console.log(n); if(n.nodeId){const d=aw",
+    "console.log(fs.readdirSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Downloads')); console.log(fs.readdirSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads'));",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:15,files:['/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state()",
+    "console.log(process.cwd()); console.log(fs.realpathSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads/Jordan_Testcase_TEST_RESUME.pdf'))",
+    "console.log(fs.readFileSync('.uploads-manifest.json','utf8')); console.log(fs.readFileSync('AGENTS.md','utf8').slice(0,1000))",
+    "for (const d of ['/home/oai/share','/tmp','/mnt/data','/home/oai/Downloads','/tmp/downloads']){try{console.log(d,fs.readdirSync(d).slice(0,8))}catch(e){console.log(d,'no')}}",
+    "console.log(Object.keys(process.env).filter(k=>/download|upload|browser|workspace/i.test(k)).map(k=>[k,process.env[k]]))",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:15,files:['Jordan_Testcase_TEST_RESUME.pdf']});",
+    "await page.cdp('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:'/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads'}); await page.cdp('DOM.setFileInputFiles',{backendNodeId:15,",
+    "console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('input')).map(i=>({name:i.name,id:i.id,type:i.type,value:i.value,ph:i.placeholder,aria:i.getAttribute('aria-label'),required:i.",
+    "await bu.type(8,'Pune, India'); await bu.state()",
+    "console.log(await page.evaluate(()=>({input:document.querySelector('#location-input')?.value,hidden:document.querySelector('#selected-location')?.value,near:document.querySelector('#location-input')?.",
+    "await bu.state({max:30000})",
+    "console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('[role=option],li')).filter(e=>e.innerText.includes('Pune')).map(e=>({tag:e.tagName,role:e.getAttribute('role'),text:e.innerTex",
+    "console.log(await page.evaluate(()=>{let i=document.querySelector('#location-input');let li=i.closest('li');return Array.from(li.querySelectorAll('*')).map(e=>({tag:e.tagName,cls:e.className,role:e.ge",
+    "const root=(await page.cdp('DOM.getDocument',{})).root.nodeId; const s=await page.cdp('DOM.querySelector',{nodeId:root,selector:'.dropdown-location'}); const desc=await page.cdp('DOM.describeNode',{no",
+    "await page.clickAt(850,361); await bu.state()",
+    "console.log(fs.readdirSync('/'));",
+    "fs.mkdirSync('/tmp/downloads',{recursive:true}); fs.copyFileSync('Jordan_Testcase_TEST_RESUME.pdf','/tmp/downloads/Jordan_Testcase_TEST_RESUME.pdf'); console.log(fs.existsSync('/tmp/downloads/Jordan_T",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:15,files:['/tmp/downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state()",
+    "function findDirs(d,depth=2){let a=[]; try{for(const x of fs.readdirSync(d,{withFileTypes:true})){if(x.isDirectory()){let p=d+'/'+x.name;if(/download/i.test(x.name))a.push(p);if(depth>0)a.push(...find",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:15,files:['downloads/Jordan_Testcase_TEST_RESUME.pdf']});",
+    "process.chdir('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Downloads'); console.log(process.cwd(),fs.existsSync('Jordan_Testcase_TEST_RESUME.pdf')); await page.cdp('DOM.setFileInputFiles',{bac",
+    "process.chdir('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f'); await bu.type(13,'Jordan Testcase'); await bu.state({max:30000})",
+    "console.log(await page.evaluate(()=>({fileCount:document.querySelector('#resume-upload-input')?.files?.length, location:document.querySelector('#location-input')?.value, selectedLocation:document.quer"
+  ],
+  "version": "v2",
+  "label": "lv-palantir",
+  "ats": "lever",
+  "company": "Palantir",
+  "run_dir": "runs\\20261105T185736-A-lv-palantir",
+  "wall_seconds": 160.1,
+  "bu_spent_before": 0.218682,
+  "bu_spent_after": 0.237475,
+  "bu_balance_delta": 0.018793,
+  "bu_cost_counted": 0.018793
+}

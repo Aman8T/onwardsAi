@@ -1,0 +1,190 @@
+{
+  "arm": "A",
+  "model": "bu-fast",
+  "run_id": "27bc74a1-d0c0-4a69-90fd-d91b19fb2e4c",
+  "session_id": "06535896-d4e7-4801-ba6e-81885a29423e",
+  "agent_seconds": 95.8,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "llm.request": 17,
+    "core.event": 67,
+    "llm.response": 17,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "",
+    "fields": [
+      {
+        "label": "What is your full name?",
+        "status": "filled",
+        "value": "Jordan Testcase"
+      },
+      {
+        "label": "What is your email?",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Phone country code",
+        "status": "filled",
+        "value": "United States +1 (matches supplied phone number)"
+      },
+      {
+        "label": "What is your phone number?",
+        "status": "filled",
+        "value": "5550100142 (with selected +1 country code: +1 555 010 0142)"
+      },
+      {
+        "label": "What country do you currently live in?",
+        "status": "filled",
+        "value": "India"
+      },
+      {
+        "label": "Which visa situation fits you best?",
+        "status": "skipped",
+        "value": "Not selected. The form's choices were Netherlands-specific (EU/EEA/Swiss citizen, certain Dutch visa statuses, or requiring sponsorship); none can be accurately selected from the supplied details, which say needs_sponsorship: No."
+      },
+      {
+        "label": "How do you assess your writing and speaking English skills?",
+        "status": "skipped",
+        "value": "Not selected; no English proficiency level was provided."
+      },
+      {
+        "label": "Do you agree and confirm with the contract duration, hybrid setup, and working hours?",
+        "status": "skipped",
+        "value": "Not selected; agreement to these terms was not provided."
+      },
+      {
+        "label": "What are your salary expectations? (gross, annual, in EUR)",
+        "status": "filled",
+        "value": "Negotiable"
+      },
+      {
+        "label": "Have you previously worked at bunq?",
+        "status": "skipped",
+        "value": "Not selected; prior bunq employment was not specified."
+      },
+      {
+        "label": "How do you usually approach your work, its impact, and solving challenges?",
+        "status": "filled",
+        "value": "I deliver projects from start to finish, tie my work to team results, and suggest fixes"
+      },
+      {
+        "label": "Which statement best describes your approach to using AI professionally?",
+        "status": "skipped",
+        "value": "Not selected; no AI-use details were provided."
+      },
+      {
+        "label": "How would you rate your practical proficiency with Swift code for iOS apps?",
+        "status": "skipped",
+        "value": "Not selected; no Swift/iOS proficiency details were provided."
+      },
+      {
+        "label": "Can you read Objective-C implementations and translate them into Swift?",
+        "status": "skipped",
+        "value": "Not selected; no Objective-C experience details were provided."
+      },
+      {
+        "label": "How familiar and practiced are you with iOS development in a CI pipeline?",
+        "status": "skipped",
+        "value": "Not selected; the supplied work history mentions ownership of a CI pipeline, but does not establish iOS CI experience."
+      },
+      {
+        "label": "Can you assess legacy UI components and reconstruct them using modern SwiftUI?",
+        "status": "skipped",
+        "value": "Not selected; no SwiftUI experience details were provided."
+      },
+      {
+        "label": "How did you first hear about this role?",
+        "status": "filled",
+        "value": "I found it myself on bunq's careers website"
+      },
+      {
+        "label": "Recruitment Privacy Policy acknowledgement",
+        "status": "filled",
+        "value": "Checked (test-only, as authorized)."
+      },
+      {
+        "label": "Resume/CV upload",
+        "status": "skipped",
+        "value": "No upload field or file input was present in the form, so the supplied PDF could not be attached."
+      },
+      {
+        "label": "Other supplied details (location city, work history, education, website, demographics, cover letter, etc.)",
+        "status": "skipped",
+        "value": "No corresponding fields appeared in the application form."
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 266954,
+    "output": 5667
+  },
+  "run_cost_usd": 0.010268,
+  "browser_id": "d72f544b-4d2b-417d-90e3-26d7e5934bde",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": true,
+    "fields_total": 10,
+    "required_total": 6,
+    "required_filled": 6,
+    "mapped_correct": 3,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": null,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://careers.bunq.com/positions/ios-developer-4",
+  "session_cost": {
+    "llm_cost_usd": 0.010268,
+    "browser_cost_usd": 0.000667,
+    "proxy_cost_usd": 0.000201,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.011136
+  },
+  "browser_use_usd": 0.011136,
+  "seconds": 120.0,
+  "anthropic_usd": 0.0,
+  "steps": 17,
+  "llm_requests": 17,
+  "agent_trace": [
+    "await page.goto('https://careers.bunq.com/o/ios-developer-4/c/new'); await bu.state();",
+    "await bu.click(506); await bu.state();",
+    "await bu.state({max:30000});",
+    "await bu.click(201); await bu.state({max:30000});",
+    "console.log(await page.evaluate(()=>{let d=document.querySelector('[role=dialog]'); return [...d.querySelectorAll('input,select,textarea,button,[role=combobox]')].map((e,i)=>({i,tag:e.tagName,type:e.t",
+    "console.log(await page.evaluate(()=>{let d=document.querySelector('[role=dialog]'); return {selects:[...d.querySelectorAll('select')].map(e=>({name:e.name,label:e.closest('label')?.innerText||e.parent",
+    "await bu.type(848,'Jordan Testcase'); await bu.type(858,'jordan.testcase@example.com'); await bu.click(880); await bu.state({max:10000});",
+    "await bu.click(4150); await bu.type(881,'5550100142'); await bu.type(890,'India'); await bu.state({max:10000});",
+    "await bu.type(1026,'Negotiable'); await bu.type(1091,'I deliver projects from start to finish, tie my work to team results, and suggest fixes'); await bu.type(1271,\"I found it myself on bunq's careers",
+    "await bu.state({max:12000});",
+    "await bu.click(4840); await bu.click(1091); await bu.state({max:12000});",
+    "await bu.click(4887); await bu.click(1278); await bu.state({max:10000});",
+    "console.log(await require('node:fs/promises').readdir('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads'));",
+    "const fs=await import('node:fs/promises'); const p='/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/jordan_testcase_test_resume.pdf'; console.log((await fs.stat(p)).size);",
+    "const cp=await import('node:child_process'); try{console.log(cp.execSync(`pdftotext '${p}' -`,{encoding:'utf8'}))}catch(e){console.log('pdf extraction unavailable',e.message.slice(0,180))}",
+    "console.log(await page.evaluate(()=>{const d=document.querySelector('[role=dialog]'); return {files:[...d.querySelectorAll('input[type=file]')].length, entries:[...d.querySelectorAll('input:not([type="
+  ],
+  "version": "v2",
+  "label": "cu-recruitee-bunq",
+  "ats": "custom",
+  "company": "bunq",
+  "run_dir": "runs\\20261105T191658-A-cu-recruitee-bunq",
+  "wall_seconds": 125.2,
+  "bu_spent_before": 0.314937,
+  "bu_spent_after": 0.326372,
+  "bu_balance_delta": 0.011435,
+  "bu_cost_counted": 0.011435
+}

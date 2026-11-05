@@ -1,0 +1,72 @@
+{
+  "arm": "B",
+  "model": "claude-sonnet-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 1,
+  "score": {
+    "success": false,
+    "fields_total": 0,
+    "required_total": 0,
+    "required_filled": 0,
+    "mapped_correct": 0,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": null,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://apply.workable.com/huggingface/j/81B46579FE/apply/",
+  "seconds": 100.7,
+  "failure": "no_form",
+  "errors": [
+    "field 5 (Github profile): TimeoutError Locator.fill: Timeout 8000ms exceeded.",
+    "field 6 (Linkedin): TimeoutError Locator.fill: Timeout 8000ms exceeded.",
+    "field 7 (Cover letter): TimeoutError Locator.fill: Timeout 8000ms exceeded.",
+    "field 8 (Expected salary): TimeoutError Locator.fill: Timeout 8000ms exceeded.",
+    "field 9 (Notice period / availability): TimeoutError Locator.focus: Timeout 8000ms exceeded.",
+    "field 10 (How did you hear about us?): TimeoutError Locator.fill: Timeout 8000ms exceeded.",
+    "field 11 (Why Hugging Face, and where would you make the biggest diffe): TimeoutError Locator.fill: Timeout 8000ms exceeded.",
+    "field 12 (Share 2\u20133 of your open-source contributions with links (GitH): TimeoutError Locator.fill: Timeout 8000ms exceeded."
+  ],
+  "steps": 6,
+  "claude_calls": 2,
+  "usage": [
+    {
+      "input_tokens": 2171,
+      "output_tokens": 582,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.010162,
+      "seconds": 4.7,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 1897,
+      "output_tokens": 30,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.004094,
+      "seconds": 1.5,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.014256,
+  "browser_use_usd": 0.000671,
+  "browser_cost": {
+    "browser": 0.0006666666666666666,
+    "proxy": 4.508905112743377e-06,
+    "proxy_mb": 0.023085594177246094
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "version": "v2",
+  "label": "cu-workable-huggingface",
+  "ats": "custom",
+  "company": "Hugging Face",
+  "run_dir": "runs\\20261105T183814-B-cu-workable-huggingface",
+  "wall_seconds": 105.9,
+  "bu_spent_before": 0.082166,
+  "bu_spent_after": 0.083666,
+  "bu_balance_delta": 0.0015,
+  "bu_cost_counted": 0.0015
+}

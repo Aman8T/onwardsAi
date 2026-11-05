@@ -1,0 +1,4728 @@
+[
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534476,
+    "ts": "2026-11-05T19:03:15.391990Z",
+    "type": "run.created",
+    "data": {
+      "model": "bu-fast",
+      "session_id": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "is_free_tier": false,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "browser_settings": {
+        "record": false,
+        "profile_id": null,
+        "custom_proxy": false,
+        "extension_ids": [
+          "fd5fbf23-0393-4707-95ab-91cf0b4c4bfc"
+        ],
+        "allow_resizing": null,
+        "proxy_country_code": null,
+        "browser_screen_width": null,
+        "browser_screen_height": null,
+        "profile_storage_generation": ""
+      }
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534478,
+    "ts": "2026-11-05T19:03:15.421792Z",
+    "type": "run.dispatching",
+    "data": {
+      "transport": "agentcore"
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534497,
+    "ts": "2026-11-05T19:03:15.708517Z",
+    "type": "browser.ready",
+    "data": {
+      "live_view_url": "<redacted>",
+      "browser_session_id": "fe206221-1297-40c0-92eb-9f5ca3c21d20"
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534518,
+    "ts": "2026-11-05T19:03:15.973431Z",
+    "type": "run.dispatched",
+    "data": {
+      "transport": "agentcore",
+      "browser_session_id": "fe206221-1297-40c0-92eb-9f5ca3c21d20"
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534520,
+    "ts": "2026-11-05T19:03:15.985616Z",
+    "type": "worker.started",
+    "data": {
+      "core_agent": "bu-pi",
+      "session_id": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "cold_process": true,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "invocation_index": 1,
+      "prewarmed_process": false,
+      "invocation_received_unix_ms": 1793905395955,
+      "process_age_at_invocation_ms": 4656.571777,
+      "runtime_session_header_present": true
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534568,
+    "ts": "2026-11-05T19:03:16.485006Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905396444
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534570,
+    "ts": "2026-11-05T19:03:16.484721Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 2,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "14321",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534734,
+    "ts": "2026-11-05T19:03:18.654140Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000412",
+      "charge_usd": "0.000494",
+      "is_own_key": false,
+      "input_tokens": 2986,
+      "output_tokens": 78,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 17,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2983,
+      "cached_input_tokens": 0
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534740,
+    "ts": "2026-11-05T19:03:18.768855Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "page = await tabs.open('https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application'); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_WhrhILTzj2EN10a45EymuoRr|fc_0dd392239469e17b016aecd2f6652487d1b6abd626076c132d"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905398661
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534778,
+    "ts": "2026-11-05T19:03:19.230271Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "page = await tabs.open('https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application'); await bu.state();"
+          },
+          "output": "[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_WhrhILTzj2EN10a45EymuoRr|fc_0dd392239469e17b016aecd2f6652487d1b6abd626076c132d"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905399224
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534781,
+    "ts": "2026-11-05T19:03:19.242280Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905399226
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534783,
+    "ts": "2026-11-05T19:03:19.247933Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 5,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "17121",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534784,
+    "ts": "2026-11-05T19:03:19.260647Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905399238
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534925,
+    "ts": "2026-11-05T19:03:20.651909Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000064",
+      "charge_usd": "0.000077",
+      "is_own_key": false,
+      "input_tokens": 3121,
+      "output_tokens": 34,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 12,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 135,
+      "cached_input_tokens": 2983
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534927,
+    "ts": "2026-11-05T19:03:20.672367Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_yxPkXXeWZZrSd9yhLR8bdyOh|fc_0dd392239469e17b016aecd2f87f5087d19ce864f80c9eafed"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905400668
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534934,
+    "ts": "2026-11-05T19:03:20.777944Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state();"
+          },
+          "output": "[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n[43] link \"Linear\"\n[46] link \"Back to Linear\u2019s Job Listings\"\n## Senior / Staff Fullstack Engineer\n## Location\nEurope\n## Employment Type\nFull time\n## Location Type\nRemote\n## Department\nProduct\n[66] tab \"Overview\"\n[67] tab \"Application\" selected\n[85] tabpanel \"Application\"\n[164] file \"Choose File\" = \"No file chosen\"\n## Autofill from resume\nUpload your resume here to autofill key fields.\n[154] button \"Upload file\"\n## Contact Details\nName\n[170] textbox \"Name*\"\nEmail\n[175] textbox \"Email*\"\nResume\n[187] file \"Resume*\" = \"No file chosen\"\n[185] button \"Upload File\"\nor drag and drop here\nCover letter\nTell us why you want to join our team!\n[197] textbox \"Cover letter*\"\n## Links\nGithub\nPlease provide your GitHub username. We'll need this info to host final interview rounds.\n[205] textbox \"Github *\"\nLinkedIn\nPlease provide the link to your LinkedIn profile.\n[210] textbox \"LinkedIn\"\nX\nPlease provide the link to your X profile.\n[215] textbox \"X\"\n## Location\nAre you based in a EU or equivalent timezone?\n[224] button \"Yes\"\n[225] button \"No\"\nWhat country are you based in?\n[229] textbox \"What country are you based in?*\"\nNotice Period\nWhat is your expected notice period?\n[233] textbox \"Notice Period*\"\n## Tell us more\nWe would like to learn more about your motivations, interests, and strengths. Please answer each question in 500 words or less.\nWhat would you want to work on? Tell us about the features you would want to implement in your first month.\n[248] textbox \"What would you want to work on? Tell us about the features you would want to implement in your first month.*\"\nTell us of a time you had to put your PM hat on to solve a complex product problem.\n[253] textbox \"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\"\nWhat are you extremely good at? What could you teach the team?\n[258] textbox \"What are you extremely good at? What could you teach the team?*\"\n[259] textbox \"Has someone at Linear referred you for this role? If so, please include their name here:\"\n[276] button \"Submit Application\"\n[101] link \"Learn more about Ashby\"\nPowered by\n[98] link \"Privacy Policy\"\n[99] link \"Security\"\n[100] link \"Vulnerability Disclosure\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_yxPkXXeWZZrSd9yhLR8bdyOh|fc_0dd392239469e17b016aecd2f87f5087d19ce864f80c9eafed"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905400771
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534935,
+    "ts": "2026-11-05T19:03:20.787214Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 8,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "21557",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534936,
+    "ts": "2026-11-05T19:03:20.789981Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905400774
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455534938,
+    "ts": "2026-11-05T19:03:20.801484Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905400780
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535411,
+    "ts": "2026-11-05T19:03:27.134840Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000346",
+      "charge_usd": "0.000415",
+      "is_own_key": false,
+      "input_tokens": 3769,
+      "output_tokens": 468,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 424,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 648,
+      "cached_input_tokens": 3118
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535413,
+    "ts": "2026-11-05T19:03:27.148292Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const fs = require('fs'); console.log(fs.existsSync('uploads/Jordan_Testcase_TEST_RESUME.pdf'), process.cwd());"
+          },
+          "status": "running"
+        },
+        "callID": "call_naBUPaKs6NgEzCDkWNO6EN7b|fc_0dd392239469e17b016aecd2fef01087d1b9c02bc3ae4470f7"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905407142
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535414,
+    "ts": "2026-11-05T19:03:27.158469Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const fs = require('fs'); console.log(fs.existsSync('uploads/Jordan_Testcase_TEST_RESUME.pdf'), process.cwd());"
+          },
+          "output": "false /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f\n",
+          "status": "completed"
+        },
+        "callID": "call_naBUPaKs6NgEzCDkWNO6EN7b|fc_0dd392239469e17b016aecd2fef01087d1b9c02bc3ae4470f7"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905407149
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535415,
+    "ts": "2026-11-05T19:03:27.163978Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 11,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "29832",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535416,
+    "ts": "2026-11-05T19:03:27.165555Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905407151
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535417,
+    "ts": "2026-11-05T19:03:27.174331Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905407157
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535560,
+    "ts": "2026-11-05T19:03:29.216028Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000137",
+      "charge_usd": "0.000164",
+      "is_own_key": false,
+      "input_tokens": 4275,
+      "output_tokens": 72,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 13,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 506,
+      "cached_input_tokens": 3766
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535563,
+    "ts": "2026-11-05T19:03:29.228814Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('.')); console.log(fs.existsSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads'));"
+          },
+          "status": "running"
+        },
+        "callID": "call_OquA1FCP95oBJMg1guc04n0I|fc_0dd392239469e17b016aecd300fa9087d19e4bf29067d14c09"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905409223
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535565,
+    "ts": "2026-11-05T19:03:29.240736Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('.')); console.log(fs.existsSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads'));"
+          },
+          "output": "[\n  '.browser-use',\n  '.promote-manifest.json',\n  '.restore-marker',\n  '.uploads-manifest.json',\n  'AGENTS.md',\n  'Downloads',\n  'Jordan_Testcase_TEST_RESUME.pdf',\n  'downloads',\n  'jordan_resume_copy.pdf',\n  'outputs',\n  'resume-upload-test-copy.pdf',\n  'resume_for_linear_test.pdf',\n  'resume_test_upload.pdf',\n  'uploads'\n]\ntrue\n",
+          "status": "completed"
+        },
+        "callID": "call_OquA1FCP95oBJMg1guc04n0I|fc_0dd392239469e17b016aecd300fa9087d19e4bf29067d14c09"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905409230
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535567,
+    "ts": "2026-11-05T19:03:29.253245Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 14,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "32312",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535568,
+    "ts": "2026-11-05T19:03:29.267354Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905409232
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535569,
+    "ts": "2026-11-05T19:03:29.277454Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905409243
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535688,
+    "ts": "2026-11-05T19:03:30.451814Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000084",
+      "charge_usd": "0.000101",
+      "is_own_key": false,
+      "input_tokens": 4449,
+      "output_tokens": 39,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 12,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 174,
+      "cached_input_tokens": 4272
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535689,
+    "ts": "2026-11-05T19:03:30.470448Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('uploads'));"
+          },
+          "status": "running"
+        },
+        "callID": "call_83OE3Lez4PhtDrcnoRuIqC4m|fc_0dd392239469e17b016aecd3024ed487d19ff3d746708f2e38"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905410466
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535692,
+    "ts": "2026-11-05T19:03:30.477961Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('uploads'));"
+          },
+          "output": "[ 'jordan_testcase_test_resume.pdf' ]\n",
+          "status": "completed"
+        },
+        "callID": "call_83OE3Lez4PhtDrcnoRuIqC4m|fc_0dd392239469e17b016aecd3024ed487d19ff3d746708f2e38"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905410472
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535695,
+    "ts": "2026-11-05T19:03:30.487178Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905410475
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535696,
+    "ts": "2026-11-05T19:03:30.499577Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905410486
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455535697,
+    "ts": "2026-11-05T19:03:30.494913Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 17,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "34377",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536136,
+    "ts": "2026-11-05T19:03:35.500230Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000248",
+      "charge_usd": "0.000298",
+      "is_own_key": false,
+      "input_tokens": 4509,
+      "output_tokens": 392,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 337,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 60,
+      "cached_input_tokens": 4446
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536138,
+    "ts": "2026-11-05T19:03:35.519130Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/uploads/jordan_testcase_test_resume.pdf']}); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_jVnkDGHbvkxsXDMJZjZ1a2U6|fc_0dd392239469e17b016aecd307410087d19c5375f30d212ccc"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905415514
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536139,
+    "ts": "2026-11-05T19:03:35.527105Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/uploads/jordan_testcase_test_resume.pdf']}); await bu.state();"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/13eb32f8-01aa-4609-a511-326366c9af3a.txt",
+          "status": "error"
+        },
+        "callID": "call_jVnkDGHbvkxsXDMJZjZ1a2U6|fc_0dd392239469e17b016aecd307410087d19c5375f30d212ccc"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905415522
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536140,
+    "ts": "2026-11-05T19:03:35.535809Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905415524
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536141,
+    "ts": "2026-11-05T19:03:35.562781Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905415555
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536144,
+    "ts": "2026-11-05T19:03:35.565546Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 20,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "41823",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536383,
+    "ts": "2026-11-05T19:03:38.435505Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000166",
+      "charge_usd": "0.000199",
+      "is_own_key": false,
+      "input_tokens": 5213,
+      "output_tokens": 66,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 32,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 704,
+      "cached_input_tokens": 4506
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536384,
+    "ts": "2026-11-05T19:03:38.453604Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('downloads'),fs.readdirSync('Downloads'));"
+          },
+          "status": "running"
+        },
+        "callID": "call_NNeQBcXJH2x3DNknu4w69tB2|fc_0dd392239469e17b016aecd30a3c7887d1a09ff35699301092"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905418449
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536388,
+    "ts": "2026-11-05T19:03:38.463612Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('downloads'),fs.readdirSync('Downloads'));"
+          },
+          "output": "[ 'Jordan_Testcase_TEST_RESUME.pdf', 'jordan_resume_copy.pdf' ] [ 'Jordan_Testcase_TEST_RESUME.pdf' ]\n",
+          "status": "completed"
+        },
+        "callID": "call_NNeQBcXJH2x3DNknu4w69tB2|fc_0dd392239469e17b016aecd30a3c7887d1a09ff35699301092"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905418456
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536390,
+    "ts": "2026-11-05T19:03:38.476760Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905418458
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536391,
+    "ts": "2026-11-05T19:03:38.479429Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 23,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "44751",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536396,
+    "ts": "2026-11-05T19:03:38.487410Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905418469
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536669,
+    "ts": "2026-11-05T19:03:41.700515Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000092",
+      "charge_usd": "0.000110",
+      "is_own_key": false,
+      "input_tokens": 5318,
+      "output_tokens": 52,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 30,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 105,
+      "cached_input_tokens": 5210
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536670,
+    "ts": "2026-11-05T19:03:41.720008Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_AAqFfWvYaxkxfZb7LSb98xif|fc_0dd392239469e17b016aecd30d921887d1aab046047b7ae49b"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905421716
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536676,
+    "ts": "2026-11-05T19:03:41.825764Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state();"
+          },
+          "output": "[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n[43] link \"Linear\"\n[46] link \"Back to Linear\u2019s Job Listings\"\n## Senior / Staff Fullstack Engineer\n## Location\nEurope\n## Employment Type\nFull time\n## Location Type\nRemote\n## Department\nProduct\n[66] tab \"Overview\"\n[67] tab \"Application\" selected\n[85] tabpanel \"Application\"\n[164] file \"Choose File\" = \"No file chosen\"\n## Autofill from resume\nUpload your resume here to autofill key fields.\n[154] button \"Upload file\"\n## Contact Details\nName\n[170] textbox \"Name*\"\nEmail\n[175] textbox \"Email*\"\nResume\n[187] file \"Resume*\" = \"No file chosen\"\n[185] button \"Upload File\"\nor drag and drop here\nCover letter\nTell us why you want to join our team!\n[197] textbox \"Cover letter*\"\n## Links\nGithub\nPlease provide your GitHub username. We'll need this info to host final interview rounds.\n[205] textbox \"Github *\"\nLinkedIn\nPlease provide the link to your LinkedIn profile.\n[210] textbox \"LinkedIn\"\nX\nPlease provide the link to your X profile.\n[215] textbox \"X\"\n## Location\nAre you based in a EU or equivalent timezone?\n[224] button \"Yes\"\n[225] button \"No\"\nWhat country are you based in?\n[229] textbox \"What country are you based in?*\"\nNotice Period\nWhat is your expected notice period?\n[233] textbox \"Notice Period*\"\n## Tell us more\nWe would like to learn more about your motivations, interests, and strengths. Please answer each question in 500 words or less.\nWhat would you want to work on? Tell us about the features you would want to implement in your first month.\n[248] textbox \"What would you want to work on? Tell us about the features you would want to implement in your first month.*\"\nTell us of a time you had to put your PM hat on to solve a complex product problem.\n[253] textbox \"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\"\nWhat are you extremely good at? What could you teach the team?\n[258] textbox \"What are you extremely good at? What could you teach the team?*\"\n[259] textbox \"Has someone at Linear referred you for this role? If so, please include their name here:\"\n[276] button \"Submit Application\"\n[101] link \"Learn more about Ashby\"\nPowered by\n[98] link \"Privacy Policy\"\n[99] link \"Security\"\n[100] link \"Vulnerability Disclosure\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_AAqFfWvYaxkxfZb7LSb98xif|fc_0dd392239469e17b016aecd30d921887d1aab046047b7ae49b"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905421821
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536677,
+    "ts": "2026-11-05T19:03:41.840326Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905421823
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536680,
+    "ts": "2026-11-05T19:03:41.852026Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905421830
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536681,
+    "ts": "2026-11-05T19:03:41.847151Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 26,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "49891",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536786,
+    "ts": "2026-11-05T19:03:43.398729Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000179",
+      "charge_usd": "0.000215",
+      "is_own_key": false,
+      "input_tokens": 5984,
+      "output_tokens": 84,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 28,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 666,
+      "cached_input_tokens": 5315
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536787,
+    "ts": "2026-11-05T19:03:43.416728Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_wb26VSRUzoBgEdmUNjSXQf4G|fc_0dd392239469e17b016aecd30f2a2887d1ab23aa68adfee4c7"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905423412
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536789,
+    "ts": "2026-11-05T19:03:43.427007Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/9a767550-22ab-4e00-be97-14c97b699785.txt",
+          "status": "error"
+        },
+        "callID": "call_wb26VSRUzoBgEdmUNjSXQf4G|fc_0dd392239469e17b016aecd30f2a2887d1ab23aa68adfee4c7"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905423420
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536790,
+    "ts": "2026-11-05T19:03:43.436067Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905423422
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536791,
+    "ts": "2026-11-05T19:03:43.436067Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 29,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "53179",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455536792,
+    "ts": "2026-11-05T19:03:43.443916Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905423429
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537174,
+    "ts": "2026-11-05T19:03:47.884162Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000240",
+      "charge_usd": "0.000288",
+      "is_own_key": false,
+      "input_tokens": 6379,
+      "output_tokens": 261,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 211,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 395,
+      "cached_input_tokens": 5981
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537176,
+    "ts": "2026-11-05T19:03:47.901575Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.realpathSync('downloads'),fs.realpathSync('Downloads'),fs.statSync('downloads/Jordan_Testcase_TEST_RESUME.pdf').size);"
+          },
+          "status": "running"
+        },
+        "callID": "call_jNtt2p2OSJAZmUO26Asck8mz|fc_0dd392239469e17b016aecd313b11087d1a84746addba6a461"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905427893
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537177,
+    "ts": "2026-11-05T19:03:47.908896Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.realpathSync('downloads'),fs.realpathSync('Downloads'),fs.statSync('downloads/Jordan_Testcase_TEST_RESUME.pdf').size);"
+          },
+          "output": "/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Downloads 969\n",
+          "status": "completed"
+        },
+        "callID": "call_jNtt2p2OSJAZmUO26Asck8mz|fc_0dd392239469e17b016aecd313b11087d1a84746addba6a461"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905427904
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537179,
+    "ts": "2026-11-05T19:03:47.921034Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905427906
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537180,
+    "ts": "2026-11-05T19:03:47.921771Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 32,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "58668",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537181,
+    "ts": "2026-11-05T19:03:47.929006Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905427913
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537405,
+    "ts": "2026-11-05T19:03:50.814325Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000157",
+      "charge_usd": "0.000188",
+      "is_own_key": false,
+      "input_tokens": 6709,
+      "output_tokens": 103,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 53,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 330,
+      "cached_input_tokens": 6376
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537406,
+    "ts": "2026-11-05T19:03:50.826264Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:['Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_aZRvqgYoRQSAlOus4ScHZzxI|fc_0dd392239469e17b016aecd3168d0887d1bd2f02d83ebe852f"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905430821
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537407,
+    "ts": "2026-11-05T19:03:50.837450Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:['Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/dfee3e56-6d4b-4a0d-8edd-f6b655acac38.txt",
+          "status": "error"
+        },
+        "callID": "call_aZRvqgYoRQSAlOus4ScHZzxI|fc_0dd392239469e17b016aecd3168d0887d1bd2f02d83ebe852f"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905430828
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537408,
+    "ts": "2026-11-05T19:03:50.843757Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 35,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "62871",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537411,
+    "ts": "2026-11-05T19:03:50.849472Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905430830
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537415,
+    "ts": "2026-11-05T19:03:50.856694Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905430837
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537780,
+    "ts": "2026-11-05T19:03:54.983490Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000183",
+      "charge_usd": "0.000220",
+      "is_own_key": false,
+      "input_tokens": 7127,
+      "output_tokens": 127,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 71,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 418,
+      "cached_input_tokens": 6706
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537782,
+    "ts": "2026-11-05T19:03:54.995440Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/Downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_gppcuSjMZ76kQks7BDaUaok0|fc_0dd392239469e17b016aecd31acaa487d1b623d36cca3e5e09"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905434992
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537783,
+    "ts": "2026-11-05T19:03:55.003979Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/Downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/b72078fa-af95-41e1-80af-7a15b861bf2b.txt",
+          "status": "error"
+        },
+        "callID": "call_gppcuSjMZ76kQks7BDaUaok0|fc_0dd392239469e17b016aecd31acaa487d1b623d36cca3e5e09"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905435000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537784,
+    "ts": "2026-11-05T19:03:55.016806Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 38,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "67324",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537785,
+    "ts": "2026-11-05T19:03:55.017440Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905435002
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455537787,
+    "ts": "2026-11-05T19:03:55.031873Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905435009
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455538950,
+    "ts": "2026-11-05T19:04:10.090625Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000808",
+      "charge_usd": "0.000970",
+      "is_own_key": false,
+      "input_tokens": 7566,
+      "output_tokens": 1364,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 1111,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 439,
+      "cached_input_tokens": 7124
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455538951,
+    "ts": "2026-11-05T19:04:10.118030Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(170,'Jordan Testcase'); await bu.type(175,'jordan.testcase@example.com'); await bu.type(197,'This is a test application from a fictional profile used to check form filling. It must not be submitted.'); await bu.type(205,'Not provided'); await bu.click(225); await bu.type(229,'India'); await bu.type(233,'30 days'); await bu.type(248,'In my first month, I\u2019d learn Linear\u2019s product and engineering workflows, then identify a focused full-stack improvement that helps teams work more effectively. I\u2019d bring my experience building Python and TypeScript services and owning CI for an internal analytics product.'); await bu.type(253,'I don\u2019t have a specific complex product story in the details provided. My background includes building and running services for an internal analytics product at Example Labs and maintaining a Django app and test suite at Sample Systems.'); await bu.type(258,'I\u2019m strong at building and operating Python and TypeScript services, and I\u2019ve owned a CI pipeline. I could share practical approaches to reliable services, maintainable tests, and CI.'); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_e3bPzsKbxcGbjzOwKZP10gin|fc_0dd392239469e17b016aecd32961c887d18098ebef8e9f9450"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905450113
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539066,
+    "ts": "2026-11-05T19:04:11.792767Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(170,'Jordan Testcase'); await bu.type(175,'jordan.testcase@example.com'); await bu.type(197,'This is a test application from a fictional profile used to check form filling. It must not be submitted.'); await bu.type(205,'Not provided'); await bu.click(225); await bu.type(229,'India'); await bu.type(233,'30 days'); await bu.type(248,'In my first month, I\u2019d learn Linear\u2019s product and engineering workflows, then identify a focused full-stack improvement that helps teams work more effectively. I\u2019d bring my experience building Python and TypeScript services and owning CI for an internal analytics product.'); await bu.type(253,'I don\u2019t have a specific complex product story in the details provided. My background includes building and running services for an internal analytics product at Example Labs and maintaining a Django app and test suite at Sample Systems.'); await bu.type(258,'I\u2019m strong at building and operating Python and TypeScript services, and I\u2019ve owned a CI pipeline. I could share practical approaches to reliable services, maintainable tests, and CI.'); await bu.state();"
+          },
+          "output": "[ok] type [170] textbox \"Name*\" = \"Jordan Testcase\" -> page changed\n[ok] type [175] textbox \"Email*\" = \"jordan.testcase@example.com\" -> page changed\n[ok] type [197] textbox \"Cover letter*\" = \"This is a test application from a fictional profile used to \u2026\" -> page changed\n[ok] type [205] textbox \"Github *\" = \"Not provided\" -> page changed\n[ok] click [225] button \"No\" -> page changed\n[ok] type [229] textbox \"What country are you based in?*\" = \"India\" -> page changed\n[ok] type [233] textbox \"Notice Period*\" = \"30 days\" -> page changed\n[ok] type [248] textbox \"What would you want to work on? Tell us about the features y\u2026\" = \"In my first month, I\u2019d learn Linear\u2019s product and engineerin\u2026\" -> page changed\n[ok] type [253] textbox \"Tell us of a time you had to put your PM hat on to solve a c\u2026\" = \"I don\u2019t have a specific complex product story in the details\u2026\" -> page changed\n[ok] type [258] textbox \"What are you extremely good at? What could you teach the tea\u2026\" = \"I\u2019m strong at building and operating Python and TypeScript s\u2026\" -> page changed\n[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n[43] link \"Linear\"\n[46] link \"Back to Linear\u2019s Job Listings\"\n## Senior / Staff Fullstack Engineer\n## Location\nEurope\n## Employment Type\nFull time\n## Location Type\nRemote\n## Department\nProduct\n[66] tab \"Overview\"\n[67] tab \"Application\" selected\n[85] tabpanel \"Application\"\n[164] file \"Choose File\" = \"No file chosen\"\n## Autofill from resume\nUpload your resume here to autofill key fields.\n[154] button \"Upload file\"\n## Contact Details\nName\n[170] textbox \"Name*\" = \"Jordan Testcase\"\nEmail\n[175] textbox \"Email*\" = \"jordan.testcase@example.com\"\nResume\n[187] file \"Resume*\" = \"No file chosen\"\n[185] button \"Upload File\"\nor drag and drop here\nCover letter\nTell us why you want to join our team!\n[197] textbox \"Cover letter*\" = \"This is a test application from a fictional profile used to check form filling. It must not be submi\u2026\"\n## Links\nGithub\nPlease provide your GitHub username. We'll need this info to host final interview rounds.\n[205] textbox \"Github *\" = \"Not provided\"\nLinkedIn\nPlease provide the link to your LinkedIn profile.\n[210] textbox \"LinkedIn\"\nX\nPlease provide the link to your X profile.\n[215] textbox \"X\"\n## Location\nAre you based in a EU or equivalent timezone?\n[224] button \"Yes\"\n[225] button \"No\"\nWhat country are you based in?\n[229] textbox \"What country are you based in?*\" = \"India\"\nNotice Period\nWhat is your expected notice period?\n[233] textbox \"Notice Period*\" = \"30 days\"\n## Tell us more\nWe would like to learn more about your motivations, interests, and strengths. Please answer each question in 500 words or less.\nWhat would you want to work on? Tell us about the features you would want to implement in your first month.\n[248] textbox \"What would you want to work on? Tell us about the features you would want to implement in your first month.*\" = \"In my first month, I\u2019d learn Linear\u2019s product and engineering workflows, then identify a focused ful\u2026\"\nTell us of a time you had to put your PM hat on to solve a complex product problem.\n[253] textbox \"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\" = \"I don\u2019t have a specific complex product story in the details provided. My background includes buildi\u2026\"\nWhat are you extremely good at? What could you teach the team?\n[258] textbox \"What are you extremely good at? What could you teach the team?*\" = \"I\u2019m strong at building and operating Python and TypeScript services, and I\u2019ve owned a CI pipeline. I\u2026\" focused\n[259] textbox \"Has someone at Linear referred you for this role? If so, please include their name here:\"\n[276] button \"Submit Application\"\n[101] link \"Learn more about Ashby\"\nPowered by\n[98] link \"Privacy Policy\"\n[99] link \"Security\"\n[100] link \"Vulnerability Disclosure\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_e3bPzsKbxcGbjzOwKZP10gin|fc_0dd392239469e17b016aecd32961c887d18098ebef8e9f9450"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905451787
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539068,
+    "ts": "2026-11-05T19:04:11.804587Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905451790
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539069,
+    "ts": "2026-11-05T19:04:11.807774Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 43,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "93574",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539070,
+    "ts": "2026-11-05T19:04:11.811823Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905451797
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539650,
+    "ts": "2026-11-05T19:04:18.721335Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000541",
+      "charge_usd": "0.000649",
+      "is_own_key": false,
+      "input_tokens": 9957,
+      "output_tokens": 332,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 282,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2391,
+      "cached_input_tokens": 7563
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539654,
+    "ts": "2026-11-05T19:04:18.733379Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log({home:process.env.HOME,tmp:process.env.TMPDIR,entries:fs.readdirSync(process.env.HOME||'/root')});"
+          },
+          "status": "running"
+        },
+        "callID": "call_OpOfgtxNP4ONOgbkYMfEgGWv|fc_0dd392239469e17b016aecd332161887d1bff4700420b2e9ad"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905458731
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539659,
+    "ts": "2026-11-05T19:04:18.741708Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log({home:process.env.HOME,tmp:process.env.TMPDIR,entries:fs.readdirSync(process.env.HOME||'/root')});"
+          },
+          "output": "Error: EACCES: permission denied, scandir '/root'\n    at Object.readdirSync (node:fs:1590:26)\n    at <anonymous>:1:70\n    at Session.post (node:inspector:142:22)\n    at file:///opt/pi-worker/node_modules/@browser_use/pi/dist/worker.js:325:23\n    at new Promise (<anonymous>)\n    at evaluate (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/worker.js:324:52)\n    at process.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/worker.js:403:27)\n    at process.emit (node:events:519:28)\n    at emit (node:internal/child_process:949:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/32861493-3870-400e-8f7d-90ad3aea42cd.txt",
+          "status": "error"
+        },
+        "callID": "call_OpOfgtxNP4ONOgbkYMfEgGWv|fc_0dd392239469e17b016aecd332161887d1bff4700420b2e9ad"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905458737
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539662,
+    "ts": "2026-11-05T19:04:18.750750Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905458739
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539667,
+    "ts": "2026-11-05T19:04:18.759223Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 46,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "100844",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539669,
+    "ts": "2026-11-05T19:04:18.769400Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905458749
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539895,
+    "ts": "2026-11-05T19:04:22.001784Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000201",
+      "charge_usd": "0.000241",
+      "is_own_key": false,
+      "input_tokens": 10557,
+      "output_tokens": 53,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 12,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 600,
+      "cached_input_tokens": 9954
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539896,
+    "ts": "2026-11-05T19:04:22.019513Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log({home:process.env.HOME,tmp:process.env.TMPDIR,cwd:process.cwd()});"
+          },
+          "status": "running"
+        },
+        "callID": "call_lKispO4xoq20rjbN0Y7OPZzv|fc_0dd392239469e17b016aecd335cc9c87d1918685839071912d"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905462017
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539897,
+    "ts": "2026-11-05T19:04:22.026979Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log({home:process.env.HOME,tmp:process.env.TMPDIR,cwd:process.cwd()});"
+          },
+          "output": "{\n  home: undefined,\n  tmp: undefined,\n  cwd: '/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f'\n}\n",
+          "status": "completed"
+        },
+        "callID": "call_lKispO4xoq20rjbN0Y7OPZzv|fc_0dd392239469e17b016aecd335cc9c87d1918685839071912d"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905462023
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539898,
+    "ts": "2026-11-05T19:04:22.034766Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905462025
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539900,
+    "ts": "2026-11-05T19:04:22.042044Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 49,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "102996",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455539901,
+    "ts": "2026-11-05T19:04:22.044538Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905462033
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540054,
+    "ts": "2026-11-05T19:04:23.972926Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000197",
+      "charge_usd": "0.000236",
+      "is_own_key": false,
+      "input_tokens": 10662,
+      "output_tokens": 156,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 104,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 105,
+      "cached_input_tokens": 10554
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540057,
+    "ts": "2026-11-05T19:04:23.985335Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('.browser-use')); console.log(fs.readdirSync('/mnt')); console.log(fs.readdirSync('/tmp').slice(0,30));"
+          },
+          "status": "running"
+        },
+        "callID": "call_nW4GIw0V5V8KbGZIhxVrhIlS|fc_0dd392239469e17b016aecd337c49887d1a548b7cdfc351477"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905463981
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540058,
+    "ts": "2026-11-05T19:04:23.995427Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('.browser-use')); console.log(fs.readdirSync('/mnt')); console.log(fs.readdirSync('/tmp').slice(0,30));"
+          },
+          "output": "[ 'cells', 'runs' ]\n[ 'workspace' ]\n[ 'bcode', 'v4-critical-delivery' ]\n",
+          "status": "completed"
+        },
+        "callID": "call_nW4GIw0V5V8KbGZIhxVrhIlS|fc_0dd392239469e17b016aecd337c49887d1a548b7cdfc351477"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905463988
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540059,
+    "ts": "2026-11-05T19:04:24.004562Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905463991
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540060,
+    "ts": "2026-11-05T19:04:24.005222Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 52,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "106340",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540061,
+    "ts": "2026-11-05T19:04:24.013581Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905463998
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540507,
+    "ts": "2026-11-05T19:04:29.036842Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000343",
+      "charge_usd": "0.000412",
+      "is_own_key": false,
+      "input_tokens": 10854,
+      "output_tokens": 425,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 399,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 192,
+      "cached_input_tokens": 10659
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540510,
+    "ts": "2026-11-05T19:04:29.048354Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('/'));"
+          },
+          "status": "running"
+        },
+        "callID": "call_wShNaUoTLawZXQn8VX8tg8rk|fc_0dd392239469e17b016aecd33cd95887d1978e71a77ab48d10"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905469046
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540511,
+    "ts": "2026-11-05T19:04:29.056176Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('/'));"
+          },
+          "output": "[\n  'app', 'bin',   'boot',\n  'dev', 'etc',   'home',\n  'lib', 'media', 'mnt',\n  'opt', 'proc',  'root',\n  'run', 'sbin',  'srv',\n  'sys', 'tmp',   'usr',\n  'var'\n]\n",
+          "status": "completed"
+        },
+        "callID": "call_wShNaUoTLawZXQn8VX8tg8rk|fc_0dd392239469e17b016aecd33cd95887d1978e71a77ab48d10"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905469052
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540512,
+    "ts": "2026-11-05T19:04:29.063457Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905469055
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540513,
+    "ts": "2026-11-05T19:04:29.073028Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905469066
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540514,
+    "ts": "2026-11-05T19:04:29.078811Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 55,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "113590",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540639,
+    "ts": "2026-11-05T19:04:30.568895Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000192",
+      "charge_usd": "0.000230",
+      "is_own_key": false,
+      "input_tokens": 11361,
+      "output_tokens": 39,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 12,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 507,
+      "cached_input_tokens": 10851
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540641,
+    "ts": "2026-11-05T19:04:30.586810Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('/home'));"
+          },
+          "status": "running"
+        },
+        "callID": "call_hC6nRMBZ2Jk5TBZr2gqOl7I6|fc_0dd392239469e17b016aecd33e672087d18bc3051f17d53946"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905470582
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540643,
+    "ts": "2026-11-05T19:04:30.597752Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('/home'));"
+          },
+          "output": "[ 'worker' ]\n",
+          "status": "completed"
+        },
+        "callID": "call_hC6nRMBZ2Jk5TBZr2gqOl7I6|fc_0dd392239469e17b016aecd33e672087d18bc3051f17d53946"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905470588
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540644,
+    "ts": "2026-11-05T19:04:30.604557Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 58,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "115608",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540646,
+    "ts": "2026-11-05T19:04:30.609528Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905470590
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540647,
+    "ts": "2026-11-05T19:04:30.620519Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905470596
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540781,
+    "ts": "2026-11-05T19:04:32.111769Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000171",
+      "charge_usd": "0.000205",
+      "is_own_key": false,
+      "input_tokens": 11415,
+      "output_tokens": 100,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 19,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 54,
+      "cached_input_tokens": 11358
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540783,
+    "ts": "2026-11-05T19:04:32.123844Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "for(const p of ['/home/worker','/home/worker/Downloads','/home/worker/downloads','/tmp/downloads','/mnt/data/downloads']){try{console.log(p,fs.readdirSync(p).slice(0,20))}catch(e){console.log(p,e.code)}}"
+          },
+          "status": "running"
+        },
+        "callID": "call_rveC9xITFfGpnbLBejtw6S7e|fc_0dd392239469e17b016aecd33fb8b087d1802b4afd08c6412e"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905472121
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540785,
+    "ts": "2026-11-05T19:04:32.133129Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "for(const p of ['/home/worker','/home/worker/Downloads','/home/worker/downloads','/tmp/downloads','/mnt/data/downloads']){try{console.log(p,fs.readdirSync(p).slice(0,20))}catch(e){console.log(p,e.code)}}"
+          },
+          "output": "/home/worker [ '.cache', '.config', '.local' ]\n/home/worker/Downloads ENOENT\n/home/worker/downloads ENOENT\n/tmp/downloads ENOENT\n/mnt/data/downloads ENOENT\n",
+          "status": "completed"
+        },
+        "callID": "call_rveC9xITFfGpnbLBejtw6S7e|fc_0dd392239469e17b016aecd33fb8b087d1802b4afd08c6412e"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905472128
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540786,
+    "ts": "2026-11-05T19:04:32.143843Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905472130
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540788,
+    "ts": "2026-11-05T19:04:32.152706Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 61,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "118003",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455540789,
+    "ts": "2026-11-05T19:04:32.164406Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905472142
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541430,
+    "ts": "2026-11-05T19:04:40.376425Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000476",
+      "charge_usd": "0.000571",
+      "is_own_key": false,
+      "input_tokens": 11574,
+      "output_tokens": 683,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 630,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 159,
+      "cached_input_tokens": 11412
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541431,
+    "ts": "2026-11-05T19:04:40.395859Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const uploadedCopy=await artifact('jordan-testcase-resume.pdf',fs.readFileSync('uploads/jordan_testcase_test_resume.pdf')); console.log(uploadedCopy);"
+          },
+          "status": "running"
+        },
+        "callID": "call_JPQk9FJguNJmGpjhStm8hgAR|fc_0dd392239469e17b016aecd34822e087d1b606b2e9be0c11b9"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905480393
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541432,
+    "ts": "2026-11-05T19:04:40.404217Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const uploadedCopy=await artifact('jordan-testcase-resume.pdf',fs.readFileSync('uploads/jordan_testcase_test_resume.pdf')); console.log(uploadedCopy);"
+          },
+          "output": "/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/jordan-testcase-resume.pdf\n",
+          "status": "completed"
+        },
+        "callID": "call_JPQk9FJguNJmGpjhStm8hgAR|fc_0dd392239469e17b016aecd34822e087d1b606b2e9be0c11b9"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905480401
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541433,
+    "ts": "2026-11-05T19:04:40.412132Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905480403
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541434,
+    "ts": "2026-11-05T19:04:40.423043Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905480414
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541435,
+    "ts": "2026-11-05T19:04:40.424874Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 65,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "131334",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541737,
+    "ts": "2026-11-05T19:04:44.725263Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000262",
+      "charge_usd": "0.000314",
+      "is_own_key": false,
+      "input_tokens": 12301,
+      "output_tokens": 111,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 66,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 727,
+      "cached_input_tokens": 11571
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541738,
+    "ts": "2026-11-05T19:04:44.742548Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[uploadedCopy]}); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_EIa9DJZXMeijOTqMmkK88BO1|fc_0dd392239469e17b016aecd34c80a887d186afb85927e5af0e"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905484740
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541741,
+    "ts": "2026-11-05T19:04:44.752156Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[uploadedCopy]}); await bu.state();"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/7eae90c2-5bb4-47c8-9b61-627dd752c01e.txt",
+          "status": "error"
+        },
+        "callID": "call_EIa9DJZXMeijOTqMmkK88BO1|fc_0dd392239469e17b016aecd34c80a887d186afb85927e5af0e"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905484747
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541742,
+    "ts": "2026-11-05T19:04:44.765233Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905484749
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541745,
+    "ts": "2026-11-05T19:04:44.771493Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 68,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "135613",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541746,
+    "ts": "2026-11-05T19:04:44.775842Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905484756
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541982,
+    "ts": "2026-11-05T19:04:48.737198Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000340",
+      "charge_usd": "0.000408",
+      "is_own_key": false,
+      "input_tokens": 12728,
+      "output_tokens": 327,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 247,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 427,
+      "cached_input_tokens": 12298
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541985,
+    "ts": "2026-11-05T19:04:48.755853Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:process.cwd()+'/downloads'}); await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_4220kcOXfO10P5KOKGdv4Ll7|fc_0dd392239469e17b016aecd350572c87d197390f8c6590ea9d"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905488753
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541988,
+    "ts": "2026-11-05T19:04:48.766954Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:process.cwd()+'/downloads'}); await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/f723f0dd-8008-4445-a22e-08267971c383.txt",
+          "status": "error"
+        },
+        "callID": "call_4220kcOXfO10P5KOKGdv4Ll7|fc_0dd392239469e17b016aecd350572c87d197390f8c6590ea9d"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905488761
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541990,
+    "ts": "2026-11-05T19:04:48.783725Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905488763
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541992,
+    "ts": "2026-11-05T19:04:48.786509Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 71,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "141951",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455541994,
+    "ts": "2026-11-05T19:04:48.798350Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905488775
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542497,
+    "ts": "2026-11-05T19:04:56.225816Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000470",
+      "charge_usd": "0.000564",
+      "is_own_key": false,
+      "input_tokens": 13365,
+      "output_tokens": 525,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 457,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 637,
+      "cached_input_tokens": 12725
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542500,
+    "ts": "2026-11-05T19:04:56.244254Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>[...document.querySelectorAll('input[type=file]')].map((x,i)=>({i,name:x.name,accept:x.accept,required:x.required,outer:x.outerHTML.slice(0,300)}))));"
+          },
+          "status": "running"
+        },
+        "callID": "call_nHBgEaNaBmAE3PnDCOheADfV|fc_0dd392239469e17b016aecd357f82887d1a9aeecbbc36d9ff0"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905496242
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542501,
+    "ts": "2026-11-05T19:04:56.254036Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>[...document.querySelectorAll('input[type=file]')].map((x,i)=>({i,name:x.name,accept:x.accept,required:x.required,outer:x.outerHTML.slice(0,300)}))));"
+          },
+          "output": "[\n  {\n    i: 0,\n    name: '',\n    accept: 'application/pdf,.pdf,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.oasis.opendocument.text,.odt,application/rtf,.rtf,text/plain,.txt,text/markdown,.md',\n    required: false,\n    outer: '<input accept=\"application/pdf,.pdf,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.oasis.opendocument.text,.odt,application/rtf,.rtf,text/plain,.txt,text/markdown,.md\" type=\"file\" tabindex=\"-1\" style=\"border: 0px; clip: rect(0px,'\n  },\n  {\n    i: 1,\n    name: '',\n    accept: 'application/pdf,.pdf,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.oasis.opendocument.text,.odt,application/rtf,.rtf,text/plain,.txt,text/markdown,.md,image/*,video/*,audio/*',\n    required: true,\n    outer: '<input accept=\"application/pdf,.pdf,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.oasis.opendocument.text,.odt,application/rtf,.rtf,text/plain,.txt,text/markdown,.md,image/*,video/*,audio/*\" type=\"file\" tabindex=\"-1\" id=\"_system'\n  }\n]\n",
+          "status": "completed"
+        },
+        "callID": "call_nHBgEaNaBmAE3PnDCOheADfV|fc_0dd392239469e17b016aecd357f82887d1a9aeecbbc36d9ff0"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905496252
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542504,
+    "ts": "2026-11-05T19:04:56.261710Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905496254
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542507,
+    "ts": "2026-11-05T19:04:56.275128Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 74,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "151930",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542508,
+    "ts": "2026-11-05T19:04:56.276324Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905496266
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542846,
+    "ts": "2026-11-05T19:05:00.315672Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000319",
+      "charge_usd": "0.000383",
+      "is_own_key": false,
+      "input_tokens": 14234,
+      "output_tokens": 152,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 69,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 869,
+      "cached_input_tokens": 13362
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542849,
+    "ts": "2026-11-05T19:05:00.337109Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(['Jordan_Testcase_TEST_RESUME.pdf','downloads/Jordan_Testcase_TEST_RESUME.pdf','uploads/jordan_testcase_test_resume.pdf'].map(p=>[p,fs.statSync(p).size,require('crypto').createHash('sha256').update(fs.readFileSync(p)).digest('hex')]))"
+          },
+          "status": "running"
+        },
+        "callID": "call_3BNnmGhQHm6wUaMWnyvTJ3sB|fc_0dd392239469e17b016aecd35bff8087d193abd381fdd8bf8d"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905500334
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542850,
+    "ts": "2026-11-05T19:05:00.350000Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(['Jordan_Testcase_TEST_RESUME.pdf','downloads/Jordan_Testcase_TEST_RESUME.pdf','uploads/jordan_testcase_test_resume.pdf'].map(p=>[p,fs.statSync(p).size,require('crypto').createHash('sha256').update(fs.readFileSync(p)).digest('hex')]))"
+          },
+          "output": "[\n  [\n    'Jordan_Testcase_TEST_RESUME.pdf',\n    969,\n    'b5455bb530d598b3734a1372b68d7bdc69ca024b2151a36903f83c399289e4b9'\n  ],\n  [\n    'downloads/Jordan_Testcase_TEST_RESUME.pdf',\n    969,\n    'b5455bb530d598b3734a1372b68d7bdc69ca024b2151a36903f83c399289e4b9'\n  ],\n  [\n    'uploads/jordan_testcase_test_resume.pdf',\n    969,\n    'b5455bb530d598b3734a1372b68d7bdc69ca024b2151a36903f83c399289e4b9'\n  ]\n]\n",
+          "status": "completed"
+        },
+        "callID": "call_3BNnmGhQHm6wUaMWnyvTJ3sB|fc_0dd392239469e17b016aecd35bff8087d193abd381fdd8bf8d"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905500340
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542851,
+    "ts": "2026-11-05T19:05:00.361644Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905500343
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542853,
+    "ts": "2026-11-05T19:05:00.365187Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 77,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "155865",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455542855,
+    "ts": "2026-11-05T19:05:00.371581Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905500354
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543095,
+    "ts": "2026-11-05T19:05:03.516099Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000307",
+      "charge_usd": "0.000368",
+      "is_own_key": false,
+      "input_tokens": 14575,
+      "output_tokens": 243,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 102,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 341,
+      "cached_input_tokens": 14231
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543099,
+    "ts": "2026-11-05T19:05:03.535793Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const pdfB64=fs.readFileSync('uploads/jordan_testcase_test_resume.pdf').toString('base64'); await page.evaluate((b64)=>{const a=document.querySelectorAll('input[type=file]')[1];const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));const dt=new DataTransfer();dt.items.add(new File([bytes],'Jordan_Testcase_TEST_RESUME.pdf',{type:'application/pdf'}));a.files=dt.files;a.dispatchEvent(new Event('change',{bubbles:true}));},pdfB64); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_N62ye5mMGe9jORPCceG0MPLl|fc_0dd392239469e17b016aecd35ebc3c87d1a8151c87c3c7d5e8"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905503532
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543111,
+    "ts": "2026-11-05T19:05:03.675124Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const pdfB64=fs.readFileSync('uploads/jordan_testcase_test_resume.pdf').toString('base64'); await page.evaluate((b64)=>{const a=document.querySelectorAll('input[type=file]')[1];const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));const dt=new DataTransfer();dt.items.add(new File([bytes],'Jordan_Testcase_TEST_RESUME.pdf',{type:'application/pdf'}));a.files=dt.files;a.dispatchEvent(new Event('change',{bubbles:true}));},pdfB64); await bu.state();"
+          },
+          "output": "[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n[43] link \"Linear\"\n[46] link \"Back to Linear\u2019s Job Listings\"\n## Senior / Staff Fullstack Engineer\n## Location\nEurope\n## Employment Type\nFull time\n## Location Type\nRemote\n## Department\nProduct\n[66] tab \"Overview\"\n[67] tab \"Application\" selected\n[85] tabpanel \"Application\"\n[164] file \"Choose File\" = \"No file chosen\"\n## Autofill from resume\nUpload your resume here to autofill key fields.\n[154] button \"Upload file\"\n## Contact Details\nName\n[170] textbox \"Name*\" = \"Jordan Testcase\"\nEmail\n[175] textbox \"Email*\" = \"jordan.testcase@example.com\"\nResume\n[187] file \"Resume*\" = \"Jordan_Testcase_TEST_RESUME.pdf\"\nJordan_Testcase_TEST_RESUME.pdf\n*[556] button \"Delete file\"\n[185] button \"Replace\"\nor drag and drop here\nCover letter\nTell us why you want to join our team!\n[197] textbox \"Cover letter*\" = \"This is a test application from a fictional profile used to check form filling. It must not be submi\u2026\"\n## Links\nGithub\nPlease provide your GitHub username. We'll need this info to host final interview rounds.\n[205] textbox \"Github *\" = \"Not provided\"\nLinkedIn\nPlease provide the link to your LinkedIn profile.\n[210] textbox \"LinkedIn\"\nX\nPlease provide the link to your X profile.\n[215] textbox \"X\"\n## Location\nAre you based in a EU or equivalent timezone?\n[224] button \"Yes\"\n[225] button \"No\"\nWhat country are you based in?\n[229] textbox \"What country are you based in?*\" = \"India\"\nNotice Period\nWhat is your expected notice period?\n[233] textbox \"Notice Period*\" = \"30 days\"\n## Tell us more\nWe would like to learn more about your motivations, interests, and strengths. Please answer each question in 500 words or less.\nWhat would you want to work on? Tell us about the features you would want to implement in your first month.\n[248] textbox \"What would you want to work on? Tell us about the features you would want to implement in your first month.*\" = \"In my first month, I\u2019d learn Linear\u2019s product and engineering workflows, then identify a focused ful\u2026\"\nTell us of a time you had to put your PM hat on to solve a complex product problem.\n[253] textbox \"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\" = \"I don\u2019t have a specific complex product story in the details provided. My background includes buildi\u2026\"\nWhat are you extremely good at? What could you teach the team?\n[258] textbox \"What are you extremely good at? What could you teach the team?*\" = \"I\u2019m strong at building and operating Python and TypeScript services, and I\u2019ve owned a CI pipeline. I\u2026\" focused\n[259] textbox \"Has someone at Linear referred you for this role? If so, please include their name here:\"\n[276] button \"Submit Application\"\n[101] link \"Learn more about Ashby\"\nPowered by\n[98] link \"Privacy Policy\"\n[99] link \"Security\"\n[100] link \"Vulnerability Disclosure\"\n*[551] button\n## ERROR\nJordan_Testcase_TEST_RESUME.pdf failed to upload\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_N62ye5mMGe9jORPCceG0MPLl|fc_0dd392239469e17b016aecd35ebc3c87d1a8151c87c3c7d5e8"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905503670
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543113,
+    "ts": "2026-11-05T19:05:03.685595Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905503672
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543114,
+    "ts": "2026-11-05T19:05:03.695229Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905503684
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543116,
+    "ts": "2026-11-05T19:05:03.697236Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 80,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "162554",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543701,
+    "ts": "2026-11-05T19:05:10.962441Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000604",
+      "charge_usd": "0.000725",
+      "is_own_key": false,
+      "input_tokens": 15592,
+      "output_tokens": 662,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 610,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1017,
+      "cached_input_tokens": 14572
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543702,
+    "ts": "2026-11-05T19:05:10.981016Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:['downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_Z0nPhT4R8oyyj7JS4pyzT7jF|fc_0dd392239469e17b016aecd366bb4487d19cb9f714faa4e297"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905510978
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543704,
+    "ts": "2026-11-05T19:05:10.992500Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:['downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state();"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/00c45510-50fb-4505-8054-84f4aaf76c20.txt",
+          "status": "error"
+        },
+        "callID": "call_Z0nPhT4R8oyyj7JS4pyzT7jF|fc_0dd392239469e17b016aecd366bb4487d19cb9f714faa4e297"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905510985
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543706,
+    "ts": "2026-11-05T19:05:11.002945Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905510987
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543707,
+    "ts": "2026-11-05T19:05:11.002909Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 84,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "175186",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543709,
+    "ts": "2026-11-05T19:05:11.011704Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905510993
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543964,
+    "ts": "2026-11-05T19:05:13.659759Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000322",
+      "charge_usd": "0.000386",
+      "is_own_key": false,
+      "input_tokens": 16567,
+      "output_tokens": 88,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 34,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 975,
+      "cached_input_tokens": 15589
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543971,
+    "ts": "2026-11-05T19:05:13.678976Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state(); console.log(await page.evaluate(()=>[...document.querySelectorAll('[role=alert], [data-sonner-toast]')].map(x=>x.innerText)));"
+          },
+          "status": "running"
+        },
+        "callID": "call_lqIStYTk0cJwiYHKLZ8vQZqW|fc_0dd392239469e17b016aecd369722087d1ac0e1844a66a8f85"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905513675
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543986,
+    "ts": "2026-11-05T19:05:13.785428Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state(); console.log(await page.evaluate(()=>[...document.querySelectorAll('[role=alert], [data-sonner-toast]')].map(x=>x.innerText)));"
+          },
+          "output": "[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n[43] link \"Linear\"\n[46] link \"Back to Linear\u2019s Job Listings\"\n## Senior / Staff Fullstack Engineer\n## Location\nEurope\n## Employment Type\nFull time\n## Location Type\nRemote\n## Department\nProduct\n[66] tab \"Overview\"\n[67] tab \"Application\" selected\n[85] tabpanel \"Application\"\n[164] file \"Choose File\" = \"No file chosen\"\n## Autofill from resume\nUpload your resume here to autofill key fields.\n[154] button \"Upload file\"\n## Contact Details\nName\n[170] textbox \"Name*\" = \"Jordan Testcase\"\nEmail\n[175] textbox \"Email*\" = \"jordan.testcase@example.com\"\nResume\n[187] file \"Resume*\" = \"Jordan_Testcase_TEST_RESUME.pdf\"\nJordan_Testcase_TEST_RESUME.pdf\n[556] button \"Delete file\"\n[185] button \"Replace\"\nor drag and drop here\nCover letter\nTell us why you want to join our team!\n[197] textbox \"Cover letter*\" = \"This is a test application from a fictional profile used to check form filling. It must not be submi\u2026\"\n## Links\nGithub\nPlease provide your GitHub username. We'll need this info to host final interview rounds.\n[205] textbox \"Github *\" = \"Not provided\"\nLinkedIn\nPlease provide the link to your LinkedIn profile.\n[210] textbox \"LinkedIn\"\nX\nPlease provide the link to your X profile.\n[215] textbox \"X\"\n## Location\nAre you based in a EU or equivalent timezone?\n[224] button \"Yes\"\n[225] button \"No\"\nWhat country are you based in?\n[229] textbox \"What country are you based in?*\" = \"India\"\nNotice Period\nWhat is your expected notice period?\n[233] textbox \"Notice Period*\" = \"30 days\"\n## Tell us more\nWe would like to learn more about your motivations, interests, and strengths. Please answer each question in 500 words or less.\nWhat would you want to work on? Tell us about the features you would want to implement in your first month.\n[248] textbox \"What would you want to work on? Tell us about the features you would want to implement in your first month.*\" = \"In my first month, I\u2019d learn Linear\u2019s product and engineering workflows, then identify a focused ful\u2026\"\nTell us of a time you had to put your PM hat on to solve a complex product problem.\n[253] textbox \"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\" = \"I don\u2019t have a specific complex product story in the details provided. My background includes buildi\u2026\"\nWhat are you extremely good at? What could you teach the team?\n[258] textbox \"What are you extremely good at? What could you teach the team?*\" = \"I\u2019m strong at building and operating Python and TypeScript services, and I\u2019ve owned a CI pipeline. I\u2026\" focused\n[259] textbox \"Has someone at Linear referred you for this role? If so, please include their name here:\"\n[276] button \"Submit Application\"\n[101] link \"Learn more about Ashby\"\nPowered by\n[98] link \"Privacy Policy\"\n[99] link \"Security\"\n[100] link \"Vulnerability Disclosure\"\n[551] button\n## ERROR\nJordan_Testcase_TEST_RESUME.pdf failed to upload\n[/state]\n[]\n",
+          "status": "completed"
+        },
+        "callID": "call_lqIStYTk0cJwiYHKLZ8vQZqW|fc_0dd392239469e17b016aecd369722087d1ac0e1844a66a8f85"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905513782
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543988,
+    "ts": "2026-11-05T19:05:13.800988Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905513784
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543990,
+    "ts": "2026-11-05T19:05:13.800598Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 87,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "181220",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455543993,
+    "ts": "2026-11-05T19:05:13.812466Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905513791
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455544985,
+    "ts": "2026-11-05T19:05:25.756902Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000774",
+      "charge_usd": "0.000929",
+      "is_own_key": false,
+      "input_tokens": 17430,
+      "output_tokens": 1000,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 954,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 863,
+      "cached_input_tokens": 16564
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455544987,
+    "ts": "2026-11-05T19:05:25.768372Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.cdp('Browser.getVersion',{})); console.log(await page.cdp('Browser.getBrowserCommandLine',{}));"
+          },
+          "status": "running"
+        },
+        "callID": "call_pJLSAIuMreOYcGbtPCDz0w6Q|fc_0dd392239469e17b016aecd375906887d1931bbe301c297436"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905525767
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455544988,
+    "ts": "2026-11-05T19:05:25.779364Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.cdp('Browser.getVersion',{})); console.log(await page.cdp('Browser.getBrowserCommandLine',{}));"
+          },
+          "output": "{\n  protocolVersion: '1.3',\n  product: 'Chrome/154.0.8037.92',\n  revision: '@334b65d254ccc35df4fca82706d1753227b01039',\n  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36',\n  jsVersion: '15.4.80.19'\n}\n{}\n",
+          "status": "completed"
+        },
+        "callID": "call_pJLSAIuMreOYcGbtPCDz0w6Q|fc_0dd392239469e17b016aecd375906887d1931bbe301c297436"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905525776
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455544990,
+    "ts": "2026-11-05T19:05:25.787004Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905525779
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455544993,
+    "ts": "2026-11-05T19:05:25.800112Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905525791
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455544994,
+    "ts": "2026-11-05T19:05:25.803728Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 92,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "200980",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455545569,
+    "ts": "2026-11-05T19:05:33.968016Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000577",
+      "charge_usd": "0.000692",
+      "is_own_key": false,
+      "input_tokens": 18558,
+      "output_tokens": 522,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 482,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1128,
+      "cached_input_tokens": 17427
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455545571,
+    "ts": "2026-11-05T19:05:33.986917Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readFileSync('.uploads-manifest.json','utf8').slice(0,2000));"
+          },
+          "status": "running"
+        },
+        "callID": "call_yENnmYhCtzharNeUegPAPnXB|fc_0dd392239469e17b016aecd37dc8c887d1bb933ef12146402c"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905533986
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455545573,
+    "ts": "2026-11-05T19:05:33.995231Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readFileSync('.uploads-manifest.json','utf8').slice(0,2000));"
+          },
+          "output": "{\"jordan_testcase_test_resume.pdf\":\"\\\"57e7cbad9cf9627382fd41eeb4fe8765\\\"\"}\n",
+          "status": "completed"
+        },
+        "callID": "call_yENnmYhCtzharNeUegPAPnXB|fc_0dd392239469e17b016aecd37dc8c887d1bb933ef12146402c"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905533992
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455545575,
+    "ts": "2026-11-05T19:05:34.002698Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905533994
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455545579,
+    "ts": "2026-11-05T19:05:34.015145Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905534006
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455545582,
+    "ts": "2026-11-05T19:05:34.019885Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 95,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "209934",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455546326,
+    "ts": "2026-11-05T19:05:42.653535Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000555",
+      "charge_usd": "0.000666",
+      "is_own_key": false,
+      "input_tokens": 19120,
+      "output_tokens": 597,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 567,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 562,
+      "cached_input_tokens": 18555
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455546327,
+    "ts": "2026-11-05T19:05:42.672356Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(Object.keys(page)); console.log(await tabs.list());"
+          },
+          "status": "running"
+        },
+        "callID": "call_SDJUhrBz1s60KcIuoBgQynGT|fc_0dd392239469e17b016aecd38673a887d1b9a636006e273655"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905542671
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455546329,
+    "ts": "2026-11-05T19:05:42.685630Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(Object.keys(page)); console.log(await tabs.list());"
+          },
+          "output": "[ 'connection', 'targetId', 'sessionId', 'initialize', 'initializing' ]\n[\n  {\n    targetId: 'F2591A6DF2D30B032B6E07E9FA79E28C',\n    type: 'page',\n    title: 'Senior / Staff Fullstack Engineer @ Linear',\n    url: 'https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application',\n    attached: true,\n    canAccessOpener: false,\n    browserContextId: 'CA2955BE1964BA3E1EE419D21B0728B0'\n  },\n  {\n    targetId: 'F7AD741E1A75E1BE500596180C345A5A',\n    type: 'page',\n    title: 'about:blank',\n    url: 'about:blank',\n    attached: true,\n    canAccessOpener: false,\n    browserContextId: 'CA2955BE1964BA3E1EE419D21B0728B0'\n  }\n]\n",
+          "status": "completed"
+        },
+        "callID": "call_SDJUhrBz1s60KcIuoBgQynGT|fc_0dd392239469e17b016aecd38673a887d1b9a636006e273655"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905542680
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455546330,
+    "ts": "2026-11-05T19:05:42.704611Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 99,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "221535",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455546331,
+    "ts": "2026-11-05T19:05:42.705626Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905542685
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455546332,
+    "ts": "2026-11-05T19:05:42.718414Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905542693
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455546854,
+    "ts": "2026-11-05T19:05:49.935042Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000536",
+      "charge_usd": "0.000643",
+      "is_own_key": false,
+      "input_tokens": 19966,
+      "output_tokens": 478,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 295,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 846,
+      "cached_input_tokens": 19117
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455546856,
+    "ts": "2026-11-05T19:05:49.948726Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('Network.enable',{}); const respP=browser.waitFor('Network.responseReceived',{sessionId:page.sessionId,timeoutMs:15000}); const b64Again=fs.readFileSync('uploads/jordan_testcase_test_resume.pdf').toString('base64'); await page.evaluate(b64=>{const x=document.querySelectorAll('input[type=file]')[1],d=new DataTransfer(),v=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));d.items.add(new File([v],'Jordan_Testcase_TEST_RESUME.pdf',{type:'application/pdf'}));x.files=d.files;x.dispatchEvent(new Event('change',{bubbles:true}));},b64Again); const evt=await respP; console.log(evt); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_H8tnEkeInhVgNAISOLBkUUxi|fc_0dd392239469e17b016aecd38cbd2c87d1a2eeb7e59e560451"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905549946
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455547900,
+    "ts": "2026-11-05T19:06:04.959117Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('Network.enable',{}); const respP=browser.waitFor('Network.responseReceived',{sessionId:page.sessionId,timeoutMs:15000}); const b64Again=fs.readFileSync('uploads/jordan_testcase_test_resume.pdf').toString('base64'); await page.evaluate(b64=>{const x=document.querySelectorAll('input[type=file]')[1],d=new DataTransfer(),v=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));d.items.add(new File([v],'Jordan_Testcase_TEST_RESUME.pdf',{type:'application/pdf'}));x.files=d.files;x.dispatchEvent(new Event('change',{bubbles:true}));},b64Again); const evt=await respP; console.log(evt); await bu.state();"
+          },
+          "output": "Error: CDP event Network.responseReceived exceeded 15000 ms.\n    at Timeout.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:265:51)\n    at listOnTimeout (node:internal/timers:585:17)\n    at process.processTimers (node:internal/timers:521:7)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/83d492d0-86b8-4612-b52a-c8f0f7b4d5d9.txt",
+          "status": "error"
+        },
+        "callID": "call_H8tnEkeInhVgNAISOLBkUUxi|fc_0dd392239469e17b016aecd38cbd2c87d1a2eeb7e59e560451"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905564958
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455547901,
+    "ts": "2026-11-05T19:06:04.967235Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905564960
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455547902,
+    "ts": "2026-11-05T19:06:04.982939Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905564974
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455547906,
+    "ts": "2026-11-05T19:06:04.990572Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 102,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "228269",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548084,
+    "ts": "2026-11-05T19:06:07.298858Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000304",
+      "charge_usd": "0.000365",
+      "is_own_key": false,
+      "input_tokens": 20609,
+      "output_tokens": 48,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 26,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 643,
+      "cached_input_tokens": 19963
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548085,
+    "ts": "2026-11-05T19:06:07.316129Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_aB2vptAeyIZORTgUzy6ff9lB|fc_0dd392239469e17b016aecd39f16f487d1b0f62ade0419fced"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905567316
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548095,
+    "ts": "2026-11-05T19:06:07.420949Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state();"
+          },
+          "output": "[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n[43] link \"Linear\"\n[46] link \"Back to Linear\u2019s Job Listings\"\n## Senior / Staff Fullstack Engineer\n## Location\nEurope\n## Employment Type\nFull time\n## Location Type\nRemote\n## Department\nProduct\n[66] tab \"Overview\"\n[67] tab \"Application\" selected\n[85] tabpanel \"Application\"\n[164] file \"Choose File\" = \"No file chosen\"\n## Autofill from resume\nUpload your resume here to autofill key fields.\n[154] button \"Upload file\"\n## Contact Details\nName\n[170] textbox \"Name*\" = \"Jordan Testcase\"\nEmail\n[175] textbox \"Email*\" = \"jordan.testcase@example.com\"\nResume\n[187] file \"Resume*\" = \"Jordan_Testcase_TEST_RESUME.pdf\"\nJordan_Testcase_TEST_RESUME.pdf\n*[588] button \"Delete file\"\n[185] button \"Replace\"\nor drag and drop here\nCover letter\nTell us why you want to join our team!\n[197] textbox \"Cover letter*\" = \"This is a test application from a fictional profile used to check form filling. It must not be submi\u2026\"\n## Links\nGithub\nPlease provide your GitHub username. We'll need this info to host final interview rounds.\n[205] textbox \"Github *\" = \"Not provided\"\nLinkedIn\nPlease provide the link to your LinkedIn profile.\n[210] textbox \"LinkedIn\"\nX\nPlease provide the link to your X profile.\n[215] textbox \"X\"\n## Location\nAre you based in a EU or equivalent timezone?\n[224] button \"Yes\"\n[225] button \"No\"\nWhat country are you based in?\n[229] textbox \"What country are you based in?*\" = \"India\"\nNotice Period\nWhat is your expected notice period?\n[233] textbox \"Notice Period*\" = \"30 days\"\n## Tell us more\nWe would like to learn more about your motivations, interests, and strengths. Please answer each question in 500 words or less.\nWhat would you want to work on? Tell us about the features you would want to implement in your first month.\n[248] textbox \"What would you want to work on? Tell us about the features you would want to implement in your first month.*\" = \"In my first month, I\u2019d learn Linear\u2019s product and engineering workflows, then identify a focused ful\u2026\"\nTell us of a time you had to put your PM hat on to solve a complex product problem.\n[253] textbox \"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\" = \"I don\u2019t have a specific complex product story in the details provided. My background includes buildi\u2026\"\nWhat are you extremely good at? What could you teach the team?\n[258] textbox \"What are you extremely good at? What could you teach the team?*\" = \"I\u2019m strong at building and operating Python and TypeScript services, and I\u2019ve owned a CI pipeline. I\u2026\" focused\n[259] textbox \"Has someone at Linear referred you for this role? If so, please include their name here:\"\n[276] button \"Submit Application\"\n[101] link \"Learn more about Ashby\"\nPowered by\n[98] link \"Privacy Policy\"\n[99] link \"Security\"\n[100] link \"Vulnerability Disclosure\"\n[551] button\n## ERROR\nJordan_Testcase_TEST_RESUME.pdf failed to upload\n*[583] button\n## ERROR\nJordan_Testcase_TEST_RESUME.pdf failed to upload\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_aB2vptAeyIZORTgUzy6ff9lB|fc_0dd392239469e17b016aecd39f16f487d1b0f62ade0419fced"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905567420
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548096,
+    "ts": "2026-11-05T19:06:07.428846Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905567422
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548101,
+    "ts": "2026-11-05T19:06:07.442802Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905567433
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548102,
+    "ts": "2026-11-05T19:06:07.444100Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 105,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "233658",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548420,
+    "ts": "2026-11-05T19:06:10.867389Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000432",
+      "charge_usd": "0.000518",
+      "is_own_key": false,
+      "input_tokens": 21450,
+      "output_tokens": 242,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 184,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 841,
+      "cached_input_tokens": 20606
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548421,
+    "ts": "2026-11-05T19:06:10.882965Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>performance.getEntriesByType('resource').slice(-20).map(x=>({name:x.name,initiatorType:x.initiatorType,duration:x.duration}))));"
+          },
+          "status": "running"
+        },
+        "callID": "call_dO09soOc0vSDBzGYDSwOfNnk|fc_0dd392239469e17b016aecd3a2a18887d1a7e354e2242677d2"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905570883
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548423,
+    "ts": "2026-11-05T19:06:10.894228Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>performance.getEntriesByType('resource').slice(-20).map(x=>({name:x.name,initiatorType:x.initiatorType,duration:x.duration}))));"
+          },
+          "output": "[\n  {\n    name: 'https://cdn.ashbyprd.com/cdn_assets/6943e559a01efc6bb485afc54d5b87fab2c6b89c/favicon.svg',\n    initiatorType: 'other',\n    duration: 12.299999999995634\n  },\n  {\n    name: 'https://www.recaptcha.net/recaptcha/enterprise.js?render=6LezdY0tAAAAAEnollNLCAI0z1VDGwM7AzGrU4XZ&onload=onLoadReCaptcha',\n    initiatorType: 'script',\n    duration: 0.5\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.39999999999417923\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.40000000000873115\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.5999999999912689\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.39999999999417923\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.5\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.40000000000873115\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.3000000000029104\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.9000000000087311\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.39999999999417923\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.5\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.39999999999417923\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.39999999999417923\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.40000000000873115\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.6000000000058208\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 0.39999999999417923\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiSetFormValue',\n    initiatorType: 'fetch',\n    duration: 1\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiCreateFileUploadHandle',\n    initiatorType: 'fetch',\n    duration: 0.5\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiCreateFileUploadHandle',\n    initiatorType: 'fetch',\n    duration: 0.39999999999417923\n  }\n]\n",
+          "status": "completed"
+        },
+        "callID": "call_dO09soOc0vSDBzGYDSwOfNnk|fc_0dd392239469e17b016aecd3a2a18887d1a7e354e2242677d2"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905570892
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548424,
+    "ts": "2026-11-05T19:06:10.910518Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905570894
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548426,
+    "ts": "2026-11-05T19:06:10.911276Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 108,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "241232",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548427,
+    "ts": "2026-11-05T19:06:10.921106Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905570900
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548708,
+    "ts": "2026-11-05T19:06:14.865025Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000441",
+      "charge_usd": "0.000529",
+      "is_own_key": false,
+      "input_tokens": 22725,
+      "output_tokens": 133,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 54,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1275,
+      "cached_input_tokens": 21447
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548711,
+    "ts": "2026-11-05T19:06:14.880095Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>performance.getEntriesByType('resource').filter(x=>/FileUpload|upload|ashbycdn|s3/.test(x.name)).map(x=>({name:x.name,initiatorType:x.initiatorType,responseStatus:x.responseStatus,duration:x.duration}))));"
+          },
+          "status": "running"
+        },
+        "callID": "call_kpfzd5PzXLehv4Cxr9SLBZbI|fc_0dd392239469e17b016aecd3a6965887d19ff463d67b6520eb"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905574878
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548715,
+    "ts": "2026-11-05T19:06:14.892771Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>performance.getEntriesByType('resource').filter(x=>/FileUpload|upload|ashbycdn|s3/.test(x.name)).map(x=>({name:x.name,initiatorType:x.initiatorType,responseStatus:x.responseStatus,duration:x.duration}))));"
+          },
+          "output": "[\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiCreateFileUploadHandle',\n    initiatorType: 'fetch',\n    responseStatus: 0,\n    duration: 0.5\n  },\n  {\n    name: 'https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiCreateFileUploadHandle',\n    initiatorType: 'fetch',\n    responseStatus: 0,\n    duration: 0.39999999999417923\n  }\n]\n",
+          "status": "completed"
+        },
+        "callID": "call_kpfzd5PzXLehv4Cxr9SLBZbI|fc_0dd392239469e17b016aecd3a6965887d19ff463d67b6520eb"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905574886
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548717,
+    "ts": "2026-11-05T19:06:14.907920Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905574888
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548718,
+    "ts": "2026-11-05T19:06:14.909995Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 111,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "244927",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455548720,
+    "ts": "2026-11-05T19:06:14.918543Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905574899
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549031,
+    "ts": "2026-11-05T19:06:18.654951Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000343",
+      "charge_usd": "0.000412",
+      "is_own_key": false,
+      "input_tokens": 22981,
+      "output_tokens": 167,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 123,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 256,
+      "cached_input_tokens": 22722
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549034,
+    "ts": "2026-11-05T19:06:18.672976Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readFileSync('uploads/jordan_testcase_test_resume.pdf').toString('latin1',0,400));"
+          },
+          "status": "running"
+        },
+        "callID": "call_oJXuVq7yNQcTKJ2USMHI69ZH|fc_0dd392239469e17b016aecd3aa6d2087d19a862d1e0ff1be60"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905578668
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549037,
+    "ts": "2026-11-05T19:06:18.682092Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readFileSync('uploads/jordan_testcase_test_resume.pdf').toString('latin1',0,400));"
+          },
+          "output": "%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n4 0 obj\n<< /Length 424 >>\nstream\nBT\n/F1 12 Tf\n14 TL\n56 780 Td\n(TEST RESUME - FICTIONAL PERSON - DO NOT PROCESS) Tj T*\n(Jordan Testcase) Tj T*\n(jordan.testcase@\n",
+          "status": "completed"
+        },
+        "callID": "call_oJXuVq7yNQcTKJ2USMHI69ZH|fc_0dd392239469e17b016aecd3aa6d2087d19a862d1e0ff1be60"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905578675
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549039,
+    "ts": "2026-11-05T19:06:18.701897Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905578676
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549040,
+    "ts": "2026-11-05T19:06:18.712400Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905578687
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549043,
+    "ts": "2026-11-05T19:06:18.708225Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 114,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "249420",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549596,
+    "ts": "2026-11-05T19:06:26.184026Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.000667",
+      "charge_usd": "0.000800",
+      "is_own_key": false,
+      "input_tokens": 23328,
+      "output_tokens": 787,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 515,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 347,
+      "cached_input_tokens": 22978
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549600,
+    "ts": "2026-11-05T19:06:26.201818Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.evaluate(()=>{window.__uploadDebug=[];const f=window.fetch.bind(window);window.fetch=async(...a)=>{const r=await f(...a);if(String(a[0]).includes('FileUpload')){let t='';try{t=await r.clone().text()}catch{}window.__uploadDebug.push({url:String(a[0]),status:r.status,ok:r.ok,body:t.slice(0,2000)})}return r}}); const b64T=fs.readFileSync('uploads/jordan_testcase_test_resume.pdf').toString('base64'); await page.evaluate(b64=>{const x=document.querySelectorAll('input[type=file]')[1],d=new DataTransfer(),v=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));d.items.add(new File([v],'Jordan_Testcase_TEST_RESUME.pdf',{type:'application/pdf'}));x.files=d.files;x.dispatchEvent(new Event('change',{bubbles:true}));},b64T); await page.waitFor(()=>document.body.innerText.includes('failed to upload'),{timeoutMs:10000}).catch(()=>{}); console.log(await page.evaluate(()=>window.__uploadDebug)); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_UMZuGdJSKohQ6WlPMVVMpNKJ|fc_0dd392239469e17b016aecd3b0a05087d1a70103e79e4dbd06"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905586197
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549619,
+    "ts": "2026-11-05T19:06:26.346828Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.evaluate(()=>{window.__uploadDebug=[];const f=window.fetch.bind(window);window.fetch=async(...a)=>{const r=await f(...a);if(String(a[0]).includes('FileUpload')){let t='';try{t=await r.clone().text()}catch{}window.__uploadDebug.push({url:String(a[0]),status:r.status,ok:r.ok,body:t.slice(0,2000)})}return r}}); const b64T=fs.readFileSync('uploads/jordan_testcase_test_resume.pdf').toString('base64'); await page.evaluate(b64=>{const x=document.querySelectorAll('input[type=file]')[1],d=new DataTransfer(),v=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));d.items.add(new File([v],'Jordan_Testcase_TEST_RESUME.pdf',{type:'application/pdf'}));x.files=d.files;x.dispatchEvent(new Event('change',{bubbles:true}));},b64T); await page.waitFor(()=>document.body.innerText.includes('failed to upload'),{timeoutMs:10000}).catch(()=>{}); console.log(await page.evaluate(()=>window.__uploadDebug)); await bu.state();"
+          },
+          "output": "[]\n[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n[43] link \"Linear\"\n[46] link \"Back to Linear\u2019s Job Listings\"\n## Senior / Staff Fullstack Engineer\n## Location\nEurope\n## Employment Type\nFull time\n## Location Type\nRemote\n## Department\nProduct\n[66] tab \"Overview\"\n[67] tab \"Application\" selected\n[85] tabpanel \"Application\"\n[164] file \"Choose File\" = \"No file chosen\"\n## Autofill from resume\nUpload your resume here to autofill key fields.\n[154] button \"Upload file\"\n## Contact Details\nName\n[170] textbox \"Name*\" = \"Jordan Testcase\"\nEmail\n[175] textbox \"Email*\" = \"jordan.testcase@example.com\"\nResume\n[187] file \"Resume*\" = \"Jordan_Testcase_TEST_RESUME.pdf\"\nJordan_Testcase_TEST_RESUME.pdf\n*[617] button \"Delete file\"\n[185] button \"Replace\"\nor drag and drop here\nCover letter\nTell us why you want to join our team!\n[197] textbox \"Cover letter*\" = \"This is a test application from a fictional profile used to check form filling. It must not be submi\u2026\"\n## Links\nGithub\nPlease provide your GitHub username. We'll need this info to host final interview rounds.\n[205] textbox \"Github *\" = \"Not provided\"\nLinkedIn\nPlease provide the link to your LinkedIn profile.\n[210] textbox \"LinkedIn\"\nX\nPlease provide the link to your X profile.\n[215] textbox \"X\"\n## Location\nAre you based in a EU or equivalent timezone?\n[224] button \"Yes\"\n[225] button \"No\"\nWhat country are you based in?\n[229] textbox \"What country are you based in?*\" = \"India\"\nNotice Period\nWhat is your expected notice period?\n[233] textbox \"Notice Period*\" = \"30 days\"\n## Tell us more\nWe would like to learn more about your motivations, interests, and strengths. Please answer each question in 500 words or less.\nWhat would you want to work on? Tell us about the features you would want to implement in your first month.\n[248] textbox \"What would you want to work on? Tell us about the features you would want to implement in your first month.*\" = \"In my first month, I\u2019d learn Linear\u2019s product and engineering workflows, then identify a focused ful\u2026\"\nTell us of a time you had to put your PM hat on to solve a complex product problem.\n[253] textbox \"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\" = \"I don\u2019t have a specific complex product story in the details provided. My background includes buildi\u2026\"\nWhat are you extremely good at? What could you teach the team?\n[258] textbox \"What are you extremely good at? What could you teach the team?*\" = \"I\u2019m strong at building and operating Python and TypeScript services, and I\u2019ve owned a CI pipeline. I\u2026\" focused\n[259] textbox \"Has someone at Linear referred you for this role? If so, please include their name here:\"\n[276] button \"Submit Application\"\n[101] link \"Learn more about Ashby\"\nPowered by\n[98] link \"Privacy Policy\"\n[99] link \"Security\"\n[100] link \"Vulnerability Disclosure\"\n[551] button\n## ERROR\nJordan_Testcase_TEST_RESUME.pdf failed to upload\n[583] button\n## ERROR\nJordan_Testcase_TEST_RESUME.pdf failed to upload\n*[612] button\n## ERROR\nJordan_Testcase_TEST_RESUME.pdf failed to upload\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_UMZuGdJSKohQ6WlPMVVMpNKJ|fc_0dd392239469e17b016aecd3b0a05087d1a70103e79e4dbd06"
+      },
+      "type": "tool_use",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905586341
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549620,
+    "ts": "2026-11-05T19:06:26.354181Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905586344
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549621,
+    "ts": "2026-11-05T19:06:26.368766Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905586355
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455549622,
+    "ts": "2026-11-05T19:06:26.371218Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-fast",
+      "tools": 5,
+      "stream": true,
+      "messages": 117,
+      "has_system": true,
+      "system_len": 9709,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "262291",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455550482,
+    "ts": "2026-11-05T19:06:38.098858Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-fast",
+      "cost_usd": "0.001098",
+      "charge_usd": "0.001318",
+      "is_own_key": false,
+      "input_tokens": 24928,
+      "output_tokens": 1328,
+      "requested_model": "bu-fast",
+      "reasoning_tokens": 790,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1600,
+      "cached_input_tokens": 23325
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455550483,
+    "ts": "2026-11-05T19:06:38.125450Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905598119
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455550484,
+    "ts": "2026-11-05T19:06:38.164719Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "text": "{\"fields\":[{\"label\":\"Autofill from resume \u2014 Choose File\",\"value\":\"No file chosen (left unused; the separate Resume field was used for the requested CV upload)\",\"status\":\"skipped\"},{\"label\":\"Name*\",\"value\":\"Jordan Testcase\",\"status\":\"filled\"},{\"label\":\"Email*\",\"value\":\"jordan.testcase@example.com\",\"status\":\"filled\"},{\"label\":\"Resume*\",\"value\":\"Jordan_Testcase_TEST_RESUME.pdf \u2014 upload attempted, but the page displayed \u201cfailed to upload\u201d\",\"status\":\"failed\"},{\"label\":\"Cover letter*\",\"value\":\"This is a test application from a fictional profile used to check form filling. It must not be submitted.\",\"status\":\"filled\"},{\"label\":\"Github *\",\"value\":\"Not provided (no GitHub username was included in the supplied details)\",\"status\":\"filled\"},{\"label\":\"LinkedIn\",\"value\":\"Left blank; no LinkedIn URL was supplied\",\"status\":\"skipped\"},{\"label\":\"X\",\"value\":\"Left blank; no X URL was supplied\",\"status\":\"skipped\"},{\"label\":\"Are you based in a EU or equivalent timezone?\",\"value\":\"No\",\"status\":\"filled\"},{\"label\":\"What country are you based in?*\",\"value\":\"India\",\"status\":\"filled\"},{\"label\":\"Notice Period*\",\"value\":\"30 days\",\"status\":\"filled\"},{\"label\":\"What would you want to work on? Tell us about the features you would want to implement in your first month.*\",\"value\":\"In my first month, I\u2019d learn Linear\u2019s product and engineering workflows, then identify a focused full-stack improvement that helps teams work more effectively. I\u2019d bring my experience building Python and TypeScript services and owning CI for an internal analytics product.\",\"status\":\"filled\"},{\"label\":\"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\",\"value\":\"I don\u2019t have a specific complex product story in the details provided. My background includes building and running services for an internal analytics product at Example Labs and maintaining a Django app and test suite at Sample Systems.\",\"status\":\"filled\"},{\"label\":\"What are you extremely good at? What could you teach the team?*\",\"value\":\"I\u2019m strong at building and operating Python and TypeScript services, and I\u2019ve owned a CI pipeline. I could share practical approaches to reliable services, maintainable tests, and CI.\",\"status\":\"filled\"},{\"label\":\"Has someone at Linear referred you for this role? If so, please include their name here:\",\"value\":\"Left blank; no referral name was supplied\",\"status\":\"skipped\"}],\"blocked\":\"\",\"submit_button_seen\":true}",
+        "time": {
+          "end": 1793905598160
+        },
+        "type": "text"
+      },
+      "type": "text",
+      "sessionID": "f98e435b-4484-4a8f-8a1f-676edfb9ef0b",
+      "timestamp": 1793905598160
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455550519,
+    "ts": "2026-11-05T19:06:38.542509Z",
+    "type": "outputs.promoted",
+    "data": {
+      "failed": false,
+      "skipped": 0,
+      "promoted": 2,
+      "rejected": 0,
+      "upload_errors": 0
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455550520,
+    "ts": "2026-11-05T19:06:38.554489Z",
+    "type": "state.promoted",
+    "data": {
+      "failed": false,
+      "harness": "bu-fast",
+      "promoted": 1
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455550523,
+    "ts": "2026-11-05T19:06:38.620099Z",
+    "type": "run.completed",
+    "data": {
+      "context": {
+        "chars": 103679,
+        "tokens": 26260,
+        "maxChars": 1000000,
+        "maxTokens": 212500,
+        "compactionFailures": 0
+      }
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455550527,
+    "ts": "2026-11-05T19:06:38.651804Z",
+    "type": "browser.released",
+    "data": {
+      "status": "kept_alive",
+      "timeout_at": "2026-11-05T23:03:15.468512+00:00",
+      "browser_session_id": "fe206221-1297-40c0-92eb-9f5ca3c21d20"
+    }
+  },
+  {
+    "run_id": "9f8cd8be-901d-4a7a-9e9e-b672ca9d088a",
+    "id": 455550529,
+    "ts": "2026-11-05T19:06:38.661017Z",
+    "type": "worker.session_released",
+    "data": {}
+  }
+]

@@ -1,0 +1,54 @@
+{
+  "arm": "B",
+  "model": "claude-sonnet-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 1,
+  "score": {
+    "success": true,
+    "fields_total": 14,
+    "required_total": 10,
+    "required_filled": 10,
+    "mapped_correct": 4,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": true,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application",
+  "seconds": 38.1,
+  "failure": null,
+  "errors": [],
+  "steps": 10,
+  "claude_calls": 1,
+  "usage": [
+    {
+      "input_tokens": 2129,
+      "output_tokens": 637,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.010628,
+      "seconds": 4.7,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.010628,
+  "browser_use_usd": 0.000333,
+  "browser_cost": {
+    "browser": 0.0003333333333333333,
+    "proxy": 0.0,
+    "proxy_mb": 0.0
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "version": "v2",
+  "label": "ab-linear",
+  "ats": "ashby",
+  "company": "Linear",
+  "run_dir": "runs\\20261105T183648-B-ab-linear",
+  "wall_seconds": 43.3,
+  "bu_spent_before": 0.080837,
+  "bu_spent_after": 0.081827,
+  "bu_balance_delta": 0.000991,
+  "bu_cost_counted": 0.000991
+}

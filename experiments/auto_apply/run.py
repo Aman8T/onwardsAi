@@ -38,8 +38,15 @@ def jobs() -> dict[str, dict[str, Any]]:
 
 
 def bu_spent() -> float:
-    credit = bu.credit_usd(bu.balance())
-    return CREDIT_START_USD - credit if credit is not None else spend.load()["browser_use_usd"]
+    """Spend from the real balance; retried, and never lower than the ledger (a failed read is not a free pass)."""
+    for attempt in range(4):
+        try:
+            credit = bu.credit_usd(bu.balance())
+            if credit is not None:
+                return max(CREDIT_START_USD - credit, 0.0)
+        except Exception:
+            time.sleep(3 * (attempt + 1))
+    return spend.load()["browser_use_usd"] + 0.05  # pessimistic when the balance cannot be read
 
 
 def preflight(arm: str, max_cost: float | None) -> float:

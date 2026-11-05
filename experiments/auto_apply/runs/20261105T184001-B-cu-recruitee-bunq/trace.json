@@ -1,0 +1,107 @@
+[
+  {
+    "op": "click",
+    "text": "Apply now",
+    "outcome": "clicked"
+  },
+  {
+    "op": "fill",
+    "label": "Website",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"job-application-honeypot-r2q\"]",
+    "name": "website",
+    "value": "https://example.com/jordan-testcase",
+    "source": "website"
+  },
+  {
+    "op": "fill",
+    "label": "What is your full name? *",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"input-name-r2r\"]",
+    "name": "name",
+    "value": "Jordan Testcase",
+    "source": "full_name"
+  },
+  {
+    "op": "fill",
+    "label": "What is your email? *",
+    "type": "email",
+    "frame": 0,
+    "selector": "[id=\"input-email-r2t\"]",
+    "name": "email",
+    "value": "jordan.testcase@example.com",
+    "source": "email"
+  },
+  {
+    "op": "fill",
+    "label": "What is your phone number? *",
+    "type": "tel",
+    "frame": 0,
+    "selector": "[id=\"input-phone-r2v\"]",
+    "name": null,
+    "value": "+1 555 010 0142",
+    "source": "phone"
+  },
+  {
+    "op": "fill",
+    "label": "What country do you currently live in? *",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"input-q_4413534-r31\"]",
+    "name": "q_4413534",
+    "value": "India",
+    "source": "country"
+  },
+  {
+    "op": "fill",
+    "label": "What are your salary expectations? (gross, annual, in EUR) *",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"input-q_4413541-r3c\"]",
+    "name": "q_4413541",
+    "value": "Negotiable",
+    "source": "salary_expectation"
+  },
+  {
+    "op": "check",
+    "label": "Have you previously worked at bunq?* (required)",
+    "type": "radio",
+    "frame": 0,
+    "selector": "[id=\"input-radio-group-true-0\"]",
+    "name": "q_4413543",
+    "value": "No",
+    "source": "no prior bunq employment in details"
+  },
+  {
+    "op": "check",
+    "label": "Can you read Objective-C implementations and translate them into Swift using modern best practices?* (required)",
+    "type": "radio",
+    "frame": 0,
+    "selector": "[id=\"input-radio-group-true-0\"]",
+    "name": "q_4413554",
+    "value": "Yes",
+    "source": "screening answer, iOS developer experience"
+  },
+  {
+    "op": "check",
+    "label": "Can you assess legacy UI components and reconstruct them following modern SwiftUI development standards?* (required)",
+    "type": "radio",
+    "frame": 0,
+    "selector": "[id=\"input-radio-group-true-0\"]",
+    "name": "q_4413556",
+    "value": "Yes",
+    "source": "screening answer, iOS developer experience"
+  },
+  {
+    "op": "check",
+    "label": "I have read and accept the",
+    "type": "checkbox",
+    "frame": 0,
+    "selector": "[id=\"job-application-privacy-r2q\"]",
+    "name": "privacy",
+    "value": "checked",
+    "source": "required consent"
+  }
+]

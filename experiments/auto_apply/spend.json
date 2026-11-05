@@ -1,6 +1,6 @@
 {
-  "browser_use_usd": 0.070545,
-  "anthropic_usd": 0.150774,
+  "browser_use_usd": 0.322626,
+  "anthropic_usd": 0.279104,
   "caps": {
     "browser_use_stop_usd": 0.8,
     "anthropic_cap_usd": 2.0
@@ -223,6 +223,240 @@
       "label": "ab-linear",
       "browser_use_usd": 0.0003333333333333333,
       "anthropic_usd": 0
+    },
+    {
+      "at": "2026-11-05T18:32:06+00:00",
+      "kind": "arm_B",
+      "label": "gh-gitlab",
+      "run_dir": "runs\\20261105T183022-B-gh-gitlab",
+      "browser_use_usd": 0.000672,
+      "anthropic_usd": 0.010478,
+      "bu_spent_real_balance": 0.078116
+    },
+    {
+      "at": "2026-11-05T18:33:39+00:00",
+      "kind": "arm_B",
+      "label": "gh-cloudflare",
+      "run_dir": "runs\\20261105T183207-B-gh-cloudflare",
+      "browser_use_usd": 0.00152,
+      "anthropic_usd": 0.015454,
+      "bu_spent_real_balance": 0.079636
+    },
+    {
+      "at": "2026-11-05T18:34:44+00:00",
+      "kind": "arm_B",
+      "label": "lv-spotify",
+      "run_dir": "runs\\20261105T183340-B-lv-spotify",
+      "browser_use_usd": 0.000413,
+      "anthropic_usd": 0.015736,
+      "bu_spent_real_balance": 0.080049
+    },
+    {
+      "at": "2026-11-05T18:36:47+00:00",
+      "kind": "arm_B",
+      "label": "lv-palantir",
+      "run_dir": "runs\\20261105T183445-B-lv-palantir",
+      "browser_use_usd": 0.000788,
+      "anthropic_usd": 0.04143,
+      "bu_spent_real_balance": 0.080837
+    },
+    {
+      "at": "2026-11-05T18:37:31+00:00",
+      "kind": "arm_B",
+      "label": "ab-linear",
+      "run_dir": "runs\\20261105T183648-B-ab-linear",
+      "browser_use_usd": 0.000991,
+      "anthropic_usd": 0.010628,
+      "bu_spent_real_balance": 0.081827
+    },
+    {
+      "at": "2026-11-05T18:38:12+00:00",
+      "kind": "arm_B",
+      "label": "ab-ramp",
+      "run_dir": "runs\\20261105T183732-B-ab-ramp",
+      "browser_use_usd": 0.000339,
+      "anthropic_usd": 0.008704,
+      "bu_spent_real_balance": 0.082166
+    },
+    {
+      "at": "2026-11-05T18:39:59+00:00",
+      "kind": "arm_B",
+      "label": "cu-workable-huggingface",
+      "run_dir": "runs\\20261105T183814-B-cu-workable-huggingface",
+      "browser_use_usd": 0.0015,
+      "anthropic_usd": 0.014256,
+      "bu_spent_real_balance": 0.083666
+    },
+    {
+      "at": "2026-11-05T18:41:17+00:00",
+      "kind": "arm_B",
+      "label": "cu-recruitee-bunq",
+      "run_dir": "runs\\20261105T184001-B-cu-recruitee-bunq",
+      "browser_use_usd": 0.000668,
+      "anthropic_usd": 0.011644,
+      "bu_spent_real_balance": 0.084335
+    },
+    {
+      "at": "2026-11-05T18:42:13+00:00",
+      "kind": "arm_A",
+      "label": "ab-linear",
+      "run_dir": "runs\\20261105T184120-A-ab-linear",
+      "browser_use_usd": 0.006995,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.09133
+    },
+    {
+      "at": "2026-11-05T18:42:57+00:00",
+      "kind": "arm_A",
+      "label": "ab-ramp",
+      "run_dir": "runs\\20261105T184214-A-ab-ramp",
+      "browser_use_usd": 0.004572,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.095902
+    },
+    {
+      "at": "2026-11-05T18:49:17+00:00",
+      "kind": "arm_A",
+      "label": "gh-gitlab",
+      "run_dir": "runs\\20261105T184300-A-gh-gitlab",
+      "browser_use_usd": 0.057538,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.153449
+    },
+    {
+      "at": "2026-11-05T18:53:17+00:00",
+      "kind": "arm_A",
+      "label": "gh-cloudflare",
+      "run_dir": "runs\\20261105T184919-A-gh-cloudflare",
+      "browser_use_usd": 0.03124,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.184689
+    },
+    {
+      "at": "2026-11-05T18:57:35+00:00",
+      "kind": "arm_A",
+      "label": "lv-spotify",
+      "run_dir": "runs\\20261105T185319-A-lv-spotify",
+      "browser_use_usd": 0.033993,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.218682
+    },
+    {
+      "at": "2026-11-05T19:00:16+00:00",
+      "kind": "arm_A",
+      "label": "lv-palantir",
+      "run_dir": "runs\\20261105T185736-A-lv-palantir",
+      "browser_use_usd": 0.018793,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.237475
+    },
+    {
+      "at": "2026-11-05T19:07:08+00:00",
+      "kind": "arm_A",
+      "label": "ab-linear",
+      "run_dir": "runs\\20261105T190311-A-ab-linear",
+      "browser_use_usd": 0.018026,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.266509
+    },
+    {
+      "at": "2026-11-05T19:09:05+00:00",
+      "kind": "arm_A",
+      "label": "ab-linear",
+      "run_dir": "runs\\20261105T190017-A-ab-linear",
+      "browser_use_usd": 0.010223,
+      "anthropic_usd": 0,
+      "note": "crashed harness, cost from session"
+    },
+    {
+      "at": "2026-11-05T19:12:35+00:00",
+      "kind": "arm_A",
+      "label": "ab-ramp",
+      "run_dir": "runs\\20261105T190908-A-ab-ramp",
+      "browser_use_usd": 0.019111,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.28562
+    },
+    {
+      "at": "2026-11-05T19:16:56+00:00",
+      "kind": "arm_A",
+      "label": "cu-workable-huggingface",
+      "run_dir": "runs\\20261105T191236-A-cu-workable-huggingface",
+      "browser_use_usd": 0.029313,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.314933
+    },
+    {
+      "at": "2026-11-05T19:19:03+00:00",
+      "kind": "arm_A",
+      "label": "cu-recruitee-bunq",
+      "run_dir": "runs\\20261105T191658-A-cu-recruitee-bunq",
+      "browser_use_usd": 0.011435,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.326372
+    },
+    {
+      "at": "2026-11-05T19:22:29+00:00",
+      "kind": "arm_C",
+      "label": "gh-gitlab",
+      "run_dir": "runs\\20261105T191945-C-gh-gitlab",
+      "browser_use_usd": 0.001124,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.327496
+    },
+    {
+      "at": "2026-11-05T19:23:58+00:00",
+      "kind": "arm_C",
+      "label": "gh-cloudflare",
+      "run_dir": "runs\\20261105T192231-C-gh-cloudflare",
+      "browser_use_usd": 0.00075,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.328247
+    },
+    {
+      "at": "2026-11-05T19:24:56+00:00",
+      "kind": "arm_C",
+      "label": "lv-spotify",
+      "run_dir": "runs\\20261105T192359-C-lv-spotify",
+      "browser_use_usd": 0.000473,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.32872
+    },
+    {
+      "at": "2026-11-05T19:25:37+00:00",
+      "kind": "arm_C",
+      "label": "ab-linear",
+      "run_dir": "runs\\20261105T192457-C-ab-linear",
+      "browser_use_usd": 0.000366,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.329086
+    },
+    {
+      "at": "2026-11-05T19:26:14+00:00",
+      "kind": "arm_C",
+      "label": "ab-ramp",
+      "run_dir": "runs\\20261105T192538-C-ab-ramp",
+      "browser_use_usd": 0.000727,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.33007
+    },
+    {
+      "at": "2026-11-05T19:26:20+00:00",
+      "kind": "arm_C",
+      "label": "cu-recruitee-bunq",
+      "run_dir": "runs\\20261105T192615-C-cu-recruitee-bunq",
+      "browser_use_usd": 0.0,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.33007
+    },
+    {
+      "at": "2026-11-05T19:27:45+00:00",
+      "kind": "arm_C",
+      "label": "cu-recruitee-bunq",
+      "run_dir": "runs\\20261105T192639-C-cu-recruitee-bunq",
+      "browser_use_usd": 0.000511,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.33059
     }
   ]
 }

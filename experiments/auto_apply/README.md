@@ -27,6 +27,7 @@ uv run python run.py a gh-gitlab              # one Arm A run (--model bu-fast, 
 uv run python run.py c gh-gitlab              # replay the newest Arm B trace for that job
 uv run python run.py batch b gh-gitlab,lv-palantir
 uv run python run.py report                   # markdown table of every run
+uv run python summarize.py                    # per-setup tables in USD and INR (the RESULTS.md numbers)
 ```
 
 Test postings are in `jobs.json` (labels like `gh-gitlab`, `lv-palantir`, `ab-linear`, `cu-workable-huggingface`).

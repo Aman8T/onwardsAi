@@ -1,0 +1,216 @@
+{
+  "arm": "A",
+  "model": "bu-fast",
+  "run_id": "0e3d00b3-761c-49ce-b572-c29ea1e1e93c",
+  "session_id": "65ab5305-df40-4c2e-996f-92232f6a7836",
+  "agent_seconds": 207.8,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "core.event": 203,
+    "llm.request": 51,
+    "llm.response": 51,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "",
+    "fields": [
+      {
+        "label": "First Name*",
+        "status": "filled",
+        "value": "Jordan"
+      },
+      {
+        "label": "Last Name*",
+        "status": "filled",
+        "value": "Testcase"
+      },
+      {
+        "label": "Email*",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Country* (phone calling code selector)",
+        "status": "filled",
+        "value": "United States (+1), matching the supplied +1 phone number"
+      },
+      {
+        "label": "Phone*",
+        "status": "filled",
+        "value": "+1 (555) 010-0142"
+      },
+      {
+        "label": "Location (City)*",
+        "status": "filled",
+        "value": "Pune, Maharashtra, India"
+      },
+      {
+        "label": "Resume/CV attachment",
+        "status": "failed",
+        "value": "Not uploaded. Attempted to select Jordan_Testcase_TEST_RESUME.pdf from the workspace downloads directory, but the browser returned \u201cFiles must exist in the downloads directory.\u201d"
+      },
+      {
+        "label": "Cover letter attachment",
+        "status": "skipped",
+        "value": "Skipped; entered the cover letter in the manual text field instead."
+      },
+      {
+        "label": "Cover letter (manual text)",
+        "status": "filled",
+        "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted."
+      },
+      {
+        "label": "Legal Name (if different than above)",
+        "status": "skipped",
+        "value": "Left blank; applicant name is not different from the name entered above."
+      },
+      {
+        "label": "Would you like to include your LinkedIn profile, personal website or blog?",
+        "status": "filled",
+        "value": "https://example.com/jordan-testcase"
+      },
+      {
+        "label": "How did you hear about this job?*",
+        "status": "filled",
+        "value": "Company careers page"
+      },
+      {
+        "label": "Do you currently live or are you willing to relocate to the job\u2019s location?*",
+        "status": "filled",
+        "value": "I do not live and not willing to relocate to this job's location."
+      },
+      {
+        "label": "Do you now or will you in the future require immigration sponsorship to work at Cloudflare?*",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "Please review and acknowledge Cloudflare's Candidate Privacy Policy (required checkbox)",
+        "status": "filled",
+        "value": "Checked (Acknowledge/Confirm)"
+      },
+      {
+        "label": "Gender",
+        "status": "filled",
+        "value": "Decline To Self Identify"
+      },
+      {
+        "label": "Are you Hispanic/Latino?",
+        "status": "filled",
+        "value": "Decline To Self Identify"
+      },
+      {
+        "label": "Veteran Status",
+        "status": "filled",
+        "value": "I don't wish to answer"
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 1200982,
+    "output": 16608
+  },
+  "run_cost_usd": 0.029627,
+  "browser_id": "5843a2ca-e4b2-43f1-85c2-d7ea19f49613",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 18,
+    "required_total": 11,
+    "required_filled": 10,
+    "mapped_correct": 6,
+    "wrong": [],
+    "missed_required": [
+      "Resume/CV*"
+    ],
+    "resume_attached": false,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://job-boards.greenhouse.io/cloudflare/jobs/8300518",
+  "session_cost": {
+    "llm_cost_usd": 0.029627,
+    "browser_cost_usd": 0.001333,
+    "proxy_cost_usd": 9.3e-05,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.031053
+  },
+  "browser_use_usd": 0.031053,
+  "seconds": 233.7,
+  "anthropic_usd": 0.0,
+  "steps": 51,
+  "llm_requests": 51,
+  "agent_trace": [
+    "const p = await tabs.open('https://job-boards.greenhouse.io/cloudflare/jobs/8300518'); await bu.state();",
+    "console.log(await p.info()); await bu.state();",
+    "console.log(await p.snapshot());",
+    "console.log(await p.evaluate(()=>({inputs:[...document.querySelectorAll('input,textarea,select,button')].map((e,i)=>({tag:e.tagName,type:e.type,name:e.name,id:e.id,placeholder:e.placeholder,required:e",
+    "console.log(await p.evaluate(()=>[...document.querySelectorAll('form label')].map(l=>({text:l.innerText,for:l.htmlFor,outer:l.outerHTML.slice(0,400), parent:l.parentElement?.innerText?.slice(0,500)}))",
+    "const s=await p.snapshot(); console.log(s.nodes.filter(n=>['textbox','combobox','checkbox','button','option','radio'].includes(n.role)||/Country|Location|sponsorship|relocate|Gender|Veteran|Hispanic|N",
+    "async function fillCss(sel,text){let d=await p.cdp('DOM.getDocument',{depth:-1,pierce:true});let {nodeId}=await p.cdp('DOM.querySelector',{nodeId:d.root.nodeId,selector:sel});let {node}=await p.cdp('D",
+    "console.log(await p.evaluate(()=>['country','candidate-location','question_70006082','question_70006083','gender','hispanic_ethnicity','veteran_status'].map(id=>{let e=document.getElementById(id); ret",
+    "await fillCss('#candidate-location','Pune'); console.log((await p.snapshot()).nodes.filter(n=>n.role==='option'||n.role==='listbox'||n.name.includes('Pune')).slice(-30)); console.log(await p.evaluate(",
+    "await bu.click(2233); console.log('location',await p.evaluate(()=>({value:document.querySelector('#candidate-location').value,text:document.querySelector('#candidate-location').parentElement.parentEle",
+    "console.log(await p.evaluate(()=>({location:document.querySelector('#candidate-location')?.value,menus:[...document.querySelectorAll('[role=option]')].slice(0,2).map(x=>x.outerHTML)}))); console.log((",
+    "await fillCss('#candidate-location','Pune'); console.log(await p.evaluate(()=>[...document.querySelectorAll('#candidate-location ~ *')].map(x=>x.outerHTML.slice(0,100)))); console.log(await p.evaluate",
+    "async function clickSelector(sel){const d=await p.cdp('DOM.getDocument',{depth:-1,pierce:true});const {nodeId}=await p.cdp('DOM.querySelector',{nodeId:d.root.nodeId,selector:sel});const {node}=await p",
+    "await fillCss('#country','India'); console.log(await p.evaluate(()=>[...document.querySelectorAll('[role=option]')].map(x=>({id:x.id,text:x.innerText})).filter(x=>x.text.includes('India'))));",
+    "await clickSelector('#react-select-country-option-101'); console.log(await p.evaluate(()=>({prefix:document.querySelector('#country').parentElement.parentElement.innerText,phone:document.querySelector",
+    "await fillCss('#country','United States'); console.log(await p.evaluate(()=>[...document.querySelectorAll('[role=option]')].map(x=>({id:x.id,text:x.innerText})).filter(x=>x.text.includes('United State",
+    "await clickSelector('#react-select-country-option-0'); await fillCss('#phone','5550100142'); console.log(await p.evaluate(()=>({prefix:document.querySelector('#country').parentElement.parentElement.in",
+    "async function replaceCss(sel,text){let d=await p.cdp('DOM.getDocument',{depth:-1,pierce:true});let {nodeId}=await p.cdp('DOM.querySelector',{nodeId:d.root.nodeId,selector:sel});let {node}=await p.cdp",
+    "let d=await p.cdp('DOM.getDocument',{depth:-1,pierce:true}); let {nodeId}=await p.cdp('DOM.querySelector',{nodeId:d.root.nodeId,selector:'#phone'}); let {node}=await p.cdp('DOM.describeNode',{nodeId})",
+    "await p.cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Control',code:'ControlLeft',windowsVirtualKeyCode:17}); await p.cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'a',code:'KeyA',windowsVirtua",
+    "for(let i=0;i<60;i++){await p.cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Backspace',code:'Backspace',windowsVirtualKeyCode:8}); await p.cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Backspace",
+    "await p.cdp('Input.insertText',{text:'5550100142'}); console.log(await p.evaluate(()=>({phone:document.querySelector('#phone').value,prefix:document.querySelector('#country').parentElement.parentEleme",
+    "async function optsFor(id,query=''){await fillCss('#'+id,query); return await p.evaluate(()=>[...document.querySelectorAll('[role=option]')].map(x=>({id:x.id,text:x.innerText})).filter(x=>x.id.include",
+    "await clickSelector('#react-select-question_70006082-option-2'); await fillCss('#question_70006083',''); console.log(await p.evaluate(()=>[...document.querySelectorAll('[role=option]')].map(x=>({id:x.",
+    "await clickSelector('#react-select-question_70006083-option-1'); await fillCss('#gender',''); console.log(await p.evaluate(()=>[...document.querySelectorAll('[role=option]')].map(x=>({id:x.id,text:x.i",
+    "await clickSelector('#react-select-gender-option-2'); await fillCss('#hispanic_ethnicity',''); console.log(await p.evaluate(()=>[...document.querySelectorAll('[role=option]')].map(x=>({id:x.id,text:x.",
+    "await clickSelector('#react-select-hispanic_ethnicity-option-2'); await fillCss('#veteran_status',''); console.log(await p.evaluate(()=>[...document.querySelectorAll('[role=option]')].map(x=>({id:x.id",
+    "await clickSelector('#react-select-veteran_status-option-2'); console.log(await p.evaluate(()=>({check:[...document.querySelectorAll('input[type=checkbox]')].map(x=>({id:x.id,checked:x.checked,label:x",
+    "console.log(await p.evaluate(()=>[...document.querySelectorAll('button')].map((b,i)=>({i,text:b.innerText,aria:b.getAttribute('aria-label'),disabled:b.disabled,html:b.outerHTML.slice(0,350)})).filter(",
+    "await clickSelector('label[for=\"question_70006084[]_757098101\"]'); console.log(await p.evaluate(()=>document.querySelector('input[type=checkbox]').checked)); let d=await p.cdp('DOM.getDocument',{depth",
+    "console.log('cwd',process.cwd(), 'ls',require('fs').readdirSync('.'));",
+    "console.log('downloads',require('fs').readdirSync('downloads')); console.log('root resume',require('fs').statSync('Jordan_Testcase_TEST_RESUME.pdf').size); require('fs').copyFileSync('Jordan_Testcase_",
+    "let d=await p.cdp('DOM.getDocument',{depth:-1,pierce:true}); let r=await p.cdp('DOM.querySelector',{nodeId:d.root.nodeId,selector:'#resume'});let rn=await p.cdp('DOM.describeNode',{nodeId:r.nodeId}); ",
+    "console.log(Object.fromEntries(Object.entries(process.env).filter(([k])=>/DOWNLOAD|HOME|WORKSPACE|UPLOAD/i.test(k)))); console.log(require('os').homedir());",
+    "console.log(require('fs').readFileSync('.uploads-manifest.json','utf8')); console.log(Object.entries(process.env).filter(([k])=>/DOWNLOAD|HOME|WORKSPACE|UPLOAD/i.test(k)));",
+    "console.log(require('fs').lstatSync('downloads'),require('fs').realpathSync('downloads'),require('fs').realpathSync('downloads/Jordan_Testcase_TEST_RESUME.pdf'));",
+    "for (const f of ['Jordan_Testcase_TEST_RESUME.pdf','/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads/Jordan_Testcase_TEST_RESUME.pdf']){try{await p.cdp('DOM.setFileInputFiles',{backendNod",
+    "console.log(require('fs').statSync('downloads/Jordan_Testcase_TEST_RESUME.pdf').size, require('fs').statSync('uploads/jordan_testcase_test_resume.pdf').size,require('fs').readFileSync('downloads/Jorda",
+    "console.log('ack',await p.evaluate(()=>document.querySelector('input[type=checkbox]').checked)); await clickSelector('button[data-testid=\"cover_letter-text\"]'); console.log(await p.evaluate(()=>({visi",
+    "console.log(await p.evaluate(()=>({manual:document.querySelector('[data-testid=\"cover_letter-text\"]')?.outerHTML,cover:document.querySelector('#cover_letter_text'),texts:[...document.querySelectorAll(",
+    "async function clickVisible(sel){let d=await p.cdp('DOM.getDocument',{depth:-1,pierce:true});let {nodeId}=await p.cdp('DOM.querySelector',{nodeId:d.root.nodeId,selector:sel});let {node}=await p.cdp('D",
+    "console.log(Object.keys(p),p.targetId,p.id);",
+    "await fillCss('#cover_letter_text','This is a test application from a fictional profile used to check form filling. It must not be submitted.'); await clickVisible('label[for=\"question_70006084[]_7570",
+    "let d=await p.cdp('DOM.getDocument',{depth:-1,pierce:true});let r=await p.cdp('DOM.querySelector',{nodeId:d.root.nodeId,selector:'#resume'});let rn=await p.cdp('DOM.describeNode',{nodeId:r.nodeId});co",
+    "try{console.log(await browser.send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:'/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads'}))}catch(e){console.log(String(e))}",
+    "try{await p.cdp('DOM.setFileInputFiles',{backendNodeId:rn.node.backendNodeId,files:['/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads/Jordan_Testcase_TEST_RESUME.pdf']}); console.log('upl",
+    "const uploadArtifact=await artifact('downloads/Jordan_Testcase_resume_copy.pdf',require('fs').readFileSync('uploads/jordan_testcase_test_resume.pdf')); console.log(uploadArtifact,require('fs').existsS",
+    "const upath=await artifact('jordan_resume_copy.pdf',require('fs').readFileSync('uploads/jordan_testcase_test_resume.pdf')); require('fs').copyFileSync(upath,'downloads/jordan_resume_copy.pdf'); consol",
+    "console.log(await p.evaluate(()=>({fields:[...document.querySelectorAll('form input:not([type=file]), form textarea')].map(e=>({id:e.id,type:e.type,label:e.labels?.[0]?.innerText||e.getAttribute('aria",
+    "console.log(['/mnt/data/downloads','/tmp/downloads','/home/oai/share/downloads','/home/oai/share/Downloads','/root/Downloads','/app/downloads','/browser/downloads','/mnt/workspace/downloads'].map(x=>["
+  ],
+  "version": "v2",
+  "label": "gh-cloudflare",
+  "ats": "greenhouse",
+  "company": "Cloudflare",
+  "run_dir": "runs\\20261105T184919-A-gh-cloudflare",
+  "wall_seconds": 238.9,
+  "bu_spent_before": 0.153449,
+  "bu_spent_after": 0.184689,
+  "bu_balance_delta": 0.03124,
+  "bu_cost_counted": 0.03124
+}

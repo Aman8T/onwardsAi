@@ -1,0 +1,1330 @@
+[
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455415883,
+    "ts": "2026-11-05T18:41:22.298267Z",
+    "type": "run.created",
+    "data": {
+      "model": "bu-ultrafast",
+      "session_id": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "is_free_tier": false,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "browser_settings": {
+        "record": false,
+        "profile_id": null,
+        "custom_proxy": false,
+        "extension_ids": [
+          "fd5fbf23-0393-4707-95ab-91cf0b4c4bfc"
+        ],
+        "allow_resizing": null,
+        "proxy_country_code": null,
+        "browser_screen_width": null,
+        "browser_screen_height": null,
+        "profile_storage_generation": ""
+      }
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455415885,
+    "ts": "2026-11-05T18:41:22.324386Z",
+    "type": "run.dispatching",
+    "data": {
+      "transport": "agentcore"
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455415922,
+    "ts": "2026-11-05T18:41:22.588473Z",
+    "type": "browser.ready",
+    "data": {
+      "live_view_url": "<redacted>",
+      "browser_session_id": "edda7cdb-1eaf-45fa-b7cc-2d86e2389477"
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455415963,
+    "ts": "2026-11-05T18:41:22.916637Z",
+    "type": "worker.started",
+    "data": {
+      "core_agent": "bu-pi",
+      "session_id": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "cold_process": true,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "invocation_index": 1,
+      "prewarmed_process": false,
+      "invocation_received_unix_ms": 1793904082891,
+      "process_age_at_invocation_ms": 4698.761605,
+      "runtime_session_header_present": true
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455415964,
+    "ts": "2026-11-05T18:41:22.920181Z",
+    "type": "run.dispatched",
+    "data": {
+      "transport": "agentcore",
+      "browser_session_id": "edda7cdb-1eaf-45fa-b7cc-2d86e2389477"
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416008,
+    "ts": "2026-11-05T18:41:23.230002Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 2,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "14323",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416009,
+    "ts": "2026-11-05T18:41:23.232865Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904083159
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416164,
+    "ts": "2026-11-05T18:41:24.426421Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000806",
+      "charge_usd": "0.000967",
+      "is_own_key": false,
+      "input_tokens": 2989,
+      "output_tokens": 59,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2986,
+      "cached_input_tokens": 0
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416197,
+    "ts": "2026-11-05T18:41:24.556410Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "page = await tabs.open('https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application'); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_RnPIE3iGtkuDlKLME1fkMHrd|fc_04ea99920869c225016aeccdd3cd8487d1aa9cf2b622a62b8e"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904084433
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416257,
+    "ts": "2026-11-05T18:41:25.161046Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "page = await tabs.open('https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application'); await bu.state();"
+          },
+          "output": "[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_RnPIE3iGtkuDlKLME1fkMHrd|fc_04ea99920869c225016aeccdd3cd8487d1aa9cf2b622a62b8e"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904085156
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416258,
+    "ts": "2026-11-05T18:41:25.168449Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904085159
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416260,
+    "ts": "2026-11-05T18:41:25.174228Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 4,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "14861",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416261,
+    "ts": "2026-11-05T18:41:25.177248Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904085166
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416325,
+    "ts": "2026-11-05T18:41:25.842080Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000108",
+      "charge_usd": "0.000130",
+      "is_own_key": false,
+      "input_tokens": 3105,
+      "output_tokens": 19,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 116,
+      "cached_input_tokens": 2986
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416327,
+    "ts": "2026-11-05T18:41:25.854936Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await screenshot()"
+          },
+          "status": "running"
+        },
+        "callID": "call_TNNzYgbDXKC2lzVgeB4t8kzo|fc_04ea99920869c225016aeccdd5ae2887d1a6a06bd4cdc9b1bd"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904085849
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416338,
+    "ts": "2026-11-05T18:41:25.913344Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await screenshot()"
+          },
+          "output": "'Screenshot captured.'",
+          "status": "completed",
+          "attachments": {
+            "count": 1,
+            "deferred": true
+          }
+        },
+        "callID": "call_TNNzYgbDXKC2lzVgeB4t8kzo|fc_04ea99920869c225016aeccdd5ae2887d1a6a06bd4cdc9b1bd"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904085903
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416341,
+    "ts": "2026-11-05T18:41:25.923641Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904085909
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416344,
+    "ts": "2026-11-05T18:41:25.930085Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904085922
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416347,
+    "ts": "2026-11-05T18:41:25.933094Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 6,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 1,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "70273",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416579,
+    "ts": "2026-11-05T18:41:27.895082Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000476",
+      "charge_usd": "0.000571",
+      "is_own_key": false,
+      "input_tokens": 4549,
+      "output_tokens": 52,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 18,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1444,
+      "cached_input_tokens": 3102
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416584,
+    "ts": "2026-11-05T18:41:27.917186Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state(); const s=await page.snapshot(); console.log(s.nodes);"
+          },
+          "status": "running"
+        },
+        "callID": "call_DogLQg9ZN6b8Pz0GqxpYM7nN|fc_04ea99920869c225016aeccdd7b59887d1ac357fadb07cb8ae"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904087910
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416597,
+    "ts": "2026-11-05T18:41:28.047397Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state(); const s=await page.snapshot(); console.log(s.nodes);"
+          },
+          "output": "[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n[43] link \"Linear\"\n[46] link \"Back to Linear\u2019s Job Listings\"\n## Senior / Staff Fullstack Engineer\n## Location\nEurope\n## Employment Type\nFull time\n## Location Type\nRemote\n## Department\nProduct\n[66] tab \"Overview\"\n[67] tab \"Application\" selected\n[85] tabpanel \"Application\"\n[164] file \"Choose File\" = \"No file chosen\"\n## Autofill from resume\nUpload your resume here to autofill key fields.\n[154] button \"Upload file\"\n## Contact Details\nName\n[170] textbox \"Name*\"\nEmail\n[175] textbox \"Email*\"\nResume\n[187] file \"Resume*\" = \"No file chosen\"\n[185] button \"Upload File\"\nor drag and drop here\nCover letter\nTell us why you want to join our team!\n[197] textbox \"Cover letter*\"\n## Links\nGithub\nPlease provide your GitHub username. We'll need this info to host final interview rounds.\n[205] textbox \"Github *\"\nLinkedIn\nPlease provide the link to your LinkedIn profile.\n[210] textbox \"LinkedIn\"\nX\nPlease provide the link to your X profile.\n[215] textbox \"X\"\n## Location\nAre you based in a EU or equivalent timezone?\n[224] button \"Yes\"\n[225] button \"No\"\nWhat country are you based in?\n[229] textbox \"What country are you based in?*\"\nNotice Period\nWhat is your expected notice period?\n[233] textbox \"Notice Period*\"\n## Tell us more\nWe would like to learn more about your motivations, interests, and strengths. Please answer each question in 500 words or less.\nWhat would you want to work on? Tell us about the features you would want to implement in your first month.\n[248] textbox \"What would you want to work on? Tell us about the features you would want to implement in your first month.*\"\nTell us of a time you had to put your PM hat on to solve a complex product problem.\n[253] textbox \"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\"\nWhat are you extremely good at? What could you teach the team?\n[258] textbox \"What are you extremely good at? What could you teach the team?*\"\n[259] textbox \"Has someone at Linear referred you for this role? If so, please include their name here:\"\n[276] button \"Submit Application\"\n[101] link \"Learn more about Ashby\"\nPowered by\n[98] link \"Privacy Policy\"\n[99] link \"Security\"\n[100] link \"Vulnerability Disclosure\"\n[/state]\n[\n  {\n    id: 2,\n    role: 'RootWebArea',\n    name: 'Senior / Staff Fullstack Engineer @ Linear'\n  },\n  { id: 35, role: 'generic', name: '' },\n  { id: 111, role: 'generic', name: '' },\n  {\n    id: 51,\n    role: 'heading',\n    name: 'Senior / Staff Fullstack Engineer'\n  },\n  { id: 52, role: 'heading', name: 'Location' },\n  { id: 129, role: 'StaticText', name: 'Europe' },\n  { id: 54, role: 'heading', name: 'Employment Type' },\n  { id: 131, role: 'StaticText', name: 'Full time' },\n  { id: 56, role: 'heading', name: 'Location Type' },\n  { id: 133, role: 'StaticText', name: 'Remote' },\n  { id: 58, role: 'heading', name: 'Department' },\n  { id: 135, role: 'StaticText', name: 'Product' },\n  { id: 84, role: 'tablist', name: '' },\n  { id: 85, role: 'tabpanel', name: 'Application' },\n  { id: 113, role: 'contentinfo', name: '' },\n  { id: 114, role: 'generic', name: '' },\n  { id: 50, role: 'list', name: '' },\n  {\n    id: 127,\n    role: 'StaticText',\n    name: 'Senior / Staff Fullstack Engineer'\n  },\n  { id: 128, role: 'StaticText', name: 'Location' },\n  { id: 130, role: 'StaticText', name: 'Employment Type' },\n  { id: 132, role: 'StaticText', name: 'Location Type' },\n  { id: 134, role: 'StaticText', name: 'Department' },\n  { id: 66, role: 'tab', name: 'Overview', selected: false },\n  { id: 67, role: 'tab', name: 'Application', selected: true },\n  {\n    id: 164,\n    role: 'button',\n    name: 'Choose File',\n    value: 'No file chosen'\n  },\n  { id: 151, role: 'image', name: '' },\n  { id: 153, role: 'heading', name: 'Autofill from resume' },\n  { id: 156, role: 'paragraph', name: '' },\n  { id: 154, role: 'button', name: 'Upload file' },\n  { id: 169, role: 'heading', name: 'Contact Details' },\n  { id: 171, role: 'LabelText', name: '' },\n  { id: 170, role: 'textbox', name: 'Name*' },\n  { id: 176, role: 'LabelText', name: '' },\n  { id: 175, role: 'textbox', name: 'Email*' },\n  { id: 189, role: 'LabelText', name: '' },\n  { id: 187, role: 'button', name: 'Resume*', value: 'No file chosen' },\n  { id: 185, role: 'button', name: 'Upload File' },\n  { id: 353, role: 'StaticText', name: 'or drag and drop here' },\n  { id: 195, role: 'LabelText', name: '' },\n  {\n    id: 355,\n    role: 'StaticText',\n    name: 'Tell us why you want to join our team!'\n  },\n  { id: 197, role: 'textbox', name: 'Cover letter*' },\n  { id: 203, role: 'heading', name: 'Links' },\n  { id: 206, role: 'LabelText', name: '' },\n  {\n    id: 359,\n    role: 'StaticText',\n    name: \"Please provide your GitHub username. We'll need this info to host final interview rounds.\"\n  },\n  { id: 205, role: 'textbox', name: 'Github *' },\n  { id: 211, role: 'LabelText', name: '' },\n  {\n    id: 362,\n    role: 'StaticText',\n    name: 'Please provide the link to your LinkedIn profile.'\n  },\n  { id: 210, role: 'textbox', name: 'LinkedIn' },\n  { id: 216, role: 'LabelText', name: '' },\n  {\n    id: 365,\n    role: 'StaticText',\n    name: 'Please provide the link to your X profile.'\n  },\n  { id: 215, role: 'textbox', name: 'X' },\n  { id: 223, role: 'heading', name: 'Location' },\n  { id: 227, role: 'LabelText', name: '' },\n  { id: 228, role: 'generic', name: '' },\n  { id: 230, role: 'LabelText', name: '' },\n  { id: 229, role: 'textbox', name: 'What country are you based in?*' },\n  { id: 234, role: 'LabelText', name: '' },\n  {\n    id: 374,\n    role: 'StaticText',\n    name: 'What is your expected notice period?'\n  },\n  { id: 233, role: 'textbox', name: 'Notice Period*' },\n  { id: 242, role: 'heading', name: 'Tell us more' },\n  {\n    id: 377,\n    role: 'StaticText',\n    name: 'We would like to learn more about your motivations, interests, and strengths. Please answer each question in 500 words or less.'\n  },\n  { id: 247, role: 'LabelText', name: '' },\n  {\n    id: 248,\n    role: 'textbox',\n    name: 'What would you want to work on? Tell us about the features you would want to implement in your first month.*'\n  },\n  { id: 252, role: 'LabelText', name: '' },\n  {\n    id: 253,\n    role: 'textbox',\n    name: 'Tell us of a time you had to put your PM hat on to solve a complex product problem.*'\n  },\n  { id: 257, role: 'LabelText', name: '' },\n  {\n    id: 258,\n    role: 'textbox',\n    name: 'What are you extremely good at? What could you teach the team?*'\n  },\n  { id: 260, role: 'LabelText', name: '' },\n  {\n    id: 259,\n    role: 'textbox',\n    name: 'Has someone at Linear referred you for this role? If so, please include their name here:'\n  },\n  { id: 276, role: 'button', name: 'Submit Application' },\n  { id: 101, role: 'link', name: 'Learn more about Ashby' },\n  { id: 98, role: 'link', name: 'Privacy Policy' },\n  { id: 99, role: 'link', name: 'Security' },\n  { id: 100, role: 'link', name: 'Vulnerability Disclosure' },\n  { id: 47, role: 'listitem', name: '' },\n  { id: 48, role: 'listitem', name: '' },\n  { id: 49, role: 'listitem', name: '' },\n  { id: 136, role: 'StaticText', name: 'Overview' },\n  { id: 137, role: 'StaticText', name: 'Application' },\n  { id: 335, role: 'StaticText', name: 'Autofill from resume' },\n  {\n    id: 336,\n    role: 'StaticText',\n    name: 'Upload your resume here to autofill key'\n  },\n  { id: 337, role: 'StaticText', name: '' },\n  { id: 338, role: 'StaticText', name: 'application' },\n  { id: 339, role: 'StaticText', name: '' },\n  { id: 340, role: 'StaticText', name: 'fields.' },\n  { id: 341, role: 'StaticText', name: 'Upload file' },\n  { id: 346, role: 'StaticText', name: 'Contact Details' },\n  { id: 347, role: 'StaticText', name: 'Name' },\n  { id: 286, role: 'generic', name: '' },\n  { id: 349, role: 'StaticText', name: 'Email' },\n  { id: 173, role: 'generic', name: '' },\n  { id: 351, role: 'StaticText', name: 'Resume' },\n  { id: 183, role: 'image', name: '' },\n  { id: 352, role: 'StaticText', name: 'Upload File' },\n  { id: 354, role: 'StaticText', name: 'Cover letter' },\n  { id: 193, role: 'generic', name: '' },\n  { id: 357, role: 'StaticText', name: 'Links' },\n  { id: 358, role: 'StaticText', name: 'Github' },\n  { id: 284, role: 'generic', name: '' },\n  { id: 361, role: 'StaticText', name: 'LinkedIn' },\n  ... 33 more items\n]\n",
+          "status": "completed"
+        },
+        "callID": "call_DogLQg9ZN6b8Pz0GqxpYM7nN|fc_04ea99920869c225016aeccdd7b59887d1ac357fadb07cb8ae"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904088041
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416598,
+    "ts": "2026-11-05T18:41:28.053600Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904088045
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416601,
+    "ts": "2026-11-05T18:41:28.065656Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 9,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 1,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "81519",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416602,
+    "ts": "2026-11-05T18:41:28.067227Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904088057
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416767,
+    "ts": "2026-11-05T18:41:29.360334Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000867",
+      "charge_usd": "0.001040",
+      "is_own_key": false,
+      "input_tokens": 7311,
+      "output_tokens": 85,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 42,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2762,
+      "cached_input_tokens": 4546
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416768,
+    "ts": "2026-11-05T18:41:29.379558Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const fs=require('fs'); console.log(fs.existsSync('uploads/Jordan_Testcase_TEST_RESUME.pdf'),process.cwd());"
+          },
+          "status": "running"
+        },
+        "callID": "call_KWPNjGd4UmlPCsI8GGy2ZP9G|fc_04ea99920869c225016aeccdd92bc087d1bc78d90eac048b79"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904089373
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416773,
+    "ts": "2026-11-05T18:41:29.392411Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const fs=require('fs'); console.log(fs.existsSync('uploads/Jordan_Testcase_TEST_RESUME.pdf'),process.cwd());"
+          },
+          "output": "false /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f\n",
+          "status": "completed"
+        },
+        "callID": "call_KWPNjGd4UmlPCsI8GGy2ZP9G|fc_04ea99920869c225016aeccdd92bc087d1bc78d90eac048b79"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904089382
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416776,
+    "ts": "2026-11-05T18:41:29.400657Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 12,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 1,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "84101",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416779,
+    "ts": "2026-11-05T18:41:29.405162Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904089385
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416782,
+    "ts": "2026-11-05T18:41:29.417271Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904089393
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416886,
+    "ts": "2026-11-05T18:41:30.539835Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000212",
+      "charge_usd": "0.000254",
+      "is_own_key": false,
+      "input_tokens": 7434,
+      "output_tokens": 34,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 7,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 123,
+      "cached_input_tokens": 7308
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416888,
+    "ts": "2026-11-05T18:41:30.549882Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('uploads'));"
+          },
+          "status": "running"
+        },
+        "callID": "call_yM5yVUdHD4j5fIY0ZaXNt49q|fc_04ea99920869c225016aeccdda667887d1a3296c7a7522f2be"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904090545
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416889,
+    "ts": "2026-11-05T18:41:30.558830Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(fs.readdirSync('uploads'));"
+          },
+          "output": "[ 'jordan_testcase_test_resume.pdf' ]\n",
+          "status": "completed"
+        },
+        "callID": "call_yM5yVUdHD4j5fIY0ZaXNt49q|fc_04ea99920869c225016aeccdda667887d1a3296c7a7522f2be"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904090555
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416890,
+    "ts": "2026-11-05T18:41:30.568867Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904090557
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416892,
+    "ts": "2026-11-05T18:41:30.579143Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 15,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 1,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "86082",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455416894,
+    "ts": "2026-11-05T18:41:30.580737Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904090571
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417023,
+    "ts": "2026-11-05T18:41:31.710750Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000249",
+      "charge_usd": "0.000299",
+      "is_own_key": false,
+      "input_tokens": 7489,
+      "output_tokens": 86,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 55,
+      "cached_input_tokens": 7431
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417026,
+    "ts": "2026-11-05T18:41:31.723066Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const b=await page.cdp('DOM.getDocument',{}); const d=b.root; const ins=await page.evaluate(()=>[...document.querySelectorAll('input,textarea')].map(x=>({tag:x.tagName,type:x.type,name:x.name,placeholder:x.placeholder,aria:x.getAttribute('aria-label')}))); console.log(ins);"
+          },
+          "status": "running"
+        },
+        "callID": "call_A4NHi3DVQxJreEGmxjXJeEK5|fc_04ea99920869c225016aeccddb3cb887d187d978996cc4dda6"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904091719
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417031,
+    "ts": "2026-11-05T18:41:31.738737Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const b=await page.cdp('DOM.getDocument',{}); const d=b.root; const ins=await page.evaluate(()=>[...document.querySelectorAll('input,textarea')].map(x=>({tag:x.tagName,type:x.type,name:x.name,placeholder:x.placeholder,aria:x.getAttribute('aria-label')}))); console.log(ins);"
+          },
+          "output": "[\n  { tag: 'INPUT', type: 'file', name: '', placeholder: '', aria: null },\n  {\n    tag: 'INPUT',\n    type: 'text',\n    name: '_systemfield_name',\n    placeholder: 'Type here...',\n    aria: null\n  },\n  {\n    tag: 'INPUT',\n    type: 'email',\n    name: '_systemfield_email',\n    placeholder: 'hello@example.com...',\n    aria: null\n  },\n  { tag: 'INPUT', type: 'file', name: '', placeholder: '', aria: null },\n  {\n    tag: 'TEXTAREA',\n    type: 'textarea',\n    name: '1ed7df4b-e6d4-484e-92c3-4a5f5e07fd0c',\n    placeholder: 'Type here...',\n    aria: null\n  },\n  {\n    tag: 'INPUT',\n    type: 'text',\n    name: '1c843a13-4fe3-43df-afcf-37a69d88591b',\n    placeholder: 'Type here...',\n    aria: null\n  },\n  {\n    tag: 'INPUT',\n    type: 'text',\n    name: 'ca5c9d78-ec13-4bf2-86b8-bce6ff32e45e',\n    placeholder: 'Type here...',\n    aria: null\n  },\n  {\n    tag: 'INPUT',\n    type: 'text',\n    name: '2165840e-d858-4ff0-ad26-bd48832fe3a7',\n    placeholder: 'Type here...',\n    aria: null\n  },\n  {\n    tag: 'INPUT',\n    type: 'checkbox',\n    name: '9fd0020d-14f0-47f3-b076-f31e5eaa8295',\n    placeholder: '',\n    aria: null\n  },\n  {\n    tag: 'INPUT',\n    type: 'text',\n    name: 'b617d074-3a16-46ec-bb02-550e30cb0e50',\n    placeholder: 'Type here...',\n    aria: null\n  },\n  {\n    tag: 'INPUT',\n    type: 'text',\n    name: 'ce587bdf-31fa-4768-9e92-7741b7ad2317',\n    placeholder: 'Type here...',\n    aria: null\n  },\n  {\n    tag: 'TEXTAREA',\n    type: 'textarea',\n    name: '7d3da580-9e6d-494f-a63b-0a889e0a157a',\n    placeholder: 'Type here...',\n    aria: null\n  },\n  {\n    tag: 'TEXTAREA',\n    type: 'textarea',\n    name: 'e8a6b6ee-0550-4c69-85ab-05bd9b26c702',\n    placeholder: 'Type here...',\n    aria: null\n  },\n  {\n    tag: 'TEXTAREA',\n    type: 'textarea',\n    name: 'c4b19ee4-d084-47fa-89df-ca00e63a7721',\n    placeholder: 'Type here...',\n    aria: null\n  },\n  {\n    tag: 'INPUT',\n    type: 'text',\n    name: '018585ea-12fd-472a-bdd6-9ef643dfabdd',\n    placeholder: 'Type here...',\n    aria: null\n  }\n]\n",
+          "status": "completed"
+        },
+        "callID": "call_A4NHi3DVQxJreEGmxjXJeEK5|fc_04ea99920869c225016aeccddb3cb887d187d978996cc4dda6"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904091734
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417035,
+    "ts": "2026-11-05T18:41:31.750147Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 17,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 1,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "88715",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417036,
+    "ts": "2026-11-05T18:41:31.755615Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904091737
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417040,
+    "ts": "2026-11-05T18:41:31.764762Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904091742
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417453,
+    "ts": "2026-11-05T18:41:35.026443Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000652",
+      "charge_usd": "0.000782",
+      "is_own_key": false,
+      "input_tokens": 8320,
+      "output_tokens": 294,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 28,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 831,
+      "cached_input_tokens": 7486
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417454,
+    "ts": "2026-11-05T18:41:35.040563Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/uploads/jordan_testcase_test_resume.pdf']}); await bu.type(170,'Jordan Testcase'); await bu.type(175,'jordan.testcase@example.com'); await bu.type(197,'This is a test application from a fictional profile used to check form filling. It must not be submitted.'); await bu.type(205,'Not provided'); await bu.type(210,'Not provided'); await bu.type(215,'Not provided'); await bu.click(225); await bu.type(229,'India'); await bu.type(233,'30 days'); await bu.type(248,'In my first month, I would learn the product and customer workflows, then identify a focused improvement to analytics and reliability. I have built Python and TypeScript services and owned CI.'); await bu.type(253,'My provided background notes do not describe a specific product problem or PM decision, so I cannot give a factual example.'); await bu.type(258,'I am experienced in building and operating Python and TypeScript services and maintaining CI pipelines; I can share those practices.'); await bu.type(259,''); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_3ViBFrwvfipTfA9RLis5JA7J|fc_04ea99920869c225016aeccddcf46087d1916427f920e8cdd2"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904095034
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417456,
+    "ts": "2026-11-05T18:41:35.054579Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.cdp('DOM.setFileInputFiles',{backendNodeId:187,files:[process.cwd()+'/uploads/jordan_testcase_test_resume.pdf']}); await bu.type(170,'Jordan Testcase'); await bu.type(175,'jordan.testcase@example.com'); await bu.type(197,'This is a test application from a fictional profile used to check form filling. It must not be submitted.'); await bu.type(205,'Not provided'); await bu.type(210,'Not provided'); await bu.type(215,'Not provided'); await bu.click(225); await bu.type(229,'India'); await bu.type(233,'30 days'); await bu.type(248,'In my first month, I would learn the product and customer workflows, then identify a focused improvement to analytics and reliability. I have built Python and TypeScript services and owned CI.'); await bu.type(253,'My provided background notes do not describe a specific product problem or PM decision, so I cannot give a factual example.'); await bu.type(258,'I am experienced in building and operating Python and TypeScript services and maintaining CI pipelines; I can share those practices.'); await bu.type(259,''); await bu.state();"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/aa71bddc-7ef2-4789-8f25-bd5c9c2d0d3a.txt",
+          "status": "error"
+        },
+        "callID": "call_3ViBFrwvfipTfA9RLis5JA7J|fc_04ea99920869c225016aeccddcf46087d1916427f920e8cdd2"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904095045
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417459,
+    "ts": "2026-11-05T18:41:35.060288Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 20,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 1,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "92940",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417460,
+    "ts": "2026-11-05T18:41:35.066041Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904095047
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417461,
+    "ts": "2026-11-05T18:41:35.078463Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904095052
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417660,
+    "ts": "2026-11-05T18:41:37.120148Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000567",
+      "charge_usd": "0.000680",
+      "is_own_key": false,
+      "input_tokens": 8932,
+      "output_tokens": 247,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 21,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 612,
+      "cached_input_tokens": 8317
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417663,
+    "ts": "2026-11-05T18:41:37.130401Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(170,'Jordan Testcase'); await bu.type(175,'jordan.testcase@example.com'); await bu.type(197,'This is a test application from a fictional profile used to check form filling. It must not be submitted.'); await bu.type(205,'Not provided'); await bu.type(210,'Not provided'); await bu.type(215,'Not provided'); await bu.click(225); await bu.type(229,'India'); await bu.type(233,'30 days'); await bu.type(248,'In my first month, I would learn the product and customer workflows, then identify a focused improvement to analytics and reliability. I have built Python and TypeScript services and owned CI.'); await bu.type(253,'My provided background notes do not describe a specific product problem or PM decision, so I cannot give a factual example.'); await bu.type(258,'I am experienced in building and operating Python and TypeScript services and maintaining CI pipelines; I can share those practices.'); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_cmDvKhOp4xlGm8AqNSWgv7Cz|fc_04ea99920869c225016aeccde04b9c87d19c47a7f754813da2"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904097126
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417892,
+    "ts": "2026-11-05T18:41:39.316339Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(170,'Jordan Testcase'); await bu.type(175,'jordan.testcase@example.com'); await bu.type(197,'This is a test application from a fictional profile used to check form filling. It must not be submitted.'); await bu.type(205,'Not provided'); await bu.type(210,'Not provided'); await bu.type(215,'Not provided'); await bu.click(225); await bu.type(229,'India'); await bu.type(233,'30 days'); await bu.type(248,'In my first month, I would learn the product and customer workflows, then identify a focused improvement to analytics and reliability. I have built Python and TypeScript services and owned CI.'); await bu.type(253,'My provided background notes do not describe a specific product problem or PM decision, so I cannot give a factual example.'); await bu.type(258,'I am experienced in building and operating Python and TypeScript services and maintaining CI pipelines; I can share those practices.'); await bu.state();"
+          },
+          "output": "[ok] type [170] textbox \"Name*\" = \"Jordan Testcase\" -> page changed\n[ok] type [175] textbox \"Email*\" = \"jordan.testcase@example.com\" -> page changed\n[ok] type [197] textbox \"Cover letter*\" = \"This is a test application from a fictional profile used to \u2026\" -> page changed\n[ok] type [205] textbox \"Github *\" = \"Not provided\" -> page changed\n[ok] type [210] textbox \"LinkedIn\" = \"Not provided\" -> page changed\n[ok] type [215] textbox \"X\" = \"Not provided\" -> page changed\n[ok] click [225] button \"No\" -> page changed\n[ok] type [229] textbox \"What country are you based in?*\" = \"India\" -> page changed\n[ok] type [233] textbox \"Notice Period*\" = \"30 days\" -> page changed\n[ok] type [248] textbox \"What would you want to work on? Tell us about the features y\u2026\" = \"In my first month, I would learn the product and customer wo\u2026\" -> page changed\n[ok] type [253] textbox \"Tell us of a time you had to put your PM hat on to solve a c\u2026\" = \"My provided background notes do not describe a specific prod\u2026\" -> page changed\n[ok] type [258] textbox \"What are you extremely good at? What could you teach the tea\u2026\" = \"I am experienced in building and operating Python and TypeSc\u2026\" -> page changed\n[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n[43] link \"Linear\"\n[46] link \"Back to Linear\u2019s Job Listings\"\n## Senior / Staff Fullstack Engineer\n## Location\nEurope\n## Employment Type\nFull time\n## Location Type\nRemote\n## Department\nProduct\n[66] tab \"Overview\"\n[67] tab \"Application\" selected\n[85] tabpanel \"Application\"\n[164] file \"Choose File\" = \"No file chosen\"\n## Autofill from resume\nUpload your resume here to autofill key fields.\n[154] button \"Upload file\"\n## Contact Details\nName\n[170] textbox \"Name*\" = \"Jordan Testcase\"\nEmail\n[175] textbox \"Email*\" = \"jordan.testcase@example.com\"\nResume\n[187] file \"Resume*\" = \"No file chosen\"\n[185] button \"Upload File\"\nor drag and drop here\nCover letter\nTell us why you want to join our team!\n[197] textbox \"Cover letter*\" = \"This is a test application from a fictional profile used to check form filling. It must not be submi\u2026\"\n## Links\nGithub\nPlease provide your GitHub username. We'll need this info to host final interview rounds.\n[205] textbox \"Github *\" = \"Not provided\"\nLinkedIn\nPlease provide the link to your LinkedIn profile.\n[210] textbox \"LinkedIn\" = \"Not provided\"\nX\nPlease provide the link to your X profile.\n[215] textbox \"X\" = \"Not provided\"\n## Location\nAre you based in a EU or equivalent timezone?\n[224] button \"Yes\"\n[225] button \"No\"\nWhat country are you based in?\n[229] textbox \"What country are you based in?*\" = \"India\"\nNotice Period\nWhat is your expected notice period?\n[233] textbox \"Notice Period*\" = \"30 days\"\n## Tell us more\nWe would like to learn more about your motivations, interests, and strengths. Please answer each question in 500 words or less.\nWhat would you want to work on? Tell us about the features you would want to implement in your first month.\n[248] textbox \"What would you want to work on? Tell us about the features you would want to implement in your first month.*\" = \"In my first month, I would learn the product and customer workflows, then identify a focused improve\u2026\"\nTell us of a time you had to put your PM hat on to solve a complex product problem.\n[253] textbox \"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\" = \"My provided background notes do not describe a specific product problem or PM decision, so I cannot \u2026\"\nWhat are you extremely good at? What could you teach the team?\n[258] textbox \"What are you extremely good at? What could you teach the team?*\" = \"I am experienced in building and operating Python and TypeScript services and maintaining CI pipelin\u2026\" focused\n[259] textbox \"Has someone at Linear referred you for this role? If so, please include their name here:\"\n[276] button \"Submit Application\"\n[101] link \"Learn more about Ashby\"\nPowered by\n[98] link \"Privacy Policy\"\n[99] link \"Security\"\n[100] link \"Vulnerability Disclosure\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_cmDvKhOp4xlGm8AqNSWgv7Cz|fc_04ea99920869c225016aeccde04b9c87d19c47a7f754813da2"
+      },
+      "type": "tool_use",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904099309
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417893,
+    "ts": "2026-11-05T18:41:39.328968Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 23,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 1,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "100255",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417894,
+    "ts": "2026-11-05T18:41:39.333485Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904099312
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455417897,
+    "ts": "2026-11-05T18:41:39.346875Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904099318
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418134,
+    "ts": "2026-11-05T18:41:41.483122Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000858",
+      "charge_usd": "0.001030",
+      "is_own_key": false,
+      "input_tokens": 10246,
+      "output_tokens": 350,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1314,
+      "cached_input_tokens": 8929
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418137,
+    "ts": "2026-11-05T18:41:41.494821Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904101491
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418139,
+    "ts": "2026-11-05T18:41:41.518481Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904101507
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418140,
+    "ts": "2026-11-05T18:41:41.520164Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 25,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 1,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "102506",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418393,
+    "ts": "2026-11-05T18:41:43.897494Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000743",
+      "charge_usd": "0.000892",
+      "is_own_key": false,
+      "input_tokens": 10649,
+      "output_tokens": 413,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 403,
+      "cached_input_tokens": 10112
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418399,
+    "ts": "2026-11-05T18:41:43.924075Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904103918
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418408,
+    "ts": "2026-11-05T18:41:43.955534Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "text": "The form is filled where the provided details support an answer. I did not submit the application.\n\n| Field | Value entered |\n|---|---|\n| Name* | Jordan Testcase |\n| Email* | jordan.testcase@example.com |\n| Resume* | Not uploaded \u2014 the browser required the file to be in its downloads directory, and I could not place it there. |\n| Cover letter* | This is a test application from a fictional profile used to check form filling. It must not be submitted. |\n| Github * | Not provided |\n| LinkedIn | Not provided |\n| X | Not provided |\n| Are you based in a EU or equivalent timezone? | No |\n| What country are you based in?* | India |\n| Notice Period* | 30 days |\n| What would you want to work on? Tell us about the features you would want to implement in your first month.* | In my first month, I would learn the product and customer workflows, then identify a focused improvement to analytics and reliability. I have built Python and TypeScript services and owned CI. |\n| Tell us of a time you had to put your PM hat on to solve a complex product problem.* | My provided background notes do not describe a specific product problem or PM decision, so I cannot give a factual example. |\n| What are you extremely good at? What could you teach the team?* | I am experienced in building and operating Python and TypeScript services and maintaining CI pipelines; I can share those practices. |\n| Has someone at Linear referred you for this role? If so, please include their name here: | Left blank |\n\nThe form also showed a Submit Application button; I did not click it.",
+        "time": {
+          "end": 1793904101490
+        },
+        "type": "text"
+      },
+      "type": "text",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904101490
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418412,
+    "ts": "2026-11-05T18:41:43.964325Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "text": "{\"fields\":[{\"label\":\"Name*\",\"value\":\"Jordan Testcase\",\"status\":\"filled\"},{\"label\":\"Email*\",\"value\":\"jordan.testcase@example.com\",\"status\":\"filled\"},{\"label\":\"Resume*\",\"value\":\"Not uploaded. Browser required the file in its downloads directory, and upload was unsuccessful.\",\"status\":\"failed\"},{\"label\":\"Cover letter*\",\"value\":\"This is a test application from a fictional profile used to check form filling. It must not be submitted.\",\"status\":\"filled\"},{\"label\":\"Github *\",\"value\":\"Not provided\",\"status\":\"filled\"},{\"label\":\"LinkedIn\",\"value\":\"Not provided\",\"status\":\"filled\"},{\"label\":\"X\",\"value\":\"Not provided\",\"status\":\"filled\"},{\"label\":\"Are you based in a EU or equivalent timezone?\",\"value\":\"No\",\"status\":\"filled\"},{\"label\":\"What country are you based in?*\",\"value\":\"India\",\"status\":\"filled\"},{\"label\":\"Notice Period*\",\"value\":\"30 days\",\"status\":\"filled\"},{\"label\":\"What would you want to work on? Tell us about the features you would want to implement in your first month.*\",\"value\":\"In my first month, I would learn the product and customer workflows, then identify a focused improvement to analytics and reliability. I have built Python and TypeScript services and owned CI.\",\"status\":\"filled\"},{\"label\":\"Tell us of a time you had to put your PM hat on to solve a complex product problem.*\",\"value\":\"My provided background notes do not describe a specific product problem or PM decision, so I cannot give a factual example.\",\"status\":\"filled\"},{\"label\":\"What are you extremely good at? What could you teach the team?*\",\"value\":\"I am experienced in building and operating Python and TypeScript services and maintaining CI pipelines; I can share those practices.\",\"status\":\"filled\"},{\"label\":\"Has someone at Linear referred you for this role? If so, please include their name here:\",\"value\":\"\",\"status\":\"skipped\"}],\"blocked\":\"\",\"submit_button_seen\":true}",
+        "time": {
+          "end": 1793904103954
+        },
+        "type": "text"
+      },
+      "type": "text",
+      "sessionID": "8f401e3b-abb3-442a-8b6d-f78d9fbdfa15",
+      "timestamp": 1793904103954
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418431,
+    "ts": "2026-11-05T18:41:44.145974Z",
+    "type": "outputs.promoted",
+    "data": {
+      "failed": false,
+      "skipped": 0,
+      "promoted": 1,
+      "rejected": 0,
+      "upload_errors": 0
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418435,
+    "ts": "2026-11-05T18:41:44.156917Z",
+    "type": "state.promoted",
+    "data": {
+      "failed": false,
+      "harness": "bu-ultrafast",
+      "promoted": 1
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418442,
+    "ts": "2026-11-05T18:41:44.219401Z",
+    "type": "run.completed",
+    "data": {
+      "context": {
+        "chars": 43512,
+        "tokens": 11066,
+        "maxChars": 1000000,
+        "maxTokens": 212500,
+        "compactionFailures": 0
+      }
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418446,
+    "ts": "2026-11-05T18:41:44.256004Z",
+    "type": "browser.released",
+    "data": {
+      "status": "kept_alive",
+      "timeout_at": "2026-11-05T22:41:22.344505+00:00",
+      "browser_session_id": "edda7cdb-1eaf-45fa-b7cc-2d86e2389477"
+    }
+  },
+  {
+    "run_id": "b82155ed-b069-40d0-874b-9584f9612045",
+    "id": 455418451,
+    "ts": "2026-11-05T18:41:44.273216Z",
+    "type": "worker.session_released",
+    "data": {}
+  }
+]

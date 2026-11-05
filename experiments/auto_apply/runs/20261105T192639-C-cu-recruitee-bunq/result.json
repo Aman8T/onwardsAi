@@ -1,0 +1,52 @@
+{
+  "arm": "C",
+  "model": "none (replay)",
+  "replayed_from": "20261105T184001-B-cu-recruitee-bunq",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 0,
+    "required_total": 0,
+    "required_filled": 0,
+    "mapped_correct": 0,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": null,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://careers.bunq.com/positions/ios-developer-4",
+  "seconds": 54.6,
+  "failure": null,
+  "errors": [
+    "not found: Website",
+    "not found: What is your full name? *",
+    "not found: What is your email? *",
+    "not found: What is your phone number? *",
+    "not found: What country do you currently live in? *",
+    "not found: What are your salary expectations? (gross, annual, in EUR) *",
+    "not found: Have you previously worked at bunq?* (required)",
+    "not found: Can you read Objective-C implementations and translate them ",
+    "not found: Can you assess legacy UI components and reconstruct them fol",
+    "not found: I have read and accept the"
+  ],
+  "steps": 10,
+  "anthropic_usd": 0.0,
+  "browser_use_usd": 0.000508,
+  "browser_cost": {
+    "browser": 0.0003333333333333333,
+    "proxy": 0.00017429031431674956,
+    "proxy_mb": 0.8923664093017578
+  },
+  "blocked_requests": 0,
+  "version": "v2",
+  "label": "cu-recruitee-bunq",
+  "ats": "custom",
+  "company": "bunq",
+  "run_dir": "runs\\20261105T192639-C-cu-recruitee-bunq",
+  "wall_seconds": 65.4,
+  "bu_spent_before": 0.330079,
+  "bu_spent_after": 0.33059,
+  "bu_balance_delta": 0.000511,
+  "bu_cost_counted": 0.000511
+}

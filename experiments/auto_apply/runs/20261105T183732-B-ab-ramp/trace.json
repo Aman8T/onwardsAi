@@ -1,0 +1,72 @@
+[
+  {
+    "op": "fill",
+    "label": "Name",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"_systemfield_name\"]",
+    "name": "_systemfield_name",
+    "value": "Jordan Testcase",
+    "source": "full_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email",
+    "type": "email",
+    "frame": 0,
+    "selector": "[id=\"_systemfield_email\"]",
+    "name": "_systemfield_email",
+    "value": "jordan.testcase@example.com",
+    "source": "email"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Resume",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"_systemfield_resume\"]",
+    "name": null,
+    "value": "",
+    "source": "resume"
+  },
+  {
+    "op": "fill",
+    "label": "Phone",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"phone\"]",
+    "name": "phone",
+    "value": "+1 555 010 0142",
+    "source": "phone"
+  },
+  {
+    "op": "fill",
+    "label": "Please provide a link to the App Store and/or personal portfolio showcasing your top 1-2 app(s)!",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"question_23341706002\"]",
+    "name": "question_23341706002",
+    "value": "https://example.com/jordan-testcase",
+    "source": "website"
+  },
+  {
+    "op": "fill",
+    "label": "Please share some details about your proudest Android feature in 2 to 3 sentences. What made it challenging and what was the impact?",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"question_22072318002\"]",
+    "name": "question_22072318002",
+    "value": "I have no Android-specific feature to cite; my proudest work was building and running Python and TypeScript services for an internal analytics product and owning its CI pipeline. It was challenging because of reliability needs, and it improved the team's delivery speed.",
+    "source": "work_history"
+  },
+  {
+    "op": "fill",
+    "label": "Have you contributed to a mobile app(s) and/or several features that reached a large number of users? Please describe.",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"question_22639844002\"]",
+    "name": "question_22639844002",
+    "value": "I have not shipped a large-scale mobile app. I have built and maintained web services and a Django web app with a full test suite at Example Labs and Sample Systems.",
+    "source": "work_history"
+  }
+]

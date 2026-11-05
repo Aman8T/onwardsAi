@@ -1,0 +1,41 @@
+{
+  "arm": "C",
+  "model": "none (replay)",
+  "replayed_from": "20261105T183207-B-gh-cloudflare",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": true,
+    "fields_total": 17,
+    "required_total": 11,
+    "required_filled": 11,
+    "mapped_correct": 6,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": true,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://job-boards.greenhouse.io/cloudflare/jobs/8300518",
+  "seconds": 82.2,
+  "failure": null,
+  "errors": [],
+  "steps": 13,
+  "anthropic_usd": 0.0,
+  "browser_use_usd": 0.00074,
+  "browser_cost": {
+    "browser": 0.0006666666666666666,
+    "proxy": 7.335823029279709e-05,
+    "proxy_mb": 0.3755941390991211
+  },
+  "blocked_requests": 0,
+  "version": "v2",
+  "label": "gh-cloudflare",
+  "ats": "greenhouse",
+  "company": "Cloudflare",
+  "run_dir": "runs\\20261105T192231-C-gh-cloudflare",
+  "wall_seconds": 87.5,
+  "bu_spent_before": 0.327496,
+  "bu_spent_after": 0.328247,
+  "bu_balance_delta": 0.00075,
+  "bu_cost_counted": 0.00075
+}

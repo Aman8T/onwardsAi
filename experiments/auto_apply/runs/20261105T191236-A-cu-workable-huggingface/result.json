@@ -1,0 +1,233 @@
+{
+  "arm": "A",
+  "model": "bu-fast",
+  "run_id": "8150af87-2495-4860-a115-e3f27315406f",
+  "session_id": "74c5be3a-5ab0-4b32-b803-65506e9426e2",
+  "agent_seconds": 232.6,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "core.event": 163,
+    "llm.request": 41,
+    "llm.response": 41,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "empty",
+    "fields": [
+      {
+        "label": "First name",
+        "status": "filled",
+        "value": "Jordan"
+      },
+      {
+        "label": "Last name",
+        "status": "filled",
+        "value": "Testcase"
+      },
+      {
+        "label": "Email",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Phone",
+        "status": "filled",
+        "value": "+1 555 010 0142 (form displays 555-010-0142; United States +1 selected)"
+      },
+      {
+        "label": "Education \u2014 School",
+        "status": "filled",
+        "value": "Example Institute of Technology"
+      },
+      {
+        "label": "Education \u2014 Field of study",
+        "status": "filled",
+        "value": "Computer Science"
+      },
+      {
+        "label": "Education \u2014 Degree",
+        "status": "filled",
+        "value": "B.Tech (2021)"
+      },
+      {
+        "label": "Experience \u2014 Junior Developer at Sample Systems",
+        "status": "filled",
+        "value": "Maintained a Django web app and wrote its test suite. (2021 to 2022)"
+      },
+      {
+        "label": "Experience \u2014 Software Engineer at Example Labs",
+        "status": "filled",
+        "value": "Built and ran Python and TypeScript services for an internal analytics product; owned its CI pipeline. (2022 to now). Marked as current."
+      },
+      {
+        "label": "Resume",
+        "status": "failed",
+        "value": "Upload failed; no file is selected. Tried the provided uploads/jordan_testcase_test_resume.pdf and its downloads copy, but the browser rejected the file paths with \u201cFiles must exist in the downloads directory.\u201d"
+      },
+      {
+        "label": "Github profile",
+        "status": "skipped",
+        "value": "Left blank; no GitHub URL was supplied."
+      },
+      {
+        "label": "Linkedin",
+        "status": "skipped",
+        "value": "Left blank; no LinkedIn URL was supplied."
+      },
+      {
+        "label": "Cover letter",
+        "status": "filled",
+        "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted."
+      },
+      {
+        "label": "Expected salary",
+        "status": "filled",
+        "value": "Negotiable"
+      },
+      {
+        "label": "Notice period / availability",
+        "status": "filled",
+        "value": "1 month (30 days)"
+      },
+      {
+        "label": "Are you eligible to work in the country you are applying?",
+        "status": "filled",
+        "value": "Yes"
+      },
+      {
+        "label": "How did you hear about us?",
+        "status": "filled",
+        "value": "Company careers page"
+      },
+      {
+        "label": "Can you confirm that everything in this application is true and your own, including your experience and identity?",
+        "status": "filled",
+        "value": "Yes (test-only acknowledgement)"
+      },
+      {
+        "label": "Did you start your first written answer with the exact phrase requested in the job description?",
+        "status": "filled",
+        "value": "Yes"
+      },
+      {
+        "label": "Do you have a public track record of open-source contributions?",
+        "status": "filled",
+        "value": "No (the supplied fictional profile included no public contribution links or evidence)"
+      },
+      {
+        "label": "Why Hugging Face, and where would you make the biggest difference in this role?",
+        "status": "filled",
+        "value": "GPU-poor and proud \ud83e\udd17. The supplied profile points to building and running Python and TypeScript services for an analytics product and owning its CI pipeline; that is where I could contribute to reliable open-source tools. The profile does not include specific Hugging Face or ML-library experience to claim."
+      },
+      {
+        "label": "Share 2\u20133 open-source contributions with links and your role",
+        "status": "filled",
+        "value": "The fictional profile does not include public open-source projects, issues, pull requests, or maintenance links to cite. I cannot list 2\u20133 contributions without inventing them."
+      },
+      {
+        "label": "Privacy Notice consent checkbox",
+        "status": "filled",
+        "value": "Checked"
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 944182,
+    "output": 16044
+  },
+  "run_cost_usd": 0.027548,
+  "browser_id": "a09d178c-4bf8-4c6f-a79c-d22a376bd3a5",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 13,
+    "required_total": 8,
+    "required_filled": 5,
+    "mapped_correct": 5,
+    "wrong": [],
+    "missed_required": [
+      "Resume Choose file",
+      "Github profile",
+      "Linkedin"
+    ],
+    "resume_attached": false,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://apply.workable.com/huggingface/j/81B46579FE/apply/",
+  "session_cost": {
+    "llm_cost_usd": 0.027548,
+    "browser_cost_usd": 0.001667,
+    "proxy_cost_usd": 6e-06,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.029221
+  },
+  "browser_use_usd": 0.029221,
+  "seconds": 254.9,
+  "anthropic_usd": 0.0,
+  "steps": 41,
+  "llm_requests": 41,
+  "agent_trace": [
+    "var page = await tabs.open('https://apply.workable.com/huggingface/j/81B46579FE/apply/'); await bu.state();",
+    "await bu.click(12); await bu.state();",
+    "await bu.state({max:30000});",
+    "await bu.click(239); await bu.state({max:30000});",
+    "await bu.click(240); await bu.state({max:30000});",
+    "var fs = await import('node:fs/promises'); console.log(await fs.readdir('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f')); console.log(await fs.readdir('/mnt/workspace/05657674-f78e-4440-9b34-6f",
+    "console.log(await fs.stat('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/jordan_testcase_test_resume.pdf').then(s=>({size:s.size})));",
+    "await bu.type(2521,'Jordan'); await bu.type(2532,'Testcase'); await bu.type(2543,'jordan.testcase@example.com'); await bu.type(2553,'+1 555 010 0142'); await bu.type(2654,'This is a test application f",
+    "await bu.click(4613); await bu.type(2553,'5550100142'); await bu.type(2712,'Company careers page'); await bu.click(2575); await bu.state({max:30000});",
+    "await page.cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27}); await page.cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsV",
+    "await bu.type(2553,'5550100142');",
+    "await bu.type(2712,'Company careers page'); await bu.click(2575); await bu.state({max:30000});",
+    "await bu.type(4720,'Example Institute of Technology'); await bu.type(4730,'Computer Science'); await bu.type(4740,'B.Tech'); await bu.type(4773,'2021'); await bu.click(4781); await bu.state({max:30000",
+    "await bu.click(2579); await bu.state({max:30000});",
+    "await bu.type(4973,'Software Engineer'); await bu.type(4983,'Example Labs'); await bu.type(5004,'Built and ran Python and TypeScript services for an internal analytics product; owned its CI pipeline. ",
+    "await bu.click(2579); await bu.state({max:30000});",
+    "await bu.type(5214,'Junior Developer'); await bu.type(5224,'Sample Systems'); await bu.type(5245,'Maintained a Django web app and wrote its test suite. (2021 to 2022)'); await bu.type(5260,'2021'); aw",
+    "console.log(process.cwd()); for (const p of ['/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Downloads','/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads']) console.log(p,await fs.re",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:2607,files:['/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state({max:30000});",
+    "var resumeCopy = await artifact('Jordan_Testcase_TEST_RESUME.pdf', await fs.readFile('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/jordan_testcase_test_resume.pdf')); console.log(resume",
+    "var resumeCopy = await artifact('downloads/Jordan_upload_copy.pdf', await fs.readFile('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/jordan_testcase_test_resume.pdf')); console.log(resum",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:2607,files:['/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state({max:30000});",
+    "console.log(Object.entries(process.env).filter(([k])=>/download|workspace|upload/i.test(k)).map(([k,v])=>[k,v]));",
+    "console.log(await fs.readdir('/mnt'));",
+    "var apath = await artifact('resume_upload_copy_for_form.pdf', await fs.readFile('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/jordan_testcase_test_resume.pdf')); console.log(apath);",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:2607,files:[apath]}); await bu.state({max:30000});",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:2607,files:['downloads/Jordan_Testcase_TEST_RESUME.pdf']});",
+    "console.log(await fs.readFile('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.uploads-manifest.json','utf8'));",
+    "await bu.type(2787,'GPU-poor and proud \ud83e\udd17. The supplied profile points to building and running Python and TypeScript services for an analytics product and owning its CI pipeline; that is where I could ",
+    "await page.cdp('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:'/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads'});",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:2607,files:['/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/downloads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state({max:30000});",
+    "console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('input,textarea,select')).map((e,i)=>({i,type:e.type||e.tagName,placeholder:e.placeholder,value:e.value,aria:e.getAttribute('ar",
+    "var resumeB64=(await fs.readFile('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/jordan_testcase_test_resume.pdf')).toString('base64'); console.log(await page.evaluate((b64)=>{const input",
+    "await page.goto('https://apply.workable.com/huggingface/j/81B46579FE/apply/'); await bu.state({max:30000});",
+    "await bu.state({max:30000});",
+    "await page.cdp('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:'/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Downloads'}); await page.cdp('DOM.setFileInputFiles',{backendNodeId:626",
+    "await bu.click(6199); await bu.state({max:30000});",
+    "await bu.click(8293); await bu.click(6174); await bu.state({max:30000});",
+    "await bu.type(8418,'B.Tech (2021)'); await bu.click(8459); await bu.state({max:30000});",
+    "await bu.state({max:30000});"
+  ],
+  "version": "v2",
+  "label": "cu-workable-huggingface",
+  "ats": "custom",
+  "company": "Hugging Face",
+  "run_dir": "runs\\20261105T191236-A-cu-workable-huggingface",
+  "wall_seconds": 260.1,
+  "bu_spent_before": 0.28562,
+  "bu_spent_after": 0.314933,
+  "bu_balance_delta": 0.029313,
+  "bu_cost_counted": 0.029313
+}

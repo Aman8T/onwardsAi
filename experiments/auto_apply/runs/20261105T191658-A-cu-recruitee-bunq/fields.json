@@ -1,0 +1,127 @@
+{
+  "url": "https://careers.bunq.com/positions/ios-developer-4",
+  "title": "iOS Developer at bunq | bunq Careers",
+  "fields": [
+    {
+      "selector": "[id=\"job-application-honeypot-r2b\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "website",
+      "label": "Website",
+      "required": false,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input-name-r2c\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "name",
+      "label": "What is your full name? *",
+      "required": true,
+      "value": "Jordan Testcase",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input-email-r2e\"]",
+      "tag": "input",
+      "type": "email",
+      "name": "email",
+      "label": "What is your email? *",
+      "required": true,
+      "value": "jordan.testcase@example.com",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input-phone-r2g\"]",
+      "tag": "input",
+      "type": "tel",
+      "name": null,
+      "label": "What is your phone number? *",
+      "required": true,
+      "value": "5550100142",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input-q_4413534-r2i\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "q_4413534",
+      "label": "What country do you currently live in? *",
+      "required": true,
+      "value": "India",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input-q_4413541-r2t\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "q_4413541",
+      "label": "What are your salary expectations? (gross, annual, in EUR) *",
+      "required": true,
+      "value": "Negotiable",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input-radio-group-true-0\"]",
+      "tag": "input",
+      "type": "radio",
+      "name": "q_4413543",
+      "label": "Have you previously worked at bunq?* (required)",
+      "required": false,
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input-radio-group-true-0\"]",
+      "tag": "input",
+      "type": "radio",
+      "name": "q_4413554",
+      "label": "Can you read Objective-C implementations and translate them into Swift using modern best practices?* (required)",
+      "required": false,
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input-radio-group-true-0\"]",
+      "tag": "input",
+      "type": "radio",
+      "name": "q_4413556",
+      "label": "Can you assess legacy UI components and reconstruct them following modern SwiftUI development standards?* (required)",
+      "required": false,
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"job-application-privacy-r2b\"]",
+      "tag": "input",
+      "type": "checkbox",
+      "name": "privacy",
+      "label": "I have read and accept the",
+      "required": true,
+      "value": "checked",
+      "frame": 0
+    }
+  ],
+  "blockers": {
+    "captcha_on_page": false,
+    "password_field": false,
+    "submit_texts": [
+      "Apply now",
+      "Submit Now"
+    ],
+    "resume_name_on_page": false
+  }
+}
