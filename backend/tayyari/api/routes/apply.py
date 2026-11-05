@@ -29,6 +29,7 @@ from tayyari.contract.apply import (
     ApplyStatus,
     ApproveRequest,
     CreateApplicationRequest,
+    EmailClassifyRequest,
     StageChangeRequest,
 )
 from tayyari.core.errors import BadRequest, NotFound, PayloadTooLarge, Unauthorized
@@ -208,6 +209,26 @@ async def change_stage(application_id: str, request: Request) -> JSONResponse:
 async def retry(application_id: str, request: Request) -> JSONResponse:
     _, svc, owner, _, fresh = await _start(request)
     return _json(request, (await svc.retry(owner, application_id)).to_dict(), fresh)
+
+
+@router.post("/api/apply/email")
+async def classify_email(request: Request) -> JSONResponse:
+    """An employer's email, pasted: classified, matched to an application, and dropped (never stored or logged)."""
+    from tayyari.apply.email import EmailTracker
+
+    container, _, owner, _, fresh = await _start(request)
+    require_json_content_type(request)
+    raw = await read_json_body(request, 128 * 1024)
+    try:
+        body = EmailClassifyRequest.model_validate(raw)
+    except ValidationError as err:
+        raise BadRequest("The request is not in the expected shape.") from err
+    settings = container.settings
+    claude = container.claude if settings.anthropic_api_key is not None else None
+    tracker = EmailTracker(
+        container.repos.apply, container.clock, claude, settings.apply.email_model or settings.reader_model
+    )
+    return _json(request, (await tracker.handle(owner, body)).to_dict(), fresh)
 
 
 @router.delete("/api/apply/applications/{application_id}")

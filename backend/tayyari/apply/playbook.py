@@ -119,7 +119,23 @@ LEVER: Final = Playbook(
     success_text=r"application submitted|thank(s| you) for applying",
 )
 
-BUILTIN: Final[dict[str, Playbook]] = {"greenhouse": GREENHOUSE, "lever": LEVER}
+ASHBY: Final = Playbook(
+    ats="ashby",
+    form_selector=".ashby-application-form-container form, form",
+    rules=[
+        FieldRule(key="fullName", id="_systemfield_name"),
+        FieldRule(key="email", id="_systemfield_email"),
+        FieldRule(key="resume", id="_systemfield_resume"),
+        FieldRule(key="location", id="_systemfield_location"),
+    ],
+    submit_selector=".ashby-application-form-submit-button, button[type=submit]",
+    success_text=r"thank(s| you) for applying|successfully submitted|application (was|has been) (submitted|received)",
+    notes=[
+        "Ashby uploads the resume through its API when it is chosen; that request waits for the approved submit"
+    ],
+)
+
+BUILTIN: Final[dict[str, Playbook]] = {"greenhouse": GREENHOUSE, "lever": LEVER, "ashby": ASHBY}
 
 
 def builtin_id(pb: Playbook) -> str:
@@ -143,6 +159,7 @@ def rule_for(item: FormField, playbook: Playbook) -> ProfileKey | None:
 
 
 __all__ = [
+    "ASHBY",
     "BUILTIN",
     "GENERIC_RULES",
     "GREENHOUSE",
