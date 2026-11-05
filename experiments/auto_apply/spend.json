@@ -1,0 +1,16 @@
+{
+  "browser_use_usd": 0.000333,
+  "anthropic_usd": 0.0,
+  "caps": {
+    "browser_use_stop_usd": 0.8,
+    "anthropic_cap_usd": 2.0
+  },
+  "runs": [
+    {
+      "at": "2026-11-05T17:49:18+00:00",
+      "kind": "guard_check",
+      "browser_use_usd": 0.0003333333333333333,
+      "anthropic_usd": 0
+    }
+  ]
+}

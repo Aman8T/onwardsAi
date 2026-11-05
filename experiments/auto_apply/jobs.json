@@ -1,0 +1,82 @@
+[
+  {
+    "company": "GitLab",
+    "checked_http_status": 200,
+    "label": "gh-gitlab",
+    "notes": "Hosted Greenhouse job-boards page; form is on the job page itself (form markup present in HTML).",
+    "job_url": "https://job-boards.greenhouse.io/gitlab/jobs/8771512002",
+    "apply_url": "https://job-boards.greenhouse.io/gitlab/jobs/8771512002",
+    "title": "Backend Engineer, GitLab Orbit",
+    "ats": "greenhouse"
+  },
+  {
+    "company": "Cloudflare",
+    "checked_http_status": 200,
+    "label": "gh-cloudflare",
+    "notes": "Hosted Greenhouse job-boards page; API listed it with boards.greenhouse.io URL, job-boards URL answers 200 with form markup.",
+    "job_url": "https://job-boards.greenhouse.io/cloudflare/jobs/8300518",
+    "apply_url": "https://job-boards.greenhouse.io/cloudflare/jobs/8300518",
+    "title": "Capacity Engineer",
+    "ats": "greenhouse"
+  },
+  {
+    "company": "Spotify",
+    "checked_http_status": 200,
+    "label": "lv-spotify",
+    "notes": "Lever apply page; may include hCaptcha on submit (not checked). Sales role.",
+    "job_url": "https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b",
+    "apply_url": "https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply",
+    "title": "Account Executive - Commercial, Spotify Technology",
+    "ats": "lever"
+  },
+  {
+    "company": "Palantir",
+    "checked_http_status": 200,
+    "label": "lv-palantir",
+    "notes": "Lever apply page; ops/admin role. Palantir pages are large (~1.9MB HTML).",
+    "job_url": "https://jobs.lever.co/palantir/6ed76ce8-4156-4b60-b120-403538bd66cd",
+    "apply_url": "https://jobs.lever.co/palantir/6ed76ce8-4156-4b60-b120-403538bd66cd/apply",
+    "title": "Administrative Business Partner",
+    "ats": "lever"
+  },
+  {
+    "company": "Linear",
+    "checked_http_status": 200,
+    "label": "ab-linear",
+    "notes": "Ashby is a client-rendered SPA; static HTML has no form markup, form appears after JS runs.",
+    "job_url": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff",
+    "apply_url": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application",
+    "title": "Senior / Staff Fullstack Engineer",
+    "ats": "ashby"
+  },
+  {
+    "company": "Ramp",
+    "checked_http_status": 200,
+    "label": "ab-ramp",
+    "notes": "Ashby SPA; form rendered client-side.",
+    "job_url": "https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040",
+    "apply_url": "https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040/application",
+    "title": "Mobile Engineer, Android",
+    "ats": "ashby"
+  },
+  {
+    "company": "Hugging Face",
+    "checked_http_status": 200,
+    "label": "cu-workable-huggingface",
+    "notes": "Custom ATS: Workable. SPA shell (~8KB); form rendered client-side. HTML mentions captcha, so a captcha may appear on submit.",
+    "job_url": "https://apply.workable.com/j/81B46579FE",
+    "apply_url": "https://apply.workable.com/huggingface/j/81B46579FE/apply/",
+    "title": "Open-Source Machine Learning Engineer - EMEA Remote",
+    "ats": "custom"
+  },
+  {
+    "company": "bunq",
+    "checked_http_status": 200,
+    "label": "cu-recruitee-bunq",
+    "notes": "Custom ATS: Recruitee on careers.bunq.com custom domain (bunq.recruitee.com API). Public form, no login.",
+    "job_url": "https://careers.bunq.com/o/ios-developer-4",
+    "apply_url": "https://careers.bunq.com/o/ios-developer-4/c/new",
+    "title": "iOS Developer",
+    "ats": "custom"
+  }
+]
