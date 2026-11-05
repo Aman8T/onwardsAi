@@ -1,0 +1,177 @@
+{
+  "arm": "A",
+  "model": "bu-ultrafast",
+  "run_id": "46081f83-6164-4279-b3b4-8fd46b209040",
+  "session_id": "debc5c33-ccfc-4c62-8c6c-ad811ba00361",
+  "agent_seconds": 31.6,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "llm.request": 10,
+    "core.event": 39,
+    "llm.response": 10,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "",
+    "fields": [
+      {
+        "label": "Full name",
+        "status": "filled",
+        "value": "Jordan Testcase"
+      },
+      {
+        "label": "Email",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Phone number",
+        "status": "filled",
+        "value": "555 010 0142 (United States +1 selected)"
+      },
+      {
+        "label": "Country currently living in",
+        "status": "filled",
+        "value": "India"
+      },
+      {
+        "label": "Which visa situation fits you best?",
+        "status": "skipped",
+        "value": "Select an option (left unanswered; listed choices are Netherlands-specific and provided details do not identify a matching situation)"
+      },
+      {
+        "label": "English skills",
+        "status": "skipped",
+        "value": "Select an option (left unanswered; no proficiency level supplied)"
+      },
+      {
+        "label": "Agree to contract duration / hybrid arrangement / working hours",
+        "status": "skipped",
+        "value": "Select an option (left unanswered; no agreement supplied)"
+      },
+      {
+        "label": "Salary expectations (gross annual, EUR)",
+        "status": "filled",
+        "value": "Negotiable"
+      },
+      {
+        "label": "Previously worked at bunq?",
+        "status": "skipped",
+        "value": "Unanswered (not supplied)"
+      },
+      {
+        "label": "Approach to work, impact, and solving challenges",
+        "status": "skipped",
+        "value": "Select an option (left unanswered; not enough detail to choose)"
+      },
+      {
+        "label": "Approach to AI in professional context",
+        "status": "skipped",
+        "value": "Select an option (left unanswered; not supplied)"
+      },
+      {
+        "label": "Practical proficiency with Swift",
+        "status": "skipped",
+        "value": "Select an option (left unanswered; not supplied)"
+      },
+      {
+        "label": "Read Objective-C implementations and translate into Swift?",
+        "status": "skipped",
+        "value": "Unanswered (not supplied)"
+      },
+      {
+        "label": "Familiarity with iOS development in a CI pipeline",
+        "status": "skipped",
+        "value": "Select an option (left unanswered; not supplied)"
+      },
+      {
+        "label": "Assess legacy UI and reconstruct with SwiftUI?",
+        "status": "skipped",
+        "value": "Unanswered (not supplied)"
+      },
+      {
+        "label": "How did you first hear about this role?",
+        "status": "filled",
+        "value": "I found it myself on bunq's careers website"
+      },
+      {
+        "label": "Recruitment Privacy Policy acknowledgement",
+        "status": "filled",
+        "value": "Checked"
+      },
+      {
+        "label": "Resume/CV upload",
+        "status": "skipped",
+        "value": "No resume/CV field was present in the observed application form; not uploaded"
+      },
+      {
+        "label": "Other provided details (first/last name, location/city, current company/title, experience, website, education, work history, work authorization, sponsorship, notice period, demographics, cover letter)",
+        "status": "skipped",
+        "value": "No corresponding fields were present in the observed form."
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 81846,
+    "output": 1291
+  },
+  "run_cost_usd": 0.007143,
+  "browser_id": "5a403121-cacd-4ced-98d1-681c0a3c9897",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": true,
+    "fields_total": 10,
+    "required_total": 6,
+    "required_filled": 6,
+    "mapped_correct": 3,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": null,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://careers.bunq.com/positions/ios-developer-4",
+  "session_cost": {
+    "llm_cost_usd": 0.007143,
+    "browser_cost_usd": 0.000333,
+    "proxy_cost_usd": 1.3e-05,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.00749
+  },
+  "browser_use_usd": 0.00749,
+  "seconds": 53.1,
+  "anthropic_usd": 0.0,
+  "steps": 10,
+  "llm_requests": 10,
+  "agent_trace": [
+    "page = await tabs.open('https://careers.bunq.com/o/ios-developer-4/c/new'); await bu.state();",
+    "await bu.click(504); await bu.state({max:30000});",
+    "await bu.click(199); await bu.state({max:30000});",
+    "await page.evaluate(()=>Array.from(document.querySelectorAll('select')).map(s=>({label:s.getAttribute('aria-label'),text:s.innerText, options:Array.from(s.options).map(o=>o.text)})))",
+    "await bu.type(848,'Jordan Testcase'); await bu.type(858,'jordan.testcase@example.com'); await bu.type(881,'+1 555 010 0142'); await bu.type(890,'India'); await bu.state();",
+    "await bu.type(1026,'Negotiable'); await bu.type(1271,\"I found it myself on bunq's careers website\"); await bu.click(1042); await bu.click(1278); await bu.state({max:30000});",
+    "await bu.state({max:30000});",
+    "await bu.click(1531); await bu.click(1278); await bu.state();",
+    "await bu.click(1278); await bu.state();"
+  ],
+  "label": "cu-recruitee-bunq",
+  "ats": "custom",
+  "company": "bunq",
+  "run_dir": "runs\\20261105T182533-A-cu-recruitee-bunq",
+  "wall_seconds": 58.3,
+  "bu_spent_before": 0.067616,
+  "bu_spent_after": 0.075451,
+  "bu_balance_delta": 0.007835,
+  "bu_cost_counted": 0.007835
+}

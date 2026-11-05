@@ -1,0 +1,187 @@
+{
+  "arm": "A",
+  "model": "bu-ultrafast",
+  "run_id": "ef716808-4f3f-4b7d-ad2d-4670ce2b6527",
+  "session_id": "a38c0fc0-41df-41c0-bdde-451b9e42a244",
+  "agent_seconds": 23.0,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "llm.request": 9,
+    "core.event": 35,
+    "llm.response": 9,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "",
+    "fields": [
+      {
+        "label": "First name",
+        "status": "filled",
+        "value": "Jordan"
+      },
+      {
+        "label": "Last name",
+        "status": "filled",
+        "value": "Testcase"
+      },
+      {
+        "label": "Email",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Phone",
+        "status": "filled",
+        "value": "+1 555 010 0142 (displayed as 555-010-0142; form flagged it invalid)"
+      },
+      {
+        "label": "Education",
+        "status": "skipped",
+        "value": "B.Tech in Computer Science, Example Institute of Technology, 2021 (form's Add Education control did not expose fields)"
+      },
+      {
+        "label": "Experience / work history",
+        "status": "skipped",
+        "value": "Software Engineer at Example Labs (2022 to now): built and ran Python and TypeScript services for an internal analytics product, owned its CI pipeline. Junior Developer at Sample Systems (2021 to 2022): maintained a Django web app and wrote its test suite. (form's Add Experience control did not expose fields)"
+      },
+      {
+        "label": "Resume / CV",
+        "status": "failed",
+        "value": "uploads/Jordan_Testcase_TEST_RESUME.pdf (upload not completed; browser requires file in downloads directory)"
+      },
+      {
+        "label": "Github profile",
+        "status": "skipped",
+        "value": "Not provided"
+      },
+      {
+        "label": "Linkedin",
+        "status": "skipped",
+        "value": "Not provided"
+      },
+      {
+        "label": "Cover letter",
+        "status": "filled",
+        "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted."
+      },
+      {
+        "label": "Expected salary",
+        "status": "filled",
+        "value": "Negotiable"
+      },
+      {
+        "label": "Notice period / availability",
+        "status": "filled",
+        "value": "1 month"
+      },
+      {
+        "label": "Are you eligible to work in the country you are applying?",
+        "status": "skipped",
+        "value": "Yes (not selected; country is France while provided location/work authorization details refer to India)"
+      },
+      {
+        "label": "How did you hear about us?",
+        "status": "filled",
+        "value": "Company careers page"
+      },
+      {
+        "label": "Confirm all application information is true and your own",
+        "status": "skipped",
+        "value": "Not answered; this is explicitly a fictional applicant profile"
+      },
+      {
+        "label": "Exact phrase requested in job description",
+        "status": "skipped",
+        "value": "Not answered; the requested phrase was not provided or verified"
+      },
+      {
+        "label": "Public track record of open-source contributions",
+        "status": "skipped",
+        "value": "Not answered; no contributions or links were provided"
+      },
+      {
+        "label": "Why Hugging Face / where make biggest difference",
+        "status": "skipped",
+        "value": "Not answered; no role-specific information beyond the provided work history was supplied, and the prompt requests a personal answer in the applicant's own words"
+      },
+      {
+        "label": "2\u20133 open-source contributions with links",
+        "status": "skipped",
+        "value": "Not answered; no contribution links or details were provided"
+      },
+      {
+        "label": "Privacy Notice consent checkbox",
+        "status": "skipped",
+        "value": "Not checked"
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 55980,
+    "output": 1341
+  },
+  "run_cost_usd": 0.005597,
+  "browser_id": "b7bae6e3-d8d8-42f0-bc0a-aa4a83b831ef",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 13,
+    "required_total": 8,
+    "required_filled": 3,
+    "mapped_correct": 5,
+    "wrong": [],
+    "missed_required": [
+      "Resume Choose file",
+      "Github profile",
+      "Linkedin",
+      "Why Hugging Face, and where would you make the biggest difference in this role? ",
+      "Share 2\u20133 of your open-source contributions with links (GitHub PRs, issues, or p"
+    ],
+    "resume_attached": false,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://apply.workable.com/huggingface/j/81B46579FE/apply/",
+  "session_cost": {
+    "llm_cost_usd": 0.005597,
+    "browser_cost_usd": 0.000333,
+    "proxy_cost_usd": 0.0,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.00593
+  },
+  "browser_use_usd": 0.00593,
+  "seconds": 42.4,
+  "anthropic_usd": 0.0,
+  "steps": 9,
+  "llm_requests": 9,
+  "agent_trace": [
+    "page = await tabs.open('https://apply.workable.com/huggingface/j/81B46579FE/apply/'); await bu.state()",
+    "await bu.click(6); await bu.state()",
+    "await bu.state({max:30000})",
+    "await bu.type(347,'Jordan'); await bu.type(358,'Testcase'); await bu.type(369,'jordan.testcase@example.com'); await bu.type(379,'+1 555 010 0142'); await bu.click(400); await bu.state()",
+    "await page.evaluate(()=>Array.from(document.querySelectorAll('input,button')).map(x=>({tag:x.tagName,type:x.type,placeholder:x.placeholder,aria:x.getAttribute('aria-label'),text:x.innerText})).filter(",
+    "await bu.type(478,'This is a test application from a fictional profile used to check form filling. It must not be submitted.'); await bu.type(488,'Negotiable'); await bu.type(536,'Company careers page",
+    "await bu.click(2474); await bu.click(525); const p='/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/Jordan_Testcase_TEST_RESUME.pdf'; await page.cdp('DOM.setFileInputFiles',{backendNodeId:",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:432,files:['/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/Jordan_Testcase_TEST_RESUME.pdf']}); await bu.state()"
+  ],
+  "label": "cu-workable-huggingface",
+  "ats": "custom",
+  "company": "Hugging Face",
+  "run_dir": "runs\\20261105T182444-A-cu-workable-huggingface",
+  "wall_seconds": 47.7,
+  "bu_spent_before": 0.060995,
+  "bu_spent_after": 0.067616,
+  "bu_balance_delta": 0.006621,
+  "bu_cost_counted": 0.006621
+}

@@ -1,0 +1,200 @@
+{
+  "arm": "A",
+  "model": "bu-ultrafast",
+  "run_id": "61613f40-3a4a-485a-bd5a-b84335c053e1",
+  "session_id": "614655df-c636-4e33-aa32-275a04c3d4d4",
+  "agent_seconds": 35.9,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "core.event": 54,
+    "llm.request": 14,
+    "llm.response": 14,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "Resume upload could not be completed because the browser required the file in its downloads directory. No CAPTCHA, login page, or account wall was encountered. The application was not submitted.",
+    "fields": [
+      {
+        "label": "Resume/CV (required)",
+        "status": "failed",
+        "value": "Not uploaded; upload was blocked because the browser requires files in its downloads directory."
+      },
+      {
+        "label": "Full name (required)",
+        "status": "filled",
+        "value": "Jordan Testcase"
+      },
+      {
+        "label": "Email (required)",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Phone",
+        "status": "filled",
+        "value": "+1 555 010 0142"
+      },
+      {
+        "label": "Current location (required)",
+        "status": "filled",
+        "value": "Pune, India"
+      },
+      {
+        "label": "Current company",
+        "status": "filled",
+        "value": "Example Labs"
+      },
+      {
+        "label": "LinkedIn URL",
+        "status": "skipped",
+        "value": "Blank; no value provided."
+      },
+      {
+        "label": "GitHub URL",
+        "status": "skipped",
+        "value": "Blank; no value provided."
+      },
+      {
+        "label": "Portfolio URL",
+        "status": "filled",
+        "value": "https://example.com/jordan-testcase"
+      },
+      {
+        "label": "Language skills (required)",
+        "status": "filled",
+        "value": "English (ENG), Hindi (HIN)"
+      },
+      {
+        "label": "Preferred name",
+        "status": "filled",
+        "value": "Jordan"
+      },
+      {
+        "label": "Name pronunciation",
+        "status": "filled",
+        "value": "Jordan Testcase"
+      },
+      {
+        "label": "Legally authorized to work (required)",
+        "status": "filled",
+        "value": "Yes"
+      },
+      {
+        "label": "Requires sponsorship (required)",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "University (required)",
+        "status": "filled",
+        "value": "Other - School Not Listed"
+      },
+      {
+        "label": "How did you hear (required)",
+        "status": "filled",
+        "value": "Palantir Website (closest available option to Company careers page)"
+      },
+      {
+        "label": "Favorite project/accomplishment",
+        "status": "filled",
+        "value": "Built and operated Python and TypeScript services for an internal analytics product, and owned its CI pipeline."
+      },
+      {
+        "label": "Why Palantir",
+        "status": "filled",
+        "value": "I am interested in Palantir because of its work building software that helps organizations use data effectively."
+      },
+      {
+        "label": "AI notetaker consent (required)",
+        "status": "filled",
+        "value": "No, I do not consent"
+      },
+      {
+        "label": "Singapore citizen (required)",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "Singapore permanent resident (required)",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "Additional information",
+        "status": "filled",
+        "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted. Education: B.Tech in Computer Science, Example Institute of Technology, 2021. Work history: Software Engineer at Example Labs (2022 to now): built and ran Python and TypeScript services for an internal analytics product, owned its CI pipeline. Junior Developer at Sample Systems (2021 to 2022): maintained a Django web app and wrote its test suite. Notice period: 30 days. Salary expectation: Negotiable."
+      },
+      {
+        "label": "Separate demographic question",
+        "status": "skipped",
+        "value": "No separate demographic question was observed."
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 126756,
+    "output": 2239
+  },
+  "run_cost_usd": 0.010385,
+  "browser_id": "39fbcc39-40a1-4638-94ea-bf654b12dc7a",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 22,
+    "required_total": 10,
+    "required_filled": 10,
+    "mapped_correct": 5,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": false,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.lever.co/palantir/6ed76ce8-4156-4b60-b120-403538bd66cd/apply",
+  "session_cost": {
+    "llm_cost_usd": 0.010385,
+    "browser_cost_usd": 0.000333,
+    "proxy_cost_usd": 0.0,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.010718
+  },
+  "browser_use_usd": 0.010718,
+  "seconds": 56.3,
+  "anthropic_usd": 0.0,
+  "steps": 14,
+  "llm_requests": 14,
+  "agent_trace": [
+    "await (async()=>{let p=await tabs.open('https://jobs.lever.co/palantir/6ed76ce8-4156-4b60-b120-403538bd66cd/apply'); console.log(await bu.state())})()",
+    "console.log(await tabs.list())",
+    "page=await tabs.get('A64247891505468E25ED2C98E8A546DC'); console.log(await bu.state())",
+    "await bu.click(109); console.log(await bu.state({max:30000}))",
+    "console.log(require('fs').existsSync('uploads/Jordan_Testcase_TEST_RESUME.pdf'));",
+    "await bu.type(5,'Jordan Testcase'); await bu.type(6,'jordan.testcase@example.com'); await bu.type(7,'+1 555 010 0142'); await bu.type(8,'Pune, India'); await bu.type(9,'Example Labs'); await bu.type(1",
+    "console.log(await page.evaluate(()=>[...document.querySelectorAll('select')].map(s=>[s.name,[...s.options].map(o=>o.text).filter(x=>/Other|Example/i.test(x)).slice(0,20)]))); console.log(require('fs')",
+    "await bu.type(3,'Other - School Not Listed'); await bu.type(61,'Company careers page'); await bu.type(63,'Built and operated Python and TypeScript services for an internal analytics product, and owned",
+    "await bu.type(61,'Palantir Website'); await bu.type(63,'Built and operated Python and TypeScript services for an internal analytics product, and owned its CI pipeline.'); await bu.type(64,'I am intere",
+    "await bu.type(8,'Pune, India'); console.log(await page.evaluate(()=>[...document.querySelectorAll('input')].map(x=>[x.placeholder,x.value,x.type])));",
+    "const f=await page.evaluate(()=>document.querySelector('input[type=file]')?.outerHTML); console.log(f);",
+    "let id=(await page.cdp('DOM.getDocument',{})).root; let d=await page.cdp('DOM.querySelector',{nodeId:id.nodeId,selector:'input[type=file]'}); let b=await page.cdp('DOM.describeNode',{nodeId:d.nodeId})"
+  ],
+  "label": "lv-palantir",
+  "ats": "lever",
+  "company": "Palantir",
+  "run_dir": "runs\\20261105T182235-A-lv-palantir",
+  "wall_seconds": 61.5,
+  "bu_spent_before": 0.046194,
+  "bu_spent_after": 0.057024,
+  "bu_balance_delta": 0.01083,
+  "bu_cost_counted": 0.01083
+}

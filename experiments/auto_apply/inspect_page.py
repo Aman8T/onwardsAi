@@ -35,9 +35,35 @@ def main() -> int:
         with sync_playwright() as p:
             browser = bu.connect(p, b.cdp_url)
             page = browser.contexts[0].pages[0]
+            posts: list[str] = []
+            if "--posts" in sys.argv:
+                from urllib.parse import parse_qs, urlsplit
+
+                cdp = browser.contexts[0].new_cdp_session(page)
+
+                def on_req(params: dict) -> None:
+                    req = params["request"]
+                    if req["method"] != "GET":
+                        u = urlsplit(req["url"])
+                        op = parse_qs(u.query).get("op", [""])[0]
+                        body_op = ""
+                        if req.get("postData") and '"operationName"' in req["postData"]:
+                            try:
+                                body_op = json.loads(req["postData"]).get("operationName", "")
+                            except ValueError:
+                                body_op = "?"
+                        posts.append(f"{req['method']} {u.hostname}{u.path} op={op or body_op}")
+
+                cdp.on("Network.requestWillBeSent", on_req)
+                cdp.send("Network.enable")
             page.goto(job["apply_url"], wait_until="domcontentloaded", timeout=45_000)
             page.wait_for_timeout(6000)
-            if "--upload" in sys.argv:
+            if "--posts" in sys.argv:
+                print("non-GET requests the page attempted (the guard blocks them):")
+                for line in sorted(set(posts)):
+                    print("  ", line)
+                print("page text:", page.inner_text("body")[:300].replace("\n", " "))
+            elif "--upload" in sys.argv:
                 from common.guard import install_route_guard
                 from common.profile import RESUME_NAME
                 from common.resume import build_resume

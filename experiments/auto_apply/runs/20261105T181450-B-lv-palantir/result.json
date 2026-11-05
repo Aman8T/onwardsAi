@@ -1,0 +1,77 @@
+{
+  "arm": "B",
+  "model": "claude-sonnet-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 3,
+  "score": {
+    "success": false,
+    "fields_total": 22,
+    "required_total": 10,
+    "required_filled": 9,
+    "mapped_correct": 5,
+    "wrong": [],
+    "missed_required": [
+      "Current location \u2731"
+    ],
+    "resume_attached": true,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.lever.co/palantir/6ed76ce8-4156-4b60-b120-403538bd66cd/apply",
+  "seconds": 108.2,
+  "failure": null,
+  "errors": [
+    "field 19 (Are you a Singapore citizen? \u2731): Error",
+    "field 14 (Which university are you currently attending or did you last): TimeoutError",
+    "field 14 (Which university are you currently attending or did you last): LookupError"
+  ],
+  "steps": 22,
+  "claude_calls": 3,
+  "usage": [
+    {
+      "input_tokens": 3346,
+      "output_tokens": 830,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.014992,
+      "seconds": 5.5,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 3599,
+      "output_tokens": 141,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.008608,
+      "seconds": 4.9,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 3599,
+      "output_tokens": 150,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.008698,
+      "seconds": 2.6,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.032298,
+  "browser_use_usd": 0.001033,
+  "browser_cost": {
+    "browser": 0.0006666666666666666,
+    "proxy": 0.0003659551963210106,
+    "proxy_mb": 1.8736906051635742
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "label": "lv-palantir",
+  "ats": "lever",
+  "company": "Palantir",
+  "run_dir": "runs\\20261105T181450-B-lv-palantir",
+  "wall_seconds": 113.5,
+  "bu_spent_before": 0.025338,
+  "bu_spent_after": 0.026712,
+  "bu_balance_delta": 0.001374,
+  "bu_cost_counted": 0.001374
+}

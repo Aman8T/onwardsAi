@@ -29,6 +29,7 @@ HERE = Path(__file__).resolve().parent
 RUNS = HERE / "runs"
 RESULTS = HERE / "results.jsonl"
 CREDIT_START_USD = 1.00  # the one-time free credit; spend is measured against the real balance
+CODE_VERSION = "v2"  # v1 = first batch; v2 = buttons in Arm B's prompt, error details, typeahead, Ashby read-only POSTs
 ESTIMATE = {"A": (0.15, 0.0), "B": (0.01, 0.15), "C": (0.005, 0.0)}  # (Browser Use, Anthropic) per run, USD
 
 
@@ -92,7 +93,7 @@ def one(arm: str, label: str, model: str, max_cost: float) -> dict[str, Any]:
                   "browser_use_usd": 0.0, "anthropic_usd": 0.0}  # fmt: skip
     time.sleep(4)  # let the balance settle after the browser stopped
     spent_after = bu_spent()
-    result.update(label=label, ats=job["ats"], company=job["company"], run_dir=str(run_dir.relative_to(HERE)),
+    result.update(version=CODE_VERSION, label=label, ats=job["ats"], company=job["company"], run_dir=str(run_dir.relative_to(HERE)),
                   wall_seconds=round(time.monotonic() - t0, 1), bu_spent_before=round(spent_before, 6),
                   bu_spent_after=round(spent_after, 6), bu_balance_delta=round(spent_after - spent_before, 6))  # fmt: skip
     bu_cost = max(float(result.get("browser_use_usd") or 0), result["bu_balance_delta"])

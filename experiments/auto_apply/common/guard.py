@@ -26,6 +26,13 @@ CAPTCHA_DOMAINS = ["recaptcha.net", "hcaptcha.com", "challenges.cloudflare.com",
 CAPTCHA_PATHS = ["||google.com/recaptcha", "||gstatic.com/recaptcha", "||www.google.com/recaptcha"]
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
+# Read-only POSTs a form needs just to render, allowed by exact operation name after inspection (inspect_page.py
+# --posts). Ashby loads the posting and its form through GraphQL POSTs. Submit/upload operations are NOT listed and
+# stay blocked.
+READ_ONLY_POSTS = [
+    r"^https://jobs\.ashbyhq\.com/api/non-user-graphql\?op=(ApiJobPosting|ApiOrganizationFromHostedJobsPageName)$",
+]
+
 MANIFEST = {
     "manifest_version": 3,
     "name": "Onwards experiment submit guard",
@@ -46,7 +53,17 @@ def rules() -> list[dict[str, Any]]:
     for number, path in enumerate(CAPTCHA_PATHS, start=3):
         out.append({"id": number, "priority": 1, "action": {"type": "block"},
                     "condition": {"urlFilter": path, "resourceTypes": ALL_TYPES}})  # fmt: skip
+    for number, regex in enumerate(READ_ONLY_POSTS, start=50):
+        out.append({"id": number, "priority": 2, "action": {"type": "allow"},
+                    "condition": {"regexFilter": regex, "requestMethods": ["post"],
+                                  "resourceTypes": ["xmlhttprequest", "other"]}})  # fmt: skip
     return out
+
+
+def read_only_post(url: str) -> bool:
+    import re
+
+    return any(re.match(rx, url) for rx in READ_ONLY_POSTS)
 
 
 def extension_zip() -> tuple[bytes, str]:
@@ -73,7 +90,7 @@ def install_route_guard(context: Any, blocked: list[dict[str, str]]) -> None:
 
     def handler(route: Any, request: Any) -> None:
         method, url = request.method.upper(), request.url
-        if method not in SAFE_METHODS or is_captcha_url(url):
+        if (method not in SAFE_METHODS and not (method == "POST" and read_only_post(url))) or is_captcha_url(url):
             blocked.append({"method": method, "host": urlsplit(url).hostname or "", "layer": "route"})
             route.abort("blockedbyclient")
             return

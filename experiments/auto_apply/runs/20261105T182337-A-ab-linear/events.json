@@ -1,0 +1,576 @@
+[
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310084,
+    "ts": "2026-11-05T18:23:38.838229Z",
+    "type": "run.created",
+    "data": {
+      "model": "bu-ultrafast",
+      "session_id": "39e74986-fba7-431b-a61b-a0079be84898",
+      "is_free_tier": false,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "browser_settings": {
+        "record": false,
+        "profile_id": null,
+        "custom_proxy": false,
+        "extension_ids": [
+          "b7cb8cf4-0c3c-4641-8605-52cca638c7b3"
+        ],
+        "allow_resizing": null,
+        "proxy_country_code": null,
+        "browser_screen_width": null,
+        "browser_screen_height": null,
+        "profile_storage_generation": ""
+      }
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310088,
+    "ts": "2026-11-05T18:23:38.872094Z",
+    "type": "run.dispatching",
+    "data": {
+      "transport": "agentcore"
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310124,
+    "ts": "2026-11-05T18:23:39.167818Z",
+    "type": "browser.ready",
+    "data": {
+      "live_view_url": "<redacted>",
+      "browser_session_id": "86186fd1-d251-4726-a79d-716f8a49f2d8"
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310138,
+    "ts": "2026-11-05T18:23:39.421891Z",
+    "type": "worker.started",
+    "data": {
+      "core_agent": "bu-pi",
+      "session_id": "39e74986-fba7-431b-a61b-a0079be84898",
+      "cold_process": true,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "invocation_index": 1,
+      "prewarmed_process": false,
+      "invocation_received_unix_ms": 1793903019398,
+      "process_age_at_invocation_ms": 4517.402604000001,
+      "runtime_session_header_present": true
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310140,
+    "ts": "2026-11-05T18:23:39.417120Z",
+    "type": "run.dispatched",
+    "data": {
+      "transport": "agentcore",
+      "browser_session_id": "86186fd1-d251-4726-a79d-716f8a49f2d8"
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310168,
+    "ts": "2026-11-05T18:23:39.749918Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903019676
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310169,
+    "ts": "2026-11-05T18:23:39.752715Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 2,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "14323",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310223,
+    "ts": "2026-11-05T18:23:40.611315Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000804",
+      "charge_usd": "0.000965",
+      "is_own_key": false,
+      "input_tokens": 2987,
+      "output_tokens": 57,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2984,
+      "cached_input_tokens": 0
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310232,
+    "ts": "2026-11-05T18:23:40.757248Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.goto('https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application'); await bu.state()"
+          },
+          "status": "running"
+        },
+        "callID": "call_dKtTnJSjyKcC998EvWbTAfBM|fc_0bc5382eb55508c6016aecc9ac486887d18632f7be86cd8a02"
+      },
+      "type": "tool_use",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903020625
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310260,
+    "ts": "2026-11-05T18:23:41.192106Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.goto('https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application'); await bu.state()"
+          },
+          "output": "[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_dKtTnJSjyKcC998EvWbTAfBM|fc_0bc5382eb55508c6016aecc9ac486887d18632f7be86cd8a02"
+      },
+      "type": "tool_use",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903021186
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310261,
+    "ts": "2026-11-05T18:23:41.199416Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903021189
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310262,
+    "ts": "2026-11-05T18:23:41.211116Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903021202
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310263,
+    "ts": "2026-11-05T18:23:41.211587Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 4,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "14853",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310364,
+    "ts": "2026-11-05T18:23:42.575656Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000123",
+      "charge_usd": "0.000148",
+      "is_own_key": false,
+      "input_tokens": 3101,
+      "output_tokens": 34,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 12,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 114,
+      "cached_input_tokens": 2984
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310366,
+    "ts": "2026-11-05T18:23:42.592922Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state()"
+          },
+          "status": "running"
+        },
+        "callID": "call_QL4dKfTjb5wM4Y2dsbjj186e|fc_0bc5382eb55508c6016aecc9ae2eb887d1824af2ccbffe2925"
+      },
+      "type": "tool_use",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903022588
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310375,
+    "ts": "2026-11-05T18:23:42.689634Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state()"
+          },
+          "output": "[state] Senior / Staff Fullstack Engineer @ Linear | https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application\n[44] link \"Linear\"\n[47] link \"Back to Linear\u2019s Job Listings\"\n## Senior / Staff Fullstack Engineer\n## Location\nEurope\n## Employment Type\nFull time\n## Location Type\nRemote\n## Department\nProduct\n[67] tab \"Overview\"\n[68] tab \"Application\" selected\n[86] tabpanel \"Application\"\n## Error\nApplication submission is unavailable at this time, please try again later.\n[102] link \"Learn more about Ashby\"\nPowered by\n[99] link \"Privacy Policy\"\n[100] link \"Security\"\n[101] link \"Vulnerability Disclosure\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_QL4dKfTjb5wM4Y2dsbjj186e|fc_0bc5382eb55508c6016aecc9ae2eb887d1824af2ccbffe2925"
+      },
+      "type": "tool_use",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903022685
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310376,
+    "ts": "2026-11-05T18:23:42.697554Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903022687
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310377,
+    "ts": "2026-11-05T18:23:42.701987Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 7,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "17515",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310379,
+    "ts": "2026-11-05T18:23:42.705791Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903022695
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310423,
+    "ts": "2026-11-05T18:23:43.543303Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000158",
+      "charge_usd": "0.000190",
+      "is_own_key": false,
+      "input_tokens": 3320,
+      "output_tokens": 41,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 219,
+      "cached_input_tokens": 3098
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310424,
+    "ts": "2026-11-05T18:23:43.555836Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903023551
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310426,
+    "ts": "2026-11-05T18:23:43.573498Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903023564
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310427,
+    "ts": "2026-11-05T18:23:43.575110Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 9,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "18378",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310490,
+    "ts": "2026-11-05T18:23:44.401390Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000166",
+      "charge_usd": "0.000199",
+      "is_own_key": false,
+      "input_tokens": 3414,
+      "output_tokens": 52,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 94,
+      "cached_input_tokens": 3186
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310493,
+    "ts": "2026-11-05T18:23:44.422185Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903024418
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310499,
+    "ts": "2026-11-05T18:23:44.448341Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "text": "I couldn\u2019t fill the application because the page shows: \u201cApplication submission is unavailable at this time, please try again later.\u201d No fields were available, and I did not submit anything.",
+        "time": {
+          "end": 1793903023551
+        },
+        "type": "text"
+      },
+      "type": "text",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903023551
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310502,
+    "ts": "2026-11-05T18:23:44.461214Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "text": "{\"fields\":[],\"blocked\":\"Application page displayed: \u201cApplication submission is unavailable at this time, please try again later.\u201d No form fields were available to fill.\",\"submit_button_seen\":false}",
+        "time": {
+          "end": 1793903024444
+        },
+        "type": "text"
+      },
+      "type": "text",
+      "sessionID": "39e74986-fba7-431b-a61b-a0079be84898",
+      "timestamp": 1793903024444
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310514,
+    "ts": "2026-11-05T18:23:44.628425Z",
+    "type": "outputs.promoted",
+    "data": {
+      "failed": false,
+      "skipped": 0,
+      "promoted": 1,
+      "rejected": 0,
+      "upload_errors": 0
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310515,
+    "ts": "2026-11-05T18:23:44.638470Z",
+    "type": "state.promoted",
+    "data": {
+      "failed": false,
+      "harness": "bu-ultrafast",
+      "promoted": 1
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310518,
+    "ts": "2026-11-05T18:23:44.689977Z",
+    "type": "run.completed",
+    "data": {
+      "context": {
+        "chars": 16768,
+        "tokens": 3853,
+        "maxChars": 1000000,
+        "maxTokens": 212500,
+        "compactionFailures": 0
+      }
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310521,
+    "ts": "2026-11-05T18:23:44.710182Z",
+    "type": "browser.released",
+    "data": {
+      "status": "kept_alive",
+      "timeout_at": "2026-11-05T22:23:38.915295+00:00",
+      "browser_session_id": "86186fd1-d251-4726-a79d-716f8a49f2d8"
+    }
+  },
+  {
+    "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+    "id": 455310522,
+    "ts": "2026-11-05T18:23:44.725612Z",
+    "type": "worker.session_released",
+    "data": {}
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "op": "fill",
+    "label": "First name",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"firstname\"]",
+    "name": "firstname",
+    "value": "Jordan",
+    "source": "first_name"
+  },
+  {
+    "op": "fill",
+    "label": "Last name",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"lastname\"]",
+    "name": "lastname",
+    "value": "Testcase",
+    "source": "last_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email",
+    "type": "email",
+    "frame": 0,
+    "selector": "[id=\"email\"]",
+    "name": "email",
+    "value": "jordan.testcase@example.com",
+    "source": "email"
+  },
+  {
+    "op": "fill",
+    "label": "Phone",
+    "type": "tel",
+    "frame": 0,
+    "selector": "[id=\"input_phone\"]",
+    "name": "phone",
+    "value": "+1 555 010 0142",
+    "source": "phone"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Resume Choose file",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"input_files_input_fVYUGNxwwp4wo6kr\"]",
+    "name": null,
+    "value": "",
+    "source": "resume"
+  }
+]

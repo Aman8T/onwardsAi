@@ -1,0 +1,74 @@
+{
+  "arm": "B",
+  "model": "claude-sonnet-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 3,
+  "score": {
+    "success": true,
+    "fields_total": 15,
+    "required_total": 5,
+    "required_filled": 5,
+    "mapped_correct": 5,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": true,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply",
+  "seconds": 79.2,
+  "failure": null,
+  "errors": [
+    "field 6 (Current location \u2731): LookupError",
+    "field 6 (Current location \u2731 Pune, Maharashtra, IND Pune, Mah\u0101r\u0101shtra,): LookupError"
+  ],
+  "steps": 10,
+  "claude_calls": 3,
+  "usage": [
+    {
+      "input_tokens": 2354,
+      "output_tokens": 471,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.009418,
+      "seconds": 3.2,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2482,
+      "output_tokens": 137,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.006334,
+      "seconds": 3.0,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2548,
+      "output_tokens": 455,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.009646,
+      "seconds": 3.7,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.025398,
+  "browser_use_usd": 0.000668,
+  "browser_cost": {
+    "browser": 0.0006666666666666666,
+    "proxy": 1.636892557144165e-06,
+    "proxy_mb": 0.008380889892578125
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "label": "lv-spotify",
+  "ats": "lever",
+  "company": "Spotify",
+  "run_dir": "runs\\20261105T181324-B-lv-spotify",
+  "wall_seconds": 84.4,
+  "bu_spent_before": 0.02455,
+  "bu_spent_after": 0.025338,
+  "bu_balance_delta": 0.000788,
+  "bu_cost_counted": 0.000788
+}

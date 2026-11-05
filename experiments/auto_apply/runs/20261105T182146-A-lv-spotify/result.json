@@ -1,0 +1,151 @@
+{
+  "arm": "A",
+  "model": "bu-ultrafast",
+  "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+  "session_id": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+  "agent_seconds": 23.0,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "core.event": 35,
+    "llm.request": 9,
+    "llm.response": 9,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "",
+    "fields": [
+      {
+        "label": "Resume/CV",
+        "status": "failed",
+        "value": "Not uploaded; file upload failed because browser requires file in downloads directory."
+      },
+      {
+        "label": "Full name",
+        "status": "filled",
+        "value": "Jordan Testcase"
+      },
+      {
+        "label": "Pronouns",
+        "status": "skipped",
+        "value": "Not specified"
+      },
+      {
+        "label": "Email",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Phone",
+        "status": "filled",
+        "value": "+1 555 010 0142"
+      },
+      {
+        "label": "Current location",
+        "status": "filled",
+        "value": "Pune (typed; not selected from autocomplete; India not set)"
+      },
+      {
+        "label": "Current company",
+        "status": "filled",
+        "value": "Example Labs"
+      },
+      {
+        "label": "LinkedIn URL",
+        "status": "skipped",
+        "value": ""
+      },
+      {
+        "label": "GitHub URL",
+        "status": "skipped",
+        "value": ""
+      },
+      {
+        "label": "Portfolio URL",
+        "status": "skipped",
+        "value": ""
+      },
+      {
+        "label": "Other website",
+        "status": "filled",
+        "value": "https://example.com/jordan-testcase"
+      },
+      {
+        "label": "Previously employed by Spotify?",
+        "status": "filled",
+        "value": "No"
+      },
+      {
+        "label": "Demographic questions",
+        "status": "skipped",
+        "value": "Visible demographic survey is voluntary; not answered."
+      },
+      {
+        "label": "Spotify consent to contact about future job opportunities",
+        "status": "skipped",
+        "value": "Unchecked"
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 75160,
+    "output": 940
+  },
+  "run_cost_usd": 0.007098,
+  "browser_id": "c3094b0d-dd9f-4eca-8f43-6738c7c6ea27",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 15,
+    "required_total": 5,
+    "required_filled": 5,
+    "mapped_correct": 5,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": false,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply",
+  "session_cost": {
+    "llm_cost_usd": 0.007098,
+    "browser_cost_usd": 0.000333,
+    "proxy_cost_usd": 0.0,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.007431
+  },
+  "browser_use_usd": 0.007431,
+  "seconds": 42.4,
+  "anthropic_usd": 0.0,
+  "steps": 9,
+  "llm_requests": 9,
+  "agent_trace": [
+    "page = await tabs.open('https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply'); await bu.state()",
+    "await bu.click(124); await bu.state()",
+    "console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('input,textarea,select')).map(e=>({type:e.type,name:e.name,placeholder:e.placeholder,aria:e.getAttribute('aria-label'),required",
+    "await bu.type(5,'Jordan Testcase'); await bu.type(7,'jordan.testcase@example.com'); await bu.type(8,'+1 555 010 0142'); await bu.type(9,'Pune, India'); await bu.type(10,'Example Labs'); await bu.type(",
+    "console.log(require('fs').readdirSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f')); console.log(await page.evaluate(()=>document.querySelector('[name=location]').value));",
+    "const p='/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Jordan_Testcase_TEST_RESUME.pdf'; await page.cdp('DOM.setFileInputFiles',{backendNodeId:15,files:[p]}); await bu.state()",
+    "await bu.type(9,'Pune'); await bu.state()",
+    "await bu.state(); console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('input,select')).filter(e=>e.type!=='hidden').map(e=>({name:e.name,value:e.value,checked:e.checked,required:e"
+  ],
+  "label": "lv-spotify",
+  "ats": "lever",
+  "company": "Spotify",
+  "run_dir": "runs\\20261105T182146-A-lv-spotify",
+  "wall_seconds": 47.6,
+  "bu_spent_before": 0.038416,
+  "bu_spent_after": 0.046194,
+  "bu_balance_delta": 0.007778,
+  "bu_cost_counted": 0.007778
+}

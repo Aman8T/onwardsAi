@@ -1,0 +1,222 @@
+[
+  {
+    "op": "upload_resume",
+    "label": "Resume/CV \u2731 ATTACH RESUME/CV",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"resume-upload-input\"]",
+    "name": "resume",
+    "value": "",
+    "source": "resume"
+  },
+  {
+    "op": "fill",
+    "label": "Full name \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"name\"]",
+    "name": "name",
+    "value": "Jordan Testcase",
+    "source": "full_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email \u2731",
+    "type": "email",
+    "frame": 0,
+    "selector": "input[name=\"email\"]",
+    "name": "email",
+    "value": "jordan.testcase@example.com",
+    "source": "email"
+  },
+  {
+    "op": "fill",
+    "label": "Phone",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"phone\"]",
+    "name": "phone",
+    "value": "+1 555 010 0142",
+    "source": "phone"
+  },
+  {
+    "op": "fill",
+    "label": "Current location \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"location-input\"]",
+    "name": "location",
+    "value": "Pune, India",
+    "source": "location"
+  },
+  {
+    "op": "fill",
+    "label": "Current company",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"org\"]",
+    "name": "org",
+    "value": "Example Labs",
+    "source": "current_company"
+  },
+  {
+    "op": "fill",
+    "label": "Portfolio URL",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"urls[Portfolio]\"]",
+    "name": "urls[Portfolio]",
+    "value": "https://example.com/jordan-testcase",
+    "source": "website"
+  },
+  {
+    "op": "check",
+    "label": "Language Skill(s) (Check all that apply) \u2731",
+    "type": "checkbox-group",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(3) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[a69a985a-eae9-4c14-90fb-b5a4b891523e][field0]",
+    "value": "English (ENG)",
+    "source": "required language; English assumed for test"
+  },
+  {
+    "op": "fill",
+    "label": "Preferred Name | What would you like us to call you?",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"cards[a69a985a-eae9-4c14-90fb-b5a4b891523e][field1]\"]",
+    "name": "cards[a69a985a-eae9-4c14-90fb-b5a4b891523e][field1]",
+    "value": "Jordan",
+    "source": "first_name"
+  },
+  {
+    "op": "check",
+    "label": "Are you legally authorized to work in the country for which you are applying? \u2731",
+    "type": "radio",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(4) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[1c719ca9-5069-4afe-9e82-39ca420e0edb][field0]",
+    "value": "Yes",
+    "source": "authorized_to_work"
+  },
+  {
+    "op": "check",
+    "label": "Will you now or in the future require sponsorship for employment visa status (e.g., H-1B, etc.)? \u2731",
+    "type": "radio",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(4) > ul:nth-of-type(1) > li:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[1c719ca9-5069-4afe-9e82-39ca420e0edb][field1]",
+    "value": "No",
+    "source": "needs_sponsorship"
+  },
+  {
+    "op": "select",
+    "label": "Which university are you currently attending or did you last attend? Please select \"Other (School Not Listed)\" if your school is not listed. \u2731",
+    "type": "select",
+    "frame": 0,
+    "selector": "select[name=\"cards[3da58b41-acf5-40a1-945e-c7f047ef8050][field0]\"]",
+    "name": "cards[3da58b41-acf5-40a1-945e-c7f047ef8050][field0]",
+    "value": "Click Here (If you encounter an issue, make sure your browser is updated and try clearing cache & cookies)",
+    "source": "school not listed in visible options; placeholder only"
+  },
+  {
+    "op": "select",
+    "label": "Please tell us how you heard about this opportunity. \u2731",
+    "type": "select",
+    "frame": 0,
+    "selector": "select[name=\"cards[a6197d84-549e-4a91-8bb0-6af972510013][field0]\"]",
+    "name": "cards[a6197d84-549e-4a91-8bb0-6af972510013][field0]",
+    "value": "Palantir Website",
+    "source": "how_heard"
+  },
+  {
+    "op": "fill",
+    "label": "What has been your favorite project or proudest accomplishment? Why?",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "textarea[name=\"cards[ce72d538-c9ad-41f3-8e9a-618d40c82e3a][field0]\"]",
+    "name": "cards[ce72d538-c9ad-41f3-8e9a-618d40c82e3a][field0]",
+    "value": "At Example Labs I built and ran Python and TypeScript services for an internal analytics product and owned its CI pipeline, which I am proud of because it made releases reliable.",
+    "source": "work_history"
+  },
+  {
+    "op": "fill",
+    "label": "Why do you want to work at Palantir?",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "textarea[name=\"cards[ce72d538-c9ad-41f3-8e9a-618d40c82e3a][field1]\"]",
+    "name": "cards[ce72d538-c9ad-41f3-8e9a-618d40c82e3a][field1]",
+    "value": "I am interested in building software that helps organizations work with complex data, and my analytics experience fits that.",
+    "source": "work_history"
+  },
+  {
+    "op": "check",
+    "label": "As part of our interview process, we may use AI notetakers to transcribe conversations for accuracy and efficiency. Please see our candidate privacy policy for more information on how we process your data. Your decision ",
+    "type": "radio",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(8) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[73796cde-fc01-4758-9002-c85155f3503d][field0]",
+    "value": "Yes, I consent",
+    "source": "required consent (test only)"
+  },
+  {
+    "op": "check",
+    "label": "Are you a Singapore permanent resident? \u2731",
+    "type": "radio",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(9) > ul:nth-of-type(1) > li:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[a5557d1f-0fab-4dbd-9059-b8625900049a][field1]",
+    "value": "No",
+    "source": "applicant is in India"
+  },
+  {
+    "op": "fill",
+    "label": "ADDITIONAL INFORMATION",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "[id=\"additional-information\"]",
+    "name": "comments",
+    "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted.",
+    "source": "cover_letter"
+  },
+  {
+    "op": "fill",
+    "label": "Current location \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"location-input\"]",
+    "name": "location",
+    "value": "Pune, India",
+    "source": "applicant location"
+  },
+  {
+    "op": "check",
+    "label": "Are you a Singapore citizen? \u2731",
+    "type": "radio",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(9) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[a5557d1f-0fab-4dbd-9059-b8625900049a][field0]",
+    "value": "No",
+    "source": "applicant is in India, not a Singapore citizen"
+  },
+  {
+    "op": "fill",
+    "label": "Current location \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"location-input\"]",
+    "name": "location",
+    "value": "Pune, India",
+    "source": "applicant location"
+  },
+  {
+    "op": "select",
+    "label": "Please tell us how you heard about this opportunity. \u2731",
+    "type": "select",
+    "frame": 0,
+    "selector": "select[name=\"cards[a6197d84-549e-4a91-8bb0-6af972510013][field0]\"]",
+    "name": "cards[a6197d84-549e-4a91-8bb0-6af972510013][field0]",
+    "value": "Other",
+    "source": "how_heard is company careers page; no exact option, closest is Other"
+  }
+]

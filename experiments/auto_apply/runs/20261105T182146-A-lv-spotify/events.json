@@ -1,0 +1,1228 @@
+[
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455300928,
+    "ts": "2026-11-05T18:21:47.291085Z",
+    "type": "run.created",
+    "data": {
+      "model": "bu-ultrafast",
+      "session_id": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "is_free_tier": false,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "browser_settings": {
+        "record": false,
+        "profile_id": null,
+        "custom_proxy": false,
+        "extension_ids": [
+          "b7cb8cf4-0c3c-4641-8605-52cca638c7b3"
+        ],
+        "allow_resizing": null,
+        "proxy_country_code": null,
+        "browser_screen_width": null,
+        "browser_screen_height": null,
+        "profile_storage_generation": ""
+      }
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455300930,
+    "ts": "2026-11-05T18:21:47.315355Z",
+    "type": "run.dispatching",
+    "data": {
+      "transport": "agentcore"
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455300954,
+    "ts": "2026-11-05T18:21:47.590851Z",
+    "type": "browser.ready",
+    "data": {
+      "live_view_url": "<redacted>",
+      "browser_session_id": "c3094b0d-dd9f-4eca-8f43-6738c7c6ea27"
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455300978,
+    "ts": "2026-11-05T18:21:47.983723Z",
+    "type": "run.dispatched",
+    "data": {
+      "transport": "agentcore",
+      "browser_session_id": "c3094b0d-dd9f-4eca-8f43-6738c7c6ea27"
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455300981,
+    "ts": "2026-11-05T18:21:48.006447Z",
+    "type": "worker.started",
+    "data": {
+      "core_agent": "bu-pi",
+      "session_id": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "cold_process": true,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "invocation_index": 1,
+      "prewarmed_process": false,
+      "invocation_received_unix_ms": 1793902907967,
+      "process_age_at_invocation_ms": 3566.8392230000004,
+      "runtime_session_header_present": true
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301017,
+    "ts": "2026-11-05T18:21:48.395322Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902908284
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301020,
+    "ts": "2026-11-05T18:21:48.396082Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 2,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "14333",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301114,
+    "ts": "2026-11-05T18:21:49.422278Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000808",
+      "charge_usd": "0.000970",
+      "is_own_key": false,
+      "input_tokens": 2990,
+      "output_tokens": 61,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2987,
+      "cached_input_tokens": 0
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301119,
+    "ts": "2026-11-05T18:21:49.456770Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "page = await tabs.open('https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply'); await bu.state()"
+          },
+          "status": "running"
+        },
+        "callID": "call_vxobD1ghFG6gosmHZJfQzOCo|fc_01b2e46e500e946e016aecc93d0a4887d18017c032be0acf76"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902909438
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301206,
+    "ts": "2026-11-05T18:21:50.465089Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "page = await tabs.open('https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply'); await bu.state()"
+          },
+          "output": "[state] Spotify - Account Executive - Commercial, Spotify Technology | https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply\n\ud83c\udf6a\n[124] button \"deny\"\n[125] button \"accept\"\n## Privacy Notice\nThis website uses cookies to improve your web experience. By clicking Accept , you agree to the use of cookies.\n[135] link \"Spotify logo\"\n## Account Executive - Commercial, Spotify Technology\nNew York, NY Operations And Business Support \u2013 Platform / Permanent / Hybrid\n## SUBMIT YOUR APPLICATION\nResume/CV \u2731\n[152] link \"ATTACH RESUME/CV Resume/CV \u2731: No file chosen\"\n[15] file \"Resume/CV \u2731 ATTACH RESUME/CV\" = \"No file chosen\"\n[5] textbox \"Full name \u2731\"\nPronouns\n[16] checkbox \"He/him\" unchecked\nHe/him\n[17] checkbox \"She/her\" unchecked\nShe/her\n[18] checkbox \"They/them\" unchecked\nThey/them\n[19] checkbox \"Xe/xem\" unchecked\nXe/xem\n[20] checkbox \"Ze/hir\" unchecked\nZe/hir\n[21] checkbox \"Ey/em\" unchecked\nEy/em\n[22] checkbox \"Hir/hir\" unchecked\nHir/hir\n[23] checkbox \"Fae/faer\" unchecked\nFae/faer\n[24] checkbox \"Hu/hu\" unchecked\nHu/hu\n[25] checkbox \"Use name only\" unchecked\nUse name only\n[26] checkbox \"Custom\" unchecked\nCustom\nLet the employer know what pronouns you use so that they can address you correctly.\n[7] textbox \"Email \u2731\"\n[8] textbox \"Phone \u2731\"\n[9] textbox \"Current location \u2731\"\n[10] textbox \"Current company \u2731\"\n## LINKS\n[11] textbox \"LinkedIn URL\"\n[12] textbox \"GitHub URL\"\n[13] textbox \"Portfolio URL\"\n[14] textbox \"Other website\"\n## PREVIOUS SPOTIFY EMPLOYMENT\nHave you ever been previously employed by Spotify? \u2731\n[27] checkbox \"No\" unchecked\nNo\n[28] checkbox \"Yes - Intern\" unchecked\nYes - Intern\n[29] checkbox \"Yes - Full Time Employment\" unchecked\nYes - Full Time Employment\n## DEMOGRAPHIC SURVEY\n[2] select \"What is your location?\" = \"Select...\" collapsed  options: Select... | Afghanistan | Albania | Algeria | American Samoa | \u2026 246 more\nBy applying for this position, your data will be processed as per Spotify's\n[1293] link \"Privacy Policy\"\n.\n[82] checkbox \"Spotify has my consent to contact me about future job opportunities.\" unchecked\n[1301] button \"SUBMIT APPLICATION\"\n[1305] link \"Spotify Home Page\"\nWe may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. Find our AI notice here: https://lifeatspotify.com/ai-notice\n[1308] link \"Jobs powered by Lever logo\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_vxobD1ghFG6gosmHZJfQzOCo|fc_01b2e46e500e946e016aecc93d0a4887d18017c032be0acf76"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902910455
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301208,
+    "ts": "2026-11-05T18:21:50.478933Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902910459
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301209,
+    "ts": "2026-11-05T18:21:50.489902Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902910476
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301210,
+    "ts": "2026-11-05T18:21:50.490038Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 4,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "17496",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301268,
+    "ts": "2026-11-05T18:21:51.445343Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000284",
+      "charge_usd": "0.000341",
+      "is_own_key": false,
+      "input_tokens": 3779,
+      "output_tokens": 26,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 789,
+      "cached_input_tokens": 2987
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301272,
+    "ts": "2026-11-05T18:21:51.463874Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(124); await bu.state()"
+          },
+          "status": "running"
+        },
+        "callID": "call_lshRvTfFLa5JojCKbM1UED08|fc_01b2e46e500e946e016aecc93f151887d1b8c4d53b827481ee"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902911459
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301286,
+    "ts": "2026-11-05T18:21:51.614185Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.click(124); await bu.state()"
+          },
+          "output": "[ok] click [124] button \"deny\" -> page changed\n[state] Spotify - Account Executive - Commercial, Spotify Technology | https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply\n\ud83c\udf6a\n[124] button \"deny\" focused\n[125] button \"accept\"\n## Privacy Notice\nThis website uses cookies to improve your web experience. By clicking Accept , you agree to the use of cookies.\n[135] link \"Spotify logo\"\n## Account Executive - Commercial, Spotify Technology\nNew York, NY Operations And Business Support \u2013 Platform / Permanent / Hybrid\n## SUBMIT YOUR APPLICATION\nResume/CV \u2731\n[152] link \"ATTACH RESUME/CV Resume/CV \u2731: No file chosen\"\n[15] file \"Resume/CV \u2731 ATTACH RESUME/CV\" = \"No file chosen\"\n[5] textbox \"Full name \u2731\"\nPronouns\n[16] checkbox \"He/him\" unchecked\nHe/him\n[17] checkbox \"She/her\" unchecked\nShe/her\n[18] checkbox \"They/them\" unchecked\nThey/them\n[19] checkbox \"Xe/xem\" unchecked\nXe/xem\n[20] checkbox \"Ze/hir\" unchecked\nZe/hir\n[21] checkbox \"Ey/em\" unchecked\nEy/em\n[22] checkbox \"Hir/hir\" unchecked\nHir/hir\n[23] checkbox \"Fae/faer\" unchecked\nFae/faer\n[24] checkbox \"Hu/hu\" unchecked\nHu/hu\n[25] checkbox \"Use name only\" unchecked\nUse name only\n[26] checkbox \"Custom\" unchecked\nCustom\nLet the employer know what pronouns you use so that they can address you correctly.\n[7] textbox \"Email \u2731\"\n[8] textbox \"Phone \u2731\"\n[9] textbox \"Current location \u2731\"\n[10] textbox \"Current company \u2731\"\n## LINKS\n[11] textbox \"LinkedIn URL\"\n[12] textbox \"GitHub URL\"\n[13] textbox \"Portfolio URL\"\n[14] textbox \"Other website\"\n## PREVIOUS SPOTIFY EMPLOYMENT\nHave you ever been previously employed by Spotify? \u2731\n[27] checkbox \"No\" unchecked\nNo\n[28] checkbox \"Yes - Intern\" unchecked\nYes - Intern\n[29] checkbox \"Yes - Full Time Employment\" unchecked\nYes - Full Time Employment\n## DEMOGRAPHIC SURVEY\n[2] select \"What is your location?\" = \"Select...\" collapsed  options: Select... | Afghanistan | Albania | Algeria | American Samoa | \u2026 246 more\nBy applying for this position, your data will be processed as per Spotify's\n[1293] link \"Privacy Policy\"\n.\n[82] checkbox \"Spotify has my consent to contact me about future job opportunities.\" unchecked\n[1301] button \"SUBMIT APPLICATION\"\n[1305] link \"Spotify Home Page\"\nWe may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. Find our AI notice here: https://lifeatspotify.com/ai-notice\n[1308] link \"Jobs powered by Lever logo\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_lshRvTfFLa5JojCKbM1UED08|fc_01b2e46e500e946e016aecc93f151887d1b8c4d53b827481ee"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902911608
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301287,
+    "ts": "2026-11-05T18:21:51.624648Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902911611
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301288,
+    "ts": "2026-11-05T18:21:51.639298Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902911625
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301289,
+    "ts": "2026-11-05T18:21:51.637844Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 6,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "20638",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301528,
+    "ts": "2026-11-05T18:21:53.765446Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000379",
+      "charge_usd": "0.000455",
+      "is_own_key": false,
+      "input_tokens": 4550,
+      "output_tokens": 110,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 37,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 771,
+      "cached_input_tokens": 3776
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301529,
+    "ts": "2026-11-05T18:21:53.784726Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('input,textarea,select')).map(e=>({type:e.type,name:e.name,placeholder:e.placeholder,aria:e.getAttribute('aria-label'),required:e.required,tag:e.tagName,value:e.value}))))"
+          },
+          "status": "running"
+        },
+        "callID": "call_c4U38wzbNegSC83bHijuNms9|fc_01b2e46e500e946e016aecc9417ae087d1afbc93b366131f2e"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902913780
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301533,
+    "ts": "2026-11-05T18:21:53.808169Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('input,textarea,select')).map(e=>({type:e.type,name:e.name,placeholder:e.placeholder,aria:e.getAttribute('aria-label'),required:e.required,tag:e.tagName,value:e.value}))))"
+          },
+          "output": "[\n  {\n    type: 'file',\n    name: 'resume',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'text',\n    name: 'name',\n    placeholder: '',\n    aria: null,\n    required: true,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'checkbox',\n    name: 'pronouns',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'He/him'\n  },\n  {\n    type: 'checkbox',\n    name: 'pronouns',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'She/her'\n  },\n  {\n    type: 'checkbox',\n    name: 'pronouns',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'They/them'\n  },\n  {\n    type: 'checkbox',\n    name: 'pronouns',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Xe/xem'\n  },\n  {\n    type: 'checkbox',\n    name: 'pronouns',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Ze/hir'\n  },\n  {\n    type: 'checkbox',\n    name: 'pronouns',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Ey/em'\n  },\n  {\n    type: 'checkbox',\n    name: 'pronouns',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Hir/hir'\n  },\n  {\n    type: 'checkbox',\n    name: 'pronouns',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Fae/faer'\n  },\n  {\n    type: 'checkbox',\n    name: 'pronouns',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Hu/hu'\n  },\n  {\n    type: 'checkbox',\n    name: 'pronouns',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Use name only'\n  },\n  {\n    type: 'checkbox',\n    name: '',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Custom'\n  },\n  {\n    type: 'text',\n    name: 'pronouns',\n    placeholder: 'Write here...',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'email',\n    name: 'email',\n    placeholder: '',\n    aria: null,\n    required: true,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'text',\n    name: 'phone',\n    placeholder: '',\n    aria: null,\n    required: true,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'text',\n    name: 'location',\n    placeholder: '',\n    aria: null,\n    required: true,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'hidden',\n    name: 'selectedLocation',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'text',\n    name: 'org',\n    placeholder: '',\n    aria: null,\n    required: true,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'text',\n    name: 'urls[LinkedIn]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'text',\n    name: 'urls[GitHub]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'text',\n    name: 'urls[Portfolio]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'text',\n    name: 'urls[Other]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'hidden',\n    name: 'cards[92a51f92-d683-4f7b-be57-e25376f60abe][baseTemplate]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: '{\"createdAt\":1778256840527,\"updatedAt\":1779805492785,\"text\":\"Previous Spotify Employment\",\"instructions\":\"\",\"type\":\"posting\",\"accountId\":\"0f50cbb4-b98b-444e-bf90-e2e61463d146\",\"fields\":[{\"type\":\"multiple-select\",\"text\":\"Have you ever been previously employed by Spotify?\",\"description\":\"\",\"required\":true,\"id\":\"11a3f209-3ad0-4ee5-b787-0bfd9213de48\",\"options\":[{\"text\":\"No\",\"optionId\":\"1a6b45cb-32a7-4e39-a132-dd1f9324a3d3\"},{\"text\":\"Yes - Intern\",\"optionId\":\"61935dde-5f25-48f4-a7e7-d8c783f41509\"},{\"text\":\"Yes - Full Time Employment\",\"optionId\":\"f23f8403-fcda-4652-aa61-4e0a3d2a8014\"}]}],\"updatedByUserId\":\"ef2634a2-dc8e-45b1-bb22-eca496102648\",\"id\":\"92a51f92-d683-4f7b-be57-e25376f60abe\"}'\n  },\n  {\n    type: 'checkbox',\n    name: 'cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]',\n    placeholder: '',\n    aria: null,\n    required: true,\n    tag: 'INPUT',\n    value: 'No'\n  },\n  {\n    type: 'checkbox',\n    name: 'cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]',\n    placeholder: '',\n    aria: null,\n    required: true,\n    tag: 'INPUT',\n    value: 'Yes - Intern'\n  },\n  {\n    type: 'checkbox',\n    name: 'cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]',\n    placeholder: '',\n    aria: null,\n    required: true,\n    tag: 'INPUT',\n    value: 'Yes - Full Time Employment'\n  },\n  {\n    type: 'select-one',\n    name: '',\n    aria: null,\n    required: false,\n    tag: 'SELECT',\n    value: ''\n  },\n  {\n    type: 'hidden',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][baseTemplate]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: `{\"createdAt\":1568227545909,\"text\":\"Demographic Questions for Spotify\",\"instructions\":\"We\u2019d like to know a little more about you. Answering is completely voluntary, but we'll be forever grateful since the information will help us evaluate and improve our recruitment, diversity and belonging efforts. \\\\n\\\\nWhether or not you choose to answer the questions will not affect your job application with us. \\\\nAny information you submit here will be kept secure, pseudonymized, confidential and completely separate from your personal data and job application. \\\\n\\\\nBy answering this survey, you consent to our processing of your responses for the purposes listed above. \\\\n\\\\nYou have the right to withdraw your consent at any time by contacting us. For more information about how we process your personal data and how to contact us, please select below for our Candidate Privacy Policy. \\\\n\\\\n\\\\nThank you!\\\\n\\\\n\\\\nhttps://www.spotifyjobs.com/candidate-privacy-policy\\\\n\",\"type\":\"survey\",\"fields\":[{\"type\":\"multiple-choice\",\"text\":\"What best describes your gender?\",\"description\":\"\",\"required\":false,\"id\":\"7d4efab9-fd8b-48b0-ad04-4360c957c7e4\",\"options\":[{\"text\":\"Woman\"},{\"text\":\"Man\"},{\"text\":\"Non-binary\"},{\"text\":\"I use another term\"},{\"text\":\"Prefer not to disclose\"}]},{\"type\":\"multiple-choice\",\"text\":\"What is your race/ethnicity?:\",\"description\":\"\",\"required\":false,\"id\":\"f370553c-d610-4504-b5ef-bbf1c5294e98\",\"options\":[{\"text\":\"American Indian or Alaska Native\",\"optionId\":\"8282862c-081d-4f07-9003-479b440f62fd\"},{\"text\":\"Asian\"},{\"text\":\"Black or African American\"},{\"text\":\"Hispanic or Latino\"},{\"text\":\"Native Hawaiian or Other Pacific Islander\"},{\"text\":\"Two or More Races\"},{\"text\":\"White (Not Hispanic or Latino)\"},{\"text\":\"Prefer not to disclose\"}]},{\"type\":\"multiple-choice\",\"text\":\"Are you a veteran/have you served in the military? \",\"description\":\"\",\"required\":false,\"id\":\"a22b44b9-b749-478b-bb20-880755c517fe\",\"options\":[{\"text\":\"Yes\",\"optionId\":\"0db8a230-2b02-484e-a499-8e80e442c7b2\"},{\"text\":\"No\"},{\"text\":\"Prefer not to disclose\"}]}],\"accountId\":\"0f50cbb4-b98b-444e-bf90-e2e61463d146\",\"id\":\"cbf1b3c9-4157-4ddd-a66e-41dae0d8badb\"}`\n  },\n  {\n    type: 'hidden',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][surveyId]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: '2c258ec4-d1d7-4beb-a0e7-9eb0d4c15f0e'\n  },\n  {\n    type: 'hidden',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][candidateSelectedLocation]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: ''\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field0]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Woman'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field0]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Man'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field0]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Non-binary'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field0]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'I use another term'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field0]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Prefer not to disclose'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'American Indian or Alaska Native'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Asian'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Black or African American'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Hispanic or Latino'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Native Hawaiian or Other Pacific Islander'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Two or More Races'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'White (Not Hispanic or Latino)'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Prefer not to disclose'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field2]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Yes'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field2]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'No'\n  },\n  {\n    type: 'radio',\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field2]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: 'Prefer not to disclose'\n  },\n  {\n    type: 'hidden',\n    name: 'surveysResponses[380b7dba-8003-486d-b65d-28bf53a52415][baseTemplate]',\n    placeholder: '',\n    aria: null,\n    required: false,\n    tag: 'INPUT',\n    value: `{\"createdAt\":1596142540775,\"updatedAt\":1596142540775,\"text\":\"Demographic Question for Spotify\",\"instructions\":\"We\u2019d like to know a little more about you. Answering is completely voluntary, but we'll be forever grateful since the information will help us evaluate and improve our recruitment, diversity and belonging efforts. \\\\n\\\\nWhether or not you choose to answer the questions will not affect your job application with us. Any information you submit here will be kept secure, pseudonymized, confidential and completely se\n[Truncated. Full captured output: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/f86ca0cd-552e-4d59-8d8c-8431dfbb064b.txt]",
+          "status": "completed"
+        },
+        "callID": "call_c4U38wzbNegSC83bHijuNms9|fc_01b2e46e500e946e016aecc9417ae087d1afbc93b366131f2e"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902913800
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301534,
+    "ts": "2026-11-05T18:21:53.816010Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902913805
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301537,
+    "ts": "2026-11-05T18:21:53.823306Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 9,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "36488",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301538,
+    "ts": "2026-11-05T18:21:53.824829Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902913812
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301659,
+    "ts": "2026-11-05T18:21:55.324414Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.001225",
+      "charge_usd": "0.001470",
+      "is_own_key": false,
+      "input_tokens": 8506,
+      "output_tokens": 144,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 3956,
+      "cached_input_tokens": 4547
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301660,
+    "ts": "2026-11-05T18:21:55.337892Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(5,'Jordan Testcase'); await bu.type(7,'jordan.testcase@example.com'); await bu.type(8,'+1 555 010 0142'); await bu.type(9,'Pune, India'); await bu.type(10,'Example Labs'); await bu.type(14,'https://example.com/jordan-testcase'); await bu.click(27); const p='/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/Jordan_Testcase_TEST_RESUME.pdf'; console.log(require('fs').existsSync(p));"
+          },
+          "status": "running"
+        },
+        "callID": "call_m7dgcM7jPyFe0TylVU8dEwFX|fc_01b2e46e500e946e016aecc942959c87d18a9f5ad921a9df3d"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902915332
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301787,
+    "ts": "2026-11-05T18:21:56.341290Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(5,'Jordan Testcase'); await bu.type(7,'jordan.testcase@example.com'); await bu.type(8,'+1 555 010 0142'); await bu.type(9,'Pune, India'); await bu.type(10,'Example Labs'); await bu.type(14,'https://example.com/jordan-testcase'); await bu.click(27); const p='/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/uploads/Jordan_Testcase_TEST_RESUME.pdf'; console.log(require('fs').existsSync(p));"
+          },
+          "output": "[ok] type [5] textbox \"Full name \u2731\" = \"Jordan Testcase\" -> page changed\n[ok] type [7] textbox \"Email \u2731\" = \"jordan.testcase@example.com\" -> page changed\n[ok] type [8] textbox \"Phone \u2731\" = \"+1 555 010 0142\" -> page changed\n[ok] type [9] textbox \"Current location \u2731\" = \"Pune, India\" -> page changed\n[ok] type [10] textbox \"Current company \u2731\" = \"Example Labs\" -> page changed\n[ok] type [14] textbox \"Other website\" = \"https://example.com/jordan-testcase\" -> page changed\n[ok] click [27] checkbox \"No\" -> page changed\nfalse\n[state] Spotify - Account Executive - Commercial, Spotify Technology | https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply\n[135] link \"Spotify logo\"\n## Account Executive - Commercial, Spotify Technology\nNew York, NY Operations And Business Support \u2013 Platform / Permanent / Hybrid\n## SUBMIT YOUR APPLICATION\nResume/CV \u2731\n[152] link \"ATTACH RESUME/CV Resume/CV \u2731: No file chosen\"\n[15] file \"Resume/CV \u2731 ATTACH RESUME/CV\" = \"No file chosen\"\n[5] textbox \"Full name \u2731\" = \"Jordan Testcase\"\nPronouns\n[16] checkbox \"He/him\" unchecked\nHe/him\n[17] checkbox \"She/her\" unchecked\nShe/her\n[18] checkbox \"They/them\" unchecked\nThey/them\n[19] checkbox \"Xe/xem\" unchecked\nXe/xem\n[20] checkbox \"Ze/hir\" unchecked\nZe/hir\n[21] checkbox \"Ey/em\" unchecked\nEy/em\n[22] checkbox \"Hir/hir\" unchecked\nHir/hir\n[23] checkbox \"Fae/faer\" unchecked\nFae/faer\n[24] checkbox \"Hu/hu\" unchecked\nHu/hu\n[25] checkbox \"Use name only\" unchecked\nUse name only\n[26] checkbox \"Custom\" unchecked\nCustom\nLet the employer know what pronouns you use so that they can address you correctly.\n[7] textbox \"Email \u2731\" = \"jordan.testcase@example.com\"\n[8] textbox \"Phone \u2731\" = \"+1 555 010 0142\"\n[9] textbox \"Current location \u2731\"\n[10] textbox \"Current company \u2731\" = \"Example Labs\"\n## LINKS\n[11] textbox \"LinkedIn URL\"\n[12] textbox \"GitHub URL\"\n[13] textbox \"Portfolio URL\"\n[14] textbox \"Other website\" = \"https://example.com/jordan-testcase\"\n## PREVIOUS SPOTIFY EMPLOYMENT\nHave you ever been previously employed by Spotify? \u2731\n[27] checkbox \"No\" checked focused\nNo\n[28] checkbox \"Yes - Intern\" unchecked\nYes - Intern\n[29] checkbox \"Yes - Full Time Employment\" unchecked\nYes - Full Time Employment\n## DEMOGRAPHIC SURVEY\n[2] select \"What is your location?\" = \"Select...\" collapsed  options: Select... | Afghanistan | Albania | Algeria | American Samoa | \u2026 246 more\nBy applying for this position, your data will be processed as per Spotify's\n[1293] link \"Privacy Policy\"\n.\n[82] checkbox \"Spotify has my consent to contact me about future job opportunities.\" unchecked\n[1301] button \"SUBMIT APPLICATION\"\n[1305] link \"Spotify Home Page\"\nWe may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. Find our AI notice here: https://lifeatspotify.com/ai-notice\n[1308] link \"Jobs powered by Lever logo\"\n[/state]\n",
+          "status": "completed"
+        },
+        "callID": "call_m7dgcM7jPyFe0TylVU8dEwFX|fc_01b2e46e500e946e016aecc942959c87d18a9f5ad921a9df3d"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902916335
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301788,
+    "ts": "2026-11-05T18:21:56.348945Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902916339
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301789,
+    "ts": "2026-11-05T18:21:56.357297Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902916346
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455301790,
+    "ts": "2026-11-05T18:21:56.360333Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 11,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "40461",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302001,
+    "ts": "2026-11-05T18:21:59.018751Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000514",
+      "charge_usd": "0.000617",
+      "is_own_key": false,
+      "input_tokens": 9548,
+      "output_tokens": 83,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 13,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 1042,
+      "cached_input_tokens": 8503
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302002,
+    "ts": "2026-11-05T18:21:59.038861Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(require('fs').readdirSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f')); console.log(await page.evaluate(()=>document.querySelector('[name=location]').value));"
+          },
+          "status": "running"
+        },
+        "callID": "call_BFCveUH6U0m7SXTa0Ri39hjW|fc_01b2e46e500e946e016aecc946828c87d1b038027d1da4ebc4"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902919031
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302005,
+    "ts": "2026-11-05T18:21:59.054205Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "console.log(require('fs').readdirSync('/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f')); console.log(await page.evaluate(()=>document.querySelector('[name=location]').value));"
+          },
+          "output": "[\n  '.browser-use',\n  '.promote-manifest.json',\n  '.restore-marker',\n  '.uploads-manifest.json',\n  'AGENTS.md',\n  'Jordan_Testcase_TEST_RESUME.pdf',\n  'outputs',\n  'uploads'\n]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_BFCveUH6U0m7SXTa0Ri39hjW|fc_01b2e46e500e946e016aecc946828c87d1b038027d1da4ebc4"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902919045
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302006,
+    "ts": "2026-11-05T18:21:59.065284Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902919049
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302007,
+    "ts": "2026-11-05T18:21:59.071941Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902919062
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302008,
+    "ts": "2026-11-05T18:21:59.075841Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 14,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "42817",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302081,
+    "ts": "2026-11-05T18:22:00.080388Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000306",
+      "charge_usd": "0.000367",
+      "is_own_key": false,
+      "input_tokens": 9692,
+      "output_tokens": 79,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 144,
+      "cached_input_tokens": 9545
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302082,
+    "ts": "2026-11-05T18:22:00.100700Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const p='/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Jordan_Testcase_TEST_RESUME.pdf'; await page.cdp('DOM.setFileInputFiles',{backendNodeId:15,files:[p]}); await bu.state()"
+          },
+          "status": "running"
+        },
+        "callID": "call_5eXRhNI66wKcdGZWkgRvR8xi|fc_01b2e46e500e946e016aecc947aaf087d19e673799cbeaa861"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902920093
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302083,
+    "ts": "2026-11-05T18:22:00.111891Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "const p='/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Jordan_Testcase_TEST_RESUME.pdf'; await page.cdp('DOM.setFileInputFiles',{backendNodeId:15,files:[p]}); await bu.state()"
+          },
+          "output": "Error: CDP -32602: Files must exist in the downloads directory\n    at WebSocket.<anonymous> (file:///opt/pi-worker/node_modules/@browser_use/pi/dist/cdp.js:44:41)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12006:14)\n    at websocketMessageReceived (node:internal/deps/undici/undici:12028:7)\n    at ByteParser.run (node:internal/deps/undici/undici:12719:19)\n    at ByteParser._write (node:internal/deps/undici/undici:12591:14)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\nState reset: false. Actions may already have happened.\nPartial output: (no output)\nCaptured output file: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/d2f40c05-f89f-4828-84e4-cced902d7575.txt",
+          "status": "error"
+        },
+        "callID": "call_5eXRhNI66wKcdGZWkgRvR8xi|fc_01b2e46e500e946e016aecc947aaf087d19e673799cbeaa861"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902920104
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302086,
+    "ts": "2026-11-05T18:22:00.118619Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902920107
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302090,
+    "ts": "2026-11-05T18:22:00.129264Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902920120
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302091,
+    "ts": "2026-11-05T18:22:00.134707Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 16,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "44246",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302321,
+    "ts": "2026-11-05T18:22:02.689391Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000388",
+      "charge_usd": "0.000466",
+      "is_own_key": false,
+      "input_tokens": 10084,
+      "output_tokens": 96,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 65,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 392,
+      "cached_input_tokens": 9689
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302324,
+    "ts": "2026-11-05T18:22:02.711960Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(9,'Pune'); await bu.state()"
+          },
+          "status": "running"
+        },
+        "callID": "call_LO5BBwBEBk5SFEyp3FRtpRvk|fc_01b2e46e500e946e016aecc94a88e887d18954682a9d90e8f9"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902922705
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302333,
+    "ts": "2026-11-05T18:22:02.892999Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.type(9,'Pune'); await bu.state()"
+          },
+          "output": "[ok] type [9] textbox \"Current location \u2731\" = \"Pune\" -> page changed\n[state] Spotify - Account Executive - Commercial, Spotify Technology | https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply\n[135] link \"Spotify logo\"\n## Account Executive - Commercial, Spotify Technology\nNew York, NY Operations And Business Support \u2013 Platform / Permanent / Hybrid\n## SUBMIT YOUR APPLICATION\nResume/CV \u2731\n[152] link \"ATTACH RESUME/CV Resume/CV \u2731: No file chosen\"\n[15] file \"Resume/CV \u2731 ATTACH RESUME/CV\" = \"No file chosen\"\n[5] textbox \"Full name \u2731\" = \"Jordan Testcase\"\nPronouns\n[16] checkbox \"He/him\" unchecked\nHe/him\n[17] checkbox \"She/her\" unchecked\nShe/her\n[18] checkbox \"They/them\" unchecked\nThey/them\n[19] checkbox \"Xe/xem\" unchecked\nXe/xem\n[20] checkbox \"Ze/hir\" unchecked\nZe/hir\n[21] checkbox \"Ey/em\" unchecked\nEy/em\n[22] checkbox \"Hir/hir\" unchecked\nHir/hir\n[23] checkbox \"Fae/faer\" unchecked\nFae/faer\n[24] checkbox \"Hu/hu\" unchecked\nHu/hu\n[25] checkbox \"Use name only\" unchecked\nUse name only\n[26] checkbox \"Custom\" unchecked\nCustom\nLet the employer know what pronouns you use so that they can address you correctly.\n[7] textbox \"Email \u2731\" = \"jordan.testcase@example.com\"\n[8] textbox \"Phone \u2731\" = \"+1 555 010 0142\"\n[9] textbox \"Current location \u2731\" = \"Pune\" focused\n[10] textbox \"Current company \u2731\" = \"Example Labs\"\n## LINKS\n[11] textbox \"LinkedIn URL\"\n[12] textbox \"GitHub URL\"\n[13] textbox \"Portfolio URL\"\n[14] textbox \"Other website\" = \"https://example.com/jordan-testcase\"\n## PREVIOUS SPOTIFY EMPLOYMENT\nHave you ever been previously employed by Spotify? \u2731\n[27] checkbox \"No\" checked\nNo\n[28] checkbox \"Yes - Intern\" unchecked\nYes - Intern\n[29] checkbox \"Yes - Full Time Employment\" unchecked\nYes - Full Time Employment\n## DEMOGRAPHIC SURVEY\n[2] select \"What is your location?\" = \"Select...\" collapsed  options: Select... | Afghanistan | Albania | Algeria | American Samoa | \u2026 246 more\nBy applying for this position, your data will be processed as per Spotify's\n[1293] link \"Privacy Policy\"\n.\n[82] checkbox \"Spotify has my consent to contact me about future job opportunities.\" unchecked\n[1301] button \"SUBMIT APPLICATION\"\n[1305] link \"Spotify Home Page\"\nWe may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. Find our AI notice here: https://lifeatspotify.com/ai-notice\n[1308] link \"Jobs powered by Lever logo\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_LO5BBwBEBk5SFEyp3FRtpRvk|fc_01b2e46e500e946e016aecc94a88e887d18954682a9d90e8f9"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902922884
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302334,
+    "ts": "2026-11-05T18:22:02.907463Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902922888
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302335,
+    "ts": "2026-11-05T18:22:02.908560Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 19,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "50298",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302336,
+    "ts": "2026-11-05T18:22:02.921118Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902922896
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302451,
+    "ts": "2026-11-05T18:22:04.371096Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000481",
+      "charge_usd": "0.000577",
+      "is_own_key": false,
+      "input_tokens": 10937,
+      "output_tokens": 66,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 853,
+      "cached_input_tokens": 10081
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302452,
+    "ts": "2026-11-05T18:22:04.389524Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state(); console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('input,select')).filter(e=>e.type!=='hidden').map(e=>({name:e.name,value:e.value,checked:e.checked,required:e.required}))))"
+          },
+          "status": "running"
+        },
+        "callID": "call_sUM8DtaSa36jCgUAMrKv3Qv2|fc_01b2e46e500e946e016aecc94bf41487d1b54141e22fe59ab7"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902924384
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302468,
+    "ts": "2026-11-05T18:22:04.519915Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state(); console.log(await page.evaluate(()=>Array.from(document.querySelectorAll('input,select')).filter(e=>e.type!=='hidden').map(e=>({name:e.name,value:e.value,checked:e.checked,required:e.required}))))"
+          },
+          "output": "[state] Spotify - Account Executive - Commercial, Spotify Technology | https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply\n[135] link \"Spotify logo\"\n## Account Executive - Commercial, Spotify Technology\nNew York, NY Operations And Business Support \u2013 Platform / Permanent / Hybrid\n## SUBMIT YOUR APPLICATION\nResume/CV \u2731\n[152] link \"ATTACH RESUME/CV Resume/CV \u2731: No file chosen\"\n[15] file \"Resume/CV \u2731 ATTACH RESUME/CV\" = \"No file chosen\"\n[5] textbox \"Full name \u2731\" = \"Jordan Testcase\"\nPronouns\n[16] checkbox \"He/him\" unchecked\nHe/him\n[17] checkbox \"She/her\" unchecked\nShe/her\n[18] checkbox \"They/them\" unchecked\nThey/them\n[19] checkbox \"Xe/xem\" unchecked\nXe/xem\n[20] checkbox \"Ze/hir\" unchecked\nZe/hir\n[21] checkbox \"Ey/em\" unchecked\nEy/em\n[22] checkbox \"Hir/hir\" unchecked\nHir/hir\n[23] checkbox \"Fae/faer\" unchecked\nFae/faer\n[24] checkbox \"Hu/hu\" unchecked\nHu/hu\n[25] checkbox \"Use name only\" unchecked\nUse name only\n[26] checkbox \"Custom\" unchecked\nCustom\nLet the employer know what pronouns you use so that they can address you correctly.\n[7] textbox \"Email \u2731\" = \"jordan.testcase@example.com\"\n[8] textbox \"Phone \u2731\" = \"+1 555 010 0142\"\nCurrent location \u2731\n[9] textbox \"Current location \u2731 Pune, Maharashtra, IND Pune, Mah\u0101r\u0101shtra, IND Pune, Phungyar, Kamjong, Manipur, IND Puna, Una, Himachal Pradesh, IND\" = \"Pune\" focused\nPune, Maharashtra, IND Pune, Mah\u0101r\u0101shtra, IND Pune, Phungyar, Kamjong, Manipur, IND Puna, Una, Himachal Pradesh, IND\n[10] textbox \"Current company \u2731\" = \"Example Labs\"\n## LINKS\n[11] textbox \"LinkedIn URL\"\n[12] textbox \"GitHub URL\"\n[13] textbox \"Portfolio URL\"\n[14] textbox \"Other website\" = \"https://example.com/jordan-testcase\"\n## PREVIOUS SPOTIFY EMPLOYMENT\nHave you ever been previously employed by Spotify? \u2731\n[27] checkbox \"No\" checked\nNo\n[28] checkbox \"Yes - Intern\" unchecked\nYes - Intern\n[29] checkbox \"Yes - Full Time Employment\" unchecked\nYes - Full Time Employment\n## DEMOGRAPHIC SURVEY\n[2] select \"What is your location?\" = \"Select...\" collapsed  options: Select... | Afghanistan | Albania | Algeria | American Samoa | \u2026 246 more\nBy applying for this position, your data will be processed as per Spotify's\n[1293] link \"Privacy Policy\"\n.\n[82] checkbox \"Spotify has my consent to contact me about future job opportunities.\" unchecked\n[1301] button \"SUBMIT APPLICATION\"\n[1305] link \"Spotify Home Page\"\nWe may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. Find our AI notice here: https://lifeatspotify.com/ai-notice\n[1308] link \"Jobs powered by Lever logo\"\n[/state]\n[\n  { name: 'resume', value: '', checked: false, required: false },\n  {\n    name: 'name',\n    value: 'Jordan Testcase',\n    checked: false,\n    required: true\n  },\n  {\n    name: 'pronouns',\n    value: 'He/him',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'pronouns',\n    value: 'She/her',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'pronouns',\n    value: 'They/them',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'pronouns',\n    value: 'Xe/xem',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'pronouns',\n    value: 'Ze/hir',\n    checked: false,\n    required: false\n  },\n  { name: 'pronouns', value: 'Ey/em', checked: false, required: false },\n  {\n    name: 'pronouns',\n    value: 'Hir/hir',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'pronouns',\n    value: 'Fae/faer',\n    checked: false,\n    required: false\n  },\n  { name: 'pronouns', value: 'Hu/hu', checked: false, required: false },\n  {\n    name: 'pronouns',\n    value: 'Use name only',\n    checked: false,\n    required: false\n  },\n  { name: '', value: 'Custom', checked: false, required: false },\n  { name: 'pronouns', value: '', checked: false, required: false },\n  {\n    name: 'email',\n    value: 'jordan.testcase@example.com',\n    checked: false,\n    required: true\n  },\n  {\n    name: 'phone',\n    value: '+1 555 010 0142',\n    checked: false,\n    required: true\n  },\n  { name: 'location', value: 'Pune', checked: false, required: true },\n  {\n    name: 'org',\n    value: 'Example Labs',\n    checked: false,\n    required: true\n  },\n  {\n    name: 'urls[LinkedIn]',\n    value: '',\n    checked: false,\n    required: false\n  },\n  { name: 'urls[GitHub]', value: '', checked: false, required: false },\n  {\n    name: 'urls[Portfolio]',\n    value: '',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'urls[Other]',\n    value: 'https://example.com/jordan-testcase',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]',\n    value: 'No',\n    checked: true,\n    required: false\n  },\n  {\n    name: 'cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]',\n    value: 'Yes - Intern',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]',\n    value: 'Yes - Full Time Employment',\n    checked: false,\n    required: false\n  },\n  { name: '', value: '', required: false },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field0]',\n    value: 'Woman',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field0]',\n    value: 'Man',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field0]',\n    value: 'Non-binary',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field0]',\n    value: 'I use another term',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field0]',\n    value: 'Prefer not to disclose',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    value: 'American Indian or Alaska Native',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    value: 'Asian',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    value: 'Black or African American',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    value: 'Hispanic or Latino',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    value: 'Native Hawaiian or Other Pacific Islander',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    value: 'Two or More Races',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    value: 'White (Not Hispanic or Latino)',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field1]',\n    value: 'Prefer not to disclose',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field2]',\n    value: 'Yes',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field2]',\n    value: 'No',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[cbf1b3c9-4157-4ddd-a66e-41dae0d8badb][responses][field2]',\n    value: 'Prefer not to disclose',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[380b7dba-8003-486d-b65d-28bf53a52415][responses][field0]',\n    value: 'Woman',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[380b7dba-8003-486d-b65d-28bf53a52415][responses][field0]',\n    value: 'Man',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[380b7dba-8003-486d-b65d-28bf53a52415][responses][field0]',\n    value: 'Non-binary',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[380b7dba-8003-486d-b65d-28bf53a52415][responses][field0]',\n    value: 'I use another term',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[380b7dba-8003-486d-b65d-28bf53a52415][responses][field0]',\n    value: 'Prefer not to disclose',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[414f4bab-5e29-4f62-ba71-2e6d2442df59][responses][field0]',\n    value: 'Woman',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[414f4bab-5e29-4f62-ba71-2e6d2442df59][responses][field0]',\n    value: 'Man',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[414f4bab-5e29-4f62-ba71-2e6d2442df59][responses][field0]',\n    value: 'Choose Not to Disclose ',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field0]',\n    value: 'Woman',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field0]',\n    value: 'Man',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field0]',\n    value: 'Non-binary',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field0]',\n    value: 'I use another term',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field0]',\n    value: 'Prefer not to disclose',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Any other ethnic group',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Arab',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Asian/Asian British: Any other Asian background',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Asian/Asian British: Bangladeshi ',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Asian/Asian British: Chinese ',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Asian/Asian British: Indian',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Asian/Asian British: Pakistani ',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Black/Black British: African',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Black/Black British: Any other Black/ African / Caribbean background',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Black/Black British: Caribbean',\n    checked: false,\n    required: false\n  },\n  {\n    name: 'surveysResponses[46c5c4bd-a2d2-43e8-85a4-eefa9d51dff2][responses][field1]',\n    value: 'Mixed: Any o\n[Truncated. Full captured output: /mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/.browser-use/cells/c18e755b-7d1d-4325-a658-5d03002fdba9.txt]",
+          "status": "completed"
+        },
+        "callID": "call_sUM8DtaSa36jCgUAMrKv3Qv2|fc_01b2e46e500e946e016aecc94bf41487d1b54141e22fe59ab7"
+      },
+      "type": "tool_use",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902924509
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302473,
+    "ts": "2026-11-05T18:22:04.542393Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902924514
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302474,
+    "ts": "2026-11-05T18:22:04.543641Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 21,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "63448",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302476,
+    "ts": "2026-11-05T18:22:04.554773Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902924527
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302628,
+    "ts": "2026-11-05T18:22:06.342159Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.001529",
+      "charge_usd": "0.001835",
+      "is_own_key": false,
+      "input_tokens": 15074,
+      "output_tokens": 275,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 4137,
+      "cached_input_tokens": 10934
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302631,
+    "ts": "2026-11-05T18:22:06.373151Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902926366
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302633,
+    "ts": "2026-11-05T18:22:06.404807Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "text": "{\"fields\":[{\"label\":\"Resume/CV\",\"value\":\"Not uploaded; file upload failed because browser requires file in downloads directory.\",\"status\":\"failed\"},{\"label\":\"Full name\",\"value\":\"Jordan Testcase\",\"status\":\"filled\"},{\"label\":\"Pronouns\",\"value\":\"Not specified\",\"status\":\"skipped\"},{\"label\":\"Email\",\"value\":\"jordan.testcase@example.com\",\"status\":\"filled\"},{\"label\":\"Phone\",\"value\":\"+1 555 010 0142\",\"status\":\"filled\"},{\"label\":\"Current location\",\"value\":\"Pune (typed; not selected from autocomplete; India not set)\",\"status\":\"filled\"},{\"label\":\"Current company\",\"value\":\"Example Labs\",\"status\":\"filled\"},{\"label\":\"LinkedIn URL\",\"value\":\"\",\"status\":\"skipped\"},{\"label\":\"GitHub URL\",\"value\":\"\",\"status\":\"skipped\"},{\"label\":\"Portfolio URL\",\"value\":\"\",\"status\":\"skipped\"},{\"label\":\"Other website\",\"value\":\"https://example.com/jordan-testcase\",\"status\":\"filled\"},{\"label\":\"Previously employed by Spotify?\",\"value\":\"No\",\"status\":\"filled\"},{\"label\":\"Demographic questions\",\"value\":\"Visible demographic survey is voluntary; not answered.\",\"status\":\"skipped\"},{\"label\":\"Spotify consent to contact about future job opportunities\",\"value\":\"Unchecked\",\"status\":\"skipped\"}],\"blocked\":\"\",\"submit_button_seen\":true}",
+        "time": {
+          "end": 1793902926400
+        },
+        "type": "text"
+      },
+      "type": "text",
+      "sessionID": "39c6fa1e-f4b9-42dc-8599-16485eafcfcd",
+      "timestamp": 1793902926400
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302645,
+    "ts": "2026-11-05T18:22:06.557723Z",
+    "type": "outputs.promoted",
+    "data": {
+      "failed": false,
+      "skipped": 0,
+      "promoted": 1,
+      "rejected": 0,
+      "upload_errors": 0
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302648,
+    "ts": "2026-11-05T18:22:06.572671Z",
+    "type": "state.promoted",
+    "data": {
+      "failed": false,
+      "harness": "bu-ultrafast",
+      "promoted": 1
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302653,
+    "ts": "2026-11-05T18:22:06.639330Z",
+    "type": "run.completed",
+    "data": {
+      "context": {
+        "chars": 61596,
+        "tokens": 15353,
+        "maxChars": 1000000,
+        "maxTokens": 212500,
+        "compactionFailures": 0
+      }
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302662,
+    "ts": "2026-11-05T18:22:06.682252Z",
+    "type": "browser.released",
+    "data": {
+      "status": "kept_alive",
+      "timeout_at": "2026-11-05T22:21:47.340963+00:00",
+      "browser_session_id": "c3094b0d-dd9f-4eca-8f43-6738c7c6ea27"
+    }
+  },
+  {
+    "run_id": "5bfcd1a4-e007-4bd3-b3a2-fda88079f394",
+    "id": 455302664,
+    "ts": "2026-11-05T18:22:06.703793Z",
+    "type": "worker.session_released",
+    "data": {}
+  }
+]

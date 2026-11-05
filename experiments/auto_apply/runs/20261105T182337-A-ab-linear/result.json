@@ -1,0 +1,74 @@
+{
+  "arm": "A",
+  "model": "bu-ultrafast",
+  "run_id": "6bdaa7ff-f35b-4449-ac4c-309f26cf1752",
+  "session_id": "39e74986-fba7-431b-a61b-a0079be84898",
+  "agent_seconds": 10.0,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "worker.started": 1,
+    "run.dispatched": 1,
+    "core.event": 14,
+    "llm.request": 4,
+    "llm.response": 4,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "Application page displayed: \u201cApplication submission is unavailable at this time, please try again later.\u201d No form fields were available to fill.",
+    "fields": [],
+    "submit_button_seen": false
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 12822,
+    "output": 184
+  },
+  "run_cost_usd": 0.001502,
+  "browser_id": "86186fd1-d251-4726-a79d-716f8a49f2d8",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 0,
+    "required_total": 0,
+    "required_filled": 0,
+    "mapped_correct": 0,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": null,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application",
+  "session_cost": {
+    "llm_cost_usd": 0.001502,
+    "browser_cost_usd": 0.000333,
+    "proxy_cost_usd": 0.0,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.001835
+  },
+  "browser_use_usd": 0.001835,
+  "seconds": 27.5,
+  "anthropic_usd": 0.0,
+  "steps": 4,
+  "llm_requests": 4,
+  "agent_trace": [
+    "await page.goto('https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application'); await bu.state()",
+    "await bu.state()"
+  ],
+  "label": "ab-linear",
+  "ats": "ashby",
+  "company": "Linear",
+  "run_dir": "runs\\20261105T182337-A-ab-linear",
+  "wall_seconds": 32.7,
+  "bu_spent_before": 0.057024,
+  "bu_spent_after": 0.05899,
+  "bu_balance_delta": 0.001966,
+  "bu_cost_counted": 0.001966
+}

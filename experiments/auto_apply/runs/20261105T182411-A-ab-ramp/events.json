@@ -1,0 +1,478 @@
+[
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312372,
+    "ts": "2026-11-05T18:24:12.703133Z",
+    "type": "run.created",
+    "data": {
+      "model": "bu-ultrafast",
+      "session_id": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "is_free_tier": false,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "browser_settings": {
+        "record": false,
+        "profile_id": null,
+        "custom_proxy": false,
+        "extension_ids": [
+          "b7cb8cf4-0c3c-4641-8605-52cca638c7b3"
+        ],
+        "allow_resizing": null,
+        "proxy_country_code": null,
+        "browser_screen_width": null,
+        "browser_screen_height": null,
+        "profile_storage_generation": ""
+      }
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312374,
+    "ts": "2026-11-05T18:24:12.722539Z",
+    "type": "run.dispatching",
+    "data": {
+      "transport": "agentcore"
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312394,
+    "ts": "2026-11-05T18:24:12.949166Z",
+    "type": "browser.ready",
+    "data": {
+      "live_view_url": "<redacted>",
+      "browser_session_id": "aaaa733d-4d1c-4090-bb7c-4010f5b5793d"
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312419,
+    "ts": "2026-11-05T18:24:13.226707Z",
+    "type": "run.dispatched",
+    "data": {
+      "transport": "agentcore",
+      "browser_session_id": "aaaa733d-4d1c-4090-bb7c-4010f5b5793d"
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312421,
+    "ts": "2026-11-05T18:24:13.227045Z",
+    "type": "worker.started",
+    "data": {
+      "core_agent": "bu-pi",
+      "session_id": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "cold_process": true,
+      "workspace_id": "05657674-f78e-4440-9b34-6fc67fe1261f",
+      "invocation_index": 1,
+      "prewarmed_process": false,
+      "invocation_received_unix_ms": 1793903053206,
+      "process_age_at_invocation_ms": 4586.744818,
+      "runtime_session_header_present": true
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312443,
+    "ts": "2026-11-05T18:24:13.504837Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903053455
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312445,
+    "ts": "2026-11-05T18:24:13.504749Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 2,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "14310",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312508,
+    "ts": "2026-11-05T18:24:14.369544Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000806",
+      "charge_usd": "0.000967",
+      "is_own_key": false,
+      "input_tokens": 2988,
+      "output_tokens": 59,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 0,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 2985,
+      "cached_input_tokens": 0
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312511,
+    "ts": "2026-11-05T18:24:14.389748Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.goto('https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040/application'); await bu.state();"
+          },
+          "status": "running"
+        },
+        "callID": "call_pF0fxXFdiexQHcsjcHbDM4PG|fc_07c26bd25796c698016aecc9ce12d087d18bb40172752fcfa3"
+      },
+      "type": "tool_use",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903054376
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312560,
+    "ts": "2026-11-05T18:24:15.088886Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await page.goto('https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040/application'); await bu.state();"
+          },
+          "output": "[state] Mobile Engineer, Android @ Ramp | https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040/application\n\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_pF0fxXFdiexQHcsjcHbDM4PG|fc_07c26bd25796c698016aecc9ce12d087d18bb40172752fcfa3"
+      },
+      "type": "tool_use",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903054965
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312563,
+    "ts": "2026-11-05T18:24:15.102038Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903055083
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312565,
+    "ts": "2026-11-05T18:24:15.100546Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 4,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "14826",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312568,
+    "ts": "2026-11-05T18:24:15.114719Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903055090
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312625,
+    "ts": "2026-11-05T18:24:16.055187Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000119",
+      "charge_usd": "0.000143",
+      "is_own_key": false,
+      "input_tokens": 3104,
+      "output_tokens": 30,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 8,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 116,
+      "cached_input_tokens": 2985
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312626,
+    "ts": "2026-11-05T18:24:16.072823Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state()"
+          },
+          "status": "running"
+        },
+        "callID": "call_QKBfKAUl74d0mWfHlellxkqm|fc_07c26bd25796c698016aecc9cfe64487d185e3023a5f0922c7"
+      },
+      "type": "tool_use",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903056069
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312636,
+    "ts": "2026-11-05T18:24:16.174372Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "tool": "javascript",
+        "type": "tool",
+        "state": {
+          "input": {
+            "code": "await bu.state()"
+          },
+          "output": "[state] Mobile Engineer, Android @ Ramp | https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040/application\n[45] link \"Ramp\"\n[48] link \"Back to Ramp\u2019s Job Listings\"\n## Mobile Engineer, Android\n## Location\nNew York, NY (HQ); Remote (Canada); Remote (US); San Francisco, CA\n## Employment Type\nFull time\n## Location Type\nHybrid\n## Department\nEngineering\n## Compensation\n$189K \u2013 $330K \u2022 Offers Equity\nThe final compensation will depend on the location and level at which the candidate is hired.\n[75] tab \"Overview\"\n[76] tab \"Application\" selected\n[94] tabpanel \"Application\"\n## Error\nApplication submission is unavailable at this time, please try again later.\n[110] link \"Learn more about Ashby\"\nPowered by\n[107] link \"Privacy Policy\"\n[108] link \"Security\"\n[109] link \"Vulnerability Disclosure\"\n[/state]\n\n",
+          "status": "completed"
+        },
+        "callID": "call_QKBfKAUl74d0mWfHlellxkqm|fc_07c26bd25796c698016aecc9cfe64487d185e3023a5f0922c7"
+      },
+      "type": "tool_use",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903056170
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312637,
+    "ts": "2026-11-05T18:24:16.183284Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903056172
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312640,
+    "ts": "2026-11-05T18:24:16.193368Z",
+    "type": "llm.request",
+    "data": {
+      "model": "bu-ultrafast",
+      "tools": 5,
+      "stream": true,
+      "messages": 7,
+      "has_system": true,
+      "system_len": 9714,
+      "tool_names": [
+        "javascript",
+        "finish",
+        "finish_from_js",
+        "new_browser",
+        "solve_captcha"
+      ],
+      "image_files": {
+        "inline_images": 0,
+        "file_references": 0
+      },
+      "looks_like_compaction": false,
+      "request_content_length": "17630",
+      "effective_max_output_tokens": 32000,
+      "requested_max_output_tokens": 32000
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312641,
+    "ts": "2026-11-05T18:24:16.203990Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-start"
+      },
+      "type": "step_start",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903056183
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312753,
+    "ts": "2026-11-05T18:24:17.524935Z",
+    "type": "llm.response",
+    "data": {
+      "model": "bu-ultrafast",
+      "cost_usd": "0.000216",
+      "charge_usd": "0.000259",
+      "is_own_key": false,
+      "input_tokens": 3366,
+      "output_tokens": 88,
+      "requested_model": "bu-ultrafast",
+      "reasoning_tokens": 32,
+      "max_output_tokens": {
+        "truncated": true,
+        "valueType": "unknown",
+        "truncationReason": "unsupported_event_value"
+      },
+      "cache_write_tokens": 262,
+      "cached_input_tokens": 3101
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312754,
+    "ts": "2026-11-05T18:24:17.546746Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "type": "step-finish"
+      },
+      "type": "step_finish",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903057543
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312757,
+    "ts": "2026-11-05T18:24:17.571629Z",
+    "type": "core.event",
+    "data": {
+      "part": {
+        "text": "{\"fields\":[{\"label\":\"Application form\",\"value\":\"Application submission is unavailable at this time, please try again later.\",\"status\":\"failed\"}],\"blocked\":\"no_form\",\"submit_button_seen\":false}",
+        "time": {
+          "end": 1793903057565
+        },
+        "type": "text"
+      },
+      "type": "text",
+      "sessionID": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+      "timestamp": 1793903057565
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312770,
+    "ts": "2026-11-05T18:24:17.726619Z",
+    "type": "outputs.promoted",
+    "data": {
+      "failed": false,
+      "skipped": 0,
+      "promoted": 1,
+      "rejected": 0,
+      "upload_errors": 0
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312771,
+    "ts": "2026-11-05T18:24:17.733980Z",
+    "type": "state.promoted",
+    "data": {
+      "failed": false,
+      "harness": "bu-ultrafast",
+      "promoted": 1
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312776,
+    "ts": "2026-11-05T18:24:17.788716Z",
+    "type": "run.completed",
+    "data": {
+      "context": {
+        "chars": 15924,
+        "tokens": 3778,
+        "maxChars": 1000000,
+        "maxTokens": 212500,
+        "compactionFailures": 0
+      }
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312781,
+    "ts": "2026-11-05T18:24:17.811697Z",
+    "type": "browser.released",
+    "data": {
+      "status": "kept_alive",
+      "timeout_at": "2026-11-05T22:24:12.746767+00:00",
+      "browser_session_id": "aaaa733d-4d1c-4090-bb7c-4010f5b5793d"
+    }
+  },
+  {
+    "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+    "id": 455312783,
+    "ts": "2026-11-05T18:24:17.829036Z",
+    "type": "worker.session_released",
+    "data": {}
+  }
+]

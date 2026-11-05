@@ -1,0 +1,80 @@
+{
+  "arm": "A",
+  "model": "bu-ultrafast",
+  "run_id": "c3d1055d-b708-464c-8a29-5e4bc3c26721",
+  "session_id": "eadc5b0b-d0ee-417e-a7f6-07d7ebfb657f",
+  "agent_seconds": 10.0,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "core.event": 11,
+    "llm.request": 3,
+    "llm.response": 3,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "no_form",
+    "fields": [
+      {
+        "label": "Application form",
+        "status": "failed",
+        "value": "Application submission is unavailable at this time, please try again later."
+      }
+    ],
+    "submit_button_seen": false
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 9458,
+    "output": 177
+  },
+  "run_cost_usd": 0.001369,
+  "browser_id": "aaaa733d-4d1c-4090-bb7c-4010f5b5793d",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 0,
+    "required_total": 0,
+    "required_filled": 0,
+    "mapped_correct": 0,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": null,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040/application",
+  "session_cost": {
+    "llm_cost_usd": 0.001369,
+    "browser_cost_usd": 0.000333,
+    "proxy_cost_usd": 0.0,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.001702
+  },
+  "browser_use_usd": 0.001702,
+  "seconds": 26.9,
+  "anthropic_usd": 0.0,
+  "steps": 3,
+  "llm_requests": 3,
+  "agent_trace": [
+    "await page.goto('https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040/application'); await bu.state();",
+    "await bu.state()"
+  ],
+  "label": "ab-ramp",
+  "ats": "ashby",
+  "company": "Ramp",
+  "run_dir": "runs\\20261105T182411-A-ab-ramp",
+  "wall_seconds": 32.1,
+  "bu_spent_before": 0.05899,
+  "bu_spent_after": 0.060995,
+  "bu_balance_delta": 0.002005,
+  "bu_cost_counted": 0.002005
+}

@@ -1,0 +1,177 @@
+{
+  "arm": "A",
+  "model": "bu-ultrafast",
+  "run_id": "74ec3eab-5722-44d6-ab14-3b0565f6b1e1",
+  "session_id": "d13508bf-3b5a-4696-8e47-c869f7edbb39",
+  "agent_seconds": 31.4,
+  "status": "completed",
+  "event_types": {
+    "run.created": 1,
+    "run.dispatching": 1,
+    "browser.ready": 1,
+    "run.dispatched": 1,
+    "worker.started": 1,
+    "core.event": 62,
+    "llm.request": 16,
+    "llm.response": 16,
+    "outputs.promoted": 1,
+    "state.promoted": 1,
+    "run.completed": 1,
+    "browser.released": 1,
+    "worker.session_released": 1
+  },
+  "agent_output": {
+    "blocked": "",
+    "fields": [
+      {
+        "label": "First Name",
+        "status": "filled",
+        "value": "Jordan"
+      },
+      {
+        "label": "Last Name",
+        "status": "filled",
+        "value": "Testcase"
+      },
+      {
+        "label": "Email",
+        "status": "filled",
+        "value": "jordan.testcase@example.com"
+      },
+      {
+        "label": "Country",
+        "status": "failed",
+        "value": "India (entry attempted, not verified; field remained blank)"
+      },
+      {
+        "label": "Phone",
+        "status": "filled",
+        "value": "+1 555 010 0142"
+      },
+      {
+        "label": "Location (City)",
+        "status": "failed",
+        "value": "Pune, India (entry attempted, not verified; field remained blank)"
+      },
+      {
+        "label": "Resume/CV",
+        "status": "failed",
+        "value": "Jordan_Testcase_TEST_RESUME.pdf (upload attempted but blocked because file was not in browser downloads directory)"
+      },
+      {
+        "label": "Cover Letter",
+        "status": "skipped",
+        "value": ""
+      },
+      {
+        "label": "Legal Name (if different than above)",
+        "status": "skipped",
+        "value": ""
+      },
+      {
+        "label": "Personal website/blog",
+        "status": "filled",
+        "value": "https://example.com/jordan-testcase"
+      },
+      {
+        "label": "How did you hear about this job?",
+        "status": "filled",
+        "value": "Company careers page"
+      },
+      {
+        "label": "Relocation willingness",
+        "status": "failed",
+        "value": "No (entry attempted, selection not verified)"
+      },
+      {
+        "label": "Immigration sponsorship",
+        "status": "failed",
+        "value": "No (entry attempted, selection not verified)"
+      },
+      {
+        "label": "Candidate Privacy Policy acknowledgement",
+        "status": "filled",
+        "value": "Checked"
+      },
+      {
+        "label": "Gender",
+        "status": "skipped",
+        "value": ""
+      },
+      {
+        "label": "Hispanic/Latino",
+        "status": "skipped",
+        "value": ""
+      },
+      {
+        "label": "Veteran Status",
+        "status": "skipped",
+        "value": ""
+      }
+    ],
+    "submit_button_seen": true
+  },
+  "agent_error": null,
+  "tokens": {
+    "input": 138314,
+    "output": 1471
+  },
+  "run_cost_usd": 0.008351,
+  "browser_id": "347536cc-62ac-4490-ad37-2be8152cf4f5",
+  "guard_probe": "BLOCKED",
+  "score": {
+    "success": false,
+    "fields_total": 17,
+    "required_total": 11,
+    "required_filled": 7,
+    "mapped_correct": 5,
+    "wrong": [],
+    "missed_required": [
+      "Location (City)*",
+      "Resume/CV*",
+      "Do you currently live or are you willing to relocate to the job\u2019s location?*",
+      "Do you now or will you in the future require immigration sponsorship to work at "
+    ],
+    "resume_attached": false,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://job-boards.greenhouse.io/cloudflare/jobs/8300518",
+  "session_cost": {
+    "llm_cost_usd": 0.008351,
+    "browser_cost_usd": 0.000667,
+    "proxy_cost_usd": 1.7e-05,
+    "search_cost_usd": 0.0,
+    "total_cost_usd": 0.009035
+  },
+  "browser_use_usd": 0.009035,
+  "seconds": 66.9,
+  "anthropic_usd": 0.0,
+  "steps": 16,
+  "llm_requests": 16,
+  "agent_trace": [
+    "await page.goto('https://job-boards.greenhouse.io/cloudflare/jobs/8300518'); await bu.state()",
+    "await bu.click(4); await bu.state()",
+    "console.log((await page.snapshot()).nodes.filter(n=>['textbox','combobox','checkbox','radio'].includes(n.role)))",
+    "await bu.state({max:30000})",
+    "await bu.type(6,'Jordan'); await bu.type(7,'Testcase'); await bu.type(8,'jordan.testcase@example.com'); await bu.type(9,'India'); await bu.type(11,'+1 555 010 0142'); await bu.type(12,'Pune, India'); ",
+    "console.log(await page.evaluate(()=>[...document.querySelectorAll('input,textarea,select')].map(e=>({tag:e.tagName,type:e.type,name:e.name,id:e.id,val:e.value,req:e.required,opts:e.options?[...e.optio",
+    "console.log(await page.evaluate(()=>[...document.querySelectorAll('input,textarea')].map(e=>[e.id,e.closest('div')?.parentElement?.innerText?.slice(0,220)])))",
+    "await bu.click(9); await bu.state()",
+    "const fs=require('fs'); console.log(fs.existsSync('uploads/Jordan_Testcase_TEST_RESUME.pdf'))",
+    "console.log(await fs.promises.readdir('.')); console.log(await fs.promises.readdir('uploads').catch(e=>String(e)))",
+    "await page.cdp('DOM.setFileInputFiles',{backendNodeId:(await page.snapshot()).nodes.find(n=>n.role==='file').id,files:['/mnt/workspace/05657674-f78e-4440-9b34-6fc67fe1261f/Jordan_Testcase_TEST_RESUME.",
+    "console.log(await page.evaluate(()=>[...document.querySelectorAll('input[type=file]')].map(x=>x.id)))",
+    "const id=(await page.cdp('DOM.getDocument',{})).root; console.log(await page.cdp('DOM.querySelector',{nodeId:id.nodeId,selector:'#resume'}))",
+    "const doc=await page.cdp('DOM.getDocument',{}); const n=await page.cdp('DOM.querySelector',{nodeId:doc.root.nodeId,selector:'#resume'}); const d=await page.cdp('DOM.describeNode',{nodeId:n.nodeId}); a"
+  ],
+  "label": "gh-cloudflare",
+  "ats": "greenhouse",
+  "company": "Cloudflare",
+  "run_dir": "runs\\20261105T182032-A-gh-cloudflare",
+  "wall_seconds": 72.4,
+  "bu_spent_before": 0.029148,
+  "bu_spent_after": 0.038416,
+  "bu_balance_delta": 0.009268,
+  "bu_cost_counted": 0.009268
+}

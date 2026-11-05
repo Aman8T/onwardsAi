@@ -1,6 +1,6 @@
 {
-  "browser_use_usd": 0.017186,
-  "anthropic_usd": 0.040472,
+  "browser_use_usd": 0.070545,
+  "anthropic_usd": 0.150774,
   "caps": {
     "browser_use_stop_usd": 0.8,
     "anthropic_cap_usd": 2.0
@@ -68,6 +68,161 @@
       "browser_use_usd": 0.007327,
       "anthropic_usd": 0,
       "bu_spent_real_balance": 0.022951
+    },
+    {
+      "at": "2026-11-05T18:11:37+00:00",
+      "kind": "arm_B",
+      "label": "gh-gitlab",
+      "run_dir": "runs\\20261105T180851-B-gh-gitlab",
+      "browser_use_usd": 0.000667,
+      "anthropic_usd": 0.010044,
+      "bu_spent_real_balance": 0.023758
+    },
+    {
+      "at": "2026-11-05T18:13:23+00:00",
+      "kind": "arm_B",
+      "label": "gh-cloudflare",
+      "run_dir": "runs\\20261105T181139-B-gh-cloudflare",
+      "browser_use_usd": 0.000792,
+      "anthropic_usd": 0.020264,
+      "bu_spent_real_balance": 0.02455
+    },
+    {
+      "at": "2026-11-05T18:14:49+00:00",
+      "kind": "arm_B",
+      "label": "lv-spotify",
+      "run_dir": "runs\\20261105T181324-B-lv-spotify",
+      "browser_use_usd": 0.000788,
+      "anthropic_usd": 0.025398,
+      "bu_spent_real_balance": 0.025338
+    },
+    {
+      "at": "2026-11-05T18:16:43+00:00",
+      "kind": "arm_B",
+      "label": "lv-palantir",
+      "run_dir": "runs\\20261105T181450-B-lv-palantir",
+      "browser_use_usd": 0.001374,
+      "anthropic_usd": 0.032298,
+      "bu_spent_real_balance": 0.026712
+    },
+    {
+      "at": "2026-11-05T18:17:23+00:00",
+      "kind": "arm_B",
+      "label": "ab-linear",
+      "run_dir": "runs\\20261105T181645-B-ab-linear",
+      "browser_use_usd": 0.000395,
+      "anthropic_usd": 0.003156,
+      "bu_spent_real_balance": 0.027107
+    },
+    {
+      "at": "2026-11-05T18:18:03+00:00",
+      "kind": "arm_B",
+      "label": "ab-ramp",
+      "run_dir": "runs\\20261105T181724-B-ab-ramp",
+      "browser_use_usd": 0.000464,
+      "anthropic_usd": 0.003148,
+      "bu_spent_real_balance": 0.027571
+    },
+    {
+      "at": "2026-11-05T18:19:46+00:00",
+      "kind": "arm_B",
+      "label": "cu-workable-huggingface",
+      "run_dir": "runs\\20261105T181804-B-cu-workable-huggingface",
+      "browser_use_usd": 0.000892,
+      "anthropic_usd": 0.012858,
+      "bu_spent_real_balance": 0.028462
+    },
+    {
+      "at": "2026-11-05T18:20:29+00:00",
+      "kind": "arm_B",
+      "label": "cu-recruitee-bunq",
+      "run_dir": "runs\\20261105T181947-B-cu-recruitee-bunq",
+      "browser_use_usd": 0.000685,
+      "anthropic_usd": 0.003136,
+      "bu_spent_real_balance": 0.029148
+    },
+    {
+      "at": "2026-11-05T18:21:45+00:00",
+      "kind": "arm_A",
+      "label": "gh-cloudflare",
+      "run_dir": "runs\\20261105T182032-A-gh-cloudflare",
+      "browser_use_usd": 0.009268,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.038416
+    },
+    {
+      "at": "2026-11-05T18:22:33+00:00",
+      "kind": "arm_A",
+      "label": "lv-spotify",
+      "run_dir": "runs\\20261105T182146-A-lv-spotify",
+      "browser_use_usd": 0.007778,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.046194
+    },
+    {
+      "at": "2026-11-05T18:23:36+00:00",
+      "kind": "arm_A",
+      "label": "lv-palantir",
+      "run_dir": "runs\\20261105T182235-A-lv-palantir",
+      "browser_use_usd": 0.01083,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.057024
+    },
+    {
+      "at": "2026-11-05T18:24:10+00:00",
+      "kind": "arm_A",
+      "label": "ab-linear",
+      "run_dir": "runs\\20261105T182337-A-ab-linear",
+      "browser_use_usd": 0.001966,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.05899
+    },
+    {
+      "at": "2026-11-05T18:24:43+00:00",
+      "kind": "arm_A",
+      "label": "ab-ramp",
+      "run_dir": "runs\\20261105T182411-A-ab-ramp",
+      "browser_use_usd": 0.002005,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.060995
+    },
+    {
+      "at": "2026-11-05T18:25:32+00:00",
+      "kind": "arm_A",
+      "label": "cu-workable-huggingface",
+      "run_dir": "runs\\20261105T182444-A-cu-workable-huggingface",
+      "browser_use_usd": 0.006621,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.067616
+    },
+    {
+      "at": "2026-11-05T18:26:32+00:00",
+      "kind": "arm_A",
+      "label": "cu-recruitee-bunq",
+      "run_dir": "runs\\20261105T182533-A-cu-recruitee-bunq",
+      "browser_use_usd": 0.007835,
+      "anthropic_usd": 0,
+      "bu_spent_real_balance": 0.075451
+    },
+    {
+      "at": "2026-11-05T18:27:47+00:00",
+      "kind": "inspect",
+      "label": "ab-linear",
+      "browser_use_usd": 0.0003333333333333333,
+      "anthropic_usd": 0
+    },
+    {
+      "at": "2026-11-05T18:28:28+00:00",
+      "kind": "guard_check",
+      "browser_use_usd": 0.0003333333333333333,
+      "anthropic_usd": 0
+    },
+    {
+      "at": "2026-11-05T18:28:48+00:00",
+      "kind": "inspect",
+      "label": "ab-linear",
+      "browser_use_usd": 0.0003333333333333333,
+      "anthropic_usd": 0
     }
   ]
 }

@@ -1,0 +1,77 @@
+{
+  "arm": "B",
+  "model": "claude-sonnet-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 3,
+  "score": {
+    "success": false,
+    "fields_total": 17,
+    "required_total": 11,
+    "required_filled": 10,
+    "mapped_correct": 6,
+    "wrong": [],
+    "missed_required": [
+      "Do you currently live or are you willing to relocate to the job\u2019s location?*"
+    ],
+    "resume_attached": true,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://job-boards.greenhouse.io/cloudflare/jobs/8300518",
+  "seconds": 99.1,
+  "failure": null,
+  "errors": [
+    "field 11 (Do you currently live or are you willing to relocate to the ): LookupError",
+    "field 10 (Do you currently live or are you willing to relocate to the ): LookupError",
+    "field 10 (Do you currently live or are you willing to relocate to the ): LookupError"
+  ],
+  "steps": 11,
+  "claude_calls": 3,
+  "usage": [
+    {
+      "input_tokens": 2118,
+      "output_tokens": 513,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.009366,
+      "seconds": 3.4,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2272,
+      "output_tokens": 102,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.005564,
+      "seconds": 2.4,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2272,
+      "output_tokens": 79,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.005334,
+      "seconds": 2.1,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.020264,
+  "browser_use_usd": 0.000667,
+  "browser_cost": {
+    "browser": 0.0006666666666666666,
+    "proxy": 0.0,
+    "proxy_mb": 0.0
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "label": "gh-cloudflare",
+  "ats": "greenhouse",
+  "company": "Cloudflare",
+  "run_dir": "runs\\20261105T181139-B-gh-cloudflare",
+  "wall_seconds": 104.3,
+  "bu_spent_before": 0.023758,
+  "bu_spent_after": 0.02455,
+  "bu_balance_delta": 0.000792,
+  "bu_cost_counted": 0.000792
+}

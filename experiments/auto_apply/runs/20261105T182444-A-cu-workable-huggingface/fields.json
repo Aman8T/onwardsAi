@@ -1,0 +1,145 @@
+{
+  "url": "https://apply.workable.com/huggingface/j/81B46579FE/apply/",
+  "title": "Open-Source Machine Learning Engineer - EMEA Remote - Hugging Face - Application",
+  "fields": [
+    {
+      "selector": "[id=\"firstname\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "firstname",
+      "label": "First name",
+      "required": true,
+      "value": "Jordan",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"lastname\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "lastname",
+      "label": "Last name",
+      "required": true,
+      "value": "Testcase",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"email\"]",
+      "tag": "input",
+      "type": "email",
+      "name": "email",
+      "label": "Email",
+      "required": true,
+      "value": "jordan.testcase@example.com",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input_phone\"]",
+      "tag": "input",
+      "type": "tel",
+      "name": "phone",
+      "label": "Phone",
+      "required": false,
+      "value": "555-010-0142",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input_files_input_o7BZ3Ifpe3PDyQvb\"]",
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Resume Choose file",
+      "required": true,
+      "value": "",
+      "accept": ".pdf,.doc,.docx,.odt,.rtf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text,application/rtf",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"CA_47143\"]",
+      "tag": "textarea",
+      "type": "text",
+      "name": "CA_47143",
+      "label": "Github profile",
+      "required": true,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"CA_47383\"]",
+      "tag": "textarea",
+      "type": "text",
+      "name": "CA_47383",
+      "label": "Linkedin",
+      "required": true,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"cover_letter\"]",
+      "tag": "textarea",
+      "type": "text",
+      "name": "cover_letter",
+      "label": "Cover letter",
+      "required": false,
+      "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted.",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"CA_10626\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "CA_10626",
+      "label": "Expected salary",
+      "required": false,
+      "value": "Negotiable",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"input_CA_10627_input\"]",
+      "tag": "input",
+      "type": "combobox",
+      "name": null,
+      "label": "Notice period / availability",
+      "required": false,
+      "value": "1 month",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"CA_10629\"]",
+      "tag": "input",
+      "type": "text",
+      "name": "CA_10629",
+      "label": "How did you hear about us?",
+      "required": false,
+      "value": "Company careers page",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"QA_11844076\"]",
+      "tag": "textarea",
+      "type": "text",
+      "name": "QA_11844076",
+      "label": "Why Hugging Face, and where would you make the biggest difference in this role? Write it yourself, in your own words. We read every answer and we're after the specifics only you could give us, so generic or copy-pasted o",
+      "required": true,
+      "value": "",
+      "frame": 0
+    },
+    {
+      "selector": "[id=\"QA_11857982\"]",
+      "tag": "textarea",
+      "type": "text",
+      "name": "QA_11857982",
+      "label": "Share 2\u20133 of your open-source contributions with links (GitHub PRs, issues, or projects you maintain), and a quick note on your role and what each one involved. This one really matters to us, so please give it a real go.",
+      "required": true,
+      "value": "",
+      "frame": 0
+    }
+  ],
+  "blockers": {
+    "captcha_on_page": false,
+    "password_field": false,
+    "submit_texts": [
+      "Submit application"
+    ],
+    "resume_name_on_page": false
+  }
+}

@@ -1,0 +1,102 @@
+[
+  {
+    "op": "upload_resume",
+    "label": "Resume/CV \u2731 ATTACH RESUME/CV",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"resume-upload-input\"]",
+    "name": "resume",
+    "value": "",
+    "source": "resume"
+  },
+  {
+    "op": "fill",
+    "label": "Full name \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"name\"]",
+    "name": "name",
+    "value": "Jordan Testcase",
+    "source": "full_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email \u2731",
+    "type": "email",
+    "frame": 0,
+    "selector": "input[name=\"email\"]",
+    "name": "email",
+    "value": "jordan.testcase@example.com",
+    "source": "email"
+  },
+  {
+    "op": "fill",
+    "label": "Phone \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"phone\"]",
+    "name": "phone",
+    "value": "+1 555 010 0142",
+    "source": "phone"
+  },
+  {
+    "op": "fill",
+    "label": "Current location \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"location-input\"]",
+    "name": "location",
+    "value": "Pune, India",
+    "source": "location"
+  },
+  {
+    "op": "fill",
+    "label": "Current company \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"org\"]",
+    "name": "org",
+    "value": "Example Labs",
+    "source": "current_company"
+  },
+  {
+    "op": "fill",
+    "label": "Other website",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"urls[Other]\"]",
+    "name": "urls[Other]",
+    "value": "https://example.com/jordan-testcase",
+    "source": "website"
+  },
+  {
+    "op": "check",
+    "label": "Have you ever been previously employed by Spotify? \u2731",
+    "type": "checkbox-group",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(3) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]",
+    "value": "No",
+    "source": "no prior Spotify employment in details"
+  },
+  {
+    "op": "check",
+    "label": "Have you ever been previously employed by Spotify? \u2731",
+    "type": "checkbox-group",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(3) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]",
+    "value": "No",
+    "source": "default"
+  },
+  {
+    "op": "check",
+    "label": "Have you ever been previously employed by Spotify? \u2731",
+    "type": "checkbox-group",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(3) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]",
+    "value": "No",
+    "source": "no prior Spotify employment"
+  }
+]
