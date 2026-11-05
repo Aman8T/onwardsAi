@@ -84,10 +84,10 @@ from tayyari.storage.ports import (
 )
 from tayyari.storage.repos import Repositories
 from tayyari.storage.repos.match import posting_listing_fields
+from tests.fakes.apply import FakeApplyRepo
 from tests.fakes.card import FakeCardRepo
 from tests.fakes.claim_marks import FakeClaimMarkRepo
 from tests.fakes.discover import FakeDiscoverRepo
-from tests.fakes.apply import FakeApplyRepo
 from tests.fakes.handoff import FakeHandoffRepo
 from tests.fakes.interview import FakeInterviewRepo
 from tests.fakes.jobsearch import FakeJobSearchRepo
