@@ -41,6 +41,10 @@ dev = [
     "ruff>=0.7",
     "mypy>=1.13",
     "types-requests>=2.33.0.20261006",
+    "playwright==1.63.0",
+]
+worker = [
+    "playwright==1.63.0",
 ]
 
 # Names the app explicitly for `fastapi dev`, `fastapi run` and FastAPI Cloud (needs

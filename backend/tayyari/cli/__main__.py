@@ -160,6 +160,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     _add_discover_commands(commands)
     _add_weekly_commands(commands)
+    _add_apply_commands(commands)
     _add_eval_commands(commands)
     return parser
 
@@ -208,6 +209,33 @@ def _add_discover_commands(commands: Any) -> None:
         default=None,
         help="read this registry file instead of the bundled employers.json",
     )
+
+
+def _add_apply_commands(commands: Any) -> None:
+    """``apply-worker`` and ``apply-metrics``: auto-apply's background worker and its learning-loop numbers."""
+    worker = commands.add_parser(
+        "apply-worker",
+        help="run auto-apply's worker: fill queued applications, submit approved ones (needs AUTO_APPLY_ENABLED)",
+    )
+    worker.add_argument("--once", action="store_true", help="run until nothing is left to do, then stop")
+    worker.add_argument("--headed", action="store_true", help="show the browser window")
+    metrics = commands.add_parser(
+        "apply-metrics", help="playbook vs AI runs, success and failure reasons per ATS"
+    )
+    metrics.add_argument("--days", type=_count(1), default=30)
+    metrics.add_argument("--json", action="store_true")
+
+
+def _apply_worker(args: argparse.Namespace) -> int:
+    from . import apply
+
+    return apply.run_worker(once=args.once, headed=args.headed)
+
+
+def _apply_metrics(args: argparse.Namespace) -> int:
+    from . import apply
+
+    return apply.run_metrics(days=args.days, as_json=args.json)
 
 
 def _add_weekly_commands(commands: Any) -> None:
@@ -492,6 +520,8 @@ _HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "discover-refresh": _discover_refresh,
     "discover-worker": _discover_worker,
     "weekly": _weekly,
+    "apply-worker": _apply_worker,
+    "apply-metrics": _apply_metrics,
     "export": _export,
     "replay": _replay,
     "eval": _eval,
