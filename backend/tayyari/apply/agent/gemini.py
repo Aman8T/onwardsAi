@@ -38,7 +38,10 @@ def _prune(contents: list[dict[str, Any]]) -> None:
     seen = 0
     for turn in reversed(contents):
         for part in turn.get("parts", []):
-            holders = [part, *list((part.get("functionResponse") or part.get("function_response") or {}).get("parts", []))]
+            holders = [
+                part,
+                *list((part.get("functionResponse") or part.get("function_response") or {}).get("parts", [])),
+            ]
             for holder in holders:
                 if "inline_data" in holder or "inlineData" in holder:
                     seen += 1
