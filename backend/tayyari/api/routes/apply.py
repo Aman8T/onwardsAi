@@ -231,6 +231,22 @@ async def classify_email(request: Request) -> JSONResponse:
     return _json(request, (await tracker.handle(owner, body)).to_dict(), fresh)
 
 
+@router.get("/api/apply/metrics")
+async def metrics(request: Request) -> JSONResponse:
+    """Playbook vs AI runs, outcomes and failure reasons per ATS. Open locally; in production, only to `ApplySettings.admin_emails`."""
+    from tayyari.apply.metrics import compute_metrics
+
+    container = get_container(request)
+    _enabled(container)
+    if container.settings.is_prod:
+        user = await get_current_user(request)
+        if user is None or not container.settings.apply.is_admin(user.email):
+            raise NotFound("Not found")
+    days = min(max(int(request.query_params.get("days", "30") or 30), 1), 365)
+    data = await compute_metrics(container.repos.apply, container.clock.now(), days)
+    return JSONResponse(data.to_dict(), headers={"Cache-Control": "no-store"})
+
+
 @router.delete("/api/apply/applications/{application_id}")
 async def delete_application(application_id: str, request: Request) -> Response:
     _, svc, owner, _, _ = await _start(request)
