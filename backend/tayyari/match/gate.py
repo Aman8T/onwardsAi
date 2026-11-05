@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Final
 
 from tayyari.contract.match import GATE_BLOCK_SEVERITY, Fact, Gate, GateAnswer
@@ -92,9 +93,11 @@ async def answer_gates(
     gates: Sequence[Gate],
     facts: Sequence[Fact],
     call_ctx: CallContext,
+    today: date | None = None,
 ) -> GateDecision:
     """Answer ``gates`` from ``facts`` (no call when there are no gates) and decide. A failed call leaves every gate
-    ``uncertain``: nothing is blocked on a guess."""
+    ``uncertain``: nothing is blocked on a guess. ``today`` heads the message, so a stated minimum of years is counted
+    to today's date."""
     if not gates:
         return GateDecision(blocked=False)
     fact_ids = [f.id for f in facts]
@@ -103,7 +106,7 @@ async def answer_gates(
         model=model,
         purpose="match.gates",
         system=GATES_SYSTEM,
-        user=build_gates_prompt(gates, facts),
+        user=build_gates_prompt(gates, facts, today=today),
         schema=schema_of(GateAnswersOut, gateId=[g.id for g in gates], factIds=fact_ids),
         max_tokens=GATES_MAX_TOKENS,
         call_ctx=call_ctx,

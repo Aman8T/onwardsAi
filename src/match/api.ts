@@ -35,6 +35,7 @@ const STATUS_OF_CODE: Record<MatchErrorCode, number> = {
   export_blocked: 409,
   no_requirements: 422,
   rate_limited: 429,
+  failed: 500,
 };
 
 export class MatchApiError extends ApiError {

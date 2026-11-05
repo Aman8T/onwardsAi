@@ -16,13 +16,14 @@ Any failure at any step (an error, a refusal, the spend ceiling) is a quiet sect
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
 from datetime import date
 from typing import Any, Final
 
 from tayyari.contract.models import Profile
 from tayyari.core.logging import get_logger
-from tayyari.core.settings import WeeklySettings
+from tayyari.core.settings import BLOCKED_NEWS_DOMAINS, WeeklySettings
 from tayyari.core.text import clip_words, tidy
 from tayyari.jobsearch.judge import has_injection
 from tayyari.llm.claude import ClaudeClient
@@ -38,6 +39,17 @@ from tayyari.prompts.weekly import (
 from .ground import NewsCheck, SearchedPage, check_news, host_of, normalise_url, on_allow_list
 
 log = get_logger(__name__)
+
+
+def readable_domains(domains: Sequence[str]) -> list[str]:
+    """``domains`` without the sites Anthropic's search crawler cannot read (`BLOCKED_NEWS_DOMAINS`, and their
+    subdomains): naming one in ``allowed_domains`` makes the API refuse the whole search, so one bad line in
+    ``TAYYARI_WEEKLY__NEWS_DOMAINS`` would silently end every edition's news. What is left out is logged."""
+    kept = [d for d in domains if not on_allow_list(d.removeprefix("www."), BLOCKED_NEWS_DOMAINS)]
+    if len(kept) < len(domains):
+        log.warning("weekly_news_domains_unreadable", left_out=[d for d in domains if d not in kept])
+    return kept
+
 
 SEARCH_MAX_TOKENS: Final = 800
 READ_MAX_TOKENS: Final = 1600
@@ -103,10 +115,13 @@ class NewsDesk:
         s = self._settings
         outcome = NewsOutcome()
         topics = topics_for(profile, closest_role, s.news_searches)
-        if not s.news or not topics or not s.news_domains:
+        if not s.news or not topics:
+            return outcome
+        domains = readable_domains(s.news_domains)
+        if not domains:
             return outcome
         try:
-            pages = await self._search(topics, ctx)
+            pages = await self._search(topics, domains, ctx)
             outcome.searches = len(topics)
             outcome.pages = len(pages)
             if not pages:
@@ -119,7 +134,7 @@ class NewsDesk:
             raw,
             pages=pages,
             skills=skills_of(profile),
-            domains=s.news_domains,
+            domains=domains,
             limit=s.news_items,
             today=today,
         )
@@ -129,7 +144,7 @@ class NewsDesk:
             log.info("weekly_news_dropped", **checked.dropped)
         return outcome
 
-    async def _search(self, topics: list[str], ctx: CallContext) -> list[SearchedPage]:
+    async def _search(self, topics: list[str], domains: list[str], ctx: CallContext) -> list[SearchedPage]:
         s = self._settings
 
         async def one(topic: str) -> list[SearchedPage]:
@@ -139,7 +154,7 @@ class NewsDesk:
                     system=[TextBlock(news_search_system())],
                     user=[TextBlock(build_news_search_prompt(topic))],
                     max_searches=1,
-                    allowed_domains=s.news_domains,
+                    allowed_domains=domains,
                     max_tokens=SEARCH_MAX_TOKENS,
                     effort="low",
                     ctx=replace(ctx, purpose="weekly.news"),
@@ -162,7 +177,7 @@ class NewsDesk:
             if key is None or key in seen or not page.title:
                 continue
             seen.add(key)
-            if not on_allow_list(host_of(page.url), s.news_domains):
+            if not on_allow_list(host_of(page.url), domains):
                 continue
             if has_injection(page.title):
                 log.warning("weekly_anomaly", where="news_result_title")
@@ -190,4 +205,4 @@ class NewsDesk:
         return answer.data.get("items")
 
 
-__all__ = ["NEWS_SCHEMA", "NewsDesk", "NewsOutcome", "skills_of", "topics_for"]
+__all__ = ["NEWS_SCHEMA", "NewsDesk", "NewsOutcome", "readable_domains", "skills_of", "topics_for"]

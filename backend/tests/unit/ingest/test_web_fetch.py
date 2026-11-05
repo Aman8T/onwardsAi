@@ -803,3 +803,44 @@ async def test_failures_are_logged_with_the_reason_and_host_only(
     flattened = " ".join(str(v) for v in event.values())
     assert "SECRET-TOKEN-4242" not in flattened
     assert "/private/path" not in flattened
+
+
+# ----------------------------------------------------------------------------- boards that forbid reading
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://www.naukri.com/mnjuser/profile?id=1",
+        "https://in.indeed.com/viewjob?jk=1",
+        "https://www.foundit.in/seeker/profile",
+        "https://internshala.com/student/resume",
+        "HTTPS://WWW.SHINE.COM/myshine/",
+    ],
+)
+async def test_a_board_that_forbids_reading_is_refused_before_anything_is_fetched(
+    url: str, dns: FakeDns, web: FakeWeb
+) -> None:
+    """The launch audit (2026-11-03) saw an analysis open a Naukri link a person supplied: non-negotiable 4."""
+    doc = await ingest_web(url, "link", "Link", "Web page", lambda _line: None)
+    assert not doc.ok
+    assert doc.error is not None and "does not allow automated reading" in doc.error
+    assert "paste it under Extra context" in doc.error
+    assert web.requests == []  # no DNS answer was even needed: nothing left the machine
+
+
+async def test_a_redirect_onto_a_board_stops_before_the_board_is_asked(dns: FakeDns, web: FakeWeb) -> None:
+    dns.answer("short.test", [PUBLIC_IP])
+    dns.answer("www.naukri.com", [PUBLIC_IP_2])
+    web.serve(PUBLIC_IP, redirect("https://www.naukri.com/job-listings-1"))
+    web.serve(PUBLIC_IP_2, page())
+    with pytest.raises(FetchProblem, match="Naukri does not allow automated reading"):
+        await fetch_text("https://short.test/x", MAX_BODY_BYTES, ACCEPT)
+    assert [r.headers["host"] for r in web.requests] == ["short.test"]
+
+
+async def test_a_host_that_only_looks_like_a_board_is_read(dns: FakeDns, web: FakeWeb) -> None:
+    dns.answer("notnaukri.com", [PUBLIC_IP])
+    web.serve(PUBLIC_IP, page())
+    doc = await ingest_web("https://notnaukri.com/me", "link", "Link", "Web page", lambda _line: None)
+    assert doc.ok

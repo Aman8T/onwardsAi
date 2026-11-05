@@ -300,7 +300,7 @@ export function ChatView({ profile }: { profile: Profile }) {
             </button>
           </div>
           <div className="ch-head-r">
-            <span className="kicker ch-model">claude-sonnet-5-5 · context loaded</span>
+            <span className="kicker ch-model">Your graph · context loaded</span>
             <span className="numeral ch-avatar" role="img" aria-label={profile.person.name || 'You'}>
               <span>{initials(profile.person.name, 'ME')}</span>
             </span>

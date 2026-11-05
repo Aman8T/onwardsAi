@@ -136,6 +136,13 @@ flowchart TD
 - **Cold start**: 13.4 s on the first production load. [V, once]
 - **Copy and layout**: "Tayyari" still appears in server messages and payment titles. The graph header overlaps at 800 px, and the header fills about a third of a phone screen. [V]
 
+**Update, 2026-11-05: more of the list fixed** (branch `claude/charming-ride-ojz4kd`, not deployed; unit tests only, no live run, because the session had no model key):
+- **Blocker 6 (developer text).** The analysis screen names roles, never models ("Readers in progress", "Drawing your graph", "Synthesizer"), on the server and the client. The "claude auth login" hint is gone: the server has no Claude Code sign-in, and its own messages are written for people. The chat header no longer says claude-sonnet-5-5. The agent log stays, with "graph" as the synthesizer's speaker. A test fails if a phase label or log line names a model.
+- **Blocker 7 (today's date).** The gate and coverage calls start with "Today's date: YYYY-MM-DD." and their system prompts say to count years to today, a role marked "present" running to today. The reader and synthesizer prompts already had the date.
+- **Naukri fetched.** `ingest/boards.py` lists the boards whose terms forbid automated reading (Naukri, Indeed, Glassdoor, foundit, Shine, TimesJobs, iimjobs, hirist, Instahyre, Internshala, Unstop). The analysis refuses them before any request and on every redirect hop, and the posting match uses the same list. LinkedIn is unchanged and is now an open decision in `docs/roadmap.md`.
+- **Weekly news.** An item whose date (the search result's own age first, else the model's) is over 60 days old or after tomorrow is dropped instead of shown undated. Press-release and paid-content addresses are dropped. A configured news domain the search cannot read is left out and logged instead of failing every search, and `.env.example` now shows readable domains.
+- **Indian amounts.** A figure is read by the verifier's own number reader, so `Rs. 8 crores`, `INR 2.5 cr`, `₹12 lakh`, `12 LPA` and `1,20,000` are accepted. The slot keeps the person's spelling without doubling the currency or the unit (`₹[x] crore` + `Rs. 3.2 crores` reads `Rs. 3.2 crores`).
+
 **Retracted:** the roadmap's "portfolio routes don't check the owner" is stale. GET, PATCH and rewrite return 404 to strangers [V].
 
 ## 4. Gaps and opportunities (impact ÷ effort)

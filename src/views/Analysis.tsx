@@ -1,7 +1,8 @@
 /**
- * Live analysis, calm theme: one Haiku reader per source streams into the Sonnet synthesizer.
+ * Live analysis, calm theme: one reader per source streams into the synthesizer that draws the graph.
  * Thin progress rings, plain text and hairlines; driven entirely by `useApp(s => s.analysis)`.
  * Board: CalmAnalysis. No glow, no loops: every motion here is a one-shot opacity / transform.
+ * No model names on screen: which model runs each role is server configuration, and a name here goes stale.
  */
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
@@ -13,8 +14,6 @@ import { Brand } from '../components/Brand';
 import { Ring } from '../components/Ring';
 import '../styles/analysis.css';
 
-const READER_MODEL = 'claude-haiku-4-5';
-const SYNTH_MODEL = 'claude-sonnet-5-5';
 const AUTO_OPEN_MS = 1600;
 
 const STEPS = ['Merge evidence', 'Score domains', 'Rank roles'] as const;
@@ -41,7 +40,6 @@ const SOURCE_NAME: Record<SourceKind, string> = {
 };
 
 const NUMBER_WORD = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
-const AUTH_RE = /auth|sign(?:ed)?[\s-]?in|log(?:ged)?[\s-]?in|credential|unauthori[sz]ed|\b401\b|api[\s_-]?key/i;
 
 type SynthState = 'wait' | 'build' | 'done' | 'error';
 /** A reader that never finished because the run failed is shown as stopped, not as still reading. */
@@ -120,20 +118,20 @@ export function Analysis() {
       : failed
         ? 'Analysis failed'
         : a.phase === 'synthesizing'
-          ? 'Sonnet is drawing your graph'
+          ? 'Drawing your graph'
           : a.phase === 'reading'
-            ? 'Haiku readers in progress'
+            ? 'Readers in progress'
             : 'Starting readers');
 
   const plural = d.total === 1 ? '' : 's';
   const sub = failed
     ? 'The run stopped before your graph was ready. Nothing was saved.'
     : done
-      ? `Sonnet merged ${d.total} source${plural} into one graph. Opening it now.`
+      ? `Merged ${d.total} source${plural} into one graph. Opening it now.`
       : d.total === 0
-        ? 'Spinning up one Haiku reader per source. Your graph appears the moment the synthesizer finishes.'
+        ? 'Starting one reader per source. Your graph appears the moment the synthesizer finishes.'
         : a.phase === 'synthesizing' || d.pending === 0
-          ? `${d.finished} of ${d.total} source${plural} read. Sonnet is merging the evidence into your graph.`
+          ? `${d.finished} of ${d.total} source${plural} read. Merging the evidence into your graph.`
           : `${NUMBER_WORD[d.total] ?? d.total} reader${d.total === 1 ? ' is' : 's are'} working in parallel. Your graph appears the moment the synthesizer finishes.`;
 
   const announce = done
@@ -263,9 +261,7 @@ function ReaderRow({ reader: r, status, index, reduce }: { reader: ReaderState; 
           </svg>
         </span>
         <div className="an-reader-txt">
-          <span className="kicker an-agent">
-            {r.agent} · {READER_MODEL}
-          </span>
+          <span className="kicker an-agent">{r.agent}</span>
           <span className="an-line" title={line}>
             {line}
           </span>
@@ -355,9 +351,9 @@ function SynthCard({
           ? 'Waiting on readers'
           : pending > 0
             ? `Waiting on ${pending} reader${pending === 1 ? '' : 's'}`
-            : 'Handing over to Sonnet';
+            : 'Handing over to the synthesizer';
 
-  // the step Sonnet is on: 0 while waiting, 1 merge, 2 score, 3 rank, then done
+  // the step the synthesizer is on: 0 while waiting, 1 merge, 2 score, 3 rank, then done
   const step = state === 'done' ? 3 : state === 'build' ? clamp(a.synthStep, 1, 3) : 0;
   const activeIdx = state === 'build' ? step - 1 : -1;
   const stepState = (i: number) => (state === 'done' || i < activeIdx ? 'done' : i === activeIdx ? 'active' : 'todo');
@@ -366,12 +362,12 @@ function SynthCard({
   const ready = state === 'done';
   const ringLabel =
     state === 'done'
-      ? 'Sonnet synthesizer, finished'
+      ? 'Synthesizer, finished'
       : state === 'build'
-        ? `Sonnet synthesizer, step ${step} of 3: ${STEP_LEGEND[step - 1].toLowerCase()}`
+        ? `Synthesizer, step ${step} of 3: ${STEP_LEGEND[step - 1].toLowerCase()}`
         : pending > 0
-          ? `Sonnet synthesizer, waiting on ${pending} reader${pending === 1 ? '' : 's'}`
-          : 'Sonnet synthesizer, waiting';
+          ? `Synthesizer, waiting on ${pending} reader${pending === 1 ? '' : 's'}`
+          : 'Synthesizer, waiting';
 
   return (
     <div className="an-synth hairline" data-state={state}>
@@ -400,7 +396,7 @@ function SynthCard({
 
             <div className="an-synth-mid">
               <div className="an-synth-head">
-                <span className="kicker an-synth-model">{SYNTH_MODEL} · synthesizer</span>
+                <span className="kicker an-synth-model">Synthesizer</span>
                 <h2 className="serif an-synth-title">
                   <AnimatePresence mode="wait" initial={false}>
                     <motion.span
@@ -450,11 +446,13 @@ function SynthCard({
   );
 }
 
+/**
+ * The stopped state. The message is the server's own sentence, already written for the person (a key or billing
+ * problem reads "The AI service isn't available right now"), so nothing here adds operator instructions.
+ */
 function SynthError({ message, canSample, step }: { message: string; canSample: boolean; step: number }) {
-  const auth = AUTH_RE.test(message);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const openSample = async () => {
     setBusy(true);
@@ -466,39 +464,19 @@ function SynthError({ message, canSample, step }: { message: string; canSample: 
       setBusy(false);
     }
   };
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText('claude auth login');
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* clipboard unavailable: the command is still on screen */
-    }
-  };
 
   return (
     <>
       <div className="an-err-head">
-        <SynthRing value={(step / 3) * 100} frac={`${step}/3`} label="Sonnet synthesizer, stopped" />
+        <SynthRing value={(step / 3) * 100} frac={`${step}/3`} label="Synthesizer, stopped" />
         <div className="an-synth-head">
-          <span className="kicker an-synth-model">{SYNTH_MODEL} · synthesizer</span>
+          <span className="kicker an-synth-model">Synthesizer</span>
           <h2 className="serif an-synth-title">Analysis stopped</h2>
         </div>
       </div>
       <p className="an-err-msg" role="alert">
         {message}
       </p>
-      {auth && (
-        <div className="an-hint">
-          <span>Claude Code is not signed in on the server. Run:</span>
-          <span className="an-hint-row">
-            <code>claude auth login</code>
-            <button type="button" className="btn btn-quiet btn-sm an-copy" onClick={copy}>
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          </span>
-        </div>
-      )}
       <div className="an-err-actions">
         <button type="button" className="btn btn-primary" onClick={() => actions.startOver()}>
           Try again

@@ -954,14 +954,24 @@ class FakePostingRepo:
 
     async def put(self, posting: Posting) -> None:
         await _yield()
-        self._s.postings.setdefault(
-            posting.hash,
-            (
-                posting.rawText,
-                _roundtrip(posting.model_dump(mode="json", exclude={"rawText"}, exclude_none=True)),
-                self._s.clock.now(),
-            ),
+        now = self._s.clock.now()
+        found = self._s.postings.get(posting.hash)
+        if found is not None:  # the first reading stays; only the time it was stored moves on
+            self._s.postings[posting.hash] = (found[0], found[1], now)
+            return
+        self._s.postings[posting.hash] = (
+            posting.rawText,
+            _roundtrip(posting.model_dump(mode="json", exclude={"rawText"}, exclude_none=True)),
+            now,
         )
+
+    async def purge_unreferenced(self, cutoff: datetime) -> int:
+        await _yield()
+        used = {m.posting_hash for m in self._s.matches.values()}
+        gone = [h for h, (_, _, at) in self._s.postings.items() if _utc(at) < _utc(cutoff) and h not in used]
+        for posting_hash in gone:
+            del self._s.postings[posting_hash]
+        return len(gone)
 
 
 class FakeProfileFactsRepo:

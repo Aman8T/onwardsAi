@@ -538,6 +538,7 @@ class Container:
                     postings=repos.postings,
                     facts_cache=repos.profile_facts,
                     call_timeout_s=settings.match.call_timeout_s,
+                    clock=clock,
                 )
 
             discover: DiscoverService

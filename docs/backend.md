@@ -38,7 +38,7 @@ The package is importable as `backend/tayyari/`, laid out in layers with import 
 
 ### Analysis (`POST /api/analyze`)
 
-1. **Ingest** (deterministic): PDF → text, GitHub repos → README + tests, links → HTML, all with SSRF guard, rate limiting, and private-IP block.
+1. **Ingest** (deterministic): PDF → text, GitHub repos → README + tests, links → HTML, all with SSRF guard, rate limiting, and private-IP block. A link to a job board whose terms forbid automated reading (`ingest/boards.py`: Naukri, Indeed, Glassdoor and the rest) is never fetched, on any hop of a redirect; its reader card says why and asks for the text under Extra context.
 2. **Jev first read** (parallel with readers): resume → career_family, stage, depth, nouls (leads, proof, outcomes, AI, progression). ~2.5 s, live signals on screen (if confidence ≥ 0.6).
 3. **Haiku readers** (6 concurrent): each source → reader output (skills, domains, role hints, facts) in structured JSON. ~5–20 s per source depending on size and cache hits.
 4. **Synthesis** (Sonnet): all reader outputs + resume → skill graph (person, mastery, 4–7 domains, skills with evidence, next roles, have/gap requirements). With prompt caching (profile block shared across threads). ~10–30 s.
@@ -166,7 +166,7 @@ A signed-in account behaves as described below whether anonymous matching is on 
 3. Body: 415 for the wrong content type, 413 above 128 KB, 408 for a stalled body, 400 for an invalid one.
 4. Profile: one of the account's own profiles; with no sign-in, one nobody has claimed or a sample run. Else 404 `Profile not found`.
 5. Counters: per client address and, for an account, per account, with `TAYYARI_GUARD__MATCH_PER_MINUTE` (0 = off), `_PER_HOUR` (10) and `_PER_DAY` (30), plus the global `TAYYARI_GUARD__MATCH_GLOBAL_PER_HOUR` (120), counted once per request. Over a limit: 429 with `Retry-After`.
-6. Posting text: the pasted text, else the link. Neither is 400; text longer than `TAYYARI_MATCH__MAX_POSTING_CHARS` (20,000) is 400; a link that is not a web link is 400. A job board whose terms forbid automated reading (LinkedIn, `lnkd.in`, Naukri, Indeed, Glassdoor, foundit, Shine) is refused with 422 `posting_link_blocked` before anything is fetched. Any other link goes through the SSRF-guarded ingest (public pages only); a page that cannot be read, or has no text, is 422 `posting_link_unreadable`. Links inside a posting are never opened.
+6. Posting text: the pasted text, else the link. Neither is 400; text longer than `TAYYARI_MATCH__MAX_POSTING_CHARS` (20,000) is 400; a link that is not a web link is 400. A site whose terms forbid automated reading (LinkedIn and `lnkd.in`, then the job boards of `ingest/boards.py`: Naukri, Indeed, Glassdoor, foundit, Shine, TimesJobs, iimjobs, hirist, Instahyre, Internshala, Unstop) is refused with 422 `posting_link_blocked` before anything is fetched. Any other link goes through the SSRF-guarded ingest (public pages only); a page that cannot be read, or has no text, is 422 `posting_link_unreadable`. Links inside a posting are never opened.
 7. Allowance, with no sign-in only: `TAYYARI_GUARD__ANON_MATCH_PER_DAY` (3) per client address (0 = off), counted only now, so a posting that could not be read uses none. Over: 429 with `Retry-After`.
 8. Spend: `TAYYARI_GUARD__EST_MATCH_USD` (0.06) reserved; 503 when the daily ceiling is reached.
 9. Entitlement: `consume` (402 `payment_required` when nothing is left). Skipped with no sign-in: nothing is taken, so nothing is given back.
@@ -748,7 +748,9 @@ A personal newspaper, built per reader once a week and stored as one `weekly_edi
   the code-only quick fit against the reader's newest claimed profile, "can't tell" only when nothing better came in; the lead one gets one
   judge read (`weekly.judge`, jobsearch's prompt and `verify`). Progress is code over Prepare plans, the newest practice session and the
   graph's roles. News: up to 3 `search_web` calls (`weekly.news`) restricted to `TAYYARI_WEEKLY__NEWS_DOMAINS`, one structured read
-  (`weekly.news.read`), then `weekly/ground.py` drops any item whose URL was not a search result or whose skill is not on the graph. Tip and
+  (`weekly.news.read`), then `weekly/ground.py` drops any item whose URL was not a search result, whose skill is not on the graph, whose
+  address is a press release or paid content, or whose date (the search result's own age first, else the model's) is over 60 days old.
+  Configured news domains Anthropic's search cannot read are left out (logged), never sent. Tip and
   quote rotate from a list in code. The paid part sits inside `SpendGuard.reserve(est_weekly_usd)` and a soft weekly cap; without it the
   edition is built anyway, without news and the read.
 - **News domains must be readable by Anthropic's crawler**: one blocked domain makes the API refuse the whole search
@@ -839,7 +841,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 | `orders` | `id` PK; `provider_order_id` unique | `user_id` FK, set to NULL when the account is deleted; `provider` (`razorpay` or `stripe`), `product`, `currency`, `amount_minor`, `status` (`created`, `paid`, `failed`), `created_at`, `paid_at`, `raw` JSON (provider ids only) | Migration 0004. `(user_id)`; never purged, so a payment record outlives its account |
 | `entitlements` | `user_id` PK, FK cascade | `credits`, `pass_until` (null), `updated_at` | Migration 0004. The row is the lock for every change to one account's balance |
 | `credit_ledger` | `id` PK | `user_id` FK cascade, `delta`, `reason` (`purchase`, `match`, `free_monthly`, `refund`; `admin` is reserved, nothing writes it yet), `ref`, `created_at` | Migration 0004. `(user_id, created_at)`; append-only, so the balance is the sum of the deltas |
-| `postings` | `hash` PK (sha256 of the normalised text) | `text`, `parsed` JSON (the Posting without its text), `created_at` | Migration 0005. No account: shared by everyone who pasted the same text; never purged |
+| `postings` | `hash` PK (sha256 of the normalised text) | `text`, `parsed` JSON (the Posting without its text), `created_at` (moved on each time the posting is stored again) | Migration 0005. No account: shared by everyone who pasted the same text; purged 30 days after its last store once no match points at it |
 | `matches` | `id` PK | `user_id` FK cascade (NULL for a match made without an account, until its profile is claimed), `profile_id` FK cascade, `posting_hash` FK (no action), `facts` JSON (the FactBook), `result` JSON, `band`, `blocked`, `version`, `created_at`, `updated_at` | Migration 0005; 0006 made `user_id` nullable. `(user_id, created_at)`, `(profile_id)` |
 | `user_facts` | `id` PK (hash of profile id and fact id) | `user_id` FK cascade (NULL for something said without an account), `profile_id` FK cascade, `match_id` FK (set to NULL when the match goes), `question`, `answer`, `fact` JSON, `created_at` | Migration 0005; 0006 made `user_id` nullable. `(profile_id, created_at)`, `(user_id)`; a fact outlives the match it was said in |
 | `variants` | `id` PK | `match_id` FK cascade, `kind` (`resume` or `cover`), `spec` JSON, `status` (`needs_user` or `ready`), `version`, `created_at`, `updated_at` | Migration 0005. Unique `(match_id, kind)` |
@@ -867,7 +869,7 @@ All timestamps are `timestamptz` (UTC). JSON columns use `JSON().with_variant(JS
 - **Claim marks** (`claim_marks`) follow their profile through the foreign key and outlive the session they came from; deleting a session deletes its marks.
 - **Radar cards** (`card_snapshots`) have no window of their own: a card goes with its account or its profile, and a card no longer shared keeps no slug.
 - **Plans** (`prepare_plans`) follow their profile through the foreign key: an anonymous profile's purge and an account's deletion take its plans along; there is no window of their own.
-- **Postings** are never purged yet. Matches, resumes, cover notes, the answers a person gave and profile facts are removed only with their account (`DELETE /api/me`) or their profile. Orders are kept when an account is deleted, with `user_id` cleared.
+- **Postings**: a posting no match points at any more (its matches went with their profile or account) is deleted 30 days after it was last stored (`POSTING_RETENTION`); pasting the same text again stores it again and resets the time. Matches, resumes, cover notes, the answers a person gave and profile facts are removed only with their account (`DELETE /api/me`) or their profile. Orders are kept when an account is deleted, with `user_id` cleared.
 
 ### Migrations (Alembic)
 

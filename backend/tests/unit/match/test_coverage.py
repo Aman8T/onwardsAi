@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import date
 from typing import Any
 
 import pytest
@@ -19,6 +20,7 @@ from tayyari.match.coverage import (
     weighted_score,
 )
 from tayyari.match.schemas import CoverageRowOut
+from tayyari.prompts.match import YEARS_RULE
 from tests.fakes.claude import FakeClaudeClient, StructuredCall
 from tests.unit.match.support import CTX, HAIKU
 
@@ -441,3 +443,18 @@ def test_zero_gates_is_reported_not_silently_passed() -> None:
     reqs = [req("a", "must")]
     note = confidence_of(reqs, [cov("a", "covered", 4)], [], gate_count=0)[1]
     assert "no hard conditions" in note
+
+
+async def test_every_batch_starts_with_today_s_date() -> None:
+    fake = FakeClaudeClient().script_structured("match.coverage", echo_gaps, repeat=True)
+    await assess_coverage(
+        fake,
+        model=HAIKU,
+        requirements=many(12),
+        facts=list(BOOK.values()),
+        call_ctx=CTX,
+        today=date(2026, 11, 5),
+    )
+    assert len(fake.structured_calls) == 2
+    assert all(c.user_text.startswith("Today's date: 2026-11-05.\n\n") for c in fake.structured_calls)
+    assert all(YEARS_RULE in c.system_text for c in fake.structured_calls)

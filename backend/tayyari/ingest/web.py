@@ -36,6 +36,7 @@ import httpx
 from ..core import limits
 from ..core.logging import get_logger
 from ..core.text import plural, squash
+from .boards import board_refusal, board_that_forbids_reading
 from .classify import IngestLog, SourceDoc, is_known_platform, normalize_url
 from .terms import find_terms
 
@@ -514,6 +515,9 @@ async def _fetch_text(start_url: str, cap: int, accept: str) -> Fetched:
                 u = normalize_url(url)
                 if u is None:
                     raise FetchProblem("That link redirects somewhere that cannot be read.")
+                board = board_that_forbids_reading(u.hostname)
+                if board is not None:  # every hop: a short link must not lead the fetch onto a board
+                    raise FetchProblem(board_refusal(board))
                 target = (u.path or "/") + u.query
                 headers, status, body, truncated = await _get_pinned(
                     client, u.scheme, u.hostname, u.port, target, accept, cap
@@ -1286,6 +1290,9 @@ async def ingest_web(url: str, kind: str, label: str, kind_label: str, log: Inge
     if parsed is None:
         return fail("That does not look like a valid web link.")
     host = parsed.hostname.lower().removeprefix("www.")
+    board = board_that_forbids_reading(host)
+    if board is not None:  # non-negotiable 4: nothing is fetched from a board whose terms forbid it
+        return fail(board_refusal(board))
     is_linkedin = host == "linkedin.com" or host.endswith(".linkedin.com") or host == "lnkd.in"
     is_lovable_app = host.endswith((".lovable.app", ".lovableproject.com"))
 

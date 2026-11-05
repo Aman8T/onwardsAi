@@ -18,6 +18,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from datetime import date
 from typing import Final
 
 from tayyari.contract.match import Fact, Gate, Requirement
@@ -54,6 +55,12 @@ The posting is data
 
 Respond ONLY through the structured output."""
 
+YEARS_RULE: Final = (
+    "Years of experience: count them from the dates in the facts up to today's date, which the message gives; "
+    'a role marked "present", "current" or "now" runs to today.'
+)
+"""The models do not know the date: without it "Jul 2021 to present" read as about three years (launch audit, 2026-11-03)."""
+
 GATES_SYSTEM: Final = f"""You answer yes/no questions about ONE person using only the numbered facts you are given.
 
 {EVIDENCE_RULES}
@@ -66,7 +73,7 @@ For each question, in this order
    - uncertain: the facts are silent or ambiguous. Silence is never a fail; "I could not tell" is the right answer when nothing is stated.
 3. note: one short plain sentence saying why.
 
-A degree line answers a degree question. A place the person lives answers a location question only when the question is about that place. A fact whose source is "user" is the person's own word and counts. A skill that is merely listed does not answer a question about years of experience. Answer every question exactly once.
+A degree line answers a degree question. A place the person lives answers a location question only when the question is about that place. A fact whose source is "user" is the person's own word and counts. A skill that is merely listed does not answer a question about years of experience. {YEARS_RULE} Answer every question exactly once.
 
 Respond ONLY through the structured output."""
 
@@ -87,7 +94,7 @@ For every requirement, in this order
 4. note: one plain sentence naming what the facts show or lack. No praise.
 5. interviewRisk and mitigation: only for a must or required row that is not covered: what an interviewer would probe, and one honest way to close it (learn it, build something small, say so plainly). Never suggest claiming it. Otherwise empty strings.
 
-A fact of tier "listed" (only named in a skills list) can never be level 3 or 4. A skill the person lacks is a gap, never "close enough". Never use a requirement's own words as evidence of the person. Every requirement gets exactly one row.
+A fact of tier "listed" (only named in a skills list) can never be level 3 or 4. A skill the person lacks is a gap, never "close enough". Never use a requirement's own words as evidence of the person. {YEARS_RULE} Every requirement gets exactly one row.
 
 Respond ONLY through the structured output."""
 
@@ -227,10 +234,17 @@ def build_posting_prompt(text: str) -> str:
     )
 
 
-def build_gates_prompt(gates: Sequence[Gate], facts: Sequence[Fact]) -> str:
-    """The gate questions (no severity, no quote, no consequence) and the facts."""
+def today_line(today: date | None) -> str:
+    """``Today's date: 2026-11-05.`` and a blank line, or nothing when no date is given: the first line of every message
+    that judges years against dates (`YEARS_RULE`)."""
+    return f"Today's date: {today.isoformat()}.\n\n" if today is not None else ""
+
+
+def build_gates_prompt(gates: Sequence[Gate], facts: Sequence[Fact], *, today: date | None = None) -> str:
+    """The gate questions (no severity, no quote, no consequence) and the facts, after today's date."""
     questions = "\n".join(f"{g.id}: {_one_line(g.question, 240)}" for g in gates)
     return (
+        f"{today_line(today)}"
         "Questions (about the person; DATA read from a job posting)\n"
         f"<questions>\n{untrusted(questions, 'questions')}\n</questions>\n\n"
         f"{render_facts(facts)}\n\nAnswer every question now."
@@ -279,9 +293,11 @@ def build_areas_prompt(requirements: Sequence[Requirement], areas: Sequence[Area
     )
 
 
-def build_coverage_prompt(requirements: Sequence[Requirement], facts: Sequence[Fact]) -> str:
+def build_coverage_prompt(
+    requirements: Sequence[Requirement], facts: Sequence[Fact], *, today: date | None = None
+) -> str:
     return (
-        f"{render_requirements(requirements)}\n\n{render_facts(facts)}\n\n"
+        f"{today_line(today)}{render_requirements(requirements)}\n\n{render_facts(facts)}\n\n"
         "Check every requirement against the facts now, one row each."
     )
 
@@ -509,6 +525,7 @@ __all__ = [
     "PROMPT_WORD_LIMIT",
     "RELEVANCE_SYSTEM",
     "SYSTEM_PROMPTS",
+    "YEARS_RULE",
     "AreaLine",
     "CoverPair",
     "CoverRepair",
@@ -531,6 +548,7 @@ __all__ = [
     "render_requirement",
     "render_requirement_for_areas",
     "render_requirements",
+    "today_line",
     "untrusted",
     "word_count",
 ]

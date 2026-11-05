@@ -62,8 +62,8 @@ POSTING_INJECTED = (
 
 NEWS_URL = "https://techcrunch.com/2026/10/15/design-systems-go-ai/"
 NEWS_TITLE = "Design systems meet AI components - TechCrunch"
-NEWS_URL_2 = "https://www.livemint.com/technology/accessibility-law-2026"
-NEWS_TITLE_2 = "New accessibility rules for web apps take effect | Mint"
+NEWS_URL_2 = "https://inc42.com/buzz/accessibility-law-2026/"
+NEWS_TITLE_2 = "New accessibility rules for web apps take effect | Inc42"
 
 
 def utc(*args: int) -> datetime:
@@ -116,7 +116,7 @@ def news_answer(urls: Mapping[str, str] | None = None) -> dict[str, Any]:
             {
                 "url": NEWS_URL_2,
                 "headline": "New accessibility rules for web apps take effect",
-                "publication": "Mint",
+                "publication": "Inc42",
                 "date": "",
                 "skill": "Accessibility (WCAG)",
                 "why": "Accessibility work is the kind you already show.",
@@ -238,7 +238,7 @@ async def make_rig(
     claude = FakeClaudeClient()
     spend = Spend()
     settings = WeeklySettings(
-        **{"batch_pause_s": 0.0, "news_domains": ["techcrunch.com", "livemint.com"], **settings_over}
+        **{"batch_pause_s": 0.0, "news_domains": ["techcrunch.com", "inc42.com"], **settings_over}
     )
     registry = fixture_registry()
     composer = EditionComposer(

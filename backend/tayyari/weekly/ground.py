@@ -4,8 +4,12 @@ Each item the model returns (``url``, ``headline``, ``publication``, ``date``, `
 
     url         it is not one of the addresses the search tool returned (compared after folding case, ``www.``, a fragment,
                 tracking parameters and a trailing slash), or its site is not on the allow-list
+    press       its address is a press release or paid content (``/press-releases-ani/``, ``/sponsored/``): a company's
+                own words are not news, even on a newspaper's site
     skill       it is not the name of a skill on the reader's graph (the graph's own spelling is kept)
     why         it is empty, carries an address, text aimed at an AI, or a number that the headline does not have
+    stale       its date (the search result's own age first, else the model's ``date``) is older than `STALE_DAYS` or
+                more than a day ahead: old news must not read as this week's
     duplicate   the same address came before it
 
 and what is kept is repaired, never trusted:
@@ -13,7 +17,8 @@ and what is kept is repaired, never trusted:
     headline    the article's own title as the search returned it when the model's headline shares too few words with it
     publication the site's name worked out from its address (a known name table, else the host's own label) unless the
                 model's name is part of that host
-    date        only a real ``YYYY-MM-DD`` that is not in the future and not older than `STALE_DAYS`
+    date        the search result's own date when it gives one (``page_age``: "October 30, 2026", "3 days ago",
+                an ISO time), else the model's ``YYYY-MM-DD``; no date when neither can be read
     why         cut at a word at 200 characters
 
 At most ``limit`` items are kept. `NewsCheck.dropped` counts every drop by reason (the known-bad fixtures prove each fires).
@@ -68,6 +73,25 @@ _TRACKING = re.compile(r"^(?:utm_.*|fbclid|gclid|mc_.*|ref|ref_src|cmpid|ocid|ta
 _WORD = re.compile(r"[a-z0-9]+")
 _NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
 _ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+_ISO_PREFIX = re.compile(r"(\d{4}-\d{2}-\d{2})(?:[T ][\d:.+\-Z]*)?", re.IGNORECASE)
+_AGO = re.compile(r"(?:(\d+)|an?|one)\s+(minute|hour|day|week|month|year)s?\s+ago", re.IGNORECASE)
+_MONTHS: Final[dict[str, int]] = {
+    name: number
+    for number, names in enumerate(
+        (("january", "jan"), ("february", "feb"), ("march", "mar"), ("april", "apr"), ("may",), ("june", "jun"),
+         ("july", "jul"), ("august", "aug"), ("september", "sep", "sept"), ("october", "oct"), ("november", "nov"),
+         ("december", "dec")),
+        start=1,
+    )
+    for name in names
+}  # fmt: skip
+_MONTH_DAY_YEAR = re.compile(r"([a-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})", re.IGNORECASE)
+_DAY_MONTH_YEAR = re.compile(r"(\d{1,2})\s+([a-z]+)\.?,?\s+(\d{4})", re.IGNORECASE)
+_DAYS_PER: Final[dict[str, int]] = {"minute": 0, "hour": 0, "day": 1, "week": 7, "month": 30, "year": 365}
+_PAID_PATH = re.compile(
+    r"press[-_]?releases?|/pr[-_]?news/|/sponsored|/brand[-_]?(?:connect|post|studio)|/partner[-_]?content|/advertorial",
+    re.IGNORECASE,
+)
 _ADDRESS = re.compile(r"https?://|www\.", re.IGNORECASE)
 _SITE_SEPARATOR = re.compile(r"\s+[|\-–—]\s+")
 
@@ -163,16 +187,52 @@ def _headline(claimed: object, page_title: str, publication: str) -> str:
     return said
 
 
-def _date(claimed: object, today: date) -> str | None:
+def _claimed_date(claimed: object) -> date | None:
+    """The model's ``date`` when it is a real ``YYYY-MM-DD``, else None."""
     if not isinstance(claimed, str) or not _ISO_DATE.fullmatch(claimed.strip()):
         return None
     try:
-        parsed = date.fromisoformat(claimed.strip())
+        return date.fromisoformat(claimed.strip())
     except ValueError:
         return None
-    if parsed > today + timedelta(days=1) or parsed < today - timedelta(days=STALE_DAYS):
+
+
+def _calendar(year: str, month: str, day: str) -> date | None:
+    number = _MONTHS.get(month.lower())
+    if number is None:
         return None
-    return parsed.isoformat()
+    try:
+        return date(int(year), number, int(day))
+    except ValueError:
+        return None
+
+
+def page_date(age: str | None, today: date) -> date | None:
+    """The date a search result's ``page_age`` gives, or None when it cannot be read.
+
+    ``2026-10-30T08:00:00``, ``October 30, 2026``, ``Oct 30, 2026``, ``30 October 2026``, ``3 days ago``, ``a week ago``
+    (a month counts as 30 days, a year as 365).
+    """
+    text = (age or "").strip()
+    if not text:
+        return None
+    if m := _ISO_PREFIX.fullmatch(text):
+        try:
+            return date.fromisoformat(m.group(1))
+        except ValueError:
+            return None
+    if m := _AGO.fullmatch(text):
+        count = int(m.group(1)) if m.group(1) else 1
+        return today - timedelta(days=count * _DAYS_PER[m.group(2).lower()])
+    if m := _MONTH_DAY_YEAR.fullmatch(text):
+        return _calendar(m.group(3), m.group(1), m.group(2))
+    if m := _DAY_MONTH_YEAR.fullmatch(text):
+        return _calendar(m.group(3), m.group(2), m.group(1))
+    return None
+
+
+def _in_range(when: date, today: date) -> bool:
+    return today - timedelta(days=STALE_DAYS) <= when <= today + timedelta(days=1)
 
 
 def check_news(
@@ -208,6 +268,9 @@ def check_news(
         if not on_allow_list(host, domains):
             result.drop("domain")
             continue
+        if _PAID_PATH.search(urlsplit(page.url).path):
+            result.drop("press")
+            continue
         skill = graph.get(tidy(entry.get("skill")).casefold())
         if skill is None:
             result.drop("skill_unknown")
@@ -231,12 +294,16 @@ def check_news(
         if any(number not in allowed_numbers for number in _NUMBER.findall(why)):
             result.drop("number")
             continue
+        when = page_date(page.age, today) or _claimed_date(entry.get("date"))
+        if when is not None and not _in_range(when, today):
+            result.drop("stale")
+            continue
         seen.add(key)
         result.items.append(
             WeeklyNews(
                 headline=headline,
                 publication=publication,
-                date=_date(entry.get("date"), today),
+                date=when.isoformat() if when is not None else None,
                 url=page.url,
                 why=_cut(why, WHY_MAX_CHARS),
                 skill=skill,
@@ -259,5 +326,6 @@ __all__ = [
     "host_of",
     "normalise_url",
     "on_allow_list",
+    "page_date",
     "publication_of",
 ]

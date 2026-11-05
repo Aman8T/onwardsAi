@@ -24,6 +24,7 @@ from tayyari.storage.tables import (
     DecisionStateRow,
     JevCallRow,
     LlmCallRow,
+    PostingRow,
     ProfileContextRow,
     ProfileRow,
     RateLimitHitRow,
@@ -466,6 +467,24 @@ async def test_rate_limit_counters_older_than_two_days_are_deleted(
 
     assert counts["rate_limit_hits"] == 1
     assert await count(any_real_db, RateLimitHitRow) == 2
+
+
+async def test_postings_no_match_points_at_are_purged_after_thirty_days(
+    any_real_db: Database, settings: Settings
+) -> None:
+    from tayyari.contract.match import Posting
+    from tests.unit.match.support import js
+
+    data = js("meera.match.json")["posting"]
+    old = Posting.model_validate({**data, "hash": "a" * 64})
+    recent = Posting.model_validate({**data, "hash": "b" * 64})
+    await build_repositories(any_real_db, _Clock(NOW - 31 * DAY)).postings.put(old)
+    await build_repositories(any_real_db, _Clock(NOW - 29 * DAY)).postings.put(recent)
+
+    counts = await run_maintenance(any_real_db, settings, NOW)
+
+    assert counts["postings"] == 1
+    assert await ids(any_real_db, PostingRow.hash) == {"b" * 64}
 
 
 async def test_it_runs_at_most_every_six_hours(any_real_db: Database, settings: Settings) -> None:

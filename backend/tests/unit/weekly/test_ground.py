@@ -1,5 +1,6 @@
 """The news verifier. A known-bad fixture proves each check fires: an address the search never returned, a skill that is not on
-the graph, a site off the allow-list, a number nobody gave, text aimed at an AI, a repeat; and what is kept is repaired."""
+the graph, a site off the allow-list, a number nobody gave, text aimed at an AI, a press release, an old date, a repeat; and
+what is kept is repaired."""
 
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ from tayyari.weekly.ground import (
     clean_title,
     normalise_url,
     on_allow_list,
+    page_date,
     publication_of,
 )
 
@@ -159,16 +161,95 @@ def test_the_publication_comes_from_the_address_not_the_claim() -> None:
     ("claimed", "kept"),
     [
         ("2026-10-15", "2026-10-15"),
-        ("2026-12-25", None),
-        ("2025-01-01", None),
         ("last Tuesday", None),
         ("", None),
         (None, None),
         ("2026-02-31", None),
     ],
 )
-def test_a_date_is_kept_only_when_real_recent_and_not_in_the_future(claimed: Any, kept: str | None) -> None:
+def test_a_claimed_date_is_kept_only_when_it_is_a_real_date(claimed: Any, kept: str | None) -> None:
     assert run([good(date=claimed)]).items[0].date == kept
+
+
+@pytest.mark.parametrize("claimed", ["2025-01-01", "2026-08-19", "2026-12-25", "2026-10-21"])
+def test_an_item_dated_before_the_window_or_ahead_of_today_is_dropped_not_shown_undated(claimed: str) -> None:
+    """The launch audit (2026-11-03): news over 60 days old was shown undated, as this week's."""
+    result = run([good(date=claimed)])
+    assert result.items == []
+    assert result.dropped == {"stale": 1}
+
+
+def test_the_last_day_of_the_window_and_tomorrow_are_still_news() -> None:
+    assert run([good(date="2026-08-20")]).items[0].date == "2026-08-20"
+    assert run([good(date="2026-10-20")]).items[0].date == "2026-10-20"
+
+
+def _paged(age: str | None) -> list[SearchedPage]:
+    return [SearchedPage(PAGES[0].url, PAGES[0].title, age=age), *PAGES[1:]]
+
+
+def test_the_search_result_s_own_date_wins_over_the_model_s() -> None:
+    def checked(age: str | None, claimed: str) -> Any:
+        return check_news(
+            [good(date=claimed)], pages=_paged(age), skills=SKILLS, domains=DOMAINS, limit=3, today=TODAY
+        )
+
+    kept = checked("October 15, 2026", "2026-10-18")
+    assert kept.items[0].date == "2026-10-15"
+    stale = checked("March 2, 2026", "2026-10-18")  # the model called an old article recent
+    assert (stale.items, stale.dropped) == ([], {"stale": 1})
+    undated = checked("sometime", "")
+    assert undated.items[0].date is None
+
+
+@pytest.mark.parametrize(
+    ("age", "expected"),
+    [
+        ("2026-10-15T08:30:00Z", date(2026, 10, 15)),
+        ("2026-10-15", date(2026, 10, 15)),
+        ("October 15, 2026", date(2026, 10, 15)),
+        ("Oct 15, 2026", date(2026, 10, 15)),
+        ("Sept 3, 2026", date(2026, 9, 3)),
+        ("15 October 2026", date(2026, 10, 15)),
+        ("3 days ago", date(2026, 10, 16)),
+        ("a week ago", date(2026, 10, 12)),
+        ("2 months ago", date(2026, 8, 20)),
+        ("5 hours ago", TODAY),
+        ("", None),
+        (None, None),
+        ("last spring", None),
+        ("Smarch 3, 2026", None),
+        ("February 30, 2026", None),
+    ],
+)
+def test_page_dates_are_read_from_the_forms_search_results_use(
+    age: str | None, expected: date | None
+) -> None:
+    assert page_date(age, TODAY) == expected
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/content/press-releases-ani/acme-launches-ai-suite-126101500123_1.html",
+        "/pr-news/acme-launches",
+        "/sponsored/acme-ai",
+        "/brand-connect/acme",
+        "/partner-content/acme",
+    ],
+)
+def test_a_press_release_or_paid_page_is_not_news(path: str) -> None:
+    url = f"https://techcrunch.com{path}"
+    pages = [SearchedPage(url, "Acme launches AI suite"), *PAGES]
+    result = check_news(
+        [good(url=url, headline="Acme launches AI suite")],
+        pages=pages,
+        skills=SKILLS,
+        domains=DOMAINS,
+        limit=3,
+        today=TODAY,
+    )
+    assert (result.items, result.dropped) == ([], {"press": 1})
 
 
 def test_why_is_cut_at_a_word_at_200_characters() -> None:

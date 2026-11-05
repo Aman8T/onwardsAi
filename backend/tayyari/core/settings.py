@@ -801,7 +801,8 @@ class WeeklySettings(BaseModel):
     """The sites a news search may return (reputable tech and business news). ``TAYYARI_WEEKLY__NEWS_DOMAINS`` takes a JSON
     list or comma-separated domains. Every one must be readable by Anthropic's search crawler: a single blocked domain makes
     the API refuse the whole search (checked 2026-10-21; arstechnica, economictimes, ft, livemint, reuters, thehindu, theverge,
-    wired and zdnet block it). `BLOCKED_NEWS_DOMAINS` lists them and a test keeps them out."""
+    wired and zdnet block it). `BLOCKED_NEWS_DOMAINS` lists them, a test keeps them out of the default, and the news desk
+    leaves out any that are configured (`weekly.news.readable_domains`, logged) rather than lose every search."""
     max_paid_editions_per_week: int = Field(default=500, ge=0)
     """Editions per week, across all readers, that may spend on a model (0 = none: every edition is built without news and
     without the read). A soft cap: two replicas can overshoot it by a few."""

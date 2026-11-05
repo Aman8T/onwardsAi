@@ -28,7 +28,7 @@ design.md                  the visual system, portable; docs/design-notes.md has
 docs/backend.md            backend architecture, request flows, storage, guard, testing, config
 docs/roadmap.md            build plan: waves, file ownership, feature specs
 docs/research/             market and open-source research
-shared/types.ts, portfolio.ts, auth.ts, billing.ts, match.ts, discover.ts, jobsearch.ts, interview.ts, speech.ts, card.ts   TS contracts; mirrored by backend/tayyari/contract/*.py
+shared/types.ts, portfolio.ts, auth.ts, billing.ts, match.ts, match_api.ts, discover.ts, jobsearch.ts, interview.ts, speech.ts, card.ts   TS contracts; mirrored by backend/tayyari/contract/*.py
 src/                       frontend: views/ (Onboarding, Analysis, GraphView, ChatView), portfolio/, auth/, billing/, match/, discover/, practice/, prepare/, card/, light/,
                            site/ (the public SEO pages, rendered to static HTML at build time by scripts/build-pages.tsx; docs/seo.md),
                            components/ (Radar, Popover, Ring...), theme/ (tokens, hue), styles/, store.ts, lib/api.ts
@@ -121,5 +121,7 @@ The radar card (R1, canvas https://claude.ai/artifact/LG8rk27K2RfG68giTXcoX5) bu
 Leafout sign-in (L1) built 2026-10-19 (the site's Supabase login is the app's login via a `.leafout.in` cookie; see roadmap L1), deployed 2026-10-23 and off until its secrets are set.
 
 The quiet look is the default (`data-look`, 29bbd73 plus the change that made it so; `localStorage tayyari.look = 'today'` or `?look=today` is the escape hatch), previewed at `/dev/design`.
+
+Launch-audit fixes (2026-11-05, branch `claude/charming-ride-ojz4kd`, not deployed): no model names or "claude auth login" on the analysis screen; today's date in the match's gate and coverage calls; job boards that forbid automated reading are never fetched by any path (`ingest/boards.py`); the Weekly drops stale and press-release news and skips unreadable news domains; Indian amounts (`Rs. 8 crores`, `12 LPA`) fill a resume's `[x]`; postings no match points at are purged after 30 days; `shared/match_api.ts` mirrors `contract/match_api.py`. Details in `docs/research/ai-launch-audit.md`.
 
 Next: the skills table (X1).

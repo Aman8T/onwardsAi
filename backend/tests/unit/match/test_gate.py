@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 
 from tayyari.contract.match import Fact, FactRef, Gate, GateAnswer
 from tayyari.llm.errors import ClaudeOverloaded
 from tayyari.match.gate import answer_gates, decide, validate_answers
 from tayyari.match.schemas import GateAnswerOut
+from tayyari.prompts.match import YEARS_RULE
 from tests.fakes.claude import FakeClaudeClient
 from tests.unit.match.support import CTX, HAIKU
 
@@ -130,3 +133,21 @@ async def test_the_model_cannot_block_by_itself_a_fail_needs_a_fact_and_severity
     decision = await answer_gates(fake, model=HAIKU, gates=gates, facts=[fact("f1")], call_ctx=CTX)
     assert [a.verdict for a in decision.answers] == ["uncertain", "fail"]
     assert not decision.blocked  # g1 had no evidence, g2 is minor
+
+
+async def test_the_message_starts_with_today_s_date_and_the_system_says_to_count_years_to_it() -> None:
+    gates = [gate("g1", 6, "Do you have at least 3 years of experience?")]
+    fake = FakeClaudeClient().script_structured("match.gates", {"answers": []})
+    await answer_gates(
+        fake, model=HAIKU, gates=gates, facts=[fact("f1")], call_ctx=CTX, today=date(2026, 11, 5)
+    )
+    call = fake.structured_calls[0]
+    assert call.user_text.startswith("Today's date: 2026-11-05.\n\n")
+    assert YEARS_RULE in call.system_text
+    assert '"present"' in YEARS_RULE and "today" in YEARS_RULE
+
+
+async def test_without_a_date_the_message_has_no_date_line() -> None:
+    fake = FakeClaudeClient().script_structured("match.gates", {"answers": []})
+    await answer_gates(fake, model=HAIKU, gates=[gate("g1", 6)], facts=[fact("f1")], call_ctx=CTX)
+    assert "Today's date" not in fake.structured_calls[0].user_text

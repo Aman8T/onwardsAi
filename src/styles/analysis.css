@@ -409,29 +409,6 @@
   overflow-wrap: anywhere;
 }
 
-.an-hint {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-  font-size: var(--fs-2);
-  color: var(--text-muted);
-}
-
-.an-hint-row {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s2);
-}
-
-.an-hint code {
-  padding: 3px 10px;
-  border-radius: var(--r-s);
-  background: var(--surface-2);
-  font-family: var(--font-mono);
-  font-size: var(--fs-1);
-  color: var(--text);
-}
-
 .an-err-actions {
   display: flex;
   flex-wrap: wrap;

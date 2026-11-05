@@ -93,14 +93,14 @@ async def test_a_sample_run_streams_the_whole_skeleton(harness: Harness) -> None
 
     phases = [(e.phase, e.label) for e in events if e.type == "phase"]  # type: ignore[union-attr]
     assert phases == [
-        ("reading", "Haiku readers in progress"),
-        ("synthesizing", "Sonnet is drawing your graph"),
+        ("reading", "Readers in progress"),
+        ("synthesizing", "Drawing your graph"),
         ("done", "Your graph is ready"),
     ]
     finished = {e.reader.sourceId for e in events if isinstance(e, ReaderEvent) and e.reader.status == "done"}
     assert finished == {"resume", "github", "lovable-1", "portfolio-1"}
 
-    texts = log_texts(events, "sonnet")
+    texts = log_texts(events, "graph")
     assert texts[0] == "Merging evidence across 4 sources"
     assert texts[-1].startswith("Graph ready · 6 domains, 21 skills, 5 roles")
     assert any(isinstance(e, SignalEvent) for e in events)
@@ -112,6 +112,20 @@ async def test_a_sample_run_streams_the_whole_skeleton(harness: Harness) -> None
     assert len(harness.claude.calls_for("reader")) == 4
     assert len(harness.claude.calls_for("synth")) == 1
     assert harness.claude.pending() == 0
+
+
+async def test_nothing_the_screen_shows_names_a_model(harness: Harness) -> None:
+    """Phase labels and log lines name what is happening, never a model: the screen once said "Sonnet is drawing your
+    graph" while production ran Haiku, and which model plays each role is configuration."""
+    harness.script_readers(readers=sample_readers())
+    harness.script_synth(sample_synth())
+    events = await harness.run(AnalyzeRequest(sample=True))
+    shown = [e.label for e in events if e.type == "phase"]  # type: ignore[union-attr]
+    shown += [f"{e.who} {e.text}" for e in events if isinstance(e, LogEvent)]
+    assert len(shown) > 5
+    assert [
+        text for text in shown if re.search(r"\b(?:haiku|sonnet|opus|claude)\b", text, re.IGNORECASE)
+    ] == []
 
 
 async def test_a_sample_run_builds_the_profile_from_the_fixtures(harness: Harness) -> None:
@@ -380,7 +394,7 @@ async def test_the_checked_graph_ready_line_counts_the_final_graph(harness: Harn
     harness.script_readers()
     harness.script_synth(synth_output(["resume"]))
     events = await harness.run(AnalyzeRequest(resume_bytes=RESUME_TEXT.encode(), resume_name="resume.txt"))
-    assert "Graph ready · 3 domains, 8 skills, 3 roles" in log_texts(events, "sonnet")
+    assert "Graph ready · 3 domains, 8 skills, 3 roles" in log_texts(events, "graph")
 
 
 async def test_a_run_with_decisions_off_shows_no_jev_lines_and_checks_nothing(harness: Harness) -> None:
@@ -442,7 +456,7 @@ async def test_a_graph_that_is_too_small_is_retried_once(harness: Harness) -> No
     harness.script_synth(tiny_synth(), synth_output(["resume"]))
     events = await harness.run(AnalyzeRequest(resume_bytes=RESUME_TEXT.encode(), resume_name="resume.txt"))
     assert_skeleton(events)
-    assert log_texts(events, "sonnet").count("Tightening the graph, one more pass") == 1
+    assert log_texts(events, "graph").count("Tightening the graph, one more pass") == 1
     first, second = harness.claude.calls_for("synth")
     assert "IMPORTANT — your previous attempt failed" not in first.user_text
     assert "IMPORTANT — your previous attempt failed" in second.user_text

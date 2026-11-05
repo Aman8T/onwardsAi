@@ -22,6 +22,7 @@ assessed rows (must 1.0, required 0.8, preferred 0.5, nice 0.25), capped at ``go
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from datetime import date
 from typing import Final
 
 from tayyari.contract.match import (
@@ -137,6 +138,7 @@ async def _assess_batch(
     batch: Sequence[Requirement],
     facts: Sequence[Fact],
     call_ctx: CallContext,
+    today: date | None = None,
 ) -> list[Coverage]:
     book = {f.id: f for f in facts}
     data = await ask_or_none(
@@ -144,7 +146,7 @@ async def _assess_batch(
         model=model,
         purpose="match.coverage",
         system=COVERAGE_SYSTEM,
-        user=build_coverage_prompt(batch, facts),
+        user=build_coverage_prompt(batch, facts, today=today),
         schema=schema_of(CoverageOut, requirementId=[r.id for r in batch], factIds=list(book)),
         max_tokens=COVERAGE_MAX_TOKENS,
         call_ctx=call_ctx,
@@ -163,15 +165,19 @@ async def assess_coverage(
     call_ctx: CallContext,
     batch_size: int = COVERAGE_BATCH,
     on_batch: Callable[[list[Coverage]], None] | None = None,
+    today: date | None = None,
 ) -> list[Coverage]:
     """Check ``requirements`` against ``facts`` in concurrent batches; rows come back in requirement order.
 
-    ``on_batch`` is called with each batch's rows as soon as that batch is done (the stream sends them on).
+    ``on_batch`` is called with each batch's rows as soon as that batch is done (the stream sends them on). ``today``
+    heads every batch's message, so "fewer years" is judged against today's date.
     """
     batches = [list(requirements[i : i + batch_size]) for i in range(0, len(requirements), batch_size)]
 
     async def run(batch: list[Requirement]) -> list[Coverage]:
-        rows = await _assess_batch(claude, model=model, batch=batch, facts=facts, call_ctx=call_ctx)
+        rows = await _assess_batch(
+            claude, model=model, batch=batch, facts=facts, call_ctx=call_ctx, today=today
+        )
         if on_batch is not None:
             on_batch(rows)
         return rows

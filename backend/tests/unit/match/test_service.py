@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import Counter
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -26,6 +27,7 @@ from tayyari.match.service import (
 )
 from tayyari.portfolio.facts import facts_hash
 from tests.fakes.claude import FakeClaudeClient, StructuredCall
+from tests.fakes.clock import FakeClock
 from tests.unit.match.support import (
     CTX,
     HAIKU,
@@ -578,3 +580,13 @@ async def test_answering_a_gate_rechecks_the_requirement_that_asks_the_same_thin
     assert asked == [["r6"]]  # only the gate was answered, and its requirement was checked with it
     row = next(c for c in after.coverage if c.requirementId == "r6")
     assert row.status == "covered" and row.factIds == [typed.id]
+
+
+async def test_the_gate_and_coverage_checks_get_the_date_of_the_service_s_clock() -> None:
+    clock = FakeClock(datetime(2026, 11, 5, 9, 30, tzinfo=UTC))
+    _, _, fake = await run(meera(), clock=clock)
+    judged = [c for c in fake.structured_calls if c.ctx.purpose in ("match.gates", "match.coverage")]
+    assert {c.ctx.purpose for c in judged} == {"match.gates", "match.coverage"}
+    assert all(c.user_text.startswith("Today's date: 2026-11-05.") for c in judged)
+    others = [c for c in fake.structured_calls if c.ctx.purpose not in ("match.gates", "match.coverage")]
+    assert others and not any("Today's date" in c.user_text for c in others)

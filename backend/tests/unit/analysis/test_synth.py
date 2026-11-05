@@ -171,7 +171,7 @@ async def test_a_graph_that_is_too_small_gets_one_repair_pass(settings: Settings
     assert logs(events).count(TIGHTENING_LOG) == 1
     assert TIGHTENING_LOG == "Tightening the graph, one more pass"
     only_logs = [e for e in events if isinstance(e, LogEvent)]
-    assert all(e.who == "sonnet" and e.kind == "sonnet" for e in only_logs)
+    assert all(e.who == "graph" and e.kind == "sonnet" for e in only_logs)
 
 
 async def test_a_good_first_graph_is_one_call_and_no_tightening_line(settings: Settings) -> None:

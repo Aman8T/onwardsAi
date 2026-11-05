@@ -54,7 +54,7 @@ async def test_three_searches_then_one_read_and_the_verified_items(tmp_path: Pat
     for call in rig.claude.search_calls:
         assert call.ctx.purpose == "weekly.news" and call.effort == "low" and call.max_searches == 1
         assert call.model == rig.settings.model
-        assert call.allowed_domains == ("techcrunch.com", "livemint.com") and call.blocked_domains == ()
+        assert call.allowed_domains == ("techcrunch.com", "inc42.com") and call.blocked_domains == ()
     reading = rig.claude.structured_calls[0]
     assert reading.ctx.purpose == "weekly.news.read"
     assert (
@@ -179,3 +179,32 @@ def test_default_news_domains_are_all_readable_by_the_search_crawler() -> None:
     domains = set(WeeklySettings().news_domains)
     assert domains, "the weekly needs at least one news domain"
     assert not domains & BLOCKED_NEWS_DOMAINS
+
+
+def test_a_domain_the_search_crawler_cannot_read_is_left_out_not_allowed_to_end_the_news() -> None:
+    """One blocked domain in ``allowed_domains`` makes the API refuse the whole search; `.env.example` once showed two."""
+    from tayyari.weekly.news import readable_domains
+
+    assert readable_domains(
+        ["techcrunch.com", "theverge.com", "www.reuters.com", "in.reuters.com", "inc42.com"]
+    ) == [
+        "techcrunch.com",
+        "inc42.com",
+    ]
+    assert readable_domains(["reuters.com"]) == []
+    assert readable_domains([]) == []
+
+
+async def test_a_configured_blocked_domain_does_not_stop_the_search(tmp_path: Path) -> None:
+    rig = await make_rig(tmp_path, news_domains=["techcrunch.com", "theverge.com", "inc42.com"])
+    rig.claude.script_search(news_search(), repeat=True)
+    rig.claude.script_structured("weekly.news.read", news_answer())
+    outcome = await gather(rig)
+    assert [i.skill for i in outcome.items] == ["Design systems", "Accessibility (WCAG)"]
+    assert all(c.allowed_domains == ("techcrunch.com", "inc42.com") for c in rig.claude.search_calls)
+
+
+async def test_only_blocked_domains_means_no_search_at_all(tmp_path: Path) -> None:
+    rig = await make_rig(tmp_path, news_domains=["reuters.com", "theverge.com"])
+    outcome = await gather(rig)
+    assert outcome.items == [] and rig.claude.search_calls == []

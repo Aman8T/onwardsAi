@@ -129,6 +129,34 @@ async def test_the_first_reading_of_a_posting_stays(env: Env) -> None:
     assert stored is not None and stored.title == posting.title
 
 
+async def test_a_posting_no_match_points_at_is_purged_once_it_is_older_than_the_cutoff(env: Env) -> None:
+    alone = meera_posting(hash="a" * 64, rawText="An old posting nobody matched any more. " * 20)
+    await env.repos.postings.put(alone)
+    uid = await an_account(env)
+    used = meera_posting()
+    await a_match(env, uid, posting=used)  # stored at the same time, but a match points at it
+    env.clock.advance(timedelta(days=31))
+    fresh = meera_posting(hash="c" * 64, rawText="A posting pasted today. " * 20)
+    await env.repos.postings.put(fresh)
+
+    assert await env.repos.postings.purge_unreferenced(env.clock.now() - timedelta(days=30)) == 1
+    assert await env.repos.postings.get(alone.hash) is None
+    assert await env.repos.postings.get(used.hash) == used
+    assert await env.repos.postings.get(fresh.hash) == fresh
+    assert await env.repos.postings.purge_unreferenced(env.clock.now() - timedelta(days=30)) == 0
+
+
+async def test_putting_a_posting_again_keeps_the_first_reading_and_resets_its_age(env: Env) -> None:
+    posting = meera_posting()
+    await env.repos.postings.put(posting)
+    env.clock.advance(timedelta(days=31))
+    await env.repos.postings.put(meera_posting(title="A different reading"))  # the same text pasted again
+
+    assert await env.repos.postings.purge_unreferenced(env.clock.now() - timedelta(days=30)) == 0
+    stored = await env.repos.postings.get(posting.hash)
+    assert stored is not None and stored.title == posting.title
+
+
 async def test_a_posting_holds_the_full_text_once_and_the_reading_without_it(env: Env) -> None:
     posting = meera_posting()
     await env.repos.postings.put(posting)

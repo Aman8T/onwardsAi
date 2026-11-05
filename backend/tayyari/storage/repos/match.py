@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Any, cast
 
 from pydantic import ValidationError
-from sqlalchemy import ColumnElement, select, update
+from sqlalchemy import ColumnElement, delete, exists, not_, select, update
 from sqlalchemy.exc import IntegrityError
 
 from tayyari.contract.match import Fact, Posting
@@ -28,7 +28,7 @@ from tayyari.contract.portfolio import Fact as PortfolioFact
 from tayyari.core.clock import Clock, SystemClock
 from tayyari.core.logging import get_logger
 
-from ..db import Database, dialect_insert
+from ..db import Database, dialect_insert, rowcount
 from ..ports import MatchListing, StoredMatch, StoredVariant, VariantKind
 from ..tables import MatchRow, PostingRow, ProfileFactsRow, UserFactRow, VariantRow
 
@@ -132,18 +132,25 @@ class SqlPostingRepo:
             return None
 
     async def put(self, posting: Posting) -> None:
-        stmt = (
-            dialect_insert(self._db.dialect, PostingRow)
-            .values(
-                hash=posting.hash,
-                text=posting.rawText,
-                parsed=posting.model_dump(mode="json", exclude={"rawText"}, exclude_none=True),
-                created_at=self._clock.now(),
-            )
-            .on_conflict_do_nothing(index_elements=[PostingRow.hash])
+        insert = dialect_insert(self._db.dialect, PostingRow).values(
+            hash=posting.hash,
+            text=posting.rawText,
+            parsed=posting.model_dump(mode="json", exclude={"rawText"}, exclude_none=True),
+            created_at=self._clock.now(),
+        )
+        # The first reading stays; putting it again only moves ``created_at`` on, so a posting in use is never old
+        # enough for `purge_unreferenced` between this put and the match row that will point at it.
+        stmt = insert.on_conflict_do_update(
+            index_elements=[PostingRow.hash], set_={"created_at": insert.excluded.created_at}
         )
         async with self._db.session() as s:
             await s.execute(stmt)
+
+    async def purge_unreferenced(self, cutoff: datetime) -> int:
+        referenced = exists(select(1).where(MatchRow.posting_hash == PostingRow.hash))
+        stmt = delete(PostingRow).where(PostingRow.created_at < cutoff, not_(referenced))
+        async with self._db.session() as s:
+            return rowcount(await s.execute(stmt))
 
 
 class SqlProfileFactsRepo:

@@ -6,6 +6,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Question } from '../../shared/match';
+import { ANSWER_MAX_CHARS } from '../../shared/match_api';
 import type { AnswerInput } from './types';
 
 export interface RecheckState {
@@ -22,7 +23,8 @@ interface Props {
   firstRef?: (el: HTMLTextAreaElement | null) => void;
 }
 
-const MAX_ANSWER_CHARS = 1500;
+/** The server's limit (`contract/match_api.py`, mirrored in `shared/match_api.ts`). */
+const MAX_ANSWER_CHARS = ANSWER_MAX_CHARS;
 
 export function Questions({ questions, recheck, onSubmit, firstRef }: Props) {
   const base = useId();

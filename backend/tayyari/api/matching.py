@@ -92,13 +92,10 @@ PROFILE_NOT_FOUND: Final = "Profile not found"
 BOARDS_THAT_FORBID_READING: Final[tuple[tuple[str, str], ...]] = (
     ("linkedin.com", "LinkedIn"),
     ("lnkd.in", "LinkedIn"),
-    ("naukri.com", "Naukri"),
-    ("indeed.com", "Indeed"),
-    ("glassdoor.com", "Glassdoor"),
-    ("foundit.in", "foundit"),
-    ("shine.com", "Shine"),
+    *ingest.JOB_BOARDS_THAT_FORBID_READING,
 )
-"""Job boards whose terms forbid automated reading. A link on one of them is refused before anything is fetched."""
+"""Sites whose terms forbid automated reading: LinkedIn, then the job boards `ingest.boards` refuses for every path. A
+posting link on one of them is refused before anything is fetched."""
 
 _refunds: set[asyncio.Task[bool]] = set()
 """Refunds in flight, held so a task that nobody awaits any more is not collected before it finishes."""

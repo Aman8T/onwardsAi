@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from tayyari.contract.match import Fact, FactRef
-from tayyari.match.bullets import DraftContext, assess_draft, export_blockers, fallback_bullet
+from tayyari.match.bullets import DraftContext, assess_draft, export_blockers, fallback_bullet, is_figure
 from tayyari.match.verify import check_text, escalations, placeholders_in, scope_verbs, unsupported_numbers
 from tayyari.portfolio.ground import Corpus
 
@@ -273,3 +273,21 @@ def test_export_blockers_list_open_bullets_only() -> None:
         changes=[],
     )
     assert export_blockers(variant) == ["open: waiting for your answer", "slot: still has a [x] to fill"]
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["35%", "9.4%", "15 %", "3x", "10K", "$2M", "40", "1,20,000", "₹12,00,000", "₹12 lakh", "2 lakhs", "12lakh",
+     "Rs. 8 crores", "Rs 8 crore", "rs.8crores", "INR 2.5 cr", "₹ 1.2 Cr", "12 LPA", "₹8 lakh p.a.", "50+", "1,000+"],
+)  # fmt: skip
+def test_a_figure_is_one_number_with_its_unit_in_any_indian_or_western_spelling(value: str) -> None:
+    assert is_figure(value), value
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", "   ", "a lot", "about 30", "30 or 40", "thirty", "35% of sales", "x", "lakh", "Rs.", "₹",
+     "12 lakh and 3 crore", "1 2", "9" * 41],
+)  # fmt: skip
+def test_anything_more_or_less_than_one_figure_is_refused(value: str) -> None:
+    assert not is_figure(value), value

@@ -396,6 +396,37 @@ async def test_an_unusable_figure_is_refused_and_the_bullet_stays_open() -> None
     assert export_blockers(settled.variant)
 
 
+async def test_an_indian_amount_fills_a_money_slot_in_the_person_s_own_words() -> None:
+    """The launch audit's case (2026-11-03): "Rs. 8 crores" was refused as "not a figure we can use"."""
+    service, outcome, result, _ = await composed(
+        meera(),
+        **{
+            "b-exp-1.2": {
+                "factIds": ["exp-1.2"],
+                "text": "Owned the paid acquisition budget across Meta Ads and Google Ads (₹4 crore a year).",
+                "verdict": "exact",
+            }
+        },
+    )
+    bullet = next(b for b in all_bullets(result.variant) if b.id == "b-exp-1.2")
+    assert bullet.status == "needs_user"
+    assert "(₹[x] crore a year)" in bullet.text
+    settled = service.settle_resume(
+        result.variant,
+        outcome.book,
+        outcome.posting,
+        outcome.result,
+        [DecisionChoice(bulletId="b-exp-1.2", choice="fill", value="Rs. 3.2 crores")],
+    )
+    assert settled.refused == []
+    bullet = next(b for b in all_bullets(settled.variant) if b.id == "b-exp-1.2")
+    assert (
+        "(Rs. 3.2 crores a year)" in bullet.text
+    )  # the person's words, the slot's own ₹ and "crore" not doubled
+    assert bullet.status == "verified"
+    assert bullet.placeholders == []
+
+
 async def test_a_scope_verb_stronger_than_the_facts_is_a_stretch_the_person_must_settle() -> None:
     draft = {
         "b-exp-1.4": {

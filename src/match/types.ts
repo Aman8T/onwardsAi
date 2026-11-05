@@ -1,10 +1,10 @@
 /**
- * What the match screens pass around on top of the contract in `shared/match.ts`: the NDJSON events of
- * `POST /api/match` and `POST /api/match/{id}/resume`, and the shapes of the GET answers.
+ * What the match screens pass around on top of the contract in `shared/match.ts`.
  *
- * `shared/match.ts` has no event types (it is the contract M1 mirrors in Python), so they live here until M2
- * settles the wire format. Where the backend's own names differ (`GatesReady.answers`, `CoverageBatch.rows`) the
- * reader in `api.ts` accepts both, so a route that forwards M1's events unchanged still works.
+ * The wire shapes themselves are `shared/match_api.ts` (mirrored by `backend/tayyari/contract/match_api.py`, checked by
+ * `tests/unit/match/test_match_api_parity.py`). Requests and list rows are those shapes as they are. The stream events
+ * and the stored match below are the same shapes with a few fields relaxed, because the readers in `api.ts` take what
+ * an older server sent too (a `done` without `createdAt`, `GatesReady.answers` for `gates`, a flattened result).
  *
  * `Fact` here is the match contract's, not the portfolio's: import it as `MatchFact`.
  */
@@ -13,20 +13,21 @@ import type {
   CoverNote,
   Fact as MatchFact,
   GateAnswer,
-  MatchBand,
   MatchResult,
   Posting,
   Question,
   Radar,
   ResumeVariant,
 } from '../../shared/match';
+import type { AnswerItem, MatchErrorCode, MatchListItem, MatchRequest } from '../../shared/match_api';
 
 export type { MatchFact };
 
-/** Machine codes an `error` event (or a failed response) may carry; anything else is shown as its message. */
-export type MatchErrorCode = 'unauthorized' | 'payment_required' | 'no_requirements' | 'export_blocked' | 'rate_limited';
+/** Machine codes an `error` event (or a failed response) may carry; `failed` is everything else. */
+export type { MatchErrorCode };
 
-/** `POST /api/match`: one JSON line per event. `facts` rides on `posting` so citations can render as rows arrive. */
+/** `POST /api/match`, as `api.ts` reads it (`MatchStreamEvent` relaxed). `facts` rides on `posting` so citations can
+ * render as rows arrive. */
 export type MatchEvent =
   | { type: 'posting'; posting: Posting; facts?: MatchFact[] }
   | { type: 'gates'; gates: GateAnswer[]; blocked: boolean }
@@ -36,13 +37,15 @@ export type MatchEvent =
   | { type: 'done'; matchId: string; result?: MatchResult; createdAt?: string }
   | { type: 'error'; message: string; code?: MatchErrorCode };
 
-/** `POST /api/match/{id}/resume`: `variant` (the composed resume, possibly more than once) then `done`. */
+/** `POST /api/match/{id}/resume`, as `api.ts` reads it (`ResumeStreamEvent` relaxed): `variant` (the composed resume,
+ * possibly more than once) then `done`. */
 export type ResumeEvent =
   | { type: 'variant'; variant: ResumeVariant }
   | { type: 'done'; variant?: ResumeVariant }
   | { type: 'error'; message: string; code?: MatchErrorCode };
 
-/** `GET /api/match/{id}`: the stored match with the posting it was made from and the evidence it cites. */
+/** `GET /api/match/{id}`, as `api.ts` reads it (`MatchDetail` of `shared/match_api.ts` with `createdAt` optional): the
+ * stored match with the posting it was made from and the evidence it cites. */
 export interface MatchDetail {
   id: string;
   createdAt?: string;
@@ -52,24 +55,12 @@ export interface MatchDetail {
 }
 
 /** One row of `GET /api/matches`. */
-export interface MatchSummary {
-  id: string;
-  title: string;
-  company?: string;
-  band: MatchBand;
-  createdAt: string;
-}
+export type MatchSummary = MatchListItem;
 
 /** `POST /api/match/{id}/answers` body item. */
-export interface AnswerInput {
-  questionId: string;
-  text: string;
-}
+export type AnswerInput = AnswerItem;
 
-export interface SubmitInput {
-  profileId: string;
-  text?: string;
-  url?: string;
-}
+/** `POST /api/match` body. */
+export type SubmitInput = MatchRequest;
 
 export type { CoverNote, ResumeVariant };

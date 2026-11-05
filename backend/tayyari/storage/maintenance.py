@@ -24,6 +24,8 @@ What is purged, with the windows from ``settings.retention``:
 ``auth``               sign-ins (``auth_sessions``) and emailed links (``magic_links``) past their expiry
 ``discover_closed``    Discover listings closed more than 30 days ago (`CLOSED_LISTING_DAYS`)
 ``jobsearch``          searches with AI, prep pages and referral notes older than 30 days (`JOBSEARCH_RETENTION`)
+``postings``           pasted job postings no match points at any more, stored over 30 days ago (`POSTING_RETENTION`):
+                       a posting outlives its matches only as a cache, and its text is what someone pasted
 ``interview``          practice interviews (transcript, work and debrief) older than ``settings.interview.retention_days``
                        (30 by default, `INTERVIEW_RETENTION`)
 =====================  ===========================================================================
@@ -70,6 +72,9 @@ CLOSED_LISTING_RETENTION = timedelta(days=30)
 """A Discover listing the employer's board stopped listing is deleted this long after it was closed."""
 JOBSEARCH_RETENTION: Final = timedelta(days=30)
 """Searches with AI, and the prep pages and referral notes written for their roles, are deleted after this long."""
+POSTING_RETENTION: Final = timedelta(days=30)
+"""A posting no match points at (its matches went with their profile or account) is deleted this long after it was
+last stored; pasting the same text again stores it again and resets the time."""
 INTERVIEW_RETENTION: Final = timedelta(days=30)
 """How long a practice interview (its transcript, work and debrief) is kept: the default of
 ``settings.interview.retention_days``, which is what the purge reads."""
@@ -250,6 +255,7 @@ async def run_maintenance(
         ("auth", lambda: repos.users.purge_expired(now)),
         ("discover_closed", lambda: repos.discover.purge_closed(now - CLOSED_LISTING_RETENTION)),
         ("jobsearch", lambda: repos.jobsearch.purge(now - JOBSEARCH_RETENTION)),
+        ("postings", lambda: repos.postings.purge_unreferenced(now - POSTING_RETENTION)),
         ("interview", lambda: repos.interview.purge(now - interview_retention)),
     ]
     counts: dict[str, int] = {}
@@ -274,5 +280,6 @@ __all__ = [
     "JOBSEARCH_RETENTION",
     "LAST_RUN_KEY",
     "MIN_INTERVAL",
+    "POSTING_RETENTION",
     "run_maintenance",
 ]

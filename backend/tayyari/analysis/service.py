@@ -6,7 +6,7 @@ the web app expects (it replaces ``legacy/pipeline.py``)::
     readers                      one queued card per source
     phase reading                (reader, log and signal events while the sources are read)
     phase synthesizing, synth 1, log "Merging evidence across N sources"
-    synth 2 / synth 3 and their log lines, while Sonnet writes
+    synth 2 / synth 3 and their log lines, while the synth model writes
     [log "Tightening the graph, one more pass" and a second synth call, when the first graph is too small]
     [log "Checked N evidence quotes, dropped M"]   (Jev)
     log "Graph ready", synth 3, phase done, done
@@ -63,13 +63,17 @@ from .planning import initial_states, plan_sources_for, resolve_goal
 from .readers import CHANNEL_THROTTLE_S, ReaderChannel, SourceReader
 from .runctx import RunContext
 from .signals import SignalStream
-from .synth import synthesize
+from .synth import SYNTH_KIND, SYNTH_WHO, synthesize
 
 log = get_logger(__name__)
 
 NOTHING_TO_ANALYSE = "Add a resume, a link or some notes to analyse."
 NO_SOURCE_READABLE = "We couldn't read any of your sources. Check the file and links, then try again."
 GRAPH_FAILED_PREFIX = "Couldn't build your graph: "
+READING_LABEL = "Readers in progress"
+SYNTHESIZING_LABEL = "Drawing your graph"
+"""Phase labels the screen shows as they are. They name what is happening, never a model: which model reads or draws
+is configuration, and the screen once said "Sonnet" while production ran Haiku."""
 
 
 class AnalysisFailed(Exception):
@@ -175,7 +179,7 @@ class PipelineAnalysisService:
         # (b) announce the readers
         states = initial_states(planned)
         send(ev_readers(list(states.values())))
-        send(ev_phase("reading", "Haiku readers in progress"))
+        send(ev_phase("reading", READING_LABEL))
         channels = {
             pid: ReaderChannel(
                 state, send, now=run.clock.monotonic, throttle_s=CHANNEL_THROTTLE_S * run.scale
@@ -206,9 +210,9 @@ class PipelineAnalysisService:
             await first_read.settle()
 
             # (d) synthesize
-            send(ev_phase("synthesizing", "Sonnet is drawing your graph"))
+            send(ev_phase("synthesizing", SYNTHESIZING_LABEL))
             send(ev_synth(1, 0))
-            send(ev_log("sonnet", f"Merging evidence across {plural(len(ok), 'source')}", "sonnet"))
+            send(ev_log(SYNTH_WHO, f"Merging evidence across {plural(len(ok), 'source')}", SYNTH_KIND))
 
             resume_raw = next((r.raw for r in results if r.planned.kind == "resume"), None)
             notes_raw = next((r.raw for r in results if r.planned.kind == "notes"), None)
@@ -256,10 +260,10 @@ class PipelineAnalysisService:
             await check_evidence(run, profile, results)
             send(
                 ev_log(
-                    "sonnet",
+                    SYNTH_WHO,
                     f"Graph ready · {plural(len(profile.domains), 'domain')}, "
                     f"{plural(len(profile.skills), 'skill')}, {plural(len(profile.roles), 'role')}",
-                    "sonnet",
+                    SYNTH_KIND,
                 )
             )
 

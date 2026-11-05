@@ -642,7 +642,12 @@ class PostingRepo(Protocol):
         ...
 
     async def put(self, posting: Posting) -> None:
-        """Remember a reading (idempotent on ``posting.hash``; the first one stays)."""
+        """Remember a reading (idempotent on ``posting.hash``; the first one stays, and putting it again refreshes the
+        time it was stored, which is what `purge_unreferenced` measures)."""
+        ...
+
+    async def purge_unreferenced(self, cutoff: datetime) -> int:
+        """Delete the postings stored before ``cutoff`` that no match points at; returns how many went."""
         ...
 
 

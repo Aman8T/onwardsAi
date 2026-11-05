@@ -48,6 +48,7 @@ from tayyari.match.verify import (
     placeholders_in,
     with_placeholders,
 )
+from tayyari.portfolio.ground import measures_of
 
 MAX_NUMBER_SLOTS: Final = 2
 """A draft that invents more numbers than this is not repaired with placeholders: it is thrown away."""
@@ -55,7 +56,10 @@ BULLET_MAX_WORDS: Final = 45
 SUMMARY_MAX_WORDS: Final = 70
 
 _LEAD = re.compile(r"^[\s\-*•·▪]+")
-_FIGURE = re.compile(r"^[\$₹€£]?\s?\d[\d,]*(?:\.\d+)?\s?(?:%|[kKmMbB]|x|X|\+|lakh|crore)?$")
+FIGURE_MAX_CHARS: Final = 40
+"""The longest figure a person may type for a ``[x]`` (``INR 1,20,00,000 per annum`` fits)."""
+_FIGURE_TAIL: Final = re.compile(r"\s*(?:\+|lpa|p\.?a\.?|per annum)$")
+"""What may follow the number and its unit: ``50+``, ``12 LPA``, ``₹8 lakh p.a.``."""
 
 OPTIONS: Final[dict[str, list[DecisionChoiceKey]]] = {
     "number": ["fill", "soften", "drop"],
@@ -222,16 +226,49 @@ def _primary(bullet: Bullet, facts: Mapping[str, Fact]) -> Fact | None:
     return next((facts[i] for i in bullet.factIds if i in facts and not i.startswith("user-")), None)
 
 
+def is_figure(value: str) -> bool:
+    """A figure the person typed for a ``[x]``: one number with its unit and currency and nothing else, read the way
+    the verifier reads numbers (`portfolio.ground.measures_of`), so what is accepted here is checked the same way later.
+
+    ``35%``, ``3x``, ``10K``, ``$2M``, ``1,20,000``, ``₹12 lakh``, ``Rs. 8 crores``, ``INR 2.5 cr``, ``12 LPA`` and
+    ``50+`` are figures; ``about 30``, ``30 or 40``, ``thirty`` and ``35% of sales`` are not (a figure is the number, and
+    the sentence around it is already written).
+    """
+    text = fold_text(value)
+    if not text or len(text) > FIGURE_MAX_CHARS:
+        return False
+    text = _FIGURE_TAIL.sub("", text).strip()
+    found = measures_of(text)
+    return len(found) == 1 and found[0].text == text
+
+
+_SLOT_IN_CONTEXT: Final = re.compile(
+    r"(?P<pre>(?:[$₹€£]|(?<![^\W\d_])(?:rs\.?|inr|usd|eur|gbp)[  ]?)?)"
+    r"\[x\](?P<glued>%|\+|[kKmMxX])?"
+    r"(?P<post>(?:[  ]?(?:lakhs?|lacs?|crores?|cr|thousand|million|mn|billion|bn|lpa)(?![^\W_]))?)",
+    re.IGNORECASE,
+)
+"""The first ``[x]`` with the currency before it and the unit after it, as a verifier slot writes them: ``₹[x] crore``,
+``by [x]%``, ``Rs. [x] lakh``."""
+_UNIT_AFTER_DIGITS: Final = re.compile(r"\d\s*[^\d\s.,]")
+
+
 def _fill(bullet: Bullet, value: str) -> str:
-    """``bullet.text`` with its first ``[x]`` replaced by ``value`` (a unit the slot already has is not doubled)."""
-    match = PLACEHOLDER.search(bullet.text)
+    """``bullet.text`` with its first ``[x]`` filled with ``value``, the figure as the person typed it.
+
+    A currency or unit the person typed replaces the one around the slot instead of doubling it: ``₹[x] crore`` filled
+    with ``Rs. 8 crores`` reads ``Rs. 8 crores`` (never ``₹Rs. 8 crores crore``), with ``8`` it reads ``₹8 crore``, and
+    ``by [x]%`` filled with ``6.4%`` reads ``by 6.4%``.
+    """
+    match = _SLOT_IN_CONTEXT.search(bullet.text)
     if match is None:
         return bullet.text
-    unit = match.group()[3:]
     figure = value.strip()
-    if unit and figure.endswith(unit):
-        figure = figure[: -len(unit)].rstrip()
-    return bullet.text[: match.start()] + figure + unit + bullet.text[match.end() :]
+    folded = fold_text(figure)
+    found = measures_of(_FIGURE_TAIL.sub("", folded).strip())
+    pre = "" if found and found[0].currency else match.group("pre")
+    unit = "" if _UNIT_AFTER_DIGITS.search(folded) else (match.group("glued") or "") + match.group("post")
+    return bullet.text[: match.start()] + pre + figure + unit + bullet.text[match.end() :]
 
 
 def apply_decisions(
@@ -276,7 +313,7 @@ def apply_decisions(
             new_decisions[bullet.id] = None
         elif choice.choice == "fill":
             value = tidy(choice.value or "")
-            if not _FIGURE.match(value) or primary is None:
+            if not is_figure(value) or primary is None:
                 refused.append(f"{bullet.id}: that is not a figure we can use")
                 continue
             filled = _fill(bullet, value)
@@ -327,4 +364,5 @@ __all__ = [
     "assess_draft",
     "export_blockers",
     "fallback_bullet",
+    "is_figure",
 ]

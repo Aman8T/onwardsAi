@@ -1,4 +1,4 @@
-"""The synthesis stage: one Sonnet call that merges every reader's evidence into the skill graph.
+"""The synthesis stage: one model call (the synth model) that merges every reader's evidence into the skill graph.
 
 `synthesize` streams the synth steps while the model writes (step 2 at 2,500 characters, step 3 at 6,500, a
 character count at most every 0.3 s in between), then applies the graph-size gate: below the minimums in
@@ -9,7 +9,7 @@ nothing here retries them again.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Final
 
 from tayyari.contract import SynthStep, ev_log, ev_synth
 from tayyari.core import limits
@@ -27,6 +27,12 @@ PROGRESS_THROTTLE_S = 0.3
 
 TIGHTENING_LOG = "Tightening the graph, one more pass"
 """The log line shown before the second call."""
+SYNTH_WHO: Final = "graph"
+"""The live log's ``who`` for the synthesis step. A role, never a model name: which model draws the graph is
+configuration (``TAYYARI_SYNTH_MODEL``), and a name on screen would go stale the day it changes."""
+SYNTH_KIND: Final = "sonnet"
+"""The log line's ``kind`` for the synthesis step: the contract's literal (`contract.events.LogKind`), kept as it is
+on the wire. It only tags the line; nothing shows it."""
 
 
 def graph_size_problem(d: dict[str, Any]) -> str | None:
@@ -79,12 +85,12 @@ class _Progress:
         if self.step < 2 and chars >= STEP2_CHARS:
             self.step = 2
             run.send(ev_synth(2, chars))
-            run.send(ev_log("sonnet", "Scoring domains and skills", "sonnet"))
+            run.send(ev_log(SYNTH_WHO, "Scoring domains and skills", SYNTH_KIND))
             self._last_emit = now
         elif self.step < 3 and chars >= STEP3_CHARS:
             self.step = 3
             run.send(ev_synth(3, chars))
-            run.send(ev_log("sonnet", "Ranking next roles by alignment", "sonnet"))
+            run.send(ev_log(SYNTH_WHO, "Ranking next roles by alignment", SYNTH_KIND))
             self._last_emit = now
         elif now - self._last_emit >= PROGRESS_THROTTLE_S * run.scale:
             self._last_emit = now
@@ -117,7 +123,7 @@ async def synthesize(run: RunContext, prompt: str) -> dict[str, Any]:
     if problem is None:
         return data
 
-    run.send(ev_log("sonnet", TIGHTENING_LOG, "sonnet"))
+    run.send(ev_log(SYNTH_WHO, TIGHTENING_LOG, SYNTH_KIND))
     progress.offset = max(0, progress.last_chars)
     data = await attempt(repair_note(problem))
     problem = graph_size_problem(data)
@@ -130,6 +136,8 @@ __all__ = [
     "PROGRESS_THROTTLE_S",
     "STEP2_CHARS",
     "STEP3_CHARS",
+    "SYNTH_KIND",
+    "SYNTH_WHO",
     "TIGHTENING_LOG",
     "graph_size_problem",
     "repair_note",

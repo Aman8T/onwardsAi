@@ -20,11 +20,12 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | T | Tests, docs, walkthrough steps, `.env.example`, README | each wave | Haiku | committed 03988c7, deployed 2026-10-12 |
 | R1 | Shareable radar card (SVG + OG PNG) | F1 | Opus + Sonnet | designed 2026-10-23; built and committed 2026-10-23 (40b7acf); not deployed |
 | I1 | Evidence-grounded mock interview (practice) | M2, D3 | Opus + Sonnet | committed 659b7d6, deployed 2026-10-17 |
-| P1 | Prepare: "help me prepare" answered as typed blocks, not text | the graph's roles | Opus + Fable | designed 2026-10-18, building |
-| I2 | Re-drill weak claims, and Fix steps into Prepare | I1, P1 | Opus + Sonnet | designed 2026-10-22, spec written, not started |
+| P1 | Prepare: "help me prepare" answered as typed blocks, not text | the graph's roles | Opus + Fable | committed 9868155, deployed 2026-10-19 |
+| I2 | Re-drill weak claims, and Fix steps into Prepare | I1, P1 | Opus + Sonnet | committed 4126184 (follow-ups 67cfc99), deployed 2026-10-23 |
 | X1 | ESCO + O*NET skill table, canonical skill ids | M2 | later | not started |
 | D1 | Discover: personal, location-aware jobs with direct apply links | M2 | Opus + Sonnet | v1 built 2026-10-16 (employers' own boards, no map); rest in docs/discover-later.md |
-| L1 | Sign in to the app with the Leafout account (the site's Supabase login) | F1, app.leafout.in live | Opus + Sonnet | built 2026-10-19, committed, not yet deployed |
+| L1 | Sign in to the app with the Leafout account (the site's Supabase login) | F1, app.leafout.in live | Opus + Sonnet | committed 416cc6f, deployed 2026-10-23; off until its secrets are set |
+| W1 | The Leafout Weekly, a personal newspaper | D1, P1 | Opus + Sonnet | committed 851e985, deployed 2026-10-23; emails off until `leafout.in` is verified on Resend and the sender is set |
 
 Shared files are edited by one wave at a time, in this order: F1 → M2 → F2 for `storage/tables.py`, `storage/ports.py`, `core/settings.py`, `container.py`, `api/routes/__init__.py`, `api/security.py`, `backend/.env.example`. M1 touches none of them. Dependencies were added by the orchestrator (`authlib`, `reportlab`, `stripe`, `razorpay`; `pypdf` and `python-docx` were already present): no wave edits `pyproject.toml`.
 
@@ -1220,23 +1221,31 @@ archive; a dashboard tile on Home; `/dev/weekly` gallery from fixtures.
 
 ## Follow-ups
 
-Found while writing the documentation wave (2026-10-11). None blocks the landed waves; each is a change for a later wave.
+Found while writing the documentation wave (2026-10-11). None blocks the landed waves; each is a change for a later wave. Done since, and kept here
+so the history reads straight (2026-11-05):
+
+- ~~Postings are never purged~~: a posting no match points at is purged 30 days after it was last stored (`storage/maintenance.py`, step `postings`).
+- ~~No `shared/*.ts` mirror for `contract/match_api.py`~~: `shared/match_api.ts`, checked by `tests/unit/match/test_match_api_parity.py`; `src/match/types.ts` takes its request and list shapes from it.
+- ~~Portfolio routes do not check the owner of a claimed profile~~: they do (`api.deps.require_profile_access`); the launch audit of 2026-11-03 confirmed strangers get 404.
+- ~~Account deletion has no screen~~: `/account/delete` (`src/auth/AccountDelete.tsx`).
+
+Still open:
 
 - **Per-IP is the only meter for anonymous runs.** With no account there is no entitlement to charge, so a visitor's matches are limited by the client address alone (`TAYYARI_GUARD__ANON_MATCH_PER_DAY`, 3, on top of the ordinary per-address windows), and their answers, resumes and cover notes are only shed. An address that changes (a mobile network, a VPN) gets a fresh allowance; the daily spend ceiling and the global match cap are the backstop.
 
 - **Resume and cover are not rebuilt after answers.** A stored resume or cover note stays as it was when it was written; there is no rebuild control yet.
-- **Postings are never purged.** `postings` has no retention step (`storage/maintenance.py`).
-- **No `shared/*.ts` mirror for `contract/match_api.py`.** The API shapes are typed by hand in `src/match/types.ts` and `src/match/api.ts`; the parity test covers `shared/match.ts` only.
-- **Portfolio routes do not check the owner of a claimed profile.** `GET`, `PATCH` and `DELETE /api/portfolio/{profileId}` and the routes under it answer anyone who presents the profile id, as they did before accounts existed. A claimed profile's page should need its owner.
 - **The avatar is not shown.** `users.picture_url` is stored, but the CSP `img-src 'self' data:` blocks Google's image host, and nothing renders it.
 - **`pass30` auto-renew:** still undecided (v1: no renewal; a renewal is a new purchase).
 - **Postgres-only tests need `TEST_DATABASE_URL`**, a direct (non-pooler) URL of a throwaway database. Without it they are skipped.
 - **The per-match cost is not recorded.** The README and `docs/backend.md` quote about half a cent per match on Haiku 5.5, as measured, but the repository holds no recorded measurement; record it, with its method, before it is quoted again.
-- **Account deletion has no screen.** `DELETE /api/me` exists; the account menu does not offer it yet.
 - **Hand-off only without a webhook.** With `RAZORPAY_WEBHOOK_SECRET` unset, an order whose browser never returns after paying stays `created` and nothing is granted; set the secret and add the webhook on the cloud, or reconcile such orders by hand.
 
 ## Open items (the user decides)
 
+- **LinkedIn in the analysis.** Non-negotiable 4 names LinkedIn, and the posting match refuses LinkedIn links, but the analysis still reads
+  the public, signed-out view of a LinkedIn profile a person adds (`ingest/web.py`; onboarding warns it "usually blocks automated
+  reading"). Either refuse it like the job boards in `ingest/boards.py` (one line) and ask for the About text, or record why a person's
+  own public profile is allowed.
 - Prices for `pack3` and `pass30` in INR and USD.
 - Whether `pass30` should auto-renew later (v1: no).
 - The sender address for emails and the Google OAuth app (the user creates both and sets the secrets).

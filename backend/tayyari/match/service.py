@@ -27,6 +27,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field, replace
+from datetime import date
 from typing import Final
 
 from tayyari.contract.match import (
@@ -44,6 +45,7 @@ from tayyari.contract.match import (
 from tayyari.contract.models import Profile
 from tayyari.contract.portfolio import Fact as PortfolioFact
 from tayyari.contract.stored import StoredContext
+from tayyari.core.clock import Clock, SystemClock
 from tayyari.llm.claude import ClaudeClient
 from tayyari.llm.types import CallContext
 from tayyari.match.areas import Placement, place_requirements
@@ -175,8 +177,11 @@ class MatchService:
         postings: PostingCache | None = None,
         facts_cache: FactsCache | None = None,
         call_timeout_s: float | None = None,
+        clock: Clock | None = None,
     ) -> None:
         self._claude = claude
+        self._clock: Clock = clock or SystemClock()
+        """Gives the gate and coverage checks today's date (years of experience are counted to it)."""
         self._model = model
         self._writer = writer_model or model
         self._postings = postings
@@ -268,6 +273,7 @@ class MatchService:
                         facts=book.facts,
                         call_ctx=call_ctx,
                         on_batch=batch,
+                        today=self._today(),
                     ),
                     place_requirements(
                         self._claude,
@@ -286,9 +292,17 @@ class MatchService:
             _send(emit, QuestionsReady(result.questions))
             return MatchOutcome(posting=posting, book=book, result=result, report=read.report)
 
+    def _today(self) -> date:
+        return self._clock.now().date()
+
     async def _gates(self, posting: Posting, book: FactBook, call_ctx: CallContext) -> GateDecision:
         return await answer_gates(
-            self._claude, model=self._model, gates=posting.gates, facts=book.facts, call_ctx=call_ctx
+            self._claude,
+            model=self._model,
+            gates=posting.gates,
+            facts=book.facts,
+            call_ctx=call_ctx,
+            today=self._today(),
         )
 
     async def recheck(
@@ -315,10 +329,20 @@ class MatchService:
         with call_timeout(self._timeout):
             fresh_decision, fresh_rows = await gather2(
                 answer_gates(
-                    self._claude, model=self._model, gates=gates, facts=book.facts, call_ctx=call_ctx
+                    self._claude,
+                    model=self._model,
+                    gates=gates,
+                    facts=book.facts,
+                    call_ctx=call_ctx,
+                    today=self._today(),
                 ),
                 assess_coverage(
-                    self._claude, model=self._model, requirements=redo, facts=book.facts, call_ctx=call_ctx
+                    self._claude,
+                    model=self._model,
+                    requirements=redo,
+                    facts=book.facts,
+                    call_ctx=call_ctx,
+                    today=self._today(),
                 ),
             )
         rows = {c.requirementId: c for c in previous.coverage}

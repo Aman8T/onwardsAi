@@ -15,6 +15,7 @@ from functools import partial
 from typing import Protocol
 
 from ..core.logging import get_logger
+from .boards import JOB_BOARDS_THAT_FORBID_READING, board_refusal, board_that_forbids_reading
 from .classify import (
     MAX_LINKS,
     ClassifiedUrl,
@@ -50,6 +51,7 @@ class AnalyzeInput(Protocol):
 
 
 __all__ = [
+    "JOB_BOARDS_THAT_FORBID_READING",
     "MAX_LINKS",
     "TERM_COUNT",
     "ClassifiedUrl",
@@ -58,6 +60,8 @@ __all__ = [
     "ResumeError",
     "SourceDoc",
     "TermHit",
+    "board_refusal",
+    "board_that_forbids_reading",
     "classify_link",
     "classify_url",
     "count_terms",
