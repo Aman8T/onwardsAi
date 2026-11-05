@@ -937,7 +937,179 @@ class CardSnapshotRow(Base):
     __table_args__ = (UniqueConstraint("slug", name="uq_card_snapshots_slug"),)
 
 
+# ───────────────────────────── auto-apply ─────────────────────────────
+
+APPLY_OWNER_LEN = 80
+"""``u:<user id>`` for an account, ``a:<40 hex>`` for an anonymous browser (the sha256 of its apply cookie)."""
+APPLY_STAGE_LEN = 24
+APPLY_ATS_LEN = 64
+"""An ATS key (``greenhouse``, ``lever``, ``ashby``, ``workday``, ``unknown``) or ``site:<host>`` for a recorded playbook."""
+APPLY_DOMAIN_LEN = 255
+APPLY_DIGEST_LEN = 64
+APPLY_LEASE_LEN = 64
+APPLY_SHORT_LEN = 32
+APPLY_TITLE_LEN = 300
+
+
+class ApplicationRow(Base):
+    """One job application made (or tracked) through auto-apply. ``stage`` is an `ApplicationStage`; ``needs`` the open
+    questions for the person (a JSON list of `NeedsInput`), ``review`` the `ApplicationReview` of the last fill (what will
+    be sent) with ``review_digest`` its digest, and ``review_screenshot`` the JPEG of the filled form. Nothing is submitted
+    unless ``approved_digest`` equals the digest of the values about to be sent. ``lease_owner`` / ``lease_until`` mark the
+    worker that holds the row. ``owner_key`` is ``u:<user id>`` or ``a:<hash>`` (an anonymous browser); the row goes with
+    its account (ON DELETE CASCADE). ``profile_id`` and ``match_id`` are plain references (no foreign key): an application
+    outlives the match it came from."""
+
+    __tablename__ = "applications"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    owner_key: Mapped[str] = mapped_column(String(APPLY_OWNER_LEN))
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    profile_id: Mapped[str | None] = mapped_column(String(ID_LEN))
+    match_id: Mapped[str | None] = mapped_column(String(ID_LEN))
+    source: Mapped[str] = mapped_column(String(8))
+    job_url: Mapped[str] = mapped_column(Text)
+    apply_url: Mapped[str | None] = mapped_column(Text)
+    manual_url: Mapped[str | None] = mapped_column(Text)
+    domain: Mapped[str] = mapped_column(String(APPLY_DOMAIN_LEN))
+    ats: Mapped[str] = mapped_column(String(APPLY_ATS_LEN))
+    company: Mapped[str | None] = mapped_column(String(APPLY_TITLE_LEN))
+    title: Mapped[str | None] = mapped_column(String(APPLY_TITLE_LEN))
+    location: Mapped[str | None] = mapped_column(String(APPLY_TITLE_LEN))
+    job: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+    stage: Mapped[str] = mapped_column(String(APPLY_STAGE_LEN))
+    stage_reason: Mapped[str | None] = mapped_column(Text)
+    needs: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONType)
+    review: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+    review_digest: Mapped[str | None] = mapped_column(String(APPLY_DIGEST_LEN))
+    review_screenshot: Mapped[bytes | None] = mapped_column(LargeBinary)
+    approved_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    approved_digest: Mapped[str | None] = mapped_column(String(APPLY_DIGEST_LEN))
+    submitted_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    attempts: Mapped[int] = mapped_column(Integer)
+    lease_owner: Mapped[str | None] = mapped_column(String(APPLY_LEASE_LEN))
+    lease_until: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        Index("ix_applications_owner_key_created_at", "owner_key", "created_at"),
+        Index("ix_applications_stage_updated_at", "stage", "updated_at"),
+        Index("ix_applications_domain", "domain"),
+        Index("ix_applications_user_id", "user_id"),
+    )
+
+
+class ApplicationEventRow(Base):
+    """One thing that happened to an application: a stage change (``from_stage`` -> ``to_stage``) by the engine, the person,
+    an email or the app, or a note from the engine. ``detail`` is small JSON that never holds a resume, a token or an email
+    body. Goes with its application (ON DELETE CASCADE)."""
+
+    __tablename__ = "application_events"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    application_id: Mapped[str] = mapped_column(
+        String(ID_LEN), ForeignKey("applications.id", ondelete="CASCADE")
+    )
+    at: Mapped[datetime] = mapped_column(UtcDateTime)
+    kind: Mapped[str] = mapped_column(String(APPLY_SHORT_LEN))
+    source: Mapped[str] = mapped_column(String(16))
+    from_stage: Mapped[str | None] = mapped_column(String(APPLY_STAGE_LEN))
+    to_stage: Mapped[str | None] = mapped_column(String(APPLY_STAGE_LEN))
+    detail: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+
+    __table_args__ = (Index("ix_application_events_application_id_at", "application_id", "at"),)
+
+
+class AtsPlaybookRow(Base):
+    """A replayable playbook for one ATS (``ats``) or one site (``ats`` = ``site:<host>``, ``domain`` = the host): the field
+    map and step sequence the runner follows with no model call. ``status`` is ``active``, ``draft`` (recorded from a
+    successful AI run, tried before the AI and promoted after `ApplySettings.draft_promote_after` successes) or ``retired``;
+    ``origin`` is ``builtin``, ``recorded`` or ``manual``. Holds no one's data."""
+
+    __tablename__ = "ats_playbooks"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    ats: Mapped[str] = mapped_column(String(APPLY_ATS_LEN))
+    domain: Mapped[str | None] = mapped_column(String(APPLY_DOMAIN_LEN))
+    status: Mapped[str] = mapped_column(String(12))
+    origin: Mapped[str] = mapped_column(String(12))
+    version: Mapped[int] = mapped_column(Integer)
+    spec: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    successes: Mapped[int] = mapped_column(Integer)
+    failures: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    promoted_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        Index("ix_ats_playbooks_ats_status", "ats", "status"),
+        Index("ix_ats_playbooks_domain", "domain"),
+    )
+
+
+class RunMetricRow(Base):
+    """One engine run (a fill or a submit) for the learning loop: which ATS and site, whether a playbook or the AI fallback
+    did it (``mode``), the playbook or agent used, steps, duration, cost in micro-USD and the outcome with its failure reason.
+    A log table: no foreign keys, so a deleted application leaves its runs counted."""
+
+    __tablename__ = "run_metrics"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    application_id: Mapped[str | None] = mapped_column(String(ID_LEN))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    run_kind: Mapped[str] = mapped_column(String(12))
+    ats: Mapped[str] = mapped_column(String(APPLY_ATS_LEN))
+    domain: Mapped[str] = mapped_column(String(APPLY_DOMAIN_LEN))
+    mode: Mapped[str] = mapped_column(String(12))
+    playbook_id: Mapped[str | None] = mapped_column(String(ID_LEN))
+    playbook_status: Mapped[str | None] = mapped_column(String(12))
+    agent: Mapped[str | None] = mapped_column(String(APPLY_SHORT_LEN))
+    outcome: Mapped[str] = mapped_column(String(16))
+    failure_reason: Mapped[str | None] = mapped_column(String(64))
+    steps: Mapped[int] = mapped_column(Integer)
+    duration_ms: Mapped[int] = mapped_column(Integer)
+    cost_micro_usd: Mapped[int] = mapped_column(BigInteger)
+    fields_total: Mapped[int] = mapped_column(Integer)
+    fields_filled: Mapped[int] = mapped_column(Integer)
+    fields_model: Mapped[int] = mapped_column(Integer)
+
+    __table_args__ = (
+        Index("ix_run_metrics_created_at", "created_at"),
+        Index("ix_run_metrics_ats_created_at", "ats", "created_at"),
+        Index("ix_run_metrics_domain_created_at", "domain", "created_at"),
+    )
+
+
+class ApplyProfileRow(Base):
+    """One person's saved details for every application (``details``: `ApplicantDetails` JSON), the answers they chose to
+    keep (``answers``: question key -> answer record, the per-person answer cache) and their resume file. Keyed by
+    ``owner_key`` like `ApplicationRow`; goes with its account (ON DELETE CASCADE)."""
+
+    __tablename__ = "apply_profiles"
+
+    owner_key: Mapped[str] = mapped_column(String(APPLY_OWNER_LEN), primary_key=True)
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    details: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    answers: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    resume_name: Mapped[str | None] = mapped_column(String(255))
+    resume_type: Mapped[str | None] = mapped_column(String(100))
+    resume_bytes: Mapped[bytes | None] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (Index("ix_apply_profiles_user_id", "user_id"),)
+
+
 __all__ = [
+    "APPLY_ATS_LEN",
+    "APPLY_DIGEST_LEN",
+    "APPLY_DOMAIN_LEN",
+    "APPLY_LEASE_LEN",
+    "APPLY_OWNER_LEN",
+    "APPLY_SHORT_LEN",
+    "APPLY_STAGE_LEN",
+    "APPLY_TITLE_LEN",
     "BAND_LEN",
     "CARD_ROLE_TITLE_LEN",
     "CARD_SLUG_LEN",
@@ -960,6 +1132,10 @@ __all__ = [
     "ROLE_ID_LEN",
     "USER_AGENT_LEN",
     "WEEKLY_TOKEN_LEN",
+    "ApplicationEventRow",
+    "ApplicationRow",
+    "ApplyProfileRow",
+    "AtsPlaybookRow",
     "AuthSessionRow",
     "Base",
     "CardSnapshotRow",
@@ -990,6 +1166,7 @@ __all__ = [
     "ProfileFactsRow",
     "ProfileRow",
     "RateLimitHitRow",
+    "RunMetricRow",
     "SpendDailyRow",
     "UserFactRow",
     "UserRow",

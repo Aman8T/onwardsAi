@@ -703,6 +703,7 @@ _SECRET_FIELDS = (
     "razorpay_webhook_secret",
     "stripe_secret_key",
     "stripe_webhook_secret",
+    "gemini_api_key",
 )
 
 
@@ -846,6 +847,106 @@ class WeeklySettings(BaseModel):
         return v
 
 
+AUTO_APPLY_MANUAL_ONLY_DOMAINS: Final = (
+    "linkedin.com",
+    "lnkd.in",
+    "naukri.com",
+    "indeed.com",
+    "glassdoor.com",
+    "glassdoor.co.in",
+    "foundit.in",
+    "monster.com",
+    "shine.com",
+    "timesjobs.com",
+    "instahyre.com",
+    "iimjobs.com",
+    "hirist.tech",
+    "wellfound.com",
+    "angel.co",
+    "ziprecruiter.com",
+    "internshala.com",
+)
+"""Sites whose terms forbid automated use (or that sit behind a login): auto-apply never opens them and offers the link for a
+manual application instead. The posting match's own list (`api.matching.BOARDS_THAT_FORBID_READING`) is a subset."""
+
+
+class ApplySettings(BaseModel):
+    """Auto-apply (match -> apply -> track -> learn): ``TAYYARI_APPLY__*``. The feature itself is switched by
+    ``AUTO_APPLY_ENABLED`` (`Settings.auto_apply_enabled`, off by default). The keys are third-party names (`GEMINI_API_KEY`,
+    `ANTHROPIC_API_KEY`). Nothing here is a secret."""
+
+    max_per_day: int = Field(default=25, ge=0)
+    """Applications one person (an account, or an anonymous browser) may start per UTC day (0 = no limit)."""
+    max_per_domain_per_hour: int = Field(default=6, ge=0)
+    """Engine runs (fill or submit) against one site per hour, across everyone (0 = no limit). A run over the limit waits."""
+    domain_gap_seconds: float = Field(default=20.0, ge=0)
+    """The worker leaves at least this long between two runs against the same site."""
+    manual_only_domains: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: list(AUTO_APPLY_MANUAL_ONLY_DOMAINS)
+    )
+    """Sites that are never automated (a comma-separated list or a JSON list; subdomains included). The application is
+    tracked with the link for a manual application."""
+    agent_order: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["gemini", "claude"])
+    """The AI fallback adapters, tried in this order among those with a key (``gemini``, ``claude``)."""
+    agent_max_steps: int = Field(default=40, ge=1, le=200)
+    """Model turns an AI fallback run may take before it gives up."""
+    gemini_model: str = "gemini-2.5-computer-use-preview-10-2025"
+    """The Gemini Computer Use model (the preview model id as of 2025-10; check Google's docs for a newer one)."""
+    gemini_endpoint: str = "https://generativelanguage.googleapis.com/v1beta"
+    claude_agent_model: str = "claude-sonnet-5-5"
+    """The Claude model behind the computer-use adapter (``computer_toolset_20260801``; Haiku 5.5 supports it too)."""
+    answer_model: str | None = None
+    """The model that maps form fields to the person's details and drafts answers to screening questions (default: the
+    reader model, Haiku). Its answers cite the person's facts and are checked in code."""
+    email_model: str | None = None
+    """The model that classifies an employer's email into a stage (default: the reader model)."""
+    est_run_usd: float = Field(default=0.05, ge=0)
+    """The spend reserved before an AI fallback run (settled to the real cost afterwards)."""
+    worker_poll_seconds: float = Field(default=3.0, ge=0.1)
+    worker_lease_seconds: int = Field(default=600, ge=30)
+    """How long a claimed application stays with one worker before another may pick it up."""
+    headless: bool = True
+    chromium_path: str | None = None
+    """A Chromium executable for the worker (default: Playwright's own browser)."""
+    viewport_width: int = Field(default=1280, ge=640, le=2560)
+    viewport_height: int = Field(default=800, ge=480, le=1600)
+    navigation_timeout_s: float = Field(default=30.0, ge=1)
+    draft_promote_after: int = Field(default=3, ge=1)
+    """A recorded draft playbook becomes active after this many successful fills (each still reviewed by its person)."""
+    screenshot_days: int = Field(default=30, ge=1)
+    """Review screenshots are deleted this long after the application was last touched."""
+    admin_emails: str = Field(default="", repr=False, exclude=True)
+    """Accounts that may open the metrics (``GET /api/apply/metrics``); comma-separated. Locally the metrics are open."""
+
+    @field_validator("manual_only_domains", "agent_order", mode="before")
+    @classmethod
+    def _as_list(cls, v: object) -> object:
+        """Comma- or whitespace-separated text (or a JSON list) becomes a list of trimmed, lower-cased entries."""
+        if v is None:
+            return []
+        if isinstance(v, str):
+            text = v.strip()
+            if text.startswith("["):
+                try:
+                    loaded = json.loads(text)
+                except ValueError:
+                    loaded = None
+                v = loaded if isinstance(loaded, list) else text.strip("[]").replace('"', " ")
+            if isinstance(v, str):
+                v = re.split(r"[,;\s]+", v)
+        if isinstance(v, list | tuple | set | frozenset):
+            cleaned = (str(item).strip().strip("\"'").strip().lower() for item in v)
+            return list(dict.fromkeys(item for item in cleaned if item))
+        return v
+
+    @property
+    def admin_email_list(self) -> tuple[str, ...]:
+        return parse_email_list(self.admin_emails)
+
+    def is_admin(self, email: str | None) -> bool:
+        return email is not None and email.strip().lower() in self.admin_email_list
+
+
 class Settings(BaseSettings):
     """All configuration, typed. See the module docstring for where values come from."""
 
@@ -938,6 +1039,14 @@ class Settings(BaseSettings):
     handoff: HandoffSettings = Field(default_factory=HandoffSettings)
     weekly: WeeklySettings = Field(default_factory=WeeklySettings)
     card: CardSettings = Field(default_factory=CardSettings)
+    apply: ApplySettings = Field(default_factory=ApplySettings)
+
+    auto_apply_enabled: bool = Field(
+        default=False, validation_alias=AliasChoices("AUTO_APPLY_ENABLED", "auto_apply_enabled")
+    )
+    """Auto-apply (``/api/apply/*``, the tracker page and the apply worker). Off by default; nothing of it runs while off."""
+    gemini_api_key: SecretStr | None = Field(default=None, validation_alias=AliasChoices("GEMINI_API_KEY"))
+    """Google's Gemini API (the Computer Use model behind auto-apply's AI fallback). Unset: that adapter is off."""
 
     synth_hints: bool = False
     """Feed the first-read results to the synthesizer as hints (off: they are stored for comparison only)."""
@@ -1025,6 +1134,8 @@ class Settings(BaseSettings):
             "razorpay": self.razorpay_enabled,
             "razorpay_webhooks": self.razorpay_webhooks_enabled,
             "stripe": self.stripe_enabled,
+            "auto_apply": self.auto_apply_enabled,
+            "gemini_key": self.gemini_api_key is not None,
             "database": self.db.safe_url,
             "storage": "ephemeral" if self.db.ephemeral else self.db.kind,
             "daily_ceiling_usd": self.guard.daily_ceiling_usd if self.guard.enabled else None,
@@ -1040,6 +1151,8 @@ def get_settings() -> Settings:
 
 
 __all__ = [
+    "AUTO_APPLY_MANUAL_ONLY_DOMAINS",
+    "ApplySettings",
     "AuthSettings",
     "BillingSettings",
     "CacheTtl",
