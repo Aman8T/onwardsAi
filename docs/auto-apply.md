@@ -43,7 +43,7 @@ Money is in rupees, with USD in brackets, at ₹94.48 per USD (2026-11-05).
 
 ## 2. What the person sees
 
-The screens follow `design.md` and are designed on a canvas before any frontend code (project rule). Five states:
+The screens follow `design.md` and are designed on a canvas before any frontend code (project rule). Canvas (2026-11-06, seven screens with sample data: Apply for me, Your details, Filling, Review, Needs you and outcomes, Applications, Ready for you on a phone): https://claude.ai/artifact/CsN9PPninRZ3Z1j5vx6Nh5. Five states:
 
 | Screen | What it shows | Actions |
 |---|---|---|
