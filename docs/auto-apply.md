@@ -30,7 +30,10 @@ Money is in rupees, with USD in brackets, at ₹94.48 per USD (2026-11-05).
    and the guard blocks challenge providers. A challenge or login wall becomes `needs_you` with a hand-off link.
 7. **Answers cite facts.** Custom questions are answered from the person's cited facts (rule 1 of `CLAUDE.md`), at high
    confidence only. Eligibility, salary, notice period, demographic and consent questions are never drafted; they come
-   from saved details or are asked.
+   from saved details or are asked. Work authorisation and sponsorship are stored **per country**: a question about a
+   country with no saved answer goes to Needs you and is never inferred (Tsenta answered "eligible to work in the
+   United States: Yes" from an India-only authorisation; `docs/research/tsenta-teardown.md` §4). Voluntary self-ID
+   answers default to "Decline to answer" unless the person has switched on "use on forms".
 8. **Spend is reserved before every model or browser call** through `guard.SpendGuard`, and recorded in `llm_calls`.
    The old branch's AI fallback skipped this; it is a must-fix.
 9. **Signed-in only.** No anonymous auto-apply, even while anonymous matching is on.
@@ -49,6 +52,17 @@ The screens follow `design.md` and are designed on a canvas before any frontend 
 
 What changes from `feat/auto-apply`'s `/apply` screen: it no longer starts from a pasted link alone, and it gains
 the separate resume line, "Check this one" and the refund mark.
+
+From the Tsenta teardown (`docs/research/tsenta-teardown.md` §5):
+- **Review is data, not a browser.** Fields are grouped the way the ATS groups them, with a count per group. Choice
+  fields show the chosen option among the others. Tabs are Form, Resume, Cover and Job, with Prev and Next across
+  applications (arrow keys work). Each value carries its source, which Tsenta's view does not.
+- **Status tabs carry reasons and a one-tap fix.** "Screening questions required" opens exactly those questions, and
+  answering them requeues the application.
+- **Emails are attached to their application** in a side rail, labelled by kind (received, interview, rejection,
+  offer).
+- **The lean answer to Tsenta's Auto Apply lanes is a daily "Ready for you" stack.** Fills are prepared for new roles
+  that pass the gates, and the person approves them one by one in a stack (swipe or keys), each with its own digest.
 
 ## 3. How a run works
 
@@ -144,3 +158,7 @@ Recruitee, iCIMS).
 3. **Spend for the live test.** A Browser Use top-up (from $5, about ₹472) for the 20 to 30 posting fill-only run.
 4. **Where the worker runs.** FastAPI Cloud may run it beside the app now that it needs no local browser; otherwise a
    small separate host. To be confirmed in A1.2.
+5. **Which email goes on applications, and how replies are tracked.** Tsenta puts its own hosted mailbox on every
+   form, which powers its tracker and OTP capture but locks the person in. Proposed: the person's own email on every
+   form; tracking through a per-person forwarding address (one Gmail or Outlook filter) or pasted emails, and Gmail
+   read access (`gmail.readonly`, its own consent) later.
