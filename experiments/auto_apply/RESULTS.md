@@ -1,6 +1,6 @@
 # Auto-apply experiment: results
 
-Branch `exp/auto-apply-test`, run 2026-11-05 to 06. 45 runs on 8 real public postings, **zero applications submitted**.
+Branch `exp/auto-apply-test`, run 2026-11-05 to 06. 53 runs on 8 real public postings, **zero applications submitted**.
 All money is shown in USD and INR at **₹94.48 per USD** (ECB reference rate via api.frankfurter.app, 2026-11-05;
 open.er-api.com gave ₹94.62). Browser Use and Anthropic bill in USD; paying from India by card can add a forex markup
 (often 2 to 3.5%) and 18% GST where the provider charges it, so the rupee cost actually paid can be up to about 22% higher
@@ -13,12 +13,14 @@ than the figures below. That multiplier is an assumption, not measured.
 | A: Browser Use agent, `bu-ultrafast` | 1/8 | 50/66 | 0/7 | 50 s | $0.0077 (**₹0.72**) |
 | A: Browser Use agent, `bu-fast` | 4/8 | 62/66 | 3/7 | 223 s | $0.0265 (**₹2.50**) |
 | B: Claude Sonnet 5.5 + BU browser (final harness, v2) | **6/8** | **57/58** | **6/6** | 84 s | $0.0169 (**₹1.60**): ₹0.08 Browser Use + ₹1.52 Anthropic |
+| B: Claude **Haiku 5.5** + BU browser (same harness) | 4/8 | 50/52 | 6/6 | 90 s | $0.0027 (**₹0.25**): ₹0.10 Browser Use + ₹0.16 Anthropic |
 | C: replay of a B trace, no LLM | 5/6 | 42/42 | 5/5 | 61 s | $0.0007 (**₹0.06**) |
 
 - **B beat A on quality and on cost.** It succeeded on 6 of 8 forms versus 4 of 8 for A's better preset, attached the resume every time, and was 36% cheaper than `bu-fast` and 2.7x faster.
+- **Haiku 5.5 instead of Sonnet in Arm B costs 6.4x less (₹0.25 vs ₹1.60 per application)** and got 4/8 full successes vs 6/8. Both of the forms it lost trace to page-timing and dropdown handling in our harness (a button "not found", a dropdown value that did not stick), not to wrong answers. So: Haiku first, Sonnet only when Haiku fails (section 8).
 - **C shows where the cost goes once playbooks exist: about ₹0.06 per application,** roughly 25x cheaper than B. It replayed 5 of 6 recorded forms perfectly; the one failure was a custom site whose "open the form" click did not reproduce.
 - **The sample is tiny** (one run per job per setup, 8 jobs). It is enough to see big gaps (resume upload, token use, dropdown handling), not enough for precise rates. See section 8.
-- Total spend: Browser Use **$0.3306 (₹31.23)**, Anthropic **$0.2791 (₹26.37)**, together **$0.61 (₹57.60)**. $0.47 (₹44) of Browser Use credit is left.
+- Total spend: Browser Use **$0.3395 (₹32.08)**, Anthropic **$0.2924 (₹27.63)**, together **$0.63 (₹59.71)**. $0.46 (₹43) of Browser Use credit is left.
 
 ## 1. Env findings
 
@@ -77,6 +79,7 @@ the DOM showed it empty.
 |---|---|---|---|---|---|---|---|---|
 | A: Browser Use agent (bu-fast) | 8 | 4/8 | 62/66 | 3/7 | 223 s | $0.0265 (₹2.50) | $0.0000 (₹0.00) | **$0.0265 (₹2.50)** |
 | A: Browser Use agent (bu-ultrafast) | 8 | 1/8 | 50/66 | 0/7 | 50 s | $0.0077 (₹0.72) | $0.0000 (₹0.00) | **$0.0077 (₹0.72)** |
+| B: Claude Haiku 5.5 + BU browser (v2) | 8 | 4/8 | 50/52 | 6/6 | 90 s | $0.0010 (₹0.10) | $0.0017 (₹0.16) | **$0.0027 (₹0.25)** |
 | B: Claude Sonnet 5.5 + BU browser (v1, first batch) | 8 | 2/8 | 33/35 | 4/4 | 93 s | $0.0008 (₹0.07) | $0.0138 (₹1.30) | **$0.0145 (₹1.37)** |
 | B: Claude Sonnet 5.5 + BU browser (v2, final) | 8 | 6/8 | 57/58 | 6/6 | 84 s | $0.0009 (₹0.08) | $0.0160 (₹1.52) | **$0.0169 (₹1.60)** |
 | C: replay, no LLM | 6 | 5/6 | 42/42 | 5/5 | 61 s | $0.0007 (₹0.06) | $0.0000 (₹0.00) | **$0.0007 (₹0.06)** |
@@ -86,16 +89,16 @@ because 4 of its 8 forms never rendered for it (Ashby under the strict guard, an
 
 ### Per job, final setups
 
-| Job | A `bu-ultrafast` | A `bu-fast` | B v2 | C replay |
-|---|---|---|---|---|
-| gh-gitlab | 4/9, no resume | **success** | **success** | **success** |
-| gh-cloudflare | 7/11, no resume | 10/11, no resume | **success** | **success** |
-| lv-spotify | 5/5, no resume | 5/5, no resume | **success** | **success** |
-| lv-palantir | 10/10, no resume | 10/10, no resume | 9/10 (location typeahead) | not run |
-| ab-linear | 9/10, no resume | **success** | **success** | **success** |
-| ab-ramp | 6/7, no resume | **success** | **success** | **success** |
-| cu-workable-huggingface | 3/8, no resume | 5/8, no resume | no form found | not run |
-| cu-recruitee-bunq | **success** (no resume field) | **success** | **success** | form did not open |
+| Job | A `bu-ultrafast` | A `bu-fast` | B v2 Sonnet | B v2 Haiku | C replay |
+|---|---|---|---|---|---|
+| gh-gitlab | 4/9, no resume | **success** | **success** | **success** | **success** |
+| gh-cloudflare | 7/11, no resume | 10/11, no resume | **success** | 10/11 (relocation dropdown did not stick) | **success** |
+| lv-spotify | 5/5, no resume | 5/5, no resume | **success** | **success** | **success** |
+| lv-palantir | 10/10, no resume | 10/10, no resume | 9/10 (location typeahead) | 9/10 (location typeahead) | not run |
+| ab-linear | 9/10, no resume | **success** | **success** | **success** | **success** |
+| ab-ramp | 6/7, no resume | **success** | **success** | **success** | **success** |
+| cu-workable-huggingface | 3/8, no resume | 5/8, no resume | no form found | no form found | not run |
+| cu-recruitee-bunq | **success** (no resume field) | **success** | **success** | form did not open ("Apply now" not found in time) | form did not open |
 
 ### Speed, steps and tokens
 
@@ -129,8 +132,27 @@ B's actions are **recorded as selectors and values**, which is what makes replay
 JavaScript against element indices from its own page snapshots, which cannot be replayed directly. So the setup to build
 is "our code + cloud browser + a model only when needed", not "a hosted agent per application".
 
-Not tested, and worth testing next: **Arm B with Haiku 5.5** ($0.10 / $0.50 per 1M tokens, 20x cheaper than Sonnet)
-would bring B's model cost from about ₹1.52 to about ₹0.08 if quality holds.
+**Tested afterwards: Arm B with Haiku 5.5** ($0.10 / $0.50 per 1M tokens, 20x cheaper than Sonnet), same harness, same
+8 jobs:
+
+| | Sonnet 5.5 | Haiku 5.5 |
+|---|---|---|
+| Full success | 6/8 | 4/8 |
+| Required fields filled | 57/58 | 50/52 |
+| Resume attached | 6/6 | 6/6 |
+| Claude calls per application | 1 to 4 (median 2) | 1 to 4 (median 2) |
+| Anthropic cost per application | $0.0160 (₹1.52) | $0.0017 (₹0.16), 9x less |
+| **Total per application** | **$0.0169 (₹1.60)** | **$0.0027 (₹0.25)**, 6.4x less |
+
+Haiku's model cost fell 9x rather than 20x because it needed more rounds on hard forms (4 calls on Cloudflare and
+Palantir). The two forms it lost against Sonnet were not wrong answers:
+- **bunq:** Haiku asked for the right click ("Apply now"), but the button was not found in time. It is the same page-timing problem that broke bunq's replay.
+- **Cloudflare:** Haiku chose the same "Yes" as Sonnet for the relocation dropdown, four times, and the value did not stick. It also wasted actions on the "resume attached" chip, which is not a real field.
+
+Both are harness fixes (wait for the button; verify and retry dropdown picks; hide synthetic fields from the model). With
+one run per job, 4/8 vs 6/8 is within noise. The cost-effective setup is **Haiku first, Sonnet only when Haiku leaves a
+required field empty**. At Haiku's measured 50% fallback rate, that costs about $0.0112 (₹1.06) for a form with no
+playbook, and much less as playbooks take over (PLAN.md).
 
 ## 9. Limits of this data (read before concluding anything)
 
@@ -152,14 +174,13 @@ would bring B's model cost from about ₹1.52 to about ₹0.08 if quality holds.
 
 ## 11. Spend
 
-- Browser Use, from the real credit balance (includes guard checks and inspections): **$0.3306 (₹31.23)** of the $0.80 stop line (₹75.58).
-- Anthropic (Sonnet 5.5, summed from API usage per call): **$0.2791 (₹26.37)** of the $2 cap (₹188.96).
-- Total: **$0.6097 (₹57.60)**. With a possible 3.5% forex markup and 18% GST: up to about ₹70. Running ledger: `spend.json`.
+- Browser Use, from the real credit balance (includes guard checks and inspections): **$0.3395 (₹32.08)** of the $0.80 stop line (₹75.58).
+- Anthropic (Sonnet 5.5 and Haiku 5.5, summed from API usage per call): **$0.2924 (₹27.63)** of the $2 cap (₹188.96). The 8 Haiku runs cost $0.0133 (₹1.26) of that.
+- Total: **$0.6319 (₹59.71)**. With a possible 3.5% forex markup and 18% GST: up to about ₹73. Running ledger: `spend.json`.
 
 ## 12. Every run
 
 Generated by `uv run python summarize.py`. Paths are relative to `experiments/auto_apply/`.
-
 | # | Setup | Job | ATS | Success | Required | Wrong | Resume | Steps | Time | Browser Use | Anthropic | Total (₹) | Failure / note | Screenshot |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | B: Claude Sonnet 5.5 + BU browser (v1) | gh-gitlab | greenhouse | no | 4/13 | 1 | None | 8 | 213 s | $0.0015 | $0.0304 | ₹3.01 | 15 action errors | `runs/20261105T175315-B-gh-gitlab/screenshot.jpg` |
@@ -207,3 +228,11 @@ Generated by `uv run python summarize.py`. Paths are relative to `experiments/au
 | 43 | C: replay, no LLM | ab-ramp | ashby | yes | 7/7 | 0 | True | 7 | 36 s | $0.0007 | $0.0000 | ₹0.07 |  | `runs/20261105T192538-C-ab-ramp/screenshot.jpg` |
 | 44 | C: replay, no LLM | cu-recruitee-bunq | custom | no | 0/0 | 0 | None | - | 5 s | $0.0000 | $0.0000 | ₹0.00 | crashed: ConnectError: [WinError 10054] An existing connection was for | none |
 | 45 | C: replay, no LLM | cu-recruitee-bunq | custom | no | 0/0 | 0 | None | 10 | 65 s | $0.0005 | $0.0000 | ₹0.05 | 10 action errors | `runs/20261105T192639-C-cu-recruitee-bunq/screenshot.jpg` |
+| 46 | B: Claude Haiku 5.5 + BU browser (v2) | gh-gitlab | greenhouse | yes | 9/9 | 0 | True | 12 | 112 s | $0.0008 | $0.0008 | ₹0.15 |  | `runs/20261106T044547-B-gh-gitlab/screenshot.jpg` |
+| 47 | B: Claude Haiku 5.5 + BU browser (v2) | gh-cloudflare | greenhouse | no | 10/11 | 0 | True | 45 | 283 s | $0.0019 | $0.0028 | ₹0.45 | 3 action errors | `runs/20261106T044753-B-gh-cloudflare/screenshot.jpg` |
+| 48 | B: Claude Haiku 5.5 + BU browser (v2) | lv-spotify | lever | yes | 5/5 | 0 | True | 24 | 96 s | $0.0010 | $0.0020 | ₹0.28 |  | `runs/20261106T045236-B-lv-spotify/screenshot.jpg` |
+| 49 | B: Claude Haiku 5.5 + BU browser (v2) | lv-palantir | lever | no | 9/10 | 0 | True | 62 | 232 s | $0.0018 | $0.0043 | ₹0.58 | 6 action errors | `runs/20261106T045413-B-lv-palantir/screenshot.jpg` |
+| 50 | B: Claude Haiku 5.5 + BU browser (v2) | ab-linear | ashby | yes | 10/10 | 0 | True | 19 | 67 s | $0.0003 | $0.0016 | ₹0.18 |  | `runs/20261106T045807-B-ab-linear/screenshot.jpg` |
+| 51 | B: Claude Haiku 5.5 + BU browser (v2) | ab-ramp | ashby | yes | 7/7 | 0 | True | 7 | 40 s | $0.0006 | $0.0006 | ₹0.11 |  | `runs/20261106T045915-B-ab-ramp/screenshot.jpg` |
+| 52 | B: Claude Haiku 5.5 + BU browser (v2) | cu-workable-huggingface | custom | no | 0/0 | 0 | None | 6 | 85 s | $0.0009 | $0.0010 | ₹0.19 | no_form | `runs/20261106T045956-B-cu-workable-huggingface/screenshot.jpg` |
+| 53 | B: Claude Haiku 5.5 + BU browser (v2) | cu-recruitee-bunq | custom | no | 0/0 | 0 | None | 1 | 65 s | $0.0008 | $0.0002 | ₹0.10 |  | `runs/20261106T050122-B-cu-recruitee-bunq/screenshot.jpg` |

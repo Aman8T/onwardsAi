@@ -21,7 +21,8 @@ def setup_of(r: dict[str, Any]) -> str:
     if r["arm"] == "A":
         return f"A: Browser Use agent ({r.get('model', 'bu-ultrafast')})"
     if r["arm"] == "B":
-        return f"B: Claude Sonnet 5.5 + BU browser ({r.get('version', 'v1')})"
+        name = {"claude-sonnet-5-5": "Claude Sonnet 5.5", "claude-haiku-5-5": "Claude Haiku 5.5"}.get(r.get("model", ""), r.get("model", "Claude"))
+        return f"B: {name} + BU browser ({r.get('version', 'v1')})"
     return "C: replay, no LLM"
 
 
@@ -86,7 +87,7 @@ def totals() -> str:
     an = led["anthropic_usd"]
     return (f"- Browser Use, from the real credit balance (includes guard checks and inspections): **${real:.4f} ({inr(real)})** "
             f"of the $0.80 stop line ({inr(0.80)}).\n"
-            f"- Anthropic (Sonnet 5.5, summed from API usage): **${an:.4f} ({inr(an)})** of the $2 cap ({inr(2.0)}).\n"
+            f"- Anthropic (Sonnet 5.5 and Haiku 5.5, summed from API usage): **${an:.4f} ({inr(an)})** of the $2 cap ({inr(2.0)}).\n"
             f"- Total: **${real + an:.4f} ({inr(real + an)})**. Exchange rate: ₹{INR_PER_USD} per USD.")
 
 

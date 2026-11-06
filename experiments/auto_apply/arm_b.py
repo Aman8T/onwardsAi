@@ -90,14 +90,15 @@ def compact(fields: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def ask_claude(cl: anthropic.Anthropic, job: dict[str, Any], fields: list[dict[str, Any]], feedback: str,
-               usage_log: list[dict[str, Any]], buttons: list[str] | None = None) -> dict[str, Any]:  # fmt: skip
+               usage_log: list[dict[str, Any]], buttons: list[str] | None = None,
+               model: str = spend.SONNET_MODEL) -> dict[str, Any]:  # fmt: skip
     if spend.anthropic_remaining() < 0.10:
         raise spend.BudgetExceeded("Anthropic cap nearly reached")
     user = {"job": {"company": job["company"], "title": job["title"]}, "applicant": PROFILE,
             "form_fields": compact(fields), "buttons": buttons or [], "feedback_from_last_round": feedback}  # fmt: skip
     started = time.monotonic()
     resp = cl.messages.create(
-        model=spend.SONNET_MODEL, max_tokens=8000, system=SYSTEM,
+        model=model, max_tokens=8000, system=SYSTEM,
         messages=[{"role": "user", "content": json.dumps(user, ensure_ascii=False)}],
         extra_body={"output_config": {"format": {"type": "json_schema", "schema": SCHEMA}, "effort": "low"}},
     )  # fmt: skip
@@ -105,7 +106,7 @@ def ask_claude(cl: anthropic.Anthropic, job: dict[str, Any], fields: list[dict[s
     usage_log.append({"input_tokens": u.input_tokens, "output_tokens": u.output_tokens,
                       "cache_read": getattr(u, "cache_read_input_tokens", 0) or 0,
                       "cache_write": getattr(u, "cache_creation_input_tokens", 0) or 0,
-                      "usd": round(spend.sonnet_cost(u), 6), "seconds": round(time.monotonic() - started, 1),
+                      "usd": round(spend.model_cost(u, model), 6), "seconds": round(time.monotonic() - started, 1),
                       "stop_reason": resp.stop_reason})  # fmt: skip
     text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text")
     return json.loads(text)
@@ -214,7 +215,7 @@ def wait_for_form(page: Any, seconds: float = 15) -> dict[str, Any]:
     return scan
 
 
-def run(job: dict[str, Any], run_dir: Path) -> dict[str, Any]:
+def run(job: dict[str, Any], run_dir: Path, model: str = spend.SONNET_MODEL) -> dict[str, Any]:
     resume = build_resume().read_bytes()
     c = bu.client()
     ext_id = bu.ensure_guard_extension(c)
@@ -223,7 +224,7 @@ def run(job: dict[str, Any], run_dir: Path) -> dict[str, Any]:
     trace: list[dict[str, Any]] = []
     errors: list[str] = []
     blocked_requests: list[dict[str, str]] = []
-    result: dict[str, Any] = {"arm": "B", "model": spend.SONNET_MODEL}
+    result: dict[str, Any] = {"arm": "B", "model": model}
     started = time.monotonic()
     browser_id = None
     failure = None
@@ -244,7 +245,7 @@ def run(job: dict[str, Any], run_dir: Path) -> dict[str, Any]:
                         failure = "deadline"
                         break
                     buttons = page.evaluate(BUTTONS_JS)
-                    plan = ask_claude(cl, job, scan["fields"], feedback, usage, buttons)
+                    plan = ask_claude(cl, job, scan["fields"], feedback, usage, buttons, model)
                     if plan.get("blocked"):
                         failure = plan["blocked"]
                         break

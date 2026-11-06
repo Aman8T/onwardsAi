@@ -1,6 +1,6 @@
 {
-  "browser_use_usd": 0.322626,
-  "anthropic_usd": 0.279104,
+  "browser_use_usd": 0.330861,
+  "anthropic_usd": 0.292434,
   "caps": {
     "browser_use_stop_usd": 0.8,
     "anthropic_cap_usd": 2.0
@@ -457,6 +457,78 @@
       "browser_use_usd": 0.000511,
       "anthropic_usd": 0,
       "bu_spent_real_balance": 0.33059
+    },
+    {
+      "at": "2026-11-06T04:47:39+00:00",
+      "kind": "arm_B",
+      "label": "gh-gitlab",
+      "run_dir": "runs\\20261106T044547-B-gh-gitlab",
+      "browser_use_usd": 0.000809,
+      "anthropic_usd": 0.000762,
+      "bu_spent_real_balance": 0.332076
+    },
+    {
+      "at": "2026-11-06T04:52:35+00:00",
+      "kind": "arm_B",
+      "label": "gh-cloudflare",
+      "run_dir": "runs\\20261106T044753-B-gh-cloudflare",
+      "browser_use_usd": 0.0019,
+      "anthropic_usd": 0.002817,
+      "bu_spent_real_balance": 0.333975
+    },
+    {
+      "at": "2026-11-06T04:54:12+00:00",
+      "kind": "arm_B",
+      "label": "lv-spotify",
+      "run_dir": "runs\\20261106T045236-B-lv-spotify",
+      "browser_use_usd": 0.000971,
+      "anthropic_usd": 0.002001,
+      "bu_spent_real_balance": 0.334946
+    },
+    {
+      "at": "2026-11-06T04:58:05+00:00",
+      "kind": "arm_B",
+      "label": "lv-palantir",
+      "run_dir": "runs\\20261106T045413-B-lv-palantir",
+      "browser_use_usd": 0.001819,
+      "anthropic_usd": 0.004344,
+      "bu_spent_real_balance": 0.336765
+    },
+    {
+      "at": "2026-11-06T04:59:13+00:00",
+      "kind": "arm_B",
+      "label": "ab-linear",
+      "run_dir": "runs\\20261106T045807-B-ab-linear",
+      "browser_use_usd": 0.000335,
+      "anthropic_usd": 0.001611,
+      "bu_spent_real_balance": 0.3371
+    },
+    {
+      "at": "2026-11-06T04:59:55+00:00",
+      "kind": "arm_B",
+      "label": "ab-ramp",
+      "run_dir": "runs\\20261106T045915-B-ab-ramp",
+      "browser_use_usd": 0.000627,
+      "anthropic_usd": 0.00059,
+      "bu_spent_real_balance": 0.337727
+    },
+    {
+      "at": "2026-11-06T05:01:21+00:00",
+      "kind": "arm_B",
+      "label": "cu-workable-huggingface",
+      "run_dir": "runs\\20261106T045956-B-cu-workable-huggingface",
+      "browser_use_usd": 0.000948,
+      "anthropic_usd": 0.001019,
+      "bu_spent_real_balance": 0.338674
+    },
+    {
+      "at": "2026-11-06T05:02:28+00:00",
+      "kind": "arm_B",
+      "label": "cu-recruitee-bunq",
+      "run_dir": "runs\\20261106T050122-B-cu-recruitee-bunq",
+      "browser_use_usd": 0.000826,
+      "anthropic_usd": 0.000186,
+      "bu_spent_real_balance": 0.3395
     }
   ]
 }

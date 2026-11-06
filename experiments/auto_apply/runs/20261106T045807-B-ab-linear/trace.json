@@ -1,0 +1,192 @@
+[
+  {
+    "op": "fill",
+    "label": "Name",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"_systemfield_name\"]",
+    "name": "_systemfield_name",
+    "value": "Jordan Testcase",
+    "source": "applicant.full_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email",
+    "type": "email",
+    "frame": 0,
+    "selector": "[id=\"_systemfield_email\"]",
+    "name": "_systemfield_email",
+    "value": "jordan.testcase@example.com",
+    "source": "applicant.email"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Resume",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"_systemfield_resume\"]",
+    "name": null,
+    "value": "",
+    "source": "applicant resume"
+  },
+  {
+    "op": "fill",
+    "label": "Cover letter",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "[id=\"1ed7df4b-e6d4-484e-92c3-4a5f5e07fd0c\"]",
+    "name": "1ed7df4b-e6d4-484e-92c3-4a5f5e07fd0c",
+    "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted.",
+    "source": "applicant.cover_letter"
+  },
+  {
+    "op": "fill",
+    "label": "What country are you based in?",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"b617d074-3a16-46ec-bb02-550e30cb0e50\"]",
+    "name": "b617d074-3a16-46ec-bb02-550e30cb0e50",
+    "value": "India",
+    "source": "applicant.country"
+  },
+  {
+    "op": "fill",
+    "label": "Notice Period",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"ce587bdf-31fa-4768-9e92-7741b7ad2317\"]",
+    "name": "ce587bdf-31fa-4768-9e92-7741b7ad2317",
+    "value": "30 days",
+    "source": "applicant.notice_period"
+  },
+  {
+    "op": "fill",
+    "label": "What would you want to work on? Tell us about the features you would want to implement in your first month.",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "[id=\"7d3da580-9e6d-494f-a63b-0a889e0a157a\"]",
+    "name": "7d3da580-9e6d-494f-a63b-0a889e0a157a",
+    "value": "I would start by improving CI pipeline reliability and build speed, since I owned a CI pipeline at Example Labs. I would also look at small reliability and tooling features for the team's Python and TypeScript services.",
+    "source": "applicant.work_history"
+  },
+  {
+    "op": "fill",
+    "label": "Tell us of a time you had to put your PM hat on to solve a complex product problem.",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "[id=\"e8a6b6ee-0550-4c69-85ab-05bd9b26c702\"]",
+    "name": "e8a6b6ee-0550-4c69-85ab-05bd9b26c702",
+    "value": "At Example Labs I owned the CI pipeline for an internal analytics product, and I had to balance the team's need for fast feedback against test reliability. I worked through the trade-offs with the people who used the pipeline daily.",
+    "source": "applicant.work_history"
+  },
+  {
+    "op": "fill",
+    "label": "What are you extremely good at? What could you teach the team?",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "[id=\"c4b19ee4-d084-47fa-89df-ca00e63a7721\"]",
+    "name": "c4b19ee4-d084-47fa-89df-ca00e63a7721",
+    "value": "I am good at building and maintaining Python and TypeScript services and at keeping CI pipelines reliable. I could teach the team practical test-suite habits, based on writing and maintaining a Django test suite.",
+    "source": "applicant.work_history"
+  },
+  {
+    "op": "fill",
+    "label": "Name",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"_systemfield_name\"]",
+    "name": "_systemfield_name",
+    "value": "Jordan Testcase",
+    "source": "applicant.full_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email",
+    "type": "email",
+    "frame": 0,
+    "selector": "[id=\"_systemfield_email\"]",
+    "name": "_systemfield_email",
+    "value": "jordan.testcase@example.com",
+    "source": "applicant.email"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Resume",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"_systemfield_resume\"]",
+    "name": null,
+    "value": "",
+    "source": "resume file Jordan_Testcase_TEST_RESUME.pdf"
+  },
+  {
+    "op": "fill",
+    "label": "Cover letter",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "[id=\"1ed7df4b-e6d4-484e-92c3-4a5f5e07fd0c\"]",
+    "name": "1ed7df4b-e6d4-484e-92c3-4a5f5e07fd0c",
+    "value": "This is a test application from a fictional profile used to check form filling. It must not be submitted.",
+    "source": "applicant.cover_letter"
+  },
+  {
+    "op": "fill",
+    "label": "Github",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"1c843a13-4fe3-43df-afcf-37a69d88591b\"]",
+    "name": "1c843a13-4fe3-43df-afcf-37a69d88591b",
+    "value": "Not provided",
+    "source": "applicant.github is empty; no GitHub profile given in details"
+  },
+  {
+    "op": "fill",
+    "label": "What country are you based in?",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"b617d074-3a16-46ec-bb02-550e30cb0e50\"]",
+    "name": "b617d074-3a16-46ec-bb02-550e30cb0e50",
+    "value": "India",
+    "source": "applicant.country"
+  },
+  {
+    "op": "fill",
+    "label": "Notice Period",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"ce587bdf-31fa-4768-9e92-7741b7ad2317\"]",
+    "name": "ce587bdf-31fa-4768-9e92-7741b7ad2317",
+    "value": "30 days",
+    "source": "applicant.notice_period"
+  },
+  {
+    "op": "fill",
+    "label": "What would you want to work on? Tell us about the features you would want to implement in your first month.",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "[id=\"7d3da580-9e6d-494f-a63b-0a889e0a157a\"]",
+    "name": "7d3da580-9e6d-494f-a63b-0a889e0a157a",
+    "value": "I would start by improving CI pipeline reliability and build speed, since I owned the CI pipeline at Example Labs. After that I would look at test suite speed and developer feedback loops for the Python and TypeScript services.",
+    "source": "applicant.work_history and applicant.current_title"
+  },
+  {
+    "op": "fill",
+    "label": "Tell us of a time you had to put your PM hat on to solve a complex product problem.",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "[id=\"e8a6b6ee-0550-4c69-85ab-05bd9b26c702\"]",
+    "name": "e8a6b6ee-0550-4c69-85ab-05bd9b26c702",
+    "value": "At Example Labs I owned the CI pipeline for an internal analytics product. I worked with the team to decide which build and test problems mattered most and sequenced the fixes around developer impact.",
+    "source": "applicant.work_history"
+  },
+  {
+    "op": "fill",
+    "label": "What are you extremely good at? What could you teach the team?",
+    "type": "textarea",
+    "frame": 0,
+    "selector": "[id=\"c4b19ee4-d084-47fa-89df-ca00e63a7721\"]",
+    "name": "c4b19ee4-d084-47fa-89df-ca00e63a7721",
+    "value": "I am good at building and maintaining Python and TypeScript services and at keeping CI pipelines reliable. I could teach the team how to set up and debug CI workflows and how to write maintainable Django-style test suites.",
+    "source": "applicant.work_history and applicant.education"
+  }
+]

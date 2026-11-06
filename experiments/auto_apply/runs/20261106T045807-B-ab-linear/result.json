@@ -1,0 +1,63 @@
+{
+  "arm": "B",
+  "model": "claude-haiku-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 1,
+  "score": {
+    "success": true,
+    "fields_total": 14,
+    "required_total": 10,
+    "required_filled": 10,
+    "mapped_correct": 4,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": true,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application",
+  "seconds": 61.6,
+  "failure": null,
+  "errors": [],
+  "steps": 19,
+  "claude_calls": 2,
+  "usage": [
+    {
+      "input_tokens": 2129,
+      "output_tokens": 1208,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.000817,
+      "seconds": 6.4,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2300,
+      "output_tokens": 1127,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.000794,
+      "seconds": 5.3,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.001611,
+  "browser_use_usd": 0.000333,
+  "browser_cost": {
+    "browser": 0.0003333333333333333,
+    "proxy": 0.0,
+    "proxy_mb": 0.0
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "version": "v2",
+  "label": "ab-linear",
+  "ats": "ashby",
+  "company": "Linear",
+  "run_dir": "runs\\20261106T045807-B-ab-linear",
+  "wall_seconds": 66.8,
+  "bu_spent_before": 0.336765,
+  "bu_spent_after": 0.3371,
+  "bu_balance_delta": 0.000335,
+  "bu_cost_counted": 0.000335
+}

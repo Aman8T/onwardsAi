@@ -18,14 +18,14 @@ path.**
 | A: Browser Use agent, `bu-ultrafast` | measured | 1/8 | $0.0077 (₹0.72) |
 | A: Browser Use agent, `bu-fast` | measured | 4/8 | $0.0265 (₹2.50) |
 | B: Claude Sonnet 5.5 + BU browser | measured | 6/8 | $0.0169 (₹1.60) |
+| B: Claude Haiku 5.5 + BU browser | measured | 4/8 | $0.0027 (₹0.25) |
 | C: playbook replay, no LLM | measured | 5/6 | $0.0007 (₹0.06) |
-| B with Haiku 5.5 instead of Sonnet | **estimate, untested** | ? | about $0.0017 (₹0.16) |
-| **Hybrid, MVP** (70% replay + Haiku for custom questions, 30% B with Sonnet) | estimate | target 75%+ | **about $0.0063 (₹0.59)** |
-| **Hybrid, mature** (90% replay) | estimate | target 85%+ | **about $0.0032 (₹0.30)** |
+| **Hybrid, MVP** (70% replay + Haiku for custom questions; 30% no playbook: Haiku, then Sonnet if Haiku fails) | estimate from measured parts | target 75%+ | **about $0.0046 (₹0.43)** |
+| **Hybrid, mature** (90% replay) | estimate from measured parts | target 85%+ | **about $0.0027 (₹0.25)** |
 
-Hybrid assumptions: a replayed application costs C's measured $0.0007 plus one Haiku call for its custom questions
-(about 3k input / 1k output tokens, $0.0008, rounded to $0.001), so $0.0017 (₹0.16). Fallbacks cost B's measured
-$0.0169 (₹1.60).
+Hybrid assumptions, all built from measured numbers:
+- **A replayed application:** C's measured $0.0007, plus one Haiku call for its custom questions (about 3k input / 1k output tokens, $0.0008, rounded to $0.001). That makes $0.0017 (₹0.16).
+- **An application with no playbook:** Haiku first ($0.0027), then Sonnet ($0.0169) for the 50% that Haiku did not finish in our test. That makes $0.0112 (₹1.06).
 
 Why B-shaped and not A:
 - **Higher quality, measured:** 6/8 vs 4/8, the resume attached on every form vs 3 of 7, 84 s vs 223 s median.
@@ -68,7 +68,7 @@ What they charge (from their own pages, seen 2026-11-05; several claims unverifi
 |---|---|---|
 | Tsenta (US) | $19 / $39 / $99 a month (₹1,795 / ₹3,685 / ₹9,354) for 600 / 1,500 / 4,500 applications; top tier auto-applies without review | $0.022 to $0.032 (₹2.08 to ₹2.99) |
 | JobsEye (jobseye.in, India) | ₹399 / ₹699 / ₹1,299 one-time packs for 20 / 50 / 150 applications; pay only for delivered applications | ₹8.7 to ₹20 |
-| **Onwards hybrid (our cost)** | | **₹0.30 to ₹0.59** (₹1.60 when a model fills the whole form) |
+| **Onwards hybrid (our cost)** | | **₹0.25 to ₹0.43** (₹1.06 when a form has no playbook yet) |
 
 - **Copy:** JobsEye's "pay only for delivered applications, refund failures" and one-time packs (no annual lock-in fits `project-soul.md`); Tsenta's diff view of every change to the resume; a confirmation email or screenshot as proof of each application; broad Greenhouse/Lever/Ashby coverage first.
 - **Skip:** volume as the product (Tsenta's 4,500 a month), applying without review, an "Aggressive" resume mode, LinkedIn Easy Apply and other boards whose terms forbid automation, and any CAPTCHA solving.
@@ -103,25 +103,27 @@ Rough effort in engineer-days, for one engineer who knows the repo; real numbers
 Variable cost only (model + browser + traffic), from the per-application figures in section 1. Add about 25% for retries
 and failed fills; fixed costs are small (no Browser Use subscription; an optional $100 one-time concurrency top-up).
 
-| Applications per month | A `bu-fast` | B (Sonnet) | Hybrid MVP | Hybrid mature | Replay only |
-|---|---|---|---|---|---|
-| 100 | $2.65 (₹250) | $1.69 (₹160) | $0.63 (₹60) | $0.32 (₹30) | $0.07 (₹7) |
-| 1,000 | $26.50 (₹2,504) | $16.90 (₹1,597) | $6.30 (₹595) | $3.20 (₹302) | $0.70 (₹66) |
-| 10,000 | $265 (₹25,037) | $169 (₹15,967) | $63 (₹5,952) | $32 (₹3,023) | $7 (₹661) |
+| Applications per month | A `bu-fast` | B (Sonnet) | B (Haiku) | Hybrid MVP | Hybrid mature | Replay only |
+|---|---|---|---|---|---|---|
+| 100 | $2.65 (₹250) | $1.69 (₹160) | $0.27 (₹26) | $0.46 (₹43) | $0.27 (₹26) | $0.07 (₹7) |
+| 1,000 | $26.50 (₹2,504) | $16.90 (₹1,597) | $2.70 (₹255) | $4.60 (₹435) | $2.70 (₹255) | $0.70 (₹66) |
+| 10,000 | $265 (₹25,037) | $169 (₹15,967) | $27 (₹2,551) | $46 (₹4,346) | $27 (₹2,551) | $7 (₹661) |
 
-With 25% retry overhead and up to 22% forex and GST, the hybrid at 10,000 applications a month stays at about ₹9,100
-(MVP mix) or about ₹4,600 (mature mix). The running cost of auto-apply is small next to its engineering and support cost.
+B with Haiku alone costs the same as the mature hybrid but fills fewer forms completely (4/8 in our test). The hybrid
+pays a little more for the Sonnet fallback to get the higher success rate. With 25% retry overhead and up to 22% forex
+and GST, the hybrid at 10,000 applications a month stays at about ₹6,600 (MVP mix) or about ₹3,900 (mature mix). The
+running cost of auto-apply is small next to its engineering and support cost.
 
 ## 7. Open risks
 
 - Small sample (8 jobs, one run each): the success rates need a 20 to 30 posting fill-only test before launch.
 - ATS vendors' own terms on automated applications have not been checked (only job boards were, by the branch).
-- Arm B with Haiku is untested; if quality drops, the hybrid's model cost moves from about ₹0.16 toward ₹1.60 for affected applications.
+- Arm B with Haiku was tested once per job (4/8 vs Sonnet's 6/8). Its two losses traced to harness timing and dropdown handling, so the fallback rate should fall with those fixes; if it does not, more applications fall back to Sonnet (₹1.60 each instead of ₹0.25).
 - Workable's form defeated B for reasons not yet known; custom sites will keep needing fallbacks or hand-offs.
 - Live pages change; playbooks need drift detection (it is built into the digest check) and demotion.
 
 ## 8. Decisions for you
 
 1. **Go or no-go on auto-apply itself.** `project-soul.md` and the research doc say "Avoid". If it is a go, those docs, the site's claims and an ATS-terms check need updating, and every submit stays human-approved.
-2. **Architecture:** build the hybrid on top of `feat/auto-apply`, with a Haiku 5.5 test of Arm B as the first step, or start a new branch.
+2. **Architecture:** build the hybrid on top of `feat/auto-apply` with Haiku 5.5 as the first model and Sonnet only as its fallback (tested: ₹0.25 vs ₹1.60 per form, 4/8 vs 6/8), or start a new branch.
 3. **Pricing and spend:** a per-delivered-application price in rupees (or packs), and approval to top up Browser Use credits (from $5) for the 20 to 30 posting fill-only test.

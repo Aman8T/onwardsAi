@@ -1,0 +1,69 @@
+{
+  "arm": "B",
+  "model": "claude-haiku-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 1,
+  "score": {
+    "success": false,
+    "fields_total": 0,
+    "required_total": 0,
+    "required_filled": 0,
+    "mapped_correct": 0,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": null,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://apply.workable.com/huggingface/j/81B46579FE/apply/",
+  "seconds": 79.5,
+  "failure": "no_form",
+  "errors": [
+    "field 7 (Cover letter): TimeoutError Locator.fill: Timeout 8000ms exceeded.",
+    "field 8 (Expected salary): TimeoutError Locator.fill: Timeout 8000ms exceeded.",
+    "field 9 (Notice period / availability): TimeoutError Locator.focus: Timeout 8000ms exceeded.",
+    "field 10 (How did you hear about us?): TimeoutError Locator.fill: Timeout 8000ms exceeded.",
+    "field 11 (Why Hugging Face, and where would you make the biggest diffe): TimeoutError Locator.fill: Timeout 8000ms exceeded."
+  ],
+  "steps": 6,
+  "claude_calls": 2,
+  "usage": [
+    {
+      "input_tokens": 2171,
+      "output_tokens": 1222,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.000828,
+      "seconds": 5.8,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 1759,
+      "output_tokens": 30,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.000191,
+      "seconds": 1.3,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.001019,
+  "browser_use_usd": 0.000667,
+  "browser_cost": {
+    "browser": 0.0006666666666666666,
+    "proxy": 0.0,
+    "proxy_mb": 0.0
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "version": "v2",
+  "label": "cu-workable-huggingface",
+  "ats": "custom",
+  "company": "Hugging Face",
+  "run_dir": "runs\\20261106T045956-B-cu-workable-huggingface",
+  "wall_seconds": 84.7,
+  "bu_spent_before": 0.337727,
+  "bu_spent_after": 0.338674,
+  "bu_balance_delta": 0.000948,
+  "bu_cost_counted": 0.000948
+}

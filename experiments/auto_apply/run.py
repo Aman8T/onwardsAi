@@ -70,7 +70,7 @@ def latest_trace(label: str) -> Path | None:
     return None
 
 
-def one(arm: str, label: str, model: str, max_cost: float) -> dict[str, Any]:
+def one(arm: str, label: str, model: str, max_cost: float, claude_model: str = spend.SONNET_MODEL) -> dict[str, Any]:
     job = jobs()[label]
     spent_before = preflight(arm, max_cost if arm == "A" else None)
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
@@ -85,7 +85,7 @@ def one(arm: str, label: str, model: str, max_cost: float) -> dict[str, Any]:
         elif arm == "B":
             import arm_b
 
-            result = arm_b.run(job, run_dir)
+            result = arm_b.run(job, run_dir, model=claude_model)
         else:
             import arm_c
 
@@ -141,6 +141,7 @@ def main() -> int:
     ap.add_argument("rest", nargs="*")
     ap.add_argument("--model", default="bu-ultrafast")
     ap.add_argument("--max-cost", type=float, default=0.15)
+    ap.add_argument("--claude-model", default=spend.SONNET_MODEL, choices=sorted(spend.PRICES))
     a = ap.parse_args()
     if a.cmd == "env":
         print(presence())
@@ -152,13 +153,13 @@ def main() -> int:
         arm, labels = a.rest[0].upper(), a.rest[1].split(",")
         for label in labels:
             try:
-                one(arm, label, a.model, a.max_cost)
+                one(arm, label, a.model, a.max_cost, a.claude_model)
             except spend.BudgetExceeded as exc:
                 print(f"STOP: {exc}")
                 return 3
         return 0
     try:
-        one(a.cmd.upper(), a.rest[0], a.model, a.max_cost)
+        one(a.cmd.upper(), a.rest[0], a.model, a.max_cost, a.claude_model)
     except spend.BudgetExceeded as exc:
         print(f"STOP: {exc}")
         return 3

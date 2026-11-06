@@ -1,0 +1,57 @@
+[
+  {
+    "op": "click",
+    "text": "Decline all",
+    "outcome": "clicked"
+  },
+  {
+    "op": "fill",
+    "label": "First name",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"firstname\"]",
+    "name": "firstname",
+    "value": "Jordan",
+    "source": "applicant.first_name"
+  },
+  {
+    "op": "fill",
+    "label": "Last name",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"lastname\"]",
+    "name": "lastname",
+    "value": "Testcase",
+    "source": "applicant.last_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email",
+    "type": "email",
+    "frame": 0,
+    "selector": "[id=\"email\"]",
+    "name": "email",
+    "value": "jordan.testcase@example.com",
+    "source": "applicant.email"
+  },
+  {
+    "op": "fill",
+    "label": "Phone",
+    "type": "tel",
+    "frame": 0,
+    "selector": "[id=\"input_phone\"]",
+    "name": "phone",
+    "value": "+1 555 010 0142",
+    "source": "applicant.phone"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Resume Choose file",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"input_files_input_lwBA6TbrjjSTZaTQ\"]",
+    "name": null,
+    "value": "",
+    "source": "resume file field, applicant resume"
+  }
+]

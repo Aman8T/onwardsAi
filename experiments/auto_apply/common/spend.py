@@ -16,9 +16,11 @@ LEDGER = HERE / "spend.json"
 BU_STOP_USD = 0.80
 ANTHROPIC_CAP_USD = 2.00
 
-# claude-sonnet-5-5, USD per 1M tokens (backend/tayyari/llm/models.py)
+# USD per 1M tokens (backend/tayyari/llm/models.py): input, output, cache read, cache write (5 min)
 SONNET_MODEL = "claude-sonnet-5-5"
-SONNET_IN, SONNET_OUT, SONNET_CACHE_READ, SONNET_CACHE_WRITE = 2.0, 10.0, 0.20, 2.5
+HAIKU_MODEL = "claude-haiku-5-5"
+PRICES = {SONNET_MODEL: (2.0, 10.0, 0.20, 2.5), HAIKU_MODEL: (0.10, 0.50, 0.01, 0.125)}
+SONNET_IN, SONNET_OUT, SONNET_CACHE_READ, SONNET_CACHE_WRITE = PRICES[SONNET_MODEL]
 
 
 class BudgetExceeded(RuntimeError):
@@ -60,12 +62,17 @@ def record(entry: dict[str, Any]) -> dict[str, Any]:
     return led
 
 
-def sonnet_cost(usage: Any) -> float:
-    """USD for one Messages API response's usage."""
+def model_cost(usage: Any, model: str = SONNET_MODEL) -> float:
+    """USD for one Messages API response's usage, at the repo's price for `model`."""
+    p_in, p_out, p_read, p_write = PRICES[model]
     get = (lambda k: getattr(usage, k, 0) or 0) if not isinstance(usage, dict) else (lambda k: usage.get(k) or 0)
     return (
-        get("input_tokens") * SONNET_IN
-        + get("output_tokens") * SONNET_OUT
-        + get("cache_read_input_tokens") * SONNET_CACHE_READ
-        + get("cache_creation_input_tokens") * SONNET_CACHE_WRITE
+        get("input_tokens") * p_in
+        + get("output_tokens") * p_out
+        + get("cache_read_input_tokens") * p_read
+        + get("cache_creation_input_tokens") * p_write
     ) / 1_000_000
+
+
+def sonnet_cost(usage: Any) -> float:
+    return model_cost(usage, SONNET_MODEL)

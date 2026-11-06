@@ -1,0 +1,237 @@
+[
+  {
+    "op": "click",
+    "text": "deny",
+    "outcome": "clicked"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Resume/CV \u2731 ATTACH RESUME/CV",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"resume-upload-input\"]",
+    "name": "resume",
+    "value": "",
+    "source": "resume"
+  },
+  {
+    "op": "fill",
+    "label": "Full name \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"name\"]",
+    "name": "name",
+    "value": "Jordan Testcase",
+    "source": "full_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email \u2731",
+    "type": "email",
+    "frame": 0,
+    "selector": "input[name=\"email\"]",
+    "name": "email",
+    "value": "jordan.testcase@example.com",
+    "source": "email"
+  },
+  {
+    "op": "fill",
+    "label": "Phone \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"phone\"]",
+    "name": "phone",
+    "value": "+1 555 010 0142",
+    "source": "phone"
+  },
+  {
+    "op": "fill",
+    "label": "Current location \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"location-input\"]",
+    "name": "location",
+    "value": "Pune, India",
+    "source": "location"
+  },
+  {
+    "op": "fill",
+    "label": "Current company \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"org\"]",
+    "name": "org",
+    "value": "Example Labs",
+    "source": "current_company"
+  },
+  {
+    "op": "fill",
+    "label": "Portfolio URL",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"urls[Portfolio]\"]",
+    "name": "urls[Portfolio]",
+    "value": "https://example.com/jordan-testcase",
+    "source": "website"
+  },
+  {
+    "op": "check",
+    "label": "Have you ever been previously employed by Spotify? \u2731",
+    "type": "checkbox-group",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(3) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]",
+    "value": "No",
+    "source": "previously employed by Spotify: no"
+  },
+  {
+    "op": "select",
+    "label": "What is your location? Select... Afghanistan Albania Algeria American Samoa Andorra Angola Anguilla Antarctica Antigua and Barbuda Argentina Armenia Aruba Australia Austria Azerbaijan Bahamas Bahrain Bangladesh Barbados ",
+    "type": "select",
+    "frame": 0,
+    "selector": "body > div:nth-of-type(4) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(1) > label:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > select:nth-of-type(1)",
+    "name": null,
+    "value": "India",
+    "source": "country"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Resume/CV \u2731 JORDAN_TESTCASE_TEST_RESUME.PDF Couldn't auto-read resume.",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"resume-upload-input\"]",
+    "name": "resume",
+    "value": "",
+    "source": "resume file Jordan_Testcase_TEST_RESUME.pdf"
+  },
+  {
+    "op": "fill",
+    "label": "Full name \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"name\"]",
+    "name": "name",
+    "value": "Jordan Testcase",
+    "source": "full_name"
+  },
+  {
+    "op": "fill",
+    "label": "Email \u2731",
+    "type": "email",
+    "frame": 0,
+    "selector": "input[name=\"email\"]",
+    "name": "email",
+    "value": "jordan.testcase@example.com",
+    "source": "email"
+  },
+  {
+    "op": "fill",
+    "label": "Phone \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"phone\"]",
+    "name": "phone",
+    "value": "+1 555 010 0142",
+    "source": "phone"
+  },
+  {
+    "op": "choose",
+    "label": "Current location \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"location-input\"]",
+    "name": "location",
+    "value": "Pune, India",
+    "source": "location"
+  },
+  {
+    "op": "fill",
+    "label": "Current company \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"org\"]",
+    "name": "org",
+    "value": "Example Labs",
+    "source": "current_company"
+  },
+  {
+    "op": "fill",
+    "label": "Portfolio URL",
+    "type": "text",
+    "frame": 0,
+    "selector": "input[name=\"urls[Portfolio]\"]",
+    "name": "urls[Portfolio]",
+    "value": "https://example.com/jordan-testcase",
+    "source": "website"
+  },
+  {
+    "op": "check",
+    "label": "Have you ever been previously employed by Spotify? \u2731",
+    "type": "checkbox-group",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(3) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]",
+    "value": "No",
+    "source": "Have you ever been previously employed by Spotify? - No"
+  },
+  {
+    "op": "select",
+    "label": "What is your location? Select... Afghanistan Albania Algeria American Samoa Andorra Angola Anguilla Antarctica Antigua and Barbuda Argentina Armenia Aruba Australia Austria Azerbaijan Bahamas Bahrain Bangladesh Barbados ",
+    "type": "select",
+    "frame": 0,
+    "selector": "body > div:nth-of-type(4) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(1) > label:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > select:nth-of-type(1)",
+    "name": null,
+    "value": "India",
+    "source": "country"
+  },
+  {
+    "op": "check",
+    "label": "What best describes your gender?",
+    "type": "radio",
+    "frame": 0,
+    "selector": "body > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(6) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "surveysResponses[380b7dba-8003-486d-b65d-28bf53a52415][responses][field0]",
+    "value": "Prefer not to disclose",
+    "source": "demographics: decline to self-identify"
+  },
+  {
+    "op": "upload_resume",
+    "label": "Resume/CV \u2731 JORDAN_TESTCASE_TEST_RESUME.PDF Couldn't auto-read resume.",
+    "type": "file",
+    "frame": 0,
+    "selector": "[id=\"resume-upload-input\"]",
+    "name": "resume",
+    "value": "",
+    "source": "resume file Jordan_Testcase_TEST_RESUME.pdf"
+  },
+  {
+    "op": "fill",
+    "label": "Current location \u2731",
+    "type": "text",
+    "frame": 0,
+    "selector": "[id=\"location-input\"]",
+    "name": "location",
+    "value": "Pune, India",
+    "source": "applicant location"
+  },
+  {
+    "op": "check",
+    "label": "Have you ever been previously employed by Spotify? \u2731",
+    "type": "checkbox-group",
+    "frame": 0,
+    "selector": "body > form:nth-of-type(1) > div:nth-of-type(3) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "cards[92a51f92-d683-4f7b-be57-e25376f60abe][field0]",
+    "value": "No",
+    "source": "previously employed by Spotify: no"
+  },
+  {
+    "op": "check",
+    "label": "What best describes your gender?",
+    "type": "radio",
+    "frame": 0,
+    "selector": "body > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(6) > ul:nth-of-type(1) > li:nth-of-type(1) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1) > label:nth-of-type(1) > input:nth-of-type(1)",
+    "name": "surveysResponses[380b7dba-8003-486d-b65d-28bf53a52415][responses][field0]",
+    "value": "Prefer not to disclose",
+    "source": "optional demographic, decline option"
+  }
+]

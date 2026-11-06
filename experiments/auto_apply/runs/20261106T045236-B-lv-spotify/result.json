@@ -1,0 +1,72 @@
+{
+  "arm": "B",
+  "model": "claude-haiku-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 2,
+  "score": {
+    "success": true,
+    "fields_total": 16,
+    "required_total": 5,
+    "required_filled": 5,
+    "mapped_correct": 6,
+    "wrong": [],
+    "missed_required": [],
+    "resume_attached": true,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.lever.co/spotify/2a55d6c9-c564-443a-be3e-a3851db5a93b/apply",
+  "seconds": 90.2,
+  "failure": null,
+  "errors": [],
+  "steps": 24,
+  "claude_calls": 3,
+  "usage": [
+    {
+      "input_tokens": 2480,
+      "output_tokens": 895,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.000696,
+      "seconds": 4.2,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2691,
+      "output_tokens": 945,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.000742,
+      "seconds": 4.7,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2700,
+      "output_tokens": 586,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.000563,
+      "seconds": 3.7,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.002001,
+  "browser_use_usd": 0.000922,
+  "browser_cost": {
+    "browser": 0.0006666666666666666,
+    "proxy": 0.0002552717924118042,
+    "proxy_mb": 1.3069915771484375
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "version": "v2",
+  "label": "lv-spotify",
+  "ats": "lever",
+  "company": "Spotify",
+  "run_dir": "runs\\20261106T045236-B-lv-spotify",
+  "wall_seconds": 95.5,
+  "bu_spent_before": 0.333975,
+  "bu_spent_after": 0.334946,
+  "bu_balance_delta": 0.000971,
+  "bu_cost_counted": 0.000971
+}

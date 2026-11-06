@@ -1,0 +1,87 @@
+{
+  "arm": "B",
+  "model": "claude-haiku-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 4,
+  "score": {
+    "success": false,
+    "fields_total": 17,
+    "required_total": 11,
+    "required_filled": 10,
+    "mapped_correct": 6,
+    "wrong": [],
+    "missed_required": [
+      "Do you currently live or are you willing to relocate to the job\u2019s location?*"
+    ],
+    "resume_attached": true,
+    "captcha_on_page": false,
+    "password_field": false
+  },
+  "final_url": "https://job-boards.greenhouse.io/cloudflare/jobs/8300518",
+  "seconds": 271.7,
+  "failure": null,
+  "errors": [
+    "field 16 (Resume/CV* (attached; upload held by the guard)): LookupError not an actionable field",
+    "field 16 (Resume/CV* (attached; upload held by the guard)): LookupError not an actionable field",
+    "field 16 (Resume/CV* (attached; upload held by the guard)): LookupError not an actionable field"
+  ],
+  "steps": 45,
+  "claude_calls": 4,
+  "usage": [
+    {
+      "input_tokens": 2301,
+      "output_tokens": 779,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.00062,
+      "seconds": 4.3,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2426,
+      "output_tokens": 896,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.000691,
+      "seconds": 4.4,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2469,
+      "output_tokens": 977,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.000735,
+      "seconds": 4.8,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 2469,
+      "output_tokens": 1048,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.000771,
+      "seconds": 5.0,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.002817,
+  "browser_use_usd": 0.0019,
+  "browser_cost": {
+    "browser": 0.0016666666666666668,
+    "proxy": 0.00023286622017621995,
+    "proxy_mb": 1.192275047302246
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "version": "v2",
+  "label": "gh-cloudflare",
+  "ats": "greenhouse",
+  "company": "Cloudflare",
+  "run_dir": "runs\\20261106T044753-B-gh-cloudflare",
+  "wall_seconds": 282.6,
+  "bu_spent_before": 0.332076,
+  "bu_spent_after": 0.333975,
+  "bu_balance_delta": 0.0019,
+  "bu_cost_counted": 0.0019
+}

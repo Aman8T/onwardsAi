@@ -1,0 +1,90 @@
+{
+  "arm": "B",
+  "model": "claude-haiku-5-5",
+  "guard_probe": "BLOCKED",
+  "rounds": 4,
+  "score": {
+    "success": false,
+    "fields_total": 22,
+    "required_total": 10,
+    "required_filled": 9,
+    "mapped_correct": 5,
+    "wrong": [],
+    "missed_required": [
+      "Current location \u2731"
+    ],
+    "resume_attached": true,
+    "captcha_on_page": true,
+    "password_field": false
+  },
+  "final_url": "https://jobs.lever.co/palantir/6ed76ce8-4156-4b60-b120-403538bd66cd/apply",
+  "seconds": 226.6,
+  "failure": null,
+  "errors": [
+    "field 12 (Are you legally authorized to work in the country for which ): TimeoutError Locator.focus: Timeout 8000ms exceeded.",
+    "field 13 (Will you now or in the future require sponsorship for employ): TimeoutError Locator.focus: Timeout 8000ms exceeded.",
+    "field 14 (Which university are you currently attending or did you last): TimeoutError Locator.select_option: Timeout 5000ms exceeded.",
+    "field 18 (As part of our interview process, we may use AI notetakers t): TimeoutError Locator.focus: Timeout 8000ms exceeded.",
+    "field 19 (Are you a Singapore citizen? \u2731): TimeoutError Locator.focus: Timeout 8000ms exceeded.",
+    "field 20 (Are you a Singapore permanent resident? \u2731): TimeoutError Locator.focus: Timeout 8000ms exceeded."
+  ],
+  "steps": 62,
+  "claude_calls": 4,
+  "usage": [
+    {
+      "input_tokens": 3476,
+      "output_tokens": 1429,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.001062,
+      "seconds": 6.7,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 3930,
+      "output_tokens": 1580,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.001183,
+      "seconds": 7.2,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 3620,
+      "output_tokens": 1356,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.00104,
+      "seconds": 6.0,
+      "stop_reason": "end_turn"
+    },
+    {
+      "input_tokens": 3706,
+      "output_tokens": 1377,
+      "cache_read": 0,
+      "cache_write": 0,
+      "usd": 0.001059,
+      "seconds": 6.2,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "anthropic_usd": 0.004344,
+  "browser_use_usd": 0.001707,
+  "browser_cost": {
+    "browser": 0.0013333333333333333,
+    "proxy": 0.0003741404041647911,
+    "proxy_mb": 1.9155988693237305
+  },
+  "blocked_requests": 0,
+  "blocked_sample": [],
+  "version": "v2",
+  "label": "lv-palantir",
+  "ats": "lever",
+  "company": "Palantir",
+  "run_dir": "runs\\20261106T045413-B-lv-palantir",
+  "wall_seconds": 231.7,
+  "bu_spent_before": 0.334946,
+  "bu_spent_after": 0.336765,
+  "bu_balance_delta": 0.001819,
+  "bu_cost_counted": 0.001819
+}
