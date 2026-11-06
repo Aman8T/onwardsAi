@@ -1,8 +1,8 @@
 # Tsenta teardown: what to copy, skip and do better for A1 (auto-apply)
 
 Walked through on 2026-11-06 in a real, signed-in Tsenta account on the free plan (9 applications left, 21 past
-applications). Only read-only pages were opened; no setting was changed, and nothing new was applied for during the
-walk-through. Personal details from the account are deliberately left out of this note. Spec it feeds: `docs/auto-apply.md`.
+applications). Sections 1 to 5 come from read-only pages. Section 6 is one live application the user approved; it
+ended unsupported and refunded, and nothing was sent. Personal details from the account are deliberately left out of this note. Spec it feeds: `docs/auto-apply.md`.
 
 ## 1. The journey, end to end
 
@@ -138,7 +138,41 @@ This is the pattern for our Review screen: the person checks data, not a video o
 - **Skip for now:** the assistant on every screen, chat-based setup, resume templates and fonts, job-board account
   connections (Indeed, Wellfound), memory settings and the research blog.
 
-## 6. Still to observe
+## 6. A live apply, step by step (2026-11-06)
 
-The pause-before-submit screen of a live application (with "Review before submit" switched on) has not been seen
-yet; section 3 is the view of an already-submitted application.
+The user approved one application (AI Engineer, Bengaluru, listed by ClanX). Settings were changed first: "Review
+before submit" on, auto-approve off. Tsenta's own note says review "works on Ashby, Greenhouse and 58 more ATSes.
+Other ATSes apply normally for now".
+
+1. **Apply on the card.** The credit chip drops at once (9 to 8), and the page jumps to
+   `/applications/<id>?firstRun=1`, showing "Loading application…".
+2. **About 10 s later: "Ready to review".** This is a **resume review, not a form review**.
+   - *Left pane:* a chat with Tsenta's assistant, a "Fair match, 3 of 16 keywords covered" box, and keyword chips, both
+     covered and missing ("+ Vision processing", "+ Audio processing" and others).
+   - *Changes:* "What I changed: rewrote 1 bullet to lead with impact". The actual edit was punctuation only.
+   - *Suggestion buttons:* "Weave in the missing keywords I genuinely have", "Make the summary punchier", "Fit it to
+     one page".
+   - *Right pane:* the tailored PDF with template, font and size controls and "1 edits · tailored". Buttons: "Use
+     original resume" and **"Approve & submit"**.
+   - The assistant began, unasked, to "weave the missing keywords into the bullets and skills" and named a different
+     employer (the company behind the ClanX listing). It had not changed the resume by the time of approval.
+3. **The posting was already gone.** The job's own link returned 404 ("We couldn't find this job"). The feed still
+   showed it as 3 days old and took the credit.
+4. **"Approve & submit" led to "Not Supported".**
+   - The message: "This job board isn't supported for auto-apply yet. Your credit has been refunded."
+   - The actions: Apply manually, Download Resume, Skip and "I've Applied".
+   - The headline: "Couldn't submit. Skip this one, or finish it manually and mark it applied."
+   - Nothing was sent.
+
+**What this teaches A1:**
+- **Check before charging and before showing Apply.** Confirm the posting is live and that we can fill its ATS before
+  a card offers "Apply for me". Otherwise the card offers "Open on the employer's site". Tsenta charges first and
+  refunds after.
+- **Copy the honest failure screen:** a refund stated plainly, with the manual route, the resume download, and "I've
+  applied" so tracking still works.
+- **Review must include the form, not only the resume.** Tsenta's review of this application covered the resume
+  alone. Our Review shows every form value before anything is approved.
+- **Missing keywords must never be presented as additions.** Our match states them as gaps (`project-soul.md`: no
+  skill from a posting onto a resume). Tsenta's "weave in the missing keywords" is the opposite.
+
+Still not seen: Tsenta's paused *form* review on a supported ATS (Greenhouse or Ashby).

@@ -14,6 +14,9 @@ Money is in rupees, with USD in brackets, at ₹94.48 per USD (2026-11-05).
 
 1. **Fit first.** An application starts only from a posting match whose hard-requirement gates did not block. Pasting
    an application link runs the posting match on that posting first. Discover's "Apply for me" does the same.
+   "Apply for me" is offered only after a cheap check that the posting is live and that its ATS is one we can fill;
+   otherwise the card says "Open on the employer's site". Nothing is charged before that check. Tsenta charged a
+   credit for a posting that was already gone, then refunded it (`docs/research/tsenta-teardown.md` §6).
 2. **The employer's own form only.** Greenhouse, Lever and Ashby at launch, then others. Never LinkedIn, Naukri,
    Indeed, Glassdoor or any board whose terms forbid automation (`apply/intake.py` keeps the manual-only list and never
    fetches them).
