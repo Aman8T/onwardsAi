@@ -1,8 +1,9 @@
 # Tsenta teardown: what to copy, skip and do better for A1 (auto-apply)
 
 Walked through on 2026-11-06 in a real, signed-in Tsenta account on the free plan (9 applications left, 21 past
-applications). Sections 1 to 5 come from read-only pages. Section 6 is one live application the user approved; it
-ended unsupported and refunded, and nothing was sent. Personal details from the account are deliberately left out of this note. Spec it feeds: `docs/auto-apply.md`.
+applications). Sections 1 to 5 come from read-only pages. Sections 6, 8 and 9 are two live applications, each approved
+by the user. The first ended unsupported and refunded, with nothing sent. The second was reviewed (three wrong answers
+fixed) and submitted. Personal details from the account are deliberately left out of this note. Spec it feeds: `docs/auto-apply.md`.
 
 ## 1. The journey, end to end
 
@@ -199,3 +200,75 @@ The account's top 20 India matches (AI roles, Bengaluru, auto-apply-able only), 
   hard-requirement gates must cover years of experience.
 - **The feed has duplicate cards.** Two different titles pointed to the same posting URL, so de-duplicate by posting
   URL.
+
+## 8. A live apply on Workday, with the form review (2026-11-06)
+
+The user approved one application: Hitachi Energy, R&D AI Prompt & Agent Specialist, Bengaluru, on Workday. The
+posting was checked live first.
+
+1. **Apply on the card.** The credit was taken (9 to 8). The card leaves the feed and the row appears in
+   Applications as "Resume: Review · Status: Needs you", with an inline **Approve** button.
+2. **Stage 1, the resume.** Same layout as section 6: "Strong match, 13 of 17 keywords covered", 2 bullets
+   "rewritten", 9 skills added. The bullets changed only in punctuation; the skills were padded with posting
+   keywords ("AI copilots", "Knowledge management tools", "Document repositories"). The assistant left out "Power
+   electronics", saying the person does not have it. The button is now **"Approve & fill form"** ("You'll check the
+   filled form before it's sent").
+3. **Filling, streamed live (about 2.5 minutes).** "Preparing your application · Filling My Experience… 11 fields
+   filled". Fields appear as they are filled; the browser is never shown. The status pill says "Submitting" during the
+   fill, which is misleading. **The resume shows "attached" on the employer's Workday during the fill**, so it reaches
+   the employer before the person approves (the early-upload problem `docs/auto-apply.md` rule 3 avoids).
+4. **Stage 2, the form review.**
+   - "Review before submit · Waiting for your approval". The left rail says "Check what we filled in for Hitachi, and
+     edit anything before we submit. Locked fields can't be changed here."
+   - Every field is editable inline, grouped as Workday groups them, with counts: Personal Information 14, Work
+     Experience, Education, Application Questions 8, Skills 10 (locked: "Edit in your profile"), Voluntary Disclosures
+     1 (Gender, locked: "options not listed").
+   - The buttons are **Submit application** and **Cancel application**.
+5. **What the review caught.** Three answers were wrong and were fixed before submitting:
+   - "How did you hear about this role?" was filled as **LinkedIn**. That is a guess; the person never saw the role
+     on LinkedIn. It was changed to the employer's own career site.
+   - The free-text "relevant experience" answer was written by their model. It **turned a team contribution into "I
+     designed"** a multi-agent system, merged two different systems into one, and claimed proficiency in "several AI
+     copilots" with no source. It was rewritten from the resume's own lines.
+   - Long free-text answers sit in **a one-line input**, so the person can't read what they approve without
+     scrolling inside the box.
+   - Correct answers: not a Hitachi employee, no visa sponsorship, authorised to work in the country, able to perform
+     the essential functions, Bachelor's degree, salary "Negotiable".
+6. **Submit.** "Submitting your application · Sending your reviewed application to Hitachi. This usually takes under a
+   minute. You can leave this page, we'll finish in the background." Section 9 records the outcome.
+
+**What this teaches A1:**
+- **The two-stage review (resume, then form) is right,** and the streamed fill is a good waiting state. Copy both, with
+  honest status words ("Filling", not "Submitting").
+- **Every model-written answer needs its sources on screen.** Tsenta's free text overclaimed in two places a reviewer
+  would only catch by knowing the resume by heart. Ours shows the cited fact next to each sentence and drops what no
+  fact supports (`CLAUDE.md` rule 1).
+- **"How did you hear about us" is a fact, not a guess.** We know the source (Tayyari, or the employer's site), so we
+  answer from it, or choose "Other" when no option fits.
+- **Long answers get a full-height text area on Review,** whatever the ATS uses.
+- **Don't let the fill attach the resume early** on ATSs that upload at once (Workday, Greenhouse, Ashby). Attach it in
+  the approved submit pass.
+- **Skills that come from the posting** (padding) never go into the person's profile or a form.
+
+## 9. After submit
+
+- **About 2.5 minutes after the click, the status was "Submitted"** (the page said "usually under a minute"). The
+  corrected answers were the ones sent.
+- **The submitted record has more than the review showed.** Personal Information lists 15 fields against 14 at
+  review. Shown only after submit:
+  - the email, which is Tsenta's hosted inbox, not the person's;
+  - country code, phone number, country and state;
+  - "Have you worked for this company before?: No";
+  - **"Signature (full name)"**, typed in the person's name.
+
+  The header shows "Applied using <Tsenta inbox>" and "Account password: View". A Workday candidate account was
+  created for the person with Tsenta's mailbox and the stored password.
+- **What this teaches A1:**
+  - **Review shows every value that will be sent, locked fields included.** A field the person cannot edit still
+    appears, read-only, with its source.
+  - **A signature or attestation field is never filled for the person.** It is a Needs you item that they type
+    themselves.
+  - **Account creation on an ATS is the person's act.** Workday stays in the hand-off lane: the person signs in or
+    creates the account, then we fill.
+
+The confirmation email (if Hitachi sends one) lands in the Tsenta inbox, not the person's own mailbox.

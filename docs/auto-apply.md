@@ -60,6 +60,12 @@ From the Tsenta teardown (`docs/research/tsenta-teardown.md` §5):
 - **Review is data, not a browser.** Fields are grouped the way the ATS groups them, with a count per group. Choice
   fields show the chosen option among the others. Tabs are Form, Resume, Cover and Job, with Prev and Next across
   applications (arrow keys work). Each value carries its source, which Tsenta's view does not.
+- **Two stages, then a streamed fill.** First the resume (keep or tailor), then the form fill, streamed field by field
+  as a waiting state, then the form review. Status words are honest: "Filling", "Waiting for you", "Sending".
+- **Review lists every value that will be sent,** locked ones included, read-only and with their source. Long answers
+  get full-height text areas. Signature and attestation fields are always the person's to type. Tsenta's review hid 1
+  of 15 personal fields (a typed signature among them) and let model-written free text overclaim
+  (`docs/research/tsenta-teardown.md` §8–9).
 - **Status tabs carry reasons and a one-tap fix.** "Screening questions required" opens exactly those questions, and
   answering them requeues the application.
 - **Emails are attached to their application** in a side rail, labelled by kind (received, interview, rejection,
