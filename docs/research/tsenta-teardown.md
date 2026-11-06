@@ -176,3 +176,26 @@ Other ATSes apply normally for now".
   skill from a posting onto a resume). Tsenta's "weave in the missing keywords" is the opposite.
 
 Still not seen: Tsenta's paused *form* review on a supported ATS (Greenhouse or Ashby).
+
+## 7. Which ATSs an Indian feed actually uses (2026-11-06)
+
+The account's top 20 India matches (AI roles, Bengaluru, auto-apply-able only), by the employer's posting link:
+
+| ATS | Count |
+|---|---|
+| Workday (`*.myworkdayjobs.com`) | 13 |
+| SmartRecruiters | 3 (two cards share one posting URL) |
+| SAP SuccessFactors | 2 |
+| Oracle Cloud HCM | 1 |
+| Eightfold | 1 |
+| **Greenhouse, Lever, Ashby** | **0** |
+
+**Implications for A1:**
+- **Launching on Greenhouse, Lever and Ashby covers startups and global tech.** It covers almost none of the large
+  Indian employers in this sample. Most of those are on Workday, which needs an account per employer.
+- **The A1.6 live test must sample Indian postings,** to measure the real coverage. Workday, through the hand-off lane
+  (the person signs in), is the most valuable v2 target. SmartRecruiters needs no login and is the cheapest next ATS.
+- **Seniority is not gated.** Roles asking 14+ and 15+ years scored 76 to 77% for a person with about 2 years. Our
+  hard-requirement gates must cover years of experience.
+- **The feed has duplicate cards.** Two different titles pointed to the same posting URL, so de-duplicate by posting
+  URL.
