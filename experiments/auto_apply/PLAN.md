@@ -4,8 +4,8 @@ Based on the experiment in this folder ([RESULTS.md](RESULTS.md)): 45 runs, 8 re
 Money is in USD and INR at ₹94.48 per USD (2026-11-05). Card payments from India for these USD services can add a forex
 markup and 18% GST, so budget up to about 22% more in rupees than the figures shown. That multiplier is an assumption.
 
-Before any of this is built: `project-soul.md`, `CLAUDE.md` (non-negotiable 4) and `docs/research/job-discovery.md`
-("Auto-apply | Avoid") currently rule auto-apply out. Building it is decision 1 at the end.
+Decision 1 was taken on 2026-11-06: auto-apply is a go. `project-soul.md`, `CLAUDE.md` (new rule 9) and
+`docs/research/job-discovery.md` now allow it inside the guard rails below; the build spec is `docs/auto-apply.md`.
 
 ## 1. Which architecture wins: a hybrid shaped like Arm B
 
@@ -124,6 +124,6 @@ running cost of auto-apply is small next to its engineering and support cost.
 
 ## 8. Decisions for you
 
-1. **Go or no-go on auto-apply itself.** `project-soul.md` and the research doc say "Avoid". If it is a go, those docs, the site's claims and an ATS-terms check need updating, and every submit stays human-approved.
+1. **Go or no-go on auto-apply itself.** Decided 2026-11-06: go. The rules now allow it (`CLAUDE.md` rule 9); every submit stays human-approved, and the site's copy changes at launch (`docs/auto-apply.md` §5).
 2. **Architecture:** build the hybrid on top of `feat/auto-apply` with Haiku 5.5 as the first model and Sonnet only as its fallback (tested: ₹0.25 vs ₹1.60 per form, 4/8 vs 6/8), or start a new branch.
 3. **Pricing and spend:** a per-delivered-application price in rupees (or packs), and approval to top up Browser Use credits (from $5) for the 20 to 30 posting fill-only test.

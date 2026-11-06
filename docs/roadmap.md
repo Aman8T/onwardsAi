@@ -25,6 +25,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | X1 | ESCO + O*NET skill table, canonical skill ids | M2 | later | not started |
 | D1 | Discover: personal, location-aware jobs with direct apply links | M2 | Opus + Sonnet | v1 built 2026-10-16 (employers' own boards, no map); rest in docs/discover-later.md |
 | L1 | Sign in to the app with the Leafout account (the site's Supabase login) | F1, app.leafout.in live | Opus + Sonnet | built 2026-10-19, committed, not yet deployed |
+| A1 | Auto-apply: fill the employer's ATS form from cited facts, the person approves every submit | F1, M2, D3 | Opus + Sonnet | allowed 2026-11-06 (CLAUDE.md rule 9); design in `docs/auto-apply.md`, not started |
 
 Shared files are edited by one wave at a time, in this order: F1 → M2 → F2 for `storage/tables.py`, `storage/ports.py`, `core/settings.py`, `container.py`, `api/routes/__init__.py`, `api/security.py`, `backend/.env.example`. M1 touches none of them. Dependencies were added by the orchestrator (`authlib`, `reportlab`, `stripe`, `razorpay`; `pypdf` and `python-docx` were already present): no wave edits `pyproject.toml`.
 

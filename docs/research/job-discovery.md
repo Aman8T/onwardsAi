@@ -92,7 +92,7 @@ The table sets out what to borrow from other products, what to avoid, and what m
 | Pins presented as proof of commute | Avoid | Our rule | Distance is labelled as straight line |
 | The word "ghost" | Avoid | Term used by Kickresume's ghost jobs study | We state facts instead: "open 7 weeks", "reposted 3 times" |
 | Predicted salary | Avoid | Our rule | Salary shown only when the employer states it |
-| Auto-apply | Avoid | Our rule; board terms forbid automation | The person applies on the employer's page |
+| Auto-apply | Borrow, with guard rails | Decided 2026-11-06 (CLAUDE.md rule 9, `docs/auto-apply.md`); tested in `experiments/auto_apply/` | Only on the employer's own ATS form, only for roles the match says fit, and the person approves every submit. Never on boards whose terms forbid automation |
 | AI edits that add skills | Avoid | Our rule; docs/research/open-source-resume-tools.md, section 6 | Discover never edits a resume |
 | Links to portal search pages | Avoid | Our apply-link rule | Only the posting's own link |
 | Names, college or photo as ranking inputs | Avoid | Embedding bias study (arXiv 2407.20371) | Excluded from ranking and listed as excluded |

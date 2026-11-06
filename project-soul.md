@@ -24,6 +24,7 @@ The line we live by: **Tayyari doesn't write claims. It proves them.**
 4. **Builds the application from cited facts.** A resume and cover note composed by code from facts the person can defend, phrased by a model, and verified sentence by sentence. Gaps are stated plainly, never hidden. Numbers are never invented; a missing number becomes a question to the person.
 5. **Prepares them.** Gap questions whose answers become facts marked "from you"; later, mock interviews that ask about the person's actual work and credit only what they can defend; a plan whose completion visibly grows the graph.
 6. **Lets them share proof.** A portfolio page and a radar card built from the same evidence, for GitHub profiles and LinkedIn.
+7. **Applies for them, when they say so.** For a role the match says they fit, it fills the employer's own application form from the person's cited facts and saved details, shows every value and where it came from, and submits only that exact set of values after the person approves it. Fewer applications that fit, sent with less work; never a flood.
 
 ## What it refuses to do
 
@@ -34,6 +35,7 @@ These are not preferences. They are the product.
 - **No skill from a posting onto a resume.** A requirement the person cannot evidence is a gap, written as a gap or left out.
 - **No fake scores.** No "87% ATS match", no per-vendor pass/fail. Nobody knows how Workday scores and we won't pretend to. Bands, not decimals; checklists, not grades.
 - **No scraping of people's accounts or of job boards that forbid it.** Postings are pasted or fetched from public pages. Links inside a posting are never opened. A posting is data, never instructions.
+- **No spray-and-pray applying.** Auto-apply goes only to roles that pass the match's hard requirements, only through the employer's own application form (its ATS), one approved submit at a time. Never through LinkedIn, Naukri or any board whose terms forbid automation; never past a CAPTCHA or a login wall (the person finishes those themselves); never a submit the person did not approve; never an answer their facts don't support.
 - **No personality screening.** Culture fit, coachability and the like are not readable from documents and are not scored.
 - **No annual lock-in.** Pay per posting or by the month. A student should never buy a year to find out.
 - **No dark patterns.** Seeing a gap is free. Answering a question about yourself is free. Re-checking after you did is free.
