@@ -43,7 +43,7 @@ Money is in rupees, with USD in brackets, at ₹94.48 per USD (2026-11-05).
 
 ## 2. What the person sees
 
-The screens follow `design.md` and are designed on a canvas before any frontend code (project rule). Canvas (2026-11-06, seven screens with sample data: Apply for me, Your details, Filling, Review, Needs you and outcomes, Applications, Ready for you on a phone): https://claude.ai/artifact/CsN9PPninRZ3Z1j5vx6Nh5. Five states:
+The screens follow `design.md` and are designed on a canvas before any frontend code (project rule). Canvas (2026-11-06, with sample data: Apply for me, Your details, Filling, Review, Needs you and outcomes, Applications, Ready for you on a phone; and since 2026-11-07, the entry points on a match, Discover's cards, a role's page and Prepare): https://claude.ai/artifact/CsN9PPninRZ3Z1j5vx6Nh5. Five states:
 
 | Screen | What it shows | Actions |
 |---|---|---|
@@ -72,6 +72,36 @@ From the Tsenta teardown (`docs/research/tsenta-teardown.md` §5):
   offer).
 - **The lean answer to Tsenta's Auto Apply lanes is a daily "Ready for you" stack.** Fills are prepared for new roles
   that pass the gates, and the person approves them one by one in a stack (swipe or keys), each with its own digest.
+
+### 2.1 Where "Apply for me" appears (decided 2026-11-07)
+
+Today every apply is a link to the employer's site. Wherever an employer page is reachable and its ATS is one we
+can fill, **Apply for me becomes the primary action**. The employer's link stays as a quiet "or apply yourself on
+<host> ↗".
+
+The button opens one choice:
+- **Fit my resume to this role, then apply.** The match's resume, the one "Build my resume for this role" makes today.
+  The person checks it before the fill.
+- **Apply with my current resume.** The saved upload, as it is.
+
+| Place today | File | What changes |
+|---|---|---|
+| Match result: "Build my resume for this role" (primary) and "Close the gaps · N questions" | `src/match/MatchView.tsx` | The primary becomes **Apply for me ▾** with the two choices. "Build my resume for this role" moves to a quiet "Only build the resume". "Close the gaps" stays. On a pasted match (no posting address) the choice also asks for **the link to the application form**, and we check it is the same posting before filling. On a Stretch, a note suggests answering the open questions first, without blocking. |
+| Match from Discover: the origin strip's "Apply on <host> ↗" | `src/discover/OriginBar.tsx` | **Apply for me** first, the host link after it. No link to ask for. |
+| Discover card: "Apply on <host> ↗" (primary), Prepare, See how you fit, Save / Compare / Not for me | `src/discover/roles/JobCard.tsx`, `parts.tsx` (`ApplyLink`) | The primary becomes **Apply for me**. A card has only the quick fit, so it **runs the full posting match first** (about 20 s, shown on the card as steps), then opens the choice. |
+| Discover role page, "What next": apply link, Prepare for this role, See how you fit, Save | `src/discover/roles/Focus.tsx` (`PanelActions`) | **Apply for me** on top, with the two resume choices inline. Then Prepare, See how you fit and Save as now. |
+| Discover phone deck: Not for me, Details, Save, apply link | `src/discover/roles/Deck.tsx` | The apply link becomes **Apply for me**. |
+| Prepare's checklist, step "Apply on <host> ↗" | `src/discover/prepare/sections.tsx` | The step offers **Apply for me** with the resume just tailored, and ticks itself when the employer confirms. |
+| Compare: "Apply on <host>" per column | `src/discover/compare/CompareView.tsx` | **Apply for me** per column. |
+| The Weekly paper's job links | `src/weekly/EditionPaper.tsx` | Stays a link, now to the role's page in the app, where Apply for me is. |
+| "Your applications" (browser storage, Discover) | `src/discover/applications/` | Becomes the server-side Applications page (screen 6). |
+
+**When Apply for me is not offered, the card says why:**
+- **The ATS needs the person's own account** (Workday and similar): the primary is the employer's link, with a line
+  saying why.
+- **A hard requirement fails:** the button is shown off, with the reason. The person can still apply themselves.
+- **The posting is closed:** nothing is offered, and nothing is charged.
+- **Already applied to this posting:** the button opens that application.
 
 ## 3. How a run works
 
