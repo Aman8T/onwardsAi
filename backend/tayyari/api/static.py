@@ -93,6 +93,7 @@ APP_ROUTES: tuple[AppRoute, ...] = (
     AppRoute(r"discover(?:/.*)?", private=True),
     AppRoute(r"practice(?:/.*)?", private=True),
     AppRoute(r"weekly(?:/.*)?", private=True),
+    AppRoute(r"apply(?:/.*)?", private=True),
     AppRoute(r"signout/?", private=True),
     AppRoute(r"account/delete/?", private=True),
     AppRoute(r"p/.*", private=True),

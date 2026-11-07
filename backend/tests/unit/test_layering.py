@@ -90,6 +90,11 @@ RULES: dict[str, tuple[str, ...]] = {
     # and Discover's quick fit (no fork), and the email message type of auth (a sender is handed in; it imports no other part of
     # auth). Nothing imports weekly except api and the container; the spend guard is handed in as a callable, not imported.
     "weekly": (*_SERVICES, "discover", "jobsearch", "auth.email"),
+    # auto-apply sits with the model-calling services: the SSRF-guarded fetch of ingest, the Claude client for field mapping,
+    # screening answers and email stages, and the portfolio's sentence anchors to check an answer against the facts it cites.
+    # A match reaches it through a Protocol the api layer implements (it never imports match); nothing imports apply except
+    # api, the container and the CLI.
+    "apply": (*_SERVICES, "portfolio"),
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",
@@ -110,6 +115,7 @@ RULES: dict[str, tuple[str, ...]] = {
         "handoff",
         "weekly",
         "card",
+        "apply",
         "guard",
         "ingest",
         "prompts",

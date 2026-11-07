@@ -7,6 +7,7 @@
  * land and the band waits for the result code computed; nothing is guessed on the page. The view is presentational:
  * the screen in `MatchRoot` feeds it from the store, the dev gallery from fixtures.
  */
+import { ApplyFromMatch } from '../apply/ApplyFromMatch';
 import { useRef, useState } from 'react';
 import type { Coverage, GateAnswer, MatchResult, Posting, Question, Radar as RadarData, Requirement } from '../../shared/match';
 import { Radar } from '../components/Radar';
@@ -21,6 +22,8 @@ import { RequirementTable } from './RequirementTable';
 import type { AnswerInput, MatchFact } from './types';
 
 export interface MatchViewProps {
+  /** The stored match, for auto-apply's Apply control (absent on fixtures). */
+  matchId?: string;
   posting?: Posting;
   facts: readonly MatchFact[];
   coverage: readonly Coverage[];
@@ -128,6 +131,7 @@ export function MatchView(props: MatchViewProps) {
               <button type="button" className="btn btn-primary mt-btn" onClick={onBuildResume}>
                 Build my resume for this role
               </button>
+              <ApplyFromMatch matchId={props.matchId} links={posting?.links} />
             </div>
           </>
         )}

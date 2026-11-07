@@ -60,6 +60,11 @@ EXPECTED_TABLES = {
     "weekly_editions",
     "claim_marks",
     "card_snapshots",
+    "applications",
+    "application_events",
+    "ats_playbooks",
+    "run_metrics",
+    "apply_profiles",
 }
 
 

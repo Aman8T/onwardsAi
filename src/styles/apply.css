@@ -1,0 +1,57 @@
+/* Auto-apply: the /apply tracker and the Apply control on a match. Tokens and primitives only (design.md). */
+.ap-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+  display: grid;
+  gap: 16px;
+  color: var(--text);
+}
+.ap-head { display: grid; gap: 6px; }
+.ap-title { font-size: 32px; line-height: 1.15; margin: 0; }
+.ap-h2 { font-size: 22px; margin: 0; }
+.ap-muted { color: var(--text-muted); font-size: 14px; margin: 0; }
+.ap-error { color: var(--danger); margin: 0; }
+.ap-paste { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; padding: 16px; }
+.ap-field-wide { flex: 1 1 320px; }
+.ap-details { padding: 12px 16px; }
+.ap-summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.ap-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding-top: 8px; }
+.ap-form .ap-actions, .ap-form .ap-muted, .ap-form .ap-field-wide { grid-column: 1 / -1; }
+.ap-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ap-grid { display: grid; grid-template-columns: minmax(240px, 340px) 1fr; gap: 16px; align-items: start; }
+.ap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ap-row {
+  width: 100%;
+  min-height: 44px;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+}
+.ap-row-on { border-color: var(--accent-ui); background: var(--fill); }
+.ap-row-title { font-weight: 600; }
+.ap-chip { justify-self: start; }
+.ap-chip-applied, .ap-chip-interviewing, .ap-chip-offer { color: var(--accent-strong); }
+.ap-chip-needs_user, .ap-chip-failed { color: var(--danger); }
+.ap-detail { padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.ap-detail-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.ap-needs { display: grid; gap: 10px; }
+.ap-check { display: flex; gap: 8px; align-items: center; min-height: 44px; }
+.ap-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ap-table th, .ap-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+.ap-shot { margin: 0; display: grid; gap: 6px; }
+.ap-shot img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+.ap-inline { display: inline-flex; gap: 6px; align-items: center; }
+.ap-events { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ap-from-match { display: grid; gap: 8px; width: 100%; }
+@media (max-width: 760px) {
+  .ap-grid { grid-template-columns: 1fr; }
+  .ap-title { font-size: 26px; }
+}

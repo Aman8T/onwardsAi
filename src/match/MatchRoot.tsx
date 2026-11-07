@@ -184,6 +184,7 @@ function MatchScreen({ id }: { id?: string }) {
   const matchId = id ?? m.matchId;
   return (
     <MatchView
+      matchId={matchId}
       posting={m.posting}
       facts={m.facts}
       coverage={m.coverage}

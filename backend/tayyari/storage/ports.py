@@ -9,7 +9,7 @@ the model never needs a storage change (``schema_version`` records which shape a
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Collection, Sequence
+from collections.abc import AsyncIterator, Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import Any, Literal, Protocol
@@ -1324,7 +1324,268 @@ class CardRepo(Protocol):
         ...
 
 
+# ───────────────────────────── auto-apply ─────────────────────────────
+
+
+APPLICATION_COLUMNS: frozenset[str] = frozenset(
+    {
+        "profile_id", "match_id", "apply_url", "manual_url", "domain", "ats", "company", "title", "location", "job",
+        "stage", "stage_reason", "needs", "review", "review_digest", "approved_at", "approved_digest", "submitted_at",
+        "attempts", "lease_owner", "lease_until",
+    }
+)  # fmt: skip
+"""The columns `ApplyRepo.update_application` may change (the owner, source, job link and creation time never change; the
+screenshot has its own call)."""
+
+
+@dataclass(frozen=True, slots=True)
+class StoredApplication:
+    """One application (`ApplicationRow`) without its screenshot (`ApplyRepo.get_screenshot`). JSON columns are opaque
+    here: the apply service validates them against `contract.apply`."""
+
+    id: str
+    owner_key: str
+    source: str
+    job_url: str
+    domain: str
+    ats: str
+    stage: str
+    created_at: datetime
+    updated_at: datetime
+    user_id: str | None = None
+    profile_id: str | None = None
+    match_id: str | None = None
+    apply_url: str | None = None
+    manual_url: str | None = None
+    company: str | None = None
+    title: str | None = None
+    location: str | None = None
+    job: dict[str, Any] | None = None
+    stage_reason: str | None = None
+    needs: list[dict[str, Any]] | None = None
+    review: dict[str, Any] | None = None
+    review_digest: str | None = None
+    has_screenshot: bool = False
+    approved_at: datetime | None = None
+    approved_digest: str | None = None
+    submitted_at: datetime | None = None
+    attempts: int = 0
+    lease_owner: str | None = None
+    lease_until: datetime | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class StoredApplicationEvent:
+    """One entry of an application's history (`ApplicationEventRow`). ``detail`` never holds a resume, token or email body."""
+
+    id: str
+    application_id: str
+    at: datetime
+    kind: str
+    source: str
+    from_stage: str | None = None
+    to_stage: str | None = None
+    detail: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class StoredPlaybook:
+    """A stored ATS playbook (`AtsPlaybookRow`); ``spec`` is the `apply.playbook.Playbook` JSON."""
+
+    id: str
+    ats: str
+    status: str
+    origin: str
+    version: int
+    spec: dict[str, Any]
+    successes: int
+    failures: int
+    created_at: datetime
+    updated_at: datetime
+    domain: str | None = None
+    promoted_at: datetime | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class StoredRunMetric:
+    """One engine run (`RunMetricRow`)."""
+
+    id: str
+    created_at: datetime
+    run_kind: str
+    ats: str
+    domain: str
+    mode: str
+    outcome: str
+    application_id: str | None = None
+    playbook_id: str | None = None
+    playbook_status: str | None = None
+    agent: str | None = None
+    failure_reason: str | None = None
+    steps: int = 0
+    duration_ms: int = 0
+    cost_micro_usd: int = 0
+    fields_total: int = 0
+    fields_filled: int = 0
+    fields_model: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class StoredApplyProfile:
+    """A person's saved details, kept answers and resume (`ApplyProfileRow`)."""
+
+    owner_key: str
+    details: dict[str, Any]
+    answers: dict[str, Any]
+    created_at: datetime
+    updated_at: datetime
+    user_id: str | None = None
+    resume_name: str | None = None
+    resume_type: str | None = None
+    resume_bytes: bytes | None = field(default=None, repr=False)
+
+
+class ApplyRepo(Protocol):
+    """Auto-apply's applications (with their history and screenshots), playbooks, run metrics and saved profiles.
+
+    Reads that take ``owner_key`` answer another owner's id exactly like an unknown one; ``owner_key=None`` is the worker's
+    unscoped read. `claim_next` hands one runnable application to one worker at a time (a lease), on SQLite and Postgres.
+    """
+
+    async def create_application(self, item: StoredApplication) -> None:
+        """Insert a new application."""
+        ...
+
+    async def get_application(self, application_id: str, owner_key: str | None) -> StoredApplication | None:
+        """The application (scoped to ``owner_key`` unless None), or None."""
+        ...
+
+    async def list_applications(self, owner_key: str, limit: int = 200) -> list[StoredApplication]:
+        """The owner's applications, newest first."""
+        ...
+
+    async def update_application(
+        self,
+        application_id: str,
+        changes: Mapping[str, Any],
+        *,
+        now: datetime,
+        expected_stage: str | None = None,
+    ) -> StoredApplication | None:
+        """Apply ``changes`` (keys from `APPLICATION_COLUMNS`) and stamp ``updated_at``; None when the application does
+        not exist or, with ``expected_stage``, is no longer in that stage (nothing is changed then). A key outside
+        `APPLICATION_COLUMNS` raises ValueError."""
+        ...
+
+    async def delete_application(self, application_id: str, owner_key: str) -> bool:
+        """Delete the owner's application with its history; False when there was none."""
+        ...
+
+    async def count_created_since(self, owner_key: str, since: datetime) -> int:
+        """How many applications the owner created at or after ``since``."""
+        ...
+
+    async def claim_next(
+        self, *, now: datetime, lease_owner: str, lease_until: datetime, exclude_domains: Collection[str] = ()
+    ) -> StoredApplication | None:
+        """Take the oldest runnable application whose lease is free and whose domain is not in ``exclude_domains``: one in
+        ``queued`` (to fill), or in ``ready_to_submit`` with ``approved_at`` set and ``submitted_at`` unset (to submit). The
+        lease is written in the same statement that checks it, so two workers never hold one application."""
+        ...
+
+    async def release(self, application_id: str, lease_owner: str) -> None:
+        """Clear the lease if ``lease_owner`` still holds it."""
+        ...
+
+    async def get_screenshot(self, application_id: str, owner_key: str | None) -> bytes | None:
+        """The review screenshot (scoped like `get_application`), or None."""
+        ...
+
+    async def put_screenshot(self, application_id: str, data: bytes | None) -> None:
+        """Replace (or with None, remove) the review screenshot."""
+        ...
+
+    async def purge_screenshots(self, before: datetime) -> int:
+        """Remove the screenshots of applications last updated before ``before``; how many were removed."""
+        ...
+
+    async def add_event(self, event: StoredApplicationEvent) -> None:
+        """Append an entry to an application's history."""
+        ...
+
+    async def list_events(self, application_id: str, limit: int = 200) -> list[StoredApplicationEvent]:
+        """The application's history, oldest first."""
+        ...
+
+    async def list_playbooks(
+        self, *, ats: str | None = None, domain: str | None = None, statuses: Collection[str] | None = None
+    ) -> list[StoredPlaybook]:
+        """Playbooks, filtered by ATS key, domain and status (None: any), newest first."""
+        ...
+
+    async def get_playbook(self, playbook_id: str) -> StoredPlaybook | None: ...
+
+    async def save_playbook(self, item: StoredPlaybook) -> None:
+        """Insert the playbook, or replace the one with the same id."""
+        ...
+
+    async def record_playbook_result(
+        self, playbook_id: str, *, success: bool, now: datetime
+    ) -> StoredPlaybook | None:
+        """Count a success or a failure for the playbook (in one statement); the playbook after it, or None."""
+        ...
+
+    async def set_playbook_status(
+        self, playbook_id: str, status: str, *, now: datetime
+    ) -> StoredPlaybook | None:
+        """Change a playbook's status (``promoted_at`` is stamped when it becomes active); None when there is none."""
+        ...
+
+    async def add_run_metric(self, item: StoredRunMetric) -> None: ...
+
+    async def list_run_metrics(self, since: datetime, limit: int = 20000) -> list[StoredRunMetric]:
+        """Runs at or after ``since``, newest first."""
+        ...
+
+    async def count_domain_runs_since(self, domain: str, since: datetime) -> int:
+        """Engine runs against ``domain`` at or after ``since`` (the per-site limit)."""
+        ...
+
+    async def last_domain_run_at(self, domain: str) -> datetime | None:
+        """When the latest run against ``domain`` started, or None."""
+        ...
+
+    async def get_profile(self, owner_key: str) -> StoredApplyProfile | None: ...
+
+    async def put_details(
+        self, owner_key: str, *, user_id: str | None, details: dict[str, Any], now: datetime
+    ) -> StoredApplyProfile:
+        """Create or update the owner's saved details (answers and resume are kept)."""
+        ...
+
+    async def put_resume(
+        self,
+        owner_key: str,
+        *,
+        user_id: str | None,
+        name: str | None,
+        media_type: str | None,
+        data: bytes | None,
+        now: datetime,
+    ) -> StoredApplyProfile:
+        """Create the profile if needed and replace (or with ``data=None``, remove) its resume file."""
+        ...
+
+    async def merge_answers(
+        self, owner_key: str, *, user_id: str | None, answers: Mapping[str, Any], now: datetime
+    ) -> StoredApplyProfile:
+        """Create the profile if needed and merge ``answers`` (question key -> answer record) into its kept answers."""
+        ...
+
+
 __all__ = [
+    "APPLICATION_COLUMNS",
+    "ApplyRepo",
     "BillingRepo",
     "CardRepo",
     "ChatMessage",
@@ -1363,6 +1624,9 @@ __all__ = [
     "SessionRepo",
     "SettleResult",
     "SettleStatus",
+    "StoredApplication",
+    "StoredApplicationEvent",
+    "StoredApplyProfile",
     "StoredAuthSession",
     "StoredCardSnapshot",
     "StoredClaimMark",
@@ -1373,7 +1637,9 @@ __all__ = [
     "StoredMatch",
     "StoredOrder",
     "StoredPlan",
+    "StoredPlaybook",
     "StoredPortfolio",
+    "StoredRunMetric",
     "StoredSearchDoc",
     "StoredSearchRun",
     "StoredUser",
