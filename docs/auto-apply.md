@@ -154,11 +154,86 @@ once.
 ## 3. How a run works
 
 ```
-match (gates pass) ─► queued ─► preparing ─► ready_to_review ─► approved ─► submitting ─► sent
-                                    │                                           │
-                                    ├─► needs_you (question, CAPTCHA, login)    ├─► check_this_one (unclear outcome)
-                                    └─► failed (refunded)                       └─► failed (refunded)
+start checks pass ─► queued ─► filling ─► waiting_for_you ⇄ (answers) ─► approved ─► submitting ─► sent
+                                  │                                         │            │
+                                  ├─► needs_signin (login-first ATS)        │            ├─► check_this_one (no confirmation seen)
+                                  ├─► closed (posting gone)                 │            └─► failed (refunded)
+                                  └─► failed (refunded)                     └─► waiting_for_you (form changed)
+any state before submitting ─► cancelled (by the person)
 ```
+
+### 3.1 The end-to-end flow (agreed 2026-11-07)
+
+The web app only records decisions; a separate worker does all browser work; Postgres holds the state.
+
+1. **Start**: `POST /api/apply/applications {matchId | listingId, resume: "tailored" | "saved"}`. Code runs every
+   check before any browser or model:
+   - signed in, and a credit is free;
+   - the posting is live (one fetch through the SSRF-guarded ingest);
+   - its ATS is one we fill;
+   - the match's hard requirements didn't block;
+   - no earlier application to the same posting URL.
+
+   If any check fails, nothing is created or charged. If they all pass, the row is created `queued` with a credit
+   **hold**, not a charge.
+2. **Fill pass (worker)**:
+   - Lease the row and open a Browser Use browser with the guard; the probe must come back blocked.
+   - Read the form into a field list and fill each field from the cheapest source: Your details and the answer bank
+     (code), then resume facts, then the playbook, and only for custom questions Haiku then Sonnet, citing facts.
+   - Whatever is still unknown becomes a question; the resume input stays empty.
+   - Store the review (every field's selector, label, value, source and citation, the questions, a screenshot) and its
+     digest. The row moves to `waiting_for_you`.
+   - Stop the browser in `finally`.
+3. **Answers**: `POST /applications/{id}/answers {questionKey, value, save}`.
+   - A saved answer goes into the answer bank under a normalised question key.
+   - Every other waiting application that asks the same key is updated and re-queued.
+   - ID numbers are refused.
+4. **Approve**: `POST /applications/{id}/approve {digest}`. It must equal the stored digest. The row moves to
+   `approved`.
+5. **Submit pass (worker)**:
+   - Open a new browser and re-fill the same values, with no model call.
+   - Attach the resume and recompute the digest. If it differs, the row goes back to `waiting_for_you`.
+   - Commit the `submitting` marker, lift the guard for the form's own host only, and click.
+   - The outcome:
+     - the confirmation signature is seen → `sent`, and the hold is charged;
+     - no clear outcome → `check_this_one`, never retried;
+     - an error before the click → `failed`, and the hold is released.
+6. **After**: replies come in by paste, by forwarding (§3.2) or, in v2, by mailbox access. A classifier moves the stage
+   forward only. No reply in 3 weeks gives a one-tap "Heard back?" check.
+
+**Reuse.** Tables come from the old branch's migration `0016`: `applications` (state, lease, review JSON, digest,
+hold), `application_events`, `apply_profiles`, `ats_playbooks` and `run_metrics`. A new `answer_bank` maps a question
+key to its value, source, date and "ask each time" flag.
+
+**Changes from `feat/auto-apply`:**
+- Local Chromium becomes Browser Use browsers.
+- The computer-use agent becomes the field-list loop.
+- New: the start checks, the credit hold, the `submitting` marker, the shared answer bank, and sign-in for all of it.
+
+**Settled:**
+- Re-fill at submit rather than keeping a browser open between review and approval: one extra session, about ₹0.1, and
+  no idle billing.
+- The MVP leaves the Ready-for-you stack, the playbook learning loop and Gmail to v2.
+
+### 3.2 Confirmations and replies without a proxy mailbox (agreed 2026-11-07)
+
+- **The application went through.** The submit pass reads the ATS's success signature (Greenhouse's thank-you page,
+  Lever's `/thanks`, Ashby's success message, kept in the playbook). It stores a screenshot and the time, then marks
+  `sent`. No email is needed; this is the proof on the Sent screen.
+- **Replies.** The person's own email is on the form, so replies land in their inbox. Three ways in:
+  1. **Paste or forward one email** to the application (MVP).
+  2. **A personal receive-only forwarding address** (`apply+<token>@<inbound domain>`) with a ready Gmail or Outlook
+     filter on ATS senders and "your application" subjects. Only forwarded mail reaches us, and only mail matching an
+     application is kept. Gmail's forwarding-verification code is shown in the app.
+  3. **Gmail or Outlook API, read-only, under its own consent** (v2; Gmail's read scope needs Google's security
+     assessment).
+
+  Opt-in plus-addressing (`name+leafout@gmail.com`) makes the filter one line; forms that reject `+` get the plain
+  address. Matching is by employer, role and sent date. A classifier quotes the email, and when more than one
+  application could match, the person is asked.
+- **Verification codes.** A form that emails a code during submit pauses on that field and becomes `needs_you`
+  ("Type the code Kestrel Pay emailed you"). The browser stays open about 10 minutes; a forwarded code fills it
+  automatically. With no code, the row becomes `check_this_one`.
 
 - **Worker.** A separate process leases `applications` rows (the database is the queue, as on the old branch). It
   drives a Browser Use **standalone browser** over CDP with Playwright, so the worker needs no local Chromium. Every
@@ -245,7 +320,6 @@ Recruitee, iCIMS).
 3. **Spend for the live test.** A Browser Use top-up (from $5, about ₹472) for the 20 to 30 posting fill-only run.
 4. **Where the worker runs.** FastAPI Cloud may run it beside the app now that it needs no local browser; otherwise a
    small separate host. To be confirmed in A1.2.
-5. **Which email goes on applications, and how replies are tracked.** Tsenta puts its own hosted mailbox on every
-   form, which powers its tracker and OTP capture but locks the person in. Proposed: the person's own email on every
-   form; tracking through a per-person forwarding address (one Gmail or Outlook filter) or pasted emails, and Gmail
-   read access (`gmail.readonly`, its own consent) later.
+5. **Which email goes on applications, and how replies are tracked.** Decided 2026-11-07: the person's own email on
+   every form, confirmation from the ATS's success page, and replies by paste or forward, then by a forwarding address
+   with a ready filter, then by mailbox access in v2 (§3.2).
