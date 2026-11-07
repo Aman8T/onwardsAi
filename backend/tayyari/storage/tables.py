@@ -475,7 +475,10 @@ class CreditLedgerRow(Base):
     the sum of the deltas), and the free monthly postings and pass uses are rows with a delta of 0.
 
     ``reason``: ``purchase`` (``ref`` is the order id), ``match`` (``ref`` is the match id; -1 for a credit, 0 for a
-    pass), ``free_monthly`` (0), ``refund`` (``ref`` is ``refund:<id of the row it reverses>``), ``admin``.
+    pass), ``free_monthly`` (0), ``refund`` (``ref`` is ``refund:<id of the row it reverses>``), ``admin``, and the
+    auto-apply credit hold: ``apply_free`` (0, one of the free applications), ``apply_hold`` (minus the application's
+    price, or 0 while no price is set), both with ``ref`` ``apply:<application id>``, and ``apply_capture`` (0, ``ref``
+    ``capture:<id of the hold row>``: the hold was charged and can no longer be given back).
     """
 
     __tablename__ = "credit_ledger"
@@ -940,7 +943,7 @@ class CardSnapshotRow(Base):
 # ───────────────────────────── auto-apply ─────────────────────────────
 
 APPLY_OWNER_LEN = 80
-"""``u:<user id>`` for an account, ``a:<40 hex>`` for an anonymous browser (the sha256 of its apply cookie)."""
+"""``u:<user id>`` for an account (``a:<40 hex>``, an anonymous browser, is legacy: removed with the anonymous path)."""
 APPLY_STAGE_LEN = 24
 APPLY_ATS_LEN = 64
 """An ATS key (``greenhouse``, ``lever``, ``ashby``, ``workday``, ``unknown``) or ``site:<host>`` for a recorded playbook."""
@@ -949,6 +952,10 @@ APPLY_DIGEST_LEN = 64
 APPLY_LEASE_LEN = 64
 APPLY_SHORT_LEN = 32
 APPLY_TITLE_LEN = 300
+APPLY_POSTING_KEY_LEN = 64
+"""``<ats>:<board>:<job id>`` from the posting's fingerprint, else the sha256 of its normalised apply URL."""
+APPLY_QUESTION_KEY_LEN = 64
+"""A canonical answer key (``noticePeriod``, ``workAuthorization:IN``) or ``q:<20 hex>`` for a custom question."""
 
 
 class ApplicationRow(Base):
@@ -956,9 +963,16 @@ class ApplicationRow(Base):
     questions for the person (a JSON list of `NeedsInput`), ``review`` the `ApplicationReview` of the last fill (what will
     be sent) with ``review_digest`` its digest, and ``review_screenshot`` the JPEG of the filled form. Nothing is submitted
     unless ``approved_digest`` equals the digest of the values about to be sent. ``lease_owner`` / ``lease_until`` mark the
-    worker that holds the row. ``owner_key`` is ``u:<user id>`` or ``a:<hash>`` (an anonymous browser); the row goes with
-    its account (ON DELETE CASCADE). ``profile_id`` and ``match_id`` are plain references (no foreign key): an application
-    outlives the match it came from."""
+    worker that holds the row. ``owner_key`` is ``u:<user id>``; the row goes with its account (ON DELETE CASCADE).
+    ``profile_id``, ``match_id`` and ``listing_id`` are plain references (no foreign key): an application outlives the
+    match or Discover listing it came from.
+
+    ``posting_key`` identifies the posting (one application per posting per person: a unique index on
+    ``(user_id, posting_key)``). ``resume_choice`` is ``tailored`` or ``saved``. ``submitting_at`` is the marker committed
+    just before the submit click: a row in ``submitting`` is never claimed again. ``credit_ref`` / ``credit_state`` are the
+    credit hold (``apply:<id>``; ``held``, ``charged`` or ``released``). ``stop_reason`` says why a run stopped for the
+    person (a `StopReason`), ``confirmation_screenshot`` is the JPEG of the employer's confirmation (read on its own, like
+    the review screenshot), and ``progress`` the per-section fill counts shown while it fills."""
 
     __tablename__ = "applications"
 
@@ -991,12 +1005,22 @@ class ApplicationRow(Base):
     lease_until: Mapped[datetime | None] = mapped_column(UtcDateTime)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime)
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    posting_key: Mapped[str | None] = mapped_column(String(APPLY_POSTING_KEY_LEN))
+    resume_choice: Mapped[str | None] = mapped_column(String(8))
+    listing_id: Mapped[str | None] = mapped_column(String(ID_LEN))
+    submitting_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    credit_ref: Mapped[str | None] = mapped_column(String(PROVIDER_ID_LEN))
+    credit_state: Mapped[str | None] = mapped_column(String(12))
+    stop_reason: Mapped[str | None] = mapped_column(String(APPLY_STAGE_LEN))
+    confirmation_screenshot: Mapped[bytes | None] = mapped_column(LargeBinary)
+    progress: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
 
     __table_args__ = (
         Index("ix_applications_owner_key_created_at", "owner_key", "created_at"),
         Index("ix_applications_stage_updated_at", "stage", "updated_at"),
         Index("ix_applications_domain", "domain"),
         Index("ix_applications_user_id", "user_id"),
+        Index("ix_applications_user_id_posting_key", "user_id", "posting_key", unique=True),
     )
 
 
@@ -1082,9 +1106,11 @@ class RunMetricRow(Base):
 
 
 class ApplyProfileRow(Base):
-    """One person's saved details for every application (``details``: `ApplicantDetails` JSON), the answers they chose to
-    keep (``answers``: question key -> answer record, the per-person answer cache) and their resume file. Keyed by
-    ``owner_key`` like `ApplicationRow`; goes with its account (ON DELETE CASCADE)."""
+    """One person's auto-apply settings and resume file: ``self_id_on_forms`` (self-identification answers are used on
+    forms only when this is on; otherwise the decline option is picked), when the first 30-second check was done
+    (``first_check_at``), when they agreed to the auto-apply terms (``consent_at``), and the saved resume with its sha256.
+    ``details`` and ``answers`` are legacy (the answer bank, `AnswerBankRow`, replaces them). Keyed by ``owner_key`` like
+    `ApplicationRow`; goes with its account (ON DELETE CASCADE)."""
 
     __tablename__ = "apply_profiles"
 
@@ -1097,8 +1123,39 @@ class ApplyProfileRow(Base):
     resume_bytes: Mapped[bytes | None] = mapped_column(LargeBinary)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime)
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    self_id_on_forms: Mapped[bool] = mapped_column(Boolean)
+    first_check_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    consent_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    resume_sha256: Mapped[str | None] = mapped_column(String(HASH_LEN))
 
     __table_args__ = (Index("ix_apply_profiles_user_id", "user_id"),)
+
+
+class AnswerBankRow(Base):
+    """One saved answer of one person, shared by every application form that asks the same question: ``question_key`` is
+    a canonical key (``noticePeriod``, ``workAuthorization:IN``) or ``q:<hash>`` of a custom question's label, and
+    ``question`` the label it was asked with. ``value`` is NULL for an "ask each time" entry with no answer yet. ``source``
+    is where it came from (``resume``, ``first_check``, ``form``, ``you`` or ``default``); ``answered_on`` the employer
+    whose form asked it and ``application_id`` that application (a plain reference). ``confirmed_at`` is the last "Still
+    true?" confirmation. ID numbers and the other never-stored answers are refused by the repository. Goes with its account
+    (ON DELETE CASCADE)."""
+
+    __tablename__ = "answer_bank"
+
+    user_id: Mapped[str] = mapped_column(
+        String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    question_key: Mapped[str] = mapped_column(String(APPLY_QUESTION_KEY_LEN), primary_key=True)
+    question: Mapped[str] = mapped_column(String(APPLY_TITLE_LEN))
+    value: Mapped[str | None] = mapped_column(Text)
+    source: Mapped[str] = mapped_column(String(16))
+    answered_on: Mapped[str | None] = mapped_column(String(APPLY_TITLE_LEN))
+    application_id: Mapped[str | None] = mapped_column(String(ID_LEN))
+    ask_each_time: Mapped[bool] = mapped_column(Boolean)
+    answered_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    confirmed_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
 
 
 __all__ = [
@@ -1107,6 +1164,8 @@ __all__ = [
     "APPLY_DOMAIN_LEN",
     "APPLY_LEASE_LEN",
     "APPLY_OWNER_LEN",
+    "APPLY_POSTING_KEY_LEN",
+    "APPLY_QUESTION_KEY_LEN",
     "APPLY_SHORT_LEN",
     "APPLY_STAGE_LEN",
     "APPLY_TITLE_LEN",
@@ -1132,6 +1191,7 @@ __all__ = [
     "ROLE_ID_LEN",
     "USER_AGENT_LEN",
     "WEEKLY_TOKEN_LEN",
+    "AnswerBankRow",
     "ApplicationEventRow",
     "ApplicationRow",
     "ApplyProfileRow",

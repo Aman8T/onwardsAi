@@ -61,6 +61,7 @@ from tayyari.storage.ports import (
     ConsumeOutcome,
     ConsumeSource,
     EmailTaken,
+    HoldState,
     MatchListing,
     OpenProfile,
     OwnedProfile,
@@ -523,6 +524,10 @@ class FakeLimitRepo:
         for key in old:
             del self.hits[key]
         return len(old)
+
+    async def record_spend(self, at: datetime, micro_usd: int, scope: str) -> None:
+        await _yield()
+        self._s.add_spend(at, micro_usd, (TOTAL,) if scope == TOTAL else (TOTAL, scope))
 
     # inspection helper (not part of the port)
     def spend(self, day: date, scope: str) -> tuple[int, int]:
@@ -1274,13 +1279,10 @@ class FakeBillingRepo:
     ) -> ConsumeOutcome | None:
         await _yield()
         balance = self.balances.setdefault(user_id, _Balance())
-        earlier = self._live_uses(user_id, reasons=("match", "free_monthly"), ref=ref)
+        earlier = self._live_uses(user_id, reasons=_MATCH_REASONS, ref=ref)
         if earlier:
             use = earlier[0]
-            source: ConsumeSource = (
-                "free_monthly" if use.reason == "free_monthly" else ("credit" if use.delta < 0 else "pass")
-            )
-            return ConsumeOutcome(source, balance.credits, balance.pass_until, replayed=True)
+            return ConsumeOutcome(_source_of(use), balance.credits, balance.pass_until, replayed=True)
         if balance.pass_until is not None and balance.pass_until > _utc(now):
             self._add(user_id, 0, "match", ref, now)
             return ConsumeOutcome("pass", balance.credits, balance.pass_until)
@@ -1296,13 +1298,75 @@ class FakeBillingRepo:
     async def release(self, user_id: str, ref: str, *, now: datetime) -> bool:
         await _yield()
         balance = self.balances.setdefault(user_id, _Balance())
-        earlier = self._live_uses(user_id, reasons=("match", "free_monthly"), ref=ref)
+        earlier = self._live_uses(user_id, reasons=(*_MATCH_REASONS, *_HOLD_REASONS), ref=ref)
         if not earlier:
             return False
         use = earlier[0]
+        if use.reason in _HOLD_REASONS and self._captured(user_id, use.id):
+            return False  # charged: a capture is never given back here
         balance.credits -= use.delta
         self._add(user_id, -use.delta, "refund", f"refund:{use.id}", now)
         return True
+
+    # auto-apply credit hold
+    def _captured(self, user_id: str, hold_id: str) -> bool:
+        return any(
+            row.reason == "apply_capture" and row.ref == f"capture:{hold_id}"
+            for row in self.ledger_of(user_id)
+        )
+
+    async def hold(
+        self, user_id: str, ref: str, *, now: datetime, free_allowance: int, cost: int | None
+    ) -> ConsumeOutcome | None:
+        await _yield()
+        balance = self.balances.setdefault(user_id, _Balance())
+        earlier = self._live_uses(user_id, reasons=_HOLD_REASONS, ref=ref)
+        if earlier:
+            return ConsumeOutcome(_source_of(earlier[0]), balance.credits, balance.pass_until, replayed=True)
+        if len(self._live_uses(user_id, reasons=("apply_free",))) < free_allowance:
+            self._add(user_id, 0, "apply_free", ref, now)
+            return ConsumeOutcome("free_apply", balance.credits, balance.pass_until)
+        price = 0 if cost is None else max(cost, 0)
+        if price == 0:
+            self._add(user_id, 0, "apply_hold", ref, now)
+            return ConsumeOutcome("hold", balance.credits, balance.pass_until)
+        if balance.credits < price:
+            return None
+        balance.credits -= price
+        self._add(user_id, -price, "apply_hold", ref, now)
+        return ConsumeOutcome("credit", balance.credits, balance.pass_until)
+
+    async def capture(self, user_id: str, ref: str, *, now: datetime) -> bool:
+        await _yield()
+        live = self._live_uses(user_id, reasons=_HOLD_REASONS, ref=ref)
+        if not live:
+            return False
+        if not self._captured(user_id, live[0].id):
+            self._add(user_id, 0, "apply_capture", f"capture:{live[0].id}", now)
+        return True
+
+    async def hold_state(self, user_id: str, ref: str) -> HoldState | None:
+        await _yield()
+        if not any(row.reason in _HOLD_REASONS and row.ref == ref for row in self.ledger_of(user_id)):
+            return None
+        live = self._live_uses(user_id, reasons=_HOLD_REASONS, ref=ref)
+        if not live:
+            return "released"
+        return "charged" if self._captured(user_id, live[0].id) else "held"
+
+
+_MATCH_REASONS = ("match", "free_monthly")
+_HOLD_REASONS = ("apply_hold", "apply_free")
+
+
+def _source_of(use: _LedgerRow) -> ConsumeSource:
+    if use.reason == "free_monthly":
+        return "free_monthly"
+    if use.reason == "apply_free":
+        return "free_apply"
+    if use.reason == "apply_hold":
+        return "credit" if use.delta < 0 else "hold"
+    return "credit" if use.delta < 0 else "pass"
 
 
 class FakeRepositories:

@@ -204,6 +204,11 @@ class LimitRepo(Protocol):
         """Delete counters whose window started before ``before``; returns the count."""
         ...
 
+    async def record_spend(self, at: datetime, micro_usd: int, scope: str) -> None:
+        """Add one call costing ``micro_usd`` to the spend ledger on ``at``'s UTC day, in scope ``total`` and in
+        ``scope`` (``browser_use``, say): spend that no LLM-call row records, so the daily ceiling sees it too."""
+        ...
+
 
 class KvRepo(Protocol):
     async def get(self, key: str) -> Any | None:
@@ -461,8 +466,12 @@ class UserRepo(Protocol):
 
 # ───────────────────────────── payments and entitlements ─────────────────────────────
 
-ConsumeSource = Literal["pass", "free_monthly", "credit"]
-"""What paid for one use: an active pass, the month's free allowance, or one posting credit."""
+ConsumeSource = Literal["pass", "free_monthly", "credit", "free_apply", "hold"]
+"""What paid for one use: an active pass, the month's free allowance, or one posting credit. For an auto-apply credit
+hold: one of the free applications (``free_apply``), credits (``credit``), or a hold of nothing while no price is set
+(``hold``)."""
+HoldState = Literal["held", "charged", "released"]
+"""Where an auto-apply credit hold stands: taken and still open, charged (captured), or given back (released)."""
 SettleStatus = Literal["granted", "already_paid", "unknown_order", "mismatch", "orphaned"]
 """``granted``: this call marked the order paid and applied the grant. ``already_paid``: an earlier call did.
 ``unknown_order``: no such order. ``mismatch``: the amount or currency paid is not what the order asked for (nothing
@@ -577,8 +586,30 @@ class BillingRepo(Protocol):
         ...
 
     async def release(self, user_id: str, ref: str, *, now: datetime) -> bool:
-        """Give back what ``consume`` took for ``ref`` (the credit returns, a free posting counts as unused again).
-        True when something was given back; False when ``ref`` was never paid for or was already given back."""
+        """Give back what ``consume`` or ``hold`` took for ``ref`` (the credit returns, a free posting or a free
+        application counts as unused again). True when something was given back; False when ``ref`` was never paid
+        for, was already given back, or is a hold that was captured (a charge is never given back here)."""
+        ...
+
+    async def hold(
+        self, user_id: str, ref: str, *, now: datetime, free_allowance: int, cost: int | None
+    ) -> ConsumeOutcome | None:
+        """Take an auto-apply credit hold for ``ref`` (``apply:<application id>``): a free application while fewer
+        than ``free_allowance`` are in use over the account's lifetime (``apply_free``, delta 0), else ``cost``
+        credits (``apply_hold``, delta ``-cost``); None when the credits do not cover ``cost``. ``cost=None`` (no
+        price set) holds nothing: an ``apply_hold`` row with delta 0, so capture and release still work. Idempotent on
+        ``(user_id, ref)``: a live hold (captured or not) is returned as ``replayed``; after a release a new hold is
+        taken."""
+        ...
+
+    async def capture(self, user_id: str, ref: str, *, now: datetime) -> bool:
+        """Charge the live hold for ``ref``: an ``apply_capture`` row (delta 0, ``ref`` ``capture:<hold row id>``),
+        after which `release` refuses it. True when the hold is captured (by this call or an earlier one); False
+        when there is no live hold (never taken, or released)."""
+        ...
+
+    async def hold_state(self, user_id: str, ref: str) -> HoldState | None:
+        """Where the latest hold for ``ref`` stands, from the ledger; None when no hold was ever taken."""
         ...
 
 
@@ -1331,11 +1362,43 @@ APPLICATION_COLUMNS: frozenset[str] = frozenset(
     {
         "profile_id", "match_id", "apply_url", "manual_url", "domain", "ats", "company", "title", "location", "job",
         "stage", "stage_reason", "needs", "review", "review_digest", "approved_at", "approved_digest", "submitted_at",
-        "attempts", "lease_owner", "lease_until",
+        "attempts", "lease_owner", "lease_until", "posting_key", "resume_choice", "listing_id", "submitting_at",
+        "credit_ref", "credit_state", "stop_reason", "progress",
     }
 )  # fmt: skip
 """The columns `ApplyRepo.update_application` may change (the owner, source, job link and creation time never change; the
-screenshot has its own call)."""
+review and confirmation screenshots have their own calls)."""
+
+NEVER_STORED_ANSWER_KEYS: frozenset[str] = frozenset(
+    {
+        "pan", "aadhaar", "passportNumber", "idNumber", "bankAccount", "ifsc", "casteCategory", "religion",
+        "maritalStatus", "fatherName", "signature", "declaration", "consent", "knowsSomeoneHere", "referral",
+        "previousApplication",
+    }
+)  # fmt: skip
+"""Answer keys the answer bank never stores (mirrors ``contract.apply.NEVER_STORED_KEYS``; a test keeps them equal): ID
+numbers, caste, religion, marital status, father's name, signatures, declarations and consent ticks, referrals and
+earlier applications are typed on the employer's page or in Review for one form. `ApplyRepo.put_answer` refuses them
+(a second check behind the service's)."""
+
+FILLED_TERMINAL_STAGES: frozenset[str] = frozenset(
+    {"sent", "failed", "closed", "cancelled", "viewed", "interviewing", "offer", "rejected", "applied"}
+)
+"""Stages whose filled values `ApplyRepo.purge_filled` may clear: nothing more will be filled or sent from them
+(``applied`` is the legacy name of ``sent``). ``check_this_one`` is left alone until the person resolves it."""
+
+ACCOUNT_OWNER_PREFIX = "u:"
+"""``owner_key`` of an account's applications and profile is ``u:<user id>``."""
+
+
+def account_owner_key(user_id: str) -> str:
+    """The ``owner_key`` of an account's applications and apply profile."""
+    return f"{ACCOUNT_OWNER_PREFIX}{user_id}"
+
+
+def is_never_stored(question_key: str) -> bool:
+    """True when the answer bank must not keep ``question_key`` (its part before any ``:`` is a never-stored key)."""
+    return question_key.split(":", 1)[0] in NEVER_STORED_ANSWER_KEYS
 
 
 @dataclass(frozen=True, slots=True)
@@ -1372,6 +1435,20 @@ class StoredApplication:
     attempts: int = 0
     lease_owner: str | None = None
     lease_until: datetime | None = None
+    posting_key: str | None = None
+    """``<ats>:<board>:<job id>``, else the sha256 of the normalised apply URL: unique per person when set."""
+    resume_choice: str | None = None
+    """``tailored`` or ``saved``."""
+    listing_id: str | None = None
+    submitting_at: datetime | None = None
+    """The marker committed just before the submit click (with stage ``submitting``)."""
+    credit_ref: str | None = None
+    credit_state: str | None = None
+    """``held``, ``charged`` or ``released``."""
+    stop_reason: str | None = None
+    has_confirmation: bool = False
+    """Whether a confirmation screenshot is stored (`ApplyRepo.get_confirmation`)."""
+    progress: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1432,7 +1509,7 @@ class StoredRunMetric:
 
 @dataclass(frozen=True, slots=True)
 class StoredApplyProfile:
-    """A person's saved details, kept answers and resume (`ApplyProfileRow`)."""
+    """A person's auto-apply settings and resume (`ApplyProfileRow`); ``details`` and ``answers`` are legacy."""
 
     owner_key: str
     details: dict[str, Any]
@@ -1443,6 +1520,29 @@ class StoredApplyProfile:
     resume_name: str | None = None
     resume_type: str | None = None
     resume_bytes: bytes | None = field(default=None, repr=False)
+    resume_sha256: str | None = None
+    self_id_on_forms: bool = False
+    first_check_at: datetime | None = None
+    consent_at: datetime | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class StoredAnswer:
+    """One saved answer in a person's answer bank (`AnswerBankRow`). ``value`` is None for an "ask each time" entry with
+    no answer yet; ``source`` is ``resume``, ``first_check``, ``form``, ``you`` or ``default``."""
+
+    user_id: str
+    question_key: str
+    question: str
+    source: str
+    ask_each_time: bool
+    answered_at: datetime
+    created_at: datetime
+    updated_at: datetime
+    value: str | None = field(default=None, repr=False)
+    answered_on: str | None = None
+    application_id: str | None = None
+    confirmed_at: datetime | None = None
 
 
 class ApplyRepo(Protocol):
@@ -1453,7 +1553,12 @@ class ApplyRepo(Protocol):
     """
 
     async def create_application(self, item: StoredApplication) -> None:
-        """Insert a new application."""
+        """Insert a new application. Raises when the person already has an application with the same ``posting_key``
+        (``sqlalchemy.exc.IntegrityError`` in SQL, ValueError in the fake); NULL posting keys may repeat."""
+        ...
+
+    async def find_by_posting(self, user_id: str, posting_key: str) -> StoredApplication | None:
+        """The person's application for the posting ``posting_key``, or None."""
         ...
 
     async def get_application(self, application_id: str, owner_key: str | None) -> StoredApplication | None:
@@ -1474,7 +1579,8 @@ class ApplyRepo(Protocol):
     ) -> StoredApplication | None:
         """Apply ``changes`` (keys from `APPLICATION_COLUMNS`) and stamp ``updated_at``; None when the application does
         not exist or, with ``expected_stage``, is no longer in that stage (nothing is changed then). A key outside
-        `APPLICATION_COLUMNS` raises ValueError."""
+        `APPLICATION_COLUMNS` raises ValueError; a ``posting_key`` the person already uses raises like
+        `create_application`."""
         ...
 
     async def delete_application(self, application_id: str, owner_key: str) -> bool:
@@ -1489,8 +1595,25 @@ class ApplyRepo(Protocol):
         self, *, now: datetime, lease_owner: str, lease_until: datetime, exclude_domains: Collection[str] = ()
     ) -> StoredApplication | None:
         """Take the oldest runnable application whose lease is free and whose domain is not in ``exclude_domains``: one in
-        ``queued`` (to fill), or in ``ready_to_submit`` with ``approved_at`` set and ``submitted_at`` unset (to submit). The
-        lease is written in the same statement that checks it, so two workers never hold one application."""
+        ``queued`` (to fill) or ``approved`` (to submit); legacy: also ``ready_to_submit`` with ``approved_at`` set and
+        ``submitted_at`` unset. A row in ``submitting`` is never taken, even with an expired lease: the click may have
+        happened. The lease is written in the same statement that checks it, so two workers never hold one
+        application."""
+        ...
+
+    async def list_expired(
+        self, stages: Collection[str], *, now: datetime, limit: int = 50
+    ) -> list[StoredApplication]:
+        """Applications in one of ``stages`` that no worker holds (no lease, or a lease that ended before ``now``),
+        least recently updated first: the worker's sweep (``submitting`` -> ``check_this_one``, ``filling`` ->
+        ``queued``)."""
+        ...
+
+    async def list_waiting(
+        self, user_id: str, stages: Collection[str] = ("waiting_for_you",)
+    ) -> list[StoredApplication]:
+        """The person's applications in one of ``stages``, oldest first (an answer saved on one re-queues the others
+        that ask the same question)."""
         ...
 
     async def release(self, application_id: str, lease_owner: str) -> None:
@@ -1506,7 +1629,22 @@ class ApplyRepo(Protocol):
         ...
 
     async def purge_screenshots(self, before: datetime) -> int:
-        """Remove the screenshots of applications last updated before ``before``; how many were removed."""
+        """Remove the screenshots of applications last updated before ``before``; how many were removed. Legacy:
+        `purge_filled` replaces it."""
+        ...
+
+    async def get_confirmation(self, application_id: str, owner_key: str | None) -> bytes | None:
+        """The confirmation screenshot (scoped like `get_application`), or None."""
+        ...
+
+    async def put_confirmation(self, application_id: str, data: bytes | None) -> None:
+        """Replace (or with None, remove) the confirmation screenshot."""
+        ...
+
+    async def purge_filled(self, before: datetime) -> int:
+        """Clear what was filled into the form on applications in a `FILLED_TERMINAL_STAGES` stage last updated before
+        ``before``: both screenshots, the review, the needs and ``job["typed"]``. The stage, digests, times and history
+        stay, and ``updated_at`` is not touched. How many applications changed."""
         ...
 
     async def add_event(self, event: StoredApplicationEvent) -> None:
@@ -1572,8 +1710,42 @@ class ApplyRepo(Protocol):
         media_type: str | None,
         data: bytes | None,
         now: datetime,
+        sha256: str | None = None,
     ) -> StoredApplyProfile:
-        """Create the profile if needed and replace (or with ``data=None``, remove) its resume file."""
+        """Create the profile if needed and replace (or with ``data=None``, remove) its resume file and its sha256."""
+        ...
+
+    async def set_self_id(self, user_id: str, on: bool, *, now: datetime) -> StoredApplyProfile:
+        """Create the account's profile if needed and switch self-identification answers on forms on or off."""
+        ...
+
+    async def mark_first_check(self, user_id: str, *, now: datetime) -> StoredApplyProfile:
+        """Create the account's profile if needed and record that the first 30-second check was done at ``now``."""
+        ...
+
+    async def set_consent(self, user_id: str, *, now: datetime) -> StoredApplyProfile:
+        """Create the account's profile if needed and record that the person agreed to the auto-apply terms at ``now``."""
+        ...
+
+    async def list_answers(self, user_id: str) -> list[StoredAnswer]:
+        """The person's answer bank, in question key order."""
+        ...
+
+    async def get_answers(self, user_id: str, keys: Collection[str]) -> dict[str, StoredAnswer]:
+        """The person's saved answers for ``keys`` (question key -> answer); keys with no answer are left out."""
+        ...
+
+    async def put_answer(self, item: StoredAnswer) -> StoredAnswer:
+        """Insert or replace the answer for ``(user_id, question_key)`` (``created_at`` of an existing row is kept); the
+        stored answer. Raises ValueError for a never-stored key (`is_never_stored`)."""
+        ...
+
+    async def confirm_answer(self, user_id: str, question_key: str, *, now: datetime) -> StoredAnswer | None:
+        """Mark the answer as still true at ``now`` ("Still true?"); None when there is none."""
+        ...
+
+    async def delete_answer(self, user_id: str, question_key: str) -> bool:
+        """Remove the answer; False when there was none."""
         ...
 
     async def merge_answers(
@@ -1584,7 +1756,10 @@ class ApplyRepo(Protocol):
 
 
 __all__ = [
+    "ACCOUNT_OWNER_PREFIX",
     "APPLICATION_COLUMNS",
+    "FILLED_TERMINAL_STAGES",
+    "NEVER_STORED_ANSWER_KEYS",
     "ApplyRepo",
     "BillingRepo",
     "CardRepo",
@@ -1599,6 +1774,7 @@ __all__ = [
     "DiscoverRun",
     "EmailTaken",
     "HandoffRepo",
+    "HoldState",
     "InterviewRepo",
     "JobSearchRepo",
     "KvRepo",
@@ -1624,6 +1800,7 @@ __all__ = [
     "SessionRepo",
     "SettleResult",
     "SettleStatus",
+    "StoredAnswer",
     "StoredApplication",
     "StoredApplicationEvent",
     "StoredApplyProfile",
@@ -1652,4 +1829,6 @@ __all__ = [
     "UserRepo",
     "VariantKind",
     "WeeklyRepo",
+    "account_owner_key",
+    "is_never_stored",
 ]

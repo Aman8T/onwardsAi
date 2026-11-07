@@ -26,6 +26,13 @@ What is purged, with the windows from ``settings.retention``:
 ``jobsearch``          searches with AI, prep pages and referral notes older than 30 days (`JOBSEARCH_RETENTION`)
 ``interview``          practice interviews (transcript, work and debrief) older than ``settings.interview.retention_days``
                        (30 by default, `INTERVIEW_RETENTION`)
+``apply_filled``       on finished applications (`ports.FILLED_TERMINAL_STAGES`) untouched for
+                       ``settings.apply.screenshot_days``: both screenshots, the review, the needs and the typed values
+                       (`ApplyRepo.purge_filled`); the stage, digests, times and history stay
+``apply_holds``        not a purge but a reconcile: an application still marked ``credit_state = 'held'`` once it was
+                       sent (or moved on from sent) has its hold captured, and one that failed, closed or was cancelled
+                       has it released; ``credit_state`` then says what the ledger says. Both calls are idempotent, so
+                       this only repairs a capture or release that failed at the time
 =====================  ===========================================================================
 
 The permanent sample corpus is exempt from the payload and metadata steps: decision and Jev rows flagged
@@ -50,8 +57,9 @@ from tayyari.core.logging import get_logger
 from tayyari.core.settings import Settings
 
 from .db import Database, dialect_insert, rowcount
-from .repos import build_repositories
+from .repos import Repositories, build_repositories
 from .tables import (
+    ApplicationRow,
     ChatSessionRow,
     DecisionLogRow,
     DecisionStateRow,
@@ -79,6 +87,12 @@ USER_TEXT_PACKS: Final = frozenset({"chat_gate"})
 """Decision packs whose state holds text a visitor typed: never part of the permanent sample corpus."""
 USER_TEXT_PURPOSE: Final = "chat"
 """The ``llm_calls.purpose`` of a visitor's chat turn: never part of the permanent sample corpus."""
+HOLD_CAPTURE_STAGES: Final = frozenset({"sent", "viewed", "interviewing", "offer", "rejected"})
+"""An application in one of these stages was sent: a hold still open on it is captured."""
+HOLD_RELEASE_STAGES: Final = frozenset({"failed", "closed", "cancelled"})
+"""An application in one of these stages was not sent: a hold still open on it is released."""
+HOLD_SWEEP_LIMIT: Final = 500
+"""Applications reconciled per run (the next run takes the rest)."""
 
 
 async def _claim(db: Database, now: datetime) -> bool:
@@ -212,6 +226,55 @@ async def _delete_unreferenced_states(db: Database, cutoff: datetime) -> int:
         return rowcount(await s.execute(stmt))
 
 
+async def _reconcile_holds(db: Database, repos: Repositories, now: datetime) -> int:
+    """Capture or release the credit holds still open on finished applications; how many applications changed.
+
+    Each application is its own unit: one that fails is logged and left ``held`` for the next run.
+    """
+    stmt = (
+        select(ApplicationRow.id, ApplicationRow.user_id, ApplicationRow.stage, ApplicationRow.credit_ref)
+        .where(
+            ApplicationRow.credit_state == "held",
+            ApplicationRow.user_id.is_not(None),
+            ApplicationRow.stage.in_(sorted(HOLD_CAPTURE_STAGES | HOLD_RELEASE_STAGES)),
+        )
+        .order_by(ApplicationRow.updated_at.asc(), ApplicationRow.id.asc())
+        .limit(HOLD_SWEEP_LIMIT)
+    )
+    async with db.session() as s:
+        rows = (await s.execute(stmt)).all()
+    changed = 0
+    for row in rows:
+        user_id: str = row.user_id
+        ref = row.credit_ref or f"apply:{row.id}"
+        try:
+            if row.stage in HOLD_CAPTURE_STAGES:
+                await repos.billing.capture(user_id, ref, now=now)
+            else:
+                await repos.billing.release(user_id, ref, now=now)
+            state = await repos.billing.hold_state(user_id, ref)
+            if state == "held":
+                continue
+            if row.stage in HOLD_CAPTURE_STAGES and state != "charged":
+                # the application went to the employer but its hold is gone: it will never be charged
+                log.error("apply_sent_without_hold", application_id=row.id, state=state)
+            async with db.session() as s:
+                done = await s.execute(
+                    update(ApplicationRow)
+                    .where(
+                        ApplicationRow.id == row.id,
+                        ApplicationRow.credit_state == "held",
+                        ApplicationRow.stage
+                        == row.stage,  # a row reopened meanwhile keeps its new hold's state
+                    )
+                    .values(credit_state=state)
+                )
+            changed += rowcount(done)
+        except Exception:
+            log.error("apply_hold_reconcile_failed", application_id=row.id, exc_info=True)
+    return changed
+
+
 async def run_maintenance(
     db: Database, settings: Settings, now: datetime, keep_profile_ids: Collection[str] = ()
 ) -> dict[str, int]:
@@ -234,6 +297,7 @@ async def run_maintenance(
     payload_cutoff = now - timedelta(days=retention.payload_days)
     metadata_cutoff = now - timedelta(days=retention.metadata_days)
     interview_retention = timedelta(days=settings.interview.retention_days)
+    filled_cutoff = now - timedelta(days=settings.apply.screenshot_days)
 
     steps: list[tuple[str, Callable[[], Awaitable[int]]]] = [
         ("profiles", lambda: repos.profiles.purge_expired(profile_cutoff)),
@@ -251,6 +315,8 @@ async def run_maintenance(
         ("discover_closed", lambda: repos.discover.purge_closed(now - CLOSED_LISTING_RETENTION)),
         ("jobsearch", lambda: repos.jobsearch.purge(now - JOBSEARCH_RETENTION)),
         ("interview", lambda: repos.interview.purge(now - interview_retention)),
+        ("apply_filled", lambda: repos.apply.purge_filled(filled_cutoff)),
+        ("apply_holds", lambda: _reconcile_holds(db, repos, now)),
     ]
     counts: dict[str, int] = {}
     errors = 0
@@ -270,6 +336,9 @@ __all__ = [
     "ADVISORY_LOCK_KEY",
     "CLOSED_LISTING_RETENTION",
     "HITS_RETENTION",
+    "HOLD_CAPTURE_STAGES",
+    "HOLD_RELEASE_STAGES",
+    "HOLD_SWEEP_LIMIT",
     "INTERVIEW_RETENTION",
     "JOBSEARCH_RETENTION",
     "LAST_RUN_KEY",

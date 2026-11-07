@@ -22,10 +22,32 @@ INTERFACES: dict[str, type[BaseModel]] = {
     for name in ["ApplyStatus", "ApplicantDetails", "ApplicantProfile", "ApplicantProfileUpdate", "FilledField", "NeedsInput",
                  "ApplicationReview", "ApplicationEvent", "ApplicationSummary", "ApplicationDetail", "ApplicationList",
                  "CreateApplicationRequest", "NeedAnswer", "AnswerNeedsRequest", "ApproveRequest", "StageChangeRequest",
-                 "EmailClassifyRequest", "EmailClassification", "MetricsRow", "FailureCount", "PlaybookSummary", "ApplyMetrics"]
+                 "EmailClassifyRequest", "EmailClassification", "MetricsRow", "FailureCount", "PlaybookSummary", "ApplyMetrics",
+                 # A1 (expand): the new shapes beside the legacy ones above
+                 "ApplyCheckRequest", "ApplyCheck", "StartApplicationRequest", "QuestionAnswer", "AnswerRequest",
+                 "AnswerResult", "ResolveRequest", "CitedFact", "ReviewResume", "ScriptStep", "AlsoWaiting", "SavedAnswer",
+                 "BankQuestion", "WorkAuthorization", "YourDetails", "SaveAnswerRequest", "FirstCheckRequest",
+                 "SelfIdRequest", "ProgressSection", "ApplyProgress"]
 }  # fmt: skip
 UNIONS = ["ApplicationStage", "AtsKind", "ApplySource", "StageSource", "FieldKind", "FieldSource", "Confidence", "RunMode",
-          "RunOutcome", "PlaybookStatus", "PlaybookOrigin", "EmailStage"]  # fmt: skip
+          "RunOutcome", "PlaybookStatus", "PlaybookOrigin", "EmailStage",
+          # A1 (expand)
+          "StopReason", "ResumeChoice", "CreditState", "ApplyBlockReason", "AnswerSource", "AnswerGroup", "ResolveOutcome",
+          "ScriptOp", "ProgressState"]  # fmt: skip
+
+
+def test_every_union_is_listed() -> None:
+    """A literal alias exported by the TypeScript file but missing from UNIONS would never be compared."""
+    assert set(_ts().aliases) == set(UNIONS)
+
+
+def test_never_stored_keys_are_python_only_and_not_a_limit() -> None:
+    assert (
+        isinstance(ap.NEVER_STORED_KEYS, frozenset)
+        and {"pan", "aadhaar", "signature"} <= ap.NEVER_STORED_KEYS
+    )
+    assert "NEVER_STORED_KEYS" not in APPLY_TS.read_text(encoding="utf-8")
+    assert not any(n.startswith("APPLY_") and not isinstance(getattr(ap, n), int) for n in ap.__all__)
 
 
 def _ts() -> TsTypes:

@@ -65,6 +65,7 @@ EXPECTED_TABLES = {
     "ats_playbooks",
     "run_metrics",
     "apply_profiles",
+    "answer_bank",
 }
 
 

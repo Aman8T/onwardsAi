@@ -80,6 +80,14 @@ export const STAGE_LABEL: Record<ApplicationStage, string> = {
   offer: 'Offer',
   rejected: 'Not this time',
   failed: 'Could not fill',
+  waiting_for_you: 'Waiting for you',
+  needs_signin: 'Needs you on the site',
+  approved: 'Approved',
+  submitting: 'Sending',
+  sent: 'Sent',
+  check_this_one: 'Check this one',
+  closed: 'Posting closed',
+  cancelled: 'Cancelled',
 };
 
 export const TRACKING_STAGES: ApplicationStage[] = ['applied', 'viewed', 'interviewing', 'offer', 'rejected'];

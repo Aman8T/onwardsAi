@@ -9,6 +9,12 @@ same last credit) impossible, and the ledger rows written under the lock keep th
 The ledger is append-only. A use that is given back (`release`) is not deleted or edited: a ``refund`` row whose
 ``ref`` is ``refund:<id of the use>`` reverses it, and a use with such a row no longer counts, not for the idempotency
 check and not for the month's free allowance.
+
+An auto-apply credit hold is two-phase on the same ledger. `hold` writes ``apply_free`` (one of the account's free
+applications, delta 0) or ``apply_hold`` (minus the price, or 0 while no price is set) with ``ref``
+``apply:<application id>``. `capture` charges it with an ``apply_capture`` row (delta 0, ``ref`` ``capture:<id of the
+hold row>``); `release` gives it back with a ``refund`` row like any other use, and refuses a captured hold. A hold
+with neither is still open. All three run under the account's lock and are idempotent.
 """
 
 from __future__ import annotations
@@ -23,12 +29,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tayyari.core.clock import Clock, SystemClock
 
 from ..db import Database, dialect_insert, rowcount
-from ..ports import ConsumeOutcome, ConsumeSource, SettleResult, StoredEntitlements, StoredOrder
+from ..ports import ConsumeOutcome, ConsumeSource, HoldState, SettleResult, StoredEntitlements, StoredOrder
 from ..tables import CreditLedgerRow, EntitlementRow, OrderRow
 
-USE_REASONS: Final = ("match", "free_monthly")
+MATCH_REASONS: Final = ("match", "free_monthly")
+"""Ledger reasons of a paid posting match (`consume`)."""
+HOLD_REASONS: Final = ("apply_hold", "apply_free")
+"""Ledger reasons of an auto-apply credit hold (`hold`)."""
+USE_REASONS: Final = (*MATCH_REASONS, *HOLD_REASONS)
 """Ledger reasons that are a use of an entitlement (the ones `release` can reverse)."""
+CAPTURE_REASON: Final = "apply_capture"
 REFUND_PREFIX: Final = "refund:"
+CAPTURE_PREFIX: Final = "capture:"
 
 _ORDER_COLUMNS = (
     OrderRow.id,
@@ -68,6 +80,10 @@ def _new_id() -> str:
 def _source_of(reason: str, delta: int) -> ConsumeSource:
     if reason == "free_monthly":
         return "free_monthly"
+    if reason == "apply_free":
+        return "free_apply"
+    if reason == "apply_hold":
+        return "credit" if delta < 0 else "hold"
     return "credit" if delta < 0 else "pass"
 
 
@@ -188,7 +204,7 @@ class SqlBillingRepo:
     ) -> ConsumeOutcome | None:
         async with self._db.session() as s:
             credits, pass_until = await self._lock(s, user_id, now)
-            earlier = await _live_uses(s, user_id, ref=ref, reasons=USE_REASONS)
+            earlier = await _live_uses(s, user_id, ref=ref, reasons=MATCH_REASONS)
             if earlier:
                 use = earlier[0]
                 return ConsumeOutcome(_source_of(use.reason, use.delta), credits, pass_until, replayed=True)
@@ -216,6 +232,8 @@ class SqlBillingRepo:
             if not earlier:
                 return False
             use = earlier[0]
+            if use.reason in HOLD_REASONS and await _captured(s, user_id, use.id):
+                return False  # charged: a capture is never given back here
             if use.delta < 0:
                 await s.execute(
                     update(EntitlementRow)
@@ -224,6 +242,64 @@ class SqlBillingRepo:
                 )
             _ledger(s, user_id, -use.delta, "refund", f"{REFUND_PREFIX}{use.id}", now)
             return True
+
+    # ───────────────────────── auto-apply credit hold ─────────────────────────
+
+    async def hold(
+        self, user_id: str, ref: str, *, now: datetime, free_allowance: int, cost: int | None
+    ) -> ConsumeOutcome | None:
+        async with self._db.session() as s:
+            credits, pass_until = await self._lock(s, user_id, now)
+            earlier = await _live_uses(s, user_id, ref=ref, reasons=HOLD_REASONS)
+            if earlier:
+                use = earlier[0]
+                return ConsumeOutcome(_source_of(use.reason, use.delta), credits, pass_until, replayed=True)
+            free_used = await _live_uses(s, user_id, reasons=("apply_free",))
+            if len(free_used) < free_allowance:
+                _ledger(s, user_id, 0, "apply_free", ref, now)
+                return ConsumeOutcome("free_apply", credits, pass_until)
+            price = 0 if cost is None else max(cost, 0)
+            if price == 0:
+                _ledger(s, user_id, 0, "apply_hold", ref, now)
+                return ConsumeOutcome("hold", credits, pass_until)
+            if credits < price:
+                return None
+            await s.execute(
+                update(EntitlementRow)
+                .where(EntitlementRow.user_id == user_id)
+                .values(credits=EntitlementRow.credits - price)
+            )
+            _ledger(s, user_id, -price, "apply_hold", ref, now)
+            return ConsumeOutcome("credit", credits - price, pass_until)
+
+    async def capture(self, user_id: str, ref: str, *, now: datetime) -> bool:
+        async with self._db.session() as s:
+            await self._lock(s, user_id, now)
+            live = await _live_uses(s, user_id, ref=ref, reasons=HOLD_REASONS)
+            if not live:
+                return False
+            held = live[0]
+            if not await _captured(s, user_id, held.id):
+                _ledger(s, user_id, 0, CAPTURE_REASON, f"{CAPTURE_PREFIX}{held.id}", now)
+            return True
+
+    async def hold_state(self, user_id: str, ref: str) -> HoldState | None:
+        async with self._db.session() as s:
+            ever = (
+                await s.execute(
+                    select(CreditLedgerRow.id).where(
+                        CreditLedgerRow.user_id == user_id,
+                        CreditLedgerRow.ref == ref,
+                        CreditLedgerRow.reason.in_(HOLD_REASONS),
+                    )
+                )
+            ).first()
+            if ever is None:
+                return None
+            live = await _live_uses(s, user_id, ref=ref, reasons=HOLD_REASONS)
+            if not live:
+                return "released"
+            return "charged" if await _captured(s, user_id, live[0].id) else "held"
 
     # ───────────────────────── inside a transaction ─────────────────────────
 
@@ -275,6 +351,20 @@ def _ledger(s: AsyncSession, user_id: str, delta: int, reason: str, ref: str | N
     s.add(CreditLedgerRow(id=_new_id(), user_id=user_id, delta=delta, reason=reason, ref=ref, created_at=now))
 
 
+async def _captured(s: AsyncSession, user_id: str, hold_id: str) -> bool:
+    """Whether the hold row ``hold_id`` has been charged (an ``apply_capture`` row points at it)."""
+    found = (
+        await s.execute(
+            select(CreditLedgerRow.id).where(
+                CreditLedgerRow.user_id == user_id,
+                CreditLedgerRow.reason == CAPTURE_REASON,
+                CreditLedgerRow.ref == f"{CAPTURE_PREFIX}{hold_id}",
+            )
+        )
+    ).first()
+    return found is not None
+
+
 async def _live_uses(
     s: AsyncSession,
     user_id: str,
@@ -307,4 +397,12 @@ async def _live_uses(
     return [row for row in rows if f"{REFUND_PREFIX}{row.id}" not in given_back]
 
 
-__all__ = ["REFUND_PREFIX", "USE_REASONS", "SqlBillingRepo"]
+__all__ = [
+    "CAPTURE_PREFIX",
+    "CAPTURE_REASON",
+    "HOLD_REASONS",
+    "MATCH_REASONS",
+    "REFUND_PREFIX",
+    "USE_REASONS",
+    "SqlBillingRepo",
+]

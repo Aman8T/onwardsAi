@@ -4,7 +4,8 @@
 count is exact across replicas and under concurrency, on Postgres and on SQLite 3.35+.
 
 ``add_spend`` is the single writer of ``spend_daily``; the LLM-call and decision-log repositories call it
-inside their own transaction, so a call and its cost are written together or not at all.
+inside their own transaction, so a call and its cost are written together or not at all. Spend no LLM-call
+row records (a Browser Use session) goes through ``record_spend``, which calls it in its own transaction.
 """
 
 from __future__ import annotations
@@ -21,6 +22,8 @@ from ..tables import RateLimitHitRow, SpendDailyRow, as_utc
 TOTAL_SCOPE = "total"
 ANTHROPIC_SCOPE = "anthropic"
 JEV_SCOPE = "jev"
+BROWSER_USE_SCOPE = "browser_use"
+"""Browser Use sessions: their cost is read after each session stops and recorded with `SqlLimitRepo.record_spend`."""
 
 
 def window_start(now: datetime, window_s: int) -> datetime:
@@ -104,9 +107,15 @@ class SqlLimitRepo:
                 await s.execute(delete(RateLimitHitRow).where(RateLimitHitRow.window_start < before))
             )
 
+    async def record_spend(self, at: datetime, micro_usd: int, scope: str) -> None:
+        scopes = (TOTAL_SCOPE,) if scope == TOTAL_SCOPE else (TOTAL_SCOPE, scope)
+        async with self._db.session() as s:
+            await add_spend(s, self._db.dialect, spend_deltas([(at, micro_usd, scopes)]))
+
 
 __all__ = [
     "ANTHROPIC_SCOPE",
+    "BROWSER_USE_SCOPE",
     "JEV_SCOPE",
     "TOTAL_SCOPE",
     "SqlLimitRepo",

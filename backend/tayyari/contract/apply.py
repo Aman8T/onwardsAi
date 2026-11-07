@@ -6,6 +6,10 @@ exactly when the TypeScript field is ``x?:`` (absent on output, never ``null``),
 
 The whole feature sits behind ``AUTO_APPLY_ENABLED`` (off by default). Nothing is ever submitted to an employer without the
 person's explicit approval of the exact values shown to them (`ApproveRequest.digest` must equal `ApplicationReview.digest`).
+
+A1 is built expand-first (docs/auto-apply.md, the A1 plan): the new names (stages, `StartApplicationRequest`,
+`AnswerRequest`, `YourDetails` and the rest) sit next to the old branch's names, which are marked ``legacy`` and are removed
+in the last package once nothing uses them.
 """
 
 # ruff: noqa: N815  (the field names are camelCase on purpose: they are the JSON keys of shared/apply.ts)
@@ -23,44 +27,96 @@ APPLY_EMAIL_MAX_CHARS: Final = 20000
 APPLY_DETAIL_MAX_CHARS: Final = 300
 APPLY_RESUME_MAX_BYTES: Final = 5 * 1024 * 1024
 
+NEVER_STORED_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "pan",
+        "aadhaar",
+        "passportNumber",
+        "idNumber",
+        "bankAccount",
+        "ifsc",
+        "casteCategory",
+        "religion",
+        "maritalStatus",
+        "fatherName",
+        "signature",
+        "declaration",
+        "consent",
+        "knowsSomeoneHere",
+        "referral",
+        "previousApplication",
+    }
+)
+"""Question keys whose answers are never kept in the answer bank (spec 2.2 "What we leave to you"). ID numbers, caste or
+category, religion, marital status and father's name are typed by the person on the employer's page (``onSite`` needs);
+signatures, declarations and consent ticks are typed by the person in Review for one form only (``perOffer``). Python only
+(the frontend gets the labels in `YourDetails.neverStored`); not ``APPLY_``-prefixed, because those are int limits."""
+
 ApplicationStage = Literal[
     "queued",
     "filling",
-    "needs_user",
-    "ready_to_submit",
-    "applied",
+    "waiting_for_you",
+    "needs_signin",
+    "approved",
+    "submitting",
+    "sent",
+    "check_this_one",
+    "failed",
+    "closed",
+    "cancelled",
     "viewed",
     "interviewing",
     "offer",
     "rejected",
-    "failed",
+    # legacy: removed in Z
+    "needs_user",
+    "ready_to_submit",
+    "applied",
 ]
-"""Where an application stands. ``ready_to_submit`` with ``approvedAt`` set means the person approved and the worker is
-submitting it; nothing reaches the employer before that."""
+"""Where an application stands (spec 3). ``waiting_for_you``: questions or the review wait for the person.
+``needs_signin``: a login wall, a CAPTCHA or an emailed code (`StopReason` says which). ``approved``: the person approved
+the review and the worker will submit it. ``submitting``: the send was committed before the click; only the engine leaves
+it. ``check_this_one``: no clear outcome after the click, never retried. The legacy names (``needs_user``,
+``ready_to_submit``, ``applied``) are the old branch's and go once nothing writes them."""
 
 AtsKind = Literal["greenhouse", "lever", "ashby", "workday", "unknown"]
-"""The applicant tracking system behind a job link. Workday and unknown go straight to the AI fallback."""
+"""The applicant tracking system behind a job link."""
 
-ApplySource = Literal["match", "link"]
-"""How the application started: approving a posting match, or pasting a job link."""
+ApplySource = Literal["match", "link", "discover"]
+"""How the application started: a posting match, a pasted job link (legacy), or a Discover listing (which runs the match
+first)."""
 
 StageSource = Literal["engine", "user", "email", "system"]
 """Who moved a stage: the apply engine, the person, an email they received, or the app itself."""
 
 FieldKind = Literal[
-    "text", "email", "tel", "url", "number", "date", "textarea", "select", "radio", "checkbox", "file"
+    "text",
+    "email",
+    "tel",
+    "url",
+    "number",
+    "date",
+    "textarea",
+    "select",
+    "radio",
+    "checkbox",
+    "file",
+    "combobox",
+    "checkboxGroup",
 ]
 
-FieldSource = Literal["details", "resume", "answers", "model", "agent", "user", "default"]
-"""Where a filled value came from: the person's saved details, their resume file, an answer they saved before, a model
-answer grounded in their facts, the AI browser agent, what they typed just now, or a safe default (an optional field)."""
+FieldSource = Literal["details", "resume", "fact", "answers", "model", "agent", "user", "default"]
+"""Where a filled value came from: the person's saved details, their resume file, one of their facts, an answer kept in the
+answer bank, a model answer grounded in their facts, the AI browser agent (legacy: removed in Z), what they typed just now,
+or a safe default (an optional field, or "prefer not to say" for self-ID)."""
 
 Confidence = Literal["high", "medium", "low"]
 
-RunMode = Literal["playbook", "ai", "manual"]
-"""How a run filled the form: a deterministic playbook (no model), the AI browser agent, or not at all (manual apply)."""
+RunMode = Literal["playbook", "loop", "ai", "manual"]
+"""How a run filled the form: a deterministic playbook (no model), the field-list loop (Haiku, then Sonnet), the AI browser
+agent (legacy: removed in Z), or not at all (manual apply)."""
 
-RunOutcome = Literal["success", "needs_user", "failed", "blocked"]
+RunOutcome = Literal["success", "needs_user", "failed", "blocked", "check_this_one", "closed", "needs_signin"]
 
 PlaybookStatus = Literal["active", "draft", "retired"]
 PlaybookOrigin = Literal["builtin", "recorded", "manual"]
@@ -68,18 +124,69 @@ PlaybookOrigin = Literal["builtin", "recorded", "manual"]
 EmailStage = Literal["applied", "viewed", "interviewing", "offer", "rejected", "none"]
 """What an email from an employer says about an application (``none``: nothing that moves a stage)."""
 
+StopReason = Literal[
+    "questions", "signin", "challenge", "form_changed", "verification_code", "fill_error", "guard_probe"
+]
+"""Why a run stopped short of a review or a send: questions only the person can answer, a login wall, a CAPTCHA, a form
+that changed since the review, an emailed verification code, a fill step that failed, or a guard probe that did not come
+back blocked (nothing was filled)."""
+
+ResumeChoice = Literal["tailored", "saved"]
+"""Which resume goes with the application: the match's tailored resume (exported to PDF) or the person's saved file."""
+
+CreditState = Literal["held", "charged", "released"]
+"""The application's credit: held at start, charged when the application is sent, released when it was not."""
+
+ApplyBlockReason = Literal[
+    "signed_out",
+    "no_credit",
+    "closed",
+    "not_fillable",
+    "own_account_ats",
+    "blocked_by_requirement",
+    "already_applied",
+    "manual_only",
+    "unknown_liveness",
+]
+"""Why "Apply for me" is not offered (spec 2.1). ``unknown_liveness``: the posting could not be checked, so the card
+offers the employer's site and never says closed."""
+
+AnswerSource = Literal["resume", "first_check", "form", "you", "default"]
+"""Where a kept answer came from: the resume, the 30-second first check, a form's question, Your details, or a default."""
+
+AnswerGroup = Literal["you", "work", "education", "registrations", "where_how", "self_id"]
+"""The Your details section an answer is shown under."""
+
+ResolveOutcome = Literal["sent", "not_sent"]
+"""The person's word on a ``check_this_one`` application: it went through (charged) or it did not (released)."""
+
+ScriptOp = Literal["fill", "select", "check", "choose", "group"]
+"""One step of a fill script: type into a field, pick a select option, tick a box, pick from a combobox or typeahead, or
+pick in a radio or checkbox group. There is no upload step: the review leaves the file input empty, and the submit pass
+attaches the resume itself after the ``submitting`` marker, once the guard is lifted for the form's upload hosts."""
+
+ProgressState = Literal["done", "now", "todo"]
+
 
 class ApplyStatus(_Model):
     enabled: bool
     signedIn: bool
     anonymous: bool
-    """True when this visitor may use auto-apply without an account (no sign-in provider is configured)."""
+    """Legacy (removed in Z): auto-apply is for signed-in people only."""
     agents: list[str]
-    """The AI fallback adapters this server has keys for (``gemini``, ``claude``), in the order they are tried."""
+    """Legacy (removed in Z): the computer-use fallback adapters."""
+    firstCheckDone: bool | None = None
+    """The person did (or skipped) the 30-second first check."""
+    consentAt: str | None = None
+    """When the person agreed to what auto-apply sends and who processes it (spec 5); absent until they did."""
+    price: int | None = None
+    """Credits charged when an application is sent; absent while the price is not set."""
+    freeLeft: int | None = None
+    """Free applications this account has left."""
 
 
 class ApplicantDetails(_Model):
-    """What the person saved once for every application. Every field is theirs, typed by them; nothing here is inferred."""
+    """Legacy (removed in Z; replaced by `YourDetails`): what the person saved once for every application."""
 
     firstName: str | None = None
     lastName: str | None = None
@@ -106,6 +213,8 @@ class ApplicantDetails(_Model):
 
 
 class ApplicantProfile(_Model):
+    """Legacy (removed in Z; replaced by `YourDetails`)."""
+
     details: ApplicantDetails
     hasResume: bool
     savedAnswers: int
@@ -114,6 +223,8 @@ class ApplicantProfile(_Model):
 
 
 class ApplicantProfileUpdate(_Model):
+    """Legacy (removed in Z)."""
+
     details: ApplicantDetails
 
 
@@ -129,6 +240,29 @@ class FilledField(_Model):
     profileKey: str | None = None
     confidence: Confidence | None = None
     factIds: list[str] | None = None
+    selector: str | None = None
+    """The field's stable selector (id or name, never an nth-of-type path); required once the legacy runner is gone."""
+    optionValue: str | None = None
+    """For a select, radio or combobox: the option's own value (``value`` is its visible text)."""
+    options: list[str] | None = None
+    """The visible options, so Review can show the chosen one among the others."""
+    group: str | None = None
+    """The form's own section heading (Personal information, Eligibility, ...)."""
+    order: int | None = None
+    """Position in the form, for showing fields in the form's order."""
+    locked: bool | None = None
+    """A value the person cannot change in Review (their name and email from the resume, a default)."""
+    questionKey: str | None = None
+    """The answer bank key this field was filled from or will be kept under."""
+    attestation: bool | None = None
+    """A signature, declaration or consent tick: typed by the person in Review, never kept."""
+
+
+class AlsoWaiting(_Model):
+    """Another waiting application that asks the same question."""
+
+    applicationId: str
+    company: str
 
 
 class NeedsInput(_Model):
@@ -142,11 +276,50 @@ class NeedsInput(_Model):
     options: list[str] | None = None
     suggestion: str | None = None
     factIds: list[str] | None = None
+    questionKey: str | None = None
+    """The answer bank key; one answer fills every waiting form that asks it. Required once the legacy runner is gone."""
+    perOffer: bool | None = None
+    """Answered for this form only (expected CTC for this role, a declaration): the save box starts unticked."""
+    onSite: bool | None = None
+    """Typed by the person on the employer's page (an ID number, caste or category): never stored, and the application
+    cannot be approved while a required one is open."""
+    requiredBy: str | None = None
+    """The employer whose form asks it."""
+    unit: str | None = None
+    """The unit shown beside the input (``%``, ``lakh a year``)."""
+    alsoWaiting: list[AlsoWaiting] | None = None
+    """Other waiting applications that ask the same question."""
+
+
+class CitedFact(_Model):
+    """The text of a fact a model answer cites, copied at fill time (the application outlives the match)."""
+
+    id: str
+    text: str
+
+
+class ReviewResume(_Model):
+    """The resume that goes with the application. It is attached only when the person approves; ``sha256`` is part of the
+    digest, so a changed resume needs a new approval."""
+
+    name: str
+    sha256: str
+    choice: ResumeChoice
+
+
+class ScriptStep(_Model):
+    """One executable step of the review's fill script; the submit pass replays it with no model."""
+
+    selector: str
+    op: ScriptOp
+    frame: int
+    value: str | None = None
+    optionValue: str | None = None
 
 
 class ApplicationReview(_Model):
     """What will be sent, captured after the form was filled and before anything was submitted. ``digest`` is the sha256
-    of the fill plan (selectors and values); approving signs exactly this digest."""
+    over the read-back form (stable key and value per field) and the resume's sha256; approving signs exactly this digest."""
 
     digest: str
     capturedAt: str
@@ -157,6 +330,11 @@ class ApplicationReview(_Model):
     playbookId: str | None = None
     agent: str | None = None
     submitLabel: str | None = None
+    resume: ReviewResume | None = None
+    facts: list[CitedFact] | None = None
+    script: list[ScriptStep] | None = None
+    model: str | None = None
+    """The model that answered custom questions or ran the field-list loop, when one did."""
 
 
 class ApplicationEvent(_Model):
@@ -166,6 +344,28 @@ class ApplicationEvent(_Model):
     fromStage: ApplicationStage | None = None
     toStage: ApplicationStage | None = None
     note: str | None = None
+
+
+class ProgressSection(_Model):
+    """One section of the form while it is being filled."""
+
+    label: str
+    state: ProgressState
+    filled: int
+    total: int
+    waiting: int | None = None
+    """Fields in this section that wait for the person."""
+    note: str | None = None
+
+
+class ApplyProgress(_Model):
+    """How far a fill has got, written by the worker while the row is ``filling``."""
+
+    sections: list[ProgressSection]
+    filled: int
+    total: int
+    fields: list[FilledField] | None = None
+    """The fields filled so far."""
 
 
 class ApplicationSummary(_Model):
@@ -185,6 +385,12 @@ class ApplicationSummary(_Model):
     matchId: str | None = None
     approvedAt: str | None = None
     stageReason: str | None = None
+    resumeChoice: ResumeChoice | None = None
+    listingId: str | None = None
+    creditState: CreditState | None = None
+    stopReason: StopReason | None = None
+    hasConfirmation: bool | None = None
+    progress: ApplyProgress | None = None
 
 
 class ApplicationDetail(_Model):
@@ -211,6 +417,12 @@ class ApplicationDetail(_Model):
     description: str | None = None
     submittedAt: str | None = None
     review: ApplicationReview | None = None
+    resumeChoice: ResumeChoice | None = None
+    listingId: str | None = None
+    creditState: CreditState | None = None
+    stopReason: StopReason | None = None
+    hasConfirmation: bool | None = None
+    progress: ApplyProgress | None = None
 
 
 class ApplicationList(_Model):
@@ -218,28 +430,163 @@ class ApplicationList(_Model):
 
 
 class CreateApplicationRequest(_Model):
+    """Legacy (removed in Z; replaced by `StartApplicationRequest`)."""
+
     url: str
     matchId: str | None = None
     profileId: str | None = None
 
 
+class ApplyCheckRequest(_Model):
+    """The cheap, uncharged pre-check behind "Apply for me" (``POST /api/apply/check``)."""
+
+    matchId: str | None = None
+    listingId: str | None = None
+    runId: str | None = None
+    applyUrl: str | None = None
+
+
+class ApplyCheck(_Model):
+    """Whether "Apply for me" is offered for a posting, and why not."""
+
+    offered: bool
+    reason: ApplyBlockReason | None = None
+    host: str | None = None
+    ats: AtsKind | None = None
+    note: str | None = None
+    applicationId: str | None = None
+    """The earlier application to the same posting (``already_applied``)."""
+    gateReasons: list[str] | None = None
+    """The match's hard requirements that blocked (``blocked_by_requirement``)."""
+
+
+class StartApplicationRequest(_Model):
+    """Start an application (``POST /api/apply/applications``). The posting match always runs first, so ``matchId`` is
+    required; ``listingId`` and ``runId`` name a Discover listing, ``applyUrl`` the form link of a pasted match."""
+
+    matchId: str
+    resume: ResumeChoice
+    listingId: str | None = None
+    runId: str | None = None
+    applyUrl: str | None = None
+
+
 class NeedAnswer(_Model):
+    """Legacy (removed in Z; replaced by `QuestionAnswer`)."""
+
     key: str
     value: str
 
 
 class AnswerNeedsRequest(_Model):
+    """Legacy (removed in Z; replaced by `AnswerRequest`)."""
+
     answers: list[NeedAnswer]
     remember: bool
+
+
+class QuestionAnswer(_Model):
+    questionKey: str
+    value: str
+    save: bool
+    """Keep it in the answer bank for later forms."""
+
+
+class AnswerRequest(_Model):
+    answers: list[QuestionAnswer]
+
+
+class AnswerResult(_Model):
+    application: ApplicationDetail
+    requeued: int
+    """Other waiting applications this answer filled and queued again."""
 
 
 class ApproveRequest(_Model):
     digest: str
 
 
+class ResolveRequest(_Model):
+    outcome: ResolveOutcome
+
+
 class StageChangeRequest(_Model):
     stage: ApplicationStage
     note: str | None = None
+
+
+class WorkAuthorization(_Model):
+    """Work authorisation for one country (ISO 3166-1 alpha-2); never inferred from another country."""
+
+    country: str
+    authorised: str
+    needsSponsorship: str | None = None
+
+
+class SavedAnswer(_Model):
+    """One answer in the answer bank, as Your details shows it."""
+
+    questionKey: str
+    question: str
+    source: AnswerSource
+    askEachTime: bool
+    answeredAt: str
+    value: str | None = None
+    """Absent for an ask-each-time question with no answer yet, and for a private value."""
+    group: AnswerGroup | None = None
+    answeredOn: str | None = None
+    """The employer whose form asked it."""
+    confirmedAt: str | None = None
+    stale: bool | None = None
+    """Older than 90 days and not confirmed since: "Still true?"."""
+    country: str | None = None
+    private: bool | None = None
+    """Saved but never shown back (current CTC)."""
+
+
+class BankQuestion(_Model):
+    """A common question not asked yet."""
+
+    questionKey: str
+    question: str
+    group: AnswerGroup
+    kind: FieldKind
+    options: list[str] | None = None
+
+
+class YourDetails(_Model):
+    """Your details: every kept answer with its source and date, the questions not asked yet, and what is never stored."""
+
+    answers: list[SavedAnswer]
+    notAskedYet: list[BankQuestion]
+    workAuthorization: list[WorkAuthorization]
+    selfIdOnForms: bool
+    neverStored: list[str]
+    """The labels of what we leave to the person (ID numbers, caste or category, ...)."""
+    hasResume: bool
+    firstCheckDone: bool
+    resumeName: str | None = None
+    updatedAt: str | None = None
+
+
+class SaveAnswerRequest(_Model):
+    questionKey: str
+    askEachTime: bool
+    value: str | None = None
+
+
+class FirstCheckRequest(_Model):
+    """The 30-second first check. ``workAuthorization`` is for India only (the first check stores IN and nothing else);
+    ``edits`` are corrections to what was read from the resume."""
+
+    skipped: bool
+    noticePeriod: str | None = None
+    workAuthorization: WorkAuthorization | None = None
+    edits: list[QuestionAnswer] | None = None
+
+
+class SelfIdRequest(_Model):
+    selfIdOnForms: bool
 
 
 class EmailClassifyRequest(_Model):
@@ -310,7 +657,13 @@ __all__ = [
     "APPLY_NOTE_MAX_CHARS",
     "APPLY_RESUME_MAX_BYTES",
     "APPLY_URL_MAX_CHARS",
+    "NEVER_STORED_KEYS",
+    "AlsoWaiting",
+    "AnswerGroup",
     "AnswerNeedsRequest",
+    "AnswerRequest",
+    "AnswerResult",
+    "AnswerSource",
     "ApplicantDetails",
     "ApplicantProfile",
     "ApplicantProfileUpdate",
@@ -320,13 +673,20 @@ __all__ = [
     "ApplicationReview",
     "ApplicationStage",
     "ApplicationSummary",
+    "ApplyBlockReason",
+    "ApplyCheck",
+    "ApplyCheckRequest",
     "ApplyMetrics",
+    "ApplyProgress",
     "ApplySource",
     "ApplyStatus",
     "ApproveRequest",
     "AtsKind",
+    "BankQuestion",
+    "CitedFact",
     "Confidence",
     "CreateApplicationRequest",
+    "CreditState",
     "EmailClassification",
     "EmailClassifyRequest",
     "EmailStage",
@@ -334,14 +694,31 @@ __all__ = [
     "FieldKind",
     "FieldSource",
     "FilledField",
+    "FirstCheckRequest",
     "MetricsRow",
     "NeedAnswer",
     "NeedsInput",
     "PlaybookOrigin",
     "PlaybookStatus",
     "PlaybookSummary",
+    "ProgressSection",
+    "ProgressState",
+    "QuestionAnswer",
+    "ResolveOutcome",
+    "ResolveRequest",
+    "ResumeChoice",
+    "ReviewResume",
     "RunMode",
     "RunOutcome",
+    "SaveAnswerRequest",
+    "SavedAnswer",
+    "ScriptOp",
+    "ScriptStep",
+    "SelfIdRequest",
     "StageChangeRequest",
     "StageSource",
+    "StartApplicationRequest",
+    "StopReason",
+    "WorkAuthorization",
+    "YourDetails",
 ]

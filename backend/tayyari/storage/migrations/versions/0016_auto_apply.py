@@ -1,17 +1,26 @@
-"""Auto-apply: applications, application_events, ats_playbooks, run_metrics, apply_profiles.
+"""Auto-apply: applications, application_events, ats_playbooks, run_metrics, apply_profiles, answer_bank.
 
 Revision ID: 0016
 Revises: 0015
 Create Date: 2026-11-05
 
-Written by hand to match `tayyari.storage.tables` exactly (a test compares the two). Additive only: five new tables and no
+Written by hand to match `tayyari.storage.tables` exactly (a test compares the two). Additive only: six new tables and no
 change to an existing one, so the previous release keeps working against this schema.
 
 ``applications`` is one job application made or tracked through auto-apply (its stage, the review of what will be sent, the
 approval that alone allows a submit, and the worker's lease); ``application_events`` its history; ``ats_playbooks`` the
 replayable per-ATS (or per-site) playbooks, built in or recorded from successful AI runs; ``run_metrics`` one row per engine
-run for the learning loop (playbook vs AI, outcome, cost); ``apply_profiles`` a person's saved details, kept answers and
-resume file. Applications and profiles go with their account (ON DELETE CASCADE); events go with their application.
+run for the learning loop (playbook vs AI, outcome, cost); ``apply_profiles`` a person's auto-apply settings (self-ID on
+forms, the first check, consent) and resume file; ``answer_bank`` the answers a person saved, shared by every form that
+asks the same question (one row per person and question key). Applications, profiles and answers go with their account
+(ON DELETE CASCADE); events go with their application.
+
+An application also carries the posting it is for (``posting_key``, unique per person), the resume choice, the
+``submitting`` marker (``submitting_at``), the credit hold (``credit_ref``, ``credit_state``), why it stopped for the
+person, the confirmation screenshot and its fill progress.
+
+Edited in place before its first deploy (no database outside development ever ran an earlier shape of 0016): a database
+that did must drop these tables and go back to revision 0015 before it migrates again.
 """
 
 from collections.abc import Sequence
@@ -68,6 +77,15 @@ def upgrade() -> None:
         sa.Column("lease_until", _ts(), nullable=True),
         sa.Column("created_at", _ts(), nullable=False),
         sa.Column("updated_at", _ts(), nullable=False),
+        sa.Column("posting_key", sa.String(64), nullable=True),
+        sa.Column("resume_choice", sa.String(8), nullable=True),
+        sa.Column("listing_id", sa.String(96), nullable=True),
+        sa.Column("submitting_at", _ts(), nullable=True),
+        sa.Column("credit_ref", sa.String(128), nullable=True),
+        sa.Column("credit_state", sa.String(12), nullable=True),
+        sa.Column("stop_reason", sa.String(24), nullable=True),
+        sa.Column("confirmation_screenshot", sa.LargeBinary(), nullable=True),
+        sa.Column("progress", _json(), nullable=True),
         sa.ForeignKeyConstraint(
             ["user_id"], ["users.id"], name="fk_applications_user_id_users", ondelete="CASCADE"
         ),
@@ -77,6 +95,9 @@ def upgrade() -> None:
     op.create_index("ix_applications_stage_updated_at", "applications", ["stage", "updated_at"])
     op.create_index("ix_applications_domain", "applications", ["domain"])
     op.create_index("ix_applications_user_id", "applications", ["user_id"])
+    op.create_index(
+        "ix_applications_user_id_posting_key", "applications", ["user_id", "posting_key"], unique=True
+    )
 
     op.create_table(
         "application_events",
@@ -154,6 +175,10 @@ def upgrade() -> None:
         sa.Column("resume_bytes", sa.LargeBinary(), nullable=True),
         sa.Column("created_at", _ts(), nullable=False),
         sa.Column("updated_at", _ts(), nullable=False),
+        sa.Column("self_id_on_forms", sa.Boolean(), nullable=False),
+        sa.Column("first_check_at", _ts(), nullable=True),
+        sa.Column("consent_at", _ts(), nullable=True),
+        sa.Column("resume_sha256", sa.String(64), nullable=True),
         sa.ForeignKeyConstraint(
             ["user_id"], ["users.id"], name="fk_apply_profiles_user_id_users", ondelete="CASCADE"
         ),
@@ -161,8 +186,29 @@ def upgrade() -> None:
     )
     op.create_index("ix_apply_profiles_user_id", "apply_profiles", ["user_id"])
 
+    op.create_table(
+        "answer_bank",
+        sa.Column("user_id", sa.String(96), nullable=False),
+        sa.Column("question_key", sa.String(64), nullable=False),
+        sa.Column("question", sa.String(300), nullable=False),
+        sa.Column("value", sa.Text(), nullable=True),
+        sa.Column("source", sa.String(16), nullable=False),
+        sa.Column("answered_on", sa.String(300), nullable=True),
+        sa.Column("application_id", sa.String(96), nullable=True),
+        sa.Column("ask_each_time", sa.Boolean(), nullable=False),
+        sa.Column("answered_at", _ts(), nullable=False),
+        sa.Column("confirmed_at", _ts(), nullable=True),
+        sa.Column("created_at", _ts(), nullable=False),
+        sa.Column("updated_at", _ts(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["user_id"], ["users.id"], name="fk_answer_bank_user_id_users", ondelete="CASCADE"
+        ),
+        sa.PrimaryKeyConstraint("user_id", "question_key", name="pk_answer_bank"),
+    )
+
 
 def downgrade() -> None:
+    op.drop_table("answer_bank")
     op.drop_index("ix_apply_profiles_user_id", table_name="apply_profiles")
     op.drop_table("apply_profiles")
     op.drop_index("ix_run_metrics_domain_created_at", table_name="run_metrics")
@@ -174,6 +220,7 @@ def downgrade() -> None:
     op.drop_table("ats_playbooks")
     op.drop_index("ix_application_events_application_id_at", table_name="application_events")
     op.drop_table("application_events")
+    op.drop_index("ix_applications_user_id_posting_key", table_name="applications")
     op.drop_index("ix_applications_user_id", table_name="applications")
     op.drop_index("ix_applications_domain", table_name="applications")
     op.drop_index("ix_applications_stage_updated_at", table_name="applications")

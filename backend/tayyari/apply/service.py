@@ -222,7 +222,8 @@ class ApplyService:
         self, owner: str, application_id: str, stage: str, note: str | None
     ) -> ApplicationDetail:
         app = await self._get(owner, application_id)
-        if not stages.allowed(app.stage, stage, "user"):
+        # approve, resolve and "I applied there" have their own routes; the generic stage route cannot go around them
+        if stage in stages.ROUTED_TARGETS or not stages.allowed(app.stage, stage, "user"):
             raise BadRequest(
                 f"An application in {app.stage.replace('_', ' ')} cannot be moved to {stage.replace('_', ' ')}."
             )

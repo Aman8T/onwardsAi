@@ -226,6 +226,8 @@ class GuardSettings(BaseModel):
     est_weekly_usd: float = Field(default=0.06, ge=0)
     """Spend reserved around the paid part of one edition: up to three web searches (a cent each), one structured call for the
     news and one read of the lead opening."""
+    est_apply_email_usd: float = Field(default=0.005, ge=0)
+    """Spend reserved before an employer's email is read into an application stage (one small Haiku call)."""
     chat_streams_per_ip: int = Field(default=2, ge=0)
     """Concurrent chat streams one client may hold open (per replica)."""
     chat_streams_per_process: int = Field(default=24, ge=0)
@@ -429,6 +431,12 @@ class BillingSettings(BaseModel):
     """Unlimited postings for 30 days from purchase, in cents."""
     free_matches_per_month: int = Field(default=1, ge=0)
     """Posting matches every account gets free each calendar month (UTC)."""
+    free_applications: int = Field(default=10, ge=0)
+    """Auto-apply applications every account gets free, over its lifetime (counted on the credit ledger's
+    ``apply_free`` rows). 0 turns the free applications off."""
+    apply_credit_cost: int | None = Field(default=None, ge=0)
+    """Credits held at the start of a paid application and charged when it is sent. Unset (the default): the price is not
+    decided yet, so the hold is a zero-credit ledger row and nothing is sold."""
 
     @field_validator("*", mode="before")
     @classmethod
@@ -704,6 +712,7 @@ _SECRET_FIELDS = (
     "stripe_secret_key",
     "stripe_webhook_secret",
     "gemini_api_key",
+    "browser_use_api_key",
 )
 
 
@@ -872,11 +881,39 @@ manual application instead. The posting match's own list (`api.matching.BOARDS_T
 
 class ApplySettings(BaseModel):
     """Auto-apply (match -> apply -> track -> learn): ``TAYYARI_APPLY__*``. The feature itself is switched by
-    ``AUTO_APPLY_ENABLED`` (`Settings.auto_apply_enabled`, off by default). The keys are third-party names (`GEMINI_API_KEY`,
-    `ANTHROPIC_API_KEY`). Nothing here is a secret."""
+    ``AUTO_APPLY_ENABLED`` (`Settings.auto_apply_enabled`, off by default). The keys are third-party names
+    (`BROWSER_USE_API_KEY`, `ANTHROPIC_API_KEY`, and the legacy `GEMINI_API_KEY`). Nothing here is a secret."""
 
-    max_per_day: int = Field(default=25, ge=0)
-    """Applications one person (an account, or an anonymous browser) may start per UTC day (0 = no limit)."""
+    max_per_day: int = Field(default=10, ge=0)
+    """Applications one signed-in person may start per UTC day (0 = no limit; spec 3.2: 10 a day at launch)."""
+    browser_use_base_url: str = "https://api.browser-use.com/api/v4"
+    """Browser Use Cloud's REST API (standalone browsers, called with httpx). The CDP and live-view URLs it returns are
+    credentials: never logged or stored."""
+    fill_browser_minutes: int = Field(default=7, ge=1, le=60)
+    """The longest a fill pass's browser may run (Browser Use bills per minute and refunds unused time on stop)."""
+    submit_browser_minutes: int = Field(default=4, ge=1, le=60)
+    """The longest a submit pass's browser may run."""
+    est_browser_usd: float = Field(default=0.01, ge=0)
+    """Spend reserved before a Browser Use session (settled to the cost read after the browser stopped)."""
+    est_fill_call_usd: float = Field(default=0.02, ge=0)
+    """Spend reserved before one round of the field-list loop (one Haiku or Sonnet call)."""
+    est_answer_usd: float = Field(default=0.005, ge=0)
+    """Spend reserved before a custom question is answered from the person's facts (one Haiku call)."""
+    fill_model: str = "claude-haiku-5-5"
+    """The field-list loop's first model."""
+    fill_fallback_model: str = "claude-sonnet-5-5"
+    """The field-list loop's second model, used only when a required field is still empty after the first."""
+    fill_max_rounds: int = Field(default=4, ge=1, le=10)
+    """Scan, ask, execute rounds the field-list loop may take."""
+    fill_deadline_s: float = Field(default=300.0, gt=0)
+    """The longest a whole fill pass may take before it stops and says so."""
+    worker_in_app: bool = True
+    """Run the apply worker inside the web app (started at startup when auto-apply is on and the Browser Use key is set).
+    False: run it as its own process (``npm run apply-worker``)."""
+    worker_backoff_s: float = Field(default=60.0, ge=0)
+    """How long the worker waits after Browser Use answers 429 (too many browsers) before it claims again."""
+    requeue_cap: int = Field(default=3, ge=0)
+    """Times an application may go back to the queue after an interrupted fill before it fails (0 = never re-queued)."""
     max_per_domain_per_hour: int = Field(default=6, ge=0)
     """Engine runs (fill or submit) against one site per hour, across everyone (0 = no limit). A run over the limit waits."""
     domain_gap_seconds: float = Field(default=20.0, ge=0)
@@ -1047,6 +1084,10 @@ class Settings(BaseSettings):
     """Auto-apply (``/api/apply/*``, the tracker page and the apply worker). Off by default; nothing of it runs while off."""
     gemini_api_key: SecretStr | None = Field(default=None, validation_alias=AliasChoices("GEMINI_API_KEY"))
     """Google's Gemini API (the Computer Use model behind auto-apply's AI fallback). Unset: that adapter is off."""
+    browser_use_api_key: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("BROWSER_USE_API_KEY")
+    )
+    """Browser Use Cloud (the standalone browsers auto-apply fills forms in). Unset: the apply worker does not start."""
 
     synth_hints: bool = False
     """Feed the first-read results to the synthesizer as hints (off: they are stored for comparison only)."""
@@ -1136,6 +1177,7 @@ class Settings(BaseSettings):
             "stripe": self.stripe_enabled,
             "auto_apply": self.auto_apply_enabled,
             "gemini_key": self.gemini_api_key is not None,
+            "browser_use_key": self.browser_use_api_key is not None,
             "database": self.db.safe_url,
             "storage": "ephemeral" if self.db.ephemeral else self.db.kind,
             "daily_ceiling_usd": self.guard.daily_ceiling_usd if self.guard.enabled else None,

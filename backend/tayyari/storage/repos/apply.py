@@ -1,9 +1,16 @@
-"""Auto-apply storage (`applications`, `application_events`, `ats_playbooks`, `run_metrics`, `apply_profiles`).
+"""Auto-apply storage (`applications`, `application_events`, `ats_playbooks`, `run_metrics`, `apply_profiles`,
+`answer_bank`).
 
-Reads of applications never load the screenshot column (it can be hundreds of kilobytes): `has_screenshot` is computed in
-SQL and the bytes come from `get_screenshot` alone. `claim_next` is a candidate SELECT followed by a conditional UPDATE per
-candidate (``WHERE id = ? AND lease is free AND stage is still runnable``): the UPDATE that matches one row wins, so two
-workers never hold one application, on SQLite and on Postgres alike.
+Reads of applications never load the two screenshot columns (each can be hundreds of kilobytes): `has_screenshot` and
+`has_confirmation` are computed in SQL and the bytes come from `get_screenshot` / `get_confirmation` alone. `claim_next` is
+a candidate SELECT followed by a conditional UPDATE per candidate (``WHERE id = ? AND lease is free AND stage is still
+runnable``): the UPDATE that matches one row wins, so two workers never hold one application, on SQLite and on Postgres
+alike. A row in ``submitting`` is never runnable: the click may have happened, so only the worker's sweep
+(`list_expired`) moves it on, to ``check_this_one``.
+
+One application per posting per person: the unique index on ``(user_id, posting_key)`` makes a second insert (or a
+double-clicked start racing the first) raise `IntegrityError`. The answer bank refuses never-stored keys
+(`ports.is_never_stored`) before anything is written.
 """
 
 from __future__ import annotations
@@ -11,7 +18,7 @@ from __future__ import annotations
 from collections.abc import Collection, Mapping
 from dataclasses import replace
 from datetime import datetime
-from typing import Any
+from typing import Any, Final
 
 from sqlalchemy import and_, delete, func, insert, or_, select, update
 from sqlalchemy.sql.elements import ColumnElement
@@ -19,13 +26,18 @@ from sqlalchemy.sql.elements import ColumnElement
 from ..db import Database, dialect_insert, rowcount
 from ..ports import (
     APPLICATION_COLUMNS,
+    FILLED_TERMINAL_STAGES,
+    StoredAnswer,
     StoredApplication,
     StoredApplicationEvent,
     StoredApplyProfile,
     StoredPlaybook,
     StoredRunMetric,
+    account_owner_key,
+    is_never_stored,
 )
 from ..tables import (
+    AnswerBankRow,
     ApplicationEventRow,
     ApplicationRow,
     ApplyProfileRow,
@@ -34,8 +46,14 @@ from ..tables import (
     as_utc,
 )
 
-_APP_COLUMNS = [c for c in ApplicationRow.__table__.columns if c.name != "review_screenshot"]
+RUNNABLE_STAGES: Final = ("queued", "approved")
+"""Stages a worker may claim: ``queued`` to fill, ``approved`` to submit (never ``submitting``)."""
+
+_SCREENSHOT_COLUMNS: Final = frozenset({"review_screenshot", "confirmation_screenshot"})
+_APP_COLUMNS = [c for c in ApplicationRow.__table__.columns if c.name not in _SCREENSHOT_COLUMNS]
 _HAS_SCREENSHOT = ApplicationRow.review_screenshot.is_not(None).label("has_screenshot")
+_HAS_CONFIRMATION = ApplicationRow.confirmation_screenshot.is_not(None).label("has_confirmation")
+_APP_SELECT = (*_APP_COLUMNS, _HAS_SCREENSHOT, _HAS_CONFIRMATION)
 
 
 def _app(row: Any) -> StoredApplication:
@@ -69,6 +87,15 @@ def _app(row: Any) -> StoredApplication:
         lease_until=row.lease_until,
         created_at=row.created_at,
         updated_at=row.updated_at,
+        posting_key=row.posting_key,
+        resume_choice=row.resume_choice,
+        listing_id=row.listing_id,
+        submitting_at=row.submitting_at,
+        credit_ref=row.credit_ref,
+        credit_state=row.credit_state,
+        stop_reason=row.stop_reason,
+        has_confirmation=bool(row.has_confirmation),
+        progress=None if row.progress is None else dict(row.progress),
     )
 
 
@@ -134,21 +161,52 @@ def _profile(row: Any) -> StoredApplyProfile:
         resume_name=row.resume_name,
         resume_type=row.resume_type,
         resume_bytes=None if row.resume_bytes is None else bytes(row.resume_bytes),
+        resume_sha256=row.resume_sha256,
+        self_id_on_forms=bool(row.self_id_on_forms),
+        first_check_at=row.first_check_at,
+        consent_at=row.consent_at,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
 
 
+def _answer(row: Any) -> StoredAnswer:
+    return StoredAnswer(
+        user_id=row.user_id,
+        question_key=row.question_key,
+        question=row.question,
+        value=row.value,
+        source=row.source,
+        answered_on=row.answered_on,
+        application_id=row.application_id,
+        ask_each_time=bool(row.ask_each_time),
+        answered_at=row.answered_at,
+        confirmed_at=row.confirmed_at,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
+
+
+def _free_lease(now: datetime) -> ColumnElement[bool]:
+    return or_(ApplicationRow.lease_until.is_(None), ApplicationRow.lease_until < now)
+
+
 def _runnable(now: datetime) -> ColumnElement[bool]:
-    """Free lease, and either queued (to fill) or approved and not yet submitted (to submit)."""
-    free = or_(ApplicationRow.lease_until.is_(None), ApplicationRow.lease_until < now)
-    to_fill = ApplicationRow.stage == "queued"
-    to_submit = and_(
+    """Free lease, and queued (to fill) or approved (to submit). Never ``submitting``."""
+    to_run = ApplicationRow.stage.in_(RUNNABLE_STAGES)
+    # legacy: removed in Z (the old engine's approved-but-not-submitted rows)
+    legacy_submit = and_(
         ApplicationRow.stage == "ready_to_submit",
         ApplicationRow.approved_at.is_not(None),
         ApplicationRow.submitted_at.is_(None),
     )
-    return and_(free, or_(to_fill, to_submit))
+    return and_(_free_lease(now), or_(to_run, legacy_submit))
+
+
+def _without_typed(job: Any) -> dict[str, Any] | None:
+    if job is None:
+        return None
+    return {key: value for key, value in dict(job).items() if key != "typed"}
 
 
 class SqlApplyRepo:
@@ -190,11 +248,28 @@ class SqlApplyRepo:
                     lease_until=item.lease_until,
                     created_at=item.created_at,
                     updated_at=item.updated_at,
+                    posting_key=item.posting_key,
+                    resume_choice=item.resume_choice,
+                    listing_id=item.listing_id,
+                    submitting_at=item.submitting_at,
+                    credit_ref=item.credit_ref,
+                    credit_state=item.credit_state,
+                    stop_reason=item.stop_reason,
+                    confirmation_screenshot=None,
+                    progress=item.progress,
                 )
             )
 
+    async def find_by_posting(self, user_id: str, posting_key: str) -> StoredApplication | None:
+        stmt = select(*_APP_SELECT).where(
+            ApplicationRow.user_id == user_id, ApplicationRow.posting_key == posting_key
+        )
+        async with self._db.session() as s:
+            row = (await s.execute(stmt)).one_or_none()
+        return None if row is None else _app(row)
+
     async def get_application(self, application_id: str, owner_key: str | None) -> StoredApplication | None:
-        stmt = select(*_APP_COLUMNS, _HAS_SCREENSHOT).where(ApplicationRow.id == application_id)
+        stmt = select(*_APP_SELECT).where(ApplicationRow.id == application_id)
         if owner_key is not None:
             stmt = stmt.where(ApplicationRow.owner_key == owner_key)
         async with self._db.session() as s:
@@ -203,7 +278,7 @@ class SqlApplyRepo:
 
     async def list_applications(self, owner_key: str, limit: int = 200) -> list[StoredApplication]:
         stmt = (
-            select(*_APP_COLUMNS, _HAS_SCREENSHOT)
+            select(*_APP_SELECT)
             .where(ApplicationRow.owner_key == owner_key)
             .order_by(ApplicationRow.created_at.desc(), ApplicationRow.id.desc())
             .limit(limit)
@@ -231,9 +306,7 @@ class SqlApplyRepo:
             if rowcount(await s.execute(stmt)) == 0:
                 return None
             row = (
-                await s.execute(
-                    select(*_APP_COLUMNS, _HAS_SCREENSHOT).where(ApplicationRow.id == application_id)
-                )
+                await s.execute(select(*_APP_SELECT).where(ApplicationRow.id == application_id))
             ).one_or_none()
         return None if row is None else _app(row)
 
@@ -274,13 +347,38 @@ class SqlApplyRepo:
             async with self._db.session() as s:
                 if rowcount(await s.execute(stmt)) == 0:
                     continue  # another worker took it between the SELECT and here
-                row = (
-                    await s.execute(
-                        select(*_APP_COLUMNS, _HAS_SCREENSHOT).where(ApplicationRow.id == candidate)
-                    )
-                ).one()
+                row = (await s.execute(select(*_APP_SELECT).where(ApplicationRow.id == candidate))).one()
             return _app(row)
         return None
+
+    async def list_expired(
+        self, stages: Collection[str], *, now: datetime, limit: int = 50
+    ) -> list[StoredApplication]:
+        if not stages:
+            return []
+        stmt = (
+            select(*_APP_SELECT)
+            .where(ApplicationRow.stage.in_(list(stages)), _free_lease(now))
+            .order_by(ApplicationRow.updated_at.asc(), ApplicationRow.id.asc())
+            .limit(limit)
+        )
+        async with self._db.session() as s:
+            rows = (await s.execute(stmt)).all()
+        return [_app(row) for row in rows]
+
+    async def list_waiting(
+        self, user_id: str, stages: Collection[str] = ("waiting_for_you",)
+    ) -> list[StoredApplication]:
+        if not stages:
+            return []
+        stmt = (
+            select(*_APP_SELECT)
+            .where(ApplicationRow.user_id == user_id, ApplicationRow.stage.in_(list(stages)))
+            .order_by(ApplicationRow.created_at.asc(), ApplicationRow.id.asc())
+        )
+        async with self._db.session() as s:
+            rows = (await s.execute(stmt)).all()
+        return [_app(row) for row in rows]
 
     async def release(self, application_id: str, lease_owner: str) -> None:
         stmt = (
@@ -314,6 +412,54 @@ class SqlApplyRepo:
         )
         async with self._db.session() as s:
             return rowcount(await s.execute(stmt))
+
+    async def get_confirmation(self, application_id: str, owner_key: str | None) -> bytes | None:
+        stmt = select(ApplicationRow.confirmation_screenshot).where(ApplicationRow.id == application_id)
+        if owner_key is not None:
+            stmt = stmt.where(ApplicationRow.owner_key == owner_key)
+        async with self._db.session() as s:
+            data = (await s.execute(stmt)).scalar_one_or_none()
+        return None if data is None else bytes(data)
+
+    async def put_confirmation(self, application_id: str, data: bytes | None) -> None:
+        stmt = (
+            update(ApplicationRow)
+            .where(ApplicationRow.id == application_id)
+            .values(confirmation_screenshot=data)
+        )
+        async with self._db.session() as s:
+            await s.execute(stmt)
+
+    async def purge_filled(self, before: datetime) -> int:
+        candidates = select(
+            ApplicationRow.id,
+            ApplicationRow.job,
+            ApplicationRow.review_screenshot.is_not(None).label("has_screenshot"),
+            ApplicationRow.confirmation_screenshot.is_not(None).label("has_confirmation"),
+            ApplicationRow.review.is_not(None).label("has_review"),
+            ApplicationRow.needs.is_not(None).label("has_needs"),
+        ).where(ApplicationRow.stage.in_(sorted(FILLED_TERMINAL_STAGES)), ApplicationRow.updated_at < before)
+        changed = 0
+        async with self._db.session() as s:
+            for row in (await s.execute(candidates)).all():
+                typed = isinstance(row.job, dict) and "typed" in row.job
+                if not (
+                    row.has_screenshot or row.has_confirmation or row.has_review or row.has_needs or typed
+                ):
+                    continue
+                await s.execute(
+                    update(ApplicationRow)
+                    .where(ApplicationRow.id == row.id)
+                    .values(
+                        review_screenshot=None,
+                        confirmation_screenshot=None,
+                        review=None,
+                        needs=None,
+                        job=_without_typed(row.job),
+                    )
+                )
+                changed += 1
+        return changed
 
     # ── events ──
 
@@ -496,6 +642,10 @@ class SqlApplyRepo:
                 resume_name=None,
                 resume_type=None,
                 resume_bytes=None,
+                resume_sha256=None,
+                self_id_on_forms=False,
+                first_check_at=None,
+                consent_at=None,
                 created_at=now,
                 updated_at=now,
             )
@@ -507,20 +657,25 @@ class SqlApplyRepo:
         assert made is not None  # noqa: S101 - just inserted (or a concurrent insert won)
         return made
 
-    async def put_details(
-        self, owner_key: str, *, user_id: str | None, details: dict[str, Any], now: datetime
+    async def _set_profile(
+        self, owner_key: str, user_id: str | None, values: Mapping[str, Any], now: datetime
     ) -> StoredApplyProfile:
         await self._ensure(owner_key, user_id, now)
         stmt = (
             update(ApplyProfileRow)
             .where(ApplyProfileRow.owner_key == owner_key)
-            .values(details=dict(details), updated_at=now)
+            .values(**dict(values), updated_at=now)
         )
         async with self._db.session() as s:
             await s.execute(stmt)
         found = await self.get_profile(owner_key)
         assert found is not None  # noqa: S101
         return found
+
+    async def put_details(
+        self, owner_key: str, *, user_id: str | None, details: dict[str, Any], now: datetime
+    ) -> StoredApplyProfile:
+        return await self._set_profile(owner_key, user_id, {"details": dict(details)}, now)
 
     async def put_resume(
         self,
@@ -531,24 +686,25 @@ class SqlApplyRepo:
         media_type: str | None,
         data: bytes | None,
         now: datetime,
+        sha256: str | None = None,
     ) -> StoredApplyProfile:
-        await self._ensure(owner_key, user_id, now)
         keep = data is not None
-        stmt = (
-            update(ApplyProfileRow)
-            .where(ApplyProfileRow.owner_key == owner_key)
-            .values(
-                resume_name=name if keep else None,
-                resume_type=media_type if keep else None,
-                resume_bytes=data,
-                updated_at=now,
-            )
-        )
-        async with self._db.session() as s:
-            await s.execute(stmt)
-        found = await self.get_profile(owner_key)
-        assert found is not None  # noqa: S101
-        return found
+        values = {
+            "resume_name": name if keep else None,
+            "resume_type": media_type if keep else None,
+            "resume_bytes": data,
+            "resume_sha256": sha256 if keep else None,
+        }
+        return await self._set_profile(owner_key, user_id, values, now)
+
+    async def set_self_id(self, user_id: str, on: bool, *, now: datetime) -> StoredApplyProfile:
+        return await self._set_profile(account_owner_key(user_id), user_id, {"self_id_on_forms": on}, now)
+
+    async def mark_first_check(self, user_id: str, *, now: datetime) -> StoredApplyProfile:
+        return await self._set_profile(account_owner_key(user_id), user_id, {"first_check_at": now}, now)
+
+    async def set_consent(self, user_id: str, *, now: datetime) -> StoredApplyProfile:
+        return await self._set_profile(account_owner_key(user_id), user_id, {"consent_at": now}, now)
 
     async def merge_answers(
         self, owner_key: str, *, user_id: str | None, answers: Mapping[str, Any], now: datetime
@@ -564,5 +720,85 @@ class SqlApplyRepo:
             await s.execute(stmt)
         return replace(current, answers=merged, updated_at=now)
 
+    # ── answer bank ──
 
-__all__ = ["SqlApplyRepo"]
+    async def list_answers(self, user_id: str) -> list[StoredAnswer]:
+        stmt = (
+            select(AnswerBankRow)
+            .where(AnswerBankRow.user_id == user_id)
+            .order_by(AnswerBankRow.question_key.asc())
+        )
+        async with self._db.session() as s:
+            rows = (await s.execute(stmt)).scalars().all()
+        return [_answer(row) for row in rows]
+
+    async def get_answers(self, user_id: str, keys: Collection[str]) -> dict[str, StoredAnswer]:
+        if not keys:
+            return {}
+        stmt = select(AnswerBankRow).where(
+            AnswerBankRow.user_id == user_id, AnswerBankRow.question_key.in_(sorted(set(keys)))
+        )
+        async with self._db.session() as s:
+            rows = (await s.execute(stmt)).scalars().all()
+        return {row.question_key: _answer(row) for row in rows}
+
+    async def _get_answer(self, user_id: str, question_key: str) -> StoredAnswer | None:
+        stmt = select(AnswerBankRow).where(
+            AnswerBankRow.user_id == user_id, AnswerBankRow.question_key == question_key
+        )
+        async with self._db.session() as s:
+            row = (await s.execute(stmt)).scalar_one_or_none()
+        return None if row is None else _answer(row)
+
+    async def put_answer(self, item: StoredAnswer) -> StoredAnswer:
+        if is_never_stored(item.question_key):
+            raise ValueError(f"{item.question_key!r} is never stored in the answer bank")
+        values = {
+            "user_id": item.user_id,
+            "question_key": item.question_key,
+            "question": item.question,
+            "value": item.value,
+            "source": item.source,
+            "answered_on": item.answered_on,
+            "application_id": item.application_id,
+            "ask_each_time": item.ask_each_time,
+            "answered_at": item.answered_at,
+            "confirmed_at": item.confirmed_at,
+            "created_at": item.created_at,
+            "updated_at": item.updated_at,
+        }
+        stmt = dialect_insert(self._db.dialect, AnswerBankRow).values(**values)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[AnswerBankRow.user_id, AnswerBankRow.question_key],
+            set_={
+                name: getattr(stmt.excluded, name)
+                for name in values
+                if name not in ("user_id", "question_key", "created_at")
+            },
+        )
+        async with self._db.session() as s:
+            await s.execute(stmt)
+        stored = await self._get_answer(item.user_id, item.question_key)
+        assert stored is not None  # noqa: S101 - just written
+        return stored
+
+    async def confirm_answer(self, user_id: str, question_key: str, *, now: datetime) -> StoredAnswer | None:
+        stmt = (
+            update(AnswerBankRow)
+            .where(AnswerBankRow.user_id == user_id, AnswerBankRow.question_key == question_key)
+            .values(confirmed_at=now, updated_at=now)
+        )
+        async with self._db.session() as s:
+            if rowcount(await s.execute(stmt)) == 0:
+                return None
+        return await self._get_answer(user_id, question_key)
+
+    async def delete_answer(self, user_id: str, question_key: str) -> bool:
+        stmt = delete(AnswerBankRow).where(
+            AnswerBankRow.user_id == user_id, AnswerBankRow.question_key == question_key
+        )
+        async with self._db.session() as s:
+            return rowcount(await s.execute(stmt)) > 0
+
+
+__all__ = ["RUNNABLE_STAGES", "SqlApplyRepo"]

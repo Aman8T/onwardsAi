@@ -16,6 +16,7 @@ from tayyari.core.settings import RetentionSettings, Settings
 from tayyari.storage import maintenance
 from tayyari.storage.db import Database
 from tayyari.storage.maintenance import LAST_RUN_KEY, run_maintenance
+from tayyari.storage.ports import StoredApplication, account_owner_key
 from tayyari.storage.repos import Repositories, build_repositories
 from tayyari.storage.tables import (
     ChatMessageRow,
@@ -29,6 +30,7 @@ from tayyari.storage.tables import (
     RateLimitHitRow,
     SpendDailyRow,
 )
+from tests.fakes.billing import captured_events
 
 NOW = datetime(2026, 10, 7, 12, 0, 0, tzinfo=UTC)
 DAY = timedelta(days=1)
@@ -517,6 +519,99 @@ async def test_retention_windows_come_from_settings(
 async def test_a_bare_database_is_fine(any_real_db: Database, settings: Settings) -> None:
     counts = await run_maintenance(any_real_db, settings, NOW)
     assert all(v == 0 for v in counts.values())
+    assert {"apply_filled", "apply_holds"} <= set(counts)
+
+
+# ───────────────────────────── auto-apply ─────────────────────────────
+
+
+async def seed_application(repos: Repositories, user_id: str, app_id: str, **fields: Any) -> None:
+    values: dict[str, Any] = {
+        "id": app_id,
+        "owner_key": account_owner_key(user_id),
+        "user_id": user_id,
+        "source": "match",
+        "job_url": f"https://jobs.lever.co/acme/{app_id}",
+        "domain": "jobs.lever.co",
+        "ats": "lever",
+        "stage": "sent",
+        "created_at": NOW - 40 * DAY,
+        "updated_at": NOW - 40 * DAY,
+    }
+    values.update(fields)
+    await repos.apply.create_application(StoredApplication(**values))
+
+
+async def test_filled_values_of_finished_applications_are_purged_after_the_screenshot_window(
+    any_real_db: Database, settings: Settings
+) -> None:
+    repos = build_repositories(any_real_db)
+    ana = (await repos.users.sign_in_email(email="ana@example.com", now=NOW - 50 * DAY)).id
+    filled = {
+        "review": {"digest": "d" * 64, "fields": [{"key": "phone", "value": "+91 98765 43210"}]},
+        "review_digest": "d" * 64,
+        "needs": [{"key": "q1"}],
+        "job": {"title": "Engineer", "typed": {"phone": "+91 98765 43210"}},
+    }
+    await seed_application(repos, ana, "old-sent", **filled)
+    await seed_application(repos, ana, "old-waiting", stage="waiting_for_you", **filled)
+    await seed_application(repos, ana, "new-sent", updated_at=NOW - 5 * DAY, **filled)
+    await repos.apply.put_confirmation("old-sent", b"confirmation")
+
+    counts = await run_maintenance(any_real_db, settings, NOW)
+
+    assert counts["apply_filled"] == 1 and counts["errors"] == 0
+    purged = await repos.apply.get_application("old-sent", None)
+    assert purged is not None and purged.review is None and purged.needs is None
+    assert purged.job == {"title": "Engineer"} and purged.has_confirmation is False
+    assert purged.stage == "sent" and purged.review_digest == "d" * 64
+    for kept in ("old-waiting", "new-sent"):
+        row = await repos.apply.get_application(kept, None)
+        assert row is not None and row.review is not None and row.job == filled["job"]
+
+
+async def test_open_holds_on_finished_applications_are_captured_or_released(
+    any_real_db: Database, settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repos = build_repositories(any_real_db)
+    ana = (await repos.users.sign_in_email(email="ana@example.com", now=NOW - 50 * DAY)).id
+    await repos.billing.grant(ana, credits=4, pass_days=0, ref="o1", now=NOW - 50 * DAY)
+    for app_id, stage in [
+        ("sent", "sent"),
+        ("cancelled", "cancelled"),
+        ("queued", "queued"),
+        ("viewed", "viewed"),
+    ]:
+        ref = f"apply:{app_id}"
+        await repos.billing.hold(ana, ref, now=NOW - 40 * DAY, free_allowance=0, cost=1)
+        await seed_application(repos, ana, app_id, stage=stage, credit_ref=ref, credit_state="held")
+    # a hold released before the row was sent: the sent application can never be charged, which is logged as an error
+    await repos.billing.hold(ana, "apply:late", now=NOW - 40 * DAY, free_allowance=0, cost=None)
+    await repos.billing.release(ana, "apply:late", now=NOW - 39 * DAY)
+    await seed_application(repos, ana, "late", stage="sent", credit_state="held")
+
+    with captured_events(monkeypatch, "tayyari.storage.maintenance") as logs:
+        counts = await run_maintenance(any_real_db, settings, NOW)
+
+    assert counts["apply_holds"] == 4 and counts["errors"] == 0
+    unpaid = [e for e in logs if e["event"] == "apply_sent_without_hold"]
+    assert [(e["application_id"], e["state"]) for e in unpaid] == [("late", "released")]
+    states = {
+        app_id: (await repos.apply.get_application(app_id, None)).credit_state  # type: ignore[union-attr]
+        for app_id in ("sent", "cancelled", "queued", "viewed", "late")
+    }
+    assert states == {
+        "sent": "charged",
+        "cancelled": "released",
+        "queued": "held",  # still running: left alone
+        "viewed": "charged",
+        "late": "released",  # the ledger says the hold was given back: nothing to charge
+    }
+    assert await repos.billing.hold_state(ana, "apply:sent") == "charged"
+    assert await repos.billing.hold_state(ana, "apply:cancelled") == "released"
+    balance = await repos.billing.entitlements(ana, month_start=NOW - 60 * DAY)
+    assert balance.credits == 1  # four bought, two charged (sent, viewed), one given back, one still held
+    assert await maintenance._reconcile_holds(any_real_db, repos, NOW) == 0  # idempotent: nothing left to do
 
 
 class _Clock:
