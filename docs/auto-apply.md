@@ -43,7 +43,7 @@ Money is in rupees, with USD in brackets, at ₹94.48 per USD (2026-11-05).
 
 ## 2. What the person sees
 
-The screens follow `design.md` and are designed on a canvas before any frontend code (project rule). Canvas (2026-11-06, with sample data: Apply for me, Your details, Filling, Review, Needs you and outcomes, Applications, Ready for you on a phone; and since 2026-11-07, the entry points on a match, Discover's cards, a role's page and Prepare, and the first-time questionnaire): https://claude.ai/artifact/CsN9PPninRZ3Z1j5vx6Nh5. Five states:
+The screens follow `design.md` and are designed on a canvas before any frontend code (project rule). Canvas (2026-11-06, with sample data: Apply for me, Your details, Filling, Review, Needs you and outcomes, Applications, Ready for you on a phone; and since 2026-11-07, the entry points on a match, Discover's cards, a role's page and Prepare, and the first check plus just-in-time questions): https://claude.ai/artifact/CsN9PPninRZ3Z1j5vx6Nh5. Five states:
 
 | Screen | What it shows | Actions |
 |---|---|---|
@@ -103,28 +103,49 @@ The button opens one choice:
 - **The posting is closed:** nothing is offered, and nothing is charged.
 - **Already applied to this posting:** the button opens that application.
 
-### 2.2 The first time: a questionnaire (decided 2026-11-07)
+### 2.2 Asking less: a 30-second check, then only what a form needs (decided 2026-11-07)
 
-**When it runs.** The first Apply for me opens a short questionnaire: six steps, about 5 minutes. After that the
-button goes straight to the form, and the answers live in Your details (screen 2).
-- Anything the resume already says is prefilled for the person to check.
-- A step that doesn't apply is skipped. A fresher sees no CTC, and only a nurse sees the nursing council.
-- Any question can be skipped; a form that needs the answer later asks for it then.
-- Canvas screens 11 and 12.
+A questionnaire answered all at once is too heavy (the user's call, 2026-11-07). Questions come in three layers, and
+none is asked twice.
 
-**Where the questions come from:**
+1. **Nothing to answer: read from the resume.** Name, email, mobile, city, current role, full-time experience (from
+   the dates), education (degree, college, year, score when the resume has it). The person only checks them.
+2. **The first check, about 30 seconds** (canvas screen 11). The first Apply for me shows the resume facts, each with
+   Edit, and asks just two things almost every Indian form asks:
+   - the notice period (immediate, 15, 30, 60 or 90 days, or serving notice);
+   - whether they can work in India without sponsorship.
+
+   Safe defaults are set and shown, each changeable:
+   - expected CTC "open to discussion";
+   - self-ID "prefer not to say";
+   - relocation and bonds asked per offer.
+
+   "Skip, ask me on the form" is always there.
+3. **Just in time** (canvas screen 12). While filling, a field we have no answer for becomes a question on that
+   application, with the employer named and the reason ("required by Hollis Health").
+   - "Save it" is on by default, so no form asks again.
+   - **One answer covers every waiting form that asks the same thing** ("Also asked by 2 more forms waiting").
+   - Per-offer questions (bond, relocation for this role) are not remembered unless the person ticks it.
+   - Never-stored items are left empty for the person to type on the employer's page.
+
+**Keeping answers true without re-asking.** Answers that go stale (notice period, current CTC, city) get a one-tap
+"Still true?" check after 90 days, never the whole form. Your details (screen 2) shows what came from the resume, the
+first check and forms, and what has not been asked yet.
+
+**The question bank.** This is what can be asked, each item only in layer 3 unless it is listed in layers 1 or 2.
+Where the questions come from:
 - Tsenta's application defaults (`docs/research/tsenta-teardown.md` §2).
 - What Indian forms ask that a resume doesn't say: notice period and buyout, current and expected CTC, marks,
   backlogs, bonds, languages, registrations, vehicle (`docs/research/ai-launch-audit.md`, findings 1 and 2).
 
-| Step | Questions | Rules |
+| Group | Questions | Rules |
 |---|---|---|
-| 1 · You | Full name as on ID, email, mobile, current city, cities you'd work in, languages you can work in, date of birth (optional) | Your own email only. Date of birth is sent only where a form requires it (age limits in some drives and government roles) |
-| 2 · Work right now | Status (student / working / serving notice / between jobs), current company and designation, total experience (years, months; internships counted only if the person says so), notice period (immediate, 15, 30, 60, 90 days; buyout possible; last working day when serving notice), current CTC (₹ lakh a year), expected CTC (a figure / "open to discussion" / ask each time) | Current CTC is filled only into forms that require it, and never shown on a resume or portfolio. A number-only expected-CTC field with "open to discussion" saved goes to Needs you |
-| 3 · Education and marks | Highest qualification, college, year of passing, graduation score, class 12 and class 10 scores, active backlogs, backlogs ever (cleared), a gap of 6 months or more | Scores are copied as given: CGPA is never converted to a percentage. A form that wants the other goes to Needs you |
-| 4 · Registrations and licences | Profession-specific: nursing council registration, ICAI membership or articleship, CTET or TET, driving licence and own two-wheeler, passport | Shown when the resume or matched roles suggest them |
-| 5 · Where and how you work | Relocation (yes / within my cities / ask each time), work mode, shifts (day / rotational / night), service bond (up to 1 year / no bonds / ask each time), work authorisation by country | Bond defaults to "ask each time": it is a decision per offer. Country rules as in §1 rule 7 |
-| 6 · What we leave to you | Never stored, always asked on the employer's page: PAN, Aadhaar, bank or any ID number; caste or category, religion, marital status, father's name; signatures and declarations; "do you know anyone here", referrals, earlier applications to this employer. Gender: off by default ("Prefer not to say" where allowed) | A form requiring any of these goes to Needs you, and the person types it on the employer's site |
+| You | Full name as on ID, email, mobile, current city, cities you'd work in, languages you can work in, date of birth (optional) | Your own email only. Date of birth is sent only where a form requires it (age limits in some drives and government roles) |
+| Work right now | Status (student / working / serving notice / between jobs), current company and designation, total experience (years, months; internships counted only if the person says so), notice period (immediate, 15, 30, 60, 90 days; buyout possible; last working day when serving notice), current CTC (₹ lakh a year), expected CTC (a figure / "open to discussion" / ask each time) | Current CTC is filled only into forms that require it, and never shown on a resume or portfolio. A number-only expected-CTC field with "open to discussion" saved goes to Needs you |
+| Education and marks | Highest qualification, college, year of passing, graduation score, class 12 and class 10 scores, active backlogs, backlogs ever (cleared), a gap of 6 months or more | Scores are copied as given: CGPA is never converted to a percentage. A form that wants the other goes to Needs you |
+| Registrations and licences | Profession-specific: nursing council registration, ICAI membership or articleship, CTET or TET, driving licence and own two-wheeler, passport | Shown when the resume or matched roles suggest them |
+| Where and how you work | Relocation (yes / within my cities / ask each time), work mode, shifts (day / rotational / night), service bond (up to 1 year / no bonds / ask each time), work authorisation by country | Bond defaults to "ask each time": it is a decision per offer. Country rules as in §1 rule 7 |
+| What we leave to you | Never stored, always asked on the employer's page: PAN, Aadhaar, bank or any ID number; caste or category, religion, marital status, father's name; signatures and declarations; "do you know anyone here", referrals, earlier applications to this employer. Gender: off by default ("Prefer not to say" where allowed) | A form requiring any of these goes to Needs you, and the person types it on the employer's site |
 
 **The answers also feed the match.** They become facts "from you" in the fact book. A match then stops calling a
 notice period, a registration or a licence a gap. This fixes the launch audit's finding 1 for anyone who has applied
