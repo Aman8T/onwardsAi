@@ -1242,3 +1242,5 @@ Found while writing the documentation wave (2026-10-11). None blocks the landed 
 - Whether `pass30` should auto-renew later (v1: no).
 - The sender address for emails and the Google OAuth app (the user creates both and sets the secrets).
 - Regenerate the Razorpay test key pair after local testing (the secret was shared in a chat), and create the live pair only when going live.
+- Auto-apply worker and FastAPI Cloud idling (A1): the worker runs inside the app, so a paused app delays queued fills. The user plans to buy the $20 FastAPI Cloud plan; until then check whether idle apps pause, and add a scheduled ping if they do (`docs/auto-apply.md` §8, decision 4).
+- Auto-apply price (A1): applications run uncharged until a price is set (`docs/auto-apply.md` §4).

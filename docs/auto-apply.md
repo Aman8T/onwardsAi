@@ -318,8 +318,16 @@ Recruitee, iCIMS).
    possible later, still one digest per application. Auto-submit without review is not in this design.
 2. **Price.** Per delivered application in rupees, packs, or inside the ₹399 applying month; how many free.
 3. **Spend for the live test.** A Browser Use top-up (from $5, about ₹472) for the 20 to 30 posting fill-only run.
-4. **Where the worker runs.** FastAPI Cloud may run it beside the app now that it needs no local browser; otherwise a
-   small separate host. To be confirmed in A1.2.
+4. **Where the worker runs.** Decided 2026-11-08: inside the app on FastAPI Cloud, started by the lifespan.
+   - It needs no local browser, since Browser Use's cloud browsers are driven over CDP.
+   - It leases `applications` rows in Postgres, so replicas never double-run a row.
+   - It starts only when `AUTO_APPLY_ENABLED` is on and `BROWSER_USE_API_KEY` is set (the secret is set as of
+     2026-11-08).
+
+   **Open, to figure out later:** an idle app may be paused by FastAPI Cloud, and then queued fills wait for the next
+   request. The user plans to move to FastAPI Cloud's $20 plan, which should keep the app running. Until then, check
+   whether the current plan pauses idle apps; if it does, add a scheduled ping or accept the wait. Revisit if the fill
+   queue grows beyond what one replica's worker handles.
 5. **Which email goes on applications, and how replies are tracked.** Decided 2026-11-07: the person's own email on
    every form, confirmation from the ATS's success page, and replies by paste or forward, then by a forwarding address
    with a ready filter, then by mailbox access in v2 (§3.2).
