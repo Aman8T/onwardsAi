@@ -25,6 +25,9 @@ dependencies = [
     "requests>=2.34.2",
     "sarvamai==0.1.37",
     "resvg-py>=0.5.0",
+    # Auto-apply (A1) drives remote Browser Use browsers over CDP with connect_over_cdp, so the
+    # deployed app needs the client library but no local browser binaries. Imported lazily.
+    "playwright==1.63.0",
 ]
 
 # Deliberately no [build-system]: FastAPI Cloud installs the locked dependencies from uv.lock and
@@ -41,7 +44,6 @@ dev = [
     "ruff>=0.7",
     "mypy>=1.13",
     "types-requests>=2.33.0.20261006",
-    "playwright==1.63.0",
 ]
 worker = [
     "playwright==1.63.0",

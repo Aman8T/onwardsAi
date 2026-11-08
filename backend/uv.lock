@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12, <3.14"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -1746,6 +1746,7 @@ dependencies = [
     { name = "httpx" },
     { name = "httpx2" },
     { name = "platformdirs" },
+    { name = "playwright" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pypdf" },
@@ -1764,7 +1765,6 @@ dependencies = [
 dev = [
     { name = "asgi-lifespan" },
     { name = "mypy" },
-    { name = "playwright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -1787,6 +1787,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "httpx2", specifier = ">=2.13.1" },
     { name = "platformdirs", specifier = ">=4.3" },
+    { name = "playwright", specifier = "==1.63.0" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pydantic-settings", specifier = ">=2.5" },
     { name = "pypdf", specifier = ">=5" },
@@ -1805,7 +1806,6 @@ requires-dist = [
 dev = [
     { name = "asgi-lifespan", specifier = ">=2.1" },
     { name = "mypy", specifier = ">=1.13" },
-    { name = "playwright", specifier = "==1.63.0" },
     { name = "pytest", specifier = ">=8.3" },
     { name = "pytest-asyncio", specifier = ">=0.24" },
     { name = "pytest-cov", specifier = ">=5" },
