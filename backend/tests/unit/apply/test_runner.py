@@ -6,7 +6,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from tayyari.apply.answers import FillContext, Resume, question_key
+from tayyari.apply.answers import BankEntry, FillContext, Resume, question_key
 from tayyari.apply.forms import scan_form
 from tayyari.apply.playbook import GREENHOUSE, LEVER
 from tayyari.apply.runner import BOT_CHECK_WARNING, fill, submit
@@ -22,6 +22,8 @@ CV = Resume("Riya-Kapoor.pdf", b"%PDF-1.7 fake")
 
 
 def ctx(**kw: Any) -> FillContext:
+    # India's sponsorship answer comes from the answer bank (the first check); the legacy details never fill it
+    kw.setdefault("bank", {"needsSponsorship:IN": BankEntry("No", "first_check")})
     return FillContext(details=dict(DETAILS), resume=CV, **kw)
 
 
@@ -47,8 +49,13 @@ async def test_greenhouse_fills_from_details_and_asks_the_custom_question() -> N
     )
     assert sent[("fill", '[id="question_101"]')] == "https://linkedin.com/in/riya"
     assert sent[("select", '[id="question_103"]')] == "0"  # "No" picked by its option value
-    assert sent[("upload", '[id="resume"]')] == "Riya-Kapoor.pdf"
-    assert ("select", '[id="gender"]') not in sent  # never guessed: no saved answer, optional
+    # The resume is planned beside the fields and never attached in the preview (Greenhouse uploads on attach).
+    assert not any(op == "upload" for op, _, _ in driver.actions)
+    assert result.plan.resume is not None and result.plan.resume.name == "Riya-Kapoor.pdf"
+    assert all(p.item.kind != "file" for p in result.plan.filled)
+    # Self-ID is never guessed: with "use on forms" off, the form's decline option is picked, as a default.
+    assert sent[("select", '[id="gender"]')] == "3"
+    assert next(p for p in result.plan.filled if p.item.key == "gender").source == "default"
     assert [n.key for n in result.plan.needs] == ["question_102"]
     assert BOT_CHECK_WARNING in result.warnings and result.screenshot
     assert not driver.submitted and driver.blocked_submits == 0
@@ -141,3 +148,19 @@ async def test_submit_needs_the_approved_digest() -> None:
     right = FakeDriver(GH)
     done = await submit(right, GREENHOUSE, "https://x", ctx(typed=typed), review.plan.digest(), wait_s=0.1)
     assert done.status == "applied" and right.submitted
+
+
+async def test_the_digest_signs_the_resume_without_uploading_it() -> None:
+    typed = {"question_102": "Because of the platform."}
+    driver = FakeDriver(GH)
+    review = await fill(driver, GREENHOUSE, "https://x", ctx(typed=typed), None)
+    assert review.plan is not None and not any(op == "upload" for op, _, _ in driver.actions)
+    other_cv = FillContext(
+        details=dict(DETAILS),
+        resume=Resume("Riya-Kapoor.pdf", b"%PDF-1.7 edited"),
+        typed=typed,
+        bank={"needsSponsorship:IN": BankEntry("No", "first_check")},
+    )
+    changed = FakeDriver(GH)
+    refused = await submit(changed, GREENHOUSE, "https://x", other_cv, review.plan.digest(), wait_s=0.1)
+    assert refused.status == "needs_user" and refused.reason == "form_changed" and not changed.submitted

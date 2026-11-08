@@ -1,0 +1,5 @@
+{
+  "_fixture": "Hand-made: the 404 body of GET api.lever.co/v0/postings/{site}/{id} for a removed posting; verify in A1.6.",
+  "ok": false,
+  "error": "Document not found"
+}

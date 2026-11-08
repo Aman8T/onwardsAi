@@ -40,7 +40,7 @@ def application(ats: str = "greenhouse", typed: dict[str, str] | None = None) ->
     return StoredApplication(
         id="ap1", owner_key=OWNER, source="link", job_url=URL, apply_url=URL, domain="job-boards.greenhouse.io", ats=ats,
         stage="queued", created_at=T0, updated_at=T0, title="Backend Engineer", company="Acme",
-        job={"typed": typed or {"question_102": "I want to build Acme's APIs."}},
+        job={"typed": typed or {"question_102": "I want to build Acme's APIs.", "question_103": "No"}},
     )  # fmt: skip
 
 

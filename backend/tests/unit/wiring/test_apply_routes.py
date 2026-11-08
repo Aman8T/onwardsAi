@@ -64,11 +64,16 @@ async def test_paste_fill_answer_approve_submit_track(make_settings: Callable[..
         worker = ApplyWorker(engine)
         await worker.run_once()
         app = (await c.get(f"/api/apply/applications/{app['id']}")).json()
-        assert app["stage"] == "needs_user" and [n["key"] for n in app["needs"]] == ["question_102"]
+        # the India sponsorship question is asked too: the legacy details name no country, so they never fill it
+        assert app["stage"] == "needs_user" and sorted(n["key"] for n in app["needs"]) == [
+            "question_102",
+            "question_103",
+        ]
         answered = await c.post(f"/api/apply/applications/{app['id']}/answers",
-                                json={"answers": [{"key": "question_102", "value": "To build your APIs."}], "remember": True})  # fmt: skip
+                                json={"answers": [{"key": "question_102", "value": "To build your APIs."},
+                                                  {"key": "question_103", "value": "No"}], "remember": True})  # fmt: skip
         assert answered.json()["stage"] == "queued"
-        assert (await c.get("/api/apply/profile")).json()["savedAnswers"] == 1
+        assert (await c.get("/api/apply/profile")).json()["savedAnswers"] == 2
 
         await worker.run_once()
         app = (await c.get(f"/api/apply/applications/{app['id']}")).json()

@@ -1,0 +1,14 @@
+{
+  "_fixture": "Hand-made in the documented shape of GET api.lever.co/v0/postings/{site}/{id}; verify in A1.6.",
+  "id": "0f8f8b3c-1d2e-4c5b-9a7f-123456789abc",
+  "text": "Platform Engineer",
+  "categories": { "commitment": "Full-time", "department": "Engineering", "location": "Remote, India", "team": "Platform" },
+  "country": "IN",
+  "workplaceType": "remote",
+  "createdAt": 1793000000000,
+  "descriptionPlain": "Run the platform the rest of the company builds on.",
+  "lists": [{ "text": "What you will do", "content": "<li>Keep deploys boring.</li>" }],
+  "additionalPlain": "",
+  "hostedUrl": "https://jobs.lever.co/acme/0f8f8b3c-1d2e-4c5b-9a7f-123456789abc",
+  "applyUrl": "https://jobs.lever.co/acme/0f8f8b3c-1d2e-4c5b-9a7f-123456789abc/apply"
+}

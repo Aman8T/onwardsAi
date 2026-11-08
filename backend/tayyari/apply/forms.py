@@ -3,6 +3,9 @@
 The engine reads the live page's HTML (``page.content()``) through this same code, so tests run it on saved pages without a
 browser. A field's selector is ``[id="..."]`` when it has an id, else ``[name="..."]``. Labels come from ``<label for>``, a
 wrapping ``<label>``, ``aria-label`` or the placeholder. Hidden, submit and button inputs are not fields.
+
+`FormField` is also the row of a live scan (`apply.scan.parse_scan`), which fills its frame, current value, accept and
+synthetic flags. `blocker_of` spots a visible CAPTCHA or login wall; `closed_of` a posting that is gone or filled.
 """
 
 from __future__ import annotations
@@ -32,7 +35,17 @@ class FormField:
     name: str | None = None
     id: str | None = None
     options: list[tuple[str, str]] = field(default_factory=list)
-    """``(value, text)`` of a select's options (the placeholder option without a value is left out)."""
+    """``(value, text)`` of a select's options (the placeholder option without a value is left out). A live scan
+    (`apply.scan`) reads option texts only, so there ``value == text``."""
+    frame: int = 0
+    """The index of the page frame the field is in (0 = the main frame; live scans only)."""
+    value: str = ""
+    """The value the page holds now (live scans only): typed text, the picked option's text, ``checked``, or the attached
+    file's name."""
+    synthetic: bool = False
+    """True for a field the live scan inferred, not an input (a resume widget that already took its file): never filled."""
+    accept: str | None = None
+    """A file input's ``accept`` attribute."""
 
 
 @dataclass(slots=True)
@@ -192,4 +205,26 @@ def checks_on_submit(page: str) -> bool:
     return bool(_CAPTCHA_ON_SUBMIT.search(page))
 
 
-__all__ = ["FormField", "FormScan", "blocker_of", "checks_on_submit", "clean", "scan_form"]
+_CLOSED_TEXT: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("not_accepting", re.compile(r"\bno longer accept(?:s|ing)\b", re.I)),
+    ("filled", re.compile(r"\b(?:position|role|job|vacancy|opening) has (?:already )?been filled\b", re.I)),
+    ("unavailable", re.compile(
+        r"\b(?:job|position|posting|role|vacancy|opening)(?: you are looking for| you're looking for)? (?:is )?no longer "
+        r"(?:available|open|active)\b", re.I)),
+)  # fmt: skip
+
+
+def closed_of(text: str, status: int | None) -> str | None:
+    """Why a posting or form page reads as closed: ``gone`` (HTTP 404 or 410), ``not_accepting`` ("no longer accepting
+    applications"), ``filled`` ("this position has been filled") or ``unavailable`` ("this job is no longer available").
+    None when it reads as open. ``text`` is the page's visible text; only a definite signal counts, so an unclear page is
+    never called closed."""
+    if status in (404, 410):
+        return "gone"
+    for reason, pattern in _CLOSED_TEXT:
+        if pattern.search(text):
+            return reason
+    return None
+
+
+__all__ = ["FormField", "FormScan", "blocker_of", "checks_on_submit", "clean", "closed_of", "scan_form"]

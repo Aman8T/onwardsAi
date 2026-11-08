@@ -20,8 +20,8 @@ if (pathname.startsWith('/p/')) {
 } else if (pathname.replace(/\/+$/, '') === '/signout') {
   // the Leafout hand-off pages are small and need no app shell
   Root = lazy(() => import('./auth/SignOut').then((m) => ({ default: m.SignOut })));
-} else if (pathname.replace(/\/+$/, '') === '/apply') {
-  // auto-apply's tracker: its own small page (it fetches its own data; nothing of the app shell or store)
+} else if (pathname.replace(/\/+$/, '') === '/apply' || pathname.startsWith('/apply/')) {
+  // auto-apply: its own small shell (signed-in only) with Applications, Your details, Apply for me and one application
   Root = lazy(() => import('./apply/ApplyRoot').then((m) => ({ default: m.ApplyRoot })));
 } else if (pathname.replace(/\/+$/, '') === '/account/delete') {
   Root = lazy(() => import('./auth/AccountDelete').then((m) => ({ default: m.AccountDelete })));
@@ -33,6 +33,9 @@ if (pathname.startsWith('/p/')) {
 } else if (import.meta.env.DEV && pathname === '/dev/discover') {
   // every Discover state on stored fixtures: no server, no account
   Root = lazy(() => import('./discover/dev/DiscoverGallery').then((m) => ({ default: m.DiscoverGallery })));
+} else if (import.meta.env.DEV && pathname === '/dev/apply') {
+  // every auto-apply screen and state on stored fixtures: no server, no account
+  Root = lazy(() => import('./apply/dev/ApplyGallery').then((m) => ({ default: m.ApplyGallery })));
 } else if (import.meta.env.DEV && pathname === '/dev/practice') {
   // every Practice screen and state on stored fixtures: no server, no account
   Root = lazy(() => import('./practice/dev/DevPractice').then((m) => ({ default: m.DevPractice })));

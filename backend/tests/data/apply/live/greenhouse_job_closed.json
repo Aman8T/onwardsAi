@@ -1,0 +1,5 @@
+{
+  "_fixture": "Hand-made: the 404 body of GET boards-api.greenhouse.io/v1/boards/{board}/jobs/{id} for a removed job; verify in A1.6.",
+  "status": 404,
+  "error": "Job not found"
+}

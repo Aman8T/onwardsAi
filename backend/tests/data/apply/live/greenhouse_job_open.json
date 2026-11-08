@@ -1,0 +1,14 @@
+{
+  "_fixture": "Hand-made in the documented shape of GET boards-api.greenhouse.io/v1/boards/{board}/jobs/{id}; verify in A1.6.",
+  "id": 4020305008,
+  "internal_job_id": 3011220008,
+  "title": "Backend Engineer",
+  "updated_at": "2026-10-30T09:12:44-04:00",
+  "requisition_id": "ENG-142",
+  "location": { "name": "Bengaluru, India" },
+  "absolute_url": "https://job-boards.greenhouse.io/acme/jobs/4020305008",
+  "metadata": null,
+  "content": "&lt;p&gt;Build APIs in Python.&lt;/p&gt;",
+  "departments": [{ "id": 4001, "name": "Engineering", "parent_id": null, "child_ids": [] }],
+  "offices": [{ "id": 5001, "name": "Bengaluru", "location": "Bengaluru, India", "parent_id": null, "child_ids": [] }]
+}

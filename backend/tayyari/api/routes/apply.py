@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
+from urllib.parse import unquote
 
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import JSONResponse
@@ -135,7 +136,9 @@ async def put_resume(request: Request) -> JSONResponse:
         raise PayloadTooLarge("That file is over 5 MB.")
     if not data:
         raise BadRequest("The file is empty.")
-    name = (request.headers.get("x-file-name") or "resume").strip()[:120] or "resume"
+    name = (
+        unquote(request.headers.get("x-file-name") or "resume").strip()[:120] or "resume"
+    )  # sent URI-encoded
     if not name.lower().endswith(RESUME_TYPES[media_type]):
         name += RESUME_TYPES[media_type]
     return _json(request, (await svc.put_resume(owner, user_id, name, media_type, data)).to_dict(), fresh)

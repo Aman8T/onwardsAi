@@ -1,57 +1,818 @@
-/* Auto-apply: the /apply tracker and the Apply control on a match. Tokens and primitives only (design.md). */
-.ap-page {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 32px 16px 64px;
-  display: grid;
-  gap: 16px;
+/*
+ * Auto-apply: the /apply shell, Applications, Your details, the first check, Apply for me and the consent step.
+ * Every class is prefixed "ap-". Tokens and primitives only (design.md): depth from tone and 1px hairlines, never a
+ * shadow; no colour literal; nothing loops. Touch targets are at least 44px. Under 760px the table becomes stacked
+ * cards, rows stack, and popovers are bottom sheets (Sheet.tsx). The run screens have their own file (apply-run.css).
+ *
+ * Tones: waiting for the person is a well with a strong hairline; sent and ready is the soft accent; danger is only
+ * for Check this one and failures.
+ */
+
+/* ───────────── shell ───────────── */
+
+.ap-root {
   color: var(--text);
 }
-.ap-head { display: grid; gap: 6px; }
-.ap-title { font-size: 32px; line-height: 1.15; margin: 0; }
-.ap-h2 { font-size: 22px; margin: 0; }
-.ap-muted { color: var(--text-muted); font-size: 14px; margin: 0; }
-.ap-error { color: var(--danger); margin: 0; }
-.ap-paste { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; padding: 16px; }
-.ap-field-wide { flex: 1 1 320px; }
-.ap-details { padding: 12px 16px; }
-.ap-summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
-.ap-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding-top: 8px; }
-.ap-form .ap-actions, .ap-form .ap-muted, .ap-form .ap-field-wide { grid-column: 1 / -1; }
-.ap-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.ap-grid { display: grid; grid-template-columns: minmax(240px, 340px) 1fr; gap: 16px; align-items: start; }
-.ap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.ap-row {
-  width: 100%;
+
+.ap-root a.btn,
+.ap-root a.ap-navlink,
+.ap-root a.ap-pipe-link {
+  text-decoration: none;
+}
+
+.ap-root .btn {
   min-height: 44px;
-  display: grid;
-  gap: 2px;
-  text-align: left;
-  padding: 10px 12px;
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  cursor: pointer;
-  font: inherit;
+  justify-content: center;
 }
-.ap-row-on { border-color: var(--accent-ui); background: var(--fill); }
-.ap-row-title { font-weight: 600; }
-.ap-chip { justify-self: start; }
-.ap-chip-applied, .ap-chip-interviewing, .ap-chip-offer { color: var(--accent-strong); }
-.ap-chip-needs_user, .ap-chip-failed { color: var(--danger); }
-.ap-detail { padding: 16px; display: grid; gap: 12px; min-width: 0; }
-.ap-detail-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-.ap-needs { display: grid; gap: 10px; }
-.ap-check { display: flex; gap: 8px; align-items: center; min-height: 44px; }
-.ap-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.ap-table th, .ap-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
-.ap-shot { margin: 0; display: grid; gap: 6px; }
-.ap-shot img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
-.ap-inline { display: inline-flex; gap: 6px; align-items: center; }
-.ap-events { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.ap-from-match { display: grid; gap: 8px; width: 100%; }
+
+.ap-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3) var(--s5);
+  padding: var(--s3) var(--s5);
+  border-bottom: 1px solid var(--line);
+}
+
+.ap-header-end {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.ap-navlink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--s3);
+  border-radius: var(--r-m);
+  color: var(--text-muted);
+  font-size: var(--fs-2);
+}
+
+.ap-navlink:hover,
+.ap-navlink[aria-current='page'] {
+  color: var(--text);
+}
+
+.ap-navlink[aria-current='page'] {
+  background: var(--surface-2);
+}
+
+.ap-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+}
+
+.ap-pick {
+  width: auto;
+  max-width: 100%;
+  min-height: 44px;
+}
+
+.ap-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--s6) var(--s5) var(--s8);
+  min-width: 0;
+}
+
+/* ───────────── type and layout helpers ───────────── */
+
+.ap-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  min-width: 0;
+}
+
+.ap-stack-s {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+.ap-narrow {
+  max-width: 760px;
+}
+
+.ap-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.ap-head p,
+.ap-stack p,
+.ap-stack-s p {
+  margin: 0;
+}
+
+.ap-title {
+  margin: 0;
+  font-size: var(--fs-8);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.ap-h3 {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: 600;
+}
+
+.ap-strong {
+  font-weight: 500;
+}
+
+.ap-block {
+  display: block;
+}
+
+.ap-muted {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.ap-small {
+  font-size: var(--fs-1);
+}
+
+.ap-measure {
+  max-width: 68ch;
+}
+
+.ap-error {
+  color: var(--danger);
+  margin: 0;
+}
+
+.ap-label {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.ap-self-start {
+  align-self: flex-start;
+}
+
+.ap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  min-width: 0;
+}
+
+.ap-headrow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--s4);
+  min-width: 0;
+}
+
+.ap-headrow-tight {
+  align-items: baseline;
+}
+
+.ap-panel {
+  padding: var(--s5);
+  min-width: 0;
+}
+
+.ap-well {
+  background: var(--well);
+}
+
+.ap-well-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: 14px;
+  border-radius: var(--r-m);
+  background: var(--well);
+  font-size: var(--fs-2);
+}
+
+.ap-plain-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: var(--s1);
+}
+
+.ap-split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s5);
+}
+
+.ap-main {
+  flex: 999 1 520px;
+  min-width: 0;
+}
+
+.ap-aside {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.ap-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: var(--s5);
+  align-items: start;
+}
+
+.ap-wide-btn {
+  width: 100%;
+}
+
+.ap-textarea {
+  min-height: 120px;
+}
+
+/* ───────────── chips by tone ───────────── */
+
+.ap-chip {
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.ap-root .chip.ap-chip.ap-tone-you {
+  background: var(--well);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+}
+
+.ap-root .chip.ap-chip.ap-tone-ok {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.ap-root .chip.ap-chip.ap-tone-bad {
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+/* ───────────── Applications: tabs, table, pipeline ───────────── */
+
+.ap-tabs,
+.ap-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ap-tab,
+.ap-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-2);
+  cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.ap-filter {
+  border-radius: 999px;
+}
+
+.ap-tab:hover,
+.ap-filter:hover {
+  color: var(--text);
+}
+
+.ap-tab[aria-pressed='true'],
+.ap-filter[aria-pressed='true'] {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.ap-table-panel {
+  padding: var(--s2) var(--s3);
+}
+
+.ap-table-panel > .ap-muted {
+  padding: var(--s3);
+}
+
+.ap-apps {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-2);
+}
+
+.ap-apps th {
+  text-align: left;
+  font-weight: 500;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ap-apps td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.ap-apps tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.ap-apps p {
+  margin: 0;
+}
+
+.ap-apps .ap-chip + .ap-muted {
+  margin-top: var(--s1);
+}
+
+.ap-cell-action {
+  text-align: right;
+}
+
+.ap-pipe {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  gap: var(--s3);
+}
+
+.ap-pipe-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+  padding: var(--s3);
+  border-radius: var(--r-m);
+  background: var(--well);
+}
+
+.ap-pipe-col h3 {
+  margin: 0;
+  font-weight: 500;
+}
+
+.ap-pipe-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.ap-pipe-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  font-size: var(--fs-2);
+}
+
+.ap-pipe-link {
+  display: flex;
+  flex-direction: column;
+  min-height: 44px;
+  justify-content: center;
+  color: var(--text);
+}
+
+.ap-pipe-link:hover .ap-strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ap-heard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s2);
+}
+
+.ap-btn-sm {
+  min-height: 44px;
+}
+
+.ap-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.ap-email-inline {
+  padding-top: var(--s3);
+  border-top: 1px solid var(--line);
+}
+
+.ap-email,
+.ap-editor {
+  display: grid;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+.ap-email-row {
+  display: grid;
+  gap: var(--s1);
+  min-width: 0;
+}
+
+.ap-sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+}
+
+.ap-summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.ap-metrics {
+  padding: var(--s3) var(--s5);
+}
+
+.ap-metrics-scroll {
+  overflow-x: auto;
+}
+
+.ap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-2);
+}
+
+.ap-table th,
+.ap-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+/* ───────────── Your details and the first check ───────────── */
+
+.ap-ghead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+  padding-bottom: 6px;
+}
+
+.ap-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.ap-drow,
+.ap-frow {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-2);
+}
+
+.ap-frow {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr) auto;
+}
+
+.ap-rows > :first-child.ap-frow,
+.ap-rows > :first-child > .ap-drow,
+.ap-rows > .ap-drow:first-child {
+  border-top: 0;
+}
+
+.ap-q {
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.ap-v {
+  overflow-wrap: anywhere;
+}
+
+.ap-drow-na .ap-v {
+  color: var(--text-muted);
+}
+
+.ap-src {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.ap-row-btn {
+  min-height: 44px;
+  padding-inline: var(--s2);
+  color: var(--accent);
+}
+
+.ap-editor {
+  padding: var(--s3) 0 var(--s4);
+}
+
+.ap-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.ap-fieldset legend {
+  padding: 0;
+  margin-bottom: var(--s2);
+}
+
+.ap-q-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ap-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.ap-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 44px;
+  padding: 0 var(--s4);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+.ap-pill:has(input:checked) {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 500;
+}
+
+.ap-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+.ap-check input,
+.ap-pill input,
+.ap-opt input {
+  accent-color: var(--accent-strong);
+}
+
+/* ───────────── Apply for me ───────────── */
+
+.ap-checks {
+  list-style: none;
+  margin: var(--s2) 0 0;
+  padding: 0;
+}
+
+.ap-checkrow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.ap-checkrow:first-child {
+  border-top: 0;
+}
+
+.ap-check-unchecked .ap-strong {
+  color: var(--text-muted);
+}
+
+.ap-mark {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ap-mark-ok {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.ap-mark-fail {
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+.ap-mark-unchecked {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.ap-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  min-height: 44px;
+  padding: var(--s3) 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.ap-opt input {
+  margin-top: 4px;
+}
+
+.ap-opt:has(input:checked) {
+  border-color: var(--line-strong);
+  background: var(--well);
+}
+
+.ap-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: var(--s2);
+  font-size: var(--fs-2);
+}
+
+.ap-price {
+  font-size: var(--fs-6);
+  font-weight: 500;
+}
+
+/* ───────────── narrow: stacked cards, stacked rows, a 16px gutter ───────────── */
+
 @media (max-width: 760px) {
-  .ap-grid { grid-template-columns: 1fr; }
-  .ap-title { font-size: 26px; }
+  .ap-header {
+    padding: var(--s3) var(--s4);
+  }
+
+  .ap-page {
+    padding: var(--s5) var(--s4) var(--s7);
+  }
+
+  .ap-title {
+    font-size: var(--fs-7);
+  }
+
+  .ap-panel {
+    padding: var(--s4);
+  }
+
+  .ap-apps thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .ap-apps,
+  .ap-apps tbody,
+  .ap-apps tr,
+  .ap-apps td {
+    display: block;
+    width: 100%;
+  }
+
+  .ap-apps tr {
+    display: grid;
+    gap: var(--s2);
+    padding: var(--s3);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ap-apps tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .ap-apps td {
+    padding: 0;
+    border: 0;
+  }
+
+  .ap-apps td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--fs-0);
+    color: var(--text-muted);
+  }
+
+  .ap-apps td[data-label='Role']::before {
+    content: none;
+  }
+
+  .ap-cell-action {
+    text-align: left;
+  }
+
+  .ap-drow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'q btn'
+      'v v'
+      'src src';
+    gap: var(--s1) var(--s3);
+  }
+
+  .ap-drow .ap-q {
+    grid-area: q;
+  }
+
+  .ap-drow .ap-v {
+    grid-area: v;
+  }
+
+  .ap-drow .ap-src {
+    grid-area: src;
+  }
+
+  .ap-drow > :last-child {
+    grid-area: btn;
+  }
+
+  .ap-frow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'q btn'
+      'v v';
+    gap: var(--s1) var(--s3);
+  }
+
+  .ap-frow .ap-q {
+    grid-area: q;
+  }
+
+  .ap-frow .ap-v {
+    grid-area: v;
+  }
+
+  .ap-frow > :last-child {
+    grid-area: btn;
+  }
 }

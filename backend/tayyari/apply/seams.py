@@ -37,7 +37,8 @@ class ApplyCredits(Protocol):
         ...
 
     async def capture(self, user_id: str, ref: str) -> bool:
-        """Charge the held credit; False when nothing is held under ``ref`` (already captured or released)."""
+        """Charge the held credit. True when the hold is charged (by this call or an earlier one); False when there is
+        no live hold under ``ref`` (never taken, released, or an unlimited account)."""
         ...
 
     async def release(self, user_id: str, ref: str) -> bool:

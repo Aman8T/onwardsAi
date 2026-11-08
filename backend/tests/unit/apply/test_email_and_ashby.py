@@ -24,7 +24,7 @@ ASHBY_PAGE = (Path(__file__).resolve().parents[2] / "data" / "apply" / "ashby_ap
 )
 
 
-async def test_ashby_fills_name_email_resume_phone_and_linkedin() -> None:
+async def test_ashby_fills_name_email_phone_and_linkedin_and_leaves_the_resume_for_the_submit() -> None:
     driver = FakeDriver(ASHBY_PAGE)
     ctx = FillContext(details={"firstName": "Riya", "lastName": "Kapoor", "email": "riya@example.com", "phone": "+91 1",
                                "linkedin": "https://linkedin.com/in/riya"}, resume=Resume("cv.pdf", b"%PDF"))  # fmt: skip
@@ -32,8 +32,11 @@ async def test_ashby_fills_name_email_resume_phone_and_linkedin() -> None:
     assert result.status == "ready" and result.submit_label == "Submit Application"
     sent = {(op, sel): val for op, sel, val in driver.actions}
     assert sent[("fill", '[id="_systemfield_name"]')] == "Riya Kapoor"
-    assert sent[("upload", '[id="_systemfield_resume"]')] == "cv.pdf"
     assert sent[("fill", '[id="9c1d2e3f-0000-4000-8000-000000000002"]')] == "https://linkedin.com/in/riya"
+    # Ashby uploads the resume through its API the moment it is chosen: the preview never attaches it.
+    assert not any(op == "upload" for op, _, _ in driver.actions)
+    assert result.plan is not None and result.plan.resume is not None
+    assert (result.plan.resume.name, result.plan.resume.selector) == ("cv.pdf", '[id="_systemfield_resume"]')
 
 
 class Clock:
