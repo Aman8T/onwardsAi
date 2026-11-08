@@ -1,42 +1,19 @@
-"""Ashby's built-in playbook on a saved page, and employers' emails moving stages: the quote must be in the email, the
-application must be the only one the email names, and the stage machine decides."""
+"""Employers' emails moving stages: the quote must be in the email, the application must be the only one the email names,
+and the stage machine decides. (Ashby's preview is in test_ashby.py.)"""
 
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
-from tayyari.apply.answers import FillContext, Resume
 from tayyari.apply.email import EmailTracker, keyword_stage
-from tayyari.apply.playbook import ASHBY
-from tayyari.apply.runner import fill
 from tayyari.contract.apply import EmailClassifyRequest
 from tayyari.llm.types import StructuredResult, Usage
 from tayyari.storage.ports import StoredApplication
 from tests.fakes.apply import FakeApplyRepo
-from tests.fakes.apply_browser import FakeDriver
 
 T0 = datetime(2026, 11, 5, 10, 0, tzinfo=UTC)
 OWNER = "a:" + "5" * 40
-ASHBY_PAGE = (Path(__file__).resolve().parents[2] / "data" / "apply" / "ashby_application.html").read_text(
-    encoding="utf-8"
-)
-
-
-async def test_ashby_fills_name_email_phone_and_linkedin_and_leaves_the_resume_for_the_submit() -> None:
-    driver = FakeDriver(ASHBY_PAGE)
-    ctx = FillContext(details={"firstName": "Riya", "lastName": "Kapoor", "email": "riya@example.com", "phone": "+91 1",
-                               "linkedin": "https://linkedin.com/in/riya"}, resume=Resume("cv.pdf", b"%PDF"))  # fmt: skip
-    result = await fill(driver, ASHBY, "https://jobs.ashbyhq.com/acme/x/application", ctx, None)
-    assert result.status == "ready" and result.submit_label == "Submit Application"
-    sent = {(op, sel): val for op, sel, val in driver.actions}
-    assert sent[("fill", '[id="_systemfield_name"]')] == "Riya Kapoor"
-    assert sent[("fill", '[id="9c1d2e3f-0000-4000-8000-000000000002"]')] == "https://linkedin.com/in/riya"
-    # Ashby uploads the resume through its API the moment it is chosen: the preview never attaches it.
-    assert not any(op == "upload" for op, _, _ in driver.actions)
-    assert result.plan is not None and result.plan.resume is not None
-    assert (result.plan.resume.name, result.plan.resume.selector) == ("cv.pdf", '[id="_systemfield_resume"]')
 
 
 class Clock:

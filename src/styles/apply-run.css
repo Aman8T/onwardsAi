@@ -1,0 +1,417 @@
+/*
+ * Auto-apply's run screens: Filling, Questions, Review, Needs you and the outcomes (src/apply/*View.tsx). Every class is
+ * prefixed "ar-"; the shared "ap-" helpers are in apply.css. Tokens and primitives only (design.md): depth from tone
+ * and 1px hairlines, never a shadow; no colour literal; nothing loops, and the filling marks are static. Touch targets
+ * are at least 44px. Under 760px the review rows stack.
+ *
+ * Tones: what waits for the person is a well with a strong hairline; a sent or done mark is the soft accent; danger is
+ * only for Check this one and failures (the "ap-tone-bad" chip).
+ */
+
+/* ───────────── shared ───────────── */
+
+.ar-notice {
+  margin: 0;
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--r-m);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: var(--fs-2);
+}
+
+.ar-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ar-select,
+.ar-input {
+  min-height: 44px;
+}
+
+.ar-input-short {
+  width: 9rem;
+  max-width: 100%;
+}
+
+.ar-unit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.ar-textarea {
+  min-height: 168px;
+  padding: var(--s3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--well);
+  line-height: var(--lh-body, 1.55);
+}
+
+textarea.ar-textarea {
+  resize: vertical;
+}
+
+/* ───────────── Filling ───────────── */
+
+.ar-steps-panel {
+  flex: 1 1 300px;
+}
+
+.ar-filled {
+  flex: 999 1 520px;
+}
+
+.ar-steps,
+.ar-fields {
+  list-style: none;
+  margin: var(--s2) 0 0;
+  padding: 0;
+}
+
+.ar-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--line);
+}
+
+.ar-step:first-child {
+  border-top: 0;
+}
+
+.ar-step p {
+  margin: 0;
+}
+
+.ar-mark {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-0);
+}
+
+.ar-mark-done {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.ar-mark-now {
+  border: 1px solid var(--accent-ui);
+  color: var(--accent);
+}
+
+.ar-mark-todo {
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+}
+
+.ar-fld {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--s3);
+  align-items: baseline;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-2);
+}
+
+.ar-fld:first-child {
+  border-top: 0;
+}
+
+.ar-guard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.ar-guard p {
+  margin: 0;
+}
+
+.ar-guard-why {
+  flex-basis: 100%;
+}
+
+/* ───────────── a need (Questions, and the needs in Review) ───────────── */
+
+.ar-need {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--s5);
+  border-color: var(--line-strong);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.ar-need p {
+  margin: 0;
+}
+
+.ar-need-onsite {
+  background: var(--well);
+}
+
+.ar-need-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.ar-need-q {
+  font-size: var(--fs-3);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* ───────────── Review ───────────── */
+
+.ar-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.ar-nav .btn {
+  min-width: 44px;
+}
+
+.ar-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ar-tab {
+  min-height: 44px;
+  padding: 0 14px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-2);
+  cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.ar-tab:hover {
+  color: var(--text);
+}
+
+.ar-tab[aria-selected='true'] {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+.ar-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s4) var(--s5);
+}
+
+.ar-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.ar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 0.9fr);
+  gap: var(--s4);
+  align-items: start;
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-2);
+}
+
+.ar-row-edit {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 0.9fr) auto;
+  align-items: center;
+}
+
+.ar-row-full {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.ap-ghead + .ar-row,
+.ar-group > .ar-row:first-child {
+  border-top: 0;
+}
+
+.ar-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.ar-opts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ar-opt {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  color: var(--text-muted);
+}
+
+.ar-opt-chosen {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.ar-opt-mark {
+  flex: 0 0 1em;
+  color: var(--accent-strong);
+}
+
+.ar-long {
+  margin: 0;
+  padding: var(--s3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--well);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-3);
+  line-height: 1.55;
+}
+
+.ar-sup {
+  font-size: var(--fs-0);
+  color: var(--accent);
+  margin-left: 2px;
+}
+
+.ar-cites {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ar-cite {
+  display: flex;
+  gap: 10px;
+  padding: var(--s2) 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-1);
+}
+
+.ar-cite-dropped {
+  color: var(--text-muted);
+}
+
+.ar-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.ar-shot {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+}
+
+.ar-shot-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  padding: var(--s4);
+  background: var(--well);
+  color: var(--text-muted);
+  font-size: var(--fs-2);
+  text-align: center;
+}
+
+.ar-posting {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-2);
+}
+
+/* ───────────── outcomes ───────────── */
+
+.ar-outcome .ap-title {
+  font-size: var(--fs-7);
+}
+
+.ar-kv {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--s2) var(--s4);
+  margin: 0;
+  font-size: var(--fs-2);
+}
+
+.ar-kv dt,
+.ar-kv dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ───────────── narrow ───────────── */
+
+@media (max-width: 760px) {
+  .ar-fld,
+  .ar-row,
+  .ar-row-edit {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s1);
+  }
+
+  .ar-row-edit {
+    align-items: start;
+  }
+
+  .ar-need,
+  .ar-summary {
+    padding: var(--s4);
+  }
+
+  .ar-kv {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .ar-kv dd + dt {
+    margin-top: var(--s2);
+  }
+}

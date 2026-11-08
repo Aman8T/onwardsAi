@@ -16,6 +16,11 @@
  *     when a user fact is cited, the word count, and what was left out
  *   - Radar: the hidden table equals the axes
  *   - MatchView: the band in words, a chip per non-zero count, and no percentage in the summary
+ *   - Auto-apply on a match (spec 2.1): with an `apply` entry the primary is "Apply for me" and "Only build the
+ *     resume" is quiet; the choice offers the two resumes, the link field only for a pasted match, the Stretch note
+ *     only on a Stretch; blocked is aria-disabled with the gate's reason; applied opens the application; nothing
+ *     apply-related while streaming; without an entry the resume stays the primary. The state logic
+ *     (`roleApplyFor`), the ATS host rules (`ats.ts`), the application index and the hand-off are checked as data
  *   - Model text is escaped: a note, quote or prompt carrying markup is shown as text
  *   - Known-bad: each checker fails on a render with a row, a fact id or a paragraph taken out (it must fire)
  *
@@ -78,6 +83,12 @@ async function main(): Promise<number> {
   const { MatchView, RadarPanel } = await import('../src/match/MatchView');
   const { entitlementText } = await import('../src/match/EntitlementChip');
   const { parseMatchPath, matchPath } = await import('../src/match/route');
+  const { ResumeView } = await import('../src/match/ResumeView');
+  const entry = await import('../src/apply/ApplyForMe');
+  const ats = await import('../src/apply/ats');
+  const apps = await import('../src/apply/useApplications');
+  const { OriginBarView } = await import('../src/discover/OriginBar');
+  const start = await import('../src/apply/StartView');
 
   const h = React.createElement;
   const render = (el: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(el);
@@ -325,7 +336,71 @@ async function main(): Promise<number> {
     if (/\d\s*%/.test(summary)) summaryFailures.push('a percentage appears in the summary');
     if (!textOf(view).includes(`Close the gaps · ${fx.result.questions.length} question`)) summaryFailures.push('"Close the gaps" action missing');
     if (!textOf(view).includes('This service uses the ESCO classification of the European Commission.')) summaryFailures.push('ESCO attribution missing');
+    if (!textOf(view).includes('Build my resume for this role')) summaryFailures.push('without auto-apply the resume is not the primary');
+    if (textOf(view).includes('Apply for me')) summaryFailures.push('Apply for me shows without an apply entry');
     log(`${label} · match summary`, summaryFailures);
+
+    // auto-apply on the match: the same summary, with an entry in each state
+    const baseProps = {
+      posting: fx.posting, facts: fx.facts, coverage: fx.result.coverage, gates: fx.result.gates, blocked: fx.result.blocked, radar: fx.result.radar,
+      questions: fx.result.questions, result: fx.result, reading: false, recheck: { status: 'idle' as const }, onAnswer: noop, onBuildResume: noop,
+    };
+    type Entry = NonNullable<Parameters<typeof MatchView>[0]['apply']>;
+    const offer = (over: Partial<Entry> = {}): Entry => ({
+      apply: { kind: 'offer' }, needsLink: false, firstTime: true, savedResume: { hasResume: true, name: 'meera-resume.pdf' }, onContinue: noop, ...over,
+    });
+    const applyFailures: Failures = [];
+    const summaryOf = (html: string) => textOf(chunkFrom(html, 'mt-summary', 'mt-pair'));
+    const closed = render(h(MatchView, { ...baseProps, apply: offer() }));
+    const closedText = summaryOf(closed);
+    if (!closedText.includes('Apply for me')) applyFailures.push('offer: "Apply for me" missing');
+    if (!closedText.includes('Only build the resume')) applyFailures.push('offer: "Only build the resume" missing');
+    if (closedText.includes('Build my resume for this role')) applyFailures.push('offer: the old primary is still there');
+    if (!textOf(closed).includes(`Close the gaps · ${fx.result.questions.length} question`)) applyFailures.push('offer: "Close the gaps" missing');
+    if (!/<button[^>]*aria-controls="[^"]+"[^>]*aria-expanded="false"[^>]*>Apply for me/.test(closed)) applyFailures.push('offer: the button is not a closed disclosure (aria-controls, aria-expanded=false)');
+    if (closedText.includes('How should we apply?')) applyFailures.push('offer: the choice shows before it is opened');
+    if (/\d\s*%/.test(closedText)) applyFailures.push('offer: a percentage appears in the summary');
+    const order = ['Close the gaps', 'Only build the resume', 'Apply for me'].map((t) => closedText.indexOf(t));
+    if (fx.result.questions.length > 0 && !(order[0] < order[1] && order[1] < order[2])) applyFailures.push(`offer: actions out of order (${order.join(', ')})`);
+
+    const opened = render(h(MatchView, { ...baseProps, apply: offer({ open: true, needsLink: true }) }));
+    const openedText = summaryOf(opened);
+    for (const t of ['How should we apply?', 'Fit my resume to this role, then apply', 'Apply with my current resume', 'meera-resume.pdf', 'Link to the application form', 'Continue', 'Cancel', 'The first time only']) {
+      if (!openedText.includes(t)) applyFailures.push(`open choice: "${t}" missing`);
+    }
+    if (!/aria-expanded="true"/.test(opened)) applyFailures.push('open choice: aria-expanded is not true');
+    if ((opened.match(/type="radio"/g) ?? []).length !== 2) applyFailures.push('open choice: not exactly two resume radios');
+    if (/\d\s*%/.test(openedText)) applyFailures.push('open choice: a percentage appears in the summary');
+    const controlsId = /aria-controls="([^"]+)"/.exec(opened)?.[1];
+    if (!controlsId || !opened.includes(`id="${controlsId}"`)) applyFailures.push('open choice: aria-controls does not name the choice');
+    const known = summaryOf(render(h(MatchView, { ...baseProps, apply: offer({ open: true, needsLink: false, firstTime: false }) })));
+    if (known.includes('Link to the application form')) applyFailures.push('choice: the link field shows when the posting address is known');
+    if (known.includes('The first time only')) applyFailures.push('choice: the first-time note shows after the first check');
+    if (fx.result.questions.length > 0) {
+      const stretchHtml = render(h(MatchView, { ...baseProps, result: { ...fx.result, band: 'stretch' as const }, apply: offer({ open: true }) }));
+      const stretch = summaryOf(stretchHtml);
+      if (!stretch.includes('This one is a Stretch')) applyFailures.push('stretch: the note is missing');
+      if (!stretch.includes(`Answer the ${fx.result.questions.length} question`)) applyFailures.push('stretch: "Answer the N questions first" missing');
+    }
+    if (fx.result.band !== 'stretch' && openedText.includes('This one is a Stretch')) applyFailures.push('the Stretch note shows on a band that is not a Stretch');
+
+    const blockedView = render(h(MatchView, { ...baseProps, blocked: true, apply: offer({ open: true, apply: { kind: 'off', reason: 'the role needs 5+ years and your resume shows 1.' } }) }));
+    const blockedText = summaryOf(blockedView);
+    if (!/<button[^>]*aria-disabled="true"[^>]*>Apply for me/.test(blockedView)) applyFailures.push('blocked: Apply for me is not aria-disabled');
+    if (!blockedText.includes('Off: the role needs 5+ years and your resume shows 1.')) applyFailures.push('blocked: the reason is missing');
+    if (blockedText.includes('How should we apply?')) applyFailures.push('blocked: the choice opens');
+    if (!blockedText.includes('Only build the resume')) applyFailures.push('blocked: the resume can no longer be built');
+
+    const appliedView = render(h(MatchView, { ...baseProps, apply: offer({ apply: { kind: 'applied', id: 'app_1', label: 'Sent 4 Nov' } }) }));
+    if (!summaryOf(appliedView).includes('Sent 4 Nov · open the application')) applyFailures.push('applied: "Sent <date> · open the application" missing');
+    if (!/<a[^>]*href="\/apply\/app_1"/.test(appliedView)) applyFailures.push('applied: it does not open /apply/app_1');
+    const signedOut = render(h(MatchView, { ...baseProps, apply: offer({ apply: { kind: 'signed_out' } }) }));
+    if (!summaryOf(signedOut).includes('Apply for me') || /aria-expanded/.test(signedOut)) applyFailures.push('signed out: Apply for me should be a plain button (it opens the sign-in sheet)');
+    // an ATS that needs the person's own account: the resume stays the primary, with why we don't apply
+    const own = summaryOf(render(h(MatchView, { ...baseProps, apply: offer({ apply: { kind: 'own_account', reason: 'This employer asks you to apply with your own account there.' } }) })));
+    if (!own.includes('Build my resume for this role') || own.includes('Only build the resume')) applyFailures.push('own account: the resume is not the primary');
+    if (!own.includes('own account there')) applyFailures.push('own account: the reason is missing');
+    log(`${label} · apply for me on the match`, applyFailures);
 
     // a stream in progress: every requirement already listed, the rows not yet in say so, and no band yet
     const half = fx.result.coverage.slice(0, 2);
@@ -335,6 +410,15 @@ async function main(): Promise<number> {
     const liveFailures: Failures = [];
     if ((live.match(/data-status="pending"/g) ?? []).length !== fx.posting.requirements.length - half.length) liveFailures.push('pending rows are not the rows still to come');
     if (textOf(live).includes('Build my resume')) liveFailures.push('the resume action shows before the result exists');
+    const liveApply = textOf(
+      render(
+        h(MatchView, {
+          posting: fx.posting, facts: fx.facts, coverage: half, gates: fx.result.gates, blocked: false, questions: [], reading: true, step: 'Checked 2 requirements…', recheck: { status: 'idle' }, onAnswer: noop, onBuildResume: noop,
+          apply: { apply: { kind: 'offer' }, needsLink: true, firstTime: true, open: true, onContinue: noop },
+        }),
+      ),
+    );
+    for (const t of ['Apply for me', 'Only build the resume', 'Build my resume', 'How should we apply?']) if (liveApply.includes(t)) liveFailures.push(`"${t}" shows while streaming`);
     for (const b of Object.values(model.BAND_LABEL)) if (textOf(live).includes(b)) liveFailures.push(`band "${b}" shown before the result`);
     log(`${label} · streaming state`, liveFailures);
 
@@ -402,6 +486,159 @@ async function main(): Promise<number> {
   // no percent sign in any label the screens write themselves
   const labels = [...Object.values(model.STATUS_LABEL), ...Object.values(model.BAND_LABEL), ...Object.values(model.CONFIDENCE_LABEL), ...Object.values(model.GATE_LABEL), ...Object.values(model.TIER_LABEL)];
   log('no percentage in any label', labels.filter((l) => l.includes('%')).map((l) => `"${l}"`));
+
+  /* ───────────────────────── auto-apply's entry, as data ───────────────────────── */
+
+  type Input = Parameters<typeof entry.roleApplyFor>[0];
+  type Summary = NonNullable<Input['application']>;
+  type Check = NonNullable<NonNullable<Input['check']>['check']>;
+  const status = (over: Partial<NonNullable<Input['status']>> = {}): NonNullable<Input['status']> => ({ enabled: true, signedIn: true, anonymous: false, agents: [], ...over });
+  const summary = (over: Partial<Summary> = {}): Summary => ({
+    id: 'a1', stage: 'sent', source: 'match', ats: 'greenhouse', domain: 'boards.greenhouse.io', jobUrl: 'https://boards.greenhouse.io/acme/jobs/1',
+    createdAt: '2026-11-04T12:00:00Z', updatedAt: '2026-11-04T12:00:00Z', needsCount: 0, hasScreenshot: false, matchId: 'm1', ...over,
+  });
+  const ready = (check: Partial<Check>): NonNullable<Input['check']> => ({ state: 'ready', check: { offered: false, ...check } });
+  const on: Pick<Input, 'status' | 'signedIn'> = { status: status(), signedIn: true };
+  const stateCases: [string, Input, string | null, boolean?][] = [
+    ['status unknown', { status: null, signedIn: true, knownLink: false }, null],
+    ['auto-apply off', { status: status({ enabled: false }), signedIn: true, knownLink: false }, null],
+    ['sent before', { ...on, knownLink: false, application: summary() }, 'applied'],
+    ['a cancelled one reopens', { ...on, knownLink: true, application: summary({ stage: 'cancelled' }) }, 'offer', false],
+    ['signed out', { status: status({ signedIn: false }), signedIn: false, knownLink: true }, 'signed_out'],
+    ['blocked by a gate', { ...on, knownLink: true, blockedReason: 'needs 5 years' }, 'off'],
+    ['checking', { ...on, knownLink: true, check: { state: 'loading' } }, 'checking'],
+    ['check failed, pasted', { ...on, knownLink: false, check: { state: 'error' } }, 'offer', true],
+    ['check failed, from Discover', { ...on, knownLink: true, check: { state: 'error' } }, 'offer', false],
+    ['offered', { ...on, knownLink: false, check: ready({ offered: true, host: 'jobs.lever.co' }) }, 'offer', false],
+    ['already applied', { ...on, knownLink: false, check: ready({ reason: 'already_applied', applicationId: 'a9' }) }, 'applied'],
+    ['workday', { ...on, knownLink: true, check: ready({ reason: 'own_account_ats', note: 'own account' }) }, 'own_account'],
+    ['gates on the server', { ...on, knownLink: true, check: ready({ reason: 'blocked_by_requirement', gateReasons: ['5 years'] }) }, 'off'],
+    ['pasted text, no address', { ...on, knownLink: false, check: ready({ reason: 'not_fillable' }) }, 'offer', true],
+    ['an ATS we do not fill', { ...on, knownLink: false, check: ready({ reason: 'not_fillable', host: 'careers.acme.com', note: 'no' }) }, 'off'],
+    // spec 2.1: a closed posting offers nothing; an unknown liveness or a manual-only form points at the employer's site
+    ['closed', { ...on, knownLink: true, check: ready({ reason: 'closed', note: 'This posting is no longer open.' }) }, null],
+    ['a cancelled one, then the posting closed', { ...on, knownLink: true, application: summary({ stage: 'cancelled' }), check: ready({ reason: 'closed', note: 'x' }) }, null],
+    ['a cancelled one, an ATS we do not fill', { ...on, knownLink: true, application: summary({ stage: 'cancelled' }), check: ready({ reason: 'not_fillable', host: 'careers.acme.com', note: 'no' }) }, 'off'],
+    ['unknown liveness', { ...on, knownLink: true, check: ready({ reason: 'unknown_liveness', note: 'x' }) }, 'own_account'],
+    ['manual only', { ...on, knownLink: true, check: ready({ reason: 'manual_only', note: 'x' }) }, 'own_account'],
+    ['no credit', { ...on, knownLink: true, check: ready({ reason: 'no_credit', note: 'x' }) }, 'off'],
+  ];
+  const stateFailures: Failures = [];
+  for (const [name, input, kind, needsLink] of stateCases) {
+    const got = entry.roleApplyFor(input);
+    if ((got?.apply.kind ?? null) !== kind) stateFailures.push(`${name}: ${got?.apply.kind ?? 'null'}, expected ${kind ?? 'null'}`);
+    if (got && needsLink !== undefined && got.needsLink !== needsLink) stateFailures.push(`${name}: needsLink ${got.needsLink}, expected ${needsLink}`);
+  }
+  const gateOff = entry.roleApplyFor({ ...on, knownLink: true, check: ready({ reason: 'blocked_by_requirement', gateReasons: ['needs 5 years'] }) });
+  if (gateOff?.apply.kind !== 'off' || gateOff.apply.reason !== 'needs 5 years') stateFailures.push('the server gate reason is not the reason shown');
+  const closedNote = entry.roleApplyFor({ ...on, knownLink: true, check: ready({ reason: 'closed', note: 'This posting is no longer open.' }) });
+  if (closedNote !== null) stateFailures.push('a closed posting still offers something');
+  const applied = entry.roleApplyFor({ ...on, knownLink: false, application: summary() });
+  if (applied?.apply.kind !== 'applied' || applied.apply.id !== 'a1' || !applied.apply.label.startsWith('Sent ')) stateFailures.push('a sent application does not read "Sent <date>"');
+  if (entry.appliedLabel(summary({ stage: 'waiting_for_you' })) !== 'Waiting for you') stateFailures.push('a waiting application is not named by its stage');
+  log('apply for me: the state, in code', stateFailures);
+
+  const gateFailures: Failures = [];
+  const gatesDef = [
+    { id: 'g1', question: 'Can you work from Pune?', severity: 4 },
+    { id: 'g2', question: 'Five years of experience?', severity: 9 },
+  ];
+  const severe = 'the role needs 5+ years and your resume shows 1.';
+  if (entry.blockedReasonOf(gatesDef, [{ gateId: 'g1', verdict: 'fail', note: 'Pune only' }, { gateId: 'g2', verdict: 'fail', note: severe }]) !== severe) gateFailures.push('the most severe failing gate is not the one named');
+  if (entry.blockedReasonOf(gatesDef, [{ gateId: 'g2', verdict: 'uncertain', note: 'unsure' }, { gateId: 'g1', verdict: 'fail', note: '' }]) !== 'the posting asks: Can you work from Pune?') {
+    gateFailures.push('a fail with no note is not named by its question, or an uncertain gate was named');
+  }
+  if (entry.blockedReasonOf(gatesDef, []) !== entry.BLOCKED_FALLBACK) gateFailures.push('no failing gate does not fall back');
+  log('apply for me: the blocked reason', gateFailures);
+
+  const atsFailures: Failures = [];
+  const hostCases: [string, string][] = [
+    ['boards.greenhouse.io', 'greenhouse'],
+    ['https://job-boards.eu.greenhouse.io/acme/jobs/123', 'greenhouse'],
+    ['WWW.boards.greenhouse.io', 'unknown'], // the server does not take "www." off either (intake.fingerprint_url)
+    ['jobs.lever.co', 'lever'],
+    ['https://jobs.eu.lever.co/acme/abc', 'lever'],
+    ['jobs.ashbyhq.com', 'ashby'],
+    ['acme.wd5.myworkdayjobs.com', 'workday'],
+    ['myworkdaysite.com', 'workday'],
+    ['greenhouse.io', 'unknown'],
+    ['boards.greenhouse.io.example.com', 'unknown'],
+    ['www.linkedin.com', 'unknown'],
+    ['', 'unknown'],
+  ];
+  for (const [host, want] of hostCases) if (ats.atsOf(host) !== want) atsFailures.push(`${host || '(empty)'} is ${ats.atsOf(host)}, expected ${want}`);
+  if (!ats.isFillable('jobs.lever.co') || ats.isFillable('acme.wd1.myworkdayjobs.com') || ats.isFillable('naukri.com')) atsFailures.push('isFillable disagrees with the fillable set');
+  if (ats.fillableAts('jobs.ashbyhq.com') !== 'ashby' || ats.fillableAts('acme.myworkdayjobs.com') !== null) atsFailures.push('fillableAts disagrees with the fillable set');
+  if (!ats.needsOwnAccount('acme.wd3.myworkdayjobs.com') || ats.needsOwnAccount('jobs.lever.co')) atsFailures.push('needsOwnAccount disagrees with the own-account set');
+  const urlCases: [string, string | null][] = [
+    ['https://jobs.lever.co/acme/1#apply', 'https://jobs.lever.co/acme/1'],
+    ['  https://boards.greenhouse.io/acme/jobs/1  ', 'https://boards.greenhouse.io/acme/jobs/1'],
+    ['javascript:alert(1)', null],
+    ['ftp://example.com/x', null],
+    ['https://exa mple.com', null],
+    ['not a link', null],
+    ['https://localhost/x', null],
+  ];
+  for (const [raw, want] of urlCases) if (ats.cleanApplyUrl(raw) !== want) atsFailures.push(`cleanApplyUrl(${JSON.stringify(raw)}) is ${JSON.stringify(ats.cleanApplyUrl(raw))}, expected ${JSON.stringify(want)}`);
+  log('apply for me: ATS hosts (mirrors apply/intake.py)', atsFailures);
+
+  const indexFailures: Failures = [];
+  const idx = apps.indexApplications([
+    summary({ id: 'new-cancelled', stage: 'cancelled', matchId: 'm1', listingId: 'gh:1' }),
+    summary({ id: 'old-sent', stage: 'sent', matchId: 'm1', listingId: 'gh:1' }),
+    summary({ id: 'newest-2', stage: 'filling', matchId: 'm2' }),
+    summary({ id: 'older-2', stage: 'waiting_for_you', matchId: 'm2' }),
+    summary({ id: 'lonely', stage: 'failed', matchId: 'm3' }),
+  ]);
+  if (idx.byMatch.get('m1')?.id !== 'old-sent') indexFailures.push('a live application does not win over a newer cancelled one');
+  if (idx.byListing.get('gh:1')?.id !== 'old-sent') indexFailures.push('the listing index disagrees with the match index');
+  if (idx.byMatch.get('m2')?.id !== 'newest-2') indexFailures.push('the newest live application does not win');
+  if (idx.byMatch.get('m3')?.id !== 'lonely') indexFailures.push('a reopenable application alone is not indexed');
+  if (idx.byListing.size !== 1) indexFailures.push('rows without a listing were indexed by listing');
+  log('apply for me: the applications index', indexFailures);
+
+  const intentFailures: Failures = [];
+  const good = apps.parseIntent({ matchId: 'm1', resume: 'tailored', applyUrl: 'https://jobs.lever.co/acme/1', listingId: 'greenhouse:acme:1', runId: 'r1' });
+  if (!good || good.applyUrl !== 'https://jobs.lever.co/acme/1' || good.listingId !== 'greenhouse:acme:1' || good.runId !== 'r1') intentFailures.push('a clean intent did not survive');
+  if (apps.parseIntent({ matchId: 'm1', resume: 'both' }) !== null) intentFailures.push('an unknown resume choice was kept');
+  if (apps.parseIntent({ matchId: '../x', resume: 'saved' }) !== null) intentFailures.push('a bad match id was kept');
+  if (apps.parseIntent({ matchId: 'm1', resume: 'saved', applyUrl: 'javascript:alert(1)' })?.applyUrl !== undefined) intentFailures.push('a non-web link was kept');
+  // the start sends the link typed on a pasted match (StartView.startBody), and nothing it was not given
+  const sent = start.startBody({ matchId: 'm1', resume: 'saved', applyUrl: 'https://jobs.lever.co/acme/1' });
+  if (sent.applyUrl !== 'https://jobs.lever.co/acme/1' || sent.matchId !== 'm1') intentFailures.push('the start body drops the typed link');
+  if ('applyUrl' in start.startBody({ matchId: 'm1', resume: 'saved' }) || 'listingId' in start.startBody({ matchId: 'm1', resume: 'tailored' })) intentFailures.push('the start body carries empty fields');
+  log('apply for me: the hand-off to /apply/new', intentFailures);
+
+  // the resume screen, chosen with "Fit my resume to this role, then apply"
+  const resumeFailures: Failures = [];
+  const resumeProps = { posting: meera.posting, facts: meera.facts, matchId: 'm1', saving: new Set<string>(), onDecide: noop, onNavigate: noop, onDownload: noop, hrefFor: (k: string) => `/x.${k}` };
+  const startHref = '/apply/new?match=m1&resume=tailored';
+  const settledHtml = render(h(ResumeView, { ...resumeProps, variant: { ...meera.variant, decisions: [] }, applyHref: startHref }));
+  if (!/<a[^>]*href="\/apply\/new\?match=m1&amp;resume=tailored"[^>]*>Use this resume and apply/.test(settledHtml)) resumeFailures.push('settled: "Use this resume and apply" does not link to the start');
+  if ((settledHtml.match(/btn-primary/g) ?? []).length !== 1) resumeFailures.push('settled: more than one primary next to apply');
+  const pendingVariant = withDecisions(meera.variant);
+  if (pendingVariant.decisions.length > 0) {
+    const pendingHtml = render(h(ResumeView, { ...resumeProps, variant: pendingVariant, applyHref: startHref }));
+    if (!/<button[^>]*aria-disabled="true"[^>]*>Use this resume and apply/.test(pendingHtml)) resumeFailures.push('decisions waiting: apply is not held back');
+    if (!textOf(pendingHtml).includes('Downloads and applying open once')) resumeFailures.push('decisions waiting: the hint does not say applying waits too');
+  }
+  if (textOf(render(h(ResumeView, { ...resumeProps, variant: meera.variant }))).includes('Use this resume and apply')) resumeFailures.push('apply shows on the resume screen without the tailored intent');
+  log('apply for me: the tailored resume leads on to the start', resumeFailures);
+
+  // the origin bar of a match from Discover
+  const originFailures: Failures = [];
+  const origin = { listingId: 'greenhouse:corvid:1', title: 'Data Engineer', employer: 'Corvid Labs', applyUrl: 'https://jobs.lever.co/corvid/1', applyHost: 'jobs.lever.co', sourceLabel: 'Lever', discoverHref: '/discover' };
+  const bar = render(h(OriginBarView, { origin, onBack: noop, apply: { kind: 'offer' }, onApply: noop }));
+  const barText = textOf(bar);
+  const leadAt = barText.indexOf('Apply for me');
+  if (!(leadAt >= 0 && leadAt < barText.indexOf('Apply on jobs.lever.co'))) originFailures.push('Apply for me does not lead the employer link');
+  if (!/<a[^>]*class="[^"]*btn-quiet[^"]*"[^>]*href="https:\/\/jobs\.lever\.co/.test(bar) && !/<a[^>]*href="https:\/\/jobs\.lever\.co[^"]*"[^>]*class="[^"]*btn-quiet/.test(bar)) originFailures.push('the employer link is not quiet next to Apply for me');
+  if (barText.includes('Link to the application form')) originFailures.push('the bar asks for a link');
+  const own = render(h(OriginBarView, { origin, onBack: noop, apply: { kind: 'own_account', reason: 'This employer asks you to apply with your own account there.' }, onApply: noop }));
+  if (/btn-quiet/.test(own) || textOf(own).includes('Apply for me') || !textOf(own).includes('own account')) originFailures.push('own account: the employer link should stay the action, with the reason');
+  const plain = render(h(OriginBarView, { origin, onBack: noop }));
+  if (textOf(plain).includes('Apply for me') || /btn-quiet/.test(plain)) originFailures.push('without auto-apply the bar changed');
+  log('apply for me: the origin bar', originFailures);
 
   // routes and the entitlement chip
   const routeFailures: Failures = [];

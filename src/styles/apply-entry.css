@@ -1,0 +1,214 @@
+/*
+ * Auto-apply's entry points (ApplyForMe.tsx): the "Apply for me" button in each state and the "How should we apply?"
+ * choice, on a match, its origin bar and Discover's cards. Every class is prefixed "ae-". Tokens and primitives only
+ * (design.md): depth from tone and 1px hairlines, never a shadow; no colour literal; nothing loops. The chosen resume
+ * is a well with a strong hairline. Touch targets are at least 44px; under 760px the small size grows to 44px too.
+ */
+
+.ae-btn {
+  justify-content: center;
+  min-height: 44px;
+  padding-inline: 18px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.ae-btn-sm {
+  min-height: 36px;
+  padding-inline: var(--s3);
+  font-size: 13.5px;
+}
+
+.ae-chev {
+  flex: none;
+}
+
+.ae-btn[aria-expanded='true'] .ae-chev {
+  transform: rotate(180deg);
+}
+
+/* off or checking: the fill drops out (faint ink on the dark fill would not read) */
+.btn-primary.ae-btn[aria-disabled='true'] {
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.ae-entry {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  min-width: 0;
+}
+
+.ae-why {
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+  max-width: 48ch;
+}
+
+/* ───────────── the choice ───────────── */
+
+.ae-choice {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+  padding-top: var(--s5);
+  border-top: 1px solid var(--line);
+}
+
+.ae-choice-compact {
+  gap: var(--s3);
+  padding-top: 0;
+  border-top: 0;
+}
+
+.ae-choice p {
+  margin: 0;
+}
+
+.ae-h {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: 600;
+}
+
+.ae-h:focus {
+  outline: none;
+}
+
+.ae-h:focus-visible {
+  outline: 1px solid var(--line-strong);
+  outline-offset: 4px;
+}
+
+.ae-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.ae-legend {
+  margin-bottom: var(--s2);
+  padding: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+}
+
+.ae-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: var(--s3);
+}
+
+.ae-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  min-height: 44px;
+  padding: var(--s4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.ae-opt input {
+  flex: none;
+  margin: 4px 0 0;
+}
+
+.ae-opt:has(input:checked) {
+  border-color: var(--line-strong);
+  background: var(--well);
+}
+
+.ae-opt-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+}
+
+.ae-opt-title,
+.ae-strong {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.ae-muted {
+  color: var(--text-muted);
+  font-size: var(--fs-2);
+}
+
+.ae-small {
+  font-size: var(--fs-1);
+}
+
+.ae-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  max-width: 640px;
+}
+
+.ae-label {
+  font-size: var(--fs-2);
+  font-weight: 500;
+}
+
+.ae-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.ae-input::placeholder {
+  color: var(--text-faint);
+}
+
+.ae-input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.ae-error {
+  color: var(--danger);
+  font-size: var(--fs-1);
+}
+
+.ae-well {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: 14px;
+  border-radius: var(--r-m);
+  background: var(--well);
+}
+
+.ae-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+}
+
+@media (max-width: 760px) {
+  .ae-btn-sm {
+    min-height: 44px;
+  }
+
+  .ae-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

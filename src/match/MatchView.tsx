@@ -6,9 +6,14 @@
  * It renders whatever has arrived. While the match streams, requirements appear with "Checking…" until their rows
  * land and the band waits for the result code computed; nothing is guessed on the page. The view is presentational:
  * the screen in `MatchRoot` feeds it from the store, the dev gallery from fixtures.
+ *
+ * Auto-apply (spec 2.1): with an `apply` entry the summary's primary is "Apply for me", which opens an inline choice of
+ * resume, and "Build my resume for this role" becomes a quiet "Only build the resume". Without one (auto-apply off, a
+ * fixture) the resume stays the primary. Nothing apply-related renders before the result exists.
  */
-import { ApplyFromMatch } from '../apply/ApplyFromMatch';
-import { useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { ApplyForMeButton, ApplyForMeChoice } from '../apply/ApplyForMe';
+import type { ApplyEntry } from '../apply/ApplyForMe';
 import type { Coverage, GateAnswer, MatchResult, Posting, Question, Radar as RadarData, Requirement } from '../../shared/match';
 import { Radar } from '../components/Radar';
 import type { RadarAxis } from '../components/Radar';
@@ -22,7 +27,7 @@ import { RequirementTable } from './RequirementTable';
 import type { AnswerInput, MatchFact } from './types';
 
 export interface MatchViewProps {
-  /** The stored match, for auto-apply's Apply control (absent on fixtures). */
+  /** The stored match (absent on fixtures). */
   matchId?: string;
   posting?: Posting;
   facts: readonly MatchFact[];
@@ -42,16 +47,44 @@ export interface MatchViewProps {
   reveal?: boolean;
   onAnswer: (answers: AnswerInput[]) => void;
   onBuildResume: () => void;
+  /** Auto-apply's entry for this match, worked out by the screen; absent while auto-apply is off. */
+  apply?: ApplyEntry;
 }
 
 /** Rows shown on a phone before "Show the other N". */
 const PHONE_ROWS = 5;
 
 export function MatchView(props: MatchViewProps) {
-  const { posting, facts, coverage, gates, blocked, radar, questions, result, reading, step, createdAt, recheck, reveal = false, onAnswer, onBuildResume } = props;
+  const { posting, facts, coverage, gates, blocked, radar, questions, result, reading, step, createdAt, recheck, reveal = false, onAnswer, onBuildResume, apply } = props;
   const narrow = useMediaQuery(NARROW_QUERY);
   const firstQuestion = useRef<HTMLTextAreaElement | null>(null);
   const finalCoverage = result?.coverage ?? coverage;
+  const choiceId = useId();
+  const [applyOpen, setApplyOpen] = useState(!!apply?.open);
+  const [askedHere, setAskedHere] = useState(false);
+  const asks = apply?.asks ?? 0;
+  const onAsked = apply?.onAsked;
+
+  // the origin bar's Apply for me: open the choice; the choice brings itself into view and takes the keyboard
+  // (`focusOnMount`), so the asks count going back to 0 cannot cancel the scroll
+  useEffect(() => {
+    if (asks <= 0) return;
+    setApplyOpen(true);
+    setAskedHere(true);
+    onAsked?.();
+  }, [asks, onAsked]);
+
+  // a Discover card's Apply for me sent the person here: the choice is open once the entry is known
+  const openAtStart = !!apply?.open;
+  useEffect(() => {
+    if (openAtStart) setApplyOpen(true);
+  }, [openAtStart]);
+
+  const closeChoice = () => {
+    setApplyOpen(false);
+    setAskedHere(false);
+    document.querySelector<HTMLElement>(`[aria-controls="${choiceId}"]`)?.focus();
+  };
 
   const goQuestions = () => {
     const box = firstQuestion.current;
@@ -128,11 +161,44 @@ export function MatchView(props: MatchViewProps) {
                   Close the gaps · <span className="numeral">{questions.length}</span> {questions.length === 1 ? 'question' : 'questions'}
                 </button>
               )}
-              <button type="button" className="btn btn-primary mt-btn" onClick={onBuildResume}>
-                Build my resume for this role
-              </button>
-              <ApplyFromMatch matchId={props.matchId} links={posting?.links} />
+              {apply && apply.apply.kind !== 'own_account' ? (
+                <>
+                  <button type="button" className="btn btn-quiet mt-btn" onClick={onBuildResume}>
+                    Only build the resume
+                  </button>
+                  <ApplyForMeButton
+                    apply={apply.apply}
+                    className="mt-btn"
+                    controls={apply.apply.kind === 'offer' ? choiceId : undefined}
+                    expanded={applyOpen}
+                    signInNext={apply.signInNext}
+                    onApply={() => (applyOpen ? closeChoice() : setApplyOpen(true))}
+                  />
+                </>
+              ) : (
+                <>
+                  <button type="button" className="btn btn-primary mt-btn" onClick={onBuildResume}>
+                    Build my resume for this role
+                  </button>
+                  {/* an ATS that needs the person's own account: the resume stays the action, with why we don't apply */}
+                  {apply && <ApplyForMeButton apply={apply.apply} onApply={() => {}} />}
+                </>
+              )}
             </div>
+            {apply && apply.apply.kind === 'offer' && applyOpen && (
+              <ApplyForMeChoice
+                id={choiceId}
+                company={posting?.company}
+                savedResume={apply.savedResume}
+                needsLink={apply.needsLink}
+                stretchQuestions={result.band === 'stretch' ? questions.length : 0}
+                onQuestions={goQuestions}
+                firstTime={apply.firstTime}
+                focusOnMount={askedHere}
+                onContinue={apply.onContinue}
+                onCancel={closeChoice}
+              />
+            )}
           </>
         )}
       </section>

@@ -333,10 +333,15 @@ export interface ResumeViewProps {
   onDownload: (kind: 'docx' | 'pdf') => void;
   onFact?: OpenFact;
   hrefFor: (kind: 'docx' | 'pdf') => string;
+  /**
+   * The person chose "Fit my resume to this role, then apply" on the match: where "Use this resume and apply" goes
+   * (`/apply/new?match=<id>&resume=tailored`). It opens, like the downloads, once every decision is settled.
+   */
+  applyHref?: string;
 }
 
 export function ResumeView(props: ResumeViewProps) {
-  const { posting, facts, variant, matchId, saving, notice, downloading, onDecide, onNavigate, onDownload, onFact, hrefFor } = props;
+  const { posting, facts, variant, matchId, saving, notice, downloading, onDecide, onNavigate, onDownload, onFact, hrefFor, applyHref } = props;
   const pending = variant.decisions.length;
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const prev = useRef(pending);
@@ -378,13 +383,13 @@ export function ResumeView(props: ResumeViewProps) {
             )}
           </p>
         </div>
-        <div className="mt-actions" role="group" aria-label="Downloads">
+        <div className="mt-actions" role="group" aria-label={applyHref ? 'Downloads and applying' : 'Downloads'}>
           <RouteLink route={{ screen: 'cover', id: matchId }} onNavigate={onNavigate} className="btn btn-quiet mt-btn">
             Cover note
           </RouteLink>
           {(['docx', 'pdf'] as const).map((kind) =>
             pending > 0 ? (
-              <button key={kind} type="button" className={`btn mt-btn${kind === 'pdf' ? ' btn-primary' : ''}`} aria-disabled="true" aria-describedby="mt-dl-hint" onClick={jumpToDecisions}>
+              <button key={kind} type="button" className={`btn mt-btn${kind === 'pdf' && !applyHref ? ' btn-primary' : ''}`} aria-disabled="true" aria-describedby="mt-dl-hint" onClick={jumpToDecisions}>
                 Download {kind.toUpperCase()}
               </button>
             ) : (
@@ -392,7 +397,7 @@ export function ResumeView(props: ResumeViewProps) {
                 key={kind}
                 href={hrefFor(kind)}
                 download
-                className={`btn mt-btn${kind === 'pdf' ? ' btn-primary' : ''}`}
+                className={`btn mt-btn${kind === 'pdf' && !applyHref ? ' btn-primary' : ''}`}
                 aria-busy={downloading === kind}
                 onClick={(e) => {
                   if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
@@ -404,12 +409,22 @@ export function ResumeView(props: ResumeViewProps) {
               </a>
             ),
           )}
+          {applyHref &&
+            (pending > 0 ? (
+              <button type="button" className="btn btn-primary mt-btn" aria-disabled="true" aria-describedby="mt-dl-hint" onClick={jumpToDecisions}>
+                Use this resume and apply
+              </button>
+            ) : (
+              <a className="btn btn-primary mt-btn" href={applyHref}>
+                Use this resume and apply
+              </a>
+            ))}
         </div>
       </section>
       {pending > 0 && (
         <>
           <p id="mt-dl-hint" className="mt-muted mt-hint">
-            Downloads open once the {pending === 1 ? 'decision' : 'decisions'} on the right {pending === 1 ? 'is' : 'are'} settled.
+            {applyHref ? 'Downloads and applying open' : 'Downloads open'} once the {pending === 1 ? 'decision' : 'decisions'} on the right {pending === 1 ? 'is' : 'are'} settled.
           </p>
           {/* the preview below carries a tab stop for every source: this takes the keyboard straight to the decisions */}
           <button type="button" className="mt-skip" onClick={jumpToDecisions}>

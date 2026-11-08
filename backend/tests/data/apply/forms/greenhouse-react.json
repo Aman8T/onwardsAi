@@ -1,0 +1,18 @@
+{
+  "url": "https://job-boards.greenhouse.io/acme/jobs/7000001",
+  "title": "Job Application for Backend Engineer at Acme",
+  "fields": [
+    {"selector": "[id=\"first_name\"]", "tag": "input", "type": "text", "name": null, "label": "First Name*", "required": true, "value": "", "frame": 0},
+    {"selector": "[id=\"last_name\"]", "tag": "input", "type": "text", "name": null, "label": "Last Name*", "required": true, "value": "", "frame": 0},
+    {"selector": "[id=\"email\"]", "tag": "input", "type": "text", "name": null, "label": "Email*", "required": true, "value": "", "frame": 0},
+    {"selector": "[id=\"country\"]", "tag": "input", "type": "combobox", "name": null, "label": "Country*", "required": true, "value": "", "frame": 0},
+    {"selector": "[id=\"phone\"]", "tag": "input", "type": "tel", "name": null, "label": "Phone*", "required": true, "value": "", "frame": 0},
+    {"selector": "[id=\"candidate-location\"]", "tag": "input", "type": "combobox", "name": null, "label": "Location (City)*", "required": true, "value": "", "frame": 0},
+    {"selector": "[id=\"resume\"]", "tag": "input", "type": "file", "name": null, "label": "Resume/CV*", "required": true, "value": "", "accept": ".pdf,.doc,.docx,.txt,.rtf", "frame": 0},
+    {"selector": "[id=\"question_1001\"]", "tag": "input", "type": "text", "name": null, "label": "LinkedIn Profile", "required": false, "value": "", "frame": 0},
+    {"selector": "[id=\"question_1002\"]", "tag": "input", "type": "combobox", "name": null, "label": "Will you now or in the future require visa sponsorship to work in India?*", "required": true, "value": "", "options": ["Yes", "No"], "frame": 0},
+    {"selector": "[id=\"question_1003[]_1\"]", "tag": "input", "type": "checkbox", "name": "question_1003[]", "label": "Acknowledge/Confirm", "required": true, "value": "", "frame": 0},
+    {"selector": "[id=\"gender\"]", "tag": "input", "type": "combobox", "name": null, "label": "Gender", "required": false, "value": "", "options": ["Male", "Female", "Decline To Self Identify"], "frame": 0}
+  ],
+  "blockers": {"captcha_on_page": false, "password_field": false, "submit_texts": ["Submit application"], "resume_name_on_page": false}
+}

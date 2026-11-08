@@ -3,9 +3,14 @@
  * and the employer's own apply link, named. It shows only for that match: once the match has an address it is
  * remembered (`origin.ts`), and a different match, or a new one started from the paste screen, does not carry it.
  *
- * Rendered by the match section (`MatchRoot`); it decides for itself whether there is anything to show.
+ * Rendered by the match section (`MatchRoot`); it decides for itself whether there is anything to show. With auto-apply
+ * on, MatchRoot passes the match's Apply for me state: the bar leads with it and the employer's link turns quiet
+ * ("Apply on <host> ↗"). No link is asked for here: Discover already has it. When the employer's own account is needed
+ * (Workday), the employer's link stays the action and the reason sits beside it.
  */
 import { useEffect } from 'react';
+import { ApplyForMeButton } from '../apply/ApplyForMe';
+import type { RoleApply } from '../apply/ApplyForMe';
 import { useMatch } from '../match/useMatch';
 import { actions, useApp } from '../store';
 import { bindOrigin, useOrigin } from './origin';
@@ -14,7 +19,14 @@ import { parseDiscoverUrl } from './route';
 import { applyLabel, safeHref } from './util';
 import '../styles/discover.css';
 
-export function OriginBar() {
+export interface OriginApplyProps {
+  /** Apply for me on this match; absent while auto-apply is off or the match is still streaming. */
+  apply?: RoleApply;
+  onApply?: () => void;
+  signInNext?: string;
+}
+
+export function OriginBar({ apply, onApply, signInNext }: OriginApplyProps = {}) {
   const origin = useOrigin();
   const route = useApp((s) => s.matchRoute);
   const m = useMatch();
@@ -36,11 +48,12 @@ export function OriginBar() {
     // every field is named, so one the address leaves out is cleared rather than left as it was
     actions.openDiscover(q ? { city: q.city, remote: q.remote, tab: q.tab, run: q.run, job: q.job, ids: q.ids } : {});
   };
-  return <OriginBarView origin={origin} onBack={back} />;
+  return <OriginBarView origin={origin} onBack={back} apply={apply} onApply={onApply} signInNext={signInNext} />;
 }
 
 /** The bar itself: presentational, so the dev gallery can show it without a match behind it. */
-export function OriginBarView({ origin, onBack }: { origin: MatchOrigin; onBack: () => void }) {
+export function OriginBarView({ origin, onBack, apply, onApply, signInNext }: { origin: MatchOrigin; onBack: () => void } & OriginApplyProps) {
+  const leads = !!apply && apply.kind !== 'own_account';
   return (
     <div className="dc-origin" role="region" aria-label="Where this posting came from">
       <a
@@ -59,7 +72,8 @@ export function OriginBarView({ origin, onBack }: { origin: MatchOrigin; onBack:
         <span className="dc-muted"> · {origin.employer}</span>
       </span>
       <span className="dc-origin-apply">
-        <OriginApply origin={origin} />
+        {apply && <ApplyForMeButton apply={apply} size="sm" onApply={onApply ?? (() => {})} signInNext={signInNext} live={false} />}
+        <OriginApply origin={origin} quiet={leads} />
         <span className="dc-faint dc-small">{origin.sourceLabel} · opens in a new tab</span>
       </span>
     </div>
@@ -67,12 +81,12 @@ export function OriginBarView({ origin, onBack }: { origin: MatchOrigin; onBack:
 }
 
 /** "Apply on jobs.lever.co ↗", opening the employer's own posting in a new tab (only a plain web address is linked). */
-function OriginApply({ origin }: { origin: MatchOrigin }) {
+function OriginApply({ origin, quiet = false }: { origin: MatchOrigin; quiet?: boolean }) {
   const href = safeHref(origin.applyUrl);
   if (!href) return <span className="dc-faint">{`Apply on ${origin.applyHost}`}</span>;
   return (
     <a
-      className="btn btn-sm dc-btn-sm"
+      className={`btn btn-sm dc-btn-sm${quiet ? ' btn-quiet' : ''}`}
       href={href}
       target="_blank"
       rel="noopener noreferrer"

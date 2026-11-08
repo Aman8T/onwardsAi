@@ -9,12 +9,19 @@ real driver and records the refusals.
 Pages come from saved HTML (``scan()`` then reads them with `forms.scan_form`) or from a saved `SCAN_JS` result
 (``tests/data/apply/scans/*.json``, parsed with `scan.parse_scan`). ``reveals`` maps a button text to the page that
 clicking it opens (a form behind "Apply for this job").
+
+For the submit pass: ``after_submit`` (HTML or a scan) and ``after_submit_url`` script what the click leads to (a thank-you
+page, an error, a code prompt, nothing); ``raise_after_click`` makes the click go through and then raise, as a dropped
+connection would; ``resume_shows=False`` is a widget that never shows the attached file's name. ``page_posts`` are URLs
+the page's own scripts POST to on every fill step (analytics, autosave), which the guard must stop. ``allow_calls``
+records every `allow_submit_hosts` call.
 """
 
 from __future__ import annotations
 
 import re
 from collections.abc import Collection, Mapping, Sequence
+from dataclasses import replace
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -28,7 +35,7 @@ from tayyari.apply.driver import (
 )
 from tayyari.apply.forms import FormField, scan_form
 from tayyari.apply.netguard import READ_METHODS, decide, norm_write_hosts, site_of
-from tayyari.apply.scan import LiveScan, ScanBlockers, parse_scan
+from tayyari.apply.scan import LiveScan, ScanBlockers, parse_scan, resume_name_inferable
 
 THANKS = (
     "<html><body><h1>Thank you for applying!</h1><p>Your application has been submitted.</p></body></html>"
@@ -52,7 +59,7 @@ class FakeDriver:
         self,
         page: Page,
         *,
-        after_submit: str = THANKS,
+        after_submit: Page = THANKS,
         url: str = "https://example.com/apply",
         buttons: Sequence[str] | None = None,
         reveals: Mapping[str, Page] | None = None,
@@ -61,12 +68,19 @@ class FakeDriver:
         cost_micro_usd: int = 0,
         choose_sticks: bool = True,
         upload_url: str | None = None,
+        after_submit_url: str | None = None,
+        raise_after_click: BaseException | None = None,
+        resume_shows: bool = True,
+        page_posts: Sequence[str] = (),
     ) -> None:
         self.page: str = page if isinstance(page, str) else ""
         self.scan_data: Mapping[str, Any] | None = None if isinstance(page, str) else page
         self.after_submit, self.url = after_submit, url
         self.status, self.probe_result, self.choose_sticks = status, probe_result, choose_sticks
         self.upload_url = upload_url
+        self.after_submit_url, self.raise_after_click = after_submit_url, raise_after_click
+        self.resume_shows, self.page_posts = resume_shows, tuple(page_posts)
+        self.allow_calls: list[frozenset[str]] = []
         """When set, attaching a file POSTs to it at once (Greenhouse and Ashby upload on attach)."""
         self._buttons = list(buttons) if buttons is not None else None
         self._reveals = dict(reveals or {})
@@ -109,6 +123,11 @@ class FakeDriver:
 
     def allow_submit_hosts(self, hosts: Collection[str]) -> None:
         self.write_hosts = frozenset(norm_write_hosts([h for h in hosts if h.strip()]))
+        self.allow_calls.append(self.write_hosts)
+
+    def _page_scripts(self) -> None:
+        for url in self.page_posts:
+            self._request("POST", url)
 
     @property
     def cost_micro_usd(self) -> int:
@@ -185,6 +204,9 @@ class FakeDriver:
         for item in found.fields:
             if item.selector in self.values:
                 item.value = self.values[item.selector]
+        attached = {item.value for item in found.fields if item.kind == "file" and item.value}
+        if self.resume_shows and resume_name_inferable(resume_name) and resume_name in attached:
+            found.blockers = replace(found.blockers, resume_name_on_page=True)
         return found
 
     async def wait_for_form(self, seconds: float, resume_name: str = "") -> LiveScan:
@@ -209,7 +231,7 @@ class FakeDriver:
                 self.blocked_submits += 1
                 return
             self.submitted = True
-            self.page = self.after_submit
+            self.page = self.after_submit if isinstance(self.after_submit, str) else ""
             self.url = self.url.rstrip("/") + "/thanks"
 
     async def click_submit(self, selector: str, frame: int = 0) -> None:
@@ -221,8 +243,15 @@ class FakeDriver:
             self.blocked_submits += 1
             return
         self.submitted = True
-        self.page = self.after_submit
-        self.url = self.url.rstrip("/") + "/thanks"
+        self._show(self.after_submit)
+        self.url = self.after_submit_url or self.url.rstrip("/") + "/thanks"
+        if self.raise_after_click is not None:
+            raise self.raise_after_click
+
+    def _show(self, page: Page) -> None:
+        self.page = page if isinstance(page, str) else ""
+        self.scan_data = None if isinstance(page, str) else page
+        self.values = {}
 
     async def click_text(self, text: str, *, form_on_screen: bool) -> ClickOutcome:
         if click_refused(text, form_on_screen=form_on_screen):
@@ -244,6 +273,7 @@ class FakeDriver:
         self._need(selector)
         self.actions.append(("fill", selector, value))
         self.values[selector] = value
+        self._page_scripts()
 
     async def select(self, selector: str, value: str) -> None:
         self._need(selector)
@@ -260,6 +290,7 @@ class FakeDriver:
             text = options[index]
         self.actions.append(("select_label", selector, text))
         self.values[selector] = text
+        self._page_scripts()
 
     async def check(self, selector: str, frame: int = 0) -> None:
         self._need(selector)
@@ -284,6 +315,7 @@ class FakeDriver:
             raise LookupError("the pick did not stick")
         self.actions.append(("choose", selector, text))
         self.values[selector] = text
+        self._page_scripts()
 
     async def upload(self, selector: str, name: str, data: bytes, media_type: str, frame: int = 0) -> None:
         self._need(selector)

@@ -90,6 +90,8 @@ export const applyApi = {
   cancel: (id: string) => call<ApplicationDetail>(app(id, '/cancel'), { method: 'POST' }),
   /** Check this one: the person says whether it went through. */
   resolve: (id: string, outcome: ResolveOutcome) => call<ApplicationDetail>(app(id, '/resolve'), json('POST', { outcome })),
+  /** "I applied there": needs_signin -> sent, the person's word (its own route, like approve and resolve). */
+  appliedThere: (id: string) => call<ApplicationDetail>(app(id, '/applied-there'), { method: 'POST' }),
   /** Manual tracking after sent (viewed, interviewing, offer, rejected). */
   stage: (id: string, stage: ApplicationStage, note?: string) =>
     call<ApplicationDetail>(app(id, '/stage'), json('POST', note ? { stage, note } : { stage })),

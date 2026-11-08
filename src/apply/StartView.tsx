@@ -11,7 +11,7 @@
  */
 import { useEffect, useId, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { ApplyBlockReason, ApplyCheck, ApplyStatus, ResumeChoice, YourDetails } from '../../shared/apply';
+import type { ApplyBlockReason, ApplyCheck, ApplyStatus, ResumeChoice, StartApplicationRequest, YourDetails } from '../../shared/apply';
 import type { MatchBand, WorkMode } from '../../shared/match';
 import { signInSheet, useMe } from '../auth/useMe';
 import { shortDate } from '../billing/format';
@@ -22,6 +22,7 @@ import { ATS_LABEL, ApplyError, applyApi, errorText } from './api';
 import { Consent } from './Consent';
 import { FirstCheck } from './FirstCheck';
 import { DETAILS_ROUTE, LIST_ROUTE, applyPath, linkTo } from './route';
+import { applyLinkFor, clearApplyIntent } from './useApplications';
 import type { ApplyRoute, Navigate } from './route';
 
 /* ───────────────────────── what code computes ───────────────────────── */
@@ -484,6 +485,12 @@ export interface StartScreenProps {
 }
 
 /** What the screen needs before it can show anything, with a first check or consent first when they are due. */
+/** The start request: the route's ids and, for a pasted match, the form address the person typed. */
+export function startBody(input: { matchId: string; resume: ResumeChoice; listingId?: string; runId?: string; applyUrl?: string }): StartApplicationRequest {
+  const { matchId, resume, listingId, runId, applyUrl } = input;
+  return { matchId, resume, ...(listingId ? { listingId } : {}), ...(runId ? { runId } : {}), ...(applyUrl ? { applyUrl } : {}) };
+}
+
 export function StartScreen({ route, status, onStatus, navigate }: StartScreenProps) {
   const { unlimited } = useMe();
   const [check, setCheck] = useState<ApplyCheck | null>(null);
@@ -494,6 +501,8 @@ export function StartScreen({ route, status, onStatus, navigate }: StartScreenPr
   const [error, setError] = useState<string | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const { matchId, listingId, runId } = route;
+  // the application form's address the person typed on a pasted match (the match hands it over in this tab)
+  const applyUrl = applyLinkFor(matchId);
 
   useEffect(() => {
     let live = true;
@@ -513,7 +522,7 @@ export function StartScreen({ route, status, onStatus, navigate }: StartScreenPr
   useEffect(() => {
     if (!matchId) return;
     let live = true;
-    const body = { matchId, ...(listingId ? { listingId } : {}), ...(runId ? { runId } : {}) };
+    const body = { matchId, ...(listingId ? { listingId } : {}), ...(runId ? { runId } : {}), ...(applyUrl ? { applyUrl } : {}) };
     applyApi
       .check(body)
       .then((c) => live && setCheck(c))
@@ -534,7 +543,7 @@ export function StartScreen({ route, status, onStatus, navigate }: StartScreenPr
     return () => {
       live = false;
     };
-  }, [matchId, listingId, runId]);
+  }, [matchId, listingId, runId, applyUrl]);
 
   if (!matchId) {
     return (
@@ -601,8 +610,9 @@ export function StartScreen({ route, status, onStatus, navigate }: StartScreenPr
   const start = async () => {
     setStartError(null);
     try {
-      const body = { matchId, resume: route.resume, ...(listingId ? { listingId } : {}), ...(runId ? { runId } : {}) };
+      const body = startBody({ matchId, resume: route.resume, listingId, runId, applyUrl });
       const made = await applyApi.start(body);
+      clearApplyIntent();
       navigate({ screen: 'one', id: made.id });
     } catch (err) {
       if (err instanceof ApplyError && err.status === 409 && err.existingApplicationId) {

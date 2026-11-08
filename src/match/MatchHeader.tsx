@@ -2,8 +2,12 @@
  * The header of the match screens: the wordmark, the sections of the app as quiet chips (Match is where you are),
  * and on the right who you are, what your next posting will use, the atmosphere and the account control.
  * Plain, flat and on the field's own tone, like the graph header, but not sticky: these are reading screens.
+ * With auto-apply on and someone signed in, "Applications" links to the tracker at `/apply`.
  */
+import { applyPath } from '../apply/route';
+import { applyOn, useApplyStatus } from '../apply/useApplications';
 import { AccountMenu } from '../auth/AccountMenu';
+import { useMe } from '../auth/useMe';
 import { Atmosphere } from '../components/Atmosphere';
 import { Brand } from '../components/Brand';
 import { actions, useApp } from '../store';
@@ -14,6 +18,8 @@ import type { MatchRoute } from './route';
 
 export function MatchHeader({ onNavigate }: { onNavigate: (route: MatchRoute) => void }) {
   const profile = useApp((s) => s.profile);
+  const { user } = useMe();
+  const applications = applyOn(useApplyStatus()) && !!user;
   const who = profile ? [profile.person.name, profile.person.currentRole].filter(Boolean).join(' · ') : '';
 
   const home = () => (profile ? actions.showGraph() : actions.goto('onboarding'));
@@ -45,6 +51,11 @@ export function MatchHeader({ onNavigate }: { onNavigate: (route: MatchRoute) =>
         </nav>
       )}
       <div className="mt-header-end">
+        {applications && (
+          <a className="mt-navbtn" href={applyPath({ screen: 'list' })}>
+            Applications
+          </a>
+        )}
         {who && <span className="mt-who">{who}</span>}
         <EntitlementChip />
         <Atmosphere />
