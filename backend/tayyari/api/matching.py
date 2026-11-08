@@ -93,7 +93,7 @@ from tayyari.match.service import (
     RadarReady,
 )
 from tayyari.match.text import posting_hash
-from tayyari.storage.ports import StoredMatch
+from tayyari.storage.ports import StoredMatch, StoredUser
 
 log = get_logger(__name__)
 
@@ -594,6 +594,39 @@ async def listing_url(container: Container, ws: Workspace, listing_id: str, run_
     return listing.apply_url if proves_posting(ws, listing.posting_text) else None
 
 
+_PHONE = re.compile(r"\+?\d[\d ().-]{7,18}\d")
+
+
+def _years(value: object) -> str | None:
+    if not isinstance(value, int | float) or isinstance(value, bool) or value <= 0 or value > 60:
+        return None
+    n = round(float(value), 1)
+    return f"{int(n) if n.is_integer() else n} years"
+
+
+async def resume_facts(container: Container, user: StoredUser) -> dict[str, str | None]:
+    """What the person's resume says for the answer bank's first layer (spec 2.2), read in code with no model: the name,
+    current role, city and experience from their newest profile, the mobile from their newest match's fact book (as the
+    resume writes it), and the email they sign in with."""
+    out: dict[str, str | None] = {"email": user.email}
+    owned = await container.repos.users.list_profiles(user.id, 1)
+    doc = await container.repos.profiles.get_profile(owned[0].id) if owned else None
+    person = doc.get("person") if isinstance(doc, dict) else None
+    if isinstance(person, dict):
+        for key, name in (("fullName", "name"), ("currentTitle", "currentRole"), ("location", "location")):
+            value = person.get(name)
+            out[key] = value if isinstance(value, str) else None
+        out["totalExperience"] = _years(person.get("yearsExperience"))
+    for listing in await container.repos.matches.list_for_user(user.id, 1):
+        stored = await container.repos.matches.get(listing.id, user.id)
+        contact = (stored.facts or {}).get("contact") if stored is not None else None
+        for line in contact if isinstance(contact, list) else []:
+            if isinstance(line, str) and (found := _PHONE.search(line)) and "@" not in line:
+                out["phone"] = found.group(0).strip()
+                break
+    return out
+
+
 class ApplyFactSink:
     """`apply.seams.FactSink` over the profile's user facts: an allowlisted answer (`apply.service.fact_allowed`) kept
     as a fact "from you", so a match stops calling a notice period or a degree a gap. The sentence is built in code by
@@ -647,6 +680,7 @@ __all__ = [
     "posting_text_of",
     "proves_posting",
     "remember_new_facts",
+    "resume_facts",
     "stream_match",
     "stream_resume",
     "to_wire",

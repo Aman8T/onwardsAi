@@ -8,6 +8,7 @@ TAYYARI_TEST_BROWSER=1."""
 
 from __future__ import annotations
 
+import asyncio
 import os
 from collections.abc import AsyncIterator, Collection
 from contextlib import asynccontextmanager
@@ -534,3 +535,80 @@ async def test_an_expired_fill_lease_writes_an_interrupted_run() -> None:
         "lease_expired",
         0,
     )
+
+
+# ───────────────────────── A1 review fixes ─────────────────────────
+
+
+class Cancelled:
+    """An answerer whose call is cancelled: the worker task stopped mid-fill (a deploy, a restart)."""
+
+    async def answer(self, questions: Any, ctx: Any) -> dict[str, dict[str, Any]]:
+        raise asyncio.CancelledError
+
+
+async def test_a_cancelled_run_still_records_what_its_browser_cost() -> None:
+    env = Env(cost_micro_usd=700)
+    await env.seed(job={})
+    env.engine.answerer = Cancelled()
+    with pytest.raises(asyncio.CancelledError):
+        await env.engine.run(await env.app())
+    assert env.opener.drivers[0].closed and env.spend.recorded == [(700, "browser_use")]
+
+
+async def test_a_submit_whose_setup_raises_fails_before_any_browser_and_never_loops() -> None:
+    """A resume that cannot be rendered at submit time: failed with the hold released, never left approved at the head
+    of the queue to fail again on every pass."""
+    env = Env()
+    await env.seed()
+    await env.worker.run_once()
+    await env.approve()
+
+    async def broken(_: StoredApplication) -> None:
+        raise ValueError("cannot render")
+
+    env.engine.resume_for = broken
+    opened = len(env.opener.opened)
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.credit_state, app.approved_digest) == ("failed", "released", None)
+    assert len(env.opener.opened) == opened and env.credits.calls == [("release", "apply:ap1")]
+    assert await env.worker.run_once() is False  # nothing runnable is left behind
+
+
+async def test_a_fill_whose_setup_raises_is_an_interrupted_fill() -> None:
+    env = Env()
+    await env.seed()
+
+    async def broken(_: StoredApplication) -> None:
+        raise RuntimeError("db hiccup")
+
+    env.engine.resume_for = broken
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.attempts) == ("queued", 1) and env.opener.opened == []
+    assert [(m.outcome, m.failure_reason) for m in env.repo.metrics] == [("interrupted", "RuntimeError")]
+
+
+class RetriedDuringRelease(FakeApplyRepo):
+    """ "Try again" lands between the engine's move to closed and its credit write-back, trusting ``held``."""
+
+    async def update_application(self, application_id: str, changes: Any, *, now: datetime,
+                                 expected_stage: str | None = None) -> StoredApplication | None:  # fmt: skip
+        if dict(changes) == {"credit_state": "released"} and expected_stage == "closed":
+            await super().update_application(
+                application_id, {"stage": "queued"}, now=now, expected_stage="closed"
+            )
+        return await super().update_application(
+            application_id, changes, now=now, expected_stage=expected_stage
+        )
+
+
+async def test_a_release_that_races_a_retry_takes_the_hold_again() -> None:
+    env = Env(status=404)
+    env.repo = env.engine.repo = RetriedDuringRelease()
+    await env.seed()
+    await env.engine.run(await env.app())
+    app = await env.app()
+    assert (app.stage, app.credit_state) == ("queued", "held")
+    assert env.credits.calls == [("release", "apply:ap1"), ("hold", "apply:ap1")]

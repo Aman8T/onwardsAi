@@ -42,7 +42,8 @@ USER_CANCELLABLE: Final = frozenset(
 included: the worker's later move out of filling is a stale compare-and-set and does nothing)."""
 USER_RETRYABLE: Final = frozenset({"failed", "needs_signin", "closed"})
 """Stages the person may queue again ("Try again"). An answered waiting_for_you row is also queued again by the
-person, but that is the answers route, not "Try again"."""
+person, but that is the answers route, not "Try again"; and a waiting_for_you row whose only open needs are files
+goes through the retry route as "Fill it again" (`apply.service._waits_only_for_files`)."""
 ROUTED_TARGETS: Final = frozenset({"approved", "failed", "sent", "waiting_for_you"})
 """User moves only their own route makes: approve (with its digest), resolve and "I applied there". The generic stage
 route refuses these targets so it cannot go around them."""

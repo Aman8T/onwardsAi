@@ -301,6 +301,38 @@ for (const id of ['run-queued', 'run-filling', 'run-questions', 'run-review', 'r
   check('only a web address is linked', start.employerUrlOf({ check: { offered: false, applyUrl: 'javascript:alert(1)' } }) === undefined);
 }
 
+// ── A1 review: "Fill it again" for a file-only form, "off" before "sign in", a 402 in plain words ──
+{
+  const fileOnly = { ...fx.RUN_QUESTIONS, stage: 'waiting_for_you', review: undefined, needs: [{ key: 'resume:tailored', label: 'Finish your resume first', kind: 'file', required: true, reason: 'Your tailored resume still has open questions.', questionKey: 'resume:tailored', perOffer: true }] };
+  check('fill again offered when only a file is open', qv.fillAgainOffered(fileOnly) === true);
+  check('fill again not offered with a question open', qv.fillAgainOffered(fx.RUN_QUESTIONS) === false);
+  check('fill again not offered for an on-site need', qv.fillAgainOffered({ ...fileOnly, needs: [{ ...fileOnly.needs[0], onSite: true }] }) === false);
+  const fileText = textOf(render(h(qv.QuestionsView, { detail: fileOnly, navigate, onAnswer: noop, onSkip: noop, onFillAgain: noop })));
+  check('questions: a file-only form has Fill it again', fileText.includes('Fill it again') && !fileText.includes('Save and continue'), fileText.slice(0, 300));
+  check('questions: no Fill it again with questions open', !textOf(render(h(qv.QuestionsView, { detail: fx.RUN_QUESTIONS, navigate, onAnswer: noop, onSkip: noop, onFillAgain: noop }))).includes('Fill it again'));
+
+  const root: any = await import('../src/apply/ApplyRoot');
+  const base = { meError: false, loaded: true, signedIn: true, expired: false };
+  check('root: off for a signed-in person while auto-apply is off', root.rootView({ ...base, status: { enabled: false, signedIn: false } }) === 'off');
+  check('root: sign in when the session expired', root.rootView({ ...base, expired: true, status: null }) === 'signed_out');
+  check('root: sign in for a visitor', root.rootView({ ...base, signedIn: false, status: null }) === 'signed_out');
+  check('root: sign in when the server says signed out', root.rootView({ ...base, status: { enabled: true, signedIn: false } }) === 'signed_out');
+  check('root: the screen when on and signed in', root.rootView({ ...base, status: { enabled: true, signedIn: true } }) === 'screen');
+
+  const api: any = await import('../src/apply/api');
+  const realFetch = globalThis.fetch;
+  (globalThis as any).fetch = async () => new Response(JSON.stringify({ error: 'payment_required', reason: 'no_credits' }), { status: 402, headers: { 'content-type': 'application/json' } });
+  let said = '';
+  try {
+    await api.applyApi.retry('ap1');
+  } catch (e) {
+    said = api.errorText(e);
+  } finally {
+    (globalThis as any).fetch = realFetch;
+  }
+  check('a 402 is a sentence, not payment_required', said === api.NO_APPLICATIONS_LEFT && !said.includes('payment_required'), said);
+}
+
 if (failures.length) {
   console.error(`apply-run-parity: FAILED (${failures.length}, passed ${passed})`);
   for (const f of failures) console.error(`  - ${f}`);

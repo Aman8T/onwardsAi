@@ -11,9 +11,10 @@ every read is scoped by it, so another account's application reads as unknown.
               then the row ``queued`` (or a cancelled, closed or failed row of the same posting reopened). A failed
               insert gives the hold back; one that lost the race to the same posting raises `PostingTaken`.
     answer    a batch. ID numbers (by key or by shape) are refused. A saved answer goes into the answer bank, and every
-              other waiting application of the person that asks the same question gets it and is queued again (at most
-              `ApplySettings.requeue_cap`; per-offer questions and work-authorisation questions about an unknown
-              country are never shared). Allowlisted answers become facts "from you" through `FactSink`.
+              other waiting application of the person that asks the same question gets it and is queued again
+              (per-offer questions and work-authorisation questions about an unknown country are never shared). Only a
+              question the application asks (a need, or a field of its review) is taken. Allowlisted answers become
+              facts "from you" through `FactSink`.
     approve   only the review's digest, with no required question open (one typed on the employer's page included).
     cancel    any stage before submitting; the hold is given back.
     resolve   a ``check_this_one``: sent charges the hold; not sent gives it back and marks the row failed.
@@ -36,9 +37,10 @@ from typing import Any, Final, Literal, get_args
 
 from pydantic import ValidationError
 
-from tayyari.apply import stages
+from tayyari.apply import stages, wake
 from tayyari.apply.answers import COUNTRY_NAMES
 from tayyari.apply.checks import OWN_ACCOUNT_ATS, evaluate_start, fillable, reopens
+from tayyari.apply.holds import retake_if_reopened
 from tayyari.apply.intake import (
     Fingerprint,
     JobInfo,
@@ -53,6 +55,7 @@ from tayyari.apply.intake import (
     normalize_url,
     posting_key,
     same_posting,
+    site_key,
 )
 from tayyari.apply.playbook import COUNTRY_KEYS, ON_SITE_KEYS, SELF_ID_KEYS
 from tayyari.apply.seams import ApplyCredits, FactSink
@@ -137,6 +140,10 @@ STALE_KEYS: Final = frozenset({"noticePeriod", "currentCtc", "location"})
 """Answers that go stale (spec 2.2): a one-tap "Still true?" after 90 days."""
 PRIVATE_KEYS: Final = frozenset({"currentCtc"})
 """Saved but never shown back (sent only into a form that requires it)."""
+RESUME_KEYS: Final = frozenset({"fullName", "email", "phone", "location", "currentTitle", "totalExperience"})
+"""What `ApplyService.read_resume` may read from the resume into the answer bank."""
+QUESTION_KEY_MAX: Final = 64
+"""The longest question key the answer bank keeps (``answer_bank.question_key``)."""
 NO_DIGIT_CHECK_KEYS: Final = frozenset({"phone"})
 """Keys whose value is a long number by nature: a phone number is not refused as an ID."""
 
@@ -471,6 +478,28 @@ def _savable(key: str, need: Mapping[str, Any] | None) -> bool:
     return not (need is not None and need.get("perOffer") and key.startswith("q:"))
 
 
+def _asked_keys(app: StoredApplication) -> frozenset[str]:
+    """Every key an answer to this application may carry: its needs, and the fields of its review (an edit there)."""
+    keys: set[str] = set()
+    rows: list[Any] = list(app.needs or [])
+    review = app.review or {}
+    for part in ("fields", "skipped"):
+        rows.extend(r for r in review.get(part) or [] if isinstance(r, Mapping))
+    for row in rows:
+        for name in ("questionKey", "key"):
+            if found := row.get(name):
+                keys.add(str(found))
+    return frozenset(keys)
+
+
+def _waits_only_for_files(app: StoredApplication) -> bool:
+    """A waiting form whose every open required need is a file (nothing to type here): "Fill it again" queues it."""
+    if app.stage != "waiting_for_you":
+        return False
+    open_needs = [n for n in app.needs or [] if n.get("required")]
+    return bool(open_needs) and all(n.get("kind") == "file" and not n.get("onSite") for n in open_needs)
+
+
 def _saved(answer: StoredAnswer, now: datetime) -> SavedAnswer:
     key = answer.question_key
     base, _, country = key.partition(":")
@@ -572,7 +601,7 @@ class ApplyService:
                 await check_live(fp, self.status_fetcher) if self.status_fetcher is not None else "unknown"
             )
         check = verdict(fp, manual_only=False, liveness=liveness, existing=existing, host=domain)
-        return Inspected(check, clean, domain, fp, job, key, existing)
+        return Inspected(check, clean, site_key(clean, fp), fp, job, key, existing)
 
     async def check(self, owner: str, match: MatchInfo | None, url: str | None) -> ApplyCheck:
         """The read-only check behind "Apply for me": no row, no hold, no charge."""
@@ -590,15 +619,16 @@ class ApplyService:
         user_id = user_of(owner)
         if match.user_id is not None and match.user_id != user_id:
             raise NotFound(MATCH_NOT_FOUND)
+        now = self.clock.now()
+        cap = self.settings.apply.max_per_day
+        day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        # the daily cap before any page or ATS endpoint is read: a capped account makes no outbound request
+        if cap and await self.repo.count_created_since(owner, day) >= cap:
+            raise RateLimited(f"You can start {cap} applications a day. Try again tomorrow.")
         inspected = await self._inspect(user_id, match.posting_url, match)
         if not inspected.check.offered or inspected.url is None or inspected.key is None:
             log.info("apply_start_refused", reason=inspected.check.reason)
             raise StartRefused(_with_url(inspected))
-        now = self.clock.now()
-        cap = self.settings.apply.max_per_day
-        day = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        if cap and await self.repo.count_created_since(owner, day) >= cap:
-            raise RateLimited(f"You can start {cap} applications a day. Try again tomorrow.")
         earlier = inspected.existing if reopens(inspected.existing) else None
         app_id = earlier.id if earlier is not None else "app_" + secrets.token_hex(12)
         ref = apply_ref(app_id)
@@ -641,6 +671,7 @@ class ApplyService:
         note = "Started again from a match." if earlier is not None else "Started from a match."
         await stages.note(self.repo, app.id, note, source="user", now=now, kind="created")
         log.info("apply_started", application_id=app.id, ats=fp.ats, reopened=earlier is not None, held=held)
+        wake.poke()
         return await self._detail(app)
 
     async def _reopen(
@@ -704,6 +735,9 @@ class ApplyService:
         updated = await self.repo.update_application(
             app.id, {"credit_state": state}, now=self.clock.now(), expected_stage=app.stage
         )
+        if updated is None and how == "release":
+            # a fresh start or "Try again" landed between the move and this write, counting on this very hold
+            await retake_if_reopened(self.repo, self.credits, app.id, app.user_id, ref, self.clock.now())
         return updated or app
 
     # ── applications ──
@@ -832,12 +866,15 @@ class ApplyService:
             raise Conflict("This application is not waiting for answers.")
         by_key = {k: n for n in app.needs or [] if (k := _need_key(n)) is not None}
         by_field = {str(n.get("key")): n for n in app.needs or []}
+        asked = _asked_keys(app)
         given: list[tuple[QuestionAnswer, str, str, Mapping[str, Any] | None]] = []
         for item in body.answers:
             key = item.questionKey.strip()
             value = item.value.strip()[:APPLY_ANSWER_MAX_CHARS]
             if not key or not value:
                 continue
+            if key not in asked or len(key) > QUESTION_KEY_MAX:
+                raise BadRequest("That question is not one this form asks.")
             self._check_value(
                 key, value, account_email
             )  # the whole batch is refused before anything is written
@@ -866,18 +903,16 @@ class ApplyService:
         log.info(
             "apply_answered", application_id=app.id, answers=len(given), saved=len(saved), requeued=requeued
         )
+        wake.poke()
         return AnswerResult(application=await self._detail(moved), requeued=requeued)
 
     async def _share(self, user_id: str, answered_id: str, saved: Mapping[str, str]) -> int:
-        """Fill every other waiting application that asks one of the ``saved`` questions and queue it again (at most
-        `ApplySettings.requeue_cap`, oldest first). Each move is a compare-and-set: a row that moved meanwhile is left."""
-        cap = self.settings.apply.requeue_cap
-        if not saved or cap <= 0:
+        """Fill every other waiting application that asks one of the ``saved`` questions and queue it again, so no form
+        asks it twice (spec 2.2). Each move is a compare-and-set: a row that moved meanwhile is left."""
+        if not saved:
             return 0
         count = 0
         for other in await self.repo.list_waiting(user_id):
-            if count >= cap:
-                break
             if other.id == answered_id:
                 continue
             asked = {k: v for k, v in saved.items() if any(_shared(n, k) for n in other.needs or [])}
@@ -913,6 +948,7 @@ class ApplyService:
                                   changes={"approved_at": now, "approved_digest": digest}, kind="approved")  # fmt: skip
         if moved is None:
             raise Conflict(CHANGED)
+        wake.poke()
         return await self._detail(moved)
 
     async def cancel(self, owner: str, application_id: str) -> ApplicationDetail:
@@ -955,13 +991,28 @@ class ApplyService:
         app = await self._get(owner, application_id)
         if app.stage != "needs_signin":
             raise Conflict("Only an application that needed you to sign in can be marked as applied there.")
+        # the hold is given back BEFORE the row says sent: the sweep and delete capture a sent row's open hold, so a
+        # release that failed after the move would charge for an application Tayyari did not send
+        credit: dict[str, Any] = {}
+        ref = app.credit_ref or apply_ref(app.id)
+        credits, user_id = self.credits, app.user_id
+        held = app.credit_state == "held" and credits is not None and user_id is not None
+        if held and credits is not None and user_id is not None:
+            try:
+                await credits.release(user_id, ref)
+            except Exception:
+                log.error("apply_settle_failed", how="release", application_id=app.id, exc_info=True)
+                raise Conflict("We could not settle this one just now. Try again in a moment.") from None
+            credit = {"credit_state": "released"}
         moved = await stages.move(self.repo, app, "sent", source="user", now=self.clock.now(), kind="applied_there",
                                   note="Applied on the employer's site.",
                                   changes={"stage_reason": None, "stop_reason": None, "submitted_at": self.clock.now(),
-                                           **_UNAPPROVED})  # fmt: skip
+                                           **_UNAPPROVED, **credit})  # fmt: skip
         if moved is None:
+            if held and credits is not None and user_id is not None:
+                await retake_if_reopened(self.repo, credits, app.id, user_id, ref, self.clock.now())
             raise Conflict(CHANGED)
-        return await self._detail(await self._settle(moved, "release"))
+        return await self._detail(moved)
 
     async def set_stage(
         self, owner: str, application_id: str, stage: str, note: str | None, *, unlimited: bool = False
@@ -991,14 +1042,16 @@ class ApplyService:
         return await self._detail(moved)
 
     async def retry(self, owner: str, application_id: str, *, unlimited: bool = False) -> ApplicationDetail:
-        """ "Try again" after failed (before the click), needs_signin or closed: queued again, with a new hold when the
-        last one was given back."""
+        """ "Try again" after failed (before the click), needs_signin or closed, or "Fill it again" on a form that waits
+        only for a file (the resume added in Your details, or the tailored resume finished): queued again. The hold is
+        always taken through the ledger (idempotent per ref): ``credit_state`` alone is not trusted, because a release
+        that crashed before its write-back leaves ``held`` on a row whose hold is gone."""
         user_id = user_of(owner)
         app = await self._get(owner, application_id)
-        if app.stage not in stages.USER_RETRYABLE:
+        if app.stage not in stages.USER_RETRYABLE and not _waits_only_for_files(app):
             raise BadRequest(f"An application in {app.stage.replace('_', ' ')} cannot be tried again.")
         ref = app.credit_ref or apply_ref(app.id)
-        take = not unlimited and self.credits is not None and app.credit_state != "held"
+        take = not unlimited and self.credits is not None
         if take and self.credits is not None:
             await self.credits.hold(user_id, ref)
         credit: dict[str, Any] = {"credit_ref": ref, "credit_state": "held"} if take else {}
@@ -1006,20 +1059,34 @@ class ApplyService:
                                   changes={"stage_reason": None, "stop_reason": None, "attempts": 0, **_UNAPPROVED,
                                            **credit})  # fmt: skip
         if moved is None:
-            if take:
+            if take and app.credit_state != "held":
                 await self._give_back_unless_live(user_id, app.id, ref)
             raise Conflict(CHANGED)
+        wake.poke()
         return await self._detail(moved)
 
     async def delete(self, owner: str, application_id: str) -> None:
+        """Delete the row with its history, then settle its hold. The delete is a compare-and-set on the stage that was
+        read, so it never races the worker's ``submitting`` marker: either the marker lands first (the delete matches
+        nothing and is refused) or the delete does (the marker matches nothing and nothing is clicked)."""
         app = await self._get(owner, application_id)
         if app.stage in UNDELETABLE_STAGES:
             raise Conflict("This one may have reached the employer. Say whether it went through first.")
+        if not await self.repo.delete_application(application_id, owner, expected_stage=app.stage):
+            if await self.repo.get_application(application_id, owner) is None:
+                raise NotFound(NOT_FOUND)
+            raise Conflict(CHANGED)
+        if app.credit_state != "held" or self.credits is None or app.user_id is None:
+            return
         # a sent application's open hold (an email moved it on, or a capture failed) is charged, never refunded
-        sent = app.stage in stages.SENT_AND_LATER
-        await self._settle(app, "capture" if sent else "release")
-        if not await self.repo.delete_application(application_id, owner):
-            raise NotFound(NOT_FOUND)
+        ref = app.credit_ref or apply_ref(app.id)
+        try:
+            if app.stage in stages.SENT_AND_LATER:
+                await self.credits.capture(app.user_id, ref)
+            else:
+                await self.credits.release(app.user_id, ref)
+        except Exception:  # the row is gone: logged for the ledger's own reconciliation
+            log.error("apply_delete_settle_failed", application_id=app.id, exc_info=True)
 
     async def screenshot(self, owner: str, application_id: str, kind: ShotKind = "review") -> bytes:
         user_of(owner)
@@ -1080,6 +1147,37 @@ class ApplyService:
             updatedAt=max(times).isoformat() if times else None,
         )
 
+    async def read_resume(
+        self, owner: str, facts: Mapping[str, str | None], *, account_email: str | None = None
+    ) -> int:
+        """Layer 1 of the answer bank (spec 2.2): what the resume says (name, email, mobile, city, current role,
+        experience), read in code with no model, written with source ``resume`` for the first check to show for Edit.
+        Only until the first check is done, and only for questions the bank does not hold yet: what the person wrote
+        always wins. How many were written."""
+        user_id = user_of(owner)
+        profile = await self.repo.get_profile(owner)
+        if profile is not None and profile.first_check_at is not None:
+            return 0
+        wanted = {
+            k: v.strip()[:APPLY_DETAIL_MAX_CHARS]
+            for k, v in facts.items()
+            if k in RESUME_KEYS and v and v.strip()
+        }
+        if not wanted:
+            return 0
+        have = await self.repo.get_answers(user_id, list(wanted))
+        written = 0
+        for key, value in wanted.items():
+            if key in have:
+                continue
+            try:
+                self._check_value(key, value, account_email)
+            except AppError:
+                continue  # an ID-shaped line on a resume is never kept
+            await self._bank_put(user_id, key, value, question=_BANK[key].question, source="resume")
+            written += 1
+        return written
+
     async def _latest_profile_id(self, owner: str) -> str | None:
         """The profile an answer given in Your details feeds: the one the person last applied from."""
         for app in await self.repo.list_applications(owner, limit=20):
@@ -1089,7 +1187,7 @@ class ApplyService:
 
     def _bank_key(self, raw: str) -> str:
         key = raw.strip()
-        if not key or len(key) > 120:
+        if not key or len(key) > QUESTION_KEY_MAX:
             raise BadRequest("That question is not one we keep.")
         if is_never_stored(key):
             raise BadRequest("We never keep that: it is yours to type on the employer's page or in Review.")

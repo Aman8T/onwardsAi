@@ -30,6 +30,22 @@ import '../styles/apply.css';
 
 const here = (): ApplyRoute => parseApplyRoute(window.location.pathname, window.location.search) ?? LIST_ROUTE;
 
+export type RootView = 'me_error' | 'loading' | 'signed_out' | 'status_loading' | 'off' | 'screen';
+
+/**
+ * Which body the shell shows. "Off" comes before the signed-in gate: while auto-apply is off the status route does not
+ * resolve the account (it answers signedIn: false for everyone), so a signed-in person must see "off", not "sign in".
+ */
+export function rootView(s: { meError: boolean; loaded: boolean; signedIn: boolean; expired: boolean; status: Pick<ApplyStatus, 'enabled' | 'signedIn'> | null }): RootView {
+  if (s.meError) return 'me_error';
+  if (!s.loaded) return 'loading';
+  if (!s.signedIn || s.expired) return 'signed_out';
+  if (s.status && !s.status.enabled) return 'off';
+  if (s.status && !s.status.signedIn) return 'signed_out';
+  if (!s.status) return 'status_loading';
+  return 'screen';
+}
+
 export function ApplyRoot() {
   const { loaded, user, status: meStatus, refresh } = useMe();
   const [route, setRoute] = useState<ApplyRoute>(here);
@@ -80,8 +96,9 @@ export function ApplyRoot() {
     };
   }, [userId]);
 
+  const view = rootView({ meError: meStatus === 'error', loaded, signedIn: Boolean(user), expired, status });
   let body: ReactNode;
-  if (meStatus === 'error') {
+  if (view === 'me_error') {
     body = (
       <div className="ap-error" role="alert">
         <p>We could not check your sign-in.</p>
@@ -90,11 +107,13 @@ export function ApplyRoot() {
         </button>
       </div>
     );
-  } else if (!loaded) {
+  } else if (view === 'loading') {
     body = null;
-  } else if (!user || expired || (status && !status.signedIn)) {
+  } else if (view === 'signed_out') {
     body = <SignedOut />;
-  } else if (!status) {
+  } else if (view === 'off') {
+    body = <Off />;
+  } else if (view === 'status_loading' || !status) {
     body = error ? (
       <p className="ap-error" role="alert">
         {error}
@@ -104,8 +123,6 @@ export function ApplyRoot() {
         Loading
       </p>
     );
-  } else if (!status.enabled) {
-    body = <Off />;
   } else {
     body = <Screen route={route} status={status} onStatus={setStatus} navigate={navigate} />;
   }

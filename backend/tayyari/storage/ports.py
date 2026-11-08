@@ -1607,8 +1607,11 @@ class ApplyRepo(Protocol):
         `create_application`."""
         ...
 
-    async def delete_application(self, application_id: str, owner_key: str) -> bool:
-        """Delete the owner's application with its history; False when there was none."""
+    async def delete_application(
+        self, application_id: str, owner_key: str, *, expected_stage: str | None = None
+    ) -> bool:
+        """Delete the owner's application with its history; False when there was none or, with ``expected_stage``, it
+        is no longer in that stage (nothing is deleted then: a compare-and-set against the worker's marker)."""
         ...
 
     async def count_created_since(self, owner_key: str, since: datetime) -> int:

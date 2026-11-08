@@ -390,10 +390,11 @@ async def test_an_answer_requeues_every_other_waiting_application_that_asks_it(r
     assert rig.facts.written == [(USER, "p1", "noticePeriod", "My notice period is 30 days.")]
 
 
-async def test_the_fan_out_is_capped(make_settings: MakeSettings) -> None:
+async def test_the_fan_out_reaches_every_waiting_form(make_settings: MakeSettings) -> None:
+    """Spec 2.2: none is asked twice. The re-queue cap of an interrupted fill does not limit the fan-out."""
     rig = Rig(make_settings(apply={"requeue_cap": 1}))
     ask = need("notice", "noticePeriod")
-    for i in range(4):
+    for i in range(6):
         await rig.repo.create_application(
             stored(f"ap{i}", "waiting_for_you", needs=[ask], created_at=T0 + timedelta(minutes=i))
         )
@@ -402,7 +403,8 @@ async def test_the_fan_out_is_capped(make_settings: MakeSettings) -> None:
         "ap0",
         AnswerRequest(answers=[QuestionAnswer(questionKey="noticePeriod", value="30 days", save=True)]),
     )
-    assert result.requeued == 1
+    assert result.requeued == 5
+    assert {a.stage for a in rig.repo.applications.values()} == {"queued"}
 
 
 async def test_an_unsaved_or_never_stored_answer_stays_on_its_form(rig: Rig) -> None:
@@ -762,3 +764,199 @@ def test_the_tailored_resume_need_key_is_the_engines() -> None:
     from tayyari.apply import engine, service
 
     assert service.TAILORED_NEED_KEY == engine.TAILORED_NEED_KEY
+
+
+# ───────────────────────── A1 review fixes ─────────────────────────
+
+
+async def test_the_daily_cap_is_checked_before_any_page_or_ats_endpoint_is_read(
+    make_settings: MakeSettings,
+) -> None:
+    from tayyari.core.errors import RateLimited
+
+    rig = Rig(make_settings(apply={"max_per_day": 1}))
+    await rig.repo.create_application(stored("old", "sent", posting_key="other"))
+    with pytest.raises(RateLimited):
+        await rig.svc.create(OWNER, start(), match(pasted=True))
+    assert rig.pages.fetched == [] and rig.status.fetched == []
+
+
+async def test_a_start_keys_the_site_on_the_employers_board(rig: Rig) -> None:
+    """The per-site limit counts runs by ``domain``: on a shared ATS host it is the employer's board, so one Greenhouse
+    employer never holds back another's runs."""
+    detail = await rig.svc.create(OWNER, start(), match())
+    assert (await rig.get(detail.id)).domain == "job-boards.greenhouse.io/acme"
+
+
+class MarkerLandsFirst(FakeApplyRepo):
+    """The worker's ``approved -> submitting`` compare-and-set commits between delete's read and its DELETE."""
+
+    async def delete_application(
+        self, application_id: str, owner_key: str, *, expected_stage: str | None = None
+    ) -> bool:
+        await super().update_application(
+            application_id, {"stage": "submitting"}, now=T0, expected_stage="approved"
+        )
+        return await super().delete_application(application_id, owner_key, expected_stage=expected_stage)
+
+
+async def test_deleting_an_approved_row_never_races_the_submitting_marker(rig: Rig) -> None:
+    rig.repo = rig.svc.repo = MarkerLandsFirst()
+    await rig.repo.create_application(stored("ap1", "approved", credit_state="held", credit_ref="apply:ap1"))
+    rig.credits.state["apply:ap1"] = "held"
+    with pytest.raises(Conflict):
+        await rig.svc.delete(OWNER, "ap1")
+    app = await rig.get("ap1")
+    assert app.stage == "submitting" and rig.credits.live == [
+        "apply:ap1"
+    ]  # kept, and the hold not given back
+    assert rig.credits.calls == []
+
+
+async def test_a_delete_releases_the_hold_only_after_the_row_is_gone(rig: Rig) -> None:
+    await rig.repo.create_application(stored("ap1", "approved", credit_state="held", credit_ref="apply:ap1"))
+    rig.credits.state["apply:ap1"] = "held"
+    await rig.svc.delete(OWNER, "ap1")
+    assert "ap1" not in rig.repo.applications and rig.credits.state["apply:ap1"] == "released"
+
+
+class FailingRelease(Credits):
+    async def release(self, user_id: str, ref: str) -> bool:
+        self.calls.append(("release", ref))
+        raise RuntimeError("ledger down")
+
+
+async def test_i_applied_there_gives_the_hold_back_before_the_row_says_sent(rig: Rig) -> None:
+    """A release that fails leaves the row in needs_signin (still held): never a sent row with an open hold, which the
+    sweep and delete would capture."""
+    failing = FailingRelease()
+    rig.svc.credits = failing
+    await rig.repo.create_application(
+        stored("ap1", "needs_signin", credit_state="held", credit_ref="apply:ap1")
+    )
+    failing.state["apply:ap1"] = "held"
+    with pytest.raises(Conflict):
+        await rig.svc.applied_there(OWNER, "ap1")
+    app = await rig.get("ap1")
+    assert (app.stage, app.credit_state) == ("needs_signin", "held")
+    rig.svc.credits = rig.credits
+    rig.credits.state["apply:ap1"] = "held"
+    detail = await rig.svc.applied_there(OWNER, "ap1")
+    assert (detail.stage, detail.creditState) == ("sent", "released")
+    assert [e.kind for e in rig.repo.events if e.to_stage == "sent"] == ["applied_there"]
+
+
+async def test_try_again_takes_the_hold_through_the_ledger_even_when_the_row_says_held(rig: Rig) -> None:
+    """A release that crashed before its write-back leaves ``held`` on a row whose hold is gone: the retry holds again."""
+    await rig.repo.create_application(stored("ap1", "closed", credit_state="held", credit_ref="apply:ap1"))
+    rig.credits.state["apply:ap1"] = "released"
+    detail = await rig.svc.retry(OWNER, "ap1")
+    assert detail.stage == "queued" and rig.credits.live == ["apply:ap1"]
+
+
+class ReopenedDuringRelease(FakeApplyRepo):
+    """A fresh start reopens the cancelled row (replaying the still-live hold) while cancel's release runs."""
+
+    async def update_application(self, application_id: str, changes: Any, *, now: datetime,
+                                 expected_stage: str | None = None) -> StoredApplication | None:  # fmt: skip
+        if dict(changes) == {"credit_state": "released"} and expected_stage == "cancelled":
+            await super().update_application(
+                application_id,
+                {"stage": "queued", "credit_state": "held"},
+                now=now,
+                expected_stage="cancelled",
+            )
+        return await super().update_application(
+            application_id, changes, now=now, expected_stage=expected_stage
+        )
+
+
+async def test_a_cancel_whose_release_races_a_reopen_takes_the_hold_again(rig: Rig) -> None:
+    rig.repo = rig.svc.repo = ReopenedDuringRelease()
+    await rig.repo.create_application(stored("ap1", "approved", credit_state="held", credit_ref="apply:ap1"))
+    rig.credits.state["apply:ap1"] = "held"
+    await rig.svc.cancel(OWNER, "ap1")
+    app = await rig.get("ap1")
+    assert (app.stage, app.credit_state) == ("queued", "held") and rig.credits.live == ["apply:ap1"]
+
+
+async def test_a_reopen_whose_hold_cannot_be_taken_again_is_stopped_before_it_runs(rig: Rig) -> None:
+    rig.repo = rig.svc.repo = ReopenedDuringRelease()
+    await rig.repo.create_application(stored("ap1", "approved", credit_state="held", credit_ref="apply:ap1"))
+    rig.credits.state["apply:ap1"] = "held"
+    rig.credits.refuse = True  # the credits were spent meanwhile
+    await rig.svc.cancel(OWNER, "ap1")
+    app = await rig.get("ap1")
+    assert (app.stage, app.credit_state) == ("failed", "released") and rig.credits.live == []
+
+
+async def test_fill_it_again_queues_a_form_that_waits_only_for_a_file(rig: Rig) -> None:
+    resume = {"key": "resume:tailored", "label": "Finish your resume first", "kind": "file", "required": True,
+              "reason": "x", "questionKey": "resume:tailored", "perOffer": True}  # fmt: skip
+    await rig.repo.create_application(
+        stored("ap1", "waiting_for_you", needs=[resume], credit_state="held", credit_ref="apply:ap1")
+    )
+    rig.credits.state["apply:ap1"] = "held"
+    assert (await rig.svc.retry(OWNER, "ap1")).stage == "queued"
+    await rig.repo.create_application(
+        stored("ap2", "waiting_for_you", needs=[resume, need("notice", "noticePeriod")])
+    )
+    with pytest.raises(BadRequest):
+        await rig.svc.retry(OWNER, "ap2")  # a question is still open: answer it instead
+    assert await rig.stage("ap2") == "waiting_for_you"
+
+
+async def test_an_answer_must_be_to_a_question_the_form_asks(rig: Rig) -> None:
+    review = {"fields": [{"key": "city", "questionKey": "location"}], "skipped": []}
+    await rig.repo.create_application(
+        stored("ap1", "waiting_for_you", needs=[need("notice", "noticePeriod")], review=review)
+    )
+    with pytest.raises(BadRequest):
+        await rig.svc.answer(
+            OWNER, "ap1", AnswerRequest(answers=[QuestionAnswer(questionKey="x", value="y", save=True)])
+        )
+    assert await rig.stage("ap1") == "waiting_for_you"
+    edited = await rig.svc.answer(
+        OWNER,
+        "ap1",
+        AnswerRequest(answers=[QuestionAnswer(questionKey="location", value="Pune", save=False)]),
+    )
+    assert edited.application.stage == "queued"
+
+
+async def test_a_question_key_longer_than_the_bank_keeps_is_a_400(rig: Rig) -> None:
+    with pytest.raises(BadRequest):
+        await rig.svc.save_answer(
+            OWNER, SaveAnswerRequest(questionKey="q:" + "x" * 63, value="v", askEachTime=False)
+        )
+    await rig.svc.save_answer(
+        OWNER, SaveAnswerRequest(questionKey="q:" + "x" * 62, value="v", askEachTime=False)
+    )
+
+
+async def test_the_resume_fills_the_first_layer_of_the_bank_until_the_first_check(rig: Rig) -> None:
+    await rig.repo.put_answer(
+        StoredAnswer(user_id=USER, question_key="location", question="Current city", source="you",
+                     ask_each_time=False, answered_at=T0, created_at=T0, updated_at=T0, value="Pune")
+    )  # fmt: skip
+    facts = {"fullName": "Riya Kapoor", "email": "riya@example.com", "phone": "+91 98450 12345",
+             "location": "Bengaluru", "currentTitle": "Backend Engineer", "totalExperience": "4 years",
+             "pan": "ABCDE1234F"}  # fmt: skip
+    written = await rig.svc.read_resume(OWNER, facts, account_email="riya@example.com")
+    assert written == 5
+    details = await rig.svc.details(OWNER)
+    by_key = {a.questionKey: (a.value, a.source) for a in details.answers}
+    assert by_key["fullName"] == ("Riya Kapoor", "resume") and by_key["phone"] == (
+        "+91 98450 12345",
+        "resume",
+    )
+    assert by_key["location"] == ("Pune", "you")  # what the person wrote wins
+    assert "pan" not in by_key
+    assert (
+        await rig.svc.read_resume(OWNER, {"email": "someone@else.com"}, account_email="riya@example.com") == 0
+    )
+    await rig.svc.first_check(OWNER, FirstCheckRequest(skipped=True))
+    await rig.svc.delete_answer(OWNER, "currentTitle")
+    assert (
+        await rig.svc.read_resume(OWNER, facts, account_email="riya@example.com") == 0
+    )  # never after the check

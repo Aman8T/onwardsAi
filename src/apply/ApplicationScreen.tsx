@@ -160,6 +160,7 @@ export function ApplicationRun({ detail, onDetail, navigate, actions, queue, mat
             take(got.application);
           }}
           onSkip={async () => take(await actions.cancel())}
+          onFillAgain={async () => take(await actions.fillAgain())}
         />
       );
       break;

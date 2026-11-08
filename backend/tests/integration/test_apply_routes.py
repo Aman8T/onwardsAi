@@ -333,8 +333,11 @@ async def test_answers_approve_cancel_and_resolve_round_trips(start: Any) -> Non
         await rig.app(user_id, "ap2", "waiting_for_you", needs=[ask], created_at=now + timedelta(seconds=1))
         await rig.app(user_id, "ap3", "waiting_for_you", needs=[ask], created_at=now + timedelta(seconds=2))
         refused = await rig.client.post("/api/apply/applications/ap1/answers", headers=headers, json={
-            "answers": [{"questionKey": "q:x", "value": "ABCDE1234F", "save": True}]})  # fmt: skip
+            "answers": [{"questionKey": "noticePeriod", "value": "ABCDE1234F", "save": True}]})  # fmt: skip
         assert refused.status_code == 400 and await rig.stage("ap1") == "waiting_for_you"
+        unasked = await rig.client.post("/api/apply/applications/ap1/answers", headers=headers, json={
+            "answers": [{"questionKey": "q:not-on-this-form", "value": "x", "save": False}]})  # fmt: skip
+        assert unasked.status_code == 400 and await rig.stage("ap1") == "waiting_for_you"
         answered = await rig.client.post("/api/apply/applications/ap1/answers", headers=headers, json={
             "answers": [{"questionKey": "noticePeriod", "value": "30 days", "save": True}]})  # fmt: skip
         assert answered.status_code == 200, answered.text
@@ -402,7 +405,11 @@ async def test_your_details_crud(start: Any) -> None:
     async with start() as rig:
         _, headers = await rig.account()
         empty = (await rig.client.get("/api/apply/details", headers=headers)).json()
-        assert empty["answers"] == [] and empty["firstCheckDone"] is False and "PAN" in empty["neverStored"]
+        # layer 1 (spec 2.2): the resume's name and the sign-in email, for the first check to show for Edit
+        assert {a["questionKey"]: (a["value"], a["source"]) for a in empty["answers"]} == {
+            "fullName": ("Meera Nair", "resume"), "email": ("riya@example.com", "resume"),
+        }  # fmt: skip
+        assert empty["firstCheckDone"] is False and "PAN" in empty["neverStored"]
 
         checked = await rig.client.post("/api/apply/details/first-check", headers=headers, json={
             "skipped": False, "noticePeriod": "30 days",
@@ -483,6 +490,28 @@ async def test_a_discover_listing_gives_its_link_only_when_it_is_the_matched_pos
         assert await listing_url(other, ws, "l1", "run1") is None  # type: ignore[arg-type]
 
 
+async def test_the_check_reads_a_web_found_role_from_the_persons_search_run(start: Any) -> None:
+    """A role a web search found is never stored as a listing: the check reads its form link from the run."""
+    from tayyari.contract.jobsearch import JobPosting
+
+    async with start() as rig:
+        _, headers = await rig.account()
+        asked: list[tuple[str, str, str]] = []
+
+        class Search:
+            async def posting(self, profile_id: str, run_id: str, job_id: str) -> JobPosting | None:
+                asked.append((profile_id, run_id, job_id))
+                return JobPosting(jobId=job_id, title="t", employer="e", applyUrl=FORM, postingText="x")
+
+        rig.container.jobsearch = Search()
+        checked = await rig.client.post(
+            "/api/apply/check", json={"listingId": "web-1", "runId": "run1"}, headers=headers
+        )
+        assert checked.status_code == 200, checked.text
+        assert checked.json()["offered"] is True and checked.json()["applyUrl"] == FORM
+        assert asked == [("p" * 32, "run1", "web-1")]
+
+
 # ───────────────────────── rate limits (I#10) ─────────────────────────
 
 
@@ -511,3 +540,28 @@ async def test_the_check_and_the_email_are_shed_per_account(start: Any) -> None:
             await rig.client.post("/api/apply/check", json={"applyUrl": FORM}, headers=other)
         ).status_code == 200
         assert len(rig.edge.live_fetches) == fetched + 1  # another account is not held back
+
+
+async def test_the_start_and_the_answers_are_shed_per_account(start: Any) -> None:
+    """A start reads the employer's page and the ATS endpoint, and an answer queues a fill: both are shed per account
+    before anything is fetched."""
+    from tests.integration.support import roomy_guard
+
+    async with start(guard=roomy_guard(chat_per_minute=1)) as rig:
+        user_id, headers = await rig.account()
+        match_id = await rig.match(user_id)
+        body = {"matchId": match_id, "resume": "saved", "applyUrl": FORM}
+        codes = [
+            (await rig.client.post("/api/apply/applications", json=body, headers=headers)).status_code
+            for _ in range(4)
+        ]
+        assert codes[-1] == 429, codes
+        fetched = len(rig.edge.page_fetches)
+        assert (
+            await rig.client.post("/api/apply/applications", json=body, headers=headers)
+        ).status_code == 429
+        assert len(rig.edge.page_fetches) == fetched  # a shed start fetches nothing
+        await rig.app(user_id, "ap1", "waiting_for_you", needs=[need("notice", "noticePeriod")])
+        answered = await rig.client.post("/api/apply/applications/ap1/answers", headers=headers, json={
+            "answers": [{"questionKey": "noticePeriod", "value": "30 days", "save": False}]})  # fmt: skip
+        assert answered.status_code == 429 and await rig.stage("ap1") == "waiting_for_you"

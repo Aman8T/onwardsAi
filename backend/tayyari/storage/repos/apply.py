@@ -300,16 +300,25 @@ class SqlApplyRepo:
             ).one_or_none()
         return None if row is None else _app(row)
 
-    async def delete_application(self, application_id: str, owner_key: str) -> bool:
+    async def delete_application(
+        self, application_id: str, owner_key: str, *, expected_stage: str | None = None
+    ) -> bool:
         async with self._db.session() as s:
+            # lock the row in this transaction first (a no-op update on the stage read), so a concurrent compare-and-set
+            # (the worker's submitting marker) waits for this delete and then matches nothing
+            cond: list[ColumnElement[bool]] = [
+                ApplicationRow.id == application_id,
+                ApplicationRow.owner_key == owner_key,
+            ]
+            if expected_stage is not None:
+                cond.append(ApplicationRow.stage == expected_stage)
+            locked = await s.execute(update(ApplicationRow).where(*cond).values(stage=ApplicationRow.stage))
+            if rowcount(locked) == 0:
+                return False
             await s.execute(
                 delete(ApplicationEventRow).where(ApplicationEventRow.application_id == application_id)
             )
-            gone = await s.execute(
-                delete(ApplicationRow).where(
-                    ApplicationRow.id == application_id, ApplicationRow.owner_key == owner_key
-                )
-            )
+            gone = await s.execute(delete(ApplicationRow).where(*cond))
             return rowcount(gone) > 0
 
     async def count_created_since(self, owner_key: str, since: datetime) -> int:

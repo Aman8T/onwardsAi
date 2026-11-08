@@ -11,7 +11,12 @@ Each pass first sweeps the rows a run left behind (`ApplyRepo.list_expired`: a f
 
 Browser Use answering 429 after its retries (`BrowserUseBusy`), or a refused spend reservation (`SpendCeilingReached`),
 sets a global back-off of ``worker_backoff_s``: no row is claimed until it passes (the engine already put the row back). Per-site politeness: a site over
-``max_per_domain_per_hour`` runs, or run less than ``domain_gap_seconds`` ago, is skipped (its application waits).
+``max_per_domain_per_hour`` runs, or run less than ``domain_gap_seconds`` ago, is skipped (its application waits). The
+site is the application's ``domain``: the employer's board on a shared ATS host (``jobs.lever.co/acme``), else the host.
+
+While the queue is empty the wait between passes doubles from ``worker_poll_seconds`` up to ``worker_idle_max_seconds``,
+so an idle app does not query the database every few seconds; a start or an answer in this process (`apply.wake.poke`)
+ends the wait within ``worker_poll_seconds``.
 """
 
 from __future__ import annotations
@@ -23,7 +28,7 @@ import time
 from collections.abc import Callable
 from datetime import timedelta
 
-from tayyari.apply import stages
+from tayyari.apply import stages, wake
 from tayyari.apply.browser_use import BrowserUseBusy
 from tayyari.apply.engine import STOPPED_AFTER_SENDING, ApplyEngine
 from tayyari.core.logging import get_logger
@@ -112,19 +117,38 @@ class ApplyWorker:
             await self.engine.repo.release(app.id, self.name)
         return True
 
+    async def _idle(self, stop: asyncio.Event, seconds: float, seen: int) -> None:
+        """Wait up to ``seconds``, in steps of ``worker_poll_seconds``; returns early on stop or once `wake.poke` moved
+        the generation away from ``seen`` (read before the pass, so a poke during the pass is not missed)."""
+        step = self.engine.settings.worker_poll_seconds
+        loop = asyncio.get_running_loop()
+        until = loop.time() + seconds
+        while not stop.is_set() and wake.generation() == seen:
+            left = until - loop.time()
+            if left <= 0:
+                return
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=min(step, left))
+            except TimeoutError:
+                pass
+
     async def run_forever(self, stop: asyncio.Event | None = None) -> None:
         stop = stop or asyncio.Event()
+        s = self.engine.settings
+        idle = s.worker_poll_seconds
         while not stop.is_set():
+            seen = wake.generation()
             try:
                 busy = await self.run_once()
             except Exception:
                 log.exception("apply_worker_pass_failed")
                 busy = False
-            if not busy:
-                try:
-                    await asyncio.wait_for(stop.wait(), timeout=self.engine.settings.worker_poll_seconds)
-                except TimeoutError:
-                    pass
+            if busy or wake.generation() != seen:
+                idle = s.worker_poll_seconds
+                if busy:
+                    continue
+            await self._idle(stop, idle, seen)
+            idle = min(idle * 2, max(s.worker_idle_max_seconds, s.worker_poll_seconds))
 
 
 __all__ = ["ApplyWorker"]

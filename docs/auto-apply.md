@@ -290,6 +290,20 @@ as proposals and the text above is left as agreed until the user says yes.
    offline development and tests only.
 6. **Not in A1**: retention for applications abandoned before they finished, "I applied there" on a failed row, the
    Weekly's in-app role links, the price (§4), and the live fill-only test (A1.6).
+7. **The employer domain** (§3.2 limits): on Greenhouse, Lever and Ashby, whose hosts every employer shares, the
+   employer domain is the ATS host plus the employer's board (`jobs.lever.co/acme`); elsewhere it is the host. The
+   per-hour cap and the gap count runs by it, and site playbooks are keyed by it.
+8. **Resume facts** (§2.2 layer 1, §3.1 step 2): read in code, with no model, when Your details or the first check
+   first loads and only until the first check is done: the name, current role, city and years of experience from the
+   person's newest profile, the mobile from their newest match's fact book, and the email they sign in with. Education
+   is not read (the profile holds no structured education); a form asks it and the answer is kept. A resume value
+   never replaces an answer the person gave.
+9. **"Fill it again" for a file**: a form waiting only for a file (the resume added in Your details, or the tailored
+   resume finished on the match) is queued again by the person through the retry route; no upload or match edit
+   re-queues it by itself.
+10. **The idle worker**: while the queue is empty the wait between passes doubles from 3 s up to 2 minutes, so the
+    database can scale to zero between uses; a start, an answer, an approval or a retry in the same process wakes the
+    worker within one poll.
 
 ## 4. Cost and price
 

@@ -47,6 +47,7 @@ text is in their state) and ``chat`` LLM calls.
 
 from __future__ import annotations
 
+import secrets
 from collections.abc import Awaitable, Callable, Collection, Sequence
 from datetime import datetime, timedelta
 from typing import Any, Final
@@ -58,6 +59,7 @@ from tayyari.core.logging import get_logger
 from tayyari.core.settings import BillingSettings, Settings
 
 from .db import Database, dialect_insert, rowcount
+from .ports import StoredApplicationEvent
 from .repos import Repositories, build_repositories
 from .tables import (
     ApplicationRow,
@@ -92,6 +94,9 @@ HOLD_CAPTURE_STAGES: Final = frozenset({"sent", "viewed", "interviewing", "offer
 """An application in one of these stages was sent: a hold still open on it is captured."""
 HOLD_RELEASE_STAGES: Final = frozenset({"failed", "closed", "cancelled"})
 """An application in one of these stages was not sent: a hold still open on it is released."""
+HOLD_STOPPABLE_STAGES: Final = frozenset({"queued", "filling", "waiting_for_you", "approved", "needs_signin"})
+"""A reopened row whose hold could not be taken again is stopped in one of these (before the click): never sent free."""
+NO_HOLD_NOTE: Final = "You have no applications left, so this one was stopped. Nothing was sent."
 HOLD_SWEEP_LIMIT: Final = 500
 """Applications reconciled per run (the next run takes the rest)."""
 
@@ -267,6 +272,32 @@ async def _set_credit_state(
         return rowcount(await s.execute(update(ApplicationRow).where(*cond).values(credit_state=state))) > 0
 
 
+async def _stop_without_hold(
+    db: Database, repos: Repositories, app_id: str, claim: str, now: datetime
+) -> None:
+    """The hold of a reopened row could not be taken again (no credits left): the row says ``released``, and one that has
+    not reached the click is moved to failed so it is never sent with nothing held."""
+    await _set_credit_state(db, app_id, stage=None, expected=claim, state="released")
+    current = await repos.apply.get_application(app_id, None)
+    log.error("apply_hold_retake_refused", application_id=app_id, stage=current.stage if current else None)
+    if current is None or current.stage not in HOLD_STOPPABLE_STAGES:
+        return
+    moved = await repos.apply.update_application(
+        app_id,
+        {"stage": "failed", "credit_state": "released", "stage_reason": NO_HOLD_NOTE, "stop_reason": "fill_error",
+         "progress": None, "approved_at": None, "approved_digest": None},
+        now=now,
+        expected_stage=current.stage,
+    )  # fmt: skip
+    if moved is not None:
+        await repos.apply.add_event(
+            StoredApplicationEvent(
+                id="ev_" + secrets.token_hex(12), application_id=app_id, at=now, kind="stage", source="system",
+                from_stage=current.stage, to_stage="failed", detail={"note": NO_HOLD_NOTE},
+            )
+        )  # fmt: skip
+
+
 async def _reconcile_holds(
     db: Database, repos: Repositories, now: datetime, billing: BillingSettings | None = None
 ) -> int:
@@ -321,15 +352,18 @@ async def _reconcile_holds(
             ):
                 # reopened or tried again: the new run counts on this ref's hold (whether or not it wrote
                 # credit_state), so it is taken again and the row says held
-                await repos.billing.hold(
+                taken = await repos.billing.hold(
                     user_id,
                     ref,
                     now=now,
                     free_allowance=rules.free_applications,
                     cost=rules.apply_credit_cost,
                 )
-                await _set_credit_state(db, row.id, stage=None, expected=claim, state="held")
-                log.warning("apply_hold_retaken", application_id=row.id)
+                if taken is not None:
+                    await _set_credit_state(db, row.id, stage=None, expected=claim, state="held")
+                    log.warning("apply_hold_retaken", application_id=row.id)
+                else:
+                    await _stop_without_hold(db, repos, row.id, claim, now)
             elif current.stage in (HOLD_CAPTURE_STAGES if how == "capture" else HOLD_RELEASE_STAGES):
                 # moved within the same kind of stage (sent -> interviewing): the settlement stands
                 if await _set_credit_state(db, row.id, stage=current.stage, expected=claim, state=final):

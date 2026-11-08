@@ -47,6 +47,7 @@ from tayyari.apply.answers import Answerer, FillContext, Resume, bank_of
 from tayyari.apply.browser_use import BrowserUseBusy
 from tayyari.apply.driver import BrowserDriver, GuardNotActive, PageOpener, open_cost
 from tayyari.apply.fill_loop import FieldListLoop
+from tayyari.apply.holds import retake_if_reopened
 from tayyari.apply.playbook import BUILTIN, Playbook, builtin_id
 from tayyari.apply.runner import (
     ATTACH_WAIT_S,
@@ -183,6 +184,8 @@ class _Run:
     playbook_id: str | None = None
     browser_cost: int = 0
     model_cost: int = 0
+    spent: int = 0
+    """How much of ``browser_cost`` is already in the spend ledger (each session is recorded once, cancelled or not)."""
 
 
 @dataclass(slots=True)
@@ -241,13 +244,20 @@ class ApplyEngine:
             log.warning("apply_hold_not_settled", application_id=app.id, how=how)
             return
         state = "charged" if how == "capture" else "released"
-        await self.repo.update_application(
+        written = await self.repo.update_application(
             app.id, {"credit_state": state}, now=self.clock.now(), expected_stage=app.stage
         )
+        if written is None and how == "release" and app.user_id is not None:
+            # "Try again" or a fresh start landed between the stage move and this write, counting on this very hold
+            await retake_if_reopened(self.repo, self.credits, app.id, app.user_id, ref, self.clock.now())
 
-    async def _record_spend(self, cost: int) -> None:
+    async def _spend(self, run: _Run) -> None:
+        """Record what the run's browser cost that is not recorded yet (called in the browser's ``finally`` too, so a
+        cancelled run, a deploy mid-fill, still reaches the daily ceiling)."""
+        cost = run.browser_cost - run.spent
         if cost <= 0 or self.limits is None:
             return
+        run.spent = run.browser_cost
         try:
             await self.limits.record_spend(self.clock.now(), cost, BROWSER_USE_SCOPE)
         except Exception as exc:
@@ -320,13 +330,19 @@ class ApplyEngine:
         if moving is None:
             return
         app = moving
-        playbook, run.playbook_id = await self._playbook(app)
-        if playbook is None:
+        try:
+            playbook, run.playbook_id = await self._playbook(app)
+            ctx = await self._context(app, with_facts=True) if playbook is not None else None
+        except Exception as exc:
+            # a read before the browser: back to the queue while this go has re-queues left
+            log.warning("apply_fill_setup_failed", application_id=app.id, error=type(exc).__name__)
+            await self.interrupted(app, run, reason=type(exc).__name__)
+            return
+        if playbook is None or ctx is None:
             result = FillResult("failed", reason="no_playbook", note="This site is not one we can fill yet.",
                                 stop_reason="fill_error")  # fmt: skip
             await self._finish_fill(app, result, run)
             return
-        ctx = await self._context(app, with_facts=True)
         if _choice(app) == "tailored" and ctx.resume is None:
             await self._resume_not_ready(app)
             return
@@ -344,6 +360,7 @@ class ApplyEngine:
                     )  # fmt: skip
                 finally:
                     run.browser_cost = await self._close(driver)
+                    await self._spend(run)
         except GuardNotActive as exc:
             run.browser_cost = max(run.browser_cost, open_cost(exc))
             log.warning("apply_guard_not_active", application_id=app.id, run_kind="fill")
@@ -353,7 +370,7 @@ class ApplyEngine:
             )  # fmt: skip
         except (SpendCeilingReached, BrowserUseBusy) as exc:
             run.browser_cost = max(run.browser_cost, open_cost(exc))
-            await self._record_spend(run.browser_cost)
+            await self._spend(run)
             log.info("apply_fill_deferred", application_id=app.id, reason=type(exc).__name__)
             await stages.move(
                 self.repo, app, "queued", source="engine", now=self.clock.now(), note="Waiting for capacity.",
@@ -363,11 +380,11 @@ class ApplyEngine:
             raise  # the worker backs off (a 429, or the spend ceiling): no hot loop on the same row
         except Exception as exc:
             run.browser_cost = max(run.browser_cost, open_cost(exc))
-            await self._record_spend(run.browser_cost)
+            await self._spend(run)
             log.warning("apply_fill_interrupted", application_id=app.id, error=type(exc).__name__)
             await self.interrupted(app, run, reason=type(exc).__name__)
             return
-        await self._record_spend(run.browser_cost)
+        await self._spend(run)
         result = result_or_none
         if result is None:  # pragma: no cover - every path above sets it or returns
             return
@@ -472,13 +489,26 @@ class ApplyEngine:
                 app, "The review could not be read. Nothing was sent: fill it again.", "fill_error", run
             )
             return
-        playbook, run.playbook_id = await self._playbook(app, review.playbookId)
-        if playbook is None:
+        try:
+            playbook, run.playbook_id = await self._playbook(app, review.playbookId)
+            ctx = await self._context(app, with_facts=False) if playbook is not None else None
+        except Exception as exc:
+            # before the browser and the marker: nothing was sent. Failed (hold released), never left approved at the
+            # head of the queue to fail again on every pass
+            log.warning("apply_submit_setup_failed", application_id=app.id, error=type(exc).__name__)
+            await self._submit_failed(
+                app,
+                f"Sending did not start ({type(exc).__name__}). Nothing was sent.",
+                "fill_error",
+                run,
+                "error",
+            )
+            return
+        if playbook is None or ctx is None:
             await self._submit_failed(
                 app, "This site is not one we can send to. Nothing was sent.", "fill_error", run
             )
             return
-        ctx = await self._context(app, with_facts=False)
         current = app
         marked = False
 
@@ -507,6 +537,7 @@ class ApplyEngine:
                     )  # fmt: skip
                 finally:
                     run.browser_cost = await self._close(driver)
+                    await self._spend(run)
         except GuardNotActive as exc:
             run.browser_cost = max(run.browser_cost, open_cost(exc))
             log.warning("apply_guard_not_active", application_id=app.id, run_kind="submit")
@@ -515,7 +546,7 @@ class ApplyEngine:
             )
         except (SpendCeilingReached, BrowserUseBusy) as exc:
             run.browser_cost = max(run.browser_cost, open_cost(exc))
-            await self._record_spend(run.browser_cost)
+            await self._spend(run)
             log.info("apply_submit_deferred", application_id=app.id, reason=type(exc).__name__)
             if marked:  # not reached in practice: the reservation and the browser come before the marker
                 await self._check_this_one(current, "error", STOPPED_AFTER_SENDING, None, run)
@@ -524,7 +555,7 @@ class ApplyEngine:
             raise  # still approved: a later pass sends it, after the worker's back-off
         except Exception as exc:
             run.browser_cost = max(run.browser_cost, open_cost(exc))
-            await self._record_spend(run.browser_cost)
+            await self._spend(run)
             log.warning(
                 "apply_submit_stopped", application_id=app.id, marked=marked, error=type(exc).__name__
             )
@@ -534,7 +565,7 @@ class ApplyEngine:
                 note = f"Sending stopped ({type(exc).__name__}). Nothing was sent."
                 await self._submit_failed(app, note, "fill_error", run, "error")
             return
-        await self._record_spend(run.browser_cost)
+        await self._spend(run)
         result = result_or_none
         if result is None:  # pragma: no cover - every path above sets it or returns
             return

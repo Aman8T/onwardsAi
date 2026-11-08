@@ -126,9 +126,13 @@ class FakeApplyRepo:
         self.applications[application_id] = updated
         return self._out(updated)
 
-    async def delete_application(self, application_id: str, owner_key: str) -> bool:
+    async def delete_application(
+        self, application_id: str, owner_key: str, *, expected_stage: str | None = None
+    ) -> bool:
         found = self.applications.get(application_id)
         if found is None or found.owner_key != owner_key:
+            return False
+        if expected_stage is not None and found.stage != expected_stage:
             return False
         del self.applications[application_id]
         self.screenshots.pop(application_id, None)

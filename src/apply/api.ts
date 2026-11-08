@@ -49,6 +49,9 @@ export function errorText(err: unknown, fallback = 'Something went wrong. Try ag
   return err instanceof ApplyError ? err.message : fallback;
 }
 
+/** A 402 carries only the code `payment_required` (and a reason), never a sentence: this is the sentence (`billing.entitlements.NO_APPLY_CREDITS_MESSAGE`). */
+export const NO_APPLICATIONS_LEFT = 'You have used your free applications. Choose a plan to continue.';
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, { credentials: 'same-origin', ...init });
   if (!res.ok) {
@@ -58,7 +61,8 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
       const raw: unknown = await res.json();
       if (raw && typeof raw === 'object') body = raw as Record<string, unknown>;
       const text = body.error ?? body.detail;
-      if (typeof text === 'string' && text) message = text;
+      if (res.status === 402 || text === 'payment_required') message = NO_APPLICATIONS_LEFT;
+      else if (typeof text === 'string' && text) message = text;
     } catch {
       /* not JSON */
     }

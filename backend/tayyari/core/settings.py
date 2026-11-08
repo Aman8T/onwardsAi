@@ -914,7 +914,8 @@ class ApplySettings(BaseModel):
     requeue_cap: int = Field(default=3, ge=0)
     """Times an application may go back to the queue after an interrupted fill before it fails (0 = never re-queued)."""
     max_per_domain_per_hour: int = Field(default=6, ge=0)
-    """Engine runs (fill or submit) against one site per hour, across everyone (0 = no limit). A run over the limit waits."""
+    """Engine runs (fill or submit) against one site per hour, across everyone (0 = no limit). A run over the limit waits.
+    The site is the employer: on Greenhouse, Lever and Ashby the ATS host plus the employer's board."""
     domain_gap_seconds: float = Field(default=20.0, ge=0)
     """The worker leaves at least this long between two runs against the same site."""
     manual_only_domains: Annotated[list[str], NoDecode] = Field(
@@ -928,6 +929,10 @@ class ApplySettings(BaseModel):
     email_model: str | None = None
     """The model that classifies an employer's email into a stage (default: the reader model)."""
     worker_poll_seconds: float = Field(default=3.0, ge=0.1)
+    """The wait between two worker passes, and the first wait once the queue is empty."""
+    worker_idle_max_seconds: float = Field(default=120.0, ge=0.1)
+    """The longest wait between passes while the queue stays empty (the wait doubles up to it), so an idle app does not
+    keep a scale-to-zero database awake. A start or an answer in the same process wakes the worker at once."""
     worker_lease_seconds: int = Field(default=600, ge=30)
     """How long a claimed application stays with one worker before another may pick it up."""
     headless: bool = True

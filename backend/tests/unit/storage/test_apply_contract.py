@@ -257,7 +257,11 @@ async def test_events_come_back_in_order_and_go_with_the_application(repo: Apply
         "n": 0
     }
     assert await repo.delete_application("ap1", OTHER) is False
-    assert await repo.delete_application("ap1", OWNER) is True
+    stage = (await repo.get_application("ap1", None)).stage  # type: ignore[union-attr]
+    # a compare-and-set on the stage read: another stage deletes nothing, not even the history
+    assert await repo.delete_application("ap1", OWNER, expected_stage="submitting") is False
+    assert len(await repo.list_events("ap1")) == 3
+    assert await repo.delete_application("ap1", OWNER, expected_stage=stage) is True
     assert await repo.list_events("ap1") == [] and await repo.get_application("ap1", None) is None
 
 

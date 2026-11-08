@@ -353,7 +353,8 @@ class Plan:
 
 
 def pick_option(item: FormField, value: str) -> tuple[str, str] | None:
-    """The option of a select or radio group that ``value`` names (exact text, then yes/no, then a containing match)."""
+    """The option of a select or radio group that ``value`` names (exact text, then yes/no, then a containing match of
+    whole words: "no" is never found inside "another")."""
     want = value.strip().lower()
     for opt_value, text in item.options:
         if text.lower() == want or opt_value.lower() == want:
@@ -365,9 +366,15 @@ def pick_option(item: FormField, value: str) -> tuple[str, str] | None:
             if (yes and head in ("yes", "y")) or (not yes and head in ("no", "n")):
                 return opt_value, text
     for opt_value, text in item.options:
-        if want and (want in text.lower() or text.lower() in want):
+        if want and (_has_words(text.lower(), want) or _has_words(want, text.lower())):
             return opt_value, text
     return None
+
+
+def _has_words(text: str, part: str) -> bool:
+    """``part`` occurs in ``text`` as whole words (no letter or digit right before or after it)."""
+    part = part.strip()
+    return bool(part) and re.search(rf"(?<![a-z0-9]){re.escape(part)}(?![a-z0-9])", text) is not None
 
 
 class Answerer(Protocol):

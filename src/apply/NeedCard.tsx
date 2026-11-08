@@ -153,7 +153,7 @@ export function NeedCard({ need, draft, onChange, disabled, company }: NeedCardP
           {need.required && employer ? `Required by ${employer}. ` : ''}
           {need.reason}
         </p>
-        <p className="ap-muted ap-small">Add it in Your details (or finish the tailored resume on the match), then fill the form again.</p>
+        <p className="ap-muted ap-small">Add it in Your details (or finish the tailored resume on the match), then press Fill it again.</p>
       </section>
     );
   }

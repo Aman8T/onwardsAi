@@ -37,6 +37,7 @@ from tayyari.api.matching import (
     gate_reasons,
     listing_url,
     open_match,
+    resume_facts,
 )
 from tayyari.api.routes._body import describe, read_model
 from tayyari.api.uploads import read_capped_body, read_json_body, require_json_content_type
@@ -203,9 +204,21 @@ async def check(request: Request) -> JSONResponse:
         return _json((await svc.check(owner, match, match.posting_url)).to_dict())
     url = body.applyUrl
     if listing_id is not None:
-        listing = await container.repos.discover.get(listing_id)
-        url = listing.apply_url if listing is not None else None
+        url = await _listing_link(container, user, listing_id, run_id) or url
     return _json((await svc.check(owner, None, url)).to_dict())
+
+
+async def _listing_link(container: Container, user: User, listing_id: str, run_id: str | None) -> str | None:
+    """A Discover role's form link before any match: from the search run (``run_id``) of one of the person's own
+    profiles, where every role a web search found is held (they are never stored as listings), else the stored
+    listing."""
+    if run_id is not None:
+        for owned in await container.repos.users.list_profiles(user.id, 5):
+            held = await container.jobsearch.posting(owned.id, run_id, listing_id)
+            if held is not None and held.applyUrl:
+                return held.applyUrl
+    listing = await container.repos.discover.get(listing_id)
+    return listing.apply_url if listing is not None and listing.apply_url else None
 
 
 CONSENT_FIRST: Final = "Agree to how Apply for me works first: nothing is started before you do."
@@ -213,7 +226,9 @@ CONSENT_FIRST: Final = "Agree to how Apply for me works first: nothing is starte
 
 @router.post("/api/apply/applications")
 async def create_application(request: Request) -> JSONResponse:
+    """Shed per account like the check: a start reads the employer's page and the ATS's public job endpoint."""
     container, svc, user, owner = await _start(request)
+    await _shed(request, container, owner)
     body = await _body(request, container, StartApplicationRequest)
     match = await _match(
         container, user, body.matchId, listing_id=_short_id(body.listingId, "listing"),
@@ -269,7 +284,9 @@ async def get_screenshot(application_id: str, request: Request) -> Response:
 
 @router.post("/api/apply/applications/{application_id}/answers")
 async def post_answers(application_id: str, request: Request) -> JSONResponse:
+    """Shed per account: each answer queues a fill (a browser and model calls)."""
     container, svc, user, owner = await _start(request)
+    await _shed(request, container, owner)
     body = await _body(request, container, AnswerRequest)
     result = await svc.answer(owner, application_id, body, account_email=user.email)
     return _json(result.to_dict())
@@ -330,7 +347,8 @@ async def delete_application(application_id: str, request: Request) -> Response:
 
 @router.get("/api/apply/details")
 async def get_details(request: Request) -> JSONResponse:
-    _, svc, _, owner = await _start(request)
+    container, svc, user, owner = await _start(request)
+    await svc.read_resume(owner, await resume_facts(container, user), account_email=user.email)
     return _json((await svc.details(owner)).to_dict())
 
 

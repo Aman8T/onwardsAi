@@ -4,11 +4,13 @@ Browser Use answers 429, and the per-site cap."""
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator, Collection
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from tayyari.apply import wake
 from tayyari.apply.browser_use import BrowserUseBusy
 from tayyari.apply.driver import OpenMode
 from tayyari.apply.engine import ApplyEngine
@@ -184,3 +186,44 @@ async def test_the_per_domain_cap_holds_a_run_back() -> None:
     app = await repo.get_application("ap1", None)
     assert app is not None and app.stage == "queued" and app.attempts == 0 and app.lease_owner is None
     assert await worker.run_once() is False  # the site is skipped for a while
+
+
+async def test_the_per_site_cap_is_per_employer_not_per_ats_host() -> None:
+    """Every Lever posting is on jobs.lever.co: the cap counts the employer's board, so Acme's runs never hold Beta's."""
+    repo, worker, _, _ = setup(max_per_domain_per_hour=1)
+    await repo.add_run_metric(
+        StoredRunMetric(id="r1", created_at=T0 - timedelta(minutes=10), run_kind="fill", ats="lever",
+                        domain="jobs.lever.co/acme", mode="playbook", outcome="success")
+    )  # fmt: skip
+    assert await worker._over_limit("jobs.lever.co/acme") is True
+    assert await worker._over_limit("jobs.lever.co/beta") is False
+
+
+class Passes(ApplyWorker):
+    """Counts the passes; never finds work."""
+
+    def __init__(self, engine: ApplyEngine) -> None:
+        super().__init__(engine)
+        self.passes = 0
+
+    async def run_once(self) -> bool:
+        self.passes += 1
+        return False
+
+
+async def test_an_empty_queue_backs_off_and_a_poke_wakes_the_worker() -> None:
+    _, plain, _, _ = setup(worker_poll_seconds=0.1, worker_idle_max_seconds=0.4)
+    worker = Passes(plain.engine)
+    stop = asyncio.Event()
+    task = asyncio.create_task(worker.run_forever(stop))
+    await asyncio.sleep(1.2)
+    # waits of 0.1, 0.2, 0.4, 0.4 ...: far fewer passes than one every 0.1 s
+    idle_passes = worker.passes
+    assert 3 <= idle_passes <= 6, idle_passes
+    await asyncio.sleep(0.05)
+    before = worker.passes
+    wake.poke()
+    await asyncio.sleep(0.15)  # within one poll step
+    assert worker.passes > before
+    stop.set()
+    await asyncio.wait_for(task, timeout=1)

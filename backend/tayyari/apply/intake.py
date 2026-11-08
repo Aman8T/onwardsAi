@@ -148,6 +148,20 @@ def host_of(url: str) -> str:
     return host[4:] if host.startswith("www.") else host
 
 
+SITE_KEY_MAX: Final = 255
+"""The longest site key (``applications.domain``)."""
+
+
+def site_key(url: str, fp: Fingerprint) -> str:
+    """The employer's site for the per-site politeness limit and site playbooks: on a shared ATS host (Greenhouse, Lever,
+    Ashby) the host plus the employer's board (``jobs.lever.co/acme``), so one employer's runs never hold back
+    another's; else the host."""
+    host = host_of(url)
+    if fp.ats in ("greenhouse", "lever", "ashby") and fp.board:
+        return f"{host}/{fp.board.lower()}"[:SITE_KEY_MAX]
+    return host
+
+
 def host_is(host: str, domain: str) -> bool:
     return host == domain or host.endswith("." + domain)
 
@@ -533,5 +547,6 @@ __all__ = [
     "normalize_url",
     "posting_key",
     "same_posting",
+    "site_key",
     "text_of",
 ]

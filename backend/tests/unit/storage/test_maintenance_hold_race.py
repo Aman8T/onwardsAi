@@ -160,3 +160,37 @@ async def test_a_ledger_call_that_fails_puts_the_claim_back(
     app = await repos.apply.get_application("ap1", None)
     assert app is not None and app.credit_state == "held"  # never left as an out-of-contract claim
     assert await maintenance._reconcile_holds(any_real_db, repos, NOW, settings.billing) == 1
+
+
+async def test_a_reopen_whose_hold_is_refused_is_stopped_never_sent_free(
+    any_real_db: Database, settings: Settings
+) -> None:
+    """The refunded credits were spent elsewhere before the hold was taken again: the ledger refuses (None). The row is
+    never left saying ``held`` with nothing held: it is failed (it had not reached the click) and says released."""
+    repos = build_repositories(any_real_db)
+    ana = (await repos.users.sign_in_email(email="ana@example.com", now=NOW - 50 * DAY)).id
+    await repos.billing.grant(ana, credits=1, pass_days=0, ref="o1", now=NOW - 50 * DAY)
+    await seed(repos, ana, "ap1", "failed")
+    billing = repos.billing
+
+    class SpentMeanwhile:
+        def __getattr__(self, name: str) -> Any:
+            return getattr(billing, name)
+
+        async def release(self, user_id: str, ref: str, *, now: datetime) -> bool:
+            await repos.apply.update_application(
+                "ap1", {"stage": "queued", "credit_state": "held"}, now=now, expected_stage="failed"
+            )
+            return await billing.release(user_id, ref, now=now)
+
+        async def hold(self, *args: Any, **kwargs: Any) -> None:
+            return None
+
+    await maintenance._reconcile_holds(
+        any_real_db, replace(repos, billing=SpentMeanwhile()), NOW, settings.billing
+    )
+    app = await repos.apply.get_application("ap1", None)
+    assert app is not None and (app.stage, app.credit_state) == ("failed", "released")
+    assert "no applications left" in (app.stage_reason or "")
+    assert await repos.billing.hold_state(ana, "apply:ap1") == "released"
+    assert [e.to_stage for e in await repos.apply.list_events("ap1")] == ["failed"]

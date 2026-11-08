@@ -2,7 +2,8 @@
  * Questions (canvas 12): the form asks things we do not know yet. One card per need, the onSite ones without an input.
  * "Save and continue" sends every answer in one batch (`applyApi.answer`); a saved answer fills every other waiting form
  * that asks the same question, and the screen says how many carried on (`requeued`). "Skip this application" cancels it
- * (the hold is released).
+ * (the hold is released). A form that waits only for a file (the resume added in Your details, the tailored resume
+ * finished on the match) has nothing to type: "Fill it again" queues it (`applyApi.retry`, `fillAgainOffered`).
  *
  * Signatures wait for Review, where the person signs the form they are about to approve.
  */
@@ -20,6 +21,15 @@ export interface QuestionsViewProps {
   navigate: Navigate;
   onAnswer: (body: AnswerRequest) => Promise<void>;
   onSkip: () => Promise<void>;
+  /** Queue the form again once its file is there (only offered when every open required need is a file). */
+  onFillAgain?: () => Promise<void>;
+}
+
+/** Mirrors `apply.service._waits_only_for_files`: every open required need is a file, so nothing is typed here. */
+export function fillAgainOffered(detail: Pick<ApplicationDetail, 'stage' | 'needs'>): boolean {
+  if (detail.stage !== 'waiting_for_you') return false;
+  const open = detail.needs.filter((n) => n.required);
+  return open.length > 0 && open.every((n) => isFileNeed(n) && !n.onSite);
 }
 
 /** The headline's count, from the needs (code, not the server's wording). */
@@ -28,14 +38,14 @@ export function questionsTitle(asked: number, files = 0): string {
   return `This form asks ${asked === 1 ? 'one thing' : `${asked} things`} we don't know yet.`;
 }
 
-export function QuestionsView({ detail, navigate, onAnswer, onSkip }: QuestionsViewProps) {
+export function QuestionsView({ detail, navigate, onAnswer, onSkip, onFillAgain }: QuestionsViewProps) {
   const questions = detail.needs.filter(isQuestion);
   const onSite = detail.needs.filter((n) => n.onSite);
   const files = detail.needs.filter((n) => !n.onSite && isFileNeed(n));
   const toSign = detail.needs.filter((n) => !n.onSite && isAttestation(n));
   const shown = [...questions, ...onSite, ...files];
   const [drafts, setDrafts] = useState<Record<string, NeedDraft>>(() => initialDrafts(questions));
-  const [busy, setBusy] = useState<'save' | 'skip' | null>(null);
+  const [busy, setBusy] = useState<'save' | 'skip' | 'again' | null>(null);
   const [confirmSkip, setConfirmSkip] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const reasonId = useId();
@@ -53,6 +63,19 @@ export function QuestionsView({ detail, navigate, onAnswer, onSkip }: QuestionsV
       await onAnswer({ answers: batch });
     } catch (err) {
       setError(errorText(err, 'Could not save your answers. Try again.'));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const fillAgain = async () => {
+    if (busy || !onFillAgain) return;
+    setBusy('again');
+    setError(null);
+    try {
+      await onFillAgain();
+    } catch (err) {
+      setError(errorText(err, 'Could not fill the form again. Try again.'));
     } finally {
       setBusy(null);
     }
@@ -115,6 +138,11 @@ export function QuestionsView({ detail, navigate, onAnswer, onSkip }: QuestionsV
                 onClick={() => void save()}
               >
                 {busy === 'save' ? 'Saving' : 'Save and continue'}
+              </button>
+            )}
+            {questions.length === 0 && onFillAgain && fillAgainOffered(detail) && (
+              <button type="button" className="btn btn-primary" aria-disabled={busy ? 'true' : undefined} onClick={() => void fillAgain()}>
+                {busy === 'again' ? 'Queuing' : 'Fill it again'}
               </button>
             )}
             {confirmSkip ? (

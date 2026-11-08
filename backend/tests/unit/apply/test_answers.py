@@ -20,6 +20,7 @@ from tayyari.apply.answers import (
     Resume,
     apply_model_answers,
     digest_rows,
+    pick_option,
     plan_fields,
     question_key,
     resolve_country,
@@ -83,6 +84,17 @@ def test_a_us_work_auth_question_with_only_india_saved_is_asked_and_never_sent_t
     assert questions == []  # never an open question for the model
     assert need.questionKey == "workAuthorization:US" and need.required
     assert "the United States" in need.reason and need.perOffer is None
+
+
+def test_a_yes_on_another_basis_never_picks_no_from_inside_another() -> None:
+    """'no' is a substring of 'another': only whole words match, so the first check's third choice finds Yes."""
+    for options in ([("No", "No"), ("Yes", "Yes")], [("n", "No"), ("y", "Yes")]):
+        item = field("Are you legally authorised to work in India?", "select", options=options)
+        assert pick_option(item, "Yes, on another basis") == options[1]
+    item = field("Notice", "select", options=[("a", "Immediate"), ("b", "30 days")])
+    assert pick_option(item, "3") is None  # never part of a number either
+    assert pick_option(item, "30") == ("b", "30 days")
+    assert pick_option(item, "30 days notice") == ("b", "30 days")
 
 
 def test_the_india_answer_fills_an_india_question() -> None:
