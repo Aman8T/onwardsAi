@@ -28,7 +28,7 @@ import { Layout } from '../src/site/Layout';
 import { NotFound } from '../src/site/NotFound';
 import { COMPANY_LINKS, COMPANY_URL, SITE_PAGES } from '../src/site/links';
 import { CONTENT_PAGES } from '../src/site/pages';
-import { HomeSeed } from '../src/site/seeds/HomeSeed';
+import { HOME_FAQ, HomeSeed } from '../src/site/seeds/HomeSeed';
 import { PRICING_FAQ, PricingSeed } from '../src/site/seeds/PricingSeed';
 import {
   HOME_HEAD,
@@ -285,7 +285,8 @@ function applyAppHead(shellHtml: string, head: AppHead, path: string, graph: obj
 /**
  * The shell for the app's private routes (match, discover, practice, a published portfolio...): no canonical, no structured
  * data, no share tags, and `noindex`. The server answers those routes with it instead of the Home shell, which names
- * Home as the canonical of every URL it opens.
+ * Home as the canonical of every URL it opens. Its title and description are index.html's own ("Leafout, career
+ * intelligence"), the app's generic ones; the Home and Pricing shells get theirs from seo.ts.
  */
 function privateShell(shellHtml: string): string {
   let html = between(between(shellHtml, SEO_BEGIN, SEO_END), NOSCRIPT_BEGIN, NOSCRIPT_END);
@@ -463,8 +464,9 @@ function main(): void {
   });
   write('404.html', htmlDocument(notFoundHead, frame('', createElement(NotFound))));
 
+  // The Home seed shows HOME_FAQ word for word, so the shell carries the same questions as FAQPage data (as the content pages do).
   const base = [organizationLd(), websiteLd(SITE_URL), softwareLd(SITE_URL)];
-  write('index.html', applyAppHead(shell.html, HOME_HEAD, '/', base, createElement(HomeSeed)));
+  write('index.html', applyAppHead(shell.html, HOME_HEAD, '/', [...base, faqLd(HOME_FAQ)], createElement(HomeSeed)));
   write(
     'pricing/index.html',
     applyAppHead(shell.html, PRICING_HEAD, '/pricing', [...base, breadcrumbLd(SITE_URL, '/pricing'), faqLd(PRICING_FAQ)], createElement(PricingSeed)),

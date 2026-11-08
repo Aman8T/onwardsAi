@@ -8,6 +8,9 @@ import type { ContentPage } from './types';
 
 export const SITE_NAME = 'Leafout';
 
+/** The one tagline: the Home h1 (src/views/Onboarding.tsx, the Home seed) and the share picture's alt say the same words. */
+export const TAGLINE = 'See where you stand. Then where you could go.';
+
 /** The line that closes every page's footer and describes the site in structured data. */
 export const SITE_LINE = 'Leafout reads your resume, GitHub and public links and shows your skills as an evidence-cited graph.';
 
@@ -37,7 +40,7 @@ export const OG_IMAGE = {
   path: '/og-default.png',
   width: 1200,
   height: 630,
-  alt: 'Leafout: Know where you stand. See where you can go.',
+  alt: `Leafout: ${TAGLINE}`,
 } as const;
 
 /** The logo of the Organization (a file of the company site, which owns the brand). */
@@ -81,7 +84,7 @@ export function websiteLd(base: string): Ld {
     name: SITE_NAME,
     url: `${base}/`,
     description: SITE_LINE,
-    inLanguage: 'en',
+    inLanguage: 'en-IN',
     publisher: { '@id': ORG_ID },
   };
 }

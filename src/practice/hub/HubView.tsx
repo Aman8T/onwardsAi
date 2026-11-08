@@ -165,7 +165,7 @@ function ComingUp({ rows, limited, nav }: { rows: readonly PractiseRole[]; limit
     <section className="panel pc-sec" aria-labelledby={headingId}>
       <header className="pc-sec-head">
         <p className="kicker">From Your applications</p>
-        <h2 className="serif pc-h2" id={headingId}>
+        <h2 className="title pc-h2" id={headingId}>
           Coming up
         </h2>
       </header>
@@ -223,7 +223,7 @@ function KindCard({ card, choices, limited, nav }: { card: (typeof CARDS)[number
 
   return (
     <article className="panel pc-card" aria-labelledby={`${ids}-h`}>
-      <h2 className="serif pc-h3" id={`${ids}-h`}>
+      <h2 className="title pc-h3" id={`${ids}-h`}>
         {KIND_LABEL[card.kind]}
       </h2>
       <p className="pc-muted pc-card-blurb">{card.blurb}</p>
@@ -283,7 +283,7 @@ function RedrillCard({ weak, limited, nav }: { weak: readonly ClaimBest[]; limit
   const n = Math.min(weak.length, REDRILL_SHORT);
   return (
     <article className="panel pc-card pc-card-redrill" aria-labelledby={`${ids}-h`}>
-      <h2 className="serif pc-h3" id={`${ids}-h`}>
+      <h2 className="title pc-h3" id={`${ids}-h`}>
         {KIND_LABEL.redrill}
       </h2>
       <p className="pc-muted pc-card-blurb">{KIND_BLURB.redrill}</p>
@@ -316,7 +316,7 @@ function YourPractice({ history, onReload, nav, paused }: { history: Load<Practi
       <header className="pc-sec-head pc-sec-head-row">
         <div className="pc-sec-head">
           <p className="kicker">Past sessions</p>
-          <h2 className="serif pc-h2" id={headingId}>
+          <h2 className="title pc-h2" id={headingId}>
             Your practice
           </h2>
         </div>

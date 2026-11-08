@@ -80,7 +80,7 @@ export function NothingFitted({ funnel, note, trail, children }: { funnel: reado
         <ol className="dc-nothing-list" aria-label="How many roles were left after each stage">
           {funnel.map((step, i) => (
             <li key={i} className={i === funnel.length - 1 ? 'is-last' : undefined}>
-              <span className="serif dc-nothing-n">{fmt(step.count)}</span>
+              <span className="numeral dc-nothing-n">{fmt(step.count)}</span>
               <span className="dc-muted dc-funnel-label">{step.label}</span>
             </li>
           ))}

@@ -21,6 +21,7 @@ import { SignInLink } from '../auth/SignInLink';
 import { signInSheet, useMe } from '../auth/useMe';
 import { Atmosphere } from '../components/Atmosphere';
 import { Brand } from '../components/Brand';
+import { IconCheck } from '../components/Icons';
 import { EASE } from '../lib/ui';
 import { actions, useApp } from '../store';
 import { CheckoutNotice, isBusy, useCheckout, useCheckoutScript } from './Checkout';
@@ -250,7 +251,7 @@ export function PricingView() {
                 <p className="kicker" id="bl-free">
                   Free
                 </p>
-                <p className="serif bl-price">{formatPrice(0, ent.currency)}</p>
+                <p className="numeral bl-price">{formatPrice(0, ent.currency)}</p>
                 <p className="bl-sub">For as long as you like. Interview practice is free while it is in testing.</p>
               </header>
               <PlanList items={FREE_ITEMS} />
@@ -348,8 +349,8 @@ function PlanList({ items }: { items: Item[] }) {
     <ul className="bl-list">
       {items.map((item) => (
         <li key={item.text}>
-          <span className="numeral bl-tick" aria-hidden="true">
-            ✓
+          <span className="bl-tick" aria-hidden="true">
+            <IconCheck size={14} />
           </span>
           <span>
             {item.text}
@@ -392,12 +393,12 @@ function Plan({ id, kicker, sub, note, items, price, currency, unit, otherPrice,
           {kicker}
         </p>
         {onSale ? (
-          <p className="serif bl-price">
+          <p className="numeral bl-price">
             {formatPrice(price, currency)}
             {unit && <span className="bl-unit"> {unit}</span>}
           </p>
         ) : (
-          <p className="serif bl-price is-soon">Coming soon</p>
+          <p className="title bl-price is-soon">Coming soon</p>
         )}
         <p className="bl-sub">{sub}</p>
         {note && <p className="bl-sub">{note}</p>}

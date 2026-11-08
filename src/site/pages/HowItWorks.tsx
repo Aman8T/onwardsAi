@@ -8,7 +8,8 @@ export const howItWorks: ContentPage = {
   h1: 'How Leafout works',
   lede: 'Leafout reads what you have actually done and shows it as a skill graph in which every skill cites the line it came from. That graph then drives everything else: the roles you are close to, a check of any job posting, a preparation plan and interview practice.',
   blurb: 'From your sources to a cited skill graph, and what you can do with it.',
-  cta: { label: 'Try a sample profile', href: '/' },
+  // Home has no address that opens the sample by itself, so the link says what it does: it opens the app, where the sample is one button away.
+  cta: { label: 'Open Leafout', href: '/' },
   software: true,
   related: ['/skill-graph', '/job-match', '/mock-interview'],
   faq: [

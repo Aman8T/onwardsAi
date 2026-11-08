@@ -43,7 +43,7 @@ export function ChecksPanel({ debrief }: { debrief: Debrief }) {
     <section className="panel pc-sec" aria-labelledby={headingId}>
       <header className="pc-sec-head">
         <p className="kicker">The checks</p>
-        <h2 className="serif pc-h2" id={headingId}>
+        <h2 className="title pc-h2" id={headingId}>
           What this task was looking for
         </h2>
         <p className="pc-muted">Written before you started, shown now. Each one is Defended when your work or your words showed it.</p>
@@ -76,7 +76,7 @@ export function WorkPanel({ debrief }: { debrief: Debrief }) {
     <section className="panel pc-sec" aria-labelledby={`${base}-h`}>
       <header className="pc-sec-head">
         <p className="kicker">The task</p>
-        <h2 className="serif pc-h2" id={`${base}-h`}>
+        <h2 className="title pc-h2" id={`${base}-h`}>
           {task?.task ?? 'Your work'}
         </h2>
       </header>

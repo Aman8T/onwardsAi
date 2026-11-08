@@ -110,7 +110,7 @@ function Body({ job, now, ctl, onClose, narrow = false }: FocusProps & { narrow?
       </div>
 
       <div className="dc-detail-head">
-        <h2 className="serif dc-detail-title">{job.title}</h2>
+        <h2 className="title dc-detail-title">{job.title}</h2>
         {narrow ? (
           <p className="dc-detail-emp">
             <span className="dc-strong">{job.employer}</span> <span className="dc-muted">· {placeLine(job)}</span>

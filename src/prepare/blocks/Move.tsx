@@ -26,7 +26,7 @@ export function MoveBlock({ move, index, count, evidence, planOpen, onTogglePlan
           {index + 1} of {count}
         </span>
       </div>
-      <h2 id="pp-move-h" className="serif pp-move-title">
+      <h2 id="pp-move-h" className="title pp-move-title">
         {move.title}
       </h2>
       {move.body && <p className="pp-move-body">{move.body}</p>}

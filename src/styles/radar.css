@@ -320,9 +320,13 @@
 }
 
 /* Quiet states: hover darkens one step, selected underlines, related takes the accent. */
-.radar-axis:hover .radar-lbl,
 .radar-axis.is-hov .radar-lbl {
   color: var(--text);
+}
+@media (hover: hover) {
+  .radar-axis:hover .radar-lbl {
+    color: var(--text);
+  }
 }
 .radar-axis.is-sel .radar-lbl {
   color: var(--text);

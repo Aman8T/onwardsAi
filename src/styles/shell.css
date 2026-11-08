@@ -66,9 +66,14 @@
   transition: color var(--d-fast) var(--ease);
 }
 
-.gv-seg-btn:hover,
 .gv-seg-btn[aria-pressed='true'] {
   color: var(--text);
+}
+
+@media (hover: hover) {
+  .gv-seg-btn:hover {
+    color: var(--text);
+  }
 }
 
 .gv-seg-label {
@@ -306,17 +311,10 @@
     gap: var(--s5);
   }
 
-  /* Menus hang from the header's full width instead of from a button near the screen edge. */
-  .gv-header .gv-atmo,
+  /* The confirm hangs from the header's full width instead of from a button near the screen edge.
+     (The Atmosphere menu is a bottom sheet at this width: global.css.) */
   .gv-header .gv-confirm-anchor {
     position: static;
-  }
-
-  .gv-header .gv-atmo .atmo-menu {
-    left: var(--s4);
-    right: var(--s4);
-    width: auto;
-    max-width: none;
   }
 
   .gv-confirm {

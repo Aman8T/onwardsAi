@@ -9,11 +9,12 @@
 .ob-root {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .ob-root .ob-wrap {
   max-width: 1360px;
-  padding-inline: clamp(var(--s4), 3.5vw, 40px);
+  padding-inline: clamp(var(--s4), 3.5vw, var(--s6));
   padding-bottom: var(--s8);
 }
 
@@ -41,7 +42,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .ob-nav .btn {
@@ -66,7 +67,7 @@
 }
 
 .ob-h1 {
-  font-size: clamp(40px, 4.6vw, 58px);
+  font-size: var(--fs-8);
   text-wrap: balance;
 }
 
@@ -80,21 +81,21 @@
 }
 
 .ob-reads-list {
-  margin-left: 10px;
+  margin-left: var(--s2);
   color: var(--text);
 }
 
 .ob-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 20px;
+  gap: var(--s4);
   align-items: start;
 }
 
 /* quiet look */
 :root[data-look='quiet'] .ob-grid,
 .look-quiet .ob-grid {
-  gap: 20px;
+  gap: var(--s4);
 }
 
 .ob-cell {
@@ -134,13 +135,13 @@
 
 :root[data-look='quiet'] .ob-form,
 .look-quiet .ob-form {
-  padding: 28px;
+  padding: var(--s5);
 }
 
 .ob-card-head {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .ob-card-title {
@@ -181,7 +182,7 @@
 /* Boxed fields inside the panel, as on the board (global .field is the underline form). */
 .ob-form .field {
   height: 44px;
-  padding: 0 14px;
+  padding: 0 var(--s3);
   border: 1px solid var(--line);
   border-radius: var(--r-m);
   background: var(--surface-2);
@@ -189,8 +190,10 @@
   transition: border-color var(--d-fast) var(--ease);
 }
 
-.ob-form .field:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  .ob-form .field:hover {
+    border-color: var(--line-strong);
+  }
 }
 
 .ob-form .field:focus,
@@ -203,7 +206,7 @@
 .ob-form textarea.field {
   height: auto;
   min-height: 96px;
-  padding: var(--s3) 14px;
+  padding: var(--s3) var(--s3);
   line-height: var(--lh-body);
   resize: vertical;
 }
@@ -220,9 +223,14 @@
     border-color var(--d-fast) var(--ease);
 }
 
-.ob-drop:hover,
 .ob-drop.is-armed {
   background: var(--surface-2);
+}
+
+@media (hover: hover) {
+  .ob-drop:hover {
+    background: var(--surface-2);
+  }
 }
 
 .ob-drop.is-over {
@@ -273,8 +281,10 @@
   transition: text-decoration-color var(--d-fast) var(--ease);
 }
 
-.ob-drop-main:hover .ob-browse {
-  text-decoration-color: currentColor;
+@media (hover: hover) {
+  .ob-drop-main:hover .ob-browse {
+    text-decoration-color: currentColor;
+  }
 }
 
 .ob-file-name {
@@ -340,7 +350,7 @@
   display: flex;
   align-items: center;
   gap: var(--s3);
-  padding: 6px 0;
+  padding: var(--s1) 0;
 }
 
 .ob-tag {
@@ -393,7 +403,7 @@
   flex: none;
   justify-content: center;
   height: 44px;
-  padding-inline: 18px;
+  padding-inline: var(--s4);
 }
 
 .ob-links-error {
@@ -404,7 +414,7 @@
 
 .ob-more {
   align-self: flex-start;
-  margin-left: -14px;
+  margin-left: calc(-1 * var(--s3));
 }
 
 .ob-more-badge {
@@ -437,15 +447,6 @@
   justify-content: center;
   font-size: var(--fs-3);
   font-weight: 500;
-}
-
-/* Not ready: muted ink on the quiet tone, not a dimmed primary. Still clickable, so it can nudge the hint. */
-.ob-cta[aria-disabled='true'],
-.ob-cta[aria-disabled='true']:hover {
-  background: var(--surface-2);
-  border-color: var(--line);
-  color: var(--text-muted);
-  cursor: default;
 }
 
 .ob-hint {
@@ -530,7 +531,7 @@
 
 :root[data-look='quiet'] .ob-tiles,
 .look-quiet .ob-tiles {
-  gap: 20px;
+  gap: var(--s4);
 }
 
 .ob-tile {
@@ -539,7 +540,7 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 4px;
+  gap: var(--s1);
   min-height: 88px;
   padding: var(--s3) var(--s4);
   text-align: left;
@@ -549,11 +550,13 @@
 
 :root[data-look='quiet'] .ob-tile,
 .look-quiet .ob-tile {
-  padding: 28px;
+  padding: var(--s5);
 }
 
-.ob-tile:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  .ob-tile:hover {
+    border-color: var(--line-strong);
+  }
 }
 
 .ob-tile-title {
@@ -586,7 +589,7 @@
 .look-quiet .ob-how,
 :root[data-look='quiet'] .ob-recent,
 .look-quiet .ob-recent {
-  padding: 28px;
+  padding: var(--s5);
 }
 
 .ob-how-title {
@@ -604,7 +607,7 @@
 .ob-step {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
   padding-top: var(--s3);
   border-top: 1px solid var(--line);
 }
@@ -661,8 +664,10 @@
   padding-block: var(--s2);
 }
 
-.ob-recent-row:hover .ob-role-title {
-  color: var(--accent);
+@media (hover: hover) {
+  .ob-recent-row:hover .ob-role-title {
+    color: var(--accent);
+  }
 }
 
 .ob-recent-text {
@@ -738,7 +743,7 @@
 
 @media (max-width: 480px) {
   .ob-nav .btn {
-    padding-inline: 10px;
+    padding-inline: var(--s2);
     font-size: var(--fs-1);
   }
 

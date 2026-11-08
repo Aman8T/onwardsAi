@@ -142,7 +142,7 @@ function Ready({ claims, left, answer, starting, startError, onAnswer, onStart, 
         <header className="pc-sec-head pc-sec-head-row">
           <div className="pc-sec-head">
             <p className="kicker">{plural(claims.length, 'claim')}</p>
-            <h2 className="serif pc-h2" id={listId}>
+            <h2 className="title pc-h2" id={listId}>
               What comes back
             </h2>
           </div>
@@ -158,7 +158,7 @@ function Ready({ claims, left, answer, starting, startError, onAnswer, onStart, 
 
       <aside className="pc-rd-side" aria-label="Start and the rules">
         <section className="panel pc-sec" aria-labelledby={startId}>
-          <h2 className="serif pc-h2" id={startId}>
+          <h2 className="title pc-h2" id={startId}>
             Start
           </h2>
           <div className="pc-rd-field">
@@ -202,7 +202,7 @@ function Ready({ claims, left, answer, starting, startError, onAnswer, onStart, 
         </section>
 
         <section className="panel pc-sec" aria-label="How a re-drill differs">
-          <h2 className="serif pc-h3">How a re-drill differs</h2>
+          <h2 className="title pc-h3">How a re-drill differs</h2>
           <dl className="pc-rd-rules">
             {REDRILL_RULES.map((r) => (
               <div key={r.title} className="pc-rd-rule">
@@ -267,7 +267,7 @@ function Kept({ kept, onTick, onRemove }: RedrillViewProps & { kept: readonly Fi
   return (
     <section className="panel pc-sec" aria-labelledby={headingId}>
       <p className="kicker">Kept in Practice</p>
-      <h2 className="serif pc-h3" id={headingId}>
+      <h2 className="title pc-h3" id={headingId}>
         Your Fix steps
       </h2>
       <ul className="pc-rd-fixes">

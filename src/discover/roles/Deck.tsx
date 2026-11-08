@@ -230,7 +230,7 @@ export function Deck({ jobs, hidden, now, ctlOf, savedCount, where, onDetails, o
 
       {done ? (
         <section className="panel dc-deck-end" aria-label="Done">
-          <h2 className="serif dc-deck-end-title">You've seen all {total}</h2>
+          <h2 className="title dc-deck-end-title">You've seen all {total}</h2>
           <p className="dc-muted">
             {savedCount} saved
             {savedCount > 0 && (
@@ -277,7 +277,7 @@ export function Deck({ jobs, hidden, now, ctlOf, savedCount, where, onDetails, o
                 </span>
                 <FitLine job={job} />
                 <div>
-                  <h2 className="serif dc-deck-card-title">{job.title}</h2>
+                  <h2 className="title dc-deck-card-title">{job.title}</h2>
                   <p className="dc-deck-card-sub">{employerLine(job)}</p>
                 </div>
                 <AskLine asks={job.asks} />

@@ -120,7 +120,7 @@ export function Gallery() {
 
       {ALL.map((e) => (
         <section key={e.id} id={e.id} aria-labelledby={`${e.id}-h`} style={{ marginBottom: 'var(--s8)' }}>
-          <h2 id={`${e.id}-h`} className="serif" style={{ margin: 0, fontSize: 'var(--fs-5)' }}>
+          <h2 id={`${e.id}-h`} className="title" style={{ margin: 0, fontSize: 'var(--fs-5)' }}>
             {e.title}
           </h2>
           <p className="kicker" style={{ margin: 'var(--s1) 0 var(--s4)' }}>

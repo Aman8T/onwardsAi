@@ -1,18 +1,14 @@
 /**
  * The site footer: every public page of the site as a plain link, so visitors and search engines can move between
  * them. Each page is its own HTML file, so these are ordinary `<a href>` links (full page loads). The list is
- * SITE_PAGES without Home.
+ * SITE_PAGES without Home (this footer is shown on Home).
+ *
+ * It says the same things as the static pages' footer (src/site/Layout.tsx) from the same sources: the company links
+ * (website, blog, privacy, terms, refunds, contact) and the support address from links.ts, the site line from seo.ts.
  */
-import { SITE_PAGES } from '../site/links';
+import { COMPANY_LINKS, OPERATOR_LINE, SITE_PAGES, SUPPORT_EMAIL } from '../site/links';
+import { SITE_LINE } from '../site/seo';
 import '../styles/site-footer.css';
-
-/** The legal and contact pages live on the site (leafout.in), so these are absolute links. */
-const LEGAL_LINKS: readonly { href: string; label: string }[] = [
-  { href: 'https://leafout.in/terms', label: 'Terms' },
-  { href: 'https://leafout.in/privacy', label: 'Privacy' },
-  { href: 'https://leafout.in/refunds', label: 'Refunds' },
-  { href: 'https://leafout.in/contact', label: 'Contact' },
-];
 
 export function SiteFooter() {
   const pages = SITE_PAGES.filter((page) => page.path !== '/');
@@ -26,14 +22,16 @@ export function SiteFooter() {
           </a>
         ))}
       </nav>
-      <nav className="site-footer-links" aria-label="Terms and policies">
-        {LEGAL_LINKS.map((link) => (
+      <nav className="site-footer-links" aria-label="Leafout, the company">
+        {COMPANY_LINKS.map((link) => (
           <a key={link.href} href={link.href}>
             {link.label}
           </a>
         ))}
+        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
       </nav>
-      <p className="site-footer-line">Leafout reads your resume, GitHub and public links and shows your skills as an evidence-cited graph.</p>
+      <p className="site-footer-line">{SITE_LINE}</p>
+      <p className="site-footer-line">{OPERATOR_LINE}</p>
     </footer>
   );
 }

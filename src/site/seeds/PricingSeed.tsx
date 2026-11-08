@@ -68,13 +68,15 @@ export function PricingSeed() {
         purchase if no paid posting from it was used, and a posting that could not be read gives its credit back automatically. {OPERATOR_LINE} Write to{' '}
         {SUPPORT_EMAIL}.
       </p>
-      <h2>Questions</h2>
-      {PRICING_FAQ.map((f) => (
-        <div key={f.q}>
-          <h3>{f.q}</h3>
-          <p>{f.a}</p>
-        </div>
-      ))}
+      <section aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions</h2>
+        {PRICING_FAQ.map((f, i) => (
+          <div className="faq-item" role="group" aria-labelledby={`faq-q-${i + 1}`} key={f.q}>
+            <h3 id={`faq-q-${i + 1}`}>{f.q}</h3>
+            <p>{f.a}</p>
+          </div>
+        ))}
+      </section>
     </>
   );
 }

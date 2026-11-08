@@ -18,10 +18,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: var(--s5);
   max-width: 1360px;
   margin: 0 auto;
-  padding: 0 40px 48px;
+  padding: 0 var(--s6) var(--s7);
 }
 
 /* ───────────── header ───────────── */
@@ -46,19 +46,19 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--s5) 40px;
+  gap: var(--s5) var(--s6);
 }
 
 .an-title-l {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
   min-width: 0;
   max-width: var(--measure);
 }
 
 .an-h1 {
-  font-size: clamp(32px, 2.4vw + 16px, 40px);
+  font-size: var(--fs-7);
 }
 
 .an-h1-in {
@@ -116,7 +116,7 @@
 }
 
 .an-cols {
-  padding-bottom: 10px;
+  padding-bottom: var(--s2);
 }
 
 .an-cols-r {
@@ -130,7 +130,7 @@
 
 .an-row {
   min-height: 68px;
-  padding: 12px 0;
+  padding: var(--s3) 0;
 }
 
 .an-src {
@@ -141,13 +141,13 @@
 }
 
 .an-src-name {
-  font-size: 14.5px;
+  font-size: var(--fs-2);
   font-weight: 500;
 }
 
 .an-src-sub {
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--fs-1);
   color: var(--text-muted);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -156,7 +156,7 @@
 .an-reader {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--s3);
   min-width: 0;
 }
 
@@ -200,7 +200,7 @@
 
 .an-stat {
   justify-self: end;
-  font-size: 13.5px;
+  font-size: var(--fs-2);
   text-align: right;
   color: var(--text-muted);
 }
@@ -295,7 +295,7 @@
 }
 
 .an-synth-title {
-  font-size: 24px;
+  font-size: var(--fs-5);
 }
 
 .an-synth-title-in {
@@ -305,7 +305,7 @@
 .an-steps {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s2) 28px;
+  gap: var(--s2) var(--s5);
   padding: 0;
   list-style: none;
 }
@@ -314,7 +314,7 @@
   display: flex;
   align-items: center;
   gap: var(--s2);
-  font-size: 13.5px;
+  font-size: var(--fs-2);
   color: var(--text-muted);
 }
 
@@ -355,11 +355,11 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .an-chars .numeral {
-  font-size: 13px;
+  font-size: var(--fs-1);
 }
 
 .an-open {
@@ -369,11 +369,7 @@
     opacity var(--d-base) var(--ease);
 }
 
-.an-open:disabled,
-.an-open:disabled:hover {
-  background: var(--accent-strong);
-  color: var(--surface);
-  opacity: 0.5;
+.an-open:disabled {
   cursor: not-allowed;
 }
 
@@ -424,7 +420,7 @@
 }
 
 .an-hint code {
-  padding: 3px 10px;
+  padding: var(--s1) var(--s2);
   border-radius: var(--r-s);
   background: var(--surface-2);
   font-family: var(--font-mono);
@@ -448,7 +444,7 @@
 .an-bottom {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
-  gap: 40px;
+  gap: var(--s6);
   align-items: start;
 }
 
@@ -456,7 +452,7 @@
 .an-log {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--s3);
   min-width: 0;
 }
 
@@ -473,8 +469,8 @@
 }
 
 .an-sig {
-  gap: 6px;
-  padding: 3px 11px;
+  gap: var(--s1);
+  padding: var(--s1) var(--s3);
   /* a new chip fades in once as it streams; chips already on screen are never replayed */
   animation: an-in var(--d-base) var(--ease) both;
 }

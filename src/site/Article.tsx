@@ -45,9 +45,9 @@ export function Article({ page, updated }: { page: ContentPage; /** The day the 
           <Body />
           <section aria-labelledby="faq-title">
             <h2 id="faq-title">Questions</h2>
-            {page.faq.map((f) => (
-              <div className="faq-item" key={f.q}>
-                <h3>{f.q}</h3>
+            {page.faq.map((f, i) => (
+              <div className="faq-item" role="group" aria-labelledby={`faq-q-${i + 1}`} key={f.q}>
+                <h3 id={`faq-q-${i + 1}`}>{f.q}</h3>
                 <p>{f.a}</p>
               </div>
             ))}

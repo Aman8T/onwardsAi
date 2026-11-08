@@ -480,8 +480,10 @@ export function Onboarding() {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!ready) {
-      // a small sideways nudge on the hint (transform only; skipped under reduced motion)
-      if (!reduce && hintScope.current) void animateHint(hintScope.current, { x: [0, -5, 5, -3, 3, 0] }, { duration: 0.3 });
+      // nothing to read yet: put focus on the first empty field (the drop zone) so its hint is announced,
+      // and pulse the hint once (opacity only, --d-base; skipped under reduced motion)
+      (e.currentTarget as HTMLFormElement).querySelector<HTMLElement>('.ob-drop-main, input, textarea')?.focus();
+      if (!reduce && hintScope.current) void animateHint(hintScope.current, { opacity: [1, 0.35, 1] }, { duration: 0.25, ease: EASE });
       return;
     }
     let finalLinks = links;
@@ -559,7 +561,7 @@ export function Onboarding() {
               <div className="ob-cell ob-c-form">
                 <form className="panel ob-form" onSubmit={onSubmit} aria-labelledby="ob-card-title" noValidate>
             <div className="ob-card-head">
-              <h2 id="ob-card-title" className="ob-card-title serif">
+              <h2 id="ob-card-title" className="ob-card-title title">
                 Build your skill graph
               </h2>
               {wanted && !profile && (
@@ -749,7 +751,7 @@ export function Onboarding() {
 
               <section className="panel ob-cell ob-c-graph ob-graph" aria-labelledby="ob-graph-title">
                 <div className="ob-card-head">
-                  <h2 id="ob-graph-title" className="ob-card-title serif">
+                  <h2 id="ob-graph-title" className="ob-card-title title">
                     Your graph
                   </h2>
                   <p className="ob-card-sub">
@@ -803,15 +805,15 @@ export function Onboarding() {
 
               <nav className="ob-cell ob-c-tiles ob-tiles" aria-label="Tools">
                 <button type="button" className="panel ob-tile" onClick={() => actions.openMatch()}>
-                  <span className="ob-tile-title serif">Check a posting</span>
+                  <span className="ob-tile-title title">Check a posting</span>
                   <span className="ob-tile-line">Paste a posting and see each requirement against your evidence.</span>
                 </button>
                 <button type="button" className="panel ob-tile" onClick={() => actions.openPractice({ screen: 'hub' })}>
-                  <span className="ob-tile-title serif">Practice the interview</span>
+                  <span className="ob-tile-title title">Practice the interview</span>
                   <span className="ob-tile-line">Speak or type answers to questions drawn from your own work.</span>
                 </button>
                 <button type="button" className="panel ob-tile" onClick={() => actions.openDiscover()}>
-                  <span className="ob-tile-title serif">Discover jobs</span>
+                  <span className="ob-tile-title title">Discover jobs</span>
                   <span className="ob-tile-line">Search employers' own boards for roles that fit you.</span>
                 </button>
                 <button
@@ -820,7 +822,7 @@ export function Onboarding() {
                   onClick={() => (profile ? actions.showGraph() : focusForm())}
                   aria-describedby={profile ? undefined : 'ob-prep-note'}
                 >
-                  <span className="ob-tile-title serif">Prepare for a role</span>
+                  <span className="ob-tile-title title">Prepare for a role</span>
                   <span className="ob-tile-line">
                     {profile ? 'Open a role on your graph and ask how to prepare.' : 'Plan the weeks to a role from your gaps.'}
                   </span>
@@ -841,7 +843,7 @@ export function Onboarding() {
                   {STEPS.map((s) => (
                     <li key={s.n} className="ob-step">
                       <span className="kicker">{s.n}</span>
-                      <h3 className="serif">{s.title}</h3>
+                      <h3 className="title">{s.title}</h3>
                       <p>{s.body}</p>
                     </li>
                   ))}

@@ -77,7 +77,7 @@
 .bl-seg {
   display: inline-flex;
   gap: 2px;
-  padding: 3px;
+  padding: var(--s1);
   border: var(--hair) solid var(--line);
   border-radius: 999px;
   background: var(--surface);
@@ -95,8 +95,10 @@
     background-color var(--d-fast) var(--ease);
 }
 
-.bl-seg-btn:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .bl-seg-btn:hover {
+    color: var(--text);
+  }
 }
 
 .bl-seg-btn[aria-pressed='true'] {
@@ -133,7 +135,7 @@
 
 .bl-price {
   margin: 0;
-  font-size: 34px;
+  font-size: var(--fs-7);
 }
 
 .bl-price.is-soon {
@@ -171,9 +173,9 @@
 .bl-list li {
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr);
-  gap: 10px;
+  gap: var(--s2);
   align-items: start;
-  padding: 4px 0;
+  padding: var(--s1) 0;
   font-size: var(--fs-2);
 }
 
@@ -256,8 +258,10 @@
   text-underline-offset: 3px;
 }
 
-.bl-legal a:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .bl-legal a:hover {
+    color: var(--text);
+  }
 }
 
 .bl-legal a:focus-visible {

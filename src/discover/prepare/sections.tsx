@@ -32,7 +32,7 @@ interface Slots {
 const sectionHead = (kicker: string, headingId: string, title: string, lede?: string) => (
   <header className="dm-sec-head">
     <p className="kicker">{kicker}</p>
-    <h2 className="serif dm-h2" id={headingId} tabIndex={-1}>
+    <h2 className="title dm-h2" id={headingId} tabIndex={-1}>
       {title}
     </h2>
     {lede && <p className="dm-muted dm-lede">{lede}</p>}
@@ -201,7 +201,7 @@ function QuestionBlock({ q, index, notOnResume, slots }: { q: PrepQuestion; inde
     <article className="dm-question" aria-labelledby={titleId}>
       <header className="dm-question-head">
         <p className="kicker">Question {index + 1}</p>
-        <h3 className="serif dm-h3s" id={titleId}>
+        <h3 className="title dm-h3s" id={titleId}>
           {q.question}
         </h3>
         <p className="dm-muted dm-small">They ask: {quoted(q.ask)}</p>
@@ -389,7 +389,7 @@ export function PracticeSection({ headingId, runId, jobId, onPractise }: Practic
     <section className="panel dm-sec dm-sec-quiet" aria-labelledby={headingId}>
       <div className="dm-practice-text">
         <div className="dm-practice-title">
-          <h2 className="serif dm-h2s" id={headingId} tabIndex={-1}>
+          <h2 className="title dm-h2s" id={headingId} tabIndex={-1}>
             Practice the interview
           </h2>
         </div>

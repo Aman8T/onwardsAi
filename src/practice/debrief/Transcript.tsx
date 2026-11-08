@@ -92,7 +92,7 @@ export function TranscriptPanel({ debrief, ids, active, narrow, open, onOpen, on
     <section className="panel pc-side-panel" aria-labelledby={`${base}-h`}>
       <header className="pc-sec-head">
         <p className="kicker">The whole interview</p>
-        <h2 className="serif pc-h2" id={`${base}-h`}>
+        <h2 className="title pc-h2" id={`${base}-h`}>
           Transcript
         </h2>
       </header>

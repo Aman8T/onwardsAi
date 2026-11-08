@@ -183,62 +183,62 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:where([data-look='quiet']:not([data-scheme='light'])) {
-    --bg: #0b1015;
-    --lobe-1: #0b1015;
-    --lobe-2: #0b1015;
-    --lobe-3: #0b1015;
-    --lobe-4: #0b1015;
-    --lobe-1-clear: rgba(11, 16, 21, 0);
-    --lobe-2-clear: rgba(11, 16, 21, 0);
-    --lobe-3-clear: rgba(11, 16, 21, 0);
-    --lobe-4-clear: rgba(11, 16, 21, 0);
-    --surface: #151a1f;
-    --surface-2: #1d2228;
-    --well: #070a0e;
-    --text: #e3e8ee;
-    --text-muted: #abb2ba;
-    --text-faint: #9199a2;
-    --accent: #a5cffb;
-    --accent-ui: #8dc3fa;
-    --accent-strong: #b7d8fc;
-    --accent-soft: #192532;
-    --fill: rgba(141, 195, 250, 0.2);
-    --fill-2: rgba(141, 195, 250, 0.13);
-    --fill-strong: rgba(141, 195, 250, 0.28);
-    --grid: rgba(227, 232, 238, 0.12);
-    --line: #30363d;
-    --line-strong: #414951;
-    --selection: #2d445c;
+    --bg: #040b13;
+    --lobe-1: #11111f;
+    --lobe-2: #021517;
+    --lobe-3: #08111b;
+    --lobe-4: #160d18;
+    --lobe-1-clear: rgba(17, 17, 31, 0);
+    --lobe-2-clear: rgba(2, 21, 23, 0);
+    --lobe-3-clear: rgba(8, 17, 27, 0);
+    --lobe-4-clear: rgba(22, 13, 24, 0);
+    --surface: #0f1822;
+    --surface-2: #17232f;
+    --well: #020509;
+    --text: #eef2f7;
+    --text-muted: #b6bfc8;
+    --text-faint: #8c96a1;
+    --accent: #85bcf5;
+    --accent-ui: #6ea9e6;
+    --accent-strong: #c8e1fb;
+    --accent-soft: #142537;
+    --fill: rgba(110, 169, 230, 0.22);
+    --fill-2: rgba(110, 169, 230, 0.14);
+    --fill-strong: rgba(110, 169, 230, 0.3);
+    --grid: rgba(238, 242, 247, 0.12);
+    --line: #26313d;
+    --line-strong: #515f6e;
+    --selection: #27425d;
     --danger: #e6857e;
   }
 }
 :root:where([data-look='quiet'][data-scheme='dark']) {
-  --bg: #0b1015;
-  --lobe-1: #0b1015;
-  --lobe-2: #0b1015;
-  --lobe-3: #0b1015;
-  --lobe-4: #0b1015;
-  --lobe-1-clear: rgba(11, 16, 21, 0);
-  --lobe-2-clear: rgba(11, 16, 21, 0);
-  --lobe-3-clear: rgba(11, 16, 21, 0);
-  --lobe-4-clear: rgba(11, 16, 21, 0);
-  --surface: #151a1f;
-  --surface-2: #1d2228;
-  --well: #070a0e;
-  --text: #e3e8ee;
-  --text-muted: #abb2ba;
-  --text-faint: #9199a2;
-  --accent: #a5cffb;
-  --accent-ui: #8dc3fa;
-  --accent-strong: #b7d8fc;
-  --accent-soft: #192532;
-  --fill: rgba(141, 195, 250, 0.2);
-  --fill-2: rgba(141, 195, 250, 0.13);
-  --fill-strong: rgba(141, 195, 250, 0.28);
-  --grid: rgba(227, 232, 238, 0.12);
-  --line: #30363d;
-  --line-strong: #414951;
-  --selection: #2d445c;
+  --bg: #040b13;
+  --lobe-1: #11111f;
+  --lobe-2: #021517;
+  --lobe-3: #08111b;
+  --lobe-4: #160d18;
+  --lobe-1-clear: rgba(17, 17, 31, 0);
+  --lobe-2-clear: rgba(2, 21, 23, 0);
+  --lobe-3-clear: rgba(8, 17, 27, 0);
+  --lobe-4-clear: rgba(22, 13, 24, 0);
+  --surface: #0f1822;
+  --surface-2: #17232f;
+  --well: #020509;
+  --text: #eef2f7;
+  --text-muted: #b6bfc8;
+  --text-faint: #8c96a1;
+  --accent: #85bcf5;
+  --accent-ui: #6ea9e6;
+  --accent-strong: #c8e1fb;
+  --accent-soft: #142537;
+  --fill: rgba(110, 169, 230, 0.22);
+  --fill-2: rgba(110, 169, 230, 0.14);
+  --fill-strong: rgba(110, 169, 230, 0.3);
+  --grid: rgba(238, 242, 247, 0.12);
+  --line: #26313d;
+  --line-strong: #515f6e;
+  --selection: #27425d;
   --danger: #e6857e;
 }
 
@@ -386,8 +386,11 @@
 /* (c1b) The "quiet" look (opt-in, <html data-look="quiet">; absent = today's look above, unchanged). A quiet field,
  * panels that are regions rather than boxes, colour kept for the accent, the fill and the cursor. Same roles, same
  * hue variables; the light table sits on the field (surface = bg), the dark table makes panels one step LIGHTER than
- * the field (surface .215 over bg .17) and draws no lobes: every lobe token equals --bg, so the ambient layer paints
- * a flat field. `.look-quiet.scheme-light|dark` re-declare the tables inside a wrapper (the playground).
+ * the field (surface .205 over bg .145, a step of .06). Dark since 2026-11-07 (canvas "Leafout Dark Mode
+ * Explorations", direction D): the field carries the dye again (C .022, the sRGB ceiling at L .145) under three
+ * faint lobes (~.028, a quarter of the earlier dark's), ink is .96, hairlines carry chroma, and the accents sit at
+ * L .78 / .72 with C .10 / .108, the lightness where a real blue fits inside sRGB (at L .84 the gamut capped it near
+ * .08, the pastel). `.look-quiet.scheme-light|dark` re-declare the tables inside a wrapper (the playground).
  * Selectors carry :where() so they stay at :root specificity and file order decides: this block comes after
  * today's tables. The dark table exists twice (media + forced); palette-check asserts the copies agree. */
 @supports (color: oklch(0 0 0)) {
@@ -423,65 +426,65 @@
   }
   @media (prefers-color-scheme: dark) {
     :root:where([data-look='quiet']:not([data-scheme='light'])) {
-      --bg: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
-      --lobe-1: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
-      --lobe-2: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
-      --lobe-3: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
-      --lobe-4: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
-      --lobe-1-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
-      --lobe-2-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
-      --lobe-3-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
-      --lobe-4-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
-      --surface: oklch(0.215 calc(0.012 * var(--k) * var(--kw)) var(--h));
-      --surface-2: oklch(0.25 calc(0.014 * var(--k)) var(--h));
-      --well: oklch(0.145 calc(0.01 * var(--k)) var(--h));
-      --text: oklch(0.93 calc(0.01 * var(--k)) var(--h));
-      --text-muted: oklch(0.76 calc(0.014 * var(--k)) var(--h));
-      --text-faint: oklch(0.68 calc(0.016 * var(--k)) var(--h));
-      --accent: oklch(0.84 calc(0.076 * var(--k)) var(--h));
-      --accent-ui: oklch(0.8 calc(0.097 * var(--k)) var(--h));
-      --accent-strong: oklch(0.87 calc(0.061 * var(--k)) var(--h));
-      --accent-soft: oklch(0.26 calc(0.03 * var(--k)) var(--h));
-      --fill: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.2);
-      --fill-2: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.13);
-      --fill-strong: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.28);
-    --spot: oklch(1 0 0 / 0.1);
-      --grid: oklch(0.93 calc(0.01 * var(--k)) var(--h) / 0.12);
-      --line: oklch(0.33 calc(0.015 * var(--k)) var(--h));
-      --line-strong: oklch(0.4 calc(0.018 * var(--k)) var(--h));
-      --selection: oklch(0.38 calc(0.05 * var(--k)) var(--h));
+      --bg: oklch(0.145 calc(0.022 * var(--k) * var(--kw)) var(--h));
+      --lobe-1: oklch(0.185 calc(0.028 * var(--k) * var(--kw) * var(--kb)) var(--h2));
+      --lobe-2: oklch(0.18 calc(0.027 * var(--k) * var(--kw) * var(--kb)) var(--h3));
+      --lobe-3: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h));
+      --lobe-4: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h4));
+      --lobe-1-clear: oklch(0.185 calc(0.028 * var(--k) * var(--kw) * var(--kb)) var(--h2) / 0);
+      --lobe-2-clear: oklch(0.18 calc(0.027 * var(--k) * var(--kw) * var(--kb)) var(--h3) / 0);
+      --lobe-3-clear: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h) / 0);
+      --lobe-4-clear: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h4) / 0);
+      --surface: oklch(0.205 calc(0.024 * var(--k) * var(--kw)) var(--h));
+      --surface-2: oklch(0.25 calc(0.028 * var(--k)) var(--h));
+      --well: oklch(0.11 calc(0.017 * var(--k)) var(--h));
+      --text: oklch(0.96 calc(0.008 * var(--k)) var(--h));
+      --text-muted: oklch(0.8 calc(0.016 * var(--k)) var(--h));
+      --text-faint: oklch(0.67 calc(0.02 * var(--k)) var(--h));
+      --accent: oklch(0.78 calc(0.1 * var(--k)) var(--h));
+      --accent-ui: oklch(0.72 calc(0.108 * var(--k)) var(--h));
+      --accent-strong: oklch(0.9 calc(0.045 * var(--k)) var(--h));
+      --accent-soft: oklch(0.26 calc(0.04 * var(--k)) var(--h));
+      --fill: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.22);
+      --fill-2: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.14);
+      --fill-strong: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.3);
+      --spot: oklch(1 0 0 / 0.1);
+      --grid: oklch(0.96 calc(0.008 * var(--k)) var(--h) / 0.12);
+      --line: oklch(0.31 calc(0.026 * var(--k)) var(--h));
+      --line-strong: oklch(0.48 calc(0.03 * var(--k)) var(--h));
+      --selection: oklch(0.37 calc(0.058 * var(--k)) var(--h));
       --danger: oklch(0.72 0.12 25);
     }
   }
   :root:where([data-look='quiet'][data-scheme='dark']),
   .look-quiet.scheme-dark {
-    --bg: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
-    --lobe-1: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
-    --lobe-2: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
-    --lobe-3: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
-    --lobe-4: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h));
-    --lobe-1-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
-    --lobe-2-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
-    --lobe-3-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
-    --lobe-4-clear: oklch(0.17 calc(0.012 * var(--k) * var(--kw)) var(--h) / 0);
-    --surface: oklch(0.215 calc(0.012 * var(--k) * var(--kw)) var(--h));
-    --surface-2: oklch(0.25 calc(0.014 * var(--k)) var(--h));
-    --well: oklch(0.145 calc(0.01 * var(--k)) var(--h));
-    --text: oklch(0.93 calc(0.01 * var(--k)) var(--h));
-    --text-muted: oklch(0.76 calc(0.014 * var(--k)) var(--h));
-    --text-faint: oklch(0.68 calc(0.016 * var(--k)) var(--h));
-    --accent: oklch(0.84 calc(0.076 * var(--k)) var(--h));
-    --accent-ui: oklch(0.8 calc(0.097 * var(--k)) var(--h));
-    --accent-strong: oklch(0.87 calc(0.061 * var(--k)) var(--h));
-    --accent-soft: oklch(0.26 calc(0.03 * var(--k)) var(--h));
-    --fill: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.2);
-    --fill-2: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.13);
-    --fill-strong: oklch(0.8 calc(0.097 * var(--k)) var(--h) / 0.28);
+    --bg: oklch(0.145 calc(0.022 * var(--k) * var(--kw)) var(--h));
+    --lobe-1: oklch(0.185 calc(0.028 * var(--k) * var(--kw) * var(--kb)) var(--h2));
+    --lobe-2: oklch(0.18 calc(0.027 * var(--k) * var(--kw) * var(--kb)) var(--h3));
+    --lobe-3: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h));
+    --lobe-4: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h4));
+    --lobe-1-clear: oklch(0.185 calc(0.028 * var(--k) * var(--kw) * var(--kb)) var(--h2) / 0);
+    --lobe-2-clear: oklch(0.18 calc(0.027 * var(--k) * var(--kw) * var(--kb)) var(--h3) / 0);
+    --lobe-3-clear: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h) / 0);
+    --lobe-4-clear: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h4) / 0);
+    --surface: oklch(0.205 calc(0.024 * var(--k) * var(--kw)) var(--h));
+    --surface-2: oklch(0.25 calc(0.028 * var(--k)) var(--h));
+    --well: oklch(0.11 calc(0.017 * var(--k)) var(--h));
+    --text: oklch(0.96 calc(0.008 * var(--k)) var(--h));
+    --text-muted: oklch(0.8 calc(0.016 * var(--k)) var(--h));
+    --text-faint: oklch(0.67 calc(0.02 * var(--k)) var(--h));
+    --accent: oklch(0.78 calc(0.1 * var(--k)) var(--h));
+    --accent-ui: oklch(0.72 calc(0.108 * var(--k)) var(--h));
+    --accent-strong: oklch(0.9 calc(0.045 * var(--k)) var(--h));
+    --accent-soft: oklch(0.26 calc(0.04 * var(--k)) var(--h));
+    --fill: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.22);
+    --fill-2: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.14);
+    --fill-strong: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.3);
     --spot: oklch(1 0 0 / 0.1);
-    --grid: oklch(0.93 calc(0.01 * var(--k)) var(--h) / 0.12);
-    --line: oklch(0.33 calc(0.015 * var(--k)) var(--h));
-    --line-strong: oklch(0.4 calc(0.018 * var(--k)) var(--h));
-    --selection: oklch(0.38 calc(0.05 * var(--k)) var(--h));
+    --grid: oklch(0.96 calc(0.008 * var(--k)) var(--h) / 0.12);
+    --line: oklch(0.31 calc(0.026 * var(--k)) var(--h));
+    --line-strong: oklch(0.48 calc(0.03 * var(--k)) var(--h));
+    --selection: oklch(0.37 calc(0.058 * var(--k)) var(--h));
     --danger: oklch(0.72 0.12 25);
   }
 }

@@ -60,7 +60,7 @@ export function PlanBlock({ move, state, narrow, phaseIndex, onPhase, onHours, o
   return (
     <section id="pp-plan" className="panel pp-block pp-plan" aria-labelledby="pp-plan-h">
       <div className="pp-head pp-plan-head">
-        <h2 id="pp-plan-h" className="serif pp-plan-title">
+        <h2 id="pp-plan-h" className="title pp-plan-title">
           Your plan
         </h2>
         {narrow && <span className="numeral pp-meta">{summary}</span>}

@@ -32,10 +32,23 @@
   text-decoration: none;
 }
 
-.site-footer-links a:hover {
+/* Hover only where a pointer can hover: a touch screen never shows a stuck hover. */
+@media (hover: hover) {
+  .site-footer-links a:hover {
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 3px;
+  }
+}
+
+/* The current page (when a footer is shown on one of its pages): ink and a 1px accent underline, distinct from hover. */
+.site-footer-links a[aria-current='page'] {
   color: var(--text);
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration-color: var(--accent-ui);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
 }
 
 .site-footer-links a:focus-visible {

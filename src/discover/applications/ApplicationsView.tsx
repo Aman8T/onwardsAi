@@ -174,7 +174,7 @@ export function ApplicationsView({ profileId, onPrepare, onSeeMatch, onShare, on
           >
             {!narrow && (
               <div className="dm-colhead-line">
-                <h2 className="serif dm-h2s">{STAGE_LABEL[c.stage]}</h2>
+                <h2 className="title dm-h2s">{STAGE_LABEL[c.stage]}</h2>
                 <span className="numeral dm-muted dm-small">{c.items.length}</span>
               </div>
             )}

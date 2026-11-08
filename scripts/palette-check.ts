@@ -684,7 +684,7 @@ function main(): number {
   }
   failed = !reportScheme('dark', dark.tokens) || failed;
 
-  // The quiet look: its light table, its dark table (two copies), the lobes-equal-bg rule, chroma headroom, the dye.
+  // The quiet look: its light table, its dark table (two copies), chroma headroom, the dye.
   const quiet = quietTables(css, tokens);
   console.log('=== quiet look (data-look="quiet") ===\n');
   if (!quiet.light.own.length) {
@@ -699,16 +699,7 @@ function main(): number {
     console.log();
   }
   failed = !reportScheme('quiet dark', quiet.dark.tokens, QUIET_PAIRS) || failed;
-  const bgDark = quiet.dark.tokens.find((t) => t.name === 'bg');
-  for (let i = 1; i <= 4; i++) {
-    for (const suffix of ['', '-clear']) {
-      const t = quiet.dark.tokens.find((x) => x.name === `lobe-${i}${suffix}`);
-      if (!t || !bgDark || t.L !== bgDark.L || t.C !== bgDark.C || t.hue !== bgDark.hue || t.kw !== bgDark.kw || t.kb || (suffix === '' ? t.alpha !== 1 : t.alpha !== 0)) {
-        failed = true;
-        console.log(`Quiet dark: --lobe-${i}${suffix} must equal --bg (alpha ${suffix ? 0 : 1}) so the ambient layer draws nothing.`);
-      }
-    }
-  }
+  // Quiet dark draws faint lobes since 2026-11-07 (design.md §7a); they are checked like any lobe by the pairs above.
   for (const [scheme, table] of [['light', quiet.light.tokens], ['dark', quiet.dark.tokens]] as const) {
     const over = headroomFailures(table.filter((t) => quiet[scheme === 'light' ? 'light' : 'dark'].own.some((o) => o.name === t.name)));
     if (over.length) {

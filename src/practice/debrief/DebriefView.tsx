@@ -238,7 +238,7 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
             ))}
           </div>
           {debrief.redrill && (
-            <p className="serif pc-moved">
+            <p className="title pc-moved">
               {debrief.redrill.moved} of {debrief.redrill.of} moved up
             </p>
           )}
@@ -256,7 +256,7 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
         {debrief.firstThing ? (
           <div className="pc-first">
             <div className="kicker">Work on this first</div>
-            <p className="serif pc-first-text">{debrief.firstThing}</p>
+            <p className="title pc-first-text">{debrief.firstThing}</p>
             <div className="pc-actions">
               {debrief.firstSlotId && (
                 <button type="button" className="btn btn-primary pc-btn" disabled={againBusy === debrief.firstSlotId} onClick={() => void again(debrief.firstSlotId as string, 'first')}>
@@ -279,7 +279,7 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
         ) : allDefended ? (
           <div className="pc-first">
             <div className="kicker">Work on this first</div>
-            <p className="serif pc-first-text">You defended everything you were asked.</p>
+            <p className="title pc-first-text">You defended everything you were asked.</p>
             <p className="pc-muted pc-small">Ask any question again whenever you like. It is free.</p>
           </div>
         ) : null}
@@ -306,7 +306,7 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
             <>
               <div className="pc-sec-head">
                 <p className="kicker">Your {countWord(results.length)} {results.length === 1 ? 'question' : 'questions'}</p>
-                <h2 className="serif pc-h2">Question by question</h2>
+                <h2 className="title pc-h2">Question by question</h2>
                 <p className="pc-slotkey">
                   <span className="pc-slotkey-box" aria-hidden="true" />
                   <span className="pc-muted pc-small">A dashed box is for what only you know. We do not guess it.</span>

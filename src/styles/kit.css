@@ -110,9 +110,11 @@
   cursor: pointer;
 }
 
-.pop-close:hover {
-  background: var(--surface-2);
-  color: var(--text);
+@media (hover: hover) {
+  .pop-close:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
 }
 
 /* Keep the first lines clear of the close button. */
@@ -204,8 +206,10 @@
   cursor: pointer;
 }
 
-.pop-skill:hover {
-  background: var(--surface-2);
+@media (hover: hover) {
+  .pop-skill:hover {
+    background: var(--surface-2);
+  }
 }
 
 .pop-skill .numeral {
@@ -271,8 +275,10 @@ button.brand {
   color: var(--accent-ui);
 }
 
-button.brand:hover .brand-mark {
-  color: var(--accent-strong);
+@media (hover: hover) {
+  button.brand:hover .brand-mark {
+    color: var(--accent-strong);
+  }
 }
 
 .brand-word {

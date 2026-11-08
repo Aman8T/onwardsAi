@@ -19,7 +19,7 @@
 .next-row {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
-  column-gap: 56px;
+  column-gap: var(--s7);
   align-items: start;
   width: 100%;
   min-width: 0;
@@ -30,7 +30,7 @@
 .next-rail {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: var(--s5);
   min-width: 0;
   padding-top: var(--s2);
 }
@@ -38,11 +38,11 @@
 .next-rail-head {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .next-title {
-  font-size: 30px;
+  font-size: var(--fs-6);
   overflow-wrap: anywhere;
 }
 
@@ -70,8 +70,8 @@
   gap: 2px;
   max-height: min(70vh, 560px);
   /* Bleed by the focus ring's reach (2px + 2px offset) so the scroll box never clips it. */
-  margin: -4px -6px;
-  padding: 4px 6px;
+  margin: calc(-1 * var(--s1)) calc(-1 * var(--s1));
+  padding: var(--s1) var(--s1);
   overflow-y: auto;
   overscroll-behavior: contain;
   scroll-padding: var(--s1);
@@ -98,11 +98,11 @@
   flex: none;
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr) 20px;
-  gap: 2px 12px;
+  gap: 2px var(--s3);
   align-items: center;
   width: 100%;
-  padding: 12px 8px;
-  border-radius: 8px;
+  padding: var(--s3) var(--s2);
+  border-radius: var(--r-s);
   color: var(--text);
   text-align: left;
   transition: background-color var(--d-fast) var(--ease);
@@ -113,22 +113,27 @@
   min-height: 44px;
 }
 
-.next-role-row:hover,
 .next-role-row[aria-pressed='true'] {
   background: var(--surface-2);
+}
+
+@media (hover: hover) {
+  .next-role-row:hover {
+    background: var(--surface-2);
+  }
 }
 
 .next-rank {
   grid-column: 1;
   grid-row: 1;
-  font-size: 12px;
+  font-size: var(--fs-1);
   color: var(--text-muted);
 }
 
 .next-role-title {
   grid-column: 2;
   grid-row: 1;
-  font-size: 14.5px;
+  font-size: var(--fs-2);
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -143,11 +148,11 @@
   grid-row: 2;
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .next-role-pct {
-  font-size: 13.5px;
+  font-size: var(--fs-2);
 }
 
 /* ───────────── centre: the selected role ───────────── */
@@ -164,26 +169,26 @@
 .next-head {
   display: grid;
   grid-template-columns: minmax(0, 340px) minmax(0, 56ch);
-  column-gap: 56px;
+  column-gap: var(--s7);
   align-items: start;
 }
 
 .next-head-id {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
   min-width: 0;
 }
 
 .next-role-name {
-  font-size: 36px;
+  font-size: var(--fs-7);
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
 
 .next-align {
   margin-top: var(--s1);
-  font-size: 15px;
+  font-size: var(--fs-3);
 }
 
 .next-muted {
@@ -196,12 +201,12 @@
   gap: var(--s4);
   min-width: 0;
   /* Starts level with the title, under the kicker line. */
-  padding-top: 25px;
+  padding-top: var(--s5);
 }
 
 .next-why {
-  max-width: 56ch;
-  font-size: 15px;
+  max-width: var(--measure);
+  font-size: var(--fs-3);
   color: var(--text-muted);
 }
 
@@ -243,7 +248,7 @@
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--s2) 28px;
+  gap: var(--s2) var(--s5);
   margin-top: var(--s3);
   font-size: var(--fs-1);
   color: var(--text-muted);
@@ -253,7 +258,7 @@
 .next-legend span {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .next-legend svg {
@@ -292,7 +297,7 @@
   gap: var(--s1) var(--s3);
   align-items: baseline;
   width: 100%;
-  padding: 10px var(--s4);
+  padding: var(--s2) var(--s4);
   color: var(--text);
   text-align: left;
   transition: background-color var(--d-fast) var(--ease);
@@ -301,12 +306,14 @@
 :root[data-look='quiet'] .next-req-row,
 .look-quiet .next-req-row {
   min-height: 44px;
-  padding-block: 12px;
+  padding-block: var(--s3);
   align-items: center;
 }
 
-.next-req-row:hover {
-  background: var(--surface-2);
+@media (hover: hover) {
+  .next-req-row:hover {
+    background: var(--surface-2);
+  }
 }
 
 .next-req-row[aria-expanded='true'] .next-req-name {
@@ -395,7 +402,7 @@
   }
 
   .next-role-name {
-    font-size: 30px;
+    font-size: var(--fs-6);
   }
 
   .next-plot {

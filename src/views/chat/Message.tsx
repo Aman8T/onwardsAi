@@ -94,7 +94,7 @@ export const AssistantMessage = memo(function AssistantMessage({ message, source
           <div className="ch-error" role="alert">
             <div className="ch-error-text">
               <strong>{hasText ? 'This answer was cut short.' : 'Leafout could not finish that answer.'}</strong>
-              <span>{(message.error ?? 'Something went wrong.').slice(0, 220)}</span>
+              <span>{(message.error ?? 'No reply came back from the server. Send the message again.').slice(0, 220)}</span>
             </div>
             {onRetry && (
               <button type="button" className="btn btn-sm ch-retry" onClick={onRetry}>

@@ -45,7 +45,7 @@ export const IconVisibility = ({ isPublic }: { isPublic: boolean }) => (
 );
 
 export const IconChevron = ({ dir }: { dir: 'up' | 'down' }) => (
-  <Svg size={16} strokeWidth={1.8}>
+  <Svg size={16}>
     <path d={dir === 'up' ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
   </Svg>
 );

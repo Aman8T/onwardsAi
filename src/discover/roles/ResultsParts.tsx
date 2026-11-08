@@ -120,7 +120,7 @@ export function Sections({ rows, hidden, now, ctlOf, reasonOf, onUnhide, popover
         return (
           <section key={fit} className="dc-section" aria-label={title}>
             <div className="dc-section-head">
-              <h2 className="serif dc-section-title">{title}</h2>
+              <h2 className="title dc-section-title">{title}</h2>
               <span className="dc-muted">{sub(shown)}</span>
             </div>
             <ul className="dc-grid">

@@ -171,7 +171,7 @@ export function SetupView(p: SetupViewProps) {
         <div className="rm-setup-main">
           {/* the plan */}
           <section className="panel rm-sec" aria-labelledby={`${ids}-plan`}>
-            <h2 id={`${ids}-plan`} className="serif rm-h2">
+            <h2 id={`${ids}-plan`} className="title rm-h2">
               The plan
             </h2>
 
@@ -255,7 +255,7 @@ export function SetupView(p: SetupViewProps) {
           {/* spend more time on */}
           {p.kind === 'role' && (
             <section className="panel rm-sec" aria-labelledby={`${ids}-focus`}>
-              <h2 id={`${ids}-focus`} className="serif rm-h2 rm-h2-sm">
+              <h2 id={`${ids}-focus`} className="title rm-h2 rm-h2-sm">
                 Spend more time on
               </h2>
               <div className="rm-choices">
@@ -271,7 +271,7 @@ export function SetupView(p: SetupViewProps) {
           {/* length */}
           {p.kind !== 'work' && (
             <section className="panel rm-sec" aria-labelledby={`${ids}-length`}>
-              <h2 id={`${ids}-length`} className="serif rm-h2 rm-h2-sm">
+              <h2 id={`${ids}-length`} className="title rm-h2 rm-h2-sm">
                 Length
               </h2>
               <div className="rm-cards">
@@ -293,7 +293,7 @@ export function SetupView(p: SetupViewProps) {
 
           {/* how you'll answer */}
           <section className="panel rm-sec" aria-labelledby={`${ids}-answer`}>
-            <h2 id={`${ids}-answer`} className="serif rm-h2 rm-h2-sm">
+            <h2 id={`${ids}-answer`} className="title rm-h2 rm-h2-sm">
               How you&apos;ll answer
             </h2>
             <div className="rm-cards">
@@ -368,7 +368,7 @@ export function SetupView(p: SetupViewProps) {
 
           {/* how it works */}
           <section className="panel rm-sec" aria-labelledby={`${ids}-how`}>
-            <h2 id={`${ids}-how`} className="serif rm-h2 rm-h2-sm">
+            <h2 id={`${ids}-how`} className="title rm-h2 rm-h2-sm">
               How it works
             </h2>
             <ul className="rm-how">

@@ -3,7 +3,7 @@ import type { SVGProps } from 'react';
 
 type P = SVGProps<SVGSVGElement> & { size?: number };
 
-function Svg({ size = 18, children, strokeWidth = 1.7, ...rest }: P) {
+function Svg({ size = 18, children, strokeWidth = 1.5, ...rest }: P) {
   return (
     <svg
       width={size}
@@ -31,12 +31,12 @@ export const IconDoc = (p: P) => (
   </Svg>
 );
 export const IconCheck = (p: P) => (
-  <Svg strokeWidth={2} {...p}>
+  <Svg {...p}>
     <path d="M5 12.5l4.5 4.5L19 7.5" />
   </Svg>
 );
 export const IconArrowRight = (p: P) => (
-  <Svg strokeWidth={2} {...p}>
+  <Svg {...p}>
     <path d="M5 12h14M13 6l6 6-6 6" />
   </Svg>
 );

@@ -101,7 +101,7 @@ export function StartView(p: StartViewProps) {
         <section className="panel dc-apps" aria-label="Your applications">
           <div className="dc-apps-head">
             <div>
-              <h2 className="serif dc-apps-title">Your applications · {open.length}</h2>
+              <h2 className="title dc-apps-title">Your applications · {open.length}</h2>
               <p className="dc-muted dc-small">Kept in this browser</p>
             </div>
             <a

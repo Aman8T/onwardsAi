@@ -56,13 +56,15 @@ export function HomeSeed() {
         The skill graph and your next roles are free, and so is one posting match each calendar month. After that you can pay per posting or for 30 days,
         once, with no renewals. See <a href="/pricing">pricing</a>.
       </p>
-      <h2>Questions</h2>
-      {HOME_FAQ.map((f) => (
-        <div key={f.q}>
-          <h3>{f.q}</h3>
-          <p>{f.a}</p>
-        </div>
-      ))}
+      <section aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions</h2>
+        {HOME_FAQ.map((f, i) => (
+          <div className="faq-item" role="group" aria-labelledby={`faq-q-${i + 1}`} key={f.q}>
+            <h3 id={`faq-q-${i + 1}`}>{f.q}</h3>
+            <p>{f.a}</p>
+          </div>
+        ))}
+      </section>
     </>
   );
 }

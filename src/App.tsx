@@ -1,6 +1,7 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { Suspense, lazy } from 'react';
 import { SignIn } from './auth/SignIn';
+import { ViewSkeleton } from './components/ViewSkeleton';
 import { CursorLight } from './light/CursorLight';
 import { Spot } from './light/Spot';
 import { useAutoClaim } from './auth/useMe';
@@ -44,9 +45,15 @@ export function App() {
 
   return (
     <MotionConfig reducedMotion="user">
+      {/* Keyboard: the first Tab offers a jump past the header into the view frame (focusable, no ring). */}
+      <a className="skip" href="#app-main">
+        Skip to content
+      </a>
       <AnimatePresence mode="wait">
         <motion.div
           key={shown}
+          id="app-main"
+          tabIndex={-1}
           className="app-view"
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -58,32 +65,32 @@ export function App() {
           {shown === 'graph' && profile && <GraphView profile={profile} />}
           {shown === 'chat' && profile && <ChatView profile={profile} />}
           {shown === 'portfolio' && profile && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ViewSkeleton />}>
               <PortfolioScreen profile={profile} />
             </Suspense>
           )}
           {shown === 'match' && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ViewSkeleton />}>
               <MatchRoot />
             </Suspense>
           )}
           {shown === 'discover' && profile && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ViewSkeleton />}>
               <DiscoverRoot profile={profile} />
             </Suspense>
           )}
           {shown === 'practice' && profile && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ViewSkeleton />}>
               <PracticeRoot profile={profile} />
             </Suspense>
           )}
           {shown === 'weekly' && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ViewSkeleton />}>
               <WeeklyView />
             </Suspense>
           )}
           {shown === 'pricing' && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ViewSkeleton />}>
               <PricingView />
             </Suspense>
           )}

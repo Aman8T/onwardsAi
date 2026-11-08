@@ -82,7 +82,7 @@ export function ProgressView({ history, onReload, nav, onRemoveFact }: ProgressV
           <section className="panel pc-sec" aria-labelledby={claimsId}>
             <header className="pc-sec-head">
               <p className="kicker">Claims</p>
-              <h2 className="serif pc-h2" id={claimsId}>
+              <h2 className="title pc-h2" id={claimsId}>
                 Each claim, at its best
               </h2>
             </header>
@@ -97,7 +97,7 @@ export function ProgressView({ history, onReload, nav, onRemoveFact }: ProgressV
             <section className="panel pc-sec" aria-labelledby={graphId}>
               <header className="pc-sec-head">
                 <p className="kicker">Graph</p>
-                <h2 className="serif pc-h2" id={graphId}>
+                <h2 className="title pc-h2" id={graphId}>
                   In your graph
                 </h2>
               </header>
@@ -112,7 +112,7 @@ export function ProgressView({ history, onReload, nav, onRemoveFact }: ProgressV
             <section className="panel pc-sec" aria-labelledby={prepareId}>
               <header className="pc-sec-head">
                 <p className="kicker">Prepare</p>
-                <h2 className="serif pc-h2" id={prepareId}>
+                <h2 className="title pc-h2" id={prepareId}>
                   In Prepare
                 </h2>
               </header>
@@ -147,7 +147,7 @@ export function ProgressView({ history, onReload, nav, onRemoveFact }: ProgressV
           <section className="panel pc-sec" aria-labelledby={sessionsId}>
             <header className="pc-sec-head">
               <p className="kicker">Past sessions</p>
-              <h2 className="serif pc-h2" id={sessionsId}>
+              <h2 className="title pc-h2" id={sessionsId}>
                 Sessions
               </h2>
             </header>
@@ -186,7 +186,7 @@ function FactsPanel({ headingId, facts, onRemove }: { headingId: string; facts: 
     <section className="panel pc-sec" aria-labelledby={headingId}>
       <header className="pc-sec-head">
         <p className="kicker">Profile</p>
-        <h2 className="serif pc-h2" id={headingId}>
+        <h2 className="title pc-h2" id={headingId}>
           Facts from you
         </h2>
       </header>

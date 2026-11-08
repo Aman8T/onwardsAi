@@ -489,7 +489,7 @@ export function CardBody({ result, ctx, titleId }: { result: SlotResult; ctx: Ca
   const error = ctx.againError?.where === result.slotId ? ctx.againError.message : undefined;
   return (
     <>
-      <h3 id={titleId} className="serif pc-q">
+      <h3 id={titleId} className="title pc-q">
         {result.question}
       </h3>
       <BeforeNow result={result} when={dateOf(ctx.debrief.createdAt) || 'today'} />

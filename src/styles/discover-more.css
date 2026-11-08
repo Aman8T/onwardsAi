@@ -41,13 +41,15 @@
   text-decoration-color: var(--line-strong);
 }
 
-.dm-back:hover {
-  text-decoration-color: currentColor;
+@media (hover: hover) {
+  .dm-back:hover {
+    text-decoration-color: currentColor;
+  }
 }
 
 .dm-title {
   max-width: 24ch;
-  font-size: clamp(34px, 2.6vw + 22px, 52px);
+  font-size: var(--fs-7);
   font-weight: 400;
   text-wrap: balance;
   overflow-wrap: anywhere;
@@ -64,15 +66,15 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 14px;
+  gap: var(--s2) var(--s3);
 }
 
 .dm-head-tight {
-  gap: 6px 8px;
+  gap: var(--s1) var(--s2);
 }
 
 .dm-lede {
-  max-width: 66ch;
+  max-width: var(--measure);
   text-wrap: pretty;
 }
 
@@ -130,7 +132,7 @@
 }
 
 .dm-actions-tight {
-  gap: 6px;
+  gap: var(--s1);
 }
 
 /* ───────────── buttons, links, fields ───────────── */
@@ -138,7 +140,7 @@
 .dm-btn {
   justify-content: center;
   min-height: 44px;
-  padding-inline: 18px;
+  padding-inline: var(--s4);
   font-weight: 500;
   text-decoration: none;
 }
@@ -185,14 +187,16 @@
   transition: border-color var(--d-fast) var(--ease);
 }
 
-.dm-iconbtn:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  .dm-iconbtn:hover {
+    border-color: var(--line-strong);
+  }
 }
 
 /* a boxed field: the global .field is an underline, a prep page and a dialog read better with a box */
 .field.dm-box {
   min-height: 44px;
-  padding: 10px 12px;
+  padding: var(--s2) var(--s3);
   border: var(--hair) solid var(--line);
   border-radius: var(--r-m);
   background: var(--surface);
@@ -237,7 +241,7 @@ textarea.field.dm-box {
   align-items: center;
   width: fit-content;
   min-height: 26px;
-  padding: 2px 10px;
+  padding: 2px var(--s2);
   border: var(--hair) solid transparent;
   border-radius: 999px;
   font-size: var(--fs-1);
@@ -280,7 +284,7 @@ textarea.field.dm-box {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .dm-pip {
@@ -310,7 +314,7 @@ textarea.field.dm-box {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 12px;
+  gap: var(--s1) var(--s3);
 }
 
 .dm-askpips-line {
@@ -322,7 +326,7 @@ textarea.field.dm-box {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 16px;
+  gap: var(--s1) var(--s4);
   font-size: var(--fs-1);
   color: var(--text-muted);
 }
@@ -330,13 +334,13 @@ textarea.field.dm-box {
 .dm-pipskey > span {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .dm-cite {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-1);
   line-height: 1.5;
   color: var(--accent);
   overflow-wrap: anywhere;
@@ -344,7 +348,7 @@ textarea.field.dm-box {
 
 .dm-fact {
   margin: 0;
-  font-size: 14.5px;
+  font-size: var(--fs-2);
   line-height: 1.5;
   text-wrap: pretty;
   overflow-wrap: anywhere;
@@ -365,14 +369,14 @@ textarea.field.dm-box {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 6px 10px;
+  gap: var(--s1) var(--s2);
 }
 
 .dm-suggest-text {
   flex: 1 1 260px;
-  max-width: 62ch;
+  max-width: var(--measure);
   min-width: 0;
-  font-size: 14.5px;
+  font-size: var(--fs-2);
   text-wrap: pretty;
   overflow-wrap: anywhere;
 }
@@ -405,35 +409,35 @@ textarea.field.dm-box {
   display: flex;
   flex-direction: column;
   gap: var(--s4);
-  padding: var(--s5) 28px;
+  padding: var(--s5);
 }
 
 .dm-sec-head {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .dm-h2 {
-  font-size: 32px;
+  font-size: var(--fs-7);
   font-weight: 400;
   text-wrap: balance;
   overflow-wrap: anywhere;
 }
 
 .dm-h2s {
-  font-size: 28px;
+  font-size: var(--fs-6);
   font-weight: 400;
 }
 
 .dm-h3 {
-  font-size: 17px;
+  font-size: var(--fs-4);
   font-weight: 600;
   line-height: var(--lh-snug);
 }
 
 .dm-h3s {
-  font-size: 26px;
+  font-size: var(--fs-6);
   font-weight: 400;
   text-wrap: balance;
   overflow-wrap: anywhere;
@@ -442,22 +446,22 @@ textarea.field.dm-box {
 .dm-pair {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 16px 18px;
+  gap: var(--s3);
+  padding: var(--s4);
   border: var(--hair) solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-l);
 }
 
 .dm-pair-cols {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
-  gap: 12px 28px;
+  gap: var(--s3) var(--s5);
 }
 
 .dm-pair-col {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s1);
   min-width: 0;
 }
 
@@ -465,7 +469,7 @@ textarea.field.dm-box {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 14px;
+  gap: var(--s2) var(--s3);
 }
 
 .dm-gapitem {
@@ -482,16 +486,16 @@ textarea.field.dm-box {
 .dm-gapline {
   display: grid;
   grid-template-columns: 10px minmax(0, 1fr);
-  gap: 12px;
+  gap: var(--s3);
   align-items: start;
 }
 
 .dm-gapline .dm-pip {
-  margin-top: 8px;
+  margin-top: var(--s2);
 }
 
 .dm-gaptext {
-  font-size: 16px;
+  font-size: var(--fs-3);
   line-height: 1.5;
   color: var(--danger);
   overflow-wrap: anywhere;
@@ -500,7 +504,7 @@ textarea.field.dm-box {
 .dm-block {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
   padding-top: var(--s4);
   border-top: var(--hair) solid var(--line);
 }
@@ -508,45 +512,45 @@ textarea.field.dm-box {
 .dm-slotfield {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .dm-question {
   display: flex;
   flex-direction: column;
   gap: var(--s4);
-  padding: 20px;
+  padding: var(--s4);
   border: var(--hair) solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-l);
 }
 
 .dm-question-head {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .dm-story {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .dm-cell {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
   min-width: 0;
-  padding: 12px;
+  padding: var(--s3);
   border: var(--hair) solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-m);
 }
 
 .dm-slotkey {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 10px;
+  gap: var(--s1) var(--s2);
 }
 
 .dm-slotkey-box {
@@ -567,8 +571,8 @@ textarea.field.dm-box {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 12px;
-  padding: 8px 0;
+  gap: var(--s1) var(--s3);
+  padding: var(--s2) 0;
   border-top: var(--hair) solid var(--line);
 }
 
@@ -603,8 +607,8 @@ textarea.field.dm-box {
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: 14px 24px;
-  padding-block: 22px;
+  gap: var(--s3) var(--s5);
+  padding-block: var(--s5);
   border-style: dashed;
   border-color: var(--line-strong);
   background: transparent;
@@ -614,7 +618,7 @@ textarea.field.dm-box {
   display: flex;
   flex: 1 1 320px;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
   min-width: 0;
 }
 
@@ -622,7 +626,7 @@ textarea.field.dm-box {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .dm-error {
@@ -630,7 +634,7 @@ textarea.field.dm-box {
 }
 
 .dm-error-text {
-  max-width: 62ch;
+  max-width: var(--measure);
   font-size: var(--fs-3);
   line-height: 1.5;
   color: var(--danger);
@@ -669,23 +673,23 @@ textarea.field.dm-box {
 .dm-summary {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 20px;
+  gap: var(--s3);
+  padding: var(--s4);
 }
 
 .dm-summary-fit {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 12px;
+  gap: var(--s1) var(--s3);
 }
 
 .dm-meta,
 .dm-side-actions {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-top: 14px;
+  gap: var(--s1);
+  padding-top: var(--s3);
   border-top: var(--hair) solid var(--line);
 }
 
@@ -704,25 +708,27 @@ textarea.field.dm-box {
 .dm-toc {
   display: flex;
   flex-direction: column;
-  padding: 16px 20px 6px;
+  padding: var(--s4) var(--s4) var(--s1);
 }
 
 .dm-toc .kicker {
-  padding-bottom: 8px;
+  padding-bottom: var(--s2);
 }
 
 .dm-toc-item {
   min-height: 44px;
-  padding: 10px 0;
+  padding: var(--s2) 0;
   border-top: var(--hair) solid var(--line);
   color: var(--accent);
   font-size: var(--fs-2);
   text-align: left;
 }
 
-.dm-toc-item:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  .dm-toc-item:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 /* ───────────── share ───────────── */
@@ -744,11 +750,11 @@ textarea.field.dm-box {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .dm-share-title {
-  font-size: 30px;
+  font-size: var(--fs-6);
   font-weight: 400;
 }
 
@@ -760,9 +766,11 @@ textarea.field.dm-box {
   color: var(--text-muted);
 }
 
-.dm-share-head .dm-iconbtn:hover {
-  background: var(--surface-2);
-  color: var(--text);
+@media (hover: hover) {
+  .dm-share-head .dm-iconbtn:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
 }
 
 .dm-tabs,
@@ -776,9 +784,9 @@ textarea.field.dm-box {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--s1);
   min-height: 36px;
-  padding: 0 14px;
+  padding: 0 var(--s3);
   border: var(--hair) solid var(--line);
   border-radius: 999px;
   background: var(--surface);
@@ -791,8 +799,10 @@ textarea.field.dm-box {
     background-color var(--d-fast) var(--ease);
 }
 
-.dm-tab:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  .dm-tab:hover {
+    border-color: var(--line-strong);
+  }
 }
 
 .dm-tab[aria-selected='true'] {
@@ -823,13 +833,13 @@ textarea.field.dm-box {
 .dm-tofield {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .dm-to {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--s3);
 }
 
 /* lines up under the field, past the "To" label (its width and the gap) */
@@ -845,7 +855,7 @@ textarea.field.dm-box {
 .dm-notebox {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .dm-notehead {
@@ -853,7 +863,7 @@ textarea.field.dm-box {
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 2px 12px;
+  gap: 2px var(--s3);
 }
 
 .dm-notefield {
@@ -872,7 +882,7 @@ textarea.field.dm-box {
 .dm-notetext {
   display: block;
   width: 100%;
-  padding: 12px 12px 0;
+  padding: var(--s3) var(--s3) 0;
   border: 0;
   background: transparent;
   color: var(--text);
@@ -887,7 +897,7 @@ textarea.field.dm-box {
 }
 
 .dm-linkline {
-  padding: 6px 12px 12px;
+  padding: var(--s1) var(--s3) var(--s3);
   font-family: var(--font-mono);
   font-size: var(--fs-1);
   line-height: 1.5;
@@ -899,13 +909,13 @@ textarea.field.dm-box {
 .dm-key {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .dm-keylist {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s1);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -914,12 +924,12 @@ textarea.field.dm-box {
 .dm-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
   min-width: 0;
 }
 
 .dm-linkbox {
-  padding: 10px 12px;
+  padding: var(--s2) var(--s3);
   border: var(--hair) solid var(--line);
   border-radius: var(--r-m);
   background: var(--surface-2);
@@ -935,15 +945,15 @@ textarea.field.dm-box {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 10px;
+  gap: var(--s1) var(--s2);
 }
 
 .dm-confirm-card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: var(--s2);
+  padding: var(--s2) var(--s3);
   border: var(--hair) solid var(--line-strong);
   border-radius: var(--r-m);
 }
@@ -959,14 +969,14 @@ textarea.field.dm-box {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 24px;
+  gap: var(--s3) var(--s5);
 }
 
 .dm-toolbar-count {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 10px;
+  gap: var(--s1) var(--s2);
   margin-right: auto;
 }
 
@@ -991,7 +1001,7 @@ textarea.field.dm-box {
 
 .dm-cmp th,
 .dm-cmp td {
-  padding: 16px 18px;
+  padding: var(--s4);
   border-bottom: var(--hair) solid var(--line);
   background: var(--surface);
   font-weight: 400;
@@ -1022,11 +1032,11 @@ textarea.field.dm-box {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .dm-coltitle {
-  font-size: 17px;
+  font-size: var(--fs-4);
   font-weight: 600;
   line-height: 1.3;
 }
@@ -1035,13 +1045,13 @@ textarea.field.dm-box {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .dm-asklist {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1050,9 +1060,9 @@ textarea.field.dm-box {
 .dm-askitem {
   display: grid;
   grid-template-columns: 10px minmax(0, 1fr);
-  gap: 10px;
+  gap: var(--s2);
   align-items: start;
-  font-size: 13.5px;
+  font-size: var(--fs-2);
 }
 
 .dm-askitem .dm-pip {
@@ -1075,20 +1085,20 @@ textarea.field.dm-box {
 .dm-column {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--s3);
   min-width: 0;
 }
 
 .dm-colhead-line {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  padding-bottom: 8px;
+  gap: var(--s2);
+  padding-bottom: var(--s2);
   border-bottom: var(--hair) solid var(--line);
 }
 
 .dm-empty {
-  padding: 18px 14px;
+  padding: var(--s4) var(--s3);
   border: var(--hair) dashed var(--line-strong);
   border-radius: var(--r-l);
   font-size: var(--fs-2);
@@ -1098,7 +1108,7 @@ textarea.field.dm-box {
 .dm-applist {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--s3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1107,16 +1117,18 @@ textarea.field.dm-box {
 .dm-appcard {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px;
+  gap: var(--s2);
+  padding: var(--s3);
   border: var(--hair) solid var(--line);
   border-radius: var(--r-l);
   background: var(--surface);
   transition: border-color var(--d-fast) var(--ease);
 }
 
-.dm-appcard:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  .dm-appcard:hover {
+    border-color: var(--line-strong);
+  }
 }
 
 .dm-appname {
@@ -1127,7 +1139,7 @@ textarea.field.dm-box {
 }
 
 .dm-apptitle {
-  font-size: 15px;
+  font-size: var(--fs-3);
   font-weight: 600;
   line-height: 1.3;
   overflow-wrap: anywhere;
@@ -1140,7 +1152,7 @@ textarea.field.dm-box {
 .dm-appfield {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .dm-tabcount {
@@ -1182,7 +1194,7 @@ textarea.field.dm-box {
   }
 
   .dm-h2 {
-    font-size: 28px;
+    font-size: var(--fs-6);
   }
 
   .dm-question {
@@ -1210,7 +1222,7 @@ textarea.field.dm-box {
 
   .dm-cmp th,
   .dm-cmp td {
-    padding: 12px;
+    padding: var(--s3);
   }
 
   .dm-cmp thead th:first-child,

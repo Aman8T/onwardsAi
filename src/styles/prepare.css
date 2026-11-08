@@ -15,7 +15,7 @@
 .pp-msg {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s2);
   width: 100%;
   min-width: 0;
 }
@@ -27,7 +27,7 @@
 .pp-root {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--s4);
   min-width: 0;
   font-size: var(--fs-3);
   line-height: var(--lh-body);
@@ -39,8 +39,8 @@
 .pp-block {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 20px 22px;
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
   min-width: 0;
 }
 
@@ -49,11 +49,11 @@
   justify-content: space-between;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 4px 12px;
+  gap: var(--s1) var(--s3);
 }
 
 .pp-h {
-  font-size: 13px;
+  font-size: var(--fs-1);
   font-weight: 500;
   color: var(--text-muted);
 }
@@ -84,20 +84,20 @@
 .pp-stack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .pp-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  padding-top: 4px;
+  gap: var(--s2);
+  padding-top: var(--s1);
 }
 
 .pp-btn {
   min-height: 44px;
-  padding-inline: 18px;
+  padding-inline: var(--s4);
   font-size: var(--fs-2);
 }
 
@@ -108,21 +108,23 @@
 /* a text-only action, in the accent, with a touch target */
 .pp-link {
   min-height: 44px;
-  padding-inline: 4px;
+  padding-inline: var(--s1);
   color: var(--accent);
   font-size: var(--fs-2);
 }
 
-.pp-link:hover {
-  color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  .pp-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 /* ───────────── where you stand ───────────── */
 
 .pp-headline {
-  font-size: 26px;
+  font-size: var(--fs-6);
   text-wrap: balance;
 }
 
@@ -131,8 +133,8 @@
 .pp-wait {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 4px 0;
+  gap: var(--s2);
+  padding: var(--s1) 0;
 }
 
 .pp-gaps {
@@ -148,10 +150,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) auto 18px;
   align-items: center;
-  gap: 14px;
+  gap: var(--s3);
   width: 100%;
   min-height: 48px;
-  padding: 12px 0;
+  padding: var(--s3) 0;
   color: inherit;
   text-align: left;
 }
@@ -195,7 +197,7 @@
 }
 
 .pp-gap-nums {
-  font-size: 13px;
+  font-size: var(--fs-1);
   white-space: nowrap;
 }
 
@@ -208,8 +210,8 @@
 .pp-gap-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 0 0 14px;
+  gap: var(--s2);
+  padding: 0 0 var(--s3);
 }
 
 .pp-gap-body[hidden] {
@@ -223,10 +225,10 @@
 .pp-strong {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding-top: 12px;
+  gap: var(--s2);
+  padding-top: var(--s3);
   border-top: 1px solid var(--line);
-  font-size: 13px;
+  font-size: var(--fs-1);
   color: var(--text-muted);
 }
 
@@ -241,19 +243,19 @@
 .pp-ev {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .pp-ev-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .pp-ev-chip {
   min-height: 28px;
-  padding: 3px 10px;
+  padding: var(--s1) var(--s2);
   background: transparent;
   border: 1px solid var(--line);
   color: var(--text-muted);
@@ -263,9 +265,11 @@
     background-color var(--d-fast) var(--ease);
 }
 
-button.pp-ev-chip:hover {
-  color: var(--text);
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  button.pp-ev-chip:hover {
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
 }
 
 .pp-ev-chip.is-on {
@@ -294,7 +298,7 @@ button.pp-ev-chip:hover {
 /* ───────────── the one move ───────────── */
 
 .pp-move-title {
-  font-size: 30px;
+  font-size: var(--fs-6);
   text-wrap: balance;
 }
 
@@ -305,15 +309,15 @@ button.pp-ev-chip:hover {
 .pp-have {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .pp-have-chip {
-  padding: 5px 10px;
+  padding: var(--s1) var(--s2);
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--r-s);
   background: var(--surface-2);
-  font-size: 13px;
+  font-size: var(--fs-1);
   line-height: 1.4;
   text-align: left;
   color: var(--text);
@@ -322,8 +326,10 @@ button.pp-ev-chip:hover {
     background-color var(--d-fast) var(--ease);
 }
 
-.pp-have-chip:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  .pp-have-chip:hover {
+    border-color: var(--line-strong);
+  }
 }
 
 .pp-have-chip.is-on {
@@ -335,26 +341,26 @@ button.pp-ev-chip:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .pp-work {
-  padding: 4px 11px;
+  padding: var(--s1) var(--s3);
   background: var(--accent-soft);
-  font-size: 13px;
+  font-size: var(--fs-1);
   color: var(--text);
 }
 
 .pp-hours {
   margin-left: auto;
-  font-size: 13px;
+  font-size: var(--fs-1);
   color: var(--text-muted);
 }
 
 /* ───────────── your plan ───────────── */
 
 .pp-plan {
-  gap: 16px;
+  gap: var(--s4);
 }
 
 .pp-plan-head {
@@ -362,18 +368,18 @@ button.pp-ev-chip:hover {
 }
 
 .pp-plan-title {
-  font-size: 26px;
+  font-size: var(--fs-6);
 }
 
 .pp-hours-group {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .pp-hours-group > .kicker {
-  margin-right: 4px;
+  margin-right: var(--s1);
 }
 
 /* one option of a segmented control (hours, weekdays) */
@@ -383,10 +389,10 @@ button.pp-ev-chip:hover {
   justify-content: center;
   min-height: 44px;
   min-width: 52px;
-  padding: 0 12px;
+  padding: 0 var(--s3);
   border: 1px solid var(--line);
   border-radius: var(--r-m);
-  font-size: 13px;
+  font-size: var(--fs-1);
   color: var(--text-muted);
   transition:
     color var(--d-fast) var(--ease),
@@ -394,9 +400,11 @@ button.pp-ev-chip:hover {
     background-color var(--d-fast) var(--ease);
 }
 
-.pp-seg:hover {
-  color: var(--text);
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  .pp-seg:hover {
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
 }
 
 .pp-seg.is-on {
@@ -406,21 +414,21 @@ button.pp-ev-chip:hover {
 }
 
 .pp-plan-summary {
-  font-size: 13px;
+  font-size: var(--fs-1);
 }
 
 .pp-pills {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .pp-pill {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s1);
   min-height: 44px;
-  padding: 10px 12px;
+  padding: var(--s2) var(--s3);
   border: 1px solid var(--line);
   border-radius: var(--r-m);
   background: var(--surface);
@@ -431,8 +439,10 @@ button.pp-ev-chip:hover {
     background-color var(--d-fast) var(--ease);
 }
 
-.pp-pill:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  .pp-pill:hover {
+    border-color: var(--line-strong);
+  }
 }
 
 .pp-pill.is-on {
@@ -449,7 +459,7 @@ button.pp-ev-chip:hover {
   position: relative;
   display: block;
   height: 3px;
-  margin-top: 4px;
+  margin-top: var(--s1);
   border-radius: 2px;
   background: var(--surface-2);
 }
@@ -468,14 +478,14 @@ button.pp-ev-chip:hover {
 }
 
 .pp-phase {
-  padding-top: 14px;
+  padding-top: var(--s3);
   border-top: 1px solid var(--line);
 }
 
 .pp-detail {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .pp-tasks {
@@ -487,9 +497,9 @@ button.pp-ev-chip:hover {
 .pp-task {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: var(--s3);
   min-height: 44px;
-  padding: 6px 0;
+  padding: var(--s1) 0;
 }
 
 .pp-check {
@@ -514,8 +524,8 @@ button.pp-ev-chip:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 10px;
-  padding: 10px 14px;
+  gap: var(--s1) var(--s2);
+  padding: var(--s2) var(--s3);
   border-radius: var(--r-m);
   background: var(--surface-2);
   font-size: var(--fs-2);
@@ -524,8 +534,8 @@ button.pp-ev-chip:hover {
 .pp-links {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
+  gap: var(--s1);
+  font-size: var(--fs-1);
 }
 
 .pp-link-list {
@@ -533,7 +543,7 @@ button.pp-ev-chip:hover {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .pp-link-list a {
@@ -544,15 +554,15 @@ button.pp-ev-chip:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 4px;
-  font-size: 13px;
+  gap: 0 var(--s1);
+  font-size: var(--fs-1);
 }
 
 .pp-linkform {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .pp-linkfield {
@@ -582,10 +592,10 @@ button.pp-ev-chip:hover {
 .pp-phase-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--s3);
   width: 100%;
   min-height: 48px;
-  padding: 12px 0;
+  padding: var(--s3) 0;
   color: inherit;
   text-align: left;
 }
@@ -608,7 +618,7 @@ button.pp-ev-chip:hover {
   height: 22px;
   border: 1px solid var(--line);
   border-radius: 50%;
-  font-size: 11px;
+  font-size: var(--fs-0);
   color: var(--text-muted);
 }
 
@@ -625,7 +635,7 @@ button.pp-ev-chip:hover {
 }
 
 .pp-phase-item .pp-detail {
-  padding: 0 0 14px 34px;
+  padding: 0 0 var(--s3) 34px;
 }
 
 /* ───────────── next ───────────── */
@@ -633,22 +643,22 @@ button.pp-ev-chip:hover {
 .pp-next {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .pp-tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .pp-tile {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-m);
   background: var(--surface);
   color: var(--text);
   text-align: left;
@@ -657,8 +667,10 @@ button.pp-ev-chip:hover {
     background-color var(--d-fast) var(--ease);
 }
 
-.pp-tile:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) {
+  .pp-tile:hover {
+    border-color: var(--line-strong);
+  }
 }
 
 .pp-tile.is-on {
@@ -684,16 +696,16 @@ button.pp-ev-chip:hover {
 }
 
 .pp-tile-sub {
-  font-size: 13px;
+  font-size: var(--fs-1);
   color: var(--text-muted);
 }
 
 .pp-panel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 18px;
-  border-radius: 12px;
+  gap: var(--s3);
+  padding: var(--s4);
+  border-radius: var(--r-m);
 }
 
 .pp-panel-row {
@@ -712,36 +724,36 @@ button.pp-ev-chip:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
+  gap: var(--s2) var(--s4);
 }
 
 .pp-cal-days {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .pp-cal-days > .kicker {
-  margin-right: 4px;
+  margin-right: var(--s1);
 }
 
 .pp-cal-days .pp-seg {
   min-width: 48px;
   min-height: 40px;
-  padding: 0 10px;
+  padding: 0 var(--s2);
 }
 
 .pp-cal-from {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .pp-time {
   width: auto;
-  padding: 8px 0;
-  font-size: 13px;
+  padding: var(--s2) 0;
+  font-size: var(--fs-1);
 }
 
 .pp-rows {
@@ -753,8 +765,8 @@ button.pp-ev-chip:hover {
 
 .pp-row-line {
   display: flex;
-  gap: 16px;
-  padding: 9px 0;
+  gap: var(--s4);
+  padding: var(--s2) 0;
   border-top: 1px solid var(--line);
   font-size: var(--fs-2);
 }
@@ -762,14 +774,14 @@ button.pp-ev-chip:hover {
 .pp-row-weeks {
   flex: none;
   width: 92px;
-  font-size: 13px;
+  font-size: var(--fs-1);
 }
 
 .pp-repo {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 0;
+  gap: var(--s1);
+  padding: var(--s3) 0;
   border-top: 1px solid var(--line);
 }
 
@@ -777,7 +789,7 @@ button.pp-ev-chip:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 12px;
+  gap: var(--s1) var(--s3);
 }
 
 .pp-repo-name {
@@ -795,14 +807,14 @@ button.pp-ev-chip:hover {
 
 .pp-repo-open {
   margin-left: auto;
-  font-size: 13px;
+  font-size: var(--fs-1);
 }
 
 .pp-proposed {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
+  gap: var(--s1);
+  padding: var(--s3);
   border-radius: var(--r-m);
   background: var(--surface-2);
 }
@@ -815,7 +827,7 @@ button.pp-ev-chip:hover {
 /* ───────────── skeletons, stream controls, errors ───────────── */
 
 .pp-skel {
-  gap: 8px;
+  gap: var(--s2);
   border-color: var(--surface-2);
 }
 
@@ -835,7 +847,7 @@ button.pp-ev-chip:hover {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 16px;
+  gap: var(--s2) var(--s4);
 }
 
 .pp-error {
@@ -843,8 +855,8 @@ button.pp-ev-chip:hover {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 16px;
-  padding: 12px 16px;
+  gap: var(--s2) var(--s4);
+  padding: var(--s3) var(--s4);
   border: 1px solid var(--line);
   border-radius: var(--r-m);
   background: var(--surface);
@@ -866,14 +878,14 @@ button.pp-ev-chip:hover {
 /* ───────────── read this as text, the foot ───────────── */
 
 .pp-text {
-  padding-top: 12px;
+  padding-top: var(--s3);
   border-top: 1px solid var(--line);
 }
 
 /* the default disclosure marker stays (a flex summary would hide it) */
 .pp-text-summary {
-  padding: 11px 0;
-  font-size: 13px;
+  padding: var(--s3) 0;
+  font-size: var(--fs-1);
   color: var(--text-muted);
   cursor: pointer;
 }
@@ -885,8 +897,8 @@ button.pp-ev-chip:hover {
 .pp-text-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: 8px;
+  gap: var(--s2);
+  padding-bottom: var(--s2);
   max-width: var(--measure);
   color: var(--text);
 }
@@ -895,30 +907,30 @@ button.pp-ev-chip:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
+  gap: var(--s2) var(--s3);
 }
 
 /* ───────────── the phone ───────────── */
 
 .pp-root.is-narrow {
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .pp-root.is-narrow .pp-block {
-  padding: 16px;
-  gap: 10px;
+  padding: var(--s4);
+  gap: var(--s2);
 }
 
 .pp-root.is-narrow .pp-headline {
-  font-size: 23px;
+  font-size: var(--fs-5);
 }
 
 .pp-root.is-narrow .pp-move-title {
-  font-size: 24px;
+  font-size: var(--fs-5);
 }
 
 .pp-root.is-narrow .pp-plan-title {
-  font-size: 24px;
+  font-size: var(--fs-5);
 }
 
 /* gap rows stack: name and numbers on one line, the bar under them */
@@ -927,8 +939,8 @@ button.pp-ev-chip:hover {
   grid-template-areas:
     'name nums chev'
     'bar bar bar';
-  gap: 6px 8px;
-  padding: 10px 0;
+  gap: var(--s1) var(--s2);
+  padding: var(--s2) 0;
 }
 
 .pp-root.is-narrow .pp-gap-name {
@@ -950,24 +962,24 @@ button.pp-ev-chip:hover {
 .pp-root.is-narrow .pp-hours-group.is-narrow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: var(--s1);
   width: 100%;
 }
 
 .pp-root.is-narrow .pp-seg {
   min-width: 0;
-  padding: 0 8px;
+  padding: 0 var(--s2);
 }
 
 .pp-root.is-narrow .pp-tiles.is-narrow {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .pp-root.is-narrow .pp-tile {
   min-height: 56px;
-  padding: 10px 12px;
-  font-size: 13px;
+  padding: var(--s2) var(--s3);
+  font-size: var(--fs-1);
 }
 
 .pp-root.is-narrow .pp-tile-ic {
@@ -975,7 +987,7 @@ button.pp-ev-chip:hover {
 }
 
 .pp-root.is-narrow .pp-tile-label {
-  font-size: 13px;
+  font-size: var(--fs-1);
 }
 
 /* the jump bar sticks to the top of the thread's scroller; the blocks leave room for it when jumped to */
@@ -984,9 +996,9 @@ button.pp-ev-chip:hover {
   top: 0;
   z-index: 2;
   display: flex;
-  gap: 6px;
+  gap: var(--s1);
   margin: 0 -2px;
-  padding: 8px 2px;
+  padding: var(--s2) 2px;
   background: var(--bg);
 }
 
@@ -1003,7 +1015,7 @@ button.pp-ev-chip:hover {
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
-  font-size: 13px;
+  font-size: var(--fs-1);
   color: var(--text-muted);
   text-decoration: none;
   transition:
@@ -1012,9 +1024,11 @@ button.pp-ev-chip:hover {
     background-color var(--d-fast) var(--ease);
 }
 
-.pp-jump-a:hover {
-  color: var(--text);
-  text-decoration: none;
+@media (hover: hover) {
+  .pp-jump-a:hover {
+    color: var(--text);
+    text-decoration: none;
+  }
 }
 
 .pp-jump-a.is-on {
@@ -1034,7 +1048,7 @@ button.pp-ev-chip:hover {
   bottom: 0;
   z-index: 1;
   margin: 0 -16px -16px;
-  padding: 10px 16px 16px;
+  padding: var(--s2) var(--s4) var(--s4);
   background: var(--surface);
 }
 
@@ -1048,7 +1062,8 @@ button.pp-ev-chip:hover {
 @media (pointer: coarse) {
   .pp-ev-chip,
   .pp-have-chip,
-  .pp-btn-sm {
+  .pp-btn-sm,
+  .pp-cal-days .pp-seg {
     min-height: 44px;
   }
 }
@@ -1099,8 +1114,10 @@ button.pp-ev-chip:hover {
     background-color var(--d-fast) var(--ease);
 }
 
-.pp-dev-navbtn:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .pp-dev-navbtn:hover {
+    color: var(--text);
+  }
 }
 
 .pp-dev-navbtn.is-current {
@@ -1126,14 +1143,14 @@ button.pp-ev-chip:hover {
   padding: var(--s5) var(--s4) var(--s8);
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: var(--s5);
 }
 
 .pp-dev-head {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 4px var(--s4);
+  gap: var(--s1) var(--s4);
 }
 
 .pp-dev-frame {
@@ -1141,14 +1158,14 @@ button.pp-ev-chip:hover {
   max-width: 100%;
   height: 844px;
   margin: 0 auto;
-  padding: 14px 16px 20px;
+  padding: var(--s3) var(--s4) var(--s4);
   overflow-y: auto;
   border: 1px solid var(--line-strong);
   border-radius: var(--r-l);
   background: var(--bg);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--s4);
 }
 
 @media (max-width: 760px) {
@@ -1161,13 +1178,19 @@ button.pp-ev-chip:hover {
   }
 }
 
+@media (pointer: coarse) {
+  .pp-dev-navbtn {
+    min-height: 44px;
+  }
+}
+
 /* ───────────── Fix steps from practice (I2) ───────────── */
 
 .pp-practice {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 0 4px;
+  gap: var(--s2);
+  padding: var(--s3) 0 var(--s1);
   border-top: var(--hair) solid var(--line);
 }
 

@@ -154,7 +154,7 @@ export function PortfolioScreen({ profile }: { profile: Profile }) {
             </>
           }
         >
-          <span style={{ display: 'block' }}>{error ?? 'Something went wrong while reading your sources.'}</span>
+          <span style={{ display: 'block' }}>{error ?? 'Reading your resume and links failed. Try again, or add the resume again from the graph.'}</span>
           <span style={{ display: 'block' }}>Your graph is untouched.</span>
         </CalmPage>
       );
@@ -165,7 +165,7 @@ export function PortfolioScreen({ profile }: { profile: Profile }) {
         {/* The Skill Graph is already known: draw it while the resume is read, so the wait has a shape. */}
         <span style={{ display: 'grid', justifyItems: 'center', gap: 'var(--s2)', marginBottom: 'var(--s4)' }} aria-hidden="true">
           <RadarGlyph values={profile.domains.map((d) => d.score)} size={168} />
-          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--fs-5)', color: 'var(--text)' }}>{profile.person.name}</span>
+          <span className="title" style={{ fontSize: 'var(--fs-5)', color: 'var(--text)' }}>{profile.person.name}</span>
         </span>
         <AnimatePresence mode="wait" initial={false}>
           <motion.span

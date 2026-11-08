@@ -10,7 +10,7 @@
 .now-row {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
-  gap: var(--s6) 56px;
+  gap: var(--s6) var(--s7);
   align-items: start;
   width: 100%;
   padding-top: var(--s2);
@@ -21,18 +21,18 @@
 .now-rail {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: var(--s5);
   min-width: 0;
 }
 
 .now-rail-head {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .now-name {
-  font-size: 30px;
+  font-size: var(--fs-6);
   overflow-wrap: anywhere;
 }
 
@@ -48,16 +48,21 @@
   gap: var(--s2);
   width: calc(100% + 2 * var(--s3));
   margin: 0 calc(-1 * var(--s3));
-  padding: 14px var(--s3);
+  padding: var(--s3) var(--s3);
   border-radius: var(--r-m);
   color: var(--text);
   text-align: left;
   transition: background-color var(--d-fast) var(--ease);
 }
 
-.now-mastery:hover,
 .now-mastery[aria-pressed='true'] {
   background: var(--surface-2);
+}
+
+@media (hover: hover) {
+  .now-mastery:hover {
+    background: var(--surface-2);
+  }
 }
 
 .now-mastery-top {
@@ -74,13 +79,13 @@
 }
 
 .now-of {
-  font-size: 12px;
+  font-size: var(--fs-1);
   font-weight: 400;
   color: var(--text-muted);
 }
 
 .now-mastery-insight {
-  font-size: 13.5px;
+  font-size: var(--fs-2);
   line-height: 1.45;
   color: var(--text-muted);
 }
@@ -93,7 +98,7 @@
 }
 
 .now-doms-k {
-  padding: 0 var(--s2) 6px;
+  padding: 0 var(--s2) var(--s1);
 }
 
 .now-dom-list {
@@ -109,7 +114,7 @@
   gap: var(--s1) var(--s3);
   align-items: baseline;
   width: 100%;
-  padding: 10px var(--s2);
+  padding: var(--s2) var(--s2);
   border-radius: var(--r-s);
   color: var(--text);
   text-align: left;
@@ -118,11 +123,16 @@
     color var(--d-fast) var(--ease);
 }
 
-.now-dom-row:hover,
 .now-dom-row[aria-pressed='true'],
-.now-skill-row:hover,
 .now-skill-row[aria-pressed='true'] {
   background: var(--surface-2);
+}
+
+@media (hover: hover) {
+  .now-dom-row:hover,
+  .now-skill-row:hover {
+    background: var(--surface-2);
+  }
 }
 
 .now-dom-row .vl,
@@ -138,7 +148,7 @@
 
 .now-dom-num,
 .now-skill-num {
-  font-size: 13px;
+  font-size: var(--fs-1);
   color: var(--text-muted);
 }
 
@@ -158,7 +168,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: var(--s2);
   min-width: 0;
   /* Axis labels sit outside the rim and may reach into the page gutter: the graph stack
      (shell.css) clips sideways overflow, not this column, so a long label is not cut here. */
@@ -167,26 +177,26 @@
 /* Level 1 (a domain's skills): the header reads left to right like a page. */
 .now-chart.is-drilled {
   align-items: stretch;
-  gap: 22px;
+  gap: var(--s5);
 }
 
 .now-head {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--s1);
   text-align: center;
 }
 
 .now-head-domain {
   align-items: stretch;
-  gap: 22px;
+  gap: var(--s5);
   text-align: left;
 }
 
 /* The one serif line of the screen. */
 .now-title {
-  font-size: 36px;
+  font-size: var(--fs-7);
   text-wrap: balance;
 }
 
@@ -209,8 +219,10 @@
   transition: color var(--d-fast) var(--ease);
 }
 
-.now-crumb-up:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .now-crumb-up:hover {
+    color: var(--text);
+  }
 }
 
 .now-crumb-sep {
@@ -227,13 +239,13 @@
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 20px 56px;
+  gap: var(--s4) var(--s7);
 }
 
 .now-dom-id {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .now-dom-id .now-title {
@@ -253,13 +265,13 @@
 
 .now-dom-score .chip {
   align-self: center;
-  margin-left: 6px;
+  margin-left: var(--s1);
 }
 
 .now-dom-copy {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s1);
   max-width: 520px;
 }
 
@@ -283,8 +295,10 @@
   transition: text-decoration-color var(--d-fast) var(--ease);
 }
 
-.now-lnk:hover {
-  text-decoration-color: var(--accent-ui);
+@media (hover: hover) {
+  .now-lnk:hover {
+    text-decoration-color: var(--accent-ui);
+  }
 }
 
 /* ───────────── plot: the radar or the list panel ───────────── */
@@ -310,15 +324,17 @@
   display: grid;
   justify-items: center;
   gap: 0;
-  padding: 10px var(--s4);
+  padding: var(--s2) var(--s4);
   border-radius: var(--r-m);
   color: var(--text);
   text-align: center;
   transition: background-color var(--d-fast) var(--ease);
 }
 
-.now-centre:hover {
-  background: var(--surface);
+@media (hover: hover) {
+  .now-centre:hover {
+    background: var(--surface);
+  }
 }
 
 .now-centre[aria-pressed='true'] {
@@ -326,12 +342,12 @@
 }
 
 .now-centre-num {
-  font-size: 52px;
+  font-size: var(--fs-7);
   line-height: 1;
 }
 
 .now-centre-num.is-domain {
-  font-size: 44px;
+  font-size: var(--fs-7);
 }
 
 /* Too few points for a radar: a calm list instead. */
@@ -426,7 +442,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--s2);
-  margin-top: 6px;
+  margin-top: var(--s1);
   padding: 0;
   list-style: none;
 }
@@ -436,16 +452,18 @@
 }
 
 .now-src {
-  gap: 6px;
-  padding: 3px 11px;
+  gap: var(--s1);
+  padding: var(--s1) var(--s3);
   transition:
     color var(--d-fast) var(--ease),
     background-color var(--d-fast) var(--ease),
     opacity var(--d-fast) var(--ease);
 }
 
-.now-src:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .now-src:hover {
+    color: var(--text);
+  }
 }
 
 .now-src[aria-pressed='true'] {
@@ -462,8 +480,10 @@
   background: var(--accent-soft);
 }
 
-.now-src.is-rel:hover {
-  color: var(--accent-strong);
+@media (hover: hover) {
+  .now-src.is-rel:hover {
+    color: var(--accent-strong);
+  }
 }
 
 /* Unrelated to the current selection: the chip recedes by losing its fill, not by fading — it is
@@ -528,11 +548,11 @@
   }
 
   .now-centre-num {
-    font-size: 44px;
+    font-size: var(--fs-7);
   }
 
   .now-centre-num.is-domain {
-    font-size: 36px;
+    font-size: var(--fs-7);
   }
 
   .now-sources {
@@ -552,7 +572,7 @@
    and in the button's name), so it covers fewer of the low-score vertices. */
 @media (max-width: 480px) {
   .now-centre {
-    padding: 6px 10px;
+    padding: var(--s1) var(--s2);
   }
 
   .now-centre .kicker {
@@ -560,11 +580,11 @@
   }
 
   .now-centre-num {
-    font-size: 36px;
+    font-size: var(--fs-7);
   }
 
   .now-centre-num.is-domain {
-    font-size: 32px;
+    font-size: var(--fs-7);
   }
 }
 

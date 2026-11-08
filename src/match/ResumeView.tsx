@@ -24,9 +24,9 @@ function BulletText({ bullet }: { bullet: Bullet }) {
     <>
       {parts.map((p, i) =>
         p.ph ? (
-          <em key={i} className="mt-ph">
+          <span key={i} className="mt-ph">
             {p.text}
-          </em>
+          </span>
         ) : (
           <span key={i}>{p.text}</span>
         ),

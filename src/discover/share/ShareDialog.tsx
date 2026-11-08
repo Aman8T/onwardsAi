@@ -84,7 +84,7 @@ function ShareBody({ profileId, runId, job, onClose, loadReferral, titleId }: Sh
     <div className="dm-share">
       <div className="dm-share-head">
         <div>
-          <h2 className="serif dm-share-title" id={titleId}>
+          <h2 className="title dm-share-title" id={titleId}>
             Share this role
           </h2>
           <p className="dm-muted dm-small">

@@ -53,8 +53,10 @@
     background-color var(--d-fast) var(--ease);
 }
 
-.mt-navbtn:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .mt-navbtn:hover {
+    color: var(--text);
+  }
 }
 
 .mt-navbtn.is-current {
@@ -114,7 +116,7 @@
 }
 
 .mt-title {
-  font-size: clamp(34px, 2vw + 20px, 44px);
+  font-size: var(--fs-7);
   font-weight: 400;
   text-wrap: balance;
   overflow-wrap: anywhere;
@@ -155,8 +157,10 @@
   color: var(--text-muted);
 }
 
-.mt-plain:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .mt-plain:hover {
+    color: var(--text);
+  }
 }
 
 .mt-hint {
@@ -229,21 +233,13 @@
 .mt-btn {
   justify-content: center;
   min-height: 44px;
-  padding-inline: 18px;
+  padding-inline: var(--s4);
   font-weight: 500;
   text-decoration: none;
 }
 
 .mt-btn-sm {
   min-height: 36px;
-}
-
-/* A primary action that is not available yet: the fill drops out (faint ink on the dark fill would not read). */
-.mt-view .btn-primary[disabled],
-.mt-view .btn-primary[aria-disabled='true'] {
-  background: var(--surface-2);
-  border-color: var(--line);
-  color: var(--text-faint);
 }
 
 .mt-view .btn[aria-disabled='true'] {
@@ -272,7 +268,7 @@
 .look-quiet .mt-panel,
 :root[data-look='quiet'] .mt-trio .mt-panel,
 .look-quiet .mt-trio .mt-panel {
-  padding: 28px;
+  padding: var(--s5);
 }
 
 .mt-panel-head {
@@ -307,7 +303,7 @@
   align-items: center;
   width: fit-content;
   min-height: 26px;
-  padding: 2px 10px;
+  padding: 2px var(--s2);
   border: var(--hair) solid transparent;
   border-radius: 999px;
   font-size: var(--fs-1);
@@ -411,9 +407,11 @@
     background-color var(--d-fast) var(--ease);
 }
 
-.mt-chip-btn:hover {
-  background: var(--accent-soft);
-  color: var(--text);
+@media (hover: hover) {
+  .mt-chip-btn:hover {
+    background: var(--accent-soft);
+    color: var(--text);
+  }
 }
 
 /* ───────────── citations ───────────── */
@@ -478,7 +476,7 @@
 
 .field.mt-box {
   min-height: 44px;
-  padding: 10px 12px;
+  padding: var(--s2) var(--s3);
   background: var(--surface);
   border: var(--hair) solid var(--line-strong);
   border-radius: var(--r-m);
@@ -572,10 +570,12 @@
   border-top: 0;
 }
 
-.mt-recent-link:hover span:first-child {
-  text-decoration: underline;
-  text-decoration-color: var(--line-strong);
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  .mt-recent-link:hover span:first-child {
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 3px;
+  }
 }
 
 .mt-paywall {
@@ -652,7 +652,7 @@
 }
 
 .mt-band-word {
-  font-size: clamp(30px, 2vw + 14px, 36px);
+  font-size: var(--fs-7);
 }
 
 .mt-band-wait {
@@ -704,7 +704,7 @@
 .mt-legend span {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 /* The legend's swatches are the two shapes in small: "you" darker and solid, the role lighter and dashed. */
@@ -832,7 +832,7 @@
   grid-template-columns: minmax(0, 2.2fr) minmax(0, 2fr) 168px minmax(0, 2.6fr);
   gap: var(--s4);
   align-items: start;
-  padding: 14px 0;
+  padding: var(--s3) 0;
   border-top: var(--hair) solid var(--line);
 }
 
@@ -842,7 +842,7 @@
 }
 
 .mt-tr-head {
-  padding: 0 0 10px;
+  padding: 0 0 var(--s2);
   border-top: 0;
 }
 
@@ -978,7 +978,7 @@
 }
 
 .mt-doc li {
-  margin-bottom: 3px;
+  margin-bottom: var(--s1);
 }
 
 .mt-doc-name {
@@ -994,7 +994,7 @@
 
 .mt-doc-h {
   margin: var(--s4) 0 var(--s1);
-  padding-bottom: 3px;
+  padding-bottom: var(--s1);
   border-bottom: var(--hair) solid var(--line);
   font-size: var(--fs-1);
   font-weight: 600;
@@ -1018,8 +1018,8 @@
 }
 
 .mt-flag {
-  margin-inline: -4px;
-  padding-inline: 4px;
+  margin-inline: calc(-1 * var(--s1));
+  padding-inline: var(--s1);
   border-radius: var(--r-s);
   background: var(--accent-soft);
 }
@@ -1032,7 +1032,7 @@
 }
 
 .mt-sups {
-  margin-left: 3px;
+  margin-left: var(--s1);
   font-size: var(--fs-0);
   line-height: 0;
 }
@@ -1053,8 +1053,10 @@ button.mt-sup {
   text-underline-offset: 2px;
 }
 
-button.mt-sup:hover {
-  text-decoration-color: currentColor;
+@media (hover: hover) {
+  button.mt-sup:hover {
+    text-decoration-color: currentColor;
+  }
 }
 
 /* A superscript sits in a zero-height line and is too small to tap: its hit area grows around the glyphs without
@@ -1062,12 +1064,12 @@ button.mt-sup:hover {
 button.mt-sup::after {
   content: '';
   position: absolute;
-  inset: -9px -4px;
+  inset: calc(-1 * var(--s2)) calc(-1 * var(--s1));
 }
 
 @media (pointer: coarse) {
   button.mt-sup::after {
-    inset: -16px -8px;
+    inset: calc(-1 * var(--s4)) calc(-1 * var(--s2));
   }
 }
 
@@ -1109,7 +1111,7 @@ button.mt-sup::after {
 .field.mt-fill-input {
   width: 120px;
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0 var(--s2);
   background: var(--surface);
   border: var(--hair) solid var(--line-strong);
   border-radius: var(--r-m);
@@ -1145,7 +1147,7 @@ button.mt-sup::after {
   grid-template-columns: 20px minmax(0, 1fr);
   gap: var(--s2);
   align-items: start;
-  padding: 6px 0;
+  padding: var(--s1) 0;
   font-size: var(--fs-2);
 }
 
@@ -1401,7 +1403,9 @@ button.mt-sup::after {
 }
 
 @media (pointer: coarse) {
-  .mt-btn-sm {
+  .mt-btn-sm,
+  .mt-navbtn,
+  .mt-chip-btn {
     min-height: 44px;
   }
 }

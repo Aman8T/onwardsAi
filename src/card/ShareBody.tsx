@@ -58,7 +58,7 @@ export function ShareBody({ profileId, client, narrow, titleId, onClose, onAnaly
       <header className="cs-head">
         <div className="cs-head-text">
           <p className="kicker">Share proof</p>
-          <h2 id={titleId} className="serif cs-title">
+          <h2 id={titleId} className="title cs-title">
             {narrow ? 'Share your skill shape' : 'Your skill shape, as a card'}
           </h2>
         </div>

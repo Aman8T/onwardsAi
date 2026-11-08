@@ -67,7 +67,7 @@ export const IconUp = (p: P) => (
   </Svg>
 );
 export const IconCheck = (p: P) => (
-  <Svg {...p} strokeWidth="2">
+  <Svg {...p}>
     <path d="M3.5 8.5l3 3 6-7" />
   </Svg>
 );

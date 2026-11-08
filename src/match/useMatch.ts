@@ -186,7 +186,7 @@ export function useMatch(): MatchState {
 
 /* ───────────────────────── errors ───────────────────────── */
 
-const messageOf = (err: unknown) => (err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+const messageOf = (err: unknown) => (err instanceof Error ? err.message : 'No answer came back from the server. Try again in a minute.');
 const statusOf = (err: unknown) => (err instanceof MatchApiError ? err.status : 0);
 
 const SIGN_IN_NOTICE = 'Sign in to match a posting. One posting a month is free.';

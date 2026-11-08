@@ -25,7 +25,7 @@ These are enforced by `scripts/restraint-check.ts`, not just agreed.
 | Nothing loops | `infinite` animations are allowed only on an explicit allow-list (a typing indicator, a live dot). |
 | Hue properties are never transitioned | A `transition` naming `--h`, `--h2`, `--h3`, `--k`, `--kw`, `--kb` or `all` is an error: it would animate the field on every step. |
 | Depth from tone | Surfaces step 2–4 OKLCH lightness points; dividers are 1 px at ~8 % ink alpha; popovers are opaque surfaces with a hairline. |
-| One serif line per screen | A display serif for a single headline; everything else is the sans. |
+| One serif line per screen | A display serif for a single headline (the h1, or the one italic line); every other heading is the sans `.title`. The brand wordmark is the logo, not a line, and does not count. |
 | Zero idle frames | Between background steps the page draws nothing: no `requestAnimationFrame` loops, no CSS animations running at rest. |
 | Exceptions are written down | The two deliberate exceptions (§8, §9) are bounded, documented, and still pass every check above. |
 
@@ -168,7 +168,11 @@ Line heights: tight 1.08 (display), snug 1.3, body 1.55. Measure 62ch.
 
 **Motion.** Durations 150 / 250 / 400 / 500 ms; one easing `cubic-bezier(0.2, 0.8, 0.2, 1)`; no bounce. Entrances are opacity plus an 8 px rise. Whole-screen crossfades 350 ms. One-time data reveals up to 900 ms. Reduced motion collapses every animation and transition to a single frame (a global `0.001ms !important` rule), and components skip their initial animation (`initial={reduced ? false : …}`).
 
-**Primitives** (`src/styles/global.css`): `.btn`, `.btn-primary`, `.btn-quiet`, `.btn-sm`, `.field`, `.chip`, `.panel`, `.hairline`, `.kicker`, `.serif`, `.numeral`, `.sr-only`, `.wrap`, `.scroll`. Real `<button>`, `<a href>`, `<input>` + `<label>` everywhere; `aria-label` on icon-only buttons; touch targets ≥ 44 px.
+**Primitives** (`src/styles/global.css`): `.btn`, `.btn-primary`, `.btn-quiet`, `.btn-sm`, `.field`, `.chip`, `.panel`, `.hairline`, `.kicker`, `.serif`, `.title`, `.numeral`, `.sr-only`, `.skip`, `.wrap`, `.scroll`. Real `<button>`, `<a href>`, `<input>` + `<label>` everywhere; `aria-label` on icon-only buttons; touch targets ≥ 44 px (36 px controls grow to 44 under `(pointer: coarse)`).
+
+**States** (audit pass, 2026-11-08). A button presses: `.btn:active` moves 1 px down over `--d-fast`. Hover rules sit inside `@media (hover: hover)` so they never stick on touch. The primary button has one disabled look (`--surface-2` fill, `--text-faint` ink), not one per screen. Every lazy screen shows a frame-shaped static skeleton while its chunk loads, never a blank. Every screen offers a `.skip` link to its main region. Errors name what failed and the next step, in the active voice, without exclamation marks.
+
+**Token discipline.** Every `font-size`, spacing, radius and duration is a token. The only literal pixel values are 1–2 px optical nudges, element dimensions (widths, heights, chart sizes), and two phone floors inside `(max-width: 760px)`: 12 px for kickers, 13.5 px for text people read or act on. `.btn` padding is 8 / 12 px, `.btn-sm` 4 / 8 px.
 
 ## 6. Data display: radar charts
 
@@ -212,14 +216,20 @@ When pages must look different for every person *and* must never break, variety 
 
 `html[data-look='quiet']` (tokens.css block c1b) is the look the app and the static site ship with; the colour scheme follows the device unless the person picks one (no `data-scheme` means System). Panels are lighter than the field in both schemes: that one rule is the look.
 
-| | Light | Dark |
+| | Light | Dark (since 2026-11-07) |
 |---|---|---|
-| Field | L .935, C .018, lobes a quarter strength | L .17, C .012, no lobes (still) |
-| Panel | the field's own colour | L .215, one step lighter than the field |
-| Well | | L .145 |
-| Line | L .90, C .012 | L .33, C .015 |
-| Accent | L .50, C .082 | L .80, C .097 |
+| Field | L .935, C .018, lobes a quarter strength | L .145, C .022 (the sRGB ceiling at that lightness), three lobes at .175–.185 / C .026–.028 |
+| Panel | the field's own colour | L .205, C .024: a step of .06 above the field |
+| Chip, hover | L .955 | L .25, C .028 |
+| Well | L .96 | L .11 |
+| Ink | L .22 / muted .42 / faint .52 | L .96 / muted .80 / faint .67 |
+| Line, strong line | L .90, C .012 / L .84 | L .31, C .026 / L .48, C .03 |
+| Accent (links) | L .46, C .076 | L .78, C .10 |
+| Accent-ui (marks, bars, radar) | L .50, C .082 | L .72, C .108 |
+| Primary fill | L .38, C .063 | L .90, C .045, panel-coloured text |
 | Cursor dye | L .80, C .11 at .75 | L .62, C .10 at .30 |
+
+**Why the dark table moved (2026-11-07, canvas "Leafout Dark Mode Explorations", direction D).** The first quiet dark (field L .17 / C .012, panel .215, lines .33 / .40, ink .93, accents .84 / .80) read faint and dull for five measurable reasons: the field had no dye (C .012 is a grey); every non-text tone sat between L .145 and .25, so the field-to-panel step was .045; hairlines were grey on grey; the accents were pastel by force, because at L .84 the sRGB gamut caps chroma near .08 at the blue end; and the ink stopped at .93. Three levers fix it inside the rules. Range: the field drops to .145 and the panel step opens to .06. Dye: the field takes the chroma the gamut allows at its lightness, and three lobes return at about a quarter of the earlier dark's strength, so the slow hue is visible again. Ink: text goes to .96 (still off-white, so no halation), and the accents come down to L .78 / .72 where C .10 / .108 fits, a real blue instead of a pastel. Every text role stays ≥ 8:1 on every surface and lobe; `palette-check` sweeps all 360 hues as before.
 
 In dark, the spotlight (`src/light/Spot.tsx`) is white at 10 % under the wake. Escape hatch: `localStorage tayyari.look = 'today'` or `?look=today` brings back the earlier look; `?look=quiet` pins quiet. `boot.js` writes the attribute before first paint; `setLook` / `useLook` in `theme/ambient.ts` change it at runtime. Compare the two, scheme by scheme and screen by screen, at `/dev/design`.
 
@@ -239,9 +249,9 @@ Every screen (2026-10-20; canvas https://claude.ai/artifact/U8LW9zvPXdYNAT5T769W
 
 **Boundaries.** No ring, no bright core, no outline you can trace, no rhythm, no banding, no additive blending.
 
-## 9. Exception two: print conventions in the newspaper skin
+## 9. Exception two: print conventions in the newspaper skins
 
-Only in the Old Newspaper skin: a blackletter nameplate at 56 px or larger, and the thick-thin double rule (built as a fixed-height pseudo-element with a `var()` background so the border rule still holds). Everything else in that skin is hairline and shadowless.
+Two surfaces are newspapers and follow print rather than §2's type rules: the portfolio's Old Newspaper skin (`.pf-scope`, `press.css`) and the Leafout Weekly (`src/weekly`, `weekly.css`; the landing site's Weekly section is the same paper). Inside them, and only there: a blackletter nameplate at 56 px or larger, italic display lines, 700 and 900 weights, uppercase kickers with wide tracking, the fixed cream-and-ink press palette, and the thick-thin double rule (built as a fixed-height pseudo-element with a `var()` background so the border rule still holds). Everything else in those skins is hairline and shadowless, and nothing outside them borrows any of it.
 
 ## 10. Accessibility, as drawn
 

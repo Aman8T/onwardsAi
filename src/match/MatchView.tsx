@@ -122,7 +122,7 @@ export function MatchView(props: MatchViewProps) {
           <span className="kicker">Match</span>
           {result ? (
             <>
-              <h2 id="mt-band-h" className="serif mt-band-word" data-band={result.band}>
+              <h2 id="mt-band-h" className="title mt-band-word" data-band={result.band}>
                 {BAND_LABEL[result.band]}
               </h2>
               {posting && <p className="mt-muted">{bandNote(result, posting)}</p>}

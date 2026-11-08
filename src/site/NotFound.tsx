@@ -9,6 +9,9 @@ export function NotFound() {
         <p className="lede">The address may have a typo, or the page may have moved. These are the pages of the site.</p>
       </header>
       <div className="prose">
+        <p>
+          <a href="/">Back to Home</a>
+        </p>
         <ul>
           {SITE_PAGES.map((p) => (
             <li key={p.path}>

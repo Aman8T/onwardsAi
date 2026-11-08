@@ -1,9 +1,12 @@
 import { motion, useIsPresent } from 'motion/react';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import type { KeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
 import { EASE, cssVars } from '../lib/ui';
 import { ValueLine } from './ValueLine';
 import '../styles/kit.css';
+
+/** What Tab can land on inside the sheet (the same list src/auth/Sheet.tsx uses). */
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /** One "tag + sentence" line, e.g. { tag: 'Strength', text: '…' }. */
 export interface PopoverBullet {
@@ -94,10 +97,39 @@ export function Popover({
     return () => observer.disconnect();
   }, [model.key, place, sheet]);
 
+  // Sheet: a modal, so whatever opened it gets focus back when it goes. Declared before the autofocus
+  // effect so the opener is read before focus moves into the sheet.
+  useEffect(() => {
+    if (!sheet) return;
+    const active = document.activeElement;
+    const opener = active instanceof HTMLElement && active !== document.body ? active : null;
+    return () => opener?.focus({ preventScroll: true });
+  }, [sheet]);
+
   useEffect(() => {
     if (!autoFocus) return;
     (autoFocus === 'cta' ? ctaRef : dialogRef).current?.focus({ preventScroll: true });
   }, [model.key, autoFocus]);
+
+  // Sheet: Tab and Shift+Tab stay inside (the pattern from src/auth/Sheet.tsx). Escape stays with the parent.
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (!sheet || e.key !== 'Tab' || !dialogRef.current) return;
+    const items = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+    if (items.length === 0) {
+      e.preventDefault();
+      return;
+    }
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === dialogRef.current)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
 
   const { score, bullets, skills, foot, practised } = model;
   const classes = ['pop', sheet && 'pop-sheet', className].filter(Boolean).join(' ');
@@ -114,16 +146,18 @@ export function Popover({
         ref={dialogRef}
         className={classes}
         role="dialog"
+        aria-modal={sheet ? 'true' : undefined}
         aria-labelledby={titleId}
         tabIndex={-1}
         style={style}
+        onKeyDown={onKeyDown}
         initial={hidden}
         animate={shown}
         exit={leaving}
         transition={{ duration: 0.25, ease: EASE }}
       >
         <button type="button" className="pop-close" aria-label="Close" onClick={onClose}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
             <path d="M2 2l8 8M10 2l-8 8" />
           </svg>
         </button>

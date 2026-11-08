@@ -246,11 +246,11 @@
 .cs-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
   width: 480px;
   max-width: 100%;
   height: 330px;
-  padding: 18px;
+  padding: var(--s4);
   overflow: hidden;
   border: var(--hair) solid var(--line);
   border-radius: var(--r-m);
@@ -261,7 +261,7 @@
 .cs-card[data-size='sm'] {
   width: 340px;
   height: 190px;
-  padding: 14px;
+  padding: var(--s3);
 }
 
 .cs-card-top {
@@ -283,12 +283,12 @@
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  gap: 16px;
+  gap: var(--s4);
   min-height: 0;
 }
 
 .cs-card[data-size='sm'] .cs-card-body {
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .cs-card-chart {
@@ -313,7 +313,7 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s1);
   min-width: 0;
   font-size: var(--fs-1);
   line-height: 1.25;
@@ -333,8 +333,8 @@
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 4px 10px;
-  padding-bottom: 3px;
+  gap: var(--s1) var(--s2);
+  padding-bottom: var(--s1);
   border-bottom: var(--hair) solid var(--grid);
 }
 
@@ -367,7 +367,7 @@
 .cs-card-key {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
+  gap: var(--s1) var(--s3);
   padding-top: 2px;
   font-size: var(--fs-0);
   color: var(--text-muted);
@@ -376,7 +376,7 @@
 .cs-card-key span {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--s1);
 }
 
 .cs-card-key i {
@@ -397,11 +397,11 @@
 .cs-card-skills {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .cs-card-skill {
-  padding: 3px 8px;
+  padding: var(--s1) var(--s2);
   border: var(--hair) solid var(--line);
   border-radius: 999px;
   font-size: var(--fs-0);
@@ -435,16 +435,21 @@
 .cs-tab {
   position: relative;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 var(--s3);
   font-size: var(--fs-2);
   font-weight: 500;
   color: var(--text-muted);
   transition: color var(--d-fast) var(--ease);
 }
 
-.cs-tab:hover,
 .cs-tab[aria-selected='true'] {
   color: var(--text);
+}
+
+@media (hover: hover) {
+  .cs-tab:hover {
+    color: var(--text);
+  }
 }
 
 .cs-tab[aria-selected='true']::after {
@@ -468,7 +473,7 @@
 .cs-code {
   max-height: 180px;
   margin: 0;
-  padding: 12px 14px;
+  padding: var(--s3) var(--s3);
   overflow: auto;
   border-radius: var(--r-m);
   background: var(--well);
@@ -483,7 +488,7 @@
 .cs-input {
   width: 100%;
   min-height: 44px;
-  padding: 10px 12px;
+  padding: var(--s2) var(--s3);
   border: var(--hair) solid var(--line);
   border-radius: var(--r-m);
   background: var(--surface);
@@ -560,7 +565,7 @@
 .cs-select {
   width: 100%;
   min-height: 44px;
-  padding: 8px 12px;
+  padding: var(--s2) var(--s3);
   border: var(--hair) solid var(--line);
   border-radius: var(--r-m);
   background: var(--surface);
@@ -723,13 +728,21 @@
   color: var(--text-muted);
 }
 
-.cs-dev-navbtn:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .cs-dev-navbtn:hover {
+    color: var(--text);
+  }
 }
 
 .cs-dev-navbtn.is-current {
   background: var(--accent-soft);
   color: var(--text);
+}
+
+@media (pointer: coarse) {
+  .cs-dev-navbtn {
+    min-height: 44px;
+  }
 }
 
 .cs-dev-note {

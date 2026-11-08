@@ -212,11 +212,11 @@ export function NextGraph({ profile }: { profile: Profile }) {
     // a gap opens a Prepare thread for just that requirement; a strength stays a chat question
     const prepare = popReq.have ? undefined : { roleId: sel.id, requirement: popReq.name };
     const body = popReq.have
-      ? `You are at ${popReq.current}. This already counts toward ${sel.title} — make it visible in your ${hasGithub ? 'pinned repos' : 'projects'} and resume.`
+      ? `You are at ${popReq.current}. This already counts toward ${sel.title}. Make it visible in your ${hasGithub ? 'pinned repos' : 'projects'} and resume.`
       : `You are at ${popReq.current}; the role expects about ${popReq.target}. ` +
         (popReq === biggestGap
           ? 'Closing this moves your alignment more than any other single skill.'
-          : `A ${Math.max(0, popReq.target - popReq.current)}-point gap — one of ${gapCount} between you and this role.`);
+          : `A ${Math.max(0, popReq.target - popReq.current)}-point gap, one of ${gapCount} between you and this role.`);
     pop = {
       model: {
         key: `${sel.id}:${openKey}`,
@@ -245,7 +245,7 @@ export function NextGraph({ profile }: { profile: Profile }) {
           <p className="next-sub">
             {roles.length
               ? 'Alignment is how much of the role you already cover.'
-              : 'Add another source — a GitHub profile or a project link — and Leafout will map where you could go next.'}
+              : 'Add another source, a GitHub profile or a project link, and Leafout will map where you could go next.'}
           </p>
         </div>
 
@@ -292,7 +292,7 @@ export function NextGraph({ profile }: { profile: Profile }) {
             <header className="next-head">
               <div className="next-head-id">
                 <span className="kicker">{selRank === 0 ? 'Most probable next role' : 'Next role'}</span>
-                <h2 className="serif next-role-name">{sel.title}</h2>
+                <h2 className="title next-role-name">{sel.title}</h2>
                 <p className="next-align">
                   <span className="numeral">{sel.alignment}% aligned</span> <span className="next-muted">· {sel.eta}</span>
                 </p>
@@ -333,7 +333,7 @@ export function NextGraph({ profile }: { profile: Profile }) {
                 ))}
               </ul>
             ) : (
-              <p className="next-why">No specific requirements listed yet — ask and Leafout will break the role down for you.</p>
+              <p className="next-why">No specific requirements listed yet. Ask, and Leafout will break the role down for you.</p>
             )}
 
             {reqs.length > 0 && (

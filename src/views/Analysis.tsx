@@ -314,7 +314,7 @@ function SynthRing({ value, frac, label }: { value: number; frac: string; label:
   return (
     <div className="an-synth-ring">
       <Ring value={value} size={56} role="img" label={label} />
-      <span className="serif an-frac" aria-hidden="true">
+      <span className="numeral an-frac" aria-hidden="true">
         {frac}
       </span>
     </div>
@@ -401,7 +401,7 @@ function SynthCard({
             <div className="an-synth-mid">
               <div className="an-synth-head">
                 <span className="kicker an-synth-model">{SYNTH_MODEL} · synthesizer</span>
-                <h2 className="serif an-synth-title">
+                <h2 className="title an-synth-title">
                   <AnimatePresence mode="wait" initial={false}>
                     <motion.span
                       key={state}
@@ -482,7 +482,7 @@ function SynthError({ message, canSample, step }: { message: string; canSample: 
         <SynthRing value={(step / 3) * 100} frac={`${step}/3`} label="Sonnet synthesizer, stopped" />
         <div className="an-synth-head">
           <span className="kicker an-synth-model">{SYNTH_MODEL} · synthesizer</span>
-          <h2 className="serif an-synth-title">Analysis stopped</h2>
+          <h2 className="title an-synth-title">Analysis stopped</h2>
         </div>
       </div>
       <p className="an-err-msg" role="alert">
@@ -505,7 +505,7 @@ function SynthError({ message, canSample, step }: { message: string; canSample: 
         </button>
         {canSample && (
           <button type="button" className="btn" onClick={openSample} disabled={busy} aria-busy={busy}>
-            {busy ? 'Opening sample' : 'Open the pre-computed sample'}
+            {busy ? 'Opening sample' : 'Open the sample graph'}
           </button>
         )}
       </div>

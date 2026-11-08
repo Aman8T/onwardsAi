@@ -451,7 +451,7 @@ export function NowGraph({ profile }: { profile: Profile }) {
       aria-label={`${drilled.name}, domain score ${drilled.score}`}
       onClick={(e) => selectFrom({ kind: 'domain', id: drilled.id }, e)}
     >
-      <span className="serif now-centre-num is-domain" aria-hidden="true">
+      <span className="numeral now-centre-num is-domain" aria-hidden="true">
         {drilled.score}
       </span>
       <span className="kicker">{drilled.short || drilled.name}</span>
@@ -464,7 +464,7 @@ export function NowGraph({ profile }: { profile: Profile }) {
       aria-label={`You, ${role}, role mastery ${profile.mastery.score}`}
       onClick={(e) => selectFrom({ kind: 'you', id: 'you' }, e)}
     >
-      <span className="serif now-centre-num" aria-hidden="true">
+      <span className="numeral now-centre-num" aria-hidden="true">
         {mastery}
       </span>
       <span className="kicker">role mastery</span>
@@ -577,7 +577,7 @@ export function NowGraph({ profile }: { profile: Profile }) {
             </nav>
             <div className="now-dom-head">
               <div className="now-dom-id">
-                <h2 className="serif now-title">{drilled.name}</h2>
+                <h2 className="title now-title">{drilled.name}</h2>
                 <div className="now-dom-score">
                   <span className="numeral">{drilled.score}</span>
                   <span className="now-of">/ 100</span>
@@ -595,7 +595,7 @@ export function NowGraph({ profile }: { profile: Profile }) {
         ) : (
           <motion.header key="all" className="now-head" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25, ease: EASE }}>
             <span className="kicker">Skill radar · today</span>
-            <h2 className="serif now-title">
+            <h2 className="title now-title">
               Where you stand as {article(role)} {role}
             </h2>
           </motion.header>
