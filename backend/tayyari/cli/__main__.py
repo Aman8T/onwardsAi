@@ -153,10 +153,15 @@ def build_parser() -> argparse.ArgumentParser:
     deploy = commands.add_parser(
         "deploy",
         help="build the web app and deploy backend/ to FastAPI Cloud",
-        description="Run `npm run build:static` at the repo root, then `uvx --from fastapi[standard] fastapi "
-        "deploy --json .` in backend/ (with UTF-8 forced for the child on any shell).",
+        description="Run `npm run build:static` at the repo root, then `uvx --python <backend/.python-version> --from "
+        "fastapi[standard] fastapi deploy [--app-id ...] --json .` in backend/ (with UTF-8 forced for the child on any shell).",
     )
     deploy.add_argument("--skip-build", action="store_true", help="do not run `npm run build:static` first")
+    deploy.add_argument(
+        "--app-id",
+        default=None,
+        help="the FastAPI Cloud app to deploy to (default: $FASTAPI_CLOUD_APP_ID, else the app backend/ is linked to)",
+    )
 
     _add_discover_commands(commands)
     _add_weekly_commands(commands)
@@ -460,7 +465,7 @@ def _weekly(args: argparse.Namespace) -> int:
 def _deploy(args: argparse.Namespace) -> int:
     from . import deploy
 
-    return deploy.run(skip_build=args.skip_build)
+    return deploy.run(skip_build=args.skip_build, app_id=args.app_id)
 
 
 def _export(args: argparse.Namespace) -> int:

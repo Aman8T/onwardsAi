@@ -63,7 +63,17 @@ def test_builds_then_deploys(layout: Path, monkeypatch: pytest.MonkeyPatch, run_
     build, ship = run_calls.calls
     assert build["command"] == [NPM, "run", "build:static"]
     assert build["cwd"] == layout.parent  # the repo root, where package.json is
-    assert ship["command"] == [UVX, "--from", "fastapi[standard]", "fastapi", "deploy", "--json", "."]
+    assert ship["command"] == [
+        UVX,
+        "--python",
+        deploy.PYTHON_VERSION,
+        "--from",
+        "fastapi[standard]",
+        "fastapi",
+        "deploy",
+        "--json",
+        ".",
+    ]
     assert ship["cwd"] == layout  # backend/, the deploy root
 
 
@@ -111,6 +121,8 @@ def test_uv_tool_run_stands_in_for_a_missing_uvx(
         UV,
         "tool",
         "run",
+        "--python",
+        deploy.PYTHON_VERSION,
         "--from",
         "fastapi[standard]",
         "fastapi",
@@ -204,3 +216,30 @@ def test_the_real_paths_point_at_this_repo() -> None:
     assert (deploy.BACKEND_DIR / "main.py").is_file()
     assert (deploy.REPO_ROOT / "package.json").is_file()
     assert deploy.BACKEND_DIR.parent == deploy.REPO_ROOT
+
+
+def test_app_id_is_passed_through(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """An explicit app id, or $FASTAPI_CLOUD_APP_ID, becomes `--app-id` before `--json`; without either, nothing is added."""
+    assert deploy.deploy_command([UVX], "599a") == [
+        UVX,
+        "--python",
+        deploy.PYTHON_VERSION,
+        "--from",
+        "fastapi[standard]",
+        "fastapi",
+        "deploy",
+        "--app-id",
+        "599a",
+        "--json",
+        ".",
+    ]
+    assert "--app-id" not in deploy.deploy_command([UVX])
+    monkeypatch.setenv(deploy.APP_ID_ENV, "from-env")
+    monkeypatch.setattr(deploy, "BACKEND_DIR", tmp_path)
+    (tmp_path / "static").mkdir()
+    (tmp_path / "static" / "index.html").write_text("<!doctype html>", encoding="utf-8")
+    monkeypatch.setattr(deploy.shutil, "which", lambda name: UVX if name == "uvx" else None)
+    calls = Subprocess()
+    monkeypatch.setattr(deploy.subprocess, "run", calls)
+    assert deploy.run(skip_build=True) == 0
+    assert calls.calls[0]["command"][-4:] == ["--app-id", "from-env", "--json", "."]

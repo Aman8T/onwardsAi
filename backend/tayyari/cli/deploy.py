@@ -21,6 +21,10 @@ from tayyari.core.paths import BACKEND_DIR, REPO_ROOT
 
 BUILD_SCRIPT = "build:static"
 FASTAPI_SPEC = "fastapi[standard]"
+PYTHON_VERSION = (BACKEND_DIR / ".python-version").read_text(encoding="utf-8").strip() or "3.13"
+"""The interpreter the deploy CLI runs on: the backend's own (`.python-version`). Left to itself, ``uvx`` picks the newest
+CPython on the machine, and on 2026-11-09 that was 3.15, for which pyyaml (a fastapi[standard] dependency) ships no wheel,
+so the deploy died compiling it without a C toolchain."""
 EXIT_NOT_FOUND = 127
 """The shell's exit code for a command that does not exist."""
 
@@ -34,9 +38,27 @@ def build_command(npm: str) -> list[str]:
     return [npm, "run", BUILD_SCRIPT]
 
 
-def deploy_command(launcher: list[str]) -> list[str]:
-    """``<launcher> --from fastapi[standard] fastapi deploy --json .``; the launcher is ``uvx`` or ``uv tool run``."""
-    return [*launcher, "--from", FASTAPI_SPEC, "fastapi", "deploy", "--json", "."]
+APP_ID_ENV = "FASTAPI_CLOUD_APP_ID"
+"""Environment variable holding the FastAPI Cloud app id when backend/ is not linked to an app on this machine."""
+
+
+def deploy_command(launcher: list[str], app_id: str | None = None) -> list[str]:
+    """``<launcher> --python <backend's version> --from fastapi[standard] fastapi deploy [--app-id <id>] --json .``; the
+    launcher is ``uvx`` or ``uv tool run``. Without an app id, ``fastapi deploy`` needs backend/ to have been linked once
+    with ``fastapi cloud apps create --link`` (or ``fastapi cloud apps link``) on this machine."""
+    target = ["--app-id", app_id] if app_id else []
+    return [
+        *launcher,
+        "--python",
+        PYTHON_VERSION,
+        "--from",
+        FASTAPI_SPEC,
+        "fastapi",
+        "deploy",
+        *target,
+        "--json",
+        ".",
+    ]
 
 
 def deploy_env() -> dict[str, str]:
@@ -65,9 +87,11 @@ def _call(command: list[str], *, cwd: Path, env: dict[str, str] | None = None) -
         return EXIT_NOT_FOUND
 
 
-def run(skip_build: bool = False) -> int:
-    """Build (unless ``skip_build``) and deploy. Returns the exit code of the first step that fails, else 0."""
+def run(skip_build: bool = False, app_id: str | None = None) -> int:
+    """Build (unless ``skip_build``) and deploy to ``app_id`` (else ``$FASTAPI_CLOUD_APP_ID``, else the linked app).
+    Returns the exit code of the first step that fails, else 0."""
     index = BACKEND_DIR / "static" / "index.html"
+    app_id = app_id or os.environ.get(APP_ID_ENV) or None
 
     # Resolve every tool first: a missing uvx should not be discovered after a two-minute build.
     npm: str | None = None
@@ -94,7 +118,7 @@ def run(skip_build: bool = False) -> int:
     elif not index.is_file():
         _say(f"Warning: {index} does not exist, so the deployed app will have no web UI. Build it first.")
 
-    code = _call(deploy_command(launcher), cwd=BACKEND_DIR, env=deploy_env())
+    code = _call(deploy_command(launcher, app_id), cwd=BACKEND_DIR, env=deploy_env())
     if code != 0:
         _say(f"fastapi deploy failed (exit code {code}).")
     return code
