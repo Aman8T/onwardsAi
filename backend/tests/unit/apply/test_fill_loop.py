@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from tayyari.apply.answers import FillContext, Plan, Resume
+from tayyari.apply.answers import BankEntry, FillContext, Plan, Resume
 from tayyari.apply.fill_loop import FieldListLoop, hidden_from_model, offered_details
 from tayyari.apply.forms import FormField
 from tayyari.apply.playbook import GREENHOUSE, Playbook
@@ -37,8 +37,8 @@ SETTINGS = ApplySettings(
 def ctx() -> FillContext:
     details = {"firstName": "Riya", "lastName": "Kapoor", "email": "riya@example.com", "location": "Pune, India",
                "phone": "+91 98765 43210", "noticePeriod": "30 days"}  # fmt: skip
-    return FillContext(details=details, resume=Resume("Riya-Kapoor.pdf", b"%PDF"), job_title="Data Analyst",
-                       company="Example Co", profile_id="p1")  # fmt: skip
+    return FillContext(bank={k: BankEntry(v) for k, v in details.items()}, resume=Resume("Riya-Kapoor.pdf", b"%PDF"),
+                       job_title="Data Analyst", company="Example Co", profile_id="p1")  # fmt: skip
 
 
 class Reserve:
@@ -113,7 +113,7 @@ async def test_at_most_four_haiku_rounds_then_one_sonnet_round() -> None:
     models = [c.model for c in claude.calls_for("apply.map")]
     assert models == [HAIKU] * 4 + [SONNET]
     assert driver.clicked_texts == ["Show more questions"] * 5
-    assert result.status == "needs_user"  # nothing filled "where": it stays a question for the person
+    assert result.status == "questions"  # nothing filled "where": it stays a question for the person
 
 
 async def test_a_submit_like_click_is_refused() -> None:

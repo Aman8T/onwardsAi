@@ -16,7 +16,6 @@ double-clicked start racing the first) raise `IntegrityError`. The answer bank r
 from __future__ import annotations
 
 from collections.abc import Collection, Mapping
-from dataclasses import replace
 from datetime import datetime
 from typing import Any, Final
 
@@ -27,6 +26,7 @@ from ..db import Database, dialect_insert, rowcount
 from ..ports import (
     APPLICATION_COLUMNS,
     FILLED_TERMINAL_STAGES,
+    NOT_ON_SITE_OUTCOME,
     StoredAnswer,
     StoredApplication,
     StoredApplicationEvent,
@@ -140,7 +140,6 @@ def _metric(row: Any) -> StoredRunMetric:
         mode=row.mode,
         playbook_id=row.playbook_id,
         playbook_status=row.playbook_status,
-        agent=row.agent,
         outcome=row.outcome,
         failure_reason=row.failure_reason,
         steps=int(row.steps or 0),
@@ -156,8 +155,6 @@ def _profile(row: Any) -> StoredApplyProfile:
     return StoredApplyProfile(
         owner_key=row.owner_key,
         user_id=row.user_id,
-        details=dict(row.details or {}),
-        answers=dict(row.answers or {}),
         resume_name=row.resume_name,
         resume_type=row.resume_type,
         resume_bytes=None if row.resume_bytes is None else bytes(row.resume_bytes),
@@ -193,14 +190,7 @@ def _free_lease(now: datetime) -> ColumnElement[bool]:
 
 def _runnable(now: datetime) -> ColumnElement[bool]:
     """Free lease, and queued (to fill) or approved (to submit). Never ``submitting``."""
-    to_run = ApplicationRow.stage.in_(RUNNABLE_STAGES)
-    # legacy: removed in Z (the old engine's approved-but-not-submitted rows)
-    legacy_submit = and_(
-        ApplicationRow.stage == "ready_to_submit",
-        ApplicationRow.approved_at.is_not(None),
-        ApplicationRow.submitted_at.is_(None),
-    )
-    return and_(_free_lease(now), or_(to_run, legacy_submit))
+    return and_(_free_lease(now), ApplicationRow.stage.in_(RUNNABLE_STAGES))
 
 
 def _without_typed(job: Any) -> dict[str, Any] | None:
@@ -404,15 +394,6 @@ class SqlApplyRepo:
         async with self._db.session() as s:
             await s.execute(stmt)
 
-    async def purge_screenshots(self, before: datetime) -> int:
-        stmt = (
-            update(ApplicationRow)
-            .where(ApplicationRow.updated_at < before, ApplicationRow.review_screenshot.is_not(None))
-            .values(review_screenshot=None)
-        )
-        async with self._db.session() as s:
-            return rowcount(await s.execute(stmt))
-
     async def get_confirmation(self, application_id: str, owner_key: str | None) -> bytes | None:
         stmt = select(ApplicationRow.confirmation_screenshot).where(ApplicationRow.id == application_id)
         if owner_key is not None:
@@ -585,7 +566,6 @@ class SqlApplyRepo:
                     mode=item.mode,
                     playbook_id=item.playbook_id,
                     playbook_status=item.playbook_status,
-                    agent=item.agent,
                     outcome=item.outcome,
                     failure_reason=item.failure_reason,
                     steps=item.steps,
@@ -609,12 +589,18 @@ class SqlApplyRepo:
         return [_metric(row) for row in rows]
 
     async def count_domain_runs_since(self, domain: str, since: datetime) -> int:
-        stmt = select(func.count()).where(RunMetricRow.domain == domain, RunMetricRow.created_at >= since)
+        stmt = select(func.count()).where(
+            RunMetricRow.domain == domain,
+            RunMetricRow.created_at >= since,
+            RunMetricRow.outcome != NOT_ON_SITE_OUTCOME,
+        )
         async with self._db.session() as s:
             return int((await s.execute(stmt)).scalar_one())
 
     async def last_domain_run_at(self, domain: str) -> datetime | None:
-        stmt = select(func.max(RunMetricRow.created_at)).where(RunMetricRow.domain == domain)
+        stmt = select(func.max(RunMetricRow.created_at)).where(
+            RunMetricRow.domain == domain, RunMetricRow.outcome != NOT_ON_SITE_OUTCOME
+        )
         async with self._db.session() as s:
             value = (await s.execute(stmt)).scalar_one_or_none()
         return None if value is None else as_utc(value)
@@ -628,7 +614,7 @@ class SqlApplyRepo:
             ).scalar_one_or_none()
         return None if row is None else _profile(row)
 
-    async def _ensure(self, owner_key: str, user_id: str | None, now: datetime) -> StoredApplyProfile:
+    async def _ensure(self, owner_key: str, user_id: str, now: datetime) -> StoredApplyProfile:
         found = await self.get_profile(owner_key)
         if found is not None:
             return found
@@ -637,8 +623,6 @@ class SqlApplyRepo:
             .values(
                 owner_key=owner_key,
                 user_id=user_id,
-                details={},
-                answers={},
                 resume_name=None,
                 resume_type=None,
                 resume_bytes=None,
@@ -658,7 +642,7 @@ class SqlApplyRepo:
         return made
 
     async def _set_profile(
-        self, owner_key: str, user_id: str | None, values: Mapping[str, Any], now: datetime
+        self, owner_key: str, user_id: str, values: Mapping[str, Any], now: datetime
     ) -> StoredApplyProfile:
         await self._ensure(owner_key, user_id, now)
         stmt = (
@@ -672,16 +656,11 @@ class SqlApplyRepo:
         assert found is not None  # noqa: S101
         return found
 
-    async def put_details(
-        self, owner_key: str, *, user_id: str | None, details: dict[str, Any], now: datetime
-    ) -> StoredApplyProfile:
-        return await self._set_profile(owner_key, user_id, {"details": dict(details)}, now)
-
     async def put_resume(
         self,
         owner_key: str,
         *,
-        user_id: str | None,
+        user_id: str,
         name: str | None,
         media_type: str | None,
         data: bytes | None,
@@ -705,20 +684,6 @@ class SqlApplyRepo:
 
     async def set_consent(self, user_id: str, *, now: datetime) -> StoredApplyProfile:
         return await self._set_profile(account_owner_key(user_id), user_id, {"consent_at": now}, now)
-
-    async def merge_answers(
-        self, owner_key: str, *, user_id: str | None, answers: Mapping[str, Any], now: datetime
-    ) -> StoredApplyProfile:
-        current = await self._ensure(owner_key, user_id, now)
-        merged = {**current.answers, **{key: value for key, value in answers.items()}}
-        stmt = (
-            update(ApplyProfileRow)
-            .where(ApplyProfileRow.owner_key == owner_key)
-            .values(answers=merged, updated_at=now)
-        )
-        async with self._db.session() as s:
-            await s.execute(stmt)
-        return replace(current, answers=merged, updated_at=now)
 
     # ── answer bank ──
 

@@ -23,7 +23,6 @@ from tayyari.apply.playbook import (
     FieldRule,
     Playbook,
     builtin_id,
-    canonical_key,
     generic_rule_for,
     op_for,
     rule_for,
@@ -60,9 +59,12 @@ def test_the_built_ins_load_and_survive_a_json_round_trip() -> None:
         ):
             re.compile(pattern)
     # A playbook stored before this change (no hosts, no ops) still loads, with empty lists.
-    old = Playbook.model_validate({"ats": "lever", "rules": [{"key": "salaryExpectation", "name": "salary"}]})
+    old = Playbook.model_validate({"ats": "lever", "rules": [{"key": "expectedCtc", "name": "salary"}]})
     assert old.submit_hosts == [] and old.read_only_posts == [] and old.open_texts == []
-    assert rule_for(field("Pay", name="salary"), old) == "expectedCtc"  # the old name reads as the new key
+    assert rule_for(field("Pay", name="salary"), old) == "expectedCtc"
+    # the old branch's key names are gone: a rule that uses one is refused
+    with pytest.raises(ValueError):
+        Playbook.model_validate({"ats": "lever", "rules": [{"key": "salaryExpectation", "name": "salary"}]})
 
 
 def test_greenhouse_page_fields_get_their_keys() -> None:
@@ -228,11 +230,9 @@ def test_a_never_stored_rule_beats_a_playbook_label_rule() -> None:
     assert rule_for(field("Anything at all", id="e1"), exact) == "email"  # an exact id rule wins
 
 
-def test_country_keys_are_scoped_and_aliases_are_canonical() -> None:
+def test_country_keys_are_scoped_and_the_old_names_are_gone() -> None:
     assert scoped_key("workAuthorization", "in") == "workAuthorization:IN"
-    assert (
-        canonical_key("willingToRelocate") == "relocation" and canonical_key("noticePeriod") == "noticePeriod"
-    )
+    assert not {"salaryExpectation", "willingToRelocate"} & set(PROFILE_KEYS)
 
 
 def test_widgets_get_their_operations() -> None:

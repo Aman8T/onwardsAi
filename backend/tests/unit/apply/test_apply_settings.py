@@ -16,8 +16,8 @@ def build(**kwargs: object) -> Settings:
 
 def test_settings_load_with_no_keys_present() -> None:
     s = build()
-    assert s.browser_use_api_key is None and s.gemini_api_key is None and s.auto_apply_enabled is False
-    assert s.summary()["browser_use_key"] is False
+    assert s.browser_use_api_key is None and s.auto_apply_enabled is False
+    assert s.summary()["browser_use_key"] is False and "gemini_key" not in s.summary()
 
 
 def test_the_browser_use_key_loads_as_a_secret_and_never_prints(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -47,8 +47,10 @@ def test_the_a1_defaults() -> None:
     billing = BillingSettings()
     assert billing.free_applications == 10 and billing.apply_credit_cost is None
     assert GuardSettings().est_apply_email_usd > 0
-    # the legacy agent settings stay until package Z removes them
-    assert apply.agent_order == ["gemini", "claude"] and apply.gemini_model
+    # the computer-use fallback is gone, and its settings with it
+    gone = {"agent_order", "agent_max_steps", "gemini_model", "gemini_endpoint", "claude_agent_model", "est_run_usd",
+            "draft_promote_after"}  # fmt: skip
+    assert not gone & set(ApplySettings.model_fields) and "gemini_api_key" not in Settings.model_fields
 
 
 def test_the_new_settings_read_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -78,4 +80,4 @@ def test_the_conftest_isolation_strips_the_auto_apply_switch_and_keys() -> None:
     assert set(names) <= set(conftest._ISOLATED_ENV)
     assert not any(name in os.environ for name in names)
     s = Settings()
-    assert s.auto_apply_enabled is False and s.browser_use_api_key is None and s.gemini_api_key is None
+    assert s.auto_apply_enabled is False and s.browser_use_api_key is None

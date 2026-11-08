@@ -124,7 +124,7 @@ const HOLLIS: AiJob = {
 /** The "Apply for me" state: one role offered, one being checked, one already sent, one on Workday. */
 function galleryApply(onNote: (s: string) => void): DiscoverApply {
   return {
-    status: { enabled: true, signedIn: true, anonymous: false, agents: [] },
+    status: { enabled: true, signedIn: true },
     signedIn: true,
     byListing: new Map([
       [PARTICLE.id, {

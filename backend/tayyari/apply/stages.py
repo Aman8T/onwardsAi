@@ -2,21 +2,20 @@
 
     engine   queued -> filling -> waiting_for_you | needs_signin | closed | failed | queued (an expired lease);
              approved -> submitting | waiting_for_you (the form changed) | failed (before the click);
-             submitting -> sent | check_this_one | failed. Nothing but the engine (and a system repair) leaves submitting.
+             submitting -> sent | check_this_one | failed. Nothing but the engine (and a system repair) leaves
+             submitting.
     user     cancel before submitting (queued, filling, waiting_for_you, approved, needs_signin, failed, closed ->
              cancelled); try again (failed, needs_signin, closed -> queued); answer the questions (waiting_for_you ->
              queued, the answered row and every other waiting row that asks the same question); approve
-             (waiting_for_you -> approved); settle a check_this_one (-> sent, -> failed, or -> waiting_for_you); "I applied there"
-             (needs_signin -> sent); track by hand from sent on (sent, viewed, interviewing, offer, rejected -> viewed, interviewing, offer, rejected)
-    email    check_this_one -> sent; forward only: sent -> viewed -> interviewing -> offer; sent, viewed, interviewing ->
-             rejected
+             (waiting_for_you -> approved); settle a check_this_one (-> sent, or -> failed); "I applied there"
+             (needs_signin -> sent); track by hand from sent on (sent, viewed, interviewing, offer, rejected -> viewed,
+             interviewing, offer, rejected)
+    email    check_this_one -> sent; forward only: sent -> viewed -> interviewing -> offer; sent, viewed,
+             interviewing -> rejected
     system   anything (data repair; reopening a cancelled, closed or failed row on a fresh start)
 
-The old branch's moves (``needs_user``, ``ready_to_submit``, ``applied``) are kept next to the new ones until package Z
-removes them; each is marked ``# legacy: removed in Z``.
-
-Approve (digest), resolve (check_this_one -> sent | failed | waiting_for_you) and "I applied there" have their own routes, so the
-generic stage route refuses those targets (`ROUTED_TARGETS`).
+Approve (digest), resolve (check_this_one -> sent | failed) and "I applied there" have their own routes, so the generic
+stage route refuses those targets (`ROUTED_TARGETS`).
 
 `move` writes the change and its history entry together; a stage that changed under it (``expected_stage``) is a no-op.
 """
@@ -32,24 +31,9 @@ from tayyari.storage.ports import ApplyRepo, StoredApplication, StoredApplicatio
 
 STAGES: Final[tuple[str, ...]] = get_args(ApplicationStage)
 
-LEGACY_STAGES: Final = frozenset(
-    {
-        "queued",
-        "filling",
-        "needs_user",
-        "ready_to_submit",
-        "applied",
-        "viewed",
-        "interviewing",
-        "offer",
-        "rejected",
-        "failed",
-    }
-)  # legacy: removed in Z (the old branch's whole vocabulary; the legacy rules below apply only inside it)
-
 SENT_AND_LATER: Final = frozenset({"sent", "viewed", "interviewing", "offer", "rejected"})
 """Stages the application reaches only after it went to the employer; tracking by hand starts here."""
-TRACKING: Final = SENT_AND_LATER | {"applied"}  # legacy: "applied" removed in Z
+TRACKING: Final = SENT_AND_LATER
 """Stages that track an application after it was sent (moving into one clears the approval)."""
 USER_CANCELLABLE: Final = frozenset(
     {"queued", "filling", "waiting_for_you", "approved", "needs_signin", "failed", "closed"}
@@ -62,20 +46,17 @@ person, but that is the answers route, not "Try again"."""
 ROUTED_TARGETS: Final = frozenset({"approved", "failed", "sent", "waiting_for_you"})
 """User moves only their own route makes: approve (with its digest), resolve and "I applied there". The generic stage
 route refuses these targets so it cannot go around them."""
-_LEGACY_ONLY: Final = frozenset({"needs_user", "ready_to_submit"})  # legacy: removed in Z
 REOPENABLE: Final = frozenset({"cancelled", "closed", "failed"})
 """Stages a fresh start on the same posting reopens (a ``system`` move to queued with a new hold); any other stage means
 the person already has that application."""
 
-_ORDER: Final = {"sent": 0, "applied": 0, "viewed": 1, "interviewing": 2, "offer": 3}
+_ORDER: Final = {"sent": 0, "viewed": 1, "interviewing": 2, "offer": 3}
 
 ENGINE: Final[dict[str, frozenset[str]]] = {
-    "queued": frozenset({"filling"}) | {"needs_user", "failed"},  # legacy: needs_user and failed removed in Z
-    "filling": frozenset({"waiting_for_you", "needs_signin", "closed", "failed", "queued"})
-    | {"ready_to_submit", "needs_user"},  # legacy: ready_to_submit and needs_user removed in Z
+    "queued": frozenset({"filling"}),
+    "filling": frozenset({"waiting_for_you", "needs_signin", "closed", "failed", "queued"}),
     "approved": frozenset({"submitting", "waiting_for_you", "failed"}),
     "submitting": frozenset({"sent", "check_this_one", "failed"}),
-    "ready_to_submit": frozenset({"applied", "needs_user", "failed"}),  # legacy: removed in Z
 }
 
 
@@ -84,37 +65,24 @@ def _user(frm: str, to: str) -> bool:
         return frm in USER_CANCELLABLE
     if to == "queued":
         # waiting_for_you -> queued is the answers requeue (spec 3.1 step 3), not "Try again"
-        return (
-            frm in USER_RETRYABLE or frm == "waiting_for_you" or frm in _LEGACY_ONLY
-        )  # legacy: _LEGACY_ONLY
+        return frm in USER_RETRYABLE or frm == "waiting_for_you"
     if to == "approved":
         return frm == "waiting_for_you"
     if to == "sent":
         return frm in ("check_this_one", "needs_signin")
-    if to == "waiting_for_you":
-        return frm == "check_this_one"
     if to == "failed":
-        return (
-            frm == "check_this_one"
-        )  # resolve: "it did not go through" (the hold is given back, never a resend)
+        # resolve: "it did not go through" (the hold is given back, never a resend)
+        return frm == "check_this_one"
     if to in SENT_AND_LATER:
-        # legacy: the old tracking from needs_user, ready_to_submit and applied is removed in Z
-        return frm in SENT_AND_LATER or frm in ("needs_user", "ready_to_submit", "applied")
-    if to == "applied":  # legacy: removed in Z (the person applied on the site by hand)
-        # only from the old-only stages: a new-flow row (queued, filling, failed) reaches tracking only through sent
-        return frm in _LEGACY_ONLY
+        return frm in SENT_AND_LATER
     return False
 
 
 def _email(frm: str, to: str) -> bool:
     if to == "sent":
         return frm == "check_this_one"
-    if to == "applied":  # legacy: removed in Z
-        return (
-            frm in _LEGACY_ONLY
-        )  # a failed row was refunded before the click: an email cannot mark it applied
     if to == "rejected":
-        return frm in ("sent", "viewed", "interviewing") or frm == "applied"  # legacy: applied removed in Z
+        return frm in ("sent", "viewed", "interviewing")
     return frm in _ORDER and to in _ORDER and _ORDER[to] > _ORDER[frm]
 
 
@@ -153,8 +121,9 @@ async def move(
     changes: Mapping[str, Any] | None = None,
     kind: str = "stage",
 ) -> StoredApplication | None:
-    """Move ``app`` to ``to`` (raises `StageNotAllowed` for a move ``source`` may not make), with ``changes`` in the same
-    update and a history entry; None when the stage changed under us (another worker or request got there first)."""
+    """Move ``app`` to ``to`` (raises `StageNotAllowed` for a move ``source`` may not make), with ``changes`` in the
+    same update and a history entry; None when the stage changed under us (another worker or request got there
+    first)."""
     if not allowed(app.stage, to, source):
         raise StageNotAllowed(f"{source} cannot move an application from {app.stage} to {to}")
     updated = await repo.update_application(
@@ -187,7 +156,6 @@ async def note(
 
 __all__ = [
     "ENGINE",
-    "LEGACY_STAGES",
     "REOPENABLE",
     "ROUTED_TARGETS",
     "SENT_AND_LATER",

@@ -738,7 +738,8 @@ async def test_a_saved_answer_in_your_details_is_checked_like_any_other(rig: Rig
 
 async def test_consent_and_status(rig: Rig) -> None:
     before = await rig.svc.status(OWNER, enabled=True)
-    assert before.signedIn and not before.anonymous and before.agents == [] and before.consentAt is None
+    assert before.signedIn and before.consentAt is None
+    assert not {"anonymous", "agents"} & set(before.to_dict())  # the old branch's fields are gone
     after = await rig.svc.consent(OWNER)
     assert after.consentAt == T0.isoformat()
 

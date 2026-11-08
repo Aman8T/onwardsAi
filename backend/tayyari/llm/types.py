@@ -45,7 +45,6 @@ Purpose = Literal[
     "apply.map",
     "apply.answer",
     "apply.email",
-    "apply.agent",
 ]
 """Why a Claude call is made. Stored on every `llm_calls` row and used to script fakes."""
 

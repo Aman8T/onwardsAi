@@ -98,8 +98,11 @@ class Opener(FakeOpener):
 
 async def setup(opener: Opener, clock: Clock) -> tuple[FakeApplyRepo, ApplyWorker, Credits]:
     repo = FakeApplyRepo()
-    await repo.put_details(OWNER, user_id=USER, now=T0, details={"firstName": "Riya", "lastName": "Kapoor",
-                                                                 "email": "riya@example.com"})  # fmt: skip
+    for key, value in (("fullName", "Riya Kapoor"), ("email", "riya@example.com")):
+        await repo.put_answer(
+            StoredAnswer(user_id=USER, question_key=key, question=key, source="you", ask_each_time=False,
+                         answered_at=T0, created_at=T0, updated_at=T0, value=value)
+        )  # fmt: skip
     await repo.put_answer(
         StoredAnswer(user_id=USER, question_key="needsSponsorship:IN", question="Sponsorship in India",
                      source="first_check", ask_each_time=False, answered_at=T0, created_at=T0, updated_at=T0, value="No")

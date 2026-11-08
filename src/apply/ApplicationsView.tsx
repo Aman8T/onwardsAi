@@ -44,8 +44,6 @@ export const LIST_TABS: readonly (readonly [ListTab, string])[] = [
 const TAB_OF: Record<ApplicationStage, ListTab> = {
   waiting_for_you: 'waiting',
   needs_signin: 'waiting',
-  needs_user: 'waiting',
-  ready_to_submit: 'waiting',
   queued: 'filling',
   filling: 'filling',
   approved: 'filling',
@@ -55,7 +53,6 @@ const TAB_OF: Record<ApplicationStage, ListTab> = {
   interviewing: 'sent',
   offer: 'sent',
   rejected: 'sent',
-  applied: 'sent',
   check_this_one: 'check',
   failed: 'didnt_go',
   closed: 'didnt_go',
@@ -80,13 +77,13 @@ export const NO_REPLY_DAYS = 21;
 const DAY_MS = 86_400_000;
 
 /**
- * When it was sent. The summary has no send time of its own yet, so for a row still at `sent` its last change is the
- * send (the stage moves only forward, and nothing else touches a sent row).
+ * When it was sent: the summary's own `sentAt` (the click that went through, or the person's word on it). A sent row
+ * from before `sentAt` existed falls back to its last change, which for a row still at `sent` is the send.
  */
-export const sentAtOf = (a: ApplicationSummary): string => a.updatedAt;
+export const sentAtOf = (a: ApplicationSummary): string => a.sentAt ?? a.updatedAt;
 
 export function noReply(a: ApplicationSummary, now: number): boolean {
-  if (a.stage !== 'sent' && a.stage !== 'applied') return false;
+  if (a.stage !== 'sent') return false;
   const at = Date.parse(sentAtOf(a));
   return Number.isFinite(at) && now - at >= NO_REPLY_DAYS * DAY_MS;
 }
@@ -107,7 +104,7 @@ export function pipeline(apps: readonly ApplicationSummary[], now: number): Reco
   for (const a of apps) {
     if (!isSent(a.stage)) continue;
     if (noReply(a, now)) cols.no_reply.push(a);
-    else if (a.stage === 'sent' || a.stage === 'applied') cols.sent.push(a);
+    else if (a.stage === 'sent') cols.sent.push(a);
     else if (a.stage === 'viewed' || a.stage === 'interviewing' || a.stage === 'offer' || a.stage === 'rejected') cols[a.stage].push(a);
   }
   return cols;
@@ -127,8 +124,6 @@ export function standing(a: ApplicationSummary): { chip: string; line?: string }
   const why = a.stageReason ?? (a.stopReason ? STOP_REASON_TEXT[a.stopReason] : undefined);
   switch (a.stage) {
     case 'waiting_for_you':
-    case 'needs_user':
-    case 'ready_to_submit':
       return a.needsCount > 0
         ? { chip: `${plural(a.needsCount, 'question')} for you`, line: why }
         : { chip: 'Ready to review', line: why ?? 'Every value is filled; nothing is sent until you approve' };
@@ -454,7 +449,7 @@ function Replies({
   );
 }
 
-/** Engine metrics (admins only): playbook against model runs per ATS. Ratios are measured rates, shown as words and counts. */
+/** Engine metrics (admins only): playbook against field-list loop runs per ATS, and how they ended. Counts, not scores. */
 export function MetricsPanel({ metrics }: { metrics: ApplyMetrics }) {
   const rows = [...metrics.byAts, metrics.total];
   return (
@@ -467,10 +462,14 @@ export function MetricsPanel({ metrics }: { metrics: ApplyMetrics }) {
               <th scope="col">ATS</th>
               <th scope="col">Runs</th>
               <th scope="col">Playbook</th>
-              <th scope="col">Model</th>
+              <th scope="col">Field-list loop</th>
               <th scope="col">Completed</th>
-              <th scope="col">Needed the person</th>
+              <th scope="col">Questions for the person</th>
+              <th scope="col">Sign-in</th>
               <th scope="col">Failed</th>
+              <th scope="col">Check this one</th>
+              <th scope="col">Stopped half way</th>
+              <th scope="col">Waited for capacity</th>
               <th scope="col">Cost (USD)</th>
             </tr>
           </thead>
@@ -480,10 +479,14 @@ export function MetricsPanel({ metrics }: { metrics: ApplyMetrics }) {
                 <th scope="row">{r.ats}</th>
                 <td className="numeral">{r.runs}</td>
                 <td className="numeral">{r.playbookRuns}</td>
-                <td className="numeral">{r.aiRuns}</td>
+                <td className="numeral">{r.loopRuns}</td>
                 <td className="numeral">{r.successes}</td>
-                <td className="numeral">{r.needsUser}</td>
+                <td className="numeral">{r.questions}</td>
+                <td className="numeral">{r.needsSignin}</td>
                 <td className="numeral">{r.failures}</td>
+                <td className="numeral">{r.checkThisOne}</td>
+                <td className="numeral">{r.interrupted}</td>
+                <td className="numeral">{r.deferred}</td>
                 <td className="numeral">{(r.costMicroUsd / 1e6).toFixed(3)}</td>
               </tr>
             ))}

@@ -6,6 +6,7 @@
  *   - refusedApply for each reason a start check says no; the steps while it is checked (no percentages)
  *   - JobCard, Focus, Compare and the Prepare checklist with and without Apply for me
  *   - the origin's runId and apply intent; DiscoverRoot.matchOutcome (wait, open, blocked, paywall, stopped)
+ *   - listingMatch: the match Apply for me already ran for a listing, reused instead of a new, charged one (FE4#7)
  *
  * Run: npm run check:discover
  */
@@ -43,7 +44,7 @@ const textOf = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/&(?:amp|
 const h = React.createElement;
 const render = (el: any) => renderToStaticMarkup(el);
 
-const STATUS = { enabled: true, signedIn: true, anonymous: false, agents: [] };
+const STATUS = { enabled: true, signedIn: true };
 const OFF_STATUS = { ...STATUS, enabled: false };
 const NO_MAP = new Map();
 const WORKDAY = { ...fx.HEADOUT, id: 'hollis-data', employer: 'Hollis Health', applyUrl: 'https://hollis.wd5.myworkdayjobs.com/en-US/careers/job/1', applyHost: 'hollis.wd5.myworkdayjobs.com' };
@@ -250,6 +251,25 @@ const stopped = root.matchOutcome(M({ phase: 'idle', notice: 'We could not read 
 check("idle after running: the match's own sentence", stopped.kind === 'stopped' && stopped.note === 'We could not read that posting.');
 const quiet = root.matchOutcome(M({ phase: 'idle' }), { seen: true });
 check('idle after running, nothing said: a sentence of ours', quiet.kind === 'stopped' && /Nothing was applied/.test(quiet.note));
+
+// ── the match a listing already has (FE4#7) ──
+const lm: any = await import('../src/discover/listingMatch');
+check('no match remembered yet', lm.listingMatchFor('job-1', 'p1') === undefined);
+lm.rememberListingMatch('job-1', 'p1', 'm_1', 1000);
+lm.rememberListingMatch('job-2', 'p1', 'm_2', 2000);
+check('a remembered match is found for its listing and profile', lm.listingMatchFor('job-1', 'p1') === 'm_1');
+check('another profile does not reuse it', lm.listingMatchFor('job-1', 'p2') === undefined);
+lm.rememberListingMatch('job-1', 'p1', 'm_3', 3000);
+check('the newest match for a listing wins', lm.listingMatchFor('job-1', 'p1') === 'm_3');
+check('one row per listing and profile', lm.parseListingMatches(JSON.parse(store[lm.LISTING_MATCHES_KEY])).filter((r: any) => r.listingId === 'job-1').length === 1);
+lm.forgetListingMatch('job-1', 'p1');
+check('a match that is gone is forgotten', lm.listingMatchFor('job-1', 'p1') === undefined && lm.listingMatchFor('job-2', 'p1') === 'm_2');
+lm.rememberListingMatch('bad id!', 'p1', 'm_4');
+check('a malformed id is never stored', lm.listingMatchFor('bad id!', 'p1') === undefined);
+check('junk in storage reads as nothing', lm.parseListingMatches([{ listingId: 1 }, 'x', null, { listingId: 'a', profileId: 'b', matchId: 'c d', at: 1 }]).length === 0);
+const many = Array.from({ length: lm.LISTING_MATCHES_MAX + 5 }, (_, i) => ({ listingId: `j${i}`, profileId: 'p', matchId: `m${i}`, at: i }));
+const newest = lm.parseListingMatches(many);
+check('only the newest are kept', newest.length === lm.LISTING_MATCHES_MAX && newest[0].matchId === `m${lm.LISTING_MATCHES_MAX + 4}`);
 
 if (failures.length) {
   console.error(`discover-apply-parity: FAILED (${failures.length}, passed ${passed})`);

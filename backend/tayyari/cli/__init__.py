@@ -11,7 +11,7 @@
     discover-refresh  read employers' own public job boards into the database, once (no key needed)
     discover-worker   the same in a loop, as its own process
     apply-worker      auto-apply's worker: fill queued applications, submit approved ones (needs AUTO_APPLY_ENABLED)
-    apply-metrics     auto-apply's learning loop: playbook vs AI runs, success and failure reasons per ATS
+    apply-metrics     auto-apply's learning loop: playbook vs field-list loop runs, outcomes and failure reasons per ATS
     weekly            The Leafout Weekly by hand: `weekly run` (one scheduler pass), `weekly preview EMAIL` (one reader's edition)
 
 This package is the one place that prints to the terminal. Importing it imports nothing heavy: every command

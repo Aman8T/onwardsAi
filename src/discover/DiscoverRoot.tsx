@@ -17,7 +17,8 @@
  * match, whose own steps show on the card, with Cancel. Still one match at a time. When the match is done it opens
  * `/match/<id>` with the "How should we apply?" choice expanded (or, when the resume was chosen already, the tailored
  * resume to check, or `/apply/new` with the saved one); a hard requirement that fails, or a check that says no, stays on
- * the card with the reason. Signed out, the button opens the sign-in sheet.
+ * the card with the reason. Signed out, the button opens the sign-in sheet. A listing whose match this browser already
+ * finished reuses it (`listingMatch.ts`, read back with a GET that charges nothing) instead of a new, charged match.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ApplyCheck } from '../../shared/apply';
@@ -29,6 +30,7 @@ import type { ApplyChoice } from '../apply/ApplyForMe';
 import { applyPath } from '../apply/route';
 import { rememberApplyIntent, useApplications } from '../apply/useApplications';
 import { signInSheet, useMe } from '../auth/useMe';
+import { MatchApiError, getMatch } from '../match/api';
 import { isSampleId, pickProfileId } from '../match/model';
 import { getMatchState, matchActions, useMatch } from '../match/useMatch';
 import type { MatchState } from '../match/useMatch';
@@ -38,7 +40,9 @@ import type { StoredArea } from './area';
 import { DiscoverHeader } from './DiscoverHeader';
 import { DiscoverScreen } from './DiscoverScreen';
 import { getPosting } from './jobsearch/api';
+import { forgetListingMatch, listingMatchFor, rememberListingMatch } from './listingMatch';
 import { bindOrigin, writeOrigin } from './origin';
+import type { MatchOrigin } from './origin';
 import { CHECK_UNREAD, MATCH_BUSY, refusedApply } from './roles/parts';
 import type { CardFlow, DiscoverApply } from './roles/parts';
 import { discoverPath } from './route';
@@ -94,6 +98,20 @@ export function matchOutcome(
   if (!a.seen || m.phase !== 'idle') return { kind: 'wait' };
   if (m.paywall) return { kind: 'paywall' };
   return { kind: 'stopped', note: m.notice ?? MATCH_STOPPED };
+}
+
+/** What a match this browser already finished for a listing says now: open, blocked (with why), gone, or unread. */
+type KnownMatch = { kind: 'open' } | { kind: 'blocked'; reason: string } | { kind: 'gone' } | { kind: 'unread' };
+
+/** Read a remembered match back (`GET /api/match/{id}`: no new match, nothing charged). */
+async function readKnownMatch(matchId: string): Promise<KnownMatch> {
+  try {
+    const detail = await getMatch(matchId);
+    if (detail.result.blocked) return { kind: 'blocked', reason: blockedReasonOf(detail.posting.gates ?? [], detail.result.gates ?? []) };
+    return { kind: 'open' };
+  } catch (err) {
+    return err instanceof MatchApiError && err.status === 404 ? { kind: 'gone' } : { kind: 'unread' };
+  }
 }
 
 /** Where the person goes once the match behind Apply for me is done and nothing blocked it. */
@@ -175,7 +193,18 @@ export function DiscoverRoot({ profile }: { profile: Profile }) {
         return err instanceof Error ? err.message : 'Discover is having trouble right now. Please try again in a moment.';
       }
     }
-    writeOrigin({
+    writeOrigin(originOf(job, runId, opts.intent));
+    matchActions.setDraft(text !== undefined ? { text, url: '' } : { text: '', url: job.applyUrl });
+    if (opts.open) actions.openMatch({ screen: 'paste' });
+    void matchActions.submit(text !== undefined ? { profileId: matchProfileId, text } : { profileId: matchProfileId, url: job.applyUrl }, { signedIn });
+    return undefined;
+  };
+
+  const seeMatch = (job: AiJob, runId?: string): Promise<string | undefined> => startMatch(job, runId, { open: true });
+
+  /** Where a match from this listing came from, for the match screen's way back and its apply link. */
+  function originOf(job: AiJob, runId: string | undefined, intent?: 'apply'): MatchOrigin {
+    return {
       listingId: job.id,
       title: job.title,
       employer: job.employer,
@@ -185,15 +214,9 @@ export function DiscoverRoot({ profile }: { profile: Profile }) {
       discoverHref: discoverPath(query),
       profileId: profile.id,
       ...(runId ? { runId } : {}),
-      ...(opts.intent ? { intent: opts.intent } : {}),
-    });
-    matchActions.setDraft(text !== undefined ? { text, url: '' } : { text: '', url: job.applyUrl });
-    if (opts.open) actions.openMatch({ screen: 'paste' });
-    void matchActions.submit(text !== undefined ? { profileId: matchProfileId, text } : { profileId: matchProfileId, url: job.applyUrl }, { signedIn });
-    return undefined;
-  };
-
-  const seeMatch = (job: AiJob, runId?: string): Promise<string | undefined> => startMatch(job, runId, { open: true });
+      ...(intent ? { intent } : {}),
+    };
+  }
 
   /* ───────── Apply for me, on the card ───────── */
 
@@ -248,9 +271,28 @@ export function DiscoverRoot({ profile }: { profile: Profile }) {
       return;
     }
 
+    put(job.id, { kind: 'checking', phase: 'match' });
+    // a match this browser already finished for the listing is reused: reading it back starts and charges nothing
+    const known = listingMatchFor(job.id, profile.id);
+    if (known) {
+      const now = await readKnownMatch(known);
+      if (active.current !== mine) return; // cancelled
+      if (now.kind === 'gone') forgetListingMatch(job.id, profile.id);
+      else {
+        end();
+        if (now.kind === 'unread') put(job.id, { kind: 'note', text: CHECK_UNREAD });
+        else if (now.kind === 'blocked') put(job.id, { kind: 'refused', apply: { kind: 'off', reason: now.reason } });
+        else {
+          put(job.id);
+          writeOrigin(originOf(job, runId, choice ? undefined : 'apply'));
+          openAfterMatch(known, mine);
+        }
+        return;
+      }
+    }
+
     mine.stage = 'match';
     mine.before = latest.current.result;
-    put(job.id, { kind: 'checking', phase: 'match' });
     const failed = await startMatch(job, runId, { open: false, ...(choice ? {} : { intent: 'apply' as const }) });
     if (active.current !== mine) return;
     if (failed) {
@@ -289,6 +331,7 @@ export function DiscoverRoot({ profile }: { profile: Profile }) {
         return;
       case 'open':
         put(a.job.id);
+        rememberListingMatch(a.job.id, profile.id, out.matchId);
         openAfterMatch(out.matchId, a);
         return;
       case 'paywall':

@@ -33,7 +33,7 @@
               .../answers, .../approve, .../cancel, .../resolve, .../applied-there, .../stage, .../retry; GET
               /api/apply/details; PUT .../details/answer, .../details/answers/{key}, .../details/self-id; DELETE
               .../details/answers/{key}; POST .../details/still-true, .../details/first-check; PUT, DELETE
-              /api/apply/profile/resume (GET, PUT /api/apply/profile: legacy); POST /api/apply/email; GET
+              /api/apply/profile/resume; POST /api/apply/email; GET
               /api/apply/metrics (auto-apply, behind AUTO_APPLY_ENABLED; signed in only, every route but the status)
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and

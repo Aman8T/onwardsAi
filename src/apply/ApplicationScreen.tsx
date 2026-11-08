@@ -51,8 +51,8 @@ const POLL_MS = 3000;
 
 export type RunScreen = 'filling' | 'questions' | 'review' | 'outcome';
 
-/** The stages that wait for the person's answers or approval (the legacy names until Z). */
-const WAITING: ReadonlySet<ApplicationStage> = new Set(['waiting_for_you', 'needs_user', 'ready_to_submit']);
+/** The stages that wait for the person's answers or approval. */
+const WAITING: ReadonlySet<ApplicationStage> = new Set<ApplicationStage>(['waiting_for_you']);
 /** The stages a person watches the form fill in. */
 const FILLING: ReadonlySet<ApplicationStage> = new Set(['queued', 'filling']);
 /** The stages after the person approved, before the outcome. */

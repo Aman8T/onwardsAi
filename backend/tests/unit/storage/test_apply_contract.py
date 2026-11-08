@@ -7,13 +7,14 @@ profile and the answer bank."""
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
 import pytest
 import pytest_asyncio
+from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
 
 from tayyari.storage.ports import (
@@ -28,19 +29,31 @@ from tayyari.storage.ports import (
 )
 from tayyari.storage.repos import build_repositories
 from tayyari.storage.repos.apply import SqlApplyRepo
+from tayyari.storage.tables import UserRow
 from tests.fakes.apply import FakeApplyRepo
 from tests.unit.storage.conftest import T0, open_db
 
-OWNER = "a:" + "1" * 40
-OTHER = "a:" + "2" * 40
+USER = "user-one"
+OTHER_USER = "user-two"
+OWNER = account_owner_key(USER)
+OTHER = account_owner_key(OTHER_USER)
 
 
 @pytest_asyncio.fixture
 async def repo(backend: str, tmp_path: Path) -> AsyncIterator[ApplyRepo]:
+    """A repository with the two accounts behind ``OWNER`` and ``OTHER`` (every application and profile belongs to an
+    account: ``user_id`` is NOT NULL and references ``users``)."""
     if backend == "fake":
         yield FakeApplyRepo()
         return
     async with open_db(backend, tmp_path) as db:
+        async with db.session() as s:
+            for user_id in (USER, OTHER_USER):
+                await s.execute(
+                    insert(UserRow).values(
+                        id=user_id, email=f"{user_id}@example.com", created_at=T0, last_login_at=T0
+                    )
+                )
         yield SqlApplyRepo(db)
 
 
@@ -119,7 +132,8 @@ def app(
     return StoredApplication(
         id=app_id,
         owner_key=owner,
-        source="link",
+        user_id=OTHER_USER if owner == OTHER else USER,
+        source="match",
         job_url=f"https://{domain}/acme/{app_id}",
         domain=domain,
         ats="lever",
@@ -172,8 +186,8 @@ async def test_update_checks_the_stage_and_the_columns(repo: ApplyRepo) -> None:
 async def test_claim_takes_queued_and_approved_rows_once(repo: ApplyRepo) -> None:
     await repo.create_application(app("old", minutes=0))
     await repo.create_application(app("new", minutes=1))
-    await repo.create_application(app("waiting", stage="ready_to_submit", minutes=2))
-    await repo.create_application(app("done", stage="applied", minutes=3))
+    await repo.create_application(app("waiting", stage="waiting_for_you", minutes=2))
+    await repo.create_application(app("done", stage="sent", minutes=3))
     now = T0 + timedelta(minutes=10)
     lease = now + timedelta(minutes=10)
     first = await repo.claim_next(now=now, lease_owner="w1", lease_until=lease)
@@ -182,8 +196,12 @@ async def test_claim_takes_queued_and_approved_rows_once(repo: ApplyRepo) -> Non
     assert second is not None and second.id == "new"
     assert (
         await repo.claim_next(now=now, lease_owner="w3", lease_until=lease) is None
-    )  # not approved, applied
+    )  # waiting for the person, and sent
     await repo.update_application("waiting", {"approved_at": now, "approved_digest": "x" * 64}, now=now)
+    assert (
+        await repo.claim_next(now=now, lease_owner="w3", lease_until=lease) is None
+    )  # approval alone: still waiting
+    await repo.update_application("waiting", {"stage": "approved"}, now=now)
     approved = await repo.claim_next(now=now + timedelta(seconds=1), lease_owner="w3", lease_until=lease)
     assert approved is not None and approved.id == "waiting"
     # an expired lease is free again; a released one at once
@@ -208,21 +226,20 @@ async def test_claim_skips_excluded_domains(repo: ApplyRepo) -> None:
     assert got is not None and got.id == "b"
 
 
-async def test_screenshots_live_apart_and_are_purged(repo: ApplyRepo) -> None:
+async def test_screenshots_live_apart_from_the_row(repo: ApplyRepo) -> None:
     await repo.create_application(app("ap1"))
     await repo.put_screenshot("ap1", b"\xff\xd8jpeg")
     assert await repo.get_screenshot("ap1", OWNER) == b"\xff\xd8jpeg"
     assert await repo.get_screenshot("ap1", OTHER) is None
     listed = await repo.list_applications(OWNER)
     assert listed[0].has_screenshot is True
-    assert await repo.purge_screenshots(T0 - timedelta(days=1)) == 0
-    assert await repo.purge_screenshots(T0 + timedelta(days=1)) == 1
+    await repo.put_screenshot("ap1", None)
     assert await repo.get_screenshot("ap1", OWNER) is None
 
 
 async def test_events_come_back_in_order_and_go_with_the_application(repo: ApplyRepo) -> None:
     await repo.create_application(app("ap1"))
-    for n, (frm, to) in enumerate([(None, "queued"), ("queued", "filling"), ("filling", "ready_to_submit")]):
+    for n, (frm, to) in enumerate([(None, "queued"), ("queued", "filling"), ("filling", "waiting_for_you")]):
         await repo.add_event(
             StoredApplicationEvent(
                 id=f"ev{n}",
@@ -236,7 +253,7 @@ async def test_events_come_back_in_order_and_go_with_the_application(repo: Apply
             )
         )
     events = await repo.list_events("ap1")
-    assert [e.to_stage for e in events] == ["queued", "filling", "ready_to_submit"] and events[0].detail == {
+    assert [e.to_stage for e in events] == ["queued", "filling", "waiting_for_you"] and events[0].detail == {
         "n": 0
     }
     assert await repo.delete_application("ap1", OTHER) is False
@@ -283,7 +300,7 @@ async def test_run_metrics_are_counted_per_domain(repo: ApplyRepo) -> None:
                 run_kind="fill",
                 ats="lever",
                 domain="jobs.lever.co",
-                mode="playbook" if n else "ai",
+                mode="playbook" if n else "loop",
                 outcome="success",
                 steps=5,
                 cost_micro_usd=10 * n,
@@ -296,25 +313,27 @@ async def test_run_metrics_are_counted_per_domain(repo: ApplyRepo) -> None:
     assert [m.id for m in rows] == ["m2", "m1", "m0"] and rows[0].cost_micro_usd == 20
 
 
-async def test_the_profile_keeps_details_answers_and_resume_apart(repo: ApplyRepo) -> None:
+async def test_the_profile_keeps_the_resume_and_its_account(repo: ApplyRepo) -> None:
     assert await repo.get_profile(OWNER) is None
-    made = await repo.put_details(OWNER, user_id=None, details={"firstName": "Riya"}, now=T0)
-    assert made.details == {"firstName": "Riya"} and made.answers == {} and made.resume_bytes is None
     with_cv = await repo.put_resume(
-        OWNER, user_id=None, name="cv.pdf", media_type="application/pdf", data=b"%PDF", now=T0
+        OWNER, user_id=USER, name="cv.pdf", media_type="application/pdf", data=b"%PDF", now=T0
     )
-    assert (
-        with_cv.resume_name == "cv.pdf"
-        and with_cv.resume_bytes == b"%PDF"
-        and with_cv.details == {"firstName": "Riya"}
-    )
-    merged = await repo.merge_answers(OWNER, user_id=None, answers={"q:1": {"answer": "Yes"}}, now=T0)
-    merged = await repo.merge_answers(OWNER, user_id=None, answers={"q:2": {"answer": "No"}}, now=T0)
-    assert set(merged.answers) == {"q:1", "q:2"}
-    gone = await repo.put_resume(OWNER, user_id=None, name=None, media_type=None, data=None, now=T0)
-    assert gone.resume_bytes is None and gone.resume_name is None and set(gone.answers) == {"q:1", "q:2"}
+    assert with_cv.resume_name == "cv.pdf" and with_cv.resume_bytes == b"%PDF" and with_cv.user_id == USER
+    assert not hasattr(with_cv, "details") and not hasattr(
+        with_cv, "answers"
+    )  # the answer bank holds the answers
+    gone = await repo.put_resume(OWNER, user_id=USER, name=None, media_type=None, data=None, now=T0)
+    assert gone.resume_bytes is None and gone.resume_name is None
     found = await repo.get_profile(OWNER)
-    assert found is not None and found.details == {"firstName": "Riya"}
+    assert found is not None and found.user_id == USER and found.resume_bytes is None
+
+
+async def test_every_application_belongs_to_an_account(repo: ApplyRepo) -> None:
+    """``applications.user_id`` is NOT NULL: a row without an account is refused (IntegrityError in SQL)."""
+    no_account: Any = None
+    with pytest.raises((IntegrityError, ValueError)):
+        await repo.create_application(replace(app("ap1"), user_id=no_account))
+    assert await repo.get_application("ap1", None) is None
 
 
 # ───────────────────────────── the A1 build ─────────────────────────────
@@ -626,4 +645,21 @@ async def test_the_profile_keeps_the_new_settings(people: People) -> None:
     gone = await repo.put_resume(mine, user_id=people.ana, name=None, media_type=None, data=None, now=T0)
     assert gone.resume_sha256 is None and gone.resume_bytes is None
     fresh = await repo.set_consent(people.ben, now=T0)
-    assert fresh.self_id_on_forms is False and fresh.details == {} and fresh.answers == {}
+    assert fresh.self_id_on_forms is False and fresh.user_id == people.ben and fresh.first_check_at is None
+
+
+async def test_a_deferred_run_is_kept_but_left_out_of_the_per_site_limit(repo: ApplyRepo) -> None:
+    """A run put back for capacity never reached the site: it is in the metrics, not in the per-site counts."""
+    for n, outcome in enumerate(["success", "deferred", "interrupted"]):
+        await repo.add_run_metric(
+            StoredRunMetric(id=f"m{n}", created_at=T0 + timedelta(minutes=n), run_kind="fill", ats="lever",
+                            domain="jobs.lever.co", mode="playbook", outcome=outcome)
+        )  # fmt: skip
+    assert [m.outcome for m in await repo.list_run_metrics(T0)] == ["interrupted", "deferred", "success"]
+    assert await repo.count_domain_runs_since("jobs.lever.co", T0) == 2
+    assert await repo.last_domain_run_at("jobs.lever.co") == T0 + timedelta(minutes=2)
+    await repo.add_run_metric(
+        StoredRunMetric(id="m9", created_at=T0 + timedelta(minutes=9), run_kind="fill", ats="lever",
+                        domain="jobs.lever.co", mode="playbook", outcome="deferred")
+    )  # fmt: skip
+    assert await repo.last_domain_run_at("jobs.lever.co") == T0 + timedelta(minutes=2)

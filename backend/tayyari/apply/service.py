@@ -67,8 +67,6 @@ from tayyari.contract.apply import (
     AnswerRequest,
     AnswerResult,
     AnswerSource,
-    ApplicantDetails,
-    ApplicantProfile,
     ApplicationDetail,
     ApplicationEvent,
     ApplicationList,
@@ -109,7 +107,6 @@ from tayyari.storage.ports import (
     PostingTaken,
     StoredAnswer,
     StoredApplication,
-    StoredApplyProfile,
     is_never_stored,
 )
 
@@ -128,9 +125,7 @@ APPLY_REF_PREFIX: Final = "apply:"
 
 ATS_KINDS: Final[frozenset[str]] = frozenset(get_args(AtsKind))
 ANSWER_SOURCES: Final[frozenset[str]] = frozenset(get_args(AnswerSource))
-ANSWERABLE_STAGES: Final = frozenset(
-    {"waiting_for_you", "needs_user", "ready_to_submit"}
-)  # legacy: the last two go in Z
+ANSWERABLE_STAGES: Final = frozenset({"waiting_for_you"})
 """Stages whose questions the person may answer (the review's edits included)."""
 UNDELETABLE_STAGES: Final = frozenset({"submitting", "check_this_one"})
 """The send may have reached the employer: settle it first (resolve), then delete."""
@@ -366,6 +361,13 @@ class Inspected:
     existing: StoredApplication | None = None
 
 
+def _with_url(inspected: Inspected) -> ApplyCheck:
+    """The verdict with the employer's own page for the posting (``applyUrl``), for "Open on <host>'s site"."""
+    if inspected.url is None or inspected.check.applyUrl is not None:
+        return inspected.check
+    return inspected.check.model_copy(update={"applyUrl": inspected.url})
+
+
 class StartRefused(AppError):
     """A start check failed: nothing was created, held or charged. ``check`` is the verdict (the route sends its reason,
     the gate reasons and the earlier application with the error). A 402 for no credit, else a 409."""
@@ -423,16 +425,7 @@ def summary_of(app: StoredApplication) -> ApplicationSummary:
         approvedAt=_iso(app.approved_at), stageReason=app.stage_reason, resumeChoice=app.resume_choice,  # type: ignore[arg-type]
         listingId=app.listing_id, creditState=_credit_state(app.credit_state), stopReason=app.stop_reason,  # type: ignore[arg-type]
         hasConfirmation=True if app.has_confirmation else None, progress=_progress(app),
-    )  # fmt: skip
-
-
-def profile_of(stored: StoredApplyProfile | None) -> ApplicantProfile:
-    """Legacy (removed in Z): the old details form's shape."""
-    if stored is None:
-        return ApplicantProfile(details=ApplicantDetails(), hasResume=False, savedAnswers=0)
-    return ApplicantProfile(
-        details=ApplicantDetails.model_validate(stored.details), hasResume=stored.resume_bytes is not None,
-        savedAnswers=len(stored.answers), resumeName=stored.resume_name, updatedAt=stored.updated_at.isoformat(),
+        sentAt=_iso(app.submitted_at) if app.stage in stages.SENT_AND_LATER else None,
     )  # fmt: skip
 
 
@@ -585,7 +578,7 @@ class ApplyService:
         """The read-only check behind "Apply for me": no row, no hold, no charge."""
         inspected = await self._inspect(user_of(owner), url, match)
         log.info("apply_check", offered=inspected.check.offered, reason=inspected.check.reason)
-        return inspected.check
+        return _with_url(inspected)
 
     # ── start ──
 
@@ -600,7 +593,7 @@ class ApplyService:
         inspected = await self._inspect(user_id, match.posting_url, match)
         if not inspected.check.offered or inspected.url is None or inspected.key is None:
             log.info("apply_start_refused", reason=inspected.check.reason)
-            raise StartRefused(inspected.check)
+            raise StartRefused(_with_url(inspected))
         now = self.clock.now()
         cap = self.settings.apply.max_per_day
         day = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -856,9 +849,7 @@ class ApplyService:
         for item, key, value, need in given:
             typed[key] = value
             if need is not None and need.get("key"):
-                typed[str(need["key"])] = (
-                    value  # a legacy need without a question key is read by its field key
-                )
+                typed[str(need["key"])] = value  # the planner reads a typed value by field key first
             if item.save and _savable(key, need):
                 label = str((need or {}).get("label") or (_BANK[key].question if key in _BANK else key))
                 await self._bank_put(user_id, key, value, question=label, source="form", answered_on=app.company,
@@ -906,8 +897,6 @@ class ApplyService:
         """The person approves exactly the reviewed values: the digest must be the review's, and no required question
         may be open (one typed on the employer's page included). Only this lets the worker submit."""
         app = await self._get(owner, application_id)
-        if app.stage == "ready_to_submit":  # legacy: removed in Z (the old engine's reviewed rows)
-            return await self._approve_legacy(app, digest)
         if app.stage != "waiting_for_you" or not app.review_digest:
             raise Conflict("There is nothing to approve: the form is not filled and reviewed.")
         if digest != app.review_digest:
@@ -925,22 +914,6 @@ class ApplyService:
         if moved is None:
             raise Conflict(CHANGED)
         return await self._detail(moved)
-
-    async def _approve_legacy(self, app: StoredApplication, digest: str) -> ApplicationDetail:
-        if not app.review_digest or digest != app.review_digest:
-            raise Conflict("The form changed since you looked at it. Review it again.")
-        if any(n.get("required") for n in app.needs or []):
-            raise Conflict("Answer the open questions first.")
-        now = self.clock.now()
-        updated = await self.repo.update_application(
-            app.id, {"approved_at": now, "approved_digest": digest}, now=now, expected_stage="ready_to_submit"
-        )
-        if updated is None:
-            raise Conflict(CHANGED)
-        await stages.note(
-            self.repo, app.id, "Approved for submission.", source="user", now=now, kind="approved"
-        )
-        return await self._detail(updated)
 
     async def cancel(self, owner: str, application_id: str) -> ApplicationDetail:
         """Any stage before submitting -> cancelled, then the hold is given back."""
@@ -984,7 +957,8 @@ class ApplyService:
             raise Conflict("Only an application that needed you to sign in can be marked as applied there.")
         moved = await stages.move(self.repo, app, "sent", source="user", now=self.clock.now(), kind="applied_there",
                                   note="Applied on the employer's site.",
-                                  changes={"stage_reason": None, "stop_reason": None, **_UNAPPROVED})  # fmt: skip
+                                  changes={"stage_reason": None, "stop_reason": None, "submitted_at": self.clock.now(),
+                                           **_UNAPPROVED})  # fmt: skip
         if moved is None:
             raise Conflict(CHANGED)
         return await self._detail(await self._settle(moved, "release"))
@@ -999,9 +973,7 @@ class ApplyService:
         if stage == "queued":
             return await self.retry(owner, application_id, unlimited=unlimited)
         app = await self._get(owner, application_id)
-        from_sent = (
-            app.stage in stages.SENT_AND_LATER or app.stage == "applied"
-        )  # legacy: applied removed in Z
+        from_sent = app.stage in stages.SENT_AND_LATER
         if (
             stage in stages.ROUTED_TARGETS
             or stage not in TRACK_TARGETS
@@ -1044,7 +1016,7 @@ class ApplyService:
         if app.stage in UNDELETABLE_STAGES:
             raise Conflict("This one may have reached the employer. Say whether it went through first.")
         # a sent application's open hold (an email moved it on, or a capture failed) is charged, never refunded
-        sent = app.stage in stages.SENT_AND_LATER or app.stage == "applied"  # legacy: applied removed in Z
+        sent = app.stage in stages.SENT_AND_LATER
         await self._settle(app, "capture" if sent else "release")
         if not await self.repo.delete_application(application_id, owner):
             raise NotFound(NOT_FOUND)
@@ -1062,11 +1034,12 @@ class ApplyService:
     # ── status and consent ──
 
     async def status(self, owner: str | None, *, enabled: bool) -> ApplyStatus:
-        """``anonymous`` and ``agents`` are legacy and always empty: auto-apply is for signed-in people only."""
+        """Whether auto-apply is on, whether someone is signed in (it is for signed-in people only), and their first
+        check, consent and the price."""
         signed_in = owner is not None
         profile = await self.repo.get_profile(owner) if owner is not None and enabled else None
         return ApplyStatus(
-            enabled=enabled, signedIn=signed_in, anonymous=False, agents=[],
+            enabled=enabled, signedIn=signed_in,
             firstCheckDone=(profile is not None and profile.first_check_at is not None) if signed_in and enabled else None,
             consentAt=_iso(profile.consent_at) if profile is not None else None,
             price=self.settings.billing.apply_credit_cost,
@@ -1214,15 +1187,13 @@ class ApplyService:
         await self.repo.set_self_id(user_of(owner), on, now=self.clock.now())
         return await self.details(owner)
 
-    async def put_resume(self, owner: str, name: str | None, data: bytes | None) -> ApplicantProfile:
+    async def put_resume(self, owner: str, name: str | None, data: bytes | None) -> YourDetails:
         """The default resume, checked by its content: a PDF or a DOCX of at most 5 MB (``data=None`` removes it)."""
         user_id = user_of(owner)
         now = self.clock.now()
         if data is None:
-            removed = await self.repo.put_resume(
-                owner, user_id=user_id, name=None, media_type=None, data=None, now=now
-            )
-            return profile_of(removed)
+            await self.repo.put_resume(owner, user_id=user_id, name=None, media_type=None, data=None, now=now)
+            return await self.details(owner)
         if len(data) > APPLY_RESUME_MAX_BYTES:
             raise PayloadTooLarge("That file is over 5 MB.")
         if not data:
@@ -1233,24 +1204,11 @@ class ApplyService:
         clean = (name or "resume").strip()[:120] or "resume"
         if not clean.lower().endswith(RESUME_EXT[media_type]):
             clean += RESUME_EXT[media_type]
-        stored = await self.repo.put_resume(
+        await self.repo.put_resume(
             owner, user_id=user_id, name=clean, media_type=media_type, data=data, now=now,
             sha256=hashlib.sha256(data).hexdigest(),
         )  # fmt: skip
-        return profile_of(stored)
-
-    # ── legacy (removed in Z) ──
-
-    async def profile(self, owner: str) -> ApplicantProfile:
-        user_of(owner)
-        return profile_of(await self.repo.get_profile(owner))
-
-    async def put_details(self, owner: str, details: ApplicantDetails) -> ApplicantProfile:
-        user_id = user_of(owner)
-        clean = {k: v.strip()[:300] for k, v in details.to_dict().items() if isinstance(v, str) and v.strip()}
-        return profile_of(
-            await self.repo.put_details(owner, user_id=user_id, details=clean, now=self.clock.now())
-        )
+        return await self.details(owner)
 
 
 __all__ = [
@@ -1270,7 +1228,6 @@ __all__ = [
     "fact_sentence",
     "id_shaped",
     "own_email",
-    "profile_of",
     "sniff_resume",
     "summary_of",
     "user_of",

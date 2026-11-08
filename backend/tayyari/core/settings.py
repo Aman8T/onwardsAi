@@ -711,7 +711,6 @@ _SECRET_FIELDS = (
     "razorpay_webhook_secret",
     "stripe_secret_key",
     "stripe_webhook_secret",
-    "gemini_api_key",
     "browser_use_api_key",
 )
 
@@ -882,7 +881,7 @@ manual application instead. The posting match's own list (`api.matching.BOARDS_T
 class ApplySettings(BaseModel):
     """Auto-apply (match -> apply -> track -> learn): ``TAYYARI_APPLY__*``. The feature itself is switched by
     ``AUTO_APPLY_ENABLED`` (`Settings.auto_apply_enabled`, off by default). The keys are third-party names
-    (`BROWSER_USE_API_KEY`, `ANTHROPIC_API_KEY`, and the legacy `GEMINI_API_KEY`). Nothing here is a secret."""
+    (`BROWSER_USE_API_KEY`, `ANTHROPIC_API_KEY`). Nothing here is a secret."""
 
     max_per_day: int = Field(default=10, ge=0)
     """Applications one signed-in person may start per UTC day (0 = no limit; spec 3.2: 10 a day at launch)."""
@@ -923,39 +922,27 @@ class ApplySettings(BaseModel):
     )
     """Sites that are never automated (a comma-separated list or a JSON list; subdomains included). The application is
     tracked with the link for a manual application."""
-    agent_order: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["gemini", "claude"])
-    """The AI fallback adapters, tried in this order among those with a key (``gemini``, ``claude``)."""
-    agent_max_steps: int = Field(default=40, ge=1, le=200)
-    """Model turns an AI fallback run may take before it gives up."""
-    gemini_model: str = "gemini-2.5-computer-use-preview-10-2025"
-    """The Gemini Computer Use model (the preview model id as of 2025-10; check Google's docs for a newer one)."""
-    gemini_endpoint: str = "https://generativelanguage.googleapis.com/v1beta"
-    claude_agent_model: str = "claude-sonnet-5-5"
-    """The Claude model behind the computer-use adapter (``computer_toolset_20260801``; Haiku 5.5 supports it too)."""
     answer_model: str | None = None
     """The model that maps form fields to the person's details and drafts answers to screening questions (default: the
     reader model, Haiku). Its answers cite the person's facts and are checked in code."""
     email_model: str | None = None
     """The model that classifies an employer's email into a stage (default: the reader model)."""
-    est_run_usd: float = Field(default=0.05, ge=0)
-    """The spend reserved before an AI fallback run (settled to the real cost afterwards)."""
     worker_poll_seconds: float = Field(default=3.0, ge=0.1)
     worker_lease_seconds: int = Field(default=600, ge=30)
     """How long a claimed application stays with one worker before another may pick it up."""
     headless: bool = True
+    """The local test browser (``TAYYARI_TEST_BROWSER``, development only) runs headless; production uses Browser Use."""
     chromium_path: str | None = None
-    """A Chromium executable for the worker (default: Playwright's own browser)."""
+    """A Chromium executable for the local test browser (default: Playwright's own, when installed)."""
     viewport_width: int = Field(default=1280, ge=640, le=2560)
     viewport_height: int = Field(default=800, ge=480, le=1600)
     navigation_timeout_s: float = Field(default=30.0, ge=1)
-    draft_promote_after: int = Field(default=3, ge=1)
-    """A recorded draft playbook becomes active after this many successful fills (each still reviewed by its person)."""
     screenshot_days: int = Field(default=30, ge=1)
     """Review screenshots are deleted this long after the application was last touched."""
     admin_emails: str = Field(default="", repr=False, exclude=True)
     """Accounts that may open the metrics (``GET /api/apply/metrics``); comma-separated. Locally the metrics are open."""
 
-    @field_validator("manual_only_domains", "agent_order", mode="before")
+    @field_validator("manual_only_domains", mode="before")
     @classmethod
     def _as_list(cls, v: object) -> object:
         """Comma- or whitespace-separated text (or a JSON list) becomes a list of trimmed, lower-cased entries."""
@@ -1082,8 +1069,6 @@ class Settings(BaseSettings):
         default=False, validation_alias=AliasChoices("AUTO_APPLY_ENABLED", "auto_apply_enabled")
     )
     """Auto-apply (``/api/apply/*``, the tracker page and the apply worker). Off by default; nothing of it runs while off."""
-    gemini_api_key: SecretStr | None = Field(default=None, validation_alias=AliasChoices("GEMINI_API_KEY"))
-    """Google's Gemini API (the Computer Use model behind auto-apply's AI fallback). Unset: that adapter is off."""
     browser_use_api_key: SecretStr | None = Field(
         default=None, validation_alias=AliasChoices("BROWSER_USE_API_KEY")
     )
@@ -1176,7 +1161,6 @@ class Settings(BaseSettings):
             "razorpay_webhooks": self.razorpay_webhooks_enabled,
             "stripe": self.stripe_enabled,
             "auto_apply": self.auto_apply_enabled,
-            "gemini_key": self.gemini_api_key is not None,
             "browser_use_key": self.browser_use_api_key is not None,
             "database": self.db.safe_url,
             "storage": "ephemeral" if self.db.ephemeral else self.db.kind,

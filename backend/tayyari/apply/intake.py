@@ -50,7 +50,7 @@ Liveness = Literal["live", "closed", "unknown"]
 class Fingerprint:
     ats: AtsKind
     apply_url: str | None = None
-    """Where the application form is (None: start from the job page; the AI fallback finds the form)."""
+    """Where the application form is (None: start from the job page and open the form from there)."""
     board: str | None = None
     job_id: str | None = None
 

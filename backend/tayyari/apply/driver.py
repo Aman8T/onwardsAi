@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 from collections.abc import Callable, Collection, Sequence
 from typing import Final, Literal, Protocol
@@ -36,6 +37,24 @@ class GuardNotActive(RuntimeError):
     billed even though it never filled anything), for the caller to record as spend."""
 
     cost_micro_usd: int = 0
+
+
+OPEN_COST_ATTR: Final = "cost_micro_usd"
+"""The attribute a page opener puts on any error it raises after a browser was created: what that stopped browser cost."""
+
+
+def carry_open_cost(exc: BaseException, cost: int) -> None:
+    """Put a failed opening's browser cost on the error on its way out (never raises)."""
+    with contextlib.suppress(AttributeError, TypeError):
+        setattr(exc, OPEN_COST_ATTR, max(int(cost), 0))
+
+
+def open_cost(exc: BaseException) -> int:
+    """What the browser behind a failed `PageOpener.new_page` cost (`carry_open_cost`), 0 when none was created."""
+    try:
+        return max(int(getattr(exc, OPEN_COST_ATTR, 0) or 0), 0)
+    except (TypeError, ValueError):
+        return 0
 
 
 def click_refused(text: str, *, form_on_screen: bool) -> bool:
@@ -152,6 +171,7 @@ class PageOpener(Protocol):
 
 __all__ = [
     "APPLY_WORDS",
+    "OPEN_COST_ATTR",
     "PROBE_BLOCKED",
     "SUBMIT_WORDS",
     "BrowserDriver",
@@ -160,6 +180,8 @@ __all__ = [
     "OpenMode",
     "PageOpener",
     "best_option",
+    "carry_open_cost",
     "click_refused",
+    "open_cost",
     "shows",
 ]

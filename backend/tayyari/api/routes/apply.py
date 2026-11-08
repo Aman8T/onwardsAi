@@ -13,7 +13,11 @@ for an application whose approval matches its review.
                                        resume must be ready. 409 with the reason (and ``existingApplicationId`` or
                                        ``gateReasons``) when a check fails, 402 when no credit is left
     .../{id}/answers, approve, cancel, resolve, applied-there, stage, retry, screenshot?kind=review|confirmation
-    /api/apply/details[...], /api/apply/consent, /api/apply/email, /api/apply/metrics
+    /api/apply/details[...], /api/apply/profile/resume, /api/apply/consent, /api/apply/email, /api/apply/metrics
+
+The check and the email routes are light on their own but fetch an employer's page or call a model, so each is shed per
+account by the in-memory limiter (the ``chat`` bucket, keyed ``u:<user id>``), and the email route is also counted in the
+shared ``chat`` windows per account: an unlimited account is exempt from both.
 """
 
 from __future__ import annotations
@@ -43,7 +47,6 @@ from tayyari.container import Container
 from tayyari.contract.apply import (
     APPLY_RESUME_MAX_BYTES,
     AnswerRequest,
-    ApplicantProfileUpdate,
     ApplyCheck,
     ApplyCheckRequest,
     ApproveRequest,
@@ -55,6 +58,7 @@ from tayyari.contract.apply import (
     SelfIdRequest,
     StageChangeRequest,
     StartApplicationRequest,
+    StillTrueRequest,
 )
 from tayyari.core.errors import BadRequest, Conflict, NotFound, PayloadTooLarge
 from tayyari.storage.ports import PostingTaken, account_owner_key
@@ -94,6 +98,14 @@ async def _start(request: Request) -> tuple[Container, ApplyService, User, str]:
     _enabled(container)
     user = await require_user(request)
     return container, _service(container), user, account_owner_key(user.id)
+
+
+async def _shed(request: Request, container: Container, owner: str) -> bool:
+    """Turn an account that hammers a fetching or model route away before its body is read (429), per account; True
+    for an unlimited account (exempt)."""
+    free = await unlimited(request, container)
+    container.rate_limiter.shed("chat", owner, exempt=free)
+    return free
 
 
 def _json(data: dict[str, Any], status: int = 200) -> JSONResponse:
@@ -177,8 +189,10 @@ async def consent(request: Request) -> JSONResponse:
 
 @router.post("/api/apply/check")
 async def check(request: Request) -> JSONResponse:
-    """The start checks for one posting: read-only, charges nothing."""
+    """The start checks for one posting: read-only, charges nothing. Shed per account (it may read the employer's
+    page and the ATS's public job endpoint)."""
     container, svc, user, owner = await _start(request)
+    await _shed(request, container, owner)
     body = await _body(request, container, ApplyCheckRequest)
     listing_id = _short_id(body.listingId, "listing")
     run_id = _short_id(body.runId, "search")
@@ -353,14 +367,10 @@ async def delete_answer(question_key: str, request: Request) -> JSONResponse:
 @router.post("/api/apply/details/still-true")
 async def still_true(request: Request) -> JSONResponse:
     container, svc, _, owner = await _start(request)
-    require_json_content_type(request)
-    raw = await read_json_body(
-        request, BODY_MAX_BYTES, read_timeout_s=container.settings.guard.upload_read_timeout_s
-    )
-    key = raw.get("questionKey") if isinstance(raw, dict) else None
-    if not isinstance(key, str) or not key.strip():
+    body = await _body(request, container, StillTrueRequest)
+    if not body.questionKey.strip():
         raise BadRequest("Say which answer is still true.")
-    return _json((await svc.still_true(owner, key.strip())).to_dict())
+    return _json((await svc.still_true(owner, body.questionKey.strip())).to_dict())
 
 
 @router.post("/api/apply/details/first-check")
@@ -377,12 +387,13 @@ async def self_id(request: Request) -> JSONResponse:
     return _json((await svc.set_self_id(owner, body.selfIdOnForms)).to_dict())
 
 
-# ───────────────────────── the resume and the legacy details ─────────────────────────
+# ───────────────────────── the resume ─────────────────────────
 
 
 @router.put("/api/apply/profile/resume")
 async def put_resume(request: Request) -> JSONResponse:
-    """The default resume as the raw body: a PDF or DOCX by its content (the Content-Type is not trusted), 5 MB at most."""
+    """The default resume as the raw body: a PDF or DOCX by its content (the Content-Type is not trusted), 5 MB at most.
+    Answers with `YourDetails`."""
     container, svc, _, owner = await _start(request)
     try:  # counted on the stream: a chunked upload with no Content-Length is cut off at the cap too
         data = await read_capped_body(
@@ -400,21 +411,6 @@ async def delete_resume(request: Request) -> JSONResponse:
     return _json((await svc.put_resume(owner, None, None)).to_dict())
 
 
-@router.get("/api/apply/profile")
-async def get_profile(request: Request) -> JSONResponse:
-    """Legacy (removed in Z; Your details replaces it)."""
-    _, svc, _, owner = await _start(request)
-    return _json((await svc.profile(owner)).to_dict())
-
-
-@router.put("/api/apply/profile")
-async def put_profile(request: Request) -> JSONResponse:
-    """Legacy (removed in Z; Your details replaces it)."""
-    container, svc, _, owner = await _start(request)
-    body = await _body(request, container, ApplicantProfileUpdate)
-    return _json((await svc.put_details(owner, body.details)).to_dict())
-
-
 # ───────────────────────── email and metrics ─────────────────────────
 
 
@@ -424,7 +420,9 @@ async def classify_email(request: Request) -> JSONResponse:
     from tayyari.apply.email import EmailTracker
 
     container, _, _, owner = await _start(request)
+    free = await _shed(request, container, owner)
     body = await read_model(request, container, EmailClassifyRequest, max_bytes=EMAIL_BODY_MAX_BYTES)
+    await container.rate_limiter.check("chat", owner, memory=False, globally=False, exempt=free)
     settings = container.settings
     claude = container.claude if settings.anthropic_api_key is not None else None
     tracker = EmailTracker(

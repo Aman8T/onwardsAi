@@ -22,6 +22,7 @@ import type {
   ResolveOutcome,
   SaveAnswerRequest,
   StartApplicationRequest,
+  StillTrueRequest,
   StopReason,
   YourDetails,
 } from '../../shared/apply';
@@ -102,7 +103,8 @@ export const applyApi = {
   details: () => call<YourDetails>('/api/apply/details'),
   saveAnswer: (body: SaveAnswerRequest) => call<YourDetails>('/api/apply/details/answer', json('PUT', body)),
   /** "Still true?": confirms a stale answer without changing it. */
-  stillTrue: (questionKey: string) => call<YourDetails>('/api/apply/details/still-true', json('POST', { questionKey })),
+  stillTrue: (questionKey: string) =>
+    call<YourDetails>('/api/apply/details/still-true', json('POST', { questionKey } satisfies StillTrueRequest)),
   firstCheck: (body: FirstCheckRequest) => call<YourDetails>('/api/apply/details/first-check', json('POST', body)),
   setSelfId: (selfIdOnForms: boolean) => call<YourDetails>('/api/apply/details/self-id', json('PUT', { selfIdOnForms })),
   /** The consent screen's "I agree" (spec 5); the status then carries `consentAt`. */
@@ -143,10 +145,6 @@ export const STAGE_LABEL: Record<ApplicationStage, string> = {
   interviewing: 'Interviewing',
   offer: 'Offer',
   rejected: 'Not this time',
-  // legacy names, removed with the contract's in Z; nothing new is written with them
-  needs_user: 'Waiting for you',
-  ready_to_submit: 'Waiting for you',
-  applied: 'Sent',
 };
 
 /**
@@ -158,8 +156,6 @@ export type StageTone = 'you' | 'ok' | 'bad' | 'plain';
 export function stageTone(stage: ApplicationStage, needsCount = 0): StageTone {
   switch (stage) {
     case 'waiting_for_you':
-    case 'needs_user':
-    case 'ready_to_submit':
       return needsCount > 0 ? 'you' : 'ok';
     case 'needs_signin':
       return 'you';
@@ -167,7 +163,6 @@ export function stageTone(stage: ApplicationStage, needsCount = 0): StageTone {
     case 'failed':
       return 'bad';
     case 'sent':
-    case 'applied':
     case 'viewed':
     case 'interviewing':
     case 'offer':
@@ -207,7 +202,7 @@ export function busy(stage: ApplicationStage): boolean {
 export const TRACKING_STAGES: readonly ApplicationStage[] = ['viewed', 'interviewing', 'offer', 'rejected'];
 
 /** Sent and every later stage: the "After sending" pipeline. */
-export const SENT_STAGES: readonly ApplicationStage[] = ['sent', ...TRACKING_STAGES, 'applied'];
+export const SENT_STAGES: readonly ApplicationStage[] = ['sent', ...TRACKING_STAGES];
 
 export function isSent(stage: ApplicationStage): boolean {
   return SENT_STAGES.includes(stage);

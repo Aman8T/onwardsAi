@@ -41,8 +41,7 @@ log = get_logger(__name__)
 QUOTE_MAX = 160
 
 CANDIDATE_STAGES: Final = frozenset({"check_this_one"}) | (stages.TRACKING - {"offer", "rejected"})
-"""Applications an email may move: sent (or maybe sent) and not yet at an offer or a rejection. ``applied`` is the
-legacy name of ``sent`` (removed in Z)."""
+"""Applications an email may move: sent (or maybe sent) and not yet at an offer or a rejection."""
 
 NOT_SENT_NOTE: Final = "This application was not sent, so an email cannot move it."
 AMBIGUOUS_NOTE: Final = (

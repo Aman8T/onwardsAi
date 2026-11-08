@@ -7,9 +7,7 @@ exactly when the TypeScript field is ``x?:`` (absent on output, never ``null``),
 The whole feature sits behind ``AUTO_APPLY_ENABLED`` (off by default). Nothing is ever submitted to an employer without the
 person's explicit approval of the exact values shown to them (`ApproveRequest.digest` must equal `ApplicationReview.digest`).
 
-A1 is built expand-first (docs/auto-apply.md, the A1 plan): the new names (stages, `StartApplicationRequest`,
-`AnswerRequest`, `YourDetails` and the rest) sit next to the old branch's names, which are marked ``legacy`` and are removed
-in the last package once nothing uses them.
+Signed-in only: every application, saved answer and resume belongs to one account (``u:<user id>``).
 """
 
 # ruff: noqa: N815  (the field names are camelCase on purpose: they are the JSON keys of shared/apply.ts)
@@ -68,23 +66,18 @@ ApplicationStage = Literal[
     "interviewing",
     "offer",
     "rejected",
-    # legacy: removed in Z
-    "needs_user",
-    "ready_to_submit",
-    "applied",
 ]
 """Where an application stands (spec 3). ``waiting_for_you``: questions or the review wait for the person.
 ``needs_signin``: a login wall, a CAPTCHA or an emailed code (`StopReason` says which). ``approved``: the person approved
 the review and the worker will submit it. ``submitting``: the send was committed before the click; only the engine leaves
-it. ``check_this_one``: no clear outcome after the click, never retried. The legacy names (``needs_user``,
-``ready_to_submit``, ``applied``) are the old branch's and go once nothing writes them."""
+it. ``check_this_one``: no clear outcome after the click, never retried."""
 
 AtsKind = Literal["greenhouse", "lever", "ashby", "workday", "unknown"]
 """The applicant tracking system behind a job link."""
 
-ApplySource = Literal["match", "link", "discover"]
-"""How the application started: a posting match, a pasted job link (legacy), or a Discover listing (which runs the match
-first)."""
+ApplySource = Literal["match", "discover"]
+"""How the application started: a posting match (a pasted application link included), or a Discover listing (which runs
+the match first)."""
 
 StageSource = Literal["engine", "user", "email", "system"]
 """Who moved a stage: the apply engine, the person, an email they received, or the app itself."""
@@ -105,18 +98,23 @@ FieldKind = Literal[
     "checkboxGroup",
 ]
 
-FieldSource = Literal["details", "resume", "fact", "answers", "model", "agent", "user", "default"]
-"""Where a filled value came from: the person's saved details, their resume file, one of their facts, an answer kept in the
-answer bank, a model answer grounded in their facts, the AI browser agent (legacy: removed in Z), what they typed just now,
-or a safe default (an optional field, or "prefer not to say" for self-ID)."""
+FieldSource = Literal["details", "resume", "fact", "answers", "model", "user", "default"]
+"""Where a filled value came from: the person's saved details (Your details or the first check), their resume, one of their
+facts, an answer a form asked and they kept, a model answer grounded in their facts, what they typed just now, or a safe
+default (an optional field, or "prefer not to say" for self-ID)."""
 
 Confidence = Literal["high", "medium", "low"]
 
-RunMode = Literal["playbook", "loop", "ai", "manual"]
-"""How a run filled the form: a deterministic playbook (no model), the field-list loop (Haiku, then Sonnet), the AI browser
-agent (legacy: removed in Z), or not at all (manual apply)."""
+RunMode = Literal["playbook", "loop", "manual"]
+"""How a run filled the form: a deterministic playbook (no model), the field-list loop (Haiku, then Sonnet), or not at all
+(manual apply)."""
 
-RunOutcome = Literal["success", "needs_user", "failed", "blocked", "check_this_one", "closed", "needs_signin"]
+RunOutcome = Literal[
+    "success", "questions", "needs_signin", "closed", "failed", "check_this_one", "interrupted", "deferred"
+]
+"""How one engine run ended: a review with nothing open (or a send that went through), a review with questions, a login
+wall or a CAPTCHA, a closed posting, a failure before any click, no clear outcome after the click, a fill that stopped half
+way (queued again or failed), or a run put back for capacity (a Browser Use 429 or the spend ceiling)."""
 
 PlaybookStatus = Literal["active", "draft", "retired"]
 PlaybookOrigin = Literal["builtin", "recorded", "manual"]
@@ -171,10 +169,6 @@ ProgressState = Literal["done", "now", "todo"]
 class ApplyStatus(_Model):
     enabled: bool
     signedIn: bool
-    anonymous: bool
-    """Legacy (removed in Z): auto-apply is for signed-in people only."""
-    agents: list[str]
-    """Legacy (removed in Z): the computer-use fallback adapters."""
     firstCheckDone: bool | None = None
     """The person did (or skipped) the 30-second first check."""
     consentAt: str | None = None
@@ -185,49 +179,6 @@ class ApplyStatus(_Model):
     """Free applications this account has left."""
 
 
-class ApplicantDetails(_Model):
-    """Legacy (removed in Z; replaced by `YourDetails`): what the person saved once for every application."""
-
-    firstName: str | None = None
-    lastName: str | None = None
-    email: str | None = None
-    phone: str | None = None
-    location: str | None = None
-    currentCompany: str | None = None
-    currentTitle: str | None = None
-    linkedin: str | None = None
-    github: str | None = None
-    website: str | None = None
-    workAuthorization: str | None = None
-    needsSponsorship: str | None = None
-    willingToRelocate: str | None = None
-    noticePeriod: str | None = None
-    salaryExpectation: str | None = None
-    startDate: str | None = None
-    howDidYouHear: str | None = None
-    pronouns: str | None = None
-    eeoGender: str | None = None
-    eeoRace: str | None = None
-    eeoVeteran: str | None = None
-    eeoDisability: str | None = None
-
-
-class ApplicantProfile(_Model):
-    """Legacy (removed in Z; replaced by `YourDetails`)."""
-
-    details: ApplicantDetails
-    hasResume: bool
-    savedAnswers: int
-    resumeName: str | None = None
-    updatedAt: str | None = None
-
-
-class ApplicantProfileUpdate(_Model):
-    """Legacy (removed in Z)."""
-
-    details: ApplicantDetails
-
-
 class FilledField(_Model):
     """One field of the form as it will be sent."""
 
@@ -235,13 +186,13 @@ class FilledField(_Model):
     label: str
     kind: FieldKind
     required: bool
+    selector: str
+    """The field's stable selector (id or name, never an nth-of-type path)."""
     value: str | None = None
     source: FieldSource | None = None
     profileKey: str | None = None
     confidence: Confidence | None = None
     factIds: list[str] | None = None
-    selector: str | None = None
-    """The field's stable selector (id or name, never an nth-of-type path); required once the legacy runner is gone."""
     optionValue: str | None = None
     """For a select, radio or combobox: the option's own value (``value`` is its visible text)."""
     options: list[str] | None = None
@@ -273,16 +224,18 @@ class NeedsInput(_Model):
     kind: FieldKind
     required: bool
     reason: str
+    questionKey: str
+    """The answer bank key; one answer fills every waiting form that asks it."""
     options: list[str] | None = None
     suggestion: str | None = None
     factIds: list[str] | None = None
-    questionKey: str | None = None
-    """The answer bank key; one answer fills every waiting form that asks it. Required once the legacy runner is gone."""
     perOffer: bool | None = None
     """Answered for this form only (expected CTC for this role, a declaration): the save box starts unticked."""
     onSite: bool | None = None
     """Typed by the person on the employer's page (an ID number, caste or category): never stored, and the application
     cannot be approved while a required one is open."""
+    attestation: bool | None = None
+    """A signature, declaration or consent tick the person gives in Review for this form only (never kept)."""
     requiredBy: str | None = None
     """The employer whose form asks it."""
     unit: str | None = None
@@ -328,7 +281,6 @@ class ApplicationReview(_Model):
     skipped: list[FilledField]
     warnings: list[str]
     playbookId: str | None = None
-    agent: str | None = None
     submitLabel: str | None = None
     resume: ReviewResume | None = None
     facts: list[CitedFact] | None = None
@@ -391,6 +343,8 @@ class ApplicationSummary(_Model):
     stopReason: StopReason | None = None
     hasConfirmation: bool | None = None
     progress: ApplyProgress | None = None
+    sentAt: str | None = None
+    """When it went to the employer (the click that went through, or the person's word on it); absent before."""
 
 
 class ApplicationDetail(_Model):
@@ -423,18 +377,12 @@ class ApplicationDetail(_Model):
     stopReason: StopReason | None = None
     hasConfirmation: bool | None = None
     progress: ApplyProgress | None = None
+    sentAt: str | None = None
+    """When it went to the employer (as on `ApplicationSummary`)."""
 
 
 class ApplicationList(_Model):
     applications: list[ApplicationSummary]
-
-
-class CreateApplicationRequest(_Model):
-    """Legacy (removed in Z; replaced by `StartApplicationRequest`)."""
-
-    url: str
-    matchId: str | None = None
-    profileId: str | None = None
 
 
 class ApplyCheckRequest(_Model):
@@ -458,6 +406,8 @@ class ApplyCheck(_Model):
     """The earlier application to the same posting (``already_applied``)."""
     gateReasons: list[str] | None = None
     """The match's hard requirements that blocked (``blocked_by_requirement``)."""
+    applyUrl: str | None = None
+    """The employer's own page for the posting, for "Open on <host>'s site" when it is not offered."""
 
 
 class StartApplicationRequest(_Model):
@@ -469,20 +419,6 @@ class StartApplicationRequest(_Model):
     listingId: str | None = None
     runId: str | None = None
     applyUrl: str | None = None
-
-
-class NeedAnswer(_Model):
-    """Legacy (removed in Z; replaced by `QuestionAnswer`)."""
-
-    key: str
-    value: str
-
-
-class AnswerNeedsRequest(_Model):
-    """Legacy (removed in Z; replaced by `AnswerRequest`)."""
-
-    answers: list[NeedAnswer]
-    remember: bool
 
 
 class QuestionAnswer(_Model):
@@ -610,16 +546,29 @@ class EmailClassification(_Model):
     note: str | None = None
 
 
+class StillTrueRequest(_Model):
+    """ "Still true?" on a saved answer (``POST /api/apply/details/still-true``)."""
+
+    questionKey: str
+
+
 class MetricsRow(_Model):
+    """One ATS's engine runs (fills and submits) in the window, by how they ended (`RunOutcome`)."""
+
     ats: str
     runs: int
     playbookRuns: int
-    aiRuns: int
+    loopRuns: int
+    """Runs the field-list loop filled (a model chose which saved value goes where)."""
     successes: int
-    needsUser: int
+    questions: int
+    needsSignin: int
+    closed: int
     failures: int
-    blocked: int
-    aiShare: float
+    checkThisOne: int
+    interrupted: int
+    deferred: int
+    loopShare: float
     successRate: float
     avgSteps: float
     costMicroUsd: int
@@ -660,13 +609,9 @@ __all__ = [
     "NEVER_STORED_KEYS",
     "AlsoWaiting",
     "AnswerGroup",
-    "AnswerNeedsRequest",
     "AnswerRequest",
     "AnswerResult",
     "AnswerSource",
-    "ApplicantDetails",
-    "ApplicantProfile",
-    "ApplicantProfileUpdate",
     "ApplicationDetail",
     "ApplicationEvent",
     "ApplicationList",
@@ -685,7 +630,6 @@ __all__ = [
     "BankQuestion",
     "CitedFact",
     "Confidence",
-    "CreateApplicationRequest",
     "CreditState",
     "EmailClassification",
     "EmailClassifyRequest",
@@ -696,7 +640,6 @@ __all__ = [
     "FilledField",
     "FirstCheckRequest",
     "MetricsRow",
-    "NeedAnswer",
     "NeedsInput",
     "PlaybookOrigin",
     "PlaybookStatus",
@@ -718,6 +661,7 @@ __all__ = [
     "StageChangeRequest",
     "StageSource",
     "StartApplicationRequest",
+    "StillTrueRequest",
     "StopReason",
     "WorkAuthorization",
     "YourDetails",

@@ -201,6 +201,15 @@ export interface StartViewProps {
   onSignIn?: () => void;
 }
 
+/**
+ * The employer's own page for "Open on <host>'s site": the one the caller knows, else the check's `applyUrl` (the
+ * address the start checks read). Only a web address is ever linked.
+ */
+export function employerUrlOf(props: Pick<StartViewProps, 'employerUrl' | 'check'>): string | undefined {
+  const url = props.employerUrl ?? props.check.applyUrl;
+  return url && /^https?:\/\//i.test(url) ? url : undefined;
+}
+
 export function StartView(props: StartViewProps) {
   const { check, match, details, resume, navigate } = props;
   const [starting, setStarting] = useState(false);
@@ -351,8 +360,8 @@ export function StartView(props: StartViewProps) {
                   Choose this match's resume, or save a resume in Your details first.
                 </p>
               )}
-              {props.employerUrl && (
-                <a className="btn btn-quiet ap-wide-btn" href={props.employerUrl} target="_blank" rel="noreferrer noopener">
+              {employerUrlOf(props) && (
+                <a className="btn btn-quiet ap-wide-btn" href={employerUrlOf(props)} target="_blank" rel="noreferrer noopener">
                   Open on {host}'s site instead
                 </a>
               )}
@@ -422,8 +431,8 @@ function FailurePanel(props: StartViewProps) {
       );
       break;
     case 'employer':
-      action = props.employerUrl ? (
-        <a className="btn" href={props.employerUrl} target="_blank" rel="noreferrer noopener">
+      action = employerUrlOf(props) ? (
+        <a className="btn" href={employerUrlOf(props)} target="_blank" rel="noreferrer noopener">
           {f.label}
         </a>
       ) : (

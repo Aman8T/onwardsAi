@@ -17,7 +17,7 @@ from typing import Any
 
 import pytest
 
-from tayyari.apply.driver import OpenMode
+from tayyari.apply.driver import OpenMode, carry_open_cost
 from tayyari.apply.engine import TAILORED_NEED_KEY, ApplyEngine
 from tayyari.apply.worker import ApplyWorker
 from tayyari.core.settings import ApplySettings
@@ -91,14 +91,21 @@ class Spend:
 
 
 class Opener(FakeOpener):
-    """`FakeOpener` that logs each open in the shared order log, and each driver's close."""
+    """`FakeOpener` that logs each open in the shared order log, and each driver's close. ``fail`` makes the next
+    opening raise it, with ``fail_cost`` on it the way `BrowserUseOpener` puts a stopped browser's cost on any error."""
 
     def __init__(self, page: Any, log: list[str], **kwargs: Any) -> None:
         super().__init__(page, **kwargs)
         self.log = log
+        self.fail: BaseException | None = None
+        self.fail_cost = 0
 
     async def new_page(self, mode: OpenMode = "preview", write_hosts: Collection[str] = ()) -> FakeDriver:
         self.log.append(f"open:{mode}")
+        if self.fail is not None:
+            failure, self.fail = self.fail, None
+            carry_open_cost(failure, self.fail_cost)
+            raise failure
         return await super().new_page(mode, write_hosts)
 
 
@@ -128,8 +135,11 @@ class Env:
         self.worker = ApplyWorker(self.engine)
 
     async def seed(self, **fields: Any) -> None:
-        await self.repo.put_details(OWNER, user_id=USER, now=T0, details={
-            "firstName": "Riya", "lastName": "Kapoor", "email": "riya@example.com"})  # fmt: skip
+        for key, value in (("fullName", "Riya Kapoor"), ("email", "riya@example.com")):
+            await self.repo.put_answer(
+                StoredAnswer(user_id=USER, question_key=key, question=key, source="you", ask_each_time=False,
+                             answered_at=T0, created_at=T0, updated_at=T0, value=value)
+            )  # fmt: skip
         await self.repo.put_answer(
             StoredAnswer(user_id=USER, question_key="needsSponsorship:IN", question="Sponsorship in India",
                          source="first_check", ask_each_time=False, answered_at=T0, created_at=T0, updated_at=T0,
@@ -175,7 +185,8 @@ async def test_a_fill_reaches_waiting_for_you_with_the_review_script_and_digest_
     assert app.stage == "waiting_for_you" and app.stop_reason == "questions" and app.lease_owner is None
     assert app.review is not None and app.review_digest == app.review["digest"] and app.review["script"]
     assert {s["op"] for s in app.review["script"]} <= {"fill", "select", "check", "choose", "group"}
-    assert app.review["resume"]["name"] == "Riya-Kapoor.pdf" and app.attempts == 1
+    # attempts count the fills of one go: a fill that ended starts the next go at 0 (H#3)
+    assert app.review["resume"]["name"] == "Riya-Kapoor.pdf" and app.attempts == 0
     assert [n["key"] for n in app.needs or []] == ["question_102"] and app.needs[0]["questionKey"]  # type: ignore[index]
     progress = app.progress or {}
     assert (
@@ -191,7 +202,7 @@ async def test_a_fill_reaches_waiting_for_you_with_the_review_script_and_digest_
     assert (metric.run_kind, metric.mode, metric.outcome, metric.cost_micro_usd) == (
         "fill",
         "playbook",
-        "needs_user",
+        "questions",
         7000,
     )
     assert await env.worker.run_once() is False  # waiting for the person: nothing to run
@@ -257,7 +268,12 @@ async def test_a_refused_spend_reservation_leaves_the_row_queued_with_no_attempt
     await env.worker.run_once()
     app = await env.app()
     assert (app.stage, app.attempts, app.credit_state) == ("queued", 0, "held")
-    assert env.opener.opened == [] and env.repo.metrics == [] and env.credits.calls == []
+    assert env.opener.opened == [] and env.credits.calls == []
+    # a deferred fill still gets its run row, which the per-site limit leaves out (it never reached the site)
+    assert [(m.outcome, m.failure_reason, m.cost_micro_usd) for m in env.repo.metrics] == [
+        ("deferred", "spend_ceiling", 0)
+    ]
+    assert await env.repo.count_domain_runs_since("job-boards.greenhouse.io", T0) == 0
 
 
 class Raising:
@@ -459,3 +475,62 @@ async def test_real_chromium_fills_and_sends_the_saved_page_offline() -> None:
         assert (await env.app()).stage in ("sent", "check_this_one")
     finally:
         await browser.close()
+
+
+# ───────────────────────── interrupted fills (H#3, H#4) ─────────────────────────
+
+
+async def _answered(env: Env) -> None:
+    """The person answered: the row goes back to the queue (what `ApplyService.answer` does)."""
+    app = await env.app()
+    await env.repo.update_application(
+        "ap1", {"stage": "queued", "job": {"typed": dict(TYPED)}}, now=app.updated_at
+    )
+
+
+async def test_a_row_that_filled_normally_once_is_not_failed_early() -> None:
+    env = Env(cost_micro_usd=100)
+    env.engine.settings = ApplySettings(domain_gap_seconds=0, max_per_domain_per_hour=0, requeue_cap=1)
+    await env.seed(job={})
+    await env.worker.run_once()
+    assert (await env.app()).stage == "waiting_for_you"  # a normal fill: this go of fills is over
+    await _answered(env)
+    env.opener.fail, env.opener.fail_cost = ConnectionError("the browser went away"), 1_200
+    await env.worker.run_once()
+    app = await env.app()
+    # lifetime attempts would be 2 > cap 1 and fail the row; per-fill attempts are 1: queued again
+    assert (app.stage, app.attempts, app.credit_state) == ("queued", 1, "held")
+    env.opener.fail, env.opener.fail_cost = ConnectionError("again"), 800
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.stop_reason, app.credit_state) == ("failed", "fill_error", "released")
+    assert env.credits.calls == [("release", "apply:ap1")]
+
+
+async def test_a_browser_that_failed_to_open_is_recorded_as_spend_and_the_run_as_interrupted() -> None:
+    env = Env()
+    await env.seed()
+    env.opener.fail, env.opener.fail_cost = RuntimeError("cdp connect failed"), 2_500
+    await env.worker.run_once()
+    app = await env.app()
+    assert app.stage == "queued" and env.spend.recorded == [(2_500, "browser_use")]
+    (metric,) = env.repo.metrics
+    assert (metric.outcome, metric.failure_reason, metric.cost_micro_usd) == (
+        "interrupted",
+        "RuntimeError",
+        2_500,
+    )
+
+
+async def test_an_expired_fill_lease_writes_an_interrupted_run() -> None:
+    env = Env()
+    await env.seed(stage="filling", attempts=1, lease_until=T0 - timedelta(minutes=1))
+    await env.worker.sweep()
+    app = await env.app()
+    assert app.stage == "queued"
+    (metric,) = env.repo.metrics
+    assert (metric.outcome, metric.failure_reason, metric.cost_micro_usd) == (
+        "interrupted",
+        "lease_expired",
+        0,
+    )

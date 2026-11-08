@@ -1,8 +1,8 @@
 """A dict-backed `ApplyRepo` that behaves like the SQL one (the apply repo contract tests run both).
 
 What it keeps exact: owner scoping (another owner's id reads as unknown), `update_application`'s column check and its
-``expected_stage`` guard, `claim_next`'s rule (queued or approved, plus the legacy approved-but-not-submitted
-``ready_to_submit``; never ``submitting``; a free lease; oldest first; excluded domains skipped), one application per
+``expected_stage`` guard, `claim_next`'s rule (queued or approved, never ``submitting``; a free lease; oldest first;
+excluded domains skipped), an account on every application and profile (NOT NULL ``user_id``), one application per
 ``(user_id, posting_key)`` (ValueError where SQL raises IntegrityError), both screenshots kept apart from the row, the
 purge of filled values, the answer bank's upsert and its refusal of never-stored keys, and copies on the way in and out.
 """
@@ -18,6 +18,7 @@ from typing import Any
 from tayyari.storage.ports import (
     APPLICATION_COLUMNS,
     FILLED_TERMINAL_STAGES,
+    NOT_ON_SITE_OUTCOME,
     StoredAnswer,
     StoredApplication,
     StoredApplicationEvent,
@@ -40,12 +41,7 @@ def _free(app: StoredApplication, now: datetime) -> bool:
 
 
 def _runnable(app: StoredApplication, now: datetime) -> bool:
-    to_run = app.stage in RUNNABLE_STAGES
-    # legacy: removed in Z (the old engine's approved-but-not-submitted rows)
-    legacy_submit = (
-        app.stage == "ready_to_submit" and app.approved_at is not None and app.submitted_at is None
-    )
-    return _free(app, now) and (to_run or legacy_submit)
+    return _free(app, now) and app.stage in RUNNABLE_STAGES
 
 
 class FakeApplyRepo:
@@ -66,8 +62,8 @@ class FakeApplyRepo:
             has_confirmation=app.id in self.confirmations,
         )
 
-    def _posting_taken(self, user_id: str | None, posting_key: str | None, *, other_than: str) -> bool:
-        if user_id is None or posting_key is None:
+    def _posting_taken(self, user_id: str, posting_key: str | None, *, other_than: str) -> bool:
+        if posting_key is None:
             return False  # NULLs are distinct in a unique index
         return any(
             app.id != other_than and app.user_id == user_id and app.posting_key == posting_key
@@ -79,6 +75,8 @@ class FakeApplyRepo:
     async def create_application(self, item: StoredApplication) -> None:
         if item.id in self.applications:
             raise ValueError(f"application {item.id!r} already exists")
+        if not item.user_id:
+            raise ValueError("an application belongs to an account (user_id is NOT NULL)")
         if self._posting_taken(item.user_id, item.posting_key, other_than=item.id):
             raise ValueError(f"an application for posting {item.posting_key!r} already exists")
         self.applications[item.id] = replace(
@@ -194,16 +192,6 @@ class FakeApplyRepo:
         else:
             self.screenshots[application_id] = bytes(data)
 
-    async def purge_screenshots(self, before: datetime) -> int:
-        gone = [
-            key
-            for key in self.screenshots
-            if key in self.applications and self.applications[key].updated_at < _utc(before)
-        ]
-        for key in gone:
-            del self.screenshots[key]
-        return len(gone)
-
     async def get_confirmation(self, application_id: str, owner_key: str | None) -> bytes | None:
         found = self.applications.get(application_id)
         if found is None or (owner_key is not None and found.owner_key != owner_key):
@@ -316,10 +304,16 @@ class FakeApplyRepo:
         return found[:limit]
 
     async def count_domain_runs_since(self, domain: str, since: datetime) -> int:
-        return sum(1 for m in self.metrics if m.domain == domain and m.created_at >= _utc(since))
+        return sum(
+            1
+            for m in self.metrics
+            if m.domain == domain and m.created_at >= _utc(since) and m.outcome != NOT_ON_SITE_OUTCOME
+        )
 
     async def last_domain_run_at(self, domain: str) -> datetime | None:
-        times = [m.created_at for m in self.metrics if m.domain == domain]
+        times = [
+            m.created_at for m in self.metrics if m.domain == domain and m.outcome != NOT_ON_SITE_OUTCOME
+        ]
         return max(times) if times else None
 
     # ── profiles ──
@@ -328,36 +322,31 @@ class FakeApplyRepo:
         found = self.profiles.get(owner_key)
         return None if found is None else copy.deepcopy(found)
 
-    def _ensure(self, owner_key: str, user_id: str | None, now: datetime) -> StoredApplyProfile:
+    def _ensure(self, owner_key: str, user_id: str, now: datetime) -> StoredApplyProfile:
         found = self.profiles.get(owner_key)
         if found is None:
+            if not user_id:
+                raise ValueError("a profile belongs to an account (user_id is NOT NULL)")
             found = StoredApplyProfile(
                 owner_key=owner_key,
                 user_id=user_id,
-                details={},
-                answers={},
                 created_at=_utc(now),
                 updated_at=_utc(now),
             )
             self.profiles[owner_key] = found
         return found
 
-    def _set(self, owner_key: str, user_id: str | None, now: datetime, **values: Any) -> StoredApplyProfile:
+    def _set(self, owner_key: str, user_id: str, now: datetime, **values: Any) -> StoredApplyProfile:
         current = self._ensure(owner_key, user_id, now)
         updated = replace(current, **copy.deepcopy(values), updated_at=_utc(now))
         self.profiles[owner_key] = updated
         return copy.deepcopy(updated)
 
-    async def put_details(
-        self, owner_key: str, *, user_id: str | None, details: dict[str, Any], now: datetime
-    ) -> StoredApplyProfile:
-        return self._set(owner_key, user_id, now, details=dict(details))
-
     async def put_resume(
         self,
         owner_key: str,
         *,
-        user_id: str | None,
+        user_id: str,
         name: str | None,
         media_type: str | None,
         data: bytes | None,
@@ -383,12 +372,6 @@ class FakeApplyRepo:
 
     async def set_consent(self, user_id: str, *, now: datetime) -> StoredApplyProfile:
         return self._set(account_owner_key(user_id), user_id, now, consent_at=_utc(now))
-
-    async def merge_answers(
-        self, owner_key: str, *, user_id: str | None, answers: Mapping[str, Any], now: datetime
-    ) -> StoredApplyProfile:
-        current = self._ensure(owner_key, user_id, now)
-        return self._set(owner_key, user_id, now, answers={**current.answers, **dict(answers)})
 
     # ── answer bank ──
 

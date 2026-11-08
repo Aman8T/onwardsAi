@@ -260,12 +260,19 @@ async def test_the_fake_driver_guard_blocks_writes_until_the_submit_hosts_are_al
     driver = FakeDriver(page, url=url, upload_url="https://boards.greenhouse.io/uploads")
     await driver.goto(url)
     await driver.upload('[id="resume"]', "cv.pdf", b"%PDF", "application/pdf")
-    await driver.click("button[type=submit]")
-    assert driver.sent_writes() == [] and not driver.submitted and driver.blocked_submits == 1
+    with pytest.raises(PermissionError):
+        await driver.click_submit("button[type=submit]")  # never before the hosts are lifted
+    assert driver.sent_writes() == [] and not driver.submitted
     assert ("POST", "https://boards.greenhouse.io/uploads") in driver.blocked
+    driver.allow_submit_hosts(["jobs.lever.co"])  # lifted for another site: the write is still blocked
+    await driver.click_submit("button[type=submit]")
+    assert driver.sent_writes() == [] and not driver.submitted and driver.blocked_submits == 1
     driver.allow_submit_hosts(["boards.greenhouse.io"])
-    await driver.click("button[type=submit]")
+    await driver.click_submit("button[type=submit]")
     assert driver.submitted and driver.sent_writes() == [("POST", url)]
+    assert (
+        not hasattr(driver, "click") and not hasattr(driver, "allow_submit") and not hasattr(driver, "select")
+    )
 
 
 async def test_the_fake_driver_clicks_the_submit_control_only_after_the_hosts_are_lifted() -> None:

@@ -1393,10 +1393,14 @@ earlier applications are typed on the employer's page or in Review for one form.
 (a second check behind the service's)."""
 
 FILLED_TERMINAL_STAGES: frozenset[str] = frozenset(
-    {"sent", "failed", "closed", "cancelled", "viewed", "interviewing", "offer", "rejected", "applied"}
+    {"sent", "failed", "closed", "cancelled", "viewed", "interviewing", "offer", "rejected"}
 )
-"""Stages whose filled values `ApplyRepo.purge_filled` may clear: nothing more will be filled or sent from them
-(``applied`` is the legacy name of ``sent``). ``check_this_one`` is left alone until the person resolves it."""
+"""Stages whose filled values `ApplyRepo.purge_filled` may clear: nothing more will be filled or sent from them.
+``check_this_one`` is left alone until the person resolves it."""
+
+NOT_ON_SITE_OUTCOME = "deferred"
+"""The ``run_metrics.outcome`` of a run put back for capacity (a Browser Use 429, the spend ceiling) before it reached the
+site: kept for the metrics, left out of the per-site limit."""
 
 ACCOUNT_OWNER_PREFIX = "u:"
 """``owner_key`` of an account's applications and profile is ``u:<user id>``."""
@@ -1437,7 +1441,8 @@ class StoredApplication:
     stage: str
     created_at: datetime
     updated_at: datetime
-    user_id: str | None = None
+    user_id: str
+    """The account (``owner_key`` is ``u:<user_id>``); auto-apply is for accounts only."""
     profile_id: str | None = None
     match_id: str | None = None
     apply_url: str | None = None
@@ -1519,7 +1524,6 @@ class StoredRunMetric:
     application_id: str | None = None
     playbook_id: str | None = None
     playbook_status: str | None = None
-    agent: str | None = None
     failure_reason: str | None = None
     steps: int = 0
     duration_ms: int = 0
@@ -1531,14 +1535,12 @@ class StoredRunMetric:
 
 @dataclass(frozen=True, slots=True)
 class StoredApplyProfile:
-    """A person's auto-apply settings and resume (`ApplyProfileRow`); ``details`` and ``answers`` are legacy."""
+    """A person's auto-apply settings and resume (`ApplyProfileRow`); their answers are in the answer bank."""
 
     owner_key: str
-    details: dict[str, Any]
-    answers: dict[str, Any]
+    user_id: str
     created_at: datetime
     updated_at: datetime
-    user_id: str | None = None
     resume_name: str | None = None
     resume_type: str | None = None
     resume_bytes: bytes | None = field(default=None, repr=False)
@@ -1617,10 +1619,9 @@ class ApplyRepo(Protocol):
         self, *, now: datetime, lease_owner: str, lease_until: datetime, exclude_domains: Collection[str] = ()
     ) -> StoredApplication | None:
         """Take the oldest runnable application whose lease is free and whose domain is not in ``exclude_domains``: one in
-        ``queued`` (to fill) or ``approved`` (to submit); legacy: also ``ready_to_submit`` with ``approved_at`` set and
-        ``submitted_at`` unset. A row in ``submitting`` is never taken, even with an expired lease: the click may have
-        happened. The lease is written in the same statement that checks it, so two workers never hold one
-        application."""
+        ``queued`` (to fill) or ``approved`` (to submit). A row in ``submitting`` is never taken, even with an expired
+        lease: the click may have happened. The lease is written in the same statement that checks it, so two workers
+        never hold one application."""
         ...
 
     async def list_expired(
@@ -1648,11 +1649,6 @@ class ApplyRepo(Protocol):
 
     async def put_screenshot(self, application_id: str, data: bytes | None) -> None:
         """Replace (or with None, remove) the review screenshot."""
-        ...
-
-    async def purge_screenshots(self, before: datetime) -> int:
-        """Remove the screenshots of applications last updated before ``before``; how many were removed. Legacy:
-        `purge_filled` replaces it."""
         ...
 
     async def get_confirmation(self, application_id: str, owner_key: str | None) -> bytes | None:
@@ -1708,26 +1704,22 @@ class ApplyRepo(Protocol):
         ...
 
     async def count_domain_runs_since(self, domain: str, since: datetime) -> int:
-        """Engine runs against ``domain`` at or after ``since`` (the per-site limit)."""
+        """Engine runs against ``domain`` at or after ``since`` (the per-site limit). A run put back for capacity
+        (outcome `NOT_ON_SITE_OUTCOME`) never reached the site and is not counted."""
         ...
 
     async def last_domain_run_at(self, domain: str) -> datetime | None:
-        """When the latest run against ``domain`` started, or None."""
+        """When the latest run against ``domain`` started (a deferred one left out, like `count_domain_runs_since`),
+        or None."""
         ...
 
     async def get_profile(self, owner_key: str) -> StoredApplyProfile | None: ...
-
-    async def put_details(
-        self, owner_key: str, *, user_id: str | None, details: dict[str, Any], now: datetime
-    ) -> StoredApplyProfile:
-        """Create or update the owner's saved details (answers and resume are kept)."""
-        ...
 
     async def put_resume(
         self,
         owner_key: str,
         *,
-        user_id: str | None,
+        user_id: str,
         name: str | None,
         media_type: str | None,
         data: bytes | None,
@@ -1770,18 +1762,13 @@ class ApplyRepo(Protocol):
         """Remove the answer; False when there was none."""
         ...
 
-    async def merge_answers(
-        self, owner_key: str, *, user_id: str | None, answers: Mapping[str, Any], now: datetime
-    ) -> StoredApplyProfile:
-        """Create the profile if needed and merge ``answers`` (question key -> answer record) into its kept answers."""
-        ...
-
 
 __all__ = [
     "ACCOUNT_OWNER_PREFIX",
     "APPLICATION_COLUMNS",
     "FILLED_TERMINAL_STAGES",
     "NEVER_STORED_ANSWER_KEYS",
+    "NOT_ON_SITE_OUTCOME",
     "ApplyRepo",
     "BillingRepo",
     "CardRepo",

@@ -25,7 +25,7 @@ from tayyari.apply.browser_use import (
     HttpBrowserUseApi,
     usd_to_micro,
 )
-from tayyari.apply.driver import GuardNotActive
+from tayyari.apply.driver import GuardNotActive, open_cost
 from tayyari.apply.netguard import PROBE_PAGE, PROBE_URL, extension_zip
 from tayyari.core.settings import ApplySettings, Settings
 from tayyari.llm.errors import SpendCeilingReached
@@ -366,3 +366,19 @@ async def test_a_browser_that_fails_its_probe_still_reports_its_cost_and_drops_t
     with pytest.raises(GuardNotActive):
         await open_.new_page()
     assert len(bu.uploads) == 2  # uploaded again after the failed probe
+
+
+async def test_a_failed_connection_carries_the_stopped_browsers_cost_on_the_error() -> None:
+    """H#4: any error after the browser was created, not only a probe that was not blocked, carries what it cost."""
+    bu, connect = FakeBrowserUseApi(cost=4_500), FakeConnect(fail=True)
+    open_, _ = opener(bu, connect)
+    with pytest.raises(RuntimeError) as raised:
+        await open_.new_page()
+    assert open_cost(raised.value) == 4_500 and bu.cost_reads == ["br-1"]
+    no_browser = FakeBrowserUseApi(fail_create=True)
+    open_, _ = opener(no_browser, FakeConnect())
+    with pytest.raises(RuntimeError) as raised:
+        await open_.new_page()
+    assert (
+        open_cost(raised.value) == 0 and no_browser.cost_reads == []
+    )  # nothing was created, nothing was billed

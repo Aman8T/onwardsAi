@@ -13,34 +13,38 @@ from tests.fakes.apply import FakeApplyRepo
 
 T0 = datetime(2026, 11, 8, 9, 0, tzinfo=UTC)
 
+OLD_STAGES = ["needs_user", "ready_to_submit", "applied"]
+"""The old branch's stage names: no longer stages at all."""
+
 
 @pytest.mark.parametrize(
     ("frm", "to", "source", "ok"),
     [
         ("queued", "filling", "engine", True),
-        ("filling", "ready_to_submit", "engine", True),
-        ("ready_to_submit", "applied", "engine", True),
-        ("queued", "applied", "engine", False),  # the engine never skips the review
-        ("needs_user", "applied", "engine", False),
-        ("applied", "rejected", "engine", False),
-        ("needs_user", "queued", "user", True),
+        ("queued", "sent", "engine", False),  # the engine never skips the review
+        ("sent", "rejected", "engine", False),
         ("failed", "queued", "user", True),
-        ("applied", "queued", "user", False),
-        ("needs_user", "applied", "user", True),  # applied on the site by hand
         ("offer", "rejected", "user", True),
-        ("queued", "ready_to_submit", "user", False),  # only the engine fills
-        ("applied", "interviewing", "email", True),
+        ("queued", "waiting_for_you", "user", False),  # only the engine fills
+        ("sent", "interviewing", "email", True),
         ("interviewing", "viewed", "email", False),  # email moves forward only
         ("viewed", "rejected", "email", True),
         ("offer", "rejected", "email", False),
-        ("needs_user", "applied", "email", True),
         ("queued", "interviewing", "email", False),
-        ("applied", "applied", "user", False),
-        ("applied", "nonsense", "system", False),
+        ("sent", "sent", "user", False),
+        ("sent", "nonsense", "system", False),
     ],
 )
 def test_transitions(frm: str, to: str, source: str, ok: bool) -> None:
     assert allowed(frm, to, source) is ok  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("old", OLD_STAGES)
+@pytest.mark.parametrize("source", ["engine", "user", "email", "system"])
+def test_the_old_stage_names_are_gone(old: str, source: str) -> None:
+    assert old not in stages.STAGES
+    assert not allowed(old, "queued", source) and not allowed("queued", old, source)  # type: ignore[arg-type]
+    assert not allowed("sent", old, source) and not allowed(old, "sent", source)  # type: ignore[arg-type]
 
 
 ENGINE_MOVES = [
@@ -69,7 +73,6 @@ USER_MOVES = [
     ),  # the answers requeue: an answered row (and its siblings) goes back to the queue
     ("waiting_for_you", "approved"),
     ("check_this_one", "sent"),
-    ("check_this_one", "waiting_for_you"),
     ("check_this_one", "failed"),  # resolve: it did not go through
     ("needs_signin", "sent"),  # applied on the employer's page
     ("sent", "viewed"),
@@ -140,7 +143,7 @@ def test_a_system_repair_may_leave_submitting() -> None:
     assert allowed("submitting", "check_this_one", "system")
 
 
-@pytest.mark.parametrize("to", ["viewed", "interviewing", "offer", "rejected", "applied"])
+@pytest.mark.parametrize("to", ["viewed", "interviewing", "offer", "rejected"])
 @pytest.mark.parametrize(
     "frm", ["queued", "filling", "waiting_for_you", "needs_signin", "approved", "check_this_one", "failed", "closed",
             "cancelled"],
@@ -163,7 +166,7 @@ def test_every_new_stage_is_in_the_machine() -> None:
     }
     assert new <= set(stages.STAGES)
     assert stages.REOPENABLE <= set(stages.STAGES) and "submitting" not in stages.USER_CANCELLABLE
-    assert "sent" in stages.TRACKING and "applied" in stages.TRACKING
+    assert stages.TRACKING == stages.SENT_AND_LATER and "sent" in stages.TRACKING
 
 
 def _app(stage: str) -> StoredApplication:
@@ -216,16 +219,14 @@ def test_the_answers_requeue_is_not_try_again() -> None:
     assert "waiting_for_you" not in stages.USER_RETRYABLE
 
 
-@pytest.mark.parametrize("frm", ["needs_user", "ready_to_submit"])
-def test_legacy_applied_is_reachable_only_from_the_old_stages(frm: str) -> None:
-    assert allowed(frm, "applied", "user")
-    assert allowed(frm, "applied", "email")
-
-
-def test_a_failed_row_cannot_be_marked_applied_by_email() -> None:
-    assert not allowed("failed", "applied", "email")  # it was refunded before the click
-
-
 def test_approve_resolve_and_i_applied_there_have_their_own_routes() -> None:
     assert {"approved", "sent", "waiting_for_you"} <= stages.ROUTED_TARGETS
     assert not (stages.ROUTED_TARGETS & (stages.SENT_AND_LATER - {"sent"}))
+
+
+def test_resolve_settles_a_check_this_one_to_sent_or_failed_only() -> None:
+    assert allowed("check_this_one", "sent", "user") and allowed("check_this_one", "failed", "user")
+    assert not allowed(
+        "check_this_one", "waiting_for_you", "user"
+    )  # nothing is filled again from an unclear send
+    assert not allowed("check_this_one", "queued", "user")

@@ -19,21 +19,35 @@ if not APPLY_TS.is_file():
 
 INTERFACES: dict[str, type[BaseModel]] = {
     name: getattr(ap, name)
-    for name in ["ApplyStatus", "ApplicantDetails", "ApplicantProfile", "ApplicantProfileUpdate", "FilledField", "NeedsInput",
-                 "ApplicationReview", "ApplicationEvent", "ApplicationSummary", "ApplicationDetail", "ApplicationList",
-                 "CreateApplicationRequest", "NeedAnswer", "AnswerNeedsRequest", "ApproveRequest", "StageChangeRequest",
-                 "EmailClassifyRequest", "EmailClassification", "MetricsRow", "FailureCount", "PlaybookSummary", "ApplyMetrics",
-                 # A1 (expand): the new shapes beside the legacy ones above
-                 "ApplyCheckRequest", "ApplyCheck", "StartApplicationRequest", "QuestionAnswer", "AnswerRequest",
-                 "AnswerResult", "ResolveRequest", "CitedFact", "ReviewResume", "ScriptStep", "AlsoWaiting", "SavedAnswer",
-                 "BankQuestion", "WorkAuthorization", "YourDetails", "SaveAnswerRequest", "FirstCheckRequest",
-                 "SelfIdRequest", "ProgressSection", "ApplyProgress"]
+    for name in ["ApplyStatus", "FilledField", "NeedsInput", "ApplicationReview", "ApplicationEvent", "ApplicationSummary",
+                 "ApplicationDetail", "ApplicationList", "ApproveRequest", "StageChangeRequest", "EmailClassifyRequest",
+                 "EmailClassification", "MetricsRow", "FailureCount", "PlaybookSummary", "ApplyMetrics", "ApplyCheckRequest",
+                 "ApplyCheck", "StartApplicationRequest", "QuestionAnswer", "AnswerRequest", "AnswerResult",
+                 "ResolveRequest", "CitedFact", "ReviewResume", "ScriptStep", "AlsoWaiting", "SavedAnswer", "BankQuestion",
+                 "WorkAuthorization", "YourDetails", "SaveAnswerRequest", "FirstCheckRequest", "SelfIdRequest",
+                 "StillTrueRequest", "ProgressSection", "ApplyProgress"]
 }  # fmt: skip
 UNIONS = ["ApplicationStage", "AtsKind", "ApplySource", "StageSource", "FieldKind", "FieldSource", "Confidence", "RunMode",
-          "RunOutcome", "PlaybookStatus", "PlaybookOrigin", "EmailStage",
-          # A1 (expand)
-          "StopReason", "ResumeChoice", "CreditState", "ApplyBlockReason", "AnswerSource", "AnswerGroup", "ResolveOutcome",
-          "ScriptOp", "ProgressState"]  # fmt: skip
+          "RunOutcome", "PlaybookStatus", "PlaybookOrigin", "EmailStage", "StopReason", "ResumeChoice", "CreditState",
+          "ApplyBlockReason", "AnswerSource", "AnswerGroup", "ResolveOutcome", "ScriptOp", "ProgressState"]  # fmt: skip
+
+LEGACY_NAMES = ["ApplicantDetails", "ApplicantProfile", "ApplicantProfileUpdate", "CreateApplicationRequest", "NeedAnswer",
+                "AnswerNeedsRequest"]  # fmt: skip
+"""The old branch's shapes: gone from both sides."""
+
+
+def test_the_legacy_names_are_gone() -> None:
+    text = APPLY_TS.read_text(encoding="utf-8")
+    for name in LEGACY_NAMES:
+        assert not hasattr(ap, name) and f"interface {name} " not in text
+    assert not {"needs_user", "ready_to_submit", "applied"} & set(get_args(ap.ApplicationStage))
+    assert "agent" not in get_args(ap.FieldSource) and "ai" not in get_args(ap.RunMode)
+    assert not {"anonymous", "agents"} & set(ap.ApplyStatus.model_fields)
+
+
+def test_selectors_and_question_keys_are_required() -> None:
+    assert ap.FilledField.model_fields["selector"].is_required()
+    assert ap.NeedsInput.model_fields["questionKey"].is_required()
 
 
 def test_every_union_is_listed() -> None:

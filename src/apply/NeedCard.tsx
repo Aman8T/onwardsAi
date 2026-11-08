@@ -18,15 +18,16 @@ import { plural } from '../lib/ui';
 
 /**
  * Signatures, declarations and consent ticks: typed or ticked by the person in Review, for this form only, never kept.
- * Mirrors `apply.playbook.ATTESTATION_KEYS`.
+ * The server marks such a need (`NeedsInput.attestation`); this mirror of `apply.playbook.ATTESTATION_KEYS` covers a need
+ * stored before the flag.
  */
 export const ATTESTATION_KEYS: ReadonlySet<string> = new Set(['signature', 'declaration', 'consent']);
 
 /** The answer bank key a need is answered under. Every need carries one now; the field key is the fallback. */
-export const keyOf = (need: Pick<NeedsInput, 'key' | 'questionKey'>): string => need.questionKey ?? need.key;
+export const keyOf = (need: Pick<NeedsInput, 'key' | 'questionKey'>): string => need.questionKey || need.key;
 
-export function isAttestation(need: Pick<NeedsInput, 'key' | 'questionKey'>): boolean {
-  return ATTESTATION_KEYS.has(keyOf(need));
+export function isAttestation(need: Pick<NeedsInput, 'key' | 'questionKey' | 'attestation'>): boolean {
+  return need.attestation === true || ATTESTATION_KEYS.has(keyOf(need));
 }
 
 /**

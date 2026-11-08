@@ -492,7 +492,7 @@ async function main(): Promise<number> {
   type Input = Parameters<typeof entry.roleApplyFor>[0];
   type Summary = NonNullable<Input['application']>;
   type Check = NonNullable<NonNullable<Input['check']>['check']>;
-  const status = (over: Partial<NonNullable<Input['status']>> = {}): NonNullable<Input['status']> => ({ enabled: true, signedIn: true, anonymous: false, agents: [], ...over });
+  const status = (over: Partial<NonNullable<Input['status']>> = {}): NonNullable<Input['status']> => ({ enabled: true, signedIn: true, ...over });
   const summary = (over: Partial<Summary> = {}): Summary => ({
     id: 'a1', stage: 'sent', source: 'match', ats: 'greenhouse', domain: 'boards.greenhouse.io', jobUrl: 'https://boards.greenhouse.io/acme/jobs/1',
     createdAt: '2026-11-04T12:00:00Z', updatedAt: '2026-11-04T12:00:00Z', needsCount: 0, hasScreenshot: false, matchId: 'm1', ...over,

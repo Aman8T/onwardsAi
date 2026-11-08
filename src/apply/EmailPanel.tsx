@@ -23,7 +23,9 @@ interface EmailPanelProps {
 
 /** The sentence shown after the email was read. Code picks the words from the classification. */
 export function resultText(got: EmailClassification): string {
-  if (got.applied && got.stage !== 'none') return `Moved to ${STAGE_LABEL[got.stage]}${got.quote ? `: “${got.quote}”` : '.'}`;
+  // "applied" is the email's word for "your application arrived": the row is then sent
+  const label = got.stage === 'applied' ? STAGE_LABEL.sent : got.stage === 'none' ? '' : STAGE_LABEL[got.stage];
+  if (got.applied && got.stage !== 'none') return `Moved to ${label}${got.quote ? `: “${got.quote}”` : '.'}`;
   if (got.note) return got.note;
   if (got.stage === 'none') return 'Nothing in it changes a stage.';
   return 'It reads like a reply, but no application matched it. Pick the application above and try again.';

@@ -50,10 +50,12 @@ def ctx() -> FillContext:
                "linkedin": "https://linkedin.com/in/riya", "location": "Pune, India", "noticePeriod": "30 days",
                "currentCompany": "Fintech Co"}  # fmt: skip
     return FillContext(
-        details=details,
         resume=Resume("Riya-Kapoor.pdf", b"%PDF-1.7 fake"),
         typed={"question_102": "Because of the platform."},
-        bank={"needsSponsorship:IN": BankEntry("No", "first_check")},
+        bank={
+            **{k: BankEntry(v) for k, v in details.items()},
+            "needsSponsorship:IN": BankEntry("No", "first_check"),
+        },
     )
 
 
@@ -63,9 +65,9 @@ async def test_a_preview_sends_nothing_and_leaves_the_resume_empty(
 ) -> None:
     quiet = FakeDriver(page, url=url, upload_url=f"https://{url.split('/')[2]}/uploads")
     result = await preview(quiet, playbook, url, ctx(), None)
-    assert result.status in ("ready", "needs_user") and result.fields
+    assert result.status in ("ready", "questions") and result.fields
     assert all(method in READ_METHODS for method, _ in quiet.requests)  # no non-GET was even tried
-    assert quiet.allow_calls == [] and not quiet.submit_allowed and not quiet.submitted
+    assert quiet.allow_calls == [] and not quiet.write_hosts and not quiet.submitted
     assert "upload" not in [op for op, _, _ in quiet.actions]
     assert quiet.values.get(resume) is None
     scan = await quiet.scan()

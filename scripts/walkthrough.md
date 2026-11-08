@@ -328,6 +328,25 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     - **Without a server,** `/dev/card` and its states (`?state=github`, `github-match`, `linkedin`, `bars`, `many`,
       `phone`, `sample`, `anonymous`, `fail-put`, `image-failed` …; `?scheme=dark`).
 
+22. **Auto-apply** (`/apply`; needs `AUTO_APPLY_ENABLED=true` and a sign-in. Without `BROWSER_USE_API_KEY` the worker
+    does not start, so a started application stays "Waiting to fill"; nothing is ever sent without your approval).
+    - **Signed out.** `/apply` and "Apply for me" ask you to sign in; no route but the status answers without one.
+    - **First time.** Consent first (what is sent, that Browser Use and Anthropic process the form, screenshots kept 30
+      days), then the 30-second first check. "Your details" lists every saved answer with where it came from.
+    - **Start.** On a finished match of a Greenhouse, Lever or Ashby posting, "Apply for me" runs the start check
+      (nothing charged), then shows the resume choice and the price. A Workday, closed or manual-only posting shows the
+      reason and "Open on <host>'s site" instead. On Discover, a second "Apply for me" on the same listing reuses its
+      match rather than starting a new one.
+    - **Fill and review** (with the key set). The row goes Waiting to fill → Filling with its sections, then questions or
+      the review: every value with its source, the screenshot, and Approve, which stays off while a required question is
+      open. Answer a question with "Save" ticked: other waiting applications that ask it fill again too.
+    - **Send.** Approve: Sending, then Sent with the confirmation screenshot, or "Check this one" when nothing clear came
+      back. "It didn’t: refund me" there gives the credit back and the row moves to Didn't go; it is never resent.
+    - **Track.** Applications' tabs (Waiting, Filling, Sent, Check this one, Didn't go); a sent row with no reply for
+      3 weeks (counted from when it was sent) shows "Heard back?". Paste an employer's email to move a stage forward.
+    - **Without a server,** `/dev/apply` and its screens (`?screen=applications`, `details`, `first-check`, `consent`,
+      `start-offer`, `run-filling`, `run-questions`, `run-review`, `run-check`, `run-sent` …).
+
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`), except the
 role's, which Prepare changed on purpose (no percentage).

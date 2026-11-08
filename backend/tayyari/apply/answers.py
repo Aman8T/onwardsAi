@@ -1,6 +1,8 @@
-"""What goes into each field: what the person typed for this application, their answer bank (or the legacy saved details
-and kept answers), a safe default, or a model answer that cites their facts. Anything else is asked (required) or left
-blank (optional). Precedence: typed > answer bank or details > default > a question for the person.
+"""What goes into each field: what the person typed for this application, their answer bank, a safe default, or a model
+answer that cites their facts. Anything else is asked (required) or left blank (optional). Precedence: typed > answer
+bank > default > a question for the person. The answer bank is the only saved source (`FillContext.bank`); code derives
+only what follows from it (a full name from first and last name and back, a phone picker's country from the dial code,
+the country of residence from the city).
 
 Rules the code holds to (spec 1 rule 7 and 2.2, project-soul.md):
 - A model never answers eligibility, salary, notice period, demographic, consent or Indian-form questions (`NO_MODEL_KEYS`);
@@ -41,9 +43,7 @@ from tayyari.apply.playbook import (
     REQUIRED_ONLY_KEYS,
     SELF_ID_KEYS,
     Playbook,
-    canonical_key,
     generic_rule_for,
-    legacy_names,
     rule_for,
     scoped_key,
 )
@@ -73,8 +73,7 @@ NO_MODEL_KEYS: Final[frozenset[str]] = (
     | COUNTRY_KEYS
     | INDIA_KEYS
     | {
-        "willingToRelocate", "salaryExpectation", "startDate", "howDidYouHear", "email", "phone", "phoneCountry",
-        "country", "firstName", "lastName", "fullName",
+        "startDate", "howDidYouHear", "email", "phone", "phoneCountry", "country", "firstName", "lastName", "fullName",
     }
 )  # fmt: skip
 """Keys a model never answers: they come from the person or are asked."""
@@ -192,14 +191,14 @@ def question_key(item: FormField | str, rule_key: str | None = None, country: st
     """The answer-bank key of a field: its canonical profile key (``noticePeriod``, ``expectedCtc``, ``pan``), the
     per-country key (``workAuthorization:IN``), or ``q:<hash>`` of its normalised label for a custom question. A
     work-authorisation question with no known country gets the label's hash, which the per-country lookup never reads.
-    A bare label (legacy kept answers) gives its hash."""
+    A bare label gives its hash."""
     if isinstance(item, str):
         return _hashed(item)
     if rule_key is None:
         return _hashed(item.label)
     if rule_key.startswith("q:"):
         return rule_key
-    key = canonical_key(rule_key)
+    key = rule_key
     if key in COUNTRY_KEYS:
         return scoped_key(key, country) if country else _hashed(item.label)
     return key
@@ -280,10 +279,6 @@ _BANK_SOURCE: Final[dict[str, FieldSource]] = {
 
 @dataclass(slots=True)
 class FillContext:
-    details: dict[str, str]
-    """Legacy saved details (a fallback for the answer bank until package Z)."""
-    kept: Mapping[str, Any] = field(default_factory=dict)
-    """Legacy kept answers: question key -> ``{"question", "answer"}`` (a fallback until package Z)."""
     typed: Mapping[str, str] = field(default_factory=dict)
     """What the person typed for this application, by field key or question key."""
     resume: Resume | None = None
@@ -309,8 +304,6 @@ class Planned:
     profile_key: str | None = None
     confidence: Confidence | None = None
     fact_ids: list[str] | None = None
-    file: Resume | None = None
-    """Legacy; always None now (the resume is `Plan.resume`)."""
     option_value: str | None = None
     question_key: str | None = None
     attestation: bool = False
@@ -343,9 +336,9 @@ class Plan:
     def review_fields(self) -> list[FilledField]:
         return [
             FilledField(
-                key=p.item.key, label=p.item.label, kind=p.item.kind, required=p.item.required, value=p.value,
-                source=p.source, profileKey=p.profile_key, confidence=p.confidence, factIds=p.fact_ids,
-                selector=p.item.selector, optionValue=p.option_value,
+                key=p.item.key, label=p.item.label, kind=p.item.kind, required=p.item.required,
+                selector=p.item.selector, value=p.value, source=p.source, profileKey=p.profile_key,
+                confidence=p.confidence, factIds=p.fact_ids, optionValue=p.option_value,
                 options=[text for _, text in p.item.options] or None, order=p.order, questionKey=p.question_key,
                 attestation=True if p.attestation else None,
             )
@@ -415,25 +408,37 @@ def _from_bank(ctx: FillContext, names: Sequence[str]) -> _Found:
     return _Found()
 
 
-def _from_details(ctx: FillContext, key: str) -> str | None:
+def _name_part(ctx: FillContext, key: str) -> _Found:
+    """A name field the bank does not hold under its own key, derived from the others: the full name from the first and
+    last name, the first name from the full name's first word, the last name from its last word."""
     if key == "fullName":
-        parts = [ctx.details.get("firstName"), ctx.details.get("lastName")]
-        joined = " ".join(p.strip() for p in parts if p and p.strip())
-        return joined or None
-    for name in legacy_names(key):
-        if (value := _clean(ctx.details.get(name))) is not None:
-            return value
-    return None
+        parts = [_from_bank(ctx, [k]).value for k in ("firstName", "lastName")]
+        joined = " ".join(p for p in parts if p)
+        return _Found(joined, "details") if joined else _Found()
+    full = _from_bank(ctx, ["fullName"]).value
+    words = full.split() if full else []
+    if key == "firstName" and words:
+        return _Found(words[0], "details")
+    if key == "lastName" and len(words) > 1:
+        return _Found(words[-1], "details")
+    return _Found()
+
+
+def saved_value(ctx: FillContext, key: str) -> tuple[str | None, FieldSource | None, bool]:
+    """A profile key's saved value as ``(value, source, ask_each_time)``: the answer bank, then what code derives from it.
+    The field-list loop offers exactly these values to its model."""
+    found = _saved(ctx, key)
+    return found.value, found.source, found.ask_each_time
 
 
 def _saved(ctx: FillContext, key: str) -> _Found:
-    """A profile key's saved value: the answer bank (canonical name, then old names), then the legacy details, then what
-    code can derive (a phone picker's country from the dial code, the country of residence from the city)."""
-    banked = _from_bank(ctx, legacy_names(key))
+    """A profile key's saved value: the answer bank, then what code can derive from it (a name part, a phone picker's
+    country from the dial code, the country of residence from the city)."""
+    banked = _from_bank(ctx, [key])
     if banked.value is not None or banked.ask_each_time:
         return banked
-    if (detail := _from_details(ctx, key)) is not None:
-        return _Found(detail, "details")
+    if key in ("fullName", "firstName", "lastName"):
+        return _name_part(ctx, key)
     if key == "phoneCountry":
         phone = _saved(ctx, "phone").value or ""
         match = re.match(r"^\s*\+\s*(\d{1,3})", phone)
@@ -489,8 +494,8 @@ def _conflict(key: str, item: FormField, value: str) -> str | None:
 def plan_fields(
     fields: list[FormField], playbook: Playbook, ctx: FillContext
 ) -> tuple[Plan, list[FormField]]:
-    """The deterministic part: every field that what the person typed, their answer bank or details, or a safe default
-    settles, the questions for the person, and the open questions left for a model (a later `apply_model_answers`)."""
+    """The deterministic part: every field that what the person typed, their answer bank, or a safe default settles,
+    the questions for the person, and the open questions left for a model (a later `apply_model_answers`)."""
     plan, open_questions = Plan(), []
     for order, item in enumerate(fields):
         key = rule_for(item, playbook)
@@ -537,11 +542,6 @@ def plan_fields(
             _per_country(plan, item, key, qkey, country, ctx, order)
             continue
         found = _saved(ctx, key) if key is not None and not key.startswith("q:") else _from_bank(ctx, [qkey])
-        if found.value is None and not found.ask_each_time:
-            kept = ctx.kept.get(question_key(item.label))
-            kept_answer = _clean(kept.get("answer")) if isinstance(kept, Mapping) else None
-            if kept_answer is not None:
-                found = _Found(kept_answer, "answers")
         if found.value is not None and found.source is not None:
             if key in REQUIRED_ONLY_KEYS and not item.required:
                 plan.skipped.append(_skip(item))
@@ -593,6 +593,7 @@ def _never_stored(
                     qkey,
                     ctx,
                     per_offer=True,
+                    attestation=True,
                 )
             )
         else:
@@ -654,9 +655,8 @@ def _self_id(plan: Plan, item: FormField, key: str, qkey: str, ctx: FillContext,
 def _per_country(
     plan: Plan, item: FormField, key: str, qkey: str, country: str | None, ctx: FillContext, order: int
 ) -> None:
-    """Filled only from the answer bank's entry for this exact country (``workAuthorization:IN``). The legacy details
-    never named a country, so they never fill a per-country question: a country-less answer is never read as any
-    country's."""
+    """Filled only from the answer bank's entry for this exact country (``workAuthorization:IN``): an answer for one
+    country is never read as another's, and an unknown country is a question."""
     found = _from_bank(ctx, [qkey]) if country is not None else _Found()
     if found.value is not None and found.source is not None:
         if _place(plan, item, found.value, found.source, key, qkey, order):
@@ -743,17 +743,21 @@ def _place(
 def _need(
     item: FormField, reason: str, qkey: str, ctx: FillContext, *, suggestion: str | None = None,
     fact_ids: list[str] | None = None, per_offer: bool = False, on_site: bool = False, unit: str | None = None,
+    attestation: bool = False,
 ) -> NeedsInput:  # fmt: skip
     return NeedsInput(
-        key=item.key, label=item.label, kind=item.kind, required=item.required, reason=reason,
-        options=[text for _, text in item.options] or None, suggestion=suggestion, factIds=fact_ids, questionKey=qkey,
+        key=item.key, label=item.label, kind=item.kind, required=item.required, reason=reason, questionKey=qkey,
+        options=[text for _, text in item.options] or None, suggestion=suggestion, factIds=fact_ids,
         perOffer=True if per_offer else None, onSite=True if on_site else None,
+        attestation=True if attestation else None,
         requiredBy=ctx.company if (item.required and ctx.company) else None, unit=unit,
     )  # fmt: skip
 
 
 def _skip(item: FormField) -> FilledField:
-    return FilledField(key=item.key, label=item.label, kind=item.kind, required=item.required)
+    return FilledField(
+        key=item.key, label=item.label, kind=item.kind, required=item.required, selector=item.selector
+    )
 
 
 # ───────────────────────── the model ─────────────────────────
@@ -882,5 +886,6 @@ __all__ = [
     "plan_fields",
     "question_key",
     "resolve_country",
+    "saved_value",
     "stable_key",
 ]

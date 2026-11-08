@@ -6,7 +6,7 @@ Claude client, the credit hold), until interrupted (``--once``: until nothing is
 ``AUTO_APPLY_ENABLED=true`` and ``BROWSER_USE_API_KEY``; no local browser is installed, because the worker connects to the
 hosted browser over CDP. ``TAYYARI_TEST_BROWSER=1`` drives a local Chromium instead (offline runs; ``--headed`` shows
 it). Use it when ``TAYYARI_APPLY__WORKER_IN_APP=false`` keeps the worker out of the web app. ``apply-metrics`` prints
-playbook vs model runs, outcomes and failure reasons per ATS (no key needed).
+playbook vs field-list loop runs, outcomes and failure reasons per ATS (no key needed).
 """
 
 from __future__ import annotations
@@ -64,10 +64,12 @@ async def _metrics(days: int, as_json: bool) -> int:
         print(json.dumps(metrics.to_dict(), indent=2))
         return 0
     print(f"Runs since {metrics.since[:10]} (fill and submit):")
-    print(f"{'ATS':<28}{'runs':>6}{'playbook':>10}{'model':>7}{'model %':>9}{'success':>9}{'cost $':>9}")
+    print(
+        f"{'ATS':<28}{'runs':>6}{'playbook':>10}{'loop':>6}{'loop %':>8}{'success':>9}{'check':>7}{'cost $':>9}"
+    )
     for row in [*metrics.byAts, metrics.total]:
-        print(f"{row.ats:<28}{row.runs:>6}{row.playbookRuns:>10}{row.aiRuns:>7}{row.aiShare:>9.0%}{row.successRate:>9.0%}"
-              f"{row.costMicroUsd / 1e6:>9.3f}")  # fmt: skip
+        print(f"{row.ats:<28}{row.runs:>6}{row.playbookRuns:>10}{row.loopRuns:>6}{row.loopShare:>8.0%}"
+              f"{row.successRate:>9.0%}{row.checkThisOne:>7}{row.costMicroUsd / 1e6:>9.3f}")  # fmt: skip
     if metrics.failureReasons:
         print("Failure reasons: " + ", ".join(f"{f.reason} {f.count}" for f in metrics.failureReasons))
     for pb in metrics.playbooks:

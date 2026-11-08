@@ -4,9 +4,10 @@ Tayyari fills the employer's own application form for a role the person fits, sh
 and submits exactly that set of values once the person approves it.
 
 Status: allowed 2026-11-06 (`CLAUDE.md` rule 9, `project-soul.md` "What it does" 7 and "No spray-and-pray applying").
-Designed here; not started. Evidence: `experiments/auto_apply/` (53 fill-only runs on 8 live postings, nothing
-submitted; `RESULTS.md`, `PLAN.md`). Existing code to build on: branch `feat/auto-apply` (62 files, merges cleanly on
-`main`; its own notes are in `BUILD_NOTES.md` on that branch).
+Built 2026-11-08 on `feat/auto-apply-build` (A1 W1 to W5), tested on fakes only and not deployed; how it is built is in
+`docs/backend.md` ("Auto-apply"), and where the build differs from this text is in §3.3. Evidence:
+`experiments/auto_apply/` (53 fill-only runs on 8 live postings, nothing submitted; `RESULTS.md`, `PLAN.md`). The build
+started from branch `feat/auto-apply`; `BUILD_NOTES.md` says what changed from it.
 
 Money is in rupees, with USD in brackets, at ₹94.48 per USD (2026-11-05).
 
@@ -164,7 +165,8 @@ any state before submitting ─► cancelled (by the person)
 
 ### 3.1 The end-to-end flow (agreed 2026-11-07)
 
-The web app only records decisions; a separate worker does all browser work; Postgres holds the state.
+The web requests only record decisions; the worker (inside the app, §8 decision 4) does all browser work; Postgres
+holds the state.
 
 1. **Start**: `POST /api/apply/applications {matchId | listingId, resume: "tailored" | "saved"}`. Code runs every
    check before any browser or model:
@@ -235,8 +237,9 @@ key to its value, source, date and "ask each time" flag.
   ("Type the code Kestrel Pay emailed you"). The browser stays open about 10 minutes; a forwarded code fills it
   automatically. With no code, the row becomes `check_this_one`.
 
-- **Worker.** A separate process leases `applications` rows (the database is the queue, as on the old branch). It
-  drives a Browser Use **standalone browser** over CDP with Playwright, so the worker needs no local Chromium. Every
+- **Worker.** A background task inside the app (or, with `TAYYARI_APPLY__WORKER_IN_APP=false`, its own process)
+  leases `applications` rows (the database is the queue, as on the old branch). It creates a Browser Use **standalone
+  browser** through Browser Use's REST API and drives it over CDP with Playwright, so the server installs no browser. Every
   run stops the browser in a `finally` with `PATCH /api/v4/browsers/{id} {"action":"stop"}`, because dropping the
   connection does not stop billing. CDP and live-view URLs are credentials: never logged or stored.
 - **The guard.** Two layers, as in the experiment: the Manifest V3 extension (`experiments/auto_apply/common/guard.py`,
@@ -259,6 +262,34 @@ key to its value, source, date and "ask each time" flag.
   of Greenhouse, Lever and Ashby applications need a model for anything but custom questions.
 - **Limits.** Per person: 10 applications a day at launch. Per employer domain: the old branch's per-hour cap and gap.
   Browser Use: 10 concurrent browsers on the free tier (about 400 fills an hour); back off on 429.
+
+### 3.3 As built (A1, 2026-11-08)
+
+The build follows §1 to §3.2 with the differences below. The first four change agreed wording, so they are written here
+as proposals and the text above is left as agreed until the user says yes.
+
+1. **The sign-in and challenge stage** (§1 rule 6): a login wall, a CAPTCHA or an emailed code is the stage
+   `needs_signin` (the name in the §3 diagram) with a `stopReason` of `signin`, `challenge` or `verification_code`;
+   `waiting_for_you` stays for questions and the review. Proposed: "becomes `needs_signin` with a hand-off link" in
+   rule 6, and the same for the verification code in §3.2.
+2. **The submit order** (§3.1 step 5): Greenhouse and Ashby upload the resume the moment it is attached, and the guard
+   would block that upload, so the resume is attached after the marker. The built order: open the submit browser
+   with the guard on; replay the review's fill script with no model; read the form back; recompute the digest with
+   the sha256 of the resume that will be attached (a different digest goes back to `waiting_for_you`); check the
+   submit control is there (missing is `failed`, before any click); commit `submitting`; lift the guard only for the
+   playbook's submit and upload hosts; attach the resume and wait for the widget to show its name; click once. The
+   success signature is `sent`; anything else after the click (an error, a timeout, error text, a CAPTCHA, a code
+   prompt) is `check_this_one`.
+3. **The start body** (§3.1 step 1): `{matchId, resume: "tailored" | "saved", listingId?, runId?, applyUrl?}`. The
+   match is always required, because Discover and a pasted link run the posting match first (§1 rule 1); a listing
+   gives the form's address server-side, and a pasted `applyUrl` must be the same posting as the match.
+4. **The check endpoint**: `POST /api/apply/check` runs the start checks read-only and uncharged, before the match on
+   Discover and before Start; the start runs them again.
+5. **Worker and browser**: the worker runs inside the app (§8 decision 4); Browser Use is called over its REST API
+   (v4) with no SDK, and nothing is installed for a local browser. A local Chromium (`TAYYARI_TEST_BROWSER=1`) is for
+   offline development and tests only.
+6. **Not in A1**: retention for applications abandoned before they finished, "I applied there" on a failed row, the
+   Weekly's in-app role links, the price (§4), and the live fill-only test (A1.6).
 
 ## 4. Cost and price
 

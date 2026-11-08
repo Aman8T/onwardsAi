@@ -24,8 +24,8 @@ from tayyari.apply.forms import FormField
 
 ProfileKey = Literal[
     "firstName", "lastName", "fullName", "email", "phone", "phoneCountry", "location", "country", "currentCompany",
-    "currentTitle", "linkedin", "github", "website", "workAuthorization", "needsSponsorship", "willingToRelocate",
-    "noticePeriod", "salaryExpectation", "startDate", "howDidYouHear", "pronouns", "eeoGender", "eeoRace", "eeoVeteran",
+    "currentTitle", "linkedin", "github", "website", "workAuthorization", "needsSponsorship", "noticePeriod",
+    "startDate", "howDidYouHear", "pronouns", "eeoGender", "eeoRace", "eeoVeteran",
     "eeoDisability", "resume", "coverLetter",
     # India keys (spec 2.2, the question bank)
     "currentCtc", "expectedCtc", "servingNotice", "lastWorkingDay", "totalExperience", "dob", "highestQualification",
@@ -35,8 +35,8 @@ ProfileKey = Literal[
     # declined, skipped or asked
     "eeoOther",
 ]  # fmt: skip
-"""The person's details a field can ask for. ``salaryExpectation`` and ``willingToRelocate`` are the old names of
-``expectedCtc`` and ``relocation`` (`KEY_ALIASES`), kept until the legacy details go (package Z)."""
+"""The person's details a field can ask for (each is an answer-bank key; work authorisation and sponsorship are stored
+per country under `scoped_key`)."""
 
 NeverStoredKey = Literal[
     "pan", "aadhaar", "passportNumber", "idNumber", "bankAccount", "ifsc", "casteCategory", "religion", "maritalStatus",
@@ -62,17 +62,6 @@ PER_OFFER_KEYS: Final[frozenset[str]] = frozenset({"bond", "relocation"})
 """Decided per offer: asked each time unless the person saved a firm answer."""
 REQUIRED_ONLY_KEYS: Final[frozenset[str]] = frozenset({"currentCtc", "dob"})
 """Sent only into a field the form requires (spec 2.2: current CTC and date of birth)."""
-KEY_ALIASES: Final[dict[str, str]] = {"salaryExpectation": "expectedCtc", "willingToRelocate": "relocation"}
-"""Old key -> its canonical name."""
-
-
-def canonical_key(key: str) -> str:
-    return KEY_ALIASES.get(key, key)
-
-
-def legacy_names(key: str) -> tuple[str, ...]:
-    """The canonical key and its old names, in lookup order."""
-    return (key, *(old for old, new in KEY_ALIASES.items() if new == key))
 
 
 def scoped_key(key: str, country: str) -> str:
@@ -411,7 +400,7 @@ def builtin_id(pb: Playbook) -> str:
 
 def _key_of(rule: FieldRule) -> str | None:
     if rule.key is not None:
-        return canonical_key(rule.key)
+        return rule.key
     return rule.question_key
 
 
@@ -489,7 +478,6 @@ __all__ = [
     "FIRST_RULES",
     "GENERIC_RULES",
     "GREENHOUSE",
-    "KEY_ALIASES",
     "LEVER",
     "NEVER_STORED_RULES",
     "NEVER_STORED_RULE_KEYS",
@@ -506,9 +494,7 @@ __all__ = [
     "ProfileKey",
     "RuleKey",
     "builtin_id",
-    "canonical_key",
     "generic_rule_for",
-    "legacy_names",
     "match_rule",
     "op_for",
     "rule_for",

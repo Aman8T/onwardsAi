@@ -25,8 +25,6 @@ const DAY = 24 * HOUR;
 export const STATUS: ApplyStatus = {
   enabled: true,
   signedIn: true,
-  anonymous: false,
-  agents: [],
   firstCheckDone: true,
   consentAt: ago(2 * DAY),
   freeLeft: 7,
@@ -142,11 +140,11 @@ export const DETAILS: YourDetails = {
     { questionKey: 'experience', question: 'Experience', source: 'resume', askEachTime: false, answeredAt: ago(30 * DAY), value: '1 yr 4 mo full-time', group: 'work' },
     { questionKey: 'noticePeriod', question: 'Notice period', source: 'first_check', askEachTime: false, answeredAt: ago(95 * DAY), value: '30 days', group: 'work', stale: true },
     { questionKey: 'currentCtc', question: 'Current CTC', source: 'form', answeredOn: 'Hollis Health', askEachTime: false, answeredAt: ago(1 * DAY), group: 'work', private: true },
-    { questionKey: 'salaryExpectation', question: 'Expected CTC', source: 'default', askEachTime: false, answeredAt: ago(30 * DAY), value: 'Open to discussion', group: 'work' },
+    { questionKey: 'expectedCtc', question: 'Expected CTC', source: 'default', askEachTime: false, answeredAt: ago(30 * DAY), value: 'Open to discussion', group: 'work' },
     { questionKey: 'degree', question: 'Degree', source: 'resume', askEachTime: false, answeredAt: ago(30 * DAY), value: 'B.Tech CSE, COEP, 2025', group: 'education' },
     { questionKey: 'graduationScore', question: 'Graduation score', source: 'resume', askEachTime: false, answeredAt: ago(30 * DAY), value: '8.1 CGPA', group: 'education' },
     { questionKey: 'class12', question: 'Class 12', source: 'form', answeredOn: 'Hollis Health', askEachTime: false, answeredAt: ago(1 * DAY), value: '88.4%', group: 'education' },
-    { questionKey: 'willingToRelocate', question: 'Relocation', source: 'default', askEachTime: true, answeredAt: ago(30 * DAY), group: 'where_how' },
+    { questionKey: 'relocation', question: 'Relocation', source: 'default', askEachTime: true, answeredAt: ago(30 * DAY), group: 'where_how' },
     { questionKey: 'serviceBond', question: 'Service bond', source: 'default', askEachTime: true, answeredAt: ago(30 * DAY), group: 'where_how' },
     { questionKey: 'eeoGender', question: 'Gender', source: 'default', askEachTime: false, answeredAt: ago(30 * DAY), value: 'Prefer not to say', group: 'self_id' },
   ],
@@ -218,11 +216,11 @@ export const EMPLOYER_URL = 'https://job-boards.greenhouse.io/kestrelpay/jobs/40
 
 export const METRICS: ApplyMetrics = {
   since: ago(30 * DAY),
-  total: { ats: 'all', runs: 41, playbookRuns: 33, aiRuns: 8, successes: 29, needsUser: 9, failures: 3, blocked: 0, aiShare: 0.2, successRate: 0.71, avgSteps: 14, costMicroUsd: 61_000 },
+  total: { ats: 'all', runs: 41, playbookRuns: 33, loopRuns: 8, successes: 29, questions: 9, needsSignin: 0, closed: 0, failures: 3, checkThisOne: 0, interrupted: 0, deferred: 0, loopShare: 0.2, successRate: 0.71, avgSteps: 14, costMicroUsd: 61_000 },
   byAts: [
-    { ats: 'greenhouse', runs: 22, playbookRuns: 20, aiRuns: 2, successes: 17, needsUser: 4, failures: 1, blocked: 0, aiShare: 0.09, successRate: 0.77, avgSteps: 13, costMicroUsd: 21_000 },
-    { ats: 'lever', runs: 12, playbookRuns: 9, aiRuns: 3, successes: 8, needsUser: 3, failures: 1, blocked: 0, aiShare: 0.25, successRate: 0.67, avgSteps: 15, costMicroUsd: 19_000 },
-    { ats: 'ashby', runs: 7, playbookRuns: 4, aiRuns: 3, successes: 4, needsUser: 2, failures: 1, blocked: 0, aiShare: 0.43, successRate: 0.57, avgSteps: 16, costMicroUsd: 21_000 },
+    { ats: 'greenhouse', runs: 22, playbookRuns: 20, loopRuns: 2, successes: 17, questions: 4, needsSignin: 0, closed: 0, failures: 1, checkThisOne: 0, interrupted: 0, deferred: 0, loopShare: 0.09, successRate: 0.77, avgSteps: 13, costMicroUsd: 21_000 },
+    { ats: 'lever', runs: 12, playbookRuns: 9, loopRuns: 3, successes: 8, questions: 3, needsSignin: 0, closed: 0, failures: 1, checkThisOne: 0, interrupted: 0, deferred: 0, loopShare: 0.25, successRate: 0.67, avgSteps: 15, costMicroUsd: 19_000 },
+    { ats: 'ashby', runs: 7, playbookRuns: 4, loopRuns: 3, successes: 4, questions: 2, needsSignin: 0, closed: 0, failures: 1, checkThisOne: 0, interrupted: 0, deferred: 0, loopShare: 0.43, successRate: 0.57, avgSteps: 16, costMicroUsd: 21_000 },
   ],
   failureReasons: [{ reason: 'fill_error', count: 2 }, { reason: 'guard_probe', count: 1 }],
   playbooks: [],

@@ -30,7 +30,6 @@ export function sourceText(field: Pick<FilledField, 'source' | 'attestation' | '
     fact: 'One of your facts',
     answers: 'Your earlier answer',
     model: 'Written from your facts',
-    agent: 'Filled from the form',
     user: 'Typed by you',
     default: 'A default',
   };
@@ -45,13 +44,12 @@ const SUMMARY_WORD: Record<FieldSource | 'form', [string, string]> = {
   fact: ['from your facts', 'from your facts'],
   answers: ['earlier answer', 'earlier answers'],
   model: ['written from your facts', 'written from your facts'],
-  agent: ['read from the form', 'read from the form'],
   user: ['typed by you', 'typed by you'],
   default: ['default', 'defaults'],
   form: ['read from the form', 'read from the form'],
 };
 
-const SUMMARY_ORDER: readonly (FieldSource | 'form')[] = ['details', 'resume', 'answers', 'fact', 'model', 'user', 'default', 'agent', 'form'];
+const SUMMARY_ORDER: readonly (FieldSource | 'form')[] = ['details', 'resume', 'answers', 'fact', 'model', 'user', 'default', 'form'];
 
 export interface SourceCount {
   source: FieldSource | 'form';
@@ -170,7 +168,8 @@ export function changeNeed(field: FilledField): NeedsInput {
     required: field.required,
     reason: 'Your answer replaces this value, and the form is filled again before you approve.',
     options: field.options,
-    questionKey: field.questionKey,
+    // a review row without its own key is answered by its field key (the planner reads typed values by field key first)
+    questionKey: field.questionKey ?? field.key,
   };
 }
 

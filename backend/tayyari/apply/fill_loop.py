@@ -25,16 +25,15 @@ from tayyari.apply.answers import (
     FillContext,
     Plan,
     Planned,
-    _saved,  # the planner's own lookup (bank, then details, then what code derives): one source of truth
     apply_model_answers,
     pick_option,
     question_key,
+    saved_value,  # the planner's own lookup (the answer bank, then what code derives): one source of truth
 )
 from tayyari.apply.driver import BrowserDriver, click_refused
 from tayyari.apply.forms import FormField
 from tayyari.apply.playbook import (
     COUNTRY_KEYS,
-    KEY_ALIASES,
     NEVER_STORED_RULE_KEYS,
     PER_OFFER_KEYS,
     PROFILE_KEYS,
@@ -71,7 +70,6 @@ NOT_OFFERED: Final[frozenset[str]] = (
     HIDDEN_KEYS
     | REQUIRED_ONLY_KEYS
     | PER_OFFER_KEYS
-    | frozenset(KEY_ALIASES)
     | frozenset({"currentCtc", "expectedCtc", "noticePeriod", "servingNotice", "lastWorkingDay", "startDate"})
 )
 """Saved details a model is never offered as a ``valueKey``: besides the hidden ones, pay, notice and joining dates,
@@ -165,9 +163,9 @@ def offered_details(ctx: FillContext) -> dict[str, tuple[str, FieldSource]]:
     for key in PROFILE_KEYS:
         if key in NOT_OFFERED:
             continue
-        found = _saved(ctx, key)
-        if found.value is not None and found.source is not None:
-            out[key] = (found.value, found.source)
+        value, source, _ = saved_value(ctx, key)
+        if value is not None and source is not None:
+            out[key] = (value, source)
     return out
 
 

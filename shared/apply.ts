@@ -2,36 +2,38 @@
  * Auto-apply: match -> apply -> track -> learn. The contract between `/api/apply/*` and the web app.
  *
  *   GET    /api/apply/status                         `ApplyStatus` (works with the feature off: `enabled: false`)
- *   GET    /api/apply/profile                        `ApplicantProfile` (legacy: the person's saved details for every form)
- *   PUT    /api/apply/profile                        `ApplicantProfileUpdate` -> `ApplicantProfile` (legacy)
- *   PUT    /api/apply/profile/resume                 the resume file as the raw body (PDF or DOCX) -> `ApplicantProfile`
- *   DELETE /api/apply/profile/resume                 -> `ApplicantProfile`
+ *   POST   /api/apply/consent                        -> `ApplyStatus` (the person agreed to what auto-apply sends)
  *   POST   /api/apply/check                          `ApplyCheckRequest` -> `ApplyCheck` (read-only, charges nothing)
  *   POST   /api/apply/applications                   `StartApplicationRequest` -> `ApplicationDetail` (queued, with a
- *                                                    credit hold; legacy `CreateApplicationRequest` until Z)
+ *                                                    credit hold; 409 with `existingApplicationId` or the reason, 402
+ *                                                    when no credit is left)
  *   GET    /api/apply/applications                   `ApplicationList`, newest first
  *   GET    /api/apply/applications/{id}              `ApplicationDetail`
- *   GET    /api/apply/applications/{id}/screenshot   image/jpeg: the filled form as it will be sent (404 until filled)
+ *   GET    /api/apply/applications/{id}/screenshot   image/jpeg, `?kind=review|confirmation` (404 until there is one)
  *   POST   /api/apply/applications/{id}/answers      `AnswerRequest` -> `AnswerResult` (queued again, with every other
  *                                                    waiting application that asks the same question)
  *   POST   /api/apply/applications/{id}/approve      `ApproveRequest` -> `ApplicationDetail` (409 unless the digest is the
  *                                                    review's: the person approves exactly what they saw)
+ *   POST   /api/apply/applications/{id}/cancel       -> `ApplicationDetail` (any stage before submitting)
  *   POST   /api/apply/applications/{id}/resolve      `ResolveRequest` -> `ApplicationDetail` (check_this_one only)
+ *   POST   /api/apply/applications/{id}/applied-there -> `ApplicationDetail` (needs_signin -> sent, "I applied there")
  *   POST   /api/apply/applications/{id}/stage        `StageChangeRequest` -> `ApplicationDetail` (manual tracking)
  *   POST   /api/apply/applications/{id}/retry        -> `ApplicationDetail` (queued again after failed, needs_signin, closed)
  *   DELETE /api/apply/applications/{id}              204
  *   GET    /api/apply/details                        `YourDetails`
  *   PUT    /api/apply/details/answer                 `SaveAnswerRequest` -> `YourDetails`
+ *   PUT    /api/apply/details/answers/{key}          `{askEachTime, value?}` -> `YourDetails`
+ *   DELETE /api/apply/details/answers/{key}          -> `YourDetails`
+ *   POST   /api/apply/details/still-true             `StillTrueRequest` -> `YourDetails`
  *   POST   /api/apply/details/first-check            `FirstCheckRequest` -> `YourDetails`
  *   PUT    /api/apply/details/self-id                `SelfIdRequest` -> `YourDetails`
+ *   PUT    /api/apply/profile/resume                 the resume file as the raw body (PDF or DOCX) -> `YourDetails`
+ *   DELETE /api/apply/profile/resume                 -> `YourDetails`
  *   POST   /api/apply/email                          `EmailClassifyRequest` -> `EmailClassification`
- *   GET    /api/apply/metrics                        `ApplyMetrics` (admins only: playbook vs AI runs per ATS)
+ *   GET    /api/apply/metrics                        `ApplyMetrics` (admins only: playbook vs field-list loop runs per ATS)
  *
- * Every route but `status` answers 404 while `AUTO_APPLY_ENABLED` is off. Nothing is submitted without approval.
- *
- * Built expand-first: the new names sit next to the old branch's names, which are marked legacy and removed in the last
- * A1 package once nothing uses them. The check, resolve and details routes are the A1 plan's and land with the packages
- * that build them; the types here are final for new code.
+ * Every route but `status` answers 404 while `AUTO_APPLY_ENABLED` is off, and 401 without a sign-in. Nothing is
+ * submitted without approval.
  *
  * Mirrored by backend/tayyari/contract/apply.py; tests/unit/contract/test_apply_parity.py reads this file. Same subset as the
  * other contracts: interfaces, literal unions, `x?:` optionals (no `null`), `T[]`.
@@ -48,7 +50,6 @@ export const APPLY_RESUME_MAX_BYTES = 5242880;
  * Where an application stands (spec 3). `waiting_for_you`: questions or the review wait for the person. `needs_signin`: a
  * login wall, a CAPTCHA or an emailed code (`stopReason` says which). `submitting`: the send was committed before the
  * click; only the engine leaves it. `check_this_one`: no clear outcome after the click, never retried.
- * Legacy (removed in Z): `needs_user`, `ready_to_submit`, `applied`.
  */
 export type ApplicationStage =
   | 'queued'
@@ -65,16 +66,13 @@ export type ApplicationStage =
   | 'viewed'
   | 'interviewing'
   | 'offer'
-  | 'rejected'
-  | 'needs_user'
-  | 'ready_to_submit'
-  | 'applied';
+  | 'rejected';
 
 /** The applicant tracking system behind a link. */
 export type AtsKind = 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'unknown';
 
-/** A posting match, a pasted job link (legacy), or a Discover listing (which runs the match first). */
-export type ApplySource = 'match' | 'link' | 'discover';
+/** A posting match (a pasted application link included), or a Discover listing (which runs the match first). */
+export type ApplySource = 'match' | 'discover';
 
 export type StageSource = 'engine' | 'user' | 'email' | 'system';
 
@@ -93,15 +91,24 @@ export type FieldKind =
   | 'combobox'
   | 'checkboxGroup';
 
-/** Where a filled value came from. `model` answers cite the person's facts (`factIds`). `agent` is legacy (removed in Z). */
-export type FieldSource = 'details' | 'resume' | 'fact' | 'answers' | 'model' | 'agent' | 'user' | 'default';
+/** Where a filled value came from. `model` answers cite the person's facts (`factIds`). */
+export type FieldSource = 'details' | 'resume' | 'fact' | 'answers' | 'model' | 'user' | 'default';
 
 export type Confidence = 'high' | 'medium' | 'low';
 
-/** How a run filled the form: a playbook (no model), the field-list loop, the AI agent (legacy), or not at all. */
-export type RunMode = 'playbook' | 'loop' | 'ai' | 'manual';
+/** How a run filled the form: a playbook (no model), the field-list loop (Haiku, then Sonnet), or not at all. */
+export type RunMode = 'playbook' | 'loop' | 'manual';
 
-export type RunOutcome = 'success' | 'needs_user' | 'failed' | 'blocked' | 'check_this_one' | 'closed' | 'needs_signin';
+/** How one engine run ended. `interrupted`: stopped half way; `deferred`: put back for capacity (a 429, the spend ceiling). */
+export type RunOutcome =
+  | 'success'
+  | 'questions'
+  | 'needs_signin'
+  | 'closed'
+  | 'failed'
+  | 'check_this_one'
+  | 'interrupted'
+  | 'deferred';
 
 export type PlaybookStatus = 'active' | 'draft' | 'retired';
 
@@ -158,10 +165,6 @@ export type ProgressState = 'done' | 'now' | 'todo';
 export interface ApplyStatus {
   enabled: boolean;
   signedIn: boolean;
-  /** Legacy (removed in Z): auto-apply is for signed-in people only. */
-  anonymous: boolean;
-  /** Legacy (removed in Z): the computer-use fallback adapters. */
-  agents: string[];
   /** The person did (or skipped) the 30-second first check. */
   firstCheckDone?: boolean;
   /** When the person agreed to what auto-apply sends and who processes it; absent until they did. */
@@ -172,59 +175,19 @@ export interface ApplyStatus {
   freeLeft?: number;
 }
 
-/** Legacy (removed in Z; replaced by `YourDetails`). */
-export interface ApplicantDetails {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  location?: string;
-  currentCompany?: string;
-  currentTitle?: string;
-  linkedin?: string;
-  github?: string;
-  website?: string;
-  workAuthorization?: string;
-  needsSponsorship?: string;
-  willingToRelocate?: string;
-  noticePeriod?: string;
-  salaryExpectation?: string;
-  startDate?: string;
-  howDidYouHear?: string;
-  pronouns?: string;
-  eeoGender?: string;
-  eeoRace?: string;
-  eeoVeteran?: string;
-  eeoDisability?: string;
-}
-
-/** Legacy (removed in Z; replaced by `YourDetails`). */
-export interface ApplicantProfile {
-  details: ApplicantDetails;
-  hasResume: boolean;
-  savedAnswers: number;
-  resumeName?: string;
-  updatedAt?: string;
-}
-
-/** Legacy (removed in Z). */
-export interface ApplicantProfileUpdate {
-  details: ApplicantDetails;
-}
-
 /** One field of the form as it will be sent. */
 export interface FilledField {
   key: string;
   label: string;
   kind: FieldKind;
   required: boolean;
+  /** The field's stable selector (id or name, never a positional path). */
+  selector: string;
   value?: string;
   source?: FieldSource;
   profileKey?: string;
   confidence?: Confidence;
   factIds?: string[];
-  /** The field's stable selector (id or name). */
-  selector?: string;
   /** For a select, radio or combobox: the option's own value (`value` is its visible text). */
   optionValue?: string;
   options?: string[];
@@ -253,15 +216,17 @@ export interface NeedsInput {
   kind: FieldKind;
   required: boolean;
   reason: string;
+  /** The answer bank key; one answer fills every waiting form that asks it. */
+  questionKey: string;
   options?: string[];
   suggestion?: string;
   factIds?: string[];
-  /** The answer bank key; one answer fills every waiting form that asks it. */
-  questionKey?: string;
   /** Answered for this form only: the save box starts unticked. */
   perOffer?: boolean;
   /** Typed by the person on the employer's page; a required one blocks approval. */
   onSite?: boolean;
+  /** A signature, declaration or consent tick the person gives in Review for this form only (never kept). */
+  attestation?: boolean;
   /** The employer whose form asks it. */
   requiredBy?: string;
   /** The unit shown beside the input (`%`, `lakh a year`). */
@@ -300,7 +265,6 @@ export interface ApplicationReview {
   skipped: FilledField[];
   warnings: string[];
   playbookId?: string;
-  agent?: string;
   submitLabel?: string;
   resume?: ReviewResume;
   facts?: CitedFact[];
@@ -361,6 +325,8 @@ export interface ApplicationSummary {
   stopReason?: StopReason;
   hasConfirmation?: boolean;
   progress?: ApplyProgress;
+  /** When it went to the employer (the click that went through, or the person's word on it); absent before. */
+  sentAt?: string;
 }
 
 export interface ApplicationDetail {
@@ -393,17 +359,12 @@ export interface ApplicationDetail {
   stopReason?: StopReason;
   hasConfirmation?: boolean;
   progress?: ApplyProgress;
+  /** When it went to the employer (as on `ApplicationSummary`). */
+  sentAt?: string;
 }
 
 export interface ApplicationList {
   applications: ApplicationSummary[];
-}
-
-/** Legacy (removed in Z; replaced by `StartApplicationRequest`). */
-export interface CreateApplicationRequest {
-  url: string;
-  matchId?: string;
-  profileId?: string;
 }
 
 /** The cheap, uncharged pre-check behind "Apply for me". */
@@ -425,6 +386,8 @@ export interface ApplyCheck {
   applicationId?: string;
   /** The match's hard requirements that blocked (`blocked_by_requirement`). */
   gateReasons?: string[];
+  /** The employer's own page for the posting, for "Open on <host>'s site" when it is not offered. */
+  applyUrl?: string;
 }
 
 /** Start an application. The posting match always runs first, so `matchId` is required. */
@@ -434,19 +397,6 @@ export interface StartApplicationRequest {
   listingId?: string;
   runId?: string;
   applyUrl?: string;
-}
-
-/** Legacy (removed in Z; replaced by `QuestionAnswer`). */
-export interface NeedAnswer {
-  key: string;
-  value: string;
-}
-
-/** Legacy (removed in Z; replaced by `AnswerRequest`). */
-export interface AnswerNeedsRequest {
-  answers: NeedAnswer[];
-  /** Keep these answers for later applications (cached per person). */
-  remember: boolean;
 }
 
 export interface QuestionAnswer {
@@ -566,16 +516,27 @@ export interface EmailClassification {
   note?: string;
 }
 
+/** "Still true?" on a saved answer. */
+export interface StillTrueRequest {
+  questionKey: string;
+}
+
+/** One ATS's engine runs (fills and submits) in the window, by how they ended (`RunOutcome`). */
 export interface MetricsRow {
   ats: string;
   runs: number;
   playbookRuns: number;
-  aiRuns: number;
+  /** Runs the field-list loop filled (a model chose which saved value goes where). */
+  loopRuns: number;
   successes: number;
-  needsUser: number;
+  questions: number;
+  needsSignin: number;
+  closed: number;
   failures: number;
-  blocked: number;
-  aiShare: number;
+  checkThisOne: number;
+  interrupted: number;
+  deferred: number;
+  loopShare: number;
   successRate: number;
   avgSteps: number;
   costMicroUsd: number;

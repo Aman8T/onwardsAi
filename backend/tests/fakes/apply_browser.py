@@ -2,8 +2,8 @@
 
 `FakeDriver` records every action, refuses selectors the page does not have, keeps the current value of every input, and
 logs every request the page tries as ``(method, url)``. Each request is put to `netguard.decide`, as the real route guard
-does: a write passes only after `allow_submit_hosts` names its host (or the legacy `allow_submit(True)`), so the
-"submitted" page is served only after a permitted submit click. `click_text` refuses submit-like texts exactly like the
+does: a write passes only after `allow_submit_hosts` names its host, so the "submitted" page is served only after a
+permitted submit click (`click_submit`, which refuses to run before the hosts are lifted). `click_text` refuses submit-like texts exactly like the
 real driver and records the refusals.
 
 Pages come from saved HTML (``scan()`` then reads them with `forms.scan_form`) or from a saved `SCAN_JS` result
@@ -97,7 +97,6 @@ class FakeDriver:
         """The requests the guard let through."""
         self.refusals: list[str] = []
         self.clicked_texts: list[str] = []
-        self.submit_allowed = False
         self.write_hosts: frozenset[str] = frozenset()
         self.submitted = False
         self.blocked_submits = 0
@@ -107,8 +106,10 @@ class FakeDriver:
 
     def _request(self, method: str, url: str, *, navigation: bool = False) -> bool:
         self.requests.append((method, url))
-        hosts = self.write_hosts | {_host(url)} if self.submit_allowed else self.write_hosts
-        if decide(method, url, is_navigation=navigation, site=self._site, write_hosts=hosts) == "allow":
+        if (
+            decide(method, url, is_navigation=navigation, site=self._site, write_hosts=self.write_hosts)
+            == "allow"
+        ):
             self.passed.append((method, url))
             return True
         self.blocked.append((method, url))
@@ -117,9 +118,6 @@ class FakeDriver:
     def sent_writes(self) -> list[tuple[str, str]]:
         """The writes that got past the guard (empty for any preview fill)."""
         return [r for r in self.passed if r[0] not in READ_METHODS]
-
-    def allow_submit(self, allowed: bool) -> None:
-        self.submit_allowed = allowed
 
     def allow_submit_hosts(self, hosts: Collection[str]) -> None:
         self.write_hosts = frozenset(norm_write_hosts([h for h in hosts if h.strip()]))
@@ -223,17 +221,6 @@ class FakeDriver:
 
     # ── acting ──
 
-    async def click(self, selector: str) -> None:
-        self._need(selector)
-        self.actions.append(("click", selector, ""))
-        if "submit" in selector or selector.startswith("#btn-submit") or "button" in selector:
-            if not self._request("POST", self.url):
-                self.blocked_submits += 1
-                return
-            self.submitted = True
-            self.page = self.after_submit if isinstance(self.after_submit, str) else ""
-            self.url = self.url.rstrip("/") + "/thanks"
-
     async def click_submit(self, selector: str, frame: int = 0) -> None:
         if not self.write_hosts:
             raise PermissionError("the submit control is clicked only after allow_submit_hosts")
@@ -274,11 +261,6 @@ class FakeDriver:
         self.actions.append(("fill", selector, value))
         self.values[selector] = value
         self._page_scripts()
-
-    async def select(self, selector: str, value: str) -> None:
-        self._need(selector)
-        self.actions.append(("select", selector, value))
-        self.values[selector] = value
 
     async def select_label(self, selector: str, text: str, frame: int = 0) -> None:
         self._need(selector)

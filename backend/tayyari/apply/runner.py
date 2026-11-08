@@ -37,6 +37,7 @@ from tayyari.apply.answers import (
     digest_rows,
     plan_fields,
     question_key,
+    saved_value,
     stable_key,
 )
 from tayyari.apply.driver import BrowserDriver
@@ -63,8 +64,8 @@ log = get_logger(__name__)
 BOT_CHECK_WARNING = "This form runs a bot check when it is submitted. If it asks for a human check, you will get a link to finish it yourself."
 
 
-FillStatus = Literal["ready", "needs_user", "failed", "closed", "needs_signin"]
-"""``ready``: a review with nothing required left open; ``needs_user``: a review with questions for the person (both go
+FillStatus = Literal["ready", "questions", "failed", "closed", "needs_signin"]
+"""``ready``: a review with nothing required left open; ``questions``: a review with questions for the person (both go
 to ``waiting_for_you``); ``closed``: the posting is gone; ``needs_signin``: a login wall or a CAPTCHA (``stop_reason``);
 ``failed``: the form never opened."""
 
@@ -423,7 +424,7 @@ async def preview(
     )
     refused = [*(opener.refused if opener else []), *(run.refused if run else [])]
     return FillResult(
-        "needs_user" if waiting else "ready", plan, "needs_answers" if waiting else None, None, await _snap(driver),
+        "questions" if waiting else "ready", plan, "needs_answers" if waiting else None, None, await _snap(driver),
         scan.blockers.submit_texts[0] if scan.blockers.submit_texts else None, warnings, len(fields), steps,
         stop_reason="questions" if waiting else None, fields=_review_fields(plan, final), needs=list(plan.needs),
         skipped=_with_live(list(plan.skipped), final), script=_script(plan, playbook),
@@ -471,15 +472,12 @@ def resume_field(scan: LiveScan, playbook: Playbook) -> FormField | None:
 
 def attach_name(resume: Resume, ctx: FillContext) -> str | None:
     """The file name the resume is attached under: its own when it is specific enough to recognise on the page
-    (`scan.resume_name_inferable`), else ``<First>-<Last>-Resume.<ext>`` from the person's details; None when neither is,
-    because then the widget's showing the file cannot be confirmed."""
+    (`scan.resume_name_inferable`), else ``<First>-<Last>-Resume.<ext>`` from the person's saved name (the answer bank);
+    None when neither is, because then the widget's showing the file cannot be confirmed."""
     if resume_name_inferable(resume.name):
         return resume.name
     ext = re.search(r"\.[a-z0-9]{2,5}$", resume.name, re.I)
-    bank = {k: (e.value or "") for k, e in ctx.bank.items()}
-    full = bank.get("fullName") or ctx.details.get("fullName") or " ".join(
-        p for p in (bank.get("firstName") or ctx.details.get("firstName"), bank.get("lastName") or ctx.details.get("lastName")) if p
-    )  # fmt: skip
+    full, _, _ = saved_value(ctx, "fullName")
     stem = "-".join(re.findall(r"[A-Za-z0-9]+", full or ""))
     if not stem:
         return None
@@ -532,7 +530,9 @@ async def _changed(
                 )
             )  # fmt: skip
         else:
-            plan.skipped.append(FilledField(key=q.key, label=q.label, kind=q.kind, required=q.required))
+            plan.skipped.append(
+                FilledField(key=q.key, label=q.label, kind=q.kind, required=q.required, selector=q.selector)
+            )
     if plan.filled:
         steps += await _execute_plan(driver, plan, playbook)
         final = await driver.scan()
@@ -555,7 +555,7 @@ async def _changed(
     needs = list(plan.needs)
     waiting = any(n.required for n in needs)
     return FillResult(
-        "needs_user" if waiting else "ready", None, "form_changed", "The form changed since you approved it: check it again.",
+        "questions" if waiting else "ready", None, "form_changed", "The form changed since you approved it: check it again.",
         await _snap(driver), review.submitLabel, list(review.warnings), len(final.fields), steps,
         stop_reason="form_changed", fields=rows, needs=needs,
         skipped=_with_live([*review.skipped, *plan.skipped], final), script=script, digest=digest, resume=resume,

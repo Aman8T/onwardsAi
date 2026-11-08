@@ -15,12 +15,19 @@ submit  approved -> submitting -> sent | check_this_one | failed, or approved ->
 Credits (`seams.ApplyCredits`, the hold taken at start): ``sent`` captures it; a fill that closed or failed and a send
 that failed before the click release it; ``check_this_one`` keeps it until the person resolves the row. Each ledger call
 comes after its stage move; one that fails leaves ``credit_state = 'held'`` for the maintenance sweep. A row whose
-``credit_state`` is not ``held`` (an unlimited account, a legacy row) is never sent to the ledger.
+``credit_state`` is not ``held`` (an unlimited account) is never sent to the ledger.
 
 Spend: every browser session is held inside ``reserve(est_browser_usd)`` (the field-list loop and the answerer reserve
 their own model calls). A refused reservation (`llm.errors.SpendCeilingReached`) puts the row back to ``queued`` with no
-attempt counted (an approved row stays approved) and is re-raised, like `BrowserUseBusy`, so the worker backs off. Each session's Browser Use cost, read after the browser stopped, goes to the run's ``run_metrics`` row and
-to the spend ledger under ``browser_use``. The browser is stopped in a ``finally`` on every path.
+attempt counted (an approved row stays approved) and is re-raised, like `BrowserUseBusy`, so the worker backs off.
+Each session's Browser Use cost, read after the browser stopped, goes to the run's ``run_metrics`` row and to the spend
+ledger under ``browser_use``, a browser that failed to open included (`driver.open_cost`). The browser is stopped in a
+``finally`` on every path.
+
+Attempts count the fills of one go: a fill that ends (a review, a sign-in wall, closed, failed) sets ``attempts`` back to
+0, so `interrupted` fails a row only after `ApplySettings.requeue_cap` interruptions in a row, never because it was
+filled normally before. Every run writes a ``run_metrics`` row, an interrupted (``interrupted``) or deferred
+(``deferred``) fill included.
 """
 
 from __future__ import annotations
@@ -38,7 +45,7 @@ from pydantic import ValidationError
 from tayyari.apply import stages
 from tayyari.apply.answers import Answerer, FillContext, Resume, bank_of
 from tayyari.apply.browser_use import BrowserUseBusy
-from tayyari.apply.driver import BrowserDriver, GuardNotActive, PageOpener
+from tayyari.apply.driver import BrowserDriver, GuardNotActive, PageOpener, open_cost
 from tayyari.apply.fill_loop import FieldListLoop
 from tayyari.apply.playbook import BUILTIN, Playbook, builtin_id
 from tayyari.apply.runner import (
@@ -155,12 +162,16 @@ _STOP_OF_REASON: Final[dict[str, StopReason]] = {
 
 FILL_OUTCOME: Final[dict[str, str]] = {
     "ready": "success",
-    "needs_user": "needs_user",
+    "questions": "questions",
     "needs_signin": "needs_signin",
     "closed": "closed",
     "failed": "failed",
 }
 """A fill's `runner.FillResult.status` -> its ``run_metrics.outcome``."""
+
+
+def _deferred_reason(exc: BaseException) -> str:
+    return "browser_use_busy" if isinstance(exc, BrowserUseBusy) else "spend_ceiling"
 
 
 @dataclass(slots=True)
@@ -200,13 +211,6 @@ class ApplyEngine:
             await self._fill(app)
         elif app.stage == "approved":
             await self._submit(app)
-        elif app.stage == "ready_to_submit":  # legacy: removed in Z (the old engine's approved rows)
-            await stages.move(
-                self.repo, app, "failed", source="engine", now=self.clock.now(),
-                note="Approved before the new flow.",
-                changes={"stage_reason": "This application was approved before the new flow. Start it again.",
-                         "stop_reason": "fill_error"},
-            )  # fmt: skip
 
     # ── credits and spend ──
 
@@ -222,8 +226,8 @@ class ApplyEngine:
         await self._settle(app, "release")
 
     async def _settle(self, app: StoredApplication, how: Literal["capture", "release"]) -> None:
-        if self.credits is None or app.user_id is None or app.credit_state != "held":
-            return  # unlimited accounts and legacy rows hold nothing
+        if self.credits is None or app.credit_state != "held":
+            return  # an unlimited account holds nothing
         ref = self._ref(app)
         try:
             if how == "capture":
@@ -265,8 +269,7 @@ class ApplyEngine:
 
     async def _context(self, app: StoredApplication, *, with_facts: bool) -> FillContext:
         profile = await self.repo.get_profile(app.owner_key)
-        details = {k: str(v) for k, v in (profile.details if profile else {}).items() if isinstance(v, str)}
-        stored = await self.repo.list_answers(app.user_id) if app.user_id else []
+        stored = await self.repo.list_answers(app.user_id)
         bank = bank_of({a.question_key: a for a in stored})
         resume: Resume | None = None
         if self.resume_for is not None:
@@ -280,7 +283,7 @@ class ApplyEngine:
         typed = {str(k): str(v) for k, v in ((app.job or {}).get("typed") or {}).items()}
         facts = await self.facts(app) if (with_facts and self.facts is not None) else []
         return FillContext(
-            details, profile.answers if profile else {}, typed, resume, facts, app.title, app.company, bank=bank,
+            typed=typed, resume=resume, facts=facts, job_title=app.title, company=app.company, bank=bank,
             job_location=app.location, self_id_on_forms=profile.self_id_on_forms if profile else False,
             profile_id=app.profile_id,
         )  # fmt: skip
@@ -342,24 +345,27 @@ class ApplyEngine:
                 finally:
                     run.browser_cost = await self._close(driver)
         except GuardNotActive as exc:
-            run.browser_cost = exc.cost_micro_usd
+            run.browser_cost = max(run.browser_cost, open_cost(exc))
             log.warning("apply_guard_not_active", application_id=app.id, run_kind="fill")
             result_or_none = FillResult(
                 "failed", reason="guard_probe", stop_reason="guard_probe",
                 note="The browser's safety check failed, so nothing was filled. Try again later.",
             )  # fmt: skip
         except (SpendCeilingReached, BrowserUseBusy) as exc:
+            run.browser_cost = max(run.browser_cost, open_cost(exc))
             await self._record_spend(run.browser_cost)
             log.info("apply_fill_deferred", application_id=app.id, reason=type(exc).__name__)
             await stages.move(
                 self.repo, app, "queued", source="engine", now=self.clock.now(), note="Waiting for capacity.",
                 changes={"attempts": attempts_before, "progress": None},
             )  # fmt: skip
+            await self._metric(app, run, "playbook", "deferred", _deferred_reason(exc), 0)
             raise  # the worker backs off (a 429, or the spend ceiling): no hot loop on the same row
         except Exception as exc:
+            run.browser_cost = max(run.browser_cost, open_cost(exc))
             await self._record_spend(run.browser_cost)
             log.warning("apply_fill_interrupted", application_id=app.id, error=type(exc).__name__)
-            await self.interrupted(app)
+            await self.interrupted(app, run, reason=type(exc).__name__)
             return
         await self._record_spend(run.browser_cost)
         result = result_or_none
@@ -368,23 +374,27 @@ class ApplyEngine:
         run.model_cost = result.cost_micro_usd
         await self._finish_fill(app, result, run)
 
-    async def interrupted(self, app: StoredApplication) -> None:
-        """A fill that stopped half way (an error, an expired lease): back to the queue while the row has re-queues left
-        (`ApplySettings.requeue_cap`), else failed with the hold released."""
+    async def interrupted(
+        self, app: StoredApplication, run: _Run | None = None, *, reason: str = "lease_expired"
+    ) -> None:
+        """A fill that stopped half way (an error, an expired lease): back to the queue while this go of fills has
+        re-queues left (``attempts`` counts the fills since the last one that ended, `ApplySettings.requeue_cap`), else
+        failed with the hold released. Either way the run gets its ``run_metrics`` row (outcome ``interrupted``)."""
         now = self.clock.now()
         if app.attempts <= self.settings.requeue_cap:
             await stages.move(
                 self.repo, app, "queued", source="engine", now=now, note="The fill stopped; queued again.",
                 changes={"progress": None},
             )  # fmt: skip
-            return
-        moved = await stages.move(
-            self.repo, app, "failed", source="engine", now=now, note="The fill stopped too many times.",
-            changes={"progress": None, "stop_reason": "fill_error", "manual_url": _url(app),
-                     "stage_reason": "The form could not be filled. Try again, or open it on the employer's site."},
-        )  # fmt: skip
-        if moved is not None:
-            await self.release_hold(moved)
+        else:
+            moved = await stages.move(
+                self.repo, app, "failed", source="engine", now=now, note="The fill stopped too many times.",
+                changes={"progress": None, "stop_reason": "fill_error", "manual_url": _url(app), "attempts": 0,
+                         "stage_reason": "The form could not be filled. Try again, or open it on the employer's site."},
+            )  # fmt: skip
+            if moved is not None:
+                await self.release_hold(moved)
+        await self._metric(app, run or _Run("fill", time.monotonic()), "playbook", "interrupted", reason, 0)
 
     async def _resume_not_ready(self, app: StoredApplication) -> None:
         """A tailored resume that cannot be exported yet (open questions on it): a need, never the saved file instead."""
@@ -395,7 +405,7 @@ class ApplyEngine:
         )  # fmt: skip
         await stages.move(
             self.repo, app, "waiting_for_you", source="engine", now=self.clock.now(), note="The resume is not ready.",
-            changes={"needs": [need.to_dict()], "stop_reason": "questions", "progress": None,
+            changes={"needs": [need.to_dict()], "stop_reason": "questions", "progress": None, "attempts": 0,
                      "stage_reason": "Finish your tailored resume first.", "approved_at": None,
                      "approved_digest": None},
         )  # fmt: skip
@@ -406,11 +416,11 @@ class ApplyEngine:
             await self.repo.put_screenshot(app.id, result.screenshot)
         release = False
         changes: dict[str, Any]
-        if result.status in ("ready", "needs_user"):
+        if result.status in ("ready", "questions"):
             review = review_of(
                 result, captured_at=now.isoformat(), resume_choice=_choice(app), playbook_id=run.playbook_id
             )
-            waiting = result.status == "needs_user"
+            waiting = result.status == "questions"
             to = "waiting_for_you"
             changes = {
                 "review": review.to_dict(), "review_digest": review.digest,
@@ -430,6 +440,7 @@ class ApplyEngine:
             to, release = "failed", True
             changes = {"stage_reason": result.note or "The form could not be filled.", "progress": None,
                        "stop_reason": result.stop_reason or "fill_error", "manual_url": _url(app)}  # fmt: skip
+        changes["attempts"] = 0  # this fill ended: the next go of fills starts its own count
         moved = await stages.move(
             self.repo, app, to, source="engine", now=now, note=result.note, changes=changes
         )
@@ -497,19 +508,22 @@ class ApplyEngine:
                 finally:
                     run.browser_cost = await self._close(driver)
         except GuardNotActive as exc:
-            run.browser_cost = exc.cost_micro_usd
+            run.browser_cost = max(run.browser_cost, open_cost(exc))
             log.warning("apply_guard_not_active", application_id=app.id, run_kind="submit")
             result_or_none = SubmitResult(
                 "failed", "guard_probe", "The browser's safety check failed. Nothing was sent."
             )
         except (SpendCeilingReached, BrowserUseBusy) as exc:
+            run.browser_cost = max(run.browser_cost, open_cost(exc))
             await self._record_spend(run.browser_cost)
             log.info("apply_submit_deferred", application_id=app.id, reason=type(exc).__name__)
             if marked:  # not reached in practice: the reservation and the browser come before the marker
                 await self._check_this_one(current, "error", STOPPED_AFTER_SENDING, None, run)
                 return
+            await self._metric(app, run, "playbook", "deferred", _deferred_reason(exc), 0)
             raise  # still approved: a later pass sends it, after the worker's back-off
         except Exception as exc:
+            run.browser_cost = max(run.browser_cost, open_cost(exc))
             await self._record_spend(run.browser_cost)
             log.warning(
                 "apply_submit_stopped", application_id=app.id, marked=marked, error=type(exc).__name__
@@ -568,7 +582,7 @@ class ApplyEngine:
                          "approved_digest": None, "stop_reason": "form_changed",
                          "stage_reason": result.note or "The form changed since you approved it: check it again."},
             )  # fmt: skip
-            await self._metric(app, run, "playbook", "needs_user", "form_changed", result.steps)
+            await self._metric(app, run, "playbook", "questions", "form_changed", result.steps)
         elif result.reason == "not_marked":
             # the row moved before the marker (the person cancelled): it is theirs now, nothing to change
             await self._metric(app, run, "playbook", "failed", "not_marked", result.steps)

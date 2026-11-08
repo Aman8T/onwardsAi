@@ -23,6 +23,7 @@ from tayyari.apply.answers import (
     plan_fields,
     question_key,
     resolve_country,
+    saved_value,
     stable_key,
 )
 from tayyari.apply.forms import FormField
@@ -48,8 +49,12 @@ def field(
 
 
 def ctx(**kw: Any) -> FillContext:
-    kw.setdefault("details", {})
     return FillContext(**kw)
+
+
+def saved(**values: str) -> dict[str, BankEntry]:
+    """Answers the person saved in Your details (the answer bank is the only saved source)."""
+    return {key: BankEntry(value, "you") for key, value in values.items()}
 
 
 def plan_one(item: FormField, context: FillContext, playbook: Playbook = PB) -> tuple[Plan, list[FormField]]:
@@ -73,7 +78,7 @@ def filled_value(plan: Plan) -> tuple[str, str | None, str]:
 def test_a_us_work_auth_question_with_only_india_saved_is_asked_and_never_sent_to_a_model() -> None:
     item = field("Are you legally authorized to work in the United States?", "radio", options=YES_NO)
     bank = {"workAuthorization:IN": BankEntry("Yes", "first_check")}
-    plan, questions = plan_one(item, ctx(bank=bank, details={"workAuthorization": "Yes"}))
+    plan, questions = plan_one(item, ctx(bank={**bank, **saved(workAuthorization="Yes")}))
     need = only_need(plan)
     assert questions == []  # never an open question for the model
     assert need.questionKey == "workAuthorization:US" and need.required
@@ -117,18 +122,16 @@ def test_remote_gives_a_question_for_this_form_only() -> None:
     assert need.questionKey == question_key(item.label) and need.questionKey.startswith("q:")
 
 
-def test_the_legacy_details_never_fill_a_per_country_question() -> None:
-    # the old details never named a country, so they are no country's answer (India's included)
-    details = {"needsSponsorship": "No", "workAuthorization": "Yes"}
+def test_a_country_less_answer_never_fills_a_per_country_question() -> None:
+    # an answer saved under the bare key names no country, so it is no country's answer (India's included)
+    bare = saved(needsSponsorship="No", workAuthorization="Yes")
     india = field("Will you require visa sponsorship to work in India?", "select", options=YES_NO)
-    plan, _ = plan_one(india, ctx(details=details))
+    plan, _ = plan_one(india, ctx(bank=bare))
     assert only_need(plan).questionKey == "needsSponsorship:IN"
     germany = field("Will you require visa sponsorship to work in Germany?", "select", options=YES_NO)
-    plan, _ = plan_one(germany, ctx(details=details))
+    plan, _ = plan_one(germany, ctx(bank=bare))
     assert only_need(plan).questionKey == "needsSponsorship:DE"
-    plan, _ = plan_one(
-        india, ctx(details=details, bank={"needsSponsorship:IN": BankEntry("No", "first_check")})
-    )
+    plan, _ = plan_one(india, ctx(bank={**bare, "needsSponsorship:IN": BankEntry("No", "first_check")}))
     assert filled_value(plan)[:2] == ("No", "0")  # from the bank entry for IN
 
 
@@ -204,11 +207,12 @@ def test_signatures_and_declarations_are_the_persons_in_review_for_this_form_onl
     assert (
         questions == [] and need.perOffer is True and need.onSite is None and need.questionKey == "signature"
     )
+    assert need.attestation is True  # the frontend reads the flag, not a mirror of the keys
     typed, _ = plan_one(sign, ctx(typed={"signature": "Riya Kapoor"}))
     assert filled_value(typed) == ("Riya Kapoor", None, "user") and typed.filled[0].attestation
     assert typed.review_fields()[0].attestation is True
     tick = field("I hereby declare that the above is true", "checkbox")
-    plan, _ = plan_one(tick, ctx(details={"declaration": "yes"}))  # a saved value is never used
+    plan, _ = plan_one(tick, ctx(bank=saved(declaration="yes")))  # a saved value is never used
     assert only_need(plan).perOffer is True
 
 
@@ -279,23 +283,34 @@ def test_every_new_key_is_kept_from_the_model() -> None:
 # ───────────────────────── precedence and keys ─────────────────────────
 
 
-def test_typed_beats_the_bank_beats_details_beats_a_need() -> None:
+def test_typed_beats_the_bank_beats_a_need() -> None:
     item = field("Notice period")
     bank = {"noticePeriod": BankEntry("30 days", "first_check")}
-    details = {"noticePeriod": "60 days"}
+    assert filled_value(plan_one(item, ctx(bank=bank, typed={"f1": "15 days"}))[0])[0] == "15 days"
     assert (
-        filled_value(plan_one(item, ctx(bank=bank, details=details, typed={"f1": "15 days"}))[0])[0]
-        == "15 days"
+        filled_value(plan_one(item, ctx(bank=bank, typed={"noticePeriod": "Immediate"}))[0])[0] == "Immediate"
     )
-    assert filled_value(
-        plan_one(item, ctx(bank=bank, details=details, typed={"noticePeriod": "Immediate"}))[0]
-    )[0] == ("Immediate")
-    assert filled_value(plan_one(item, ctx(bank=bank, details=details))[0]) == ("30 days", None, "details")
-    assert filled_value(plan_one(item, ctx(details=details))[0]) == ("60 days", None, "details")
+    assert filled_value(plan_one(item, ctx(bank=bank))[0]) == ("30 days", None, "details")
     need = only_need(plan_one(item, ctx(company="Acme"))[0])
     assert need.questionKey == "noticePeriod" and need.requiredBy == "Acme"
-    old_name = filled_value(plan_one(field("Expected CTC"), ctx(details={"salaryExpectation": "18 LPA"}))[0])
-    assert old_name == ("18 LPA", None, "details")
+    # the old branch's key names are no saved answer any more
+    old_name = plan_one(field("Expected CTC"), ctx(bank=saved(salaryExpectation="18 LPA")))[0]
+    assert only_need(old_name).questionKey == "expectedCtc"
+
+
+def test_name_fields_are_derived_from_the_saved_name() -> None:
+    full = saved(fullName="Riya Kapoor")
+    assert saved_value(ctx(bank=full), "firstName") == ("Riya", "details", False)
+    assert saved_value(ctx(bank=full), "lastName") == ("Kapoor", "details", False)
+    parts = saved(firstName="Riya", lastName="Kapoor")
+    assert saved_value(ctx(bank=parts), "fullName") == ("Riya Kapoor", "details", False)
+    assert saved_value(ctx(bank=saved(fullName="Riya")), "lastName") == (
+        None,
+        None,
+        False,
+    )  # one word: no last name
+    plan, _ = plan_one(field("First Name", key="first_name"), ctx(bank=full), GREENHOUSE)
+    assert filled_value(plan) == ("Riya", None, "details")
 
 
 def test_question_keys() -> None:
@@ -307,7 +322,7 @@ def test_question_keys() -> None:
     )
     assert question_key(custom).startswith("q:") and len(question_key(custom)) == 22
     assert question_key(field("x"), "workAuthorization", "IN") == "workAuthorization:IN"
-    assert question_key(field("x"), "willingToRelocate", None) == "relocation"
+    assert question_key(field("x"), "relocation", None) == "relocation"
     assert question_key(field("x"), "q:abc", None) == "q:abc"
     plan, _ = plan_one(custom, ctx())
     assert plan.question_keys == {"f1": question_key(custom)}
@@ -318,15 +333,15 @@ def test_question_keys() -> None:
 
 def test_the_preview_plan_has_no_file_in_filled() -> None:
     fields = [field("Full name", key="name"), field("Resume/CV", "file", key="resume")]
-    plan, _ = plan_fields(fields, PB, ctx(details={"firstName": "Riya", "lastName": "Kapoor"}, resume=CV))
-    assert [p.item.key for p in plan.filled] == ["name"] and all(p.file is None for p in plan.filled)
+    plan, _ = plan_fields(fields, PB, ctx(bank=saved(firstName="Riya", lastName="Kapoor"), resume=CV))
+    assert [p.item.key for p in plan.filled] == ["name"] and plan.filled[0].value == "Riya Kapoor"
     assert (
         plan.resume is not None
         and plan.resume.sha256 == CV.sha256
         and plan.resume.selector == '[id="resume"]'
     )
     assert all(f.kind != "file" for f in plan.review_fields())
-    without, _ = plan_fields(fields, PB, ctx(details={"firstName": "Riya"}))
+    without, _ = plan_fields(fields, PB, ctx(bank=saved(firstName="Riya")))
     assert without.resume is None and [n.key for n in without.needs] == ["resume"]
 
 
@@ -343,11 +358,9 @@ def test_the_digest_is_stable_across_value_equal_read_backs_and_changes_with_the
     assert digest_rows(rows, sha) != digest_rows(rows, None)
     assert digest_rows(rows, sha) != digest_rows([*rows[:2], ("label:why acme|textarea", "Other")], sha)
     fields = [field("Full name", key="name"), field("Resume/CV", "file", key="resume")]
-    details = {"firstName": "Riya", "lastName": "Kapoor"}
-    first, _ = plan_fields(fields, PB, ctx(details=details, resume=CV))
-    other, _ = plan_fields(
-        fields, PB, ctx(details=details, resume=Resume("Riya-Kapoor.pdf", b"%PDF-1.7 new"))
-    )
+    name = saved(firstName="Riya", lastName="Kapoor")
+    first, _ = plan_fields(fields, PB, ctx(bank=name, resume=CV))
+    other, _ = plan_fields(fields, PB, ctx(bank=name, resume=Resume("Riya-Kapoor.pdf", b"%PDF-1.7 new")))
     assert first.digest() != other.digest()  # a changed resume needs a new approval, with nothing uploaded
 
 
@@ -467,7 +480,7 @@ async def test_greenhouse_plan_end_to_end_keeps_the_resume_out_and_the_questions
               options=YES_NO),
         field("Why do you want to work at Acme?", "textarea", key="q2"),
     ]  # fmt: skip
-    context = ctx(details={"firstName": "Riya"}, bank={"needsSponsorship:IN": BankEntry("No")}, resume=CV)
+    context = ctx(bank={**saved(firstName="Riya"), "needsSponsorship:IN": BankEntry("No")}, resume=CV)
     plan, questions = plan_fields(fields, GREENHOUSE, context)
     assert [p.item.key for p in plan.filled] == ["first_name", "q3"] and [q.key for q in questions] == ["q2"]
     assert isinstance(plan.filled[0], Planned) and plan.filled[1].question_key == "needsSponsorship:IN"
@@ -498,7 +511,7 @@ async def test_other_demographic_questions_are_declined_and_never_sent_to_a_mode
 
 def test_a_question_about_mobile_apps_never_gets_the_phone_number() -> None:
     label = "Have you contributed to a mobile app(s) and/or several features that reached a large number of users?"
-    plan, questions = plan_one(field(label, "textarea"), ctx(details={"phone": "+91 98765 43210"}))
+    plan, questions = plan_one(field(label, "textarea"), ctx(bank=saved(phone="+91 98765 43210")))
     assert plan.filled == [] and [q.label for q in questions] == [label]
 
 

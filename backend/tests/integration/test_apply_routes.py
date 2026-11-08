@@ -177,7 +177,6 @@ ROUTES: list[tuple[str, str, dict[str, Any] | None]] = [
     ("PUT", "/api/apply/details/self-id", {"selfIdOnForms": False}),
     ("POST", "/api/apply/consent", None),
     ("PUT", "/api/apply/profile/resume", None),
-    ("GET", "/api/apply/profile", None),
     ("POST", "/api/apply/email", {"subject": "s", "sender": "x", "body": "b"}),
     ("GET", "/api/apply/metrics", None),
 ]
@@ -190,8 +189,8 @@ async def test_anonymous_gets_401_on_every_route_even_with_anonymous_matching_on
             response = await rig.client.request(method, path, json=body)
             assert response.status_code == 401, (method, path, response.status_code)
         status = (await rig.client.get("/api/apply/status")).json()
-        assert status["enabled"] is True and status["signedIn"] is False and status["anonymous"] is False
-        assert status["agents"] == []
+        assert status["enabled"] is True and status["signedIn"] is False
+        assert not {"anonymous", "agents"} & set(status)  # the old branch's fields are gone
         assert rig.edge.page_fetches == [] and rig.edge.live_fetches == []
 
 
@@ -213,7 +212,9 @@ async def test_the_check_is_uncharged_and_a_start_is_queued_with_a_hold(start: A
             "/api/apply/check", json={"matchId": match_id, "applyUrl": FORM}, headers=headers
         )
         assert checked.status_code == 200, checked.text
-        assert checked.json() == {"offered": True, "host": "job-boards.greenhouse.io", "ats": "greenhouse"}
+        assert checked.json() == {
+            "offered": True, "host": "job-boards.greenhouse.io", "ats": "greenhouse", "applyUrl": FORM,
+        }  # fmt: skip
         assert (await rig.client.get("/api/apply/applications", headers=headers)).json() == {
             "applications": []
         }
@@ -438,7 +439,10 @@ async def test_your_details_crud(start: Any) -> None:
         assert bad.status_code == 400
         good = await rig.client.put("/api/apply/profile/resume", content=b"%PDF-1.7 a resume", headers={
             **headers, "content-type": "application/pdf", "x-file-name": "Riya%20CV"})  # fmt: skip
-        assert good.status_code == 200 and good.json()["resumeName"] == "Riya CV.pdf"
+        assert good.status_code == 200 and good.json()["resumeName"] == "Riya CV.pdf"  # `YourDetails`
+        assert good.json()["hasResume"] is True and "details" not in good.json()
+        old = await rig.client.get("/api/apply/profile", headers=headers)
+        assert old.status_code in (404, 405)  # the old branch's details form is gone
         assert (await rig.client.get("/api/apply/details", headers=headers)).json()["hasResume"] is True
 
         agreed = await rig.client.post("/api/apply/consent", headers=headers)
@@ -477,3 +481,33 @@ async def test_a_discover_listing_gives_its_link_only_when_it_is_the_matched_pos
         other = SimpleNamespace(jobsearch=Search("A different posting entirely. " * 20),
                                 repos=SimpleNamespace(discover=Listings()))  # fmt: skip
         assert await listing_url(other, ws, "l1", "run1") is None  # type: ignore[arg-type]
+
+
+# ───────────────────────── rate limits (I#10) ─────────────────────────
+
+
+async def test_the_check_and_the_email_are_shed_per_account(start: Any) -> None:
+    from tests.integration.support import roomy_guard
+
+    async with start(guard=roomy_guard(chat_per_minute=1)) as rig:
+        user_id, headers = await rig.account()
+        match_id = await rig.match(user_id)
+        body = {"matchId": match_id, "applyUrl": FORM}
+        checks = [
+            (await rig.client.post("/api/apply/check", json=body, headers=headers)).status_code
+            for _ in range(4)
+        ]
+        assert checks[0] == 200 and checks[-1] == 429
+        email = {
+            "subject": "Your application",
+            "sender": "jobs@lumen.example",
+            "body": "Thanks for applying.",
+        }
+        refused = await rig.client.post("/api/apply/email", json=email, headers=headers)
+        assert refused.status_code == 429  # the same account's bucket
+        fetched = len(rig.edge.live_fetches)
+        _, other = await rig.account("ben@example.com", pid="b" * 32)
+        assert (
+            await rig.client.post("/api/apply/check", json={"applyUrl": FORM}, headers=other)
+        ).status_code == 200
+        assert len(rig.edge.live_fetches) == fetched + 1  # another account is not held back

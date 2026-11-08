@@ -46,10 +46,12 @@ NOW = "2026-11-08T10:00:00Z"
 
 
 def ctx(**kw: Any) -> FillContext:
-    # India's sponsorship answer comes from the answer bank (the first check); the legacy details never fill it
-    kw.setdefault("bank", {"needsSponsorship:IN": BankEntry("No", "first_check")})
+    """The person's answer bank (Your details, and India's sponsorship answer from the first check), plus ``bank``."""
+    bank = {key: BankEntry(value) for key, value in DETAILS.items()}
+    bank["needsSponsorship:IN"] = BankEntry("No", "first_check")
+    bank.update(kw.pop("bank", {}))
     kw.setdefault("resume", CV)
-    return FillContext(details=dict(DETAILS), company="Acme", **kw)
+    return FillContext(company="Acme", bank=bank, **kw)
 
 
 class Marker:
@@ -116,7 +118,7 @@ async def test_a_greenhouse_preview_carries_selector_source_group_and_order_and_
 ):
     driver = FakeDriver(GH, url=GH_URL)
     result = await preview(driver, GREENHOUSE, GH_URL, ctx(), None)
-    assert result.status == "needs_user" and result.stop_reason == "questions"
+    assert result.status == "questions" and result.stop_reason == "questions"
     rows = {r.key: r for r in result.fields}
     first = rows["first_name"]
     assert (first.selector, first.source, first.group, first.order, first.value) == (
@@ -159,8 +161,8 @@ async def test_a_typed_answer_completes_the_review_and_the_read_back_digest_is_s
 
 
 async def test_kept_answers_and_cited_model_answers_are_used_with_their_facts() -> None:
-    kept = {question_key("Why do you want to work at Acme?"): {"answer": "Kept answer"}}
-    result = await preview(FakeDriver(GH, url=GH_URL), GREENHOUSE, GH_URL, ctx(kept=kept), None)
+    kept = {question_key("Why do you want to work at Acme?"): BankEntry("Kept answer", "form")}
+    result = await preview(FakeDriver(GH, url=GH_URL), GREENHOUSE, GH_URL, ctx(bank=kept), None)
     assert result.status == "ready"
     assert any(r.source == "answers" and r.value == "Kept answer" for r in result.fields)
 
@@ -175,7 +177,7 @@ async def test_kept_answers_and_cited_model_answers_are_used_with_their_facts() 
         {"question_102": {"answer": "I led 40 engineers.", "factIds": ["f1"], "confidence": "high"}}
     )
     result = await preview(FakeDriver(GH, url=GH_URL), GREENHOUSE, GH_URL, ctx(facts=facts), invented)
-    assert result.status == "needs_user" and result.needs[0].suggestion is None
+    assert result.status == "questions" and result.needs[0].suggestion is None
 
 
 async def test_lever_builds_the_full_name_and_fills_the_notice_period() -> None:
@@ -199,7 +201,7 @@ async def test_a_board_with_comboboxes_is_chosen_and_the_consent_tick_is_left_to
     assert sent[("choose", '[id="gender"]')] == "Decline To Self Identify"
     assert "check" not in ops(driver)
     (need,) = result.needs
-    assert need.key == "question_1003[]_1" and need.perOffer and result.status == "needs_user"
+    assert need.key == "question_1003[]_1" and need.perOffer and result.status == "questions"
     steps = {s.selector: s.op for s in result.script}
     assert steps['[id="country"]'] == "choose" and steps['[id="first_name"]'] == "fill"
 
@@ -270,7 +272,9 @@ def test_groups_follow_the_key_that_placed_the_field() -> None:
 def test_a_generic_resume_name_is_attached_under_the_persons_name() -> None:
     assert attach_name(CV, ctx()) == "Riya-Kapoor.pdf"
     assert attach_name(Resume("resume.pdf", b"x"), ctx()) == "Riya-Kapoor-Resume.pdf"
-    assert attach_name(Resume("CV.docx", b"x"), FillContext(details={})) is None
+    assert attach_name(Resume("CV.docx", b"x"), FillContext()) is None
+    only_full = FillContext(bank={"fullName": BankEntry("Riya Kapoor")})
+    assert attach_name(Resume("resume.pdf", b"x"), only_full) == "Riya-Kapoor-Resume.pdf"
 
 
 # ───────────────────────── submit ─────────────────────────

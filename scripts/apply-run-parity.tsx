@@ -284,6 +284,23 @@ for (const id of ['run-queued', 'run-filling', 'run-questions', 'run-review', 'r
   check('a self-ID change starts unsaved', need.initialSave(grp.changeNeed({ key: 'gender', label: 'Gender', kind: 'select', required: false, questionKey: 'eeoGender', value: 'Decline to self-identify' })) === false);
 }
 
+// ── Z: the attestation flag, a sent time of its own, the employer's page from the check ──
+{
+  check('an attestation need is read from its flag', need.isAttestation({ key: 'sig_1', questionKey: 'q:sig', attestation: true }) === true);
+  check('a need stored before the flag is still read by its key', need.isAttestation({ key: 'x', questionKey: 'signature' }) === true);
+  check('a plain need is not an attestation', need.isAttestation({ key: 'x', questionKey: 'noticePeriod' }) === false);
+  const apps: any = await import('../src/apply/ApplicationsView');
+  const DAY = 86_400_000;
+  const now = Date.parse('2026-11-08T10:00:00Z');
+  const sent = { id: 's1', stage: 'sent', source: 'match', ats: 'greenhouse', domain: 'x', jobUrl: 'https://x', createdAt: new Date(now - 40 * DAY).toISOString(), updatedAt: new Date(now - 1 * DAY).toISOString(), needsCount: 0, hasScreenshot: false, sentAt: new Date(now - 22 * DAY).toISOString() };
+  check('"No reply in 3 weeks" counts from sentAt, not the last change', apps.noReply(sent, now) === true && apps.sentAtOf(sent) === sent.sentAt);
+  check('a row with no sentAt falls back to its last change', apps.noReply({ ...sent, sentAt: undefined }, now) === false);
+  const start: any = await import('../src/apply/StartView');
+  check("the check's applyUrl is the employer's page", start.employerUrlOf({ check: { offered: false, reason: 'unknown_liveness', applyUrl: 'https://job-boards.greenhouse.io/acme/jobs/1' } }) === 'https://job-boards.greenhouse.io/acme/jobs/1');
+  check('a known link wins over the check', start.employerUrlOf({ employerUrl: 'https://acme.example/jobs/1', check: { offered: true, applyUrl: 'https://other.example' } }) === 'https://acme.example/jobs/1');
+  check('only a web address is linked', start.employerUrlOf({ check: { offered: false, applyUrl: 'javascript:alert(1)' } }) === undefined);
+}
+
 if (failures.length) {
   console.error(`apply-run-parity: FAILED (${failures.length}, passed ${passed})`);
   for (const f of failures) console.error(`  - ${f}`);

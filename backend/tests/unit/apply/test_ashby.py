@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tayyari.apply.answers import FillContext, Resume
+from tayyari.apply.answers import BankEntry, FillContext, Resume
 from tayyari.apply.playbook import ASHBY
 from tayyari.apply.runner import PERSONAL_GROUP, preview, review_of
 from tests.fakes.apply_browser import FakeDriver
@@ -20,7 +20,8 @@ DETAILS = {"firstName": "Riya", "lastName": "Kapoor", "email": "riya@example.com
 
 async def test_an_ashby_preview_fills_the_details_and_leaves_the_resume_for_the_submit() -> None:
     driver = FakeDriver(ASHBY_PAGE, url=URL)
-    ctx = FillContext(details=dict(DETAILS), resume=Resume("Riya-Kapoor-CV.pdf", b"%PDF-1.7 fake"))
+    bank = {key: BankEntry(value) for key, value in DETAILS.items()}
+    ctx = FillContext(bank=bank, resume=Resume("Riya-Kapoor-CV.pdf", b"%PDF-1.7 fake"))
     result = await preview(driver, ASHBY, URL, ctx, None)
     assert result.status == "ready" and result.submit_label == "Submit Application"
     sent = {(op, sel): val for op, sel, val in driver.actions}

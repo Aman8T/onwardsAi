@@ -15,7 +15,7 @@
     "demo": "npm run build:static && uv run --directory backend python -m tayyari.cli serve",
     "deploy": "npm run build:static && uv run --directory backend python -m tayyari.cli deploy --skip-build",
     "smoke": "uv run --directory backend python -m tayyari.cli smoke",
-    "apply-worker": "uv run --directory backend --group worker python -m tayyari.cli apply-worker",
+    "apply-worker": "uv run --directory backend python -m tayyari.cli apply-worker",
     "apply-metrics": "uv run --directory backend python -m tayyari.cli apply-metrics",
     "make-sample": "uv run --directory backend python -m tayyari.cli make-sample",
     "ingest-check": "uv run --directory backend python -m tayyari.cli ingest-check",

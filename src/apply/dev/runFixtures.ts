@@ -91,7 +91,10 @@ const REVIEW: ApplicationReview = {
   capturedAt: at(20 * MIN),
   mode: 'playbook',
   fields: [...REVIEW_FIELDS, SIGNED],
-  skipped: [{ key: 'website', label: 'Website', kind: 'url', required: false }, { key: 'pronouns', label: 'Pronouns', kind: 'text', required: false }],
+  skipped: [
+    { key: 'website', label: 'Website', kind: 'url', required: false, selector: '[id="website"]' },
+    { key: 'pronouns', label: 'Pronouns', kind: 'text', required: false, selector: '[id="pronouns"]' },
+  ],
   warnings: [],
   playbookId: 'pb_greenhouse',
   submitLabel: 'Submit application',
@@ -139,7 +142,13 @@ const SECTIONS_NOW: ProgressSection[] = [
   { label: 'Voluntary disclosures', state: 'todo', filled: 0, total: 3, note: 'Decline to answer (self-ID is off)' },
 ];
 
-const US_FIELD: FilledField = { key: 'wa_us', label: 'Authorised to work in the United States?', kind: 'radio', required: true };
+const US_FIELD: FilledField = {
+  key: 'wa_us',
+  label: 'Authorised to work in the United States?',
+  kind: 'radio',
+  required: true,
+  selector: '[name="wa_us"]',
+};
 
 const FILLED_SO_FAR: FilledField[] = [...REVIEW_FIELDS.slice(0, 8), US_FIELD, REVIEW_FIELDS[8]];
 

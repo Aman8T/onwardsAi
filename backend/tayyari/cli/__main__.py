@@ -220,7 +220,7 @@ def _add_apply_commands(commands: Any) -> None:
     worker.add_argument("--once", action="store_true", help="run until nothing is left to do, then stop")
     worker.add_argument("--headed", action="store_true", help="show the browser window")
     metrics = commands.add_parser(
-        "apply-metrics", help="playbook vs AI runs, success and failure reasons per ATS"
+        "apply-metrics", help="playbook vs field-list loop runs, outcomes and failure reasons per ATS"
     )
     metrics.add_argument("--days", type=_count(1), default=30)
     metrics.add_argument("--json", action="store_true")

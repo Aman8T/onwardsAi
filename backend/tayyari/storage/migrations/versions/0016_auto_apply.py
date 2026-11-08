@@ -9,11 +9,11 @@ change to an existing one, so the previous release keeps working against this sc
 
 ``applications`` is one job application made or tracked through auto-apply (its stage, the review of what will be sent, the
 approval that alone allows a submit, and the worker's lease); ``application_events`` its history; ``ats_playbooks`` the
-replayable per-ATS (or per-site) playbooks, built in or recorded from successful AI runs; ``run_metrics`` one row per engine
-run for the learning loop (playbook vs AI, outcome, cost); ``apply_profiles`` a person's auto-apply settings (self-ID on
-forms, the first check, consent) and resume file; ``answer_bank`` the answers a person saved, shared by every form that
-asks the same question (one row per person and question key). Applications, profiles and answers go with their account
-(ON DELETE CASCADE); events go with their application.
+replayable per-ATS (or per-site) playbooks; ``run_metrics`` one row per engine run for the learning loop (playbook vs the
+field-list loop, outcome, cost); ``apply_profiles`` a person's auto-apply settings (self-ID on forms, the first check,
+consent) and resume file; ``answer_bank`` the answers a person saved, shared by every form that asks the same question
+(one row per person and question key). Applications, profiles and answers belong to an account (``user_id`` NOT NULL)
+and go with it (ON DELETE CASCADE); events go with their application.
 
 An application also carries the posting it is for (``posting_key``, unique per person), the resume choice, the
 ``submitting`` marker (``submitting_at``), the credit hold (``credit_ref``, ``credit_state``), why it stopped for the
@@ -50,7 +50,7 @@ def upgrade() -> None:
         "applications",
         sa.Column("id", sa.String(96), nullable=False),
         sa.Column("owner_key", sa.String(80), nullable=False),
-        sa.Column("user_id", sa.String(96), nullable=True),
+        sa.Column("user_id", sa.String(96), nullable=False),
         sa.Column("profile_id", sa.String(96), nullable=True),
         sa.Column("match_id", sa.String(96), nullable=True),
         sa.Column("source", sa.String(8), nullable=False),
@@ -149,7 +149,6 @@ def upgrade() -> None:
         sa.Column("mode", sa.String(12), nullable=False),
         sa.Column("playbook_id", sa.String(96), nullable=True),
         sa.Column("playbook_status", sa.String(12), nullable=True),
-        sa.Column("agent", sa.String(32), nullable=True),
         sa.Column("outcome", sa.String(16), nullable=False),
         sa.Column("failure_reason", sa.String(64), nullable=True),
         sa.Column("steps", sa.Integer(), nullable=False),
@@ -167,9 +166,7 @@ def upgrade() -> None:
     op.create_table(
         "apply_profiles",
         sa.Column("owner_key", sa.String(80), nullable=False),
-        sa.Column("user_id", sa.String(96), nullable=True),
-        sa.Column("details", _json(), nullable=False),
-        sa.Column("answers", _json(), nullable=False),
+        sa.Column("user_id", sa.String(96), nullable=False),
         sa.Column("resume_name", sa.String(255), nullable=True),
         sa.Column("resume_type", sa.String(100), nullable=True),
         sa.Column("resume_bytes", sa.LargeBinary(), nullable=True),

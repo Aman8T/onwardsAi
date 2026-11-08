@@ -30,7 +30,7 @@ import httpx2
 from pydantic import SecretStr
 
 from tayyari.apply.browser import PlaywrightDriver
-from tayyari.apply.driver import PROBE_BLOCKED, GuardNotActive, OpenMode
+from tayyari.apply.driver import PROBE_BLOCKED, GuardNotActive, OpenMode, carry_open_cost
 from tayyari.apply.netguard import extension_zip
 from tayyari.apply.seams import Reserve
 from tayyari.core.logging import get_logger
@@ -385,11 +385,14 @@ class BrowserUseOpener:
             finally:
                 if created is not None:
                     await _stop(self._api, created.id)
-                    # a browser that failed to open is still billed: its cost is logged and rides on GuardNotActive
+                    # a browser that failed to open is still billed: its cost is logged and rides on the error, whatever
+                    # it is, so the engine records it as spend (`driver.open_cost`)
                     cost = await _cost(self._api, created.id)
-                    log.info("apply_browser_open_failed", mode=mode, cost_micro_usd=cost)
+                    log.info(
+                        "apply_browser_open_failed", mode=mode, cost_micro_usd=cost, error=type(exc).__name__
+                    )
+                    carry_open_cost(exc, cost)
                     if isinstance(exc, GuardNotActive):
-                        exc.cost_micro_usd = cost
                         self._extensions.clear()  # a probe that was not blocked: upload the extension again next time
             raise
         log.info("apply_browser_ready", mode=mode)

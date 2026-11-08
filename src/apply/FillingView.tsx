@@ -34,7 +34,7 @@ export function sectionLine(s: ProgressSection): string {
 
 /** Why "Ready: review it" is off, or null when it is on. */
 export function readyBlock(stage: ApplicationDetail['stage']): string | null {
-  if (stage === 'waiting_for_you' || stage === 'needs_user' || stage === 'ready_to_submit') return null;
+  if (stage === 'waiting_for_you') return null;
   if (stage === 'queued') return 'It opens once the form is filled. It has not started yet.';
   return 'It opens once the form is filled.';
 }

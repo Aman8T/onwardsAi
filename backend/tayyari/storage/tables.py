@@ -943,7 +943,7 @@ class CardSnapshotRow(Base):
 # ───────────────────────────── auto-apply ─────────────────────────────
 
 APPLY_OWNER_LEN = 80
-"""``u:<user id>`` for an account (``a:<40 hex>``, an anonymous browser, is legacy: removed with the anonymous path)."""
+"""``u:<user id>``: auto-apply is for accounts only."""
 APPLY_STAGE_LEN = 24
 APPLY_ATS_LEN = 64
 """An ATS key (``greenhouse``, ``lever``, ``ashby``, ``workday``, ``unknown``) or ``site:<host>`` for a recorded playbook."""
@@ -978,7 +978,7 @@ class ApplicationRow(Base):
 
     id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
     owner_key: Mapped[str] = mapped_column(String(APPLY_OWNER_LEN))
-    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
     profile_id: Mapped[str | None] = mapped_column(String(ID_LEN))
     match_id: Mapped[str | None] = mapped_column(String(ID_LEN))
     source: Mapped[str] = mapped_column(String(8))
@@ -1047,9 +1047,9 @@ class ApplicationEventRow(Base):
 
 class AtsPlaybookRow(Base):
     """A replayable playbook for one ATS (``ats``) or one site (``ats`` = ``site:<host>``, ``domain`` = the host): the field
-    map and step sequence the runner follows with no model call. ``status`` is ``active``, ``draft`` (recorded from a
-    successful AI run, tried before the AI and promoted after `ApplySettings.draft_promote_after` successes) or ``retired``;
-    ``origin`` is ``builtin``, ``recorded`` or ``manual``. Holds no one's data."""
+    map and step sequence the runner follows with no model call. ``status`` is ``active``, ``draft`` (not used before v2,
+    when recorded playbooks return) or ``retired``; ``origin`` is ``builtin``, ``recorded`` or ``manual``. Holds no one's
+    data."""
 
     __tablename__ = "ats_playbooks"
 
@@ -1073,9 +1073,10 @@ class AtsPlaybookRow(Base):
 
 
 class RunMetricRow(Base):
-    """One engine run (a fill or a submit) for the learning loop: which ATS and site, whether a playbook or the AI fallback
-    did it (``mode``), the playbook or agent used, steps, duration, cost in micro-USD and the outcome with its failure reason.
-    A log table: no foreign keys, so a deleted application leaves its runs counted."""
+    """One engine run (a fill or a submit) for the learning loop: which ATS and site, whether a playbook or the field-list
+    loop did it (``mode``), the playbook used, steps, duration, cost in micro-USD (Browser Use plus model calls) and the
+    outcome (`RunOutcome`) with its failure reason. A log table: no foreign keys, so a deleted application leaves its runs
+    counted."""
 
     __tablename__ = "run_metrics"
 
@@ -1088,7 +1089,6 @@ class RunMetricRow(Base):
     mode: Mapped[str] = mapped_column(String(12))
     playbook_id: Mapped[str | None] = mapped_column(String(ID_LEN))
     playbook_status: Mapped[str | None] = mapped_column(String(12))
-    agent: Mapped[str | None] = mapped_column(String(APPLY_SHORT_LEN))
     outcome: Mapped[str] = mapped_column(String(16))
     failure_reason: Mapped[str | None] = mapped_column(String(64))
     steps: Mapped[int] = mapped_column(Integer)
@@ -1109,15 +1109,13 @@ class ApplyProfileRow(Base):
     """One person's auto-apply settings and resume file: ``self_id_on_forms`` (self-identification answers are used on
     forms only when this is on; otherwise the decline option is picked), when the first 30-second check was done
     (``first_check_at``), when they agreed to the auto-apply terms (``consent_at``), and the saved resume with its sha256.
-    ``details`` and ``answers`` are legacy (the answer bank, `AnswerBankRow`, replaces them). Keyed by ``owner_key`` like
-    `ApplicationRow`; goes with its account (ON DELETE CASCADE)."""
+    The answers themselves are in the answer bank (`AnswerBankRow`). Keyed by ``owner_key`` like `ApplicationRow`; goes
+    with its account (ON DELETE CASCADE)."""
 
     __tablename__ = "apply_profiles"
 
     owner_key: Mapped[str] = mapped_column(String(APPLY_OWNER_LEN), primary_key=True)
-    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
-    details: Mapped[dict[str, Any]] = mapped_column(JSONType)
-    answers: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
     resume_name: Mapped[str | None] = mapped_column(String(255))
     resume_type: Mapped[str | None] = mapped_column(String(100))
     resume_bytes: Mapped[bytes | None] = mapped_column(LargeBinary)
