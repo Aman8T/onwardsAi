@@ -7,7 +7,9 @@
  * reads `detail.progress`, which the worker writes while the row is filling, and says honestly when there is none yet.
  */
 import { useId } from 'react';
+import type { ReactNode } from 'react';
 import type { ApplicationDetail, ProgressSection, ProgressState } from '../../shared/apply';
+import { IconCheck } from '../discover/roles/icons';
 import { plural } from '../lib/ui';
 import { STAGE_LABEL } from './api';
 import { LIST_ROUTE, linkTo } from './route';
@@ -21,7 +23,7 @@ export interface FillingViewProps {
   onReady: () => void;
 }
 
-const MARK: Record<ProgressState, string> = { done: '✓', now: '•', todo: '' };
+const MARK: Record<ProgressState, ReactNode> = { done: <IconCheck size={14} />, now: '•', todo: '' };
 const MARK_WORD: Record<ProgressState, string> = { done: 'Done', now: 'Now', todo: 'Still to do' };
 
 /** The line under a section: its count, what waits for the person, and the worker's note. */

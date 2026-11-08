@@ -377,7 +377,7 @@ function CheckMark({ state }: { state: CheckState }) {
   const label = state === 'ok' ? 'Passed' : state === 'fail' ? 'Did not pass' : 'Not checked';
   return (
     <span className={`ap-mark ap-mark-${state}`} role="img" aria-label={label}>
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" focusable="false">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" focusable="false">
         {state === 'ok' ? <path d="M2.5 6.2l2.3 2.3 4.7-5" /> : state === 'fail' ? <path d="M3 3l6 6M9 3l-6 6" /> : <path d="M3 6h6" />}
       </svg>
     </span>
@@ -493,13 +493,13 @@ export interface StartScreenProps {
   navigate: Navigate;
 }
 
-/** What the screen needs before it can show anything, with a first check or consent first when they are due. */
 /** The start request: the route's ids and, for a pasted match, the form address the person typed. */
 export function startBody(input: { matchId: string; resume: ResumeChoice; listingId?: string; runId?: string; applyUrl?: string }): StartApplicationRequest {
   const { matchId, resume, listingId, runId, applyUrl } = input;
   return { matchId, resume, ...(listingId ? { listingId } : {}), ...(runId ? { runId } : {}), ...(applyUrl ? { applyUrl } : {}) };
 }
 
+/** Runs the check, reads Your details and the match, then starts; the first check or consent comes first when they are due. */
 export function StartScreen({ route, status, onStatus, navigate }: StartScreenProps) {
   const { unlimited } = useMe();
   const [check, setCheck] = useState<ApplyCheck | null>(null);

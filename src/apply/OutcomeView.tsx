@@ -19,7 +19,7 @@ import { useId, useState } from 'react';
 import type { ApplicationDetail, ApplicationStage, EmailClassification, EmailClassifyRequest, ResolveOutcome } from '../../shared/apply';
 import { plural } from '../lib/ui';
 import { matchPath } from '../match/route';
-import { STAGE_LABEL, STOP_REASON_TEXT, TRACKING_STAGES, errorText, isSent, stageTone } from './api';
+import { APPROVED_LINE, STAGE_LABEL, STOP_REASON_TEXT, TRACKING_STAGES, errorText, isSent, stageTone } from './api';
 import { EmailPanel } from './EmailPanel';
 import { ReviewGroup, groupFields } from './ReviewGroup';
 import { LIST_ROUTE, linkTo } from './route';
@@ -156,17 +156,17 @@ function copyFor(kind: OutcomeKind, detail: ApplicationDetail): Copy {
       return detail.stage === 'approved'
         ? {
             chip: 'Approved',
-            title: 'Approved. Sending it soon.',
+            title: APPROVED_LINE,
             body: 'We fill the form again with exactly the values you approved, check it still matches, and only then send. This page updates on its own.',
           }
         : {
             chip: 'Sending',
-            title: `Sending your application to ${company}.`,
+            title: `Sending your application to ${company}`,
             body: 'The send has started, so it can no longer be stopped from here. This page updates on its own when the employer’s page answers.',
           };
     case 'signin':
       return {
-        chip: 'Needs your sign-in',
+        chip: STAGE_LABEL.needs_signin,
         title: 'The site wants you to sign in or create an account',
         body: `${company}'s form asks every applicant to sign in first. That is yours to do, and we never store a password for you. Nothing was sent.`,
         well: 'Your answers are kept here, ready to copy, so you don’t type them twice.',
@@ -180,7 +180,7 @@ function copyFor(kind: OutcomeKind, detail: ApplicationDetail): Copy {
       };
     case 'code':
       return {
-        chip: 'A code for you',
+        chip: 'Needs a code from you',
         title: `Type the code ${company} emailed you`,
         body: 'The form asked for a code it sent to your email. We don’t read your inbox, so the last step is yours, on the employer’s page. Nothing was sent.',
         well: 'Your answers are kept here, ready to copy, so you don’t type them twice.',

@@ -52,7 +52,12 @@
   font-size: var(--fs-2);
 }
 
-.ap-navlink:hover,
+@media (hover: hover) {
+  .ap-navlink:hover {
+    color: var(--text);
+  }
+}
+
 .ap-navlink[aria-current='page'] {
   color: var(--text);
 }
@@ -80,7 +85,7 @@
 }
 
 .ap-page {
-  max-width: 1180px;
+  max-width: var(--wrap);
   margin: 0 auto;
   padding: var(--s6) var(--s5) var(--s8);
   min-width: 0;
@@ -150,7 +155,7 @@
 }
 
 .ap-measure {
-  max-width: 68ch;
+  max-width: var(--measure);
 }
 
 .ap-error {
@@ -201,7 +206,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s1);
-  padding: 14px;
+  padding: var(--s3);
   border-radius: var(--r-m);
   background: var(--well);
   font-size: var(--fs-2);
@@ -209,7 +214,7 @@
 
 .ap-plain-list {
   margin: 0;
-  padding-left: 18px;
+  padding-left: var(--s4);
   display: grid;
   gap: var(--s1);
 }
@@ -249,7 +254,7 @@
 /* ───────────── chips by tone ───────────── */
 
 .ap-chip {
-  gap: 6px;
+  gap: var(--s1);
   white-space: nowrap;
 }
 
@@ -277,16 +282,16 @@
 .ap-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .ap-tab,
 .ap-filter {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s1);
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 var(--s3);
   border: 1px solid var(--line);
   border-radius: var(--r-m);
   background: transparent;
@@ -304,9 +309,11 @@
   border-radius: 999px;
 }
 
-.ap-tab:hover,
-.ap-filter:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .ap-tab:hover,
+  .ap-filter:hover {
+    color: var(--text);
+  }
 }
 
 .ap-tab[aria-pressed='true'],
@@ -335,12 +342,12 @@
   font-weight: 500;
   font-size: var(--fs-1);
   color: var(--text-muted);
-  padding: 10px 12px;
+  padding: var(--s2) var(--s3);
   border-bottom: 1px solid var(--line);
 }
 
 .ap-apps td {
-  padding: 14px 12px;
+  padding: var(--s3);
   border-bottom: 1px solid var(--line);
   vertical-align: top;
   overflow-wrap: anywhere;
@@ -396,7 +403,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s2);
-  padding: 10px 12px;
+  padding: var(--s2) var(--s3);
   border: 1px solid var(--line);
   border-radius: var(--r-m);
   background: var(--surface);
@@ -411,9 +418,11 @@
   color: var(--text);
 }
 
-.ap-pipe-link:hover .ap-strong {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  .ap-pipe-link:hover .ap-strong {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 .ap-heard {
@@ -483,7 +492,7 @@
 .ap-table th,
 .ap-table td {
   text-align: left;
-  padding: 6px 8px;
+  padding: var(--s1) var(--s2);
   border-bottom: 1px solid var(--line);
   vertical-align: top;
   white-space: nowrap;
@@ -497,7 +506,7 @@
   justify-content: space-between;
   align-items: baseline;
   gap: var(--s3);
-  padding-bottom: 6px;
+  padding-bottom: var(--s1);
 }
 
 .ap-rows {
@@ -509,7 +518,7 @@
 .ap-frow {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) minmax(0, 1fr) auto;
-  gap: 14px;
+  gap: var(--s3);
   align-items: center;
   padding: var(--s3) 0;
   border-top: 1px solid var(--line);
@@ -576,7 +585,7 @@
 .ap-q-block {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .ap-pills {
@@ -608,7 +617,7 @@
 .ap-check {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s2);
   min-height: 44px;
   font-size: var(--fs-2);
   cursor: pointer;
@@ -632,7 +641,7 @@
   display: flex;
   align-items: flex-start;
   gap: var(--s3);
-  padding: 14px 0;
+  padding: var(--s3) 0;
   border-top: 1px solid var(--line);
 }
 
@@ -675,7 +684,7 @@
   align-items: flex-start;
   gap: var(--s3);
   min-height: 44px;
-  padding: var(--s3) 14px;
+  padding: var(--s3);
   border: 1px solid var(--line);
   border-radius: var(--r-m);
   background: var(--surface);
@@ -693,7 +702,7 @@
 
 .ap-steps {
   margin: 0;
-  padding-left: 20px;
+  padding-left: var(--s4);
   display: grid;
   gap: var(--s2);
   font-size: var(--fs-2);

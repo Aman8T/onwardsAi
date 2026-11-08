@@ -8,7 +8,7 @@
 .ae-btn {
   justify-content: center;
   min-height: 44px;
-  padding-inline: 18px;
+  padding-inline: var(--s4);
   font-weight: 500;
   text-decoration: none;
 }
@@ -75,15 +75,6 @@
   margin: 0;
   font-size: var(--fs-4);
   font-weight: 600;
-}
-
-.ae-h:focus {
-  outline: none;
-}
-
-.ae-h:focus-visible {
-  outline: 1px solid var(--line-strong);
-  outline-offset: 4px;
 }
 
 .ae-fieldset {
@@ -190,7 +181,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s1);
-  padding: 14px;
+  padding: var(--s3);
   border-radius: var(--r-m);
   background: var(--well);
 }
@@ -200,6 +191,12 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s3);
+}
+
+@media (pointer: coarse) {
+  .ae-btn-sm {
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 760px) {

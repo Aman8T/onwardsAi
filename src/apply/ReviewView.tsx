@@ -17,7 +17,7 @@ import type { MatchBand } from '../../shared/match';
 import { plural } from '../lib/ui';
 import { BAND_LABEL } from '../match/model';
 import { matchPath } from '../match/route';
-import { errorText, stageTone } from './api';
+import { APPROVED_LINE, errorText, stageTone } from './api';
 import { EmailPanel } from './EmailPanel';
 import { NeedCard, answerBatch, answerable, initialDrafts, keyOf, missingRequired } from './NeedCard';
 import type { NeedDraft } from './NeedCard';
@@ -35,7 +35,6 @@ export interface ReviewMatch {
   note: string;
 }
 
-/** Why "Approve and send" is off, or null when it is on. */
 /**
  * The person said an unclear send did not go through ("It didn't: refund me"): the review it was sent from is never
  * approved again (a fresh fill and approval, never a resend).
@@ -45,6 +44,7 @@ export function afterUnclearSend(detail: { events?: ApplicationDetail['events'] 
   return last?.fromStage === 'check_this_one' && last.toStage === 'waiting_for_you';
 }
 
+/** Why "Approve and send" is off, or null when it is on. */
 export function approveBlock(detail: Pick<ApplicationDetail, 'review' | 'needs' | 'company' | 'domain'> & { events?: ApplicationDetail['events'] }): string | null {
   if (!detail.review) return 'The review is not ready yet.';
   if (afterUnclearSend(detail)) return 'This review was already sent once without a clear answer. The form is filled again before you can approve it.';
@@ -115,6 +115,7 @@ export function ReviewView({ detail, navigate, queue = [], match, shot, onApprov
   const [tab, setTab] = useState<ReviewTab>(initialTab);
   const [drafts, setDrafts] = useState<Record<string, NeedDraft>>(() => initialDrafts(detail.needs));
   const [busy, setBusy] = useState<'approve' | 'answer' | 'cancel' | null>(null);
+  const [approved, setApproved] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pasting, setPasting] = useState(false);
@@ -169,7 +170,14 @@ export function ReviewView({ detail, navigate, queue = [], match, shot, onApprov
 
   const approve = () => {
     if (block || !review) return;
-    void run('approve', () => onApprove(review.digest), 'Could not approve it. Nothing was sent. Try again.');
+    void run(
+      'approve',
+      async () => {
+        await onApprove(review.digest);
+        setApproved(true);
+      },
+      'Could not approve it. Nothing was sent. Try again.',
+    );
   };
   const change = (answer: QuestionAnswer) => run('answer', () => onAnswer({ answers: [answer] }), 'Could not change that value. Try again.');
 
@@ -438,6 +446,9 @@ export function ReviewView({ detail, navigate, queue = [], match, shot, onApprov
             >
               {busy === 'approve' ? 'Approving' : 'Approve and send'}
             </button>
+            <p className="sr-only" role="status" aria-live="polite">
+              {busy === 'approve' ? 'Approving' : approved ? APPROVED_LINE : ''}
+            </p>
             {block && (
               <p id={reasonId} className="ap-muted ap-small">
                 {block}

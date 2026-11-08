@@ -128,7 +128,7 @@ export function standing(a: ApplicationSummary): { chip: string; line?: string }
         ? { chip: `${plural(a.needsCount, 'question')} for you`, line: why }
         : { chip: 'Ready to review', line: why ?? 'Every value is filled; nothing is sent until you approve' };
     case 'needs_signin':
-      return { chip: a.stopReason === 'verification_code' ? 'Needs a code from you' : 'Needs your sign-in', line: why };
+      return { chip: a.stopReason === 'verification_code' ? 'Needs a code from you' : a.stopReason === 'challenge' ? 'A check for you' : STAGE_LABEL.needs_signin, line: why };
     case 'queued':
       return { chip: 'Waiting to fill', line: why ?? 'Nothing has been sent' };
     case 'filling': {
@@ -395,7 +395,11 @@ function HeardBack({ app, now, onStage }: { app: ApplicationSummary; now: number
           ))}
         </div>
       )}
-      {err && <p className="ap-error ap-small">{err}</p>}
+      {err && (
+        <p className="ap-error ap-small" role="alert">
+          {err}
+        </p>
+      )}
     </div>
   );
 }

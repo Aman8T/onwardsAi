@@ -183,6 +183,8 @@ export function DetailsView(props: DetailsViewProps) {
   const countries = new Set(details.answers.map((a) => a.country?.toUpperCase()).filter(Boolean));
   const workAuth = filter === 'all' || filter === 'you' ? details.workAuthorization.filter((w) => !countries.has(w.country.toUpperCase())) : [];
   const selfIdAnswers = details.answers.filter((a) => a.group === 'self_id');
+  // "all" and "not asked yet" always show the other-country row, so only the other filters can come up empty
+  const nothingMatches = shownAnswers.length + shownQuestions.length + workAuth.length === 0 && filter !== 'all' && filter !== 'not_asked';
 
   const editor = editing && (
     <AnswerEditor key={editing.questionKey} editing={editing} titleId={narrow ? sheetTitle : undefined} onSave={save} onCancel={() => setEditing(null)} />
@@ -217,6 +219,8 @@ export function DetailsView(props: DetailsViewProps) {
       </p>
 
       {check && <StillTrue answer={check} now={props.now} onStillTrue={props.onStillTrue} onChange={() => editAnswer(check)} />}
+
+      {nothingMatches && <p className="ap-muted">Nothing matches this filter.</p>}
 
       {GROUPS.map(([group, label, note]) => {
         const answers = shownAnswers.filter((a) => groupOf(a.group) === group);
@@ -328,7 +332,11 @@ function StillTrue({ answer, now, onStillTrue, onChange }: { answer: SavedAnswer
           Still true? Your {answer.question.toLowerCase()} was set {Number.isFinite(set) ? timeAgo(set, now) : 'a while ago'}.
         </p>
         <p className="ap-muted ap-small">Notice period, CTC and city get a one-tap check every 90 days, never the whole form.</p>
-        {err && <p className="ap-error ap-small">{err}</p>}
+        {err && (
+          <p className="ap-error ap-small" role="alert">
+            {err}
+          </p>
+        )}
       </div>
       <div className="ap-actions">
         <button type="button" className="btn" disabled={busyNow} onClick={() => void confirm()}>
@@ -468,7 +476,11 @@ function SelfId({ details, answers, onSelfId }: { details: YourDetails; answers:
           ))}
         </ul>
       )}
-      {err && <p className="ap-error ap-small">{err}</p>}
+      {err && (
+        <p className="ap-error ap-small" role="alert">
+          {err}
+        </p>
+      )}
     </section>
   );
 }

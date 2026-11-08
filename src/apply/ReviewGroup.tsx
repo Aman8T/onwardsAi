@@ -11,6 +11,7 @@
  */
 import { useId, useState } from 'react';
 import type { CitedFact, FieldSource, FilledField, NeedsInput, QuestionAnswer, ResumeChoice } from '../../shared/apply';
+import { IconCheck } from '../discover/roles/icons';
 import { plural } from '../lib/ui';
 import { NeedCard, initialSave } from './NeedCard';
 import type { NeedDraft } from './NeedCard';
@@ -123,7 +124,7 @@ const MAX_SHOWN_OPTIONS = 6;
 
 export function LockIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
       <rect x="2.5" y="5.5" width="7" height="5" rx="1" />
       <path d="M4 5.5V4a2 2 0 014 0v1.5" />
     </svg>
@@ -148,7 +149,7 @@ function Choices({ field }: { field: ReviewField }) {
         return (
           <li key={opt} className={on ? 'ar-opt ar-opt-chosen' : 'ar-opt'}>
             <span className="ar-opt-mark" aria-hidden="true">
-              {on ? '✓' : ''}
+              {on ? <IconCheck size={14} /> : null}
             </span>
             {opt}
             {on && <span className="sr-only"> (chosen)</span>}

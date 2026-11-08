@@ -92,7 +92,7 @@ export function FirstCheck({ details, onSubmit }: FirstCheckProps) {
         <h1 id={`${base}-title`} className="serif ap-title">
           Check what we read, answer two things.
         </h1>
-        <p className="ap-muted">Everything else, we ask only when a form actually needs it, and only once.</p>
+        <p className="ap-muted">Everything else, we ask only when a form needs it, and only once.</p>
       </div>
 
       <section className="panel ap-panel" aria-labelledby={`${base}-read`}>

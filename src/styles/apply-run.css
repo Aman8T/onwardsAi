@@ -23,7 +23,7 @@
 .ar-lock {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s1);
 }
 
 .ar-select,
@@ -121,7 +121,7 @@ textarea.ar-textarea {
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(0, 1fr);
   gap: var(--s3);
   align-items: baseline;
-  padding: 10px 0;
+  padding: var(--s2) 0;
   border-top: 1px solid var(--line);
   font-size: var(--fs-2);
 }
@@ -151,7 +151,7 @@ textarea.ar-textarea {
 .ar-need {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s2);
   padding: var(--s5);
   border-color: var(--line-strong);
   background: var(--surface);
@@ -195,13 +195,13 @@ textarea.ar-textarea {
 .ar-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--s1);
   border-bottom: 1px solid var(--line);
 }
 
 .ar-tab {
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 var(--s3);
   margin-bottom: -1px;
   border: 0;
   border-bottom: 1px solid transparent;
@@ -215,8 +215,10 @@ textarea.ar-textarea {
     border-color var(--d-fast) var(--ease);
 }
 
-.ar-tab:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .ar-tab:hover {
+    color: var(--text);
+  }
 }
 
 .ar-tab[aria-selected='true'] {
@@ -254,7 +256,7 @@ textarea.ar-textarea {
 
 .ar-row-full {
   grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .ap-ghead + .ar-row,
@@ -321,7 +323,7 @@ textarea.ar-textarea {
 
 .ar-cite {
   display: flex;
-  gap: 10px;
+  gap: var(--s2);
   padding: var(--s2) 0;
   border-top: 1px solid var(--line);
   font-size: var(--fs-1);

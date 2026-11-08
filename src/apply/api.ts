@@ -45,7 +45,7 @@ export class ApplyError extends Error {
 }
 
 /** The sentence to show for any failure: the server's own when it sent one. */
-export function errorText(err: unknown, fallback = 'Something went wrong. Try again.'): string {
+export function errorText(err: unknown, fallback = 'The server did not answer. Try again in a minute.'): string {
   return err instanceof ApplyError ? err.message : fallback;
 }
 
@@ -55,7 +55,7 @@ export const NO_APPLICATIONS_LEFT = 'You have used your free applications. Choos
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, { credentials: 'same-origin', ...init });
   if (!res.ok) {
-    let message = `Something went wrong (${res.status}).`;
+    let message = `The server answered ${res.status}. Try again in a minute.`;
     let body: Record<string, unknown> = {};
     try {
       const raw: unknown = await res.json();
@@ -131,6 +131,9 @@ export const applyApi = {
 export function screenshotUrl(id: string, kind: 'review' | 'confirmation', v: string): string {
   return `${app(id, '/screenshot')}?kind=${kind}&v=${encodeURIComponent(v)}`;
 }
+
+/** Said once the person approves: the outcome's title, and Review's live status. */
+export const APPROVED_LINE = 'Approved, sending it soon';
 
 /** Honest status words (spec 2): "Filling", "Waiting for you", "Sending". */
 export const STAGE_LABEL: Record<ApplicationStage, string> = {
