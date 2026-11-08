@@ -169,6 +169,11 @@ function set(patch: Partial<MatchState> | ((s: MatchState) => Partial<MatchState
 const setResume = (patch: Partial<ResumeState>) => set((s) => ({ resume: { ...s.resume, ...patch } }));
 const setCover = (patch: Partial<CoverState>) => set((s) => ({ cover: { ...s.cover, ...patch } }));
 
+/** The match state as it is right now, outside React (a caller that just started a match reads whether it did). */
+export function getMatchState(): MatchState {
+  return state;
+}
+
 export function useMatch(): MatchState {
   return useSyncExternalStore(
     (cb) => {

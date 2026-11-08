@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Any, cast
 
 from pydantic import ValidationError
-from sqlalchemy import ColumnElement, select, update
+from sqlalchemy import ColumnElement, delete, select, update
 from sqlalchemy.exc import IntegrityError
 
 from tayyari.contract.match import Fact, Posting
@@ -28,7 +28,7 @@ from tayyari.contract.portfolio import Fact as PortfolioFact
 from tayyari.core.clock import Clock, SystemClock
 from tayyari.core.logging import get_logger
 
-from ..db import Database, dialect_insert
+from ..db import Database, dialect_insert, rowcount
 from ..ports import MatchListing, StoredMatch, StoredVariant, VariantKind
 from ..tables import MatchRow, PostingRow, ProfileFactsRow, UserFactRow, VariantRow
 
@@ -225,6 +225,36 @@ class SqlUserFactRepo:
         )
         async with self._db.session() as s:
             return (await s.execute(stmt)).scalar_one_or_none() is not None
+
+    @staticmethod
+    def _slot(profile_id: str, question: str) -> list[ColumnElement[bool]]:
+        return [
+            UserFactRow.profile_id == profile_id,
+            UserFactRow.question == question,
+            UserFactRow.match_id.is_(None),
+        ]
+
+    async def replace(
+        self, user_id: str | None, profile_id: str, fact: Fact, *, question: str, answer: str
+    ) -> None:
+        async with self._db.session() as s:
+            await s.execute(delete(UserFactRow).where(*self._slot(profile_id, question)))
+            s.add(
+                UserFactRow(
+                    id=user_fact_key(profile_id, fact.id),
+                    user_id=user_id,
+                    profile_id=profile_id,
+                    match_id=None,
+                    question=question,
+                    answer=answer,
+                    fact=fact.model_dump(mode="json", exclude_none=True),
+                    created_at=self._clock.now(),
+                )
+            )
+
+    async def remove(self, profile_id: str, question: str) -> int:
+        async with self._db.session() as s:
+            return rowcount(await s.execute(delete(UserFactRow).where(*self._slot(profile_id, question))))
 
 
 class SqlMatchRepo:

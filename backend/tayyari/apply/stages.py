@@ -6,7 +6,7 @@
     user     cancel before submitting (queued, filling, waiting_for_you, approved, needs_signin, failed, closed ->
              cancelled); try again (failed, needs_signin, closed -> queued); answer the questions (waiting_for_you ->
              queued, the answered row and every other waiting row that asks the same question); approve
-             (waiting_for_you -> approved); settle a check_this_one (-> sent, or -> waiting_for_you); "I applied there"
+             (waiting_for_you -> approved); settle a check_this_one (-> sent, -> failed, or -> waiting_for_you); "I applied there"
              (needs_signin -> sent); track by hand from sent on (sent, viewed, interviewing, offer, rejected -> viewed, interviewing, offer, rejected)
     email    check_this_one -> sent; forward only: sent -> viewed -> interviewing -> offer; sent, viewed, interviewing ->
              rejected
@@ -15,7 +15,7 @@
 The old branch's moves (``needs_user``, ``ready_to_submit``, ``applied``) are kept next to the new ones until package Z
 removes them; each is marked ``# legacy: removed in Z``.
 
-Approve (digest), resolve (check_this_one -> sent | waiting_for_you) and "I applied there" have their own routes, so the
+Approve (digest), resolve (check_this_one -> sent | failed | waiting_for_you) and "I applied there" have their own routes, so the
 generic stage route refuses those targets (`ROUTED_TARGETS`).
 
 `move` writes the change and its history entry together; a stage that changed under it (``expected_stage``) is a no-op.
@@ -59,7 +59,7 @@ included: the worker's later move out of filling is a stale compare-and-set and 
 USER_RETRYABLE: Final = frozenset({"failed", "needs_signin", "closed"})
 """Stages the person may queue again ("Try again"). An answered waiting_for_you row is also queued again by the
 person, but that is the answers route, not "Try again"."""
-ROUTED_TARGETS: Final = frozenset({"approved", "sent", "waiting_for_you"})
+ROUTED_TARGETS: Final = frozenset({"approved", "failed", "sent", "waiting_for_you"})
 """User moves only their own route makes: approve (with its digest), resolve and "I applied there". The generic stage
 route refuses these targets so it cannot go around them."""
 _LEGACY_ONLY: Final = frozenset({"needs_user", "ready_to_submit"})  # legacy: removed in Z
@@ -93,6 +93,10 @@ def _user(frm: str, to: str) -> bool:
         return frm in ("check_this_one", "needs_signin")
     if to == "waiting_for_you":
         return frm == "check_this_one"
+    if to == "failed":
+        return (
+            frm == "check_this_one"
+        )  # resolve: "it did not go through" (the hold is given back, never a resend)
     if to in SENT_AND_LATER:
         # legacy: the old tracking from needs_user, ready_to_submit and applied is removed in Z
         return frm in SENT_AND_LATER or frm in ("needs_user", "ready_to_submit", "applied")

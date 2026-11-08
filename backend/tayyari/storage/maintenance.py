@@ -31,8 +31,9 @@ What is purged, with the windows from ``settings.retention``:
                        (`ApplyRepo.purge_filled`); the stage, digests, times and history stay
 ``apply_holds``        not a purge but a reconcile: an application still marked ``credit_state = 'held'`` once it was
                        sent (or moved on from sent) has its hold captured, and one that failed, closed or was cancelled
-                       has it released; ``credit_state`` then says what the ledger says. Both calls are idempotent, so
-                       this only repairs a capture or release that failed at the time
+                       has it released; ``credit_state`` then says what the ledger says. Each row is claimed first by a
+                       compare-and-set (``capturing`` / ``releasing``), so a row reopened meanwhile keeps its hold. Both
+                       calls are idempotent, so this only repairs a capture or release that failed at the time
 =====================  ===========================================================================
 
 The permanent sample corpus is exempt from the payload and metadata steps: decision and Jev rows flagged
@@ -46,15 +47,15 @@ text is in their state) and ``chat`` LLM calls.
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable, Collection
+from collections.abc import Awaitable, Callable, Collection, Sequence
 from datetime import datetime, timedelta
-from typing import Final
+from typing import Any, Final
 
 from sqlalchemy import ColumnElement, and_, delete, exists, not_, or_, select, text, update
 
 from tayyari.core.ids import SAMPLE_PREFIX
 from tayyari.core.logging import get_logger
-from tayyari.core.settings import Settings
+from tayyari.core.settings import BillingSettings, Settings
 
 from .db import Database, dialect_insert, rowcount
 from .repos import Repositories, build_repositories
@@ -226,15 +227,25 @@ async def _delete_unreferenced_states(db: Database, cutoff: datetime) -> int:
         return rowcount(await s.execute(stmt))
 
 
-async def _reconcile_holds(db: Database, repos: Repositories, now: datetime) -> int:
-    """Capture or release the credit holds still open on finished applications; how many applications changed.
+CLAIM_STATES: Final = {"capture": "capturing", "release": "releasing"}
+"""The intermediate ``credit_state`` the sweep claims a row with before it calls the ledger (a compare-and-set on the
+stage and the state it read), so a row reopened between the read and the ledger call is never touched."""
+OPEN_HOLD_STATES: Final = frozenset({"held", *CLAIM_STATES.values()})
+"""States the sweep picks up: an open hold, or a claim a crashed run left behind."""
 
-    Each application is its own unit: one that fails is logged and left ``held`` for the next run.
-    """
+
+async def _open_holds(db: Database) -> Sequence[Any]:
+    """The finished applications whose hold is still open (or claimed by a run that never finished), oldest first."""
     stmt = (
-        select(ApplicationRow.id, ApplicationRow.user_id, ApplicationRow.stage, ApplicationRow.credit_ref)
+        select(
+            ApplicationRow.id,
+            ApplicationRow.user_id,
+            ApplicationRow.stage,
+            ApplicationRow.credit_ref,
+            ApplicationRow.credit_state,
+        )
         .where(
-            ApplicationRow.credit_state == "held",
+            ApplicationRow.credit_state.in_(sorted(OPEN_HOLD_STATES)),
             ApplicationRow.user_id.is_not(None),
             ApplicationRow.stage.in_(sorted(HOLD_CAPTURE_STAGES | HOLD_RELEASE_STAGES)),
         )
@@ -242,36 +253,94 @@ async def _reconcile_holds(db: Database, repos: Repositories, now: datetime) -> 
         .limit(HOLD_SWEEP_LIMIT)
     )
     async with db.session() as s:
-        rows = (await s.execute(stmt)).all()
+        return (await s.execute(stmt)).all()
+
+
+async def _set_credit_state(
+    db: Database, app_id: str, *, stage: str | None, expected: str, state: str
+) -> bool:
+    """``credit_state`` from ``expected`` to ``state``, only while the row is still in ``stage`` (when given)."""
+    cond = [ApplicationRow.id == app_id, ApplicationRow.credit_state == expected]
+    if stage is not None:
+        cond.append(ApplicationRow.stage == stage)
+    async with db.session() as s:
+        return rowcount(await s.execute(update(ApplicationRow).where(*cond).values(credit_state=state))) > 0
+
+
+async def _reconcile_holds(
+    db: Database, repos: Repositories, now: datetime, billing: BillingSettings | None = None
+) -> int:
+    """Capture or release the credit holds still open on finished applications; how many applications changed.
+
+    Each application is its own unit, claimed first: one compare-and-set moves ``credit_state`` to ``capturing`` or
+    ``releasing`` only while the row is still in the stage and state that were read, so a row reopened (queued with a new
+    hold) after the read is left alone. After the ledger call the state is written back from the claim. When that write
+    finds the row reopened or tried again during the ledger call, the hold the new run counted on is taken again
+    (idempotent on the ref) and the row says ``held``, whether or not the reopen wrote ``credit_state``. One that fails
+    is logged and its claim put back to the state that was read; the next run picks it up again (as it does a claim a
+    crashed run left behind).
+    """
+    rules = billing or BillingSettings()
     changed = 0
-    for row in rows:
+    for row in await _open_holds(db):
         user_id: str = row.user_id
         ref = row.credit_ref or f"apply:{row.id}"
+        how = "capture" if row.stage in HOLD_CAPTURE_STAGES else "release"
+        claim = CLAIM_STATES[how]
+        claimed = False
         try:
-            if row.stage in HOLD_CAPTURE_STAGES:
+            if not await _set_credit_state(
+                db, row.id, stage=row.stage, expected=row.credit_state, state=claim
+            ):
+                continue  # the row moved since it was read (reopened, or settled by the engine)
+            claimed = True
+            if how == "capture":
                 await repos.billing.capture(user_id, ref, now=now)
             else:
                 await repos.billing.release(user_id, ref, now=now)
             state = await repos.billing.hold_state(user_id, ref)
             if state == "held":
+                await _set_credit_state(db, row.id, stage=None, expected=claim, state="held")
                 continue
-            if row.stage in HOLD_CAPTURE_STAGES and state != "charged":
+            if how == "capture" and state != "charged":
                 # the application went to the employer but its hold is gone: it will never be charged
                 log.error("apply_sent_without_hold", application_id=row.id, state=state)
-            async with db.session() as s:
-                done = await s.execute(
-                    update(ApplicationRow)
-                    .where(
-                        ApplicationRow.id == row.id,
-                        ApplicationRow.credit_state == "held",
-                        ApplicationRow.stage
-                        == row.stage,  # a row reopened meanwhile keeps its new hold's state
-                    )
-                    .values(credit_state=state)
+            final = state or "released"
+            if await _set_credit_state(db, row.id, stage=row.stage, expected=claim, state=final):
+                changed += 1
+                continue
+            # the row moved during the ledger call
+            current = await repos.apply.get_application(row.id, None)
+            if current is None:
+                continue
+            if (
+                how == "release"
+                and final == "released"
+                and current.stage not in HOLD_RELEASE_STAGES
+                and current.credit_state in ("held", claim)
+            ):
+                # reopened or tried again: the new run counts on this ref's hold (whether or not it wrote
+                # credit_state), so it is taken again and the row says held
+                await repos.billing.hold(
+                    user_id,
+                    ref,
+                    now=now,
+                    free_allowance=rules.free_applications,
+                    cost=rules.apply_credit_cost,
                 )
-            changed += rowcount(done)
+                await _set_credit_state(db, row.id, stage=None, expected=claim, state="held")
+                log.warning("apply_hold_retaken", application_id=row.id)
+            elif current.stage in (HOLD_CAPTURE_STAGES if how == "capture" else HOLD_RELEASE_STAGES):
+                # moved within the same kind of stage (sent -> interviewing): the settlement stands
+                if await _set_credit_state(db, row.id, stage=current.stage, expected=claim, state=final):
+                    changed += 1
         except Exception:
             log.error("apply_hold_reconcile_failed", application_id=row.id, exc_info=True)
+            if claimed:  # never leave a claim behind: the state that was read comes back, for the next run
+                try:
+                    await _set_credit_state(db, row.id, stage=None, expected=claim, state=row.credit_state)
+                except Exception:
+                    log.error("apply_hold_unclaim_failed", application_id=row.id, exc_info=True)
     return changed
 
 
@@ -316,7 +385,7 @@ async def run_maintenance(
         ("jobsearch", lambda: repos.jobsearch.purge(now - JOBSEARCH_RETENTION)),
         ("interview", lambda: repos.interview.purge(now - interview_retention)),
         ("apply_filled", lambda: repos.apply.purge_filled(filled_cutoff)),
-        ("apply_holds", lambda: _reconcile_holds(db, repos, now)),
+        ("apply_holds", lambda: _reconcile_holds(db, repos, now, settings.billing)),
     ]
     counts: dict[str, int] = {}
     errors = 0
@@ -334,6 +403,7 @@ async def run_maintenance(
 
 __all__ = [
     "ADVISORY_LOCK_KEY",
+    "CLAIM_STATES",
     "CLOSED_LISTING_RETENTION",
     "HITS_RETENTION",
     "HOLD_CAPTURE_STAGES",
@@ -343,5 +413,6 @@ __all__ = [
     "JOBSEARCH_RETENTION",
     "LAST_RUN_KEY",
     "MIN_INTERVAL",
+    "OPEN_HOLD_STATES",
     "run_maintenance",
 ]

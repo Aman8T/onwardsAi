@@ -1,13 +1,12 @@
-"""The worker's browser page: Playwright behind `driver.BrowserDriver` (and, until H removes it, the legacy runner's
-driver and `AgentBrowser` for computer use).
+"""The worker's browser page: Playwright behind `driver.BrowserDriver`.
 
 Every request the page makes goes through `_route`, layer 2 of the guard: only http(s) to public hosts (no localhost,
 private or link-local addresses: a screenshot would otherwise leak internal pages), then `netguard.decide`, which blocks
 CAPTCHA providers, main-frame navigation off the form's site, and every write until `allow_submit_hosts` (writes then go
 to those hosts only). Layer 1, the guard extension, is loaded into the hosted browser by `apply.browser_use`.
 
-`PlaywrightBrowser` launches a local Chromium: the opt-in offline test opener (``TAYYARI_TEST_BROWSER=1``) and the
-legacy CLI's; it has no extension, so only layer 2 guards it. Playwright is imported lazily: the web app never loads it.
+`PlaywrightBrowser` launches a local Chromium: the opt-in offline test opener (``TAYYARI_TEST_BROWSER=1``). It has no
+extension, so only layer 2 guards it. Playwright is imported lazily: the web app never loads it.
 """
 
 from __future__ import annotations
@@ -15,7 +14,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from collections.abc import Callable, Collection, Sequence
-from dataclasses import dataclass
 from typing import Any, Final
 from urllib.parse import urlsplit
 
@@ -100,38 +98,6 @@ def _main_frame_navigation(request: Any) -> bool:
         return False
 
 
-@dataclass(frozen=True, slots=True)
-class ElementInfo:
-    tag: str
-    id: str | None = None
-    name: str | None = None
-    type: str | None = None
-    label: str | None = None
-    text: str | None = None
-    selector: str | None = None
-    in_form: bool = False
-
-    @property
-    def is_submit(self) -> bool:
-        if self.tag in ("button", "input") and (self.type or "submit") == "submit" and self.in_form:
-            return True
-        words = f"{self.text or ''} {self.label or ''}".lower()
-        return self.tag in ("button", "input", "a") and any(
-            w in words for w in ("submit", "send application", "apply now", "finish application")
-        )
-
-
-_ELEMENT_AT = """([x, y]) => {
-  const el = document.elementFromPoint(x, y); if (!el) return null;
-  const t = el.closest('button, input, select, textarea, a, label') || el;
-  const lab = t.id ? document.querySelector('label[for="' + CSS.escape(t.id) + '"]') : t.closest('label');
-  const sel = t.id ? '[id="' + t.id + '"]' : (t.getAttribute('name') ? '[name="' + t.getAttribute('name') + '"]' : null);
-  return {tag: t.tagName.toLowerCase(), id: t.id || null, name: t.getAttribute('name'), type: t.getAttribute('type'),
-          label: lab ? lab.innerText.trim().slice(0, 200) : (t.getAttribute('aria-label') || t.getAttribute('placeholder')),
-          text: (t.innerText || t.value || '').trim().slice(0, 120), selector: sel, in_form: !!t.closest('form')};
-}"""
-
-
 _CONTROL_JS: Final[str] = r"""el => {
   const text = (el.innerText || el.value || el.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
   const tag = el.tagName.toLowerCase(); const type = (el.getAttribute('type') || '').toLowerCase();
@@ -158,7 +124,6 @@ class PlaywrightDriver:
     ) -> None:
         self.page, self._context, self._settings, self._responder = page, context, settings, responder
         self._read_only = tuple(read_only)
-        self._submit_allowed = False  # legacy `allow_submit(True)`: writes to any host (removed in H)
         self._write_hosts: frozenset[str] = frozenset()
         self._site: str | None = None
         self.blocked_requests = 0
@@ -186,9 +151,8 @@ class PlaywrightDriver:
         if self._responder is None and not public_url(url):
             await self._block(route, method, host)
             return
-        hosts = self._write_hosts | {host} if self._submit_allowed and host else self._write_hosts
         verdict = decide(
-            method, url, is_navigation=_main_frame_navigation(request), site=self._site, write_hosts=hosts,
+            method, url, is_navigation=_main_frame_navigation(request), site=self._site, write_hosts=self._write_hosts,
             read_only=self._read_only,
         )  # fmt: skip
         if verdict == "block":
@@ -208,10 +172,6 @@ class PlaywrightDriver:
         self.blocked_requests += 1
         log.info("apply_request_blocked", method=method, host=host)  # the host only: a URL may carry a token
         await route.abort("blockedbyclient")
-
-    def allow_submit(self, allowed: bool) -> None:
-        """Legacy: lift layer 2 for every host (the old runner's submit). New code calls `allow_submit_hosts`."""
-        self._submit_allowed = allowed
 
     def allow_submit_hosts(self, hosts: Collection[str]) -> None:
         """Checked as layer 1 checks its write hosts (`netguard.norm_write_hosts`): bare host names only, never a CAPTCHA
@@ -297,9 +257,6 @@ class PlaywrightDriver:
 
     # ── acting on the page ──
 
-    async def click(self, selector: str) -> None:
-        await self.page.locator(selector).first.click(timeout=10000)
-
     async def click_submit(self, selector: str, frame: int = 0) -> None:
         if not self._write_hosts:
             raise PermissionError("the submit control is clicked only after allow_submit_hosts")
@@ -307,9 +264,6 @@ class PlaywrightDriver:
 
     async def fill(self, selector: str, value: str, frame: int = 0) -> None:
         await self._frame(frame).locator(selector).first.fill(value, timeout=10000)
-
-    async def select(self, selector: str, value: str) -> None:
-        await self.page.locator(selector).first.select_option(value=value, timeout=10000)
 
     async def select_label(self, selector: str, text: str, frame: int = 0) -> None:
         loc = self._frame(frame).locator(selector).first
@@ -427,34 +381,6 @@ class PlaywrightDriver:
     async def screenshot(self) -> bytes:
         return bytes(await self.page.screenshot(full_page=True, type="jpeg", quality=70))
 
-    # ── AgentBrowser (computer use; removed in H) ──
-
-    async def screenshot_png(self) -> bytes:
-        return bytes(await self.page.screenshot(type="png"))
-
-    def viewport(self) -> tuple[int, int]:
-        return self._settings.viewport_width, self._settings.viewport_height
-
-    async def element_at(self, x: int, y: int) -> ElementInfo | None:
-        got = await self.page.evaluate(_ELEMENT_AT, [x, y])
-        return None if not got else ElementInfo(**got)
-
-    async def click_at(self, x: int, y: int) -> None:
-        await self.page.mouse.click(x, y)
-
-    async def type_text(self, text: str) -> None:
-        await self.page.keyboard.type(text, delay=10)
-
-    async def press(self, keys: str) -> None:
-        await self.page.keyboard.press(keys)
-
-    async def scroll(self, x: int, y: int, dx: int, dy: int) -> None:
-        await self.page.mouse.move(x, y)
-        await self.page.mouse.wheel(dx, dy)
-
-    async def wait(self, seconds: float) -> None:
-        await asyncio.sleep(min(seconds, 10))
-
     async def close(self) -> None:
         await self._context.close()
 
@@ -502,7 +428,6 @@ class PlaywrightBrowser:
 __all__ = [
     "BUTTONS_JS",
     "SUGGESTIONS",
-    "ElementInfo",
     "PlaywrightBrowser",
     "PlaywrightDriver",
     "Responder",

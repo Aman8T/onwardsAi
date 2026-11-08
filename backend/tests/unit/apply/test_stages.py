@@ -70,6 +70,7 @@ USER_MOVES = [
     ("waiting_for_you", "approved"),
     ("check_this_one", "sent"),
     ("check_this_one", "waiting_for_you"),
+    ("check_this_one", "failed"),  # resolve: it did not go through
     ("needs_signin", "sent"),  # applied on the employer's page
     ("sent", "viewed"),
     ("sent", "interviewing"),

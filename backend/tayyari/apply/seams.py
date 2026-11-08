@@ -47,9 +47,12 @@ class ApplyCredits(Protocol):
 
 
 class FactSink(Protocol):
-    """Adds one allowlisted answer to the person's facts, as a sentence built in code."""
+    """Keeps one allowlisted answer in the person's facts, as a sentence built in code: one fact per question key, so a
+    changed answer replaces the earlier fact and a withdrawn one (`retract`) removes it."""
 
     async def __call__(self, user_id: str, profile_id: str, question_key: str, sentence: str) -> None: ...
+
+    async def retract(self, user_id: str, profile_id: str, question_key: str) -> None: ...
 
 
 ResumeSource = Callable[[StoredApplication], Awaitable[Resume | None]]

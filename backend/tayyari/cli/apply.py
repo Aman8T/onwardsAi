@@ -1,10 +1,12 @@
 """``apply-worker`` and ``apply-metrics``: auto-apply's background worker and its learning-loop numbers.
 
-``apply-worker`` builds a `Container` on the configured database and runs the engine on queued and approved applications with
-a Playwright Chromium, until interrupted (``--once``: a single pass). It needs ``AUTO_APPLY_ENABLED=true`` and Playwright's
-browser (``uv run --directory backend --group worker playwright install chromium`` once). The AI fallback is on for each
-adapter whose key is set (GEMINI_API_KEY, ANTHROPIC_API_KEY); screening answers use the reader model when ANTHROPIC_API_KEY is
-set. ``apply-metrics`` prints playbook vs AI runs, success and failure reasons per ATS (no key needed).
+``apply-worker`` builds a `Container` on the configured database and runs the same worker the web app starts
+(`container.build_apply_worker`: Browser Use standalone browsers, the field-list loop and the answerer on the guarded
+Claude client, the credit hold), until interrupted (``--once``: until nothing is left to do). It needs
+``AUTO_APPLY_ENABLED=true`` and ``BROWSER_USE_API_KEY``; no local browser is installed, because the worker connects to the
+hosted browser over CDP. ``TAYYARI_TEST_BROWSER=1`` drives a local Chromium instead (offline runs; ``--headed`` shows
+it). Use it when ``TAYYARI_APPLY__WORKER_IN_APP=false`` keeps the worker out of the web app. ``apply-metrics`` prints
+playbook vs model runs, outcomes and failure reasons per ATS (no key needed).
 """
 
 from __future__ import annotations
@@ -12,54 +14,23 @@ from __future__ import annotations
 import asyncio
 import json
 
-from tayyari.container import Container
-from tayyari.core.settings import Settings, get_settings
-from tayyari.storage.ports import StoredApplication
-
-
-def build_engine(container: Container, settings: Settings, browser: object) -> object:
-    from tayyari.apply.answers import ClaudeAnswerer
-    from tayyari.apply.engine import ApplyEngine
-
-    async def facts(app: StoredApplication) -> list[dict[str, str]]:
-        if not app.match_id:
-            return []
-        stored = await container.repos.matches.get(app.match_id, app.user_id)
-        rows = (stored.facts.get("facts") if stored else None) or []
-        return [{"id": str(r.get("id")), "text": str(r.get("text", ""))} for r in rows if isinstance(r, dict)]
-
-    answerer = None
-    if settings.anthropic_api_key is not None:
-        answerer = ClaudeAnswerer(container.claude, settings.apply.answer_model or settings.reader_model)
-    fallback = None
-    try:
-        from tayyari.apply.agent import build_fallback
-
-        fallback = build_fallback(settings, container)
-    except ImportError:
-        fallback = None
-    return ApplyEngine(
-        repo=container.repos.apply, settings=settings.apply, browser=browser, clock=container.clock,  # type: ignore[arg-type]
-        answerer=answerer, facts=facts, fallback=fallback,
-    )  # fmt: skip
+from tayyari.container import Container, apply_worker_skip_reason, build_apply_worker
+from tayyari.core.settings import get_settings
 
 
 async def _worker(once: bool, headed: bool) -> int:
-    from tayyari.apply.browser import PlaywrightBrowser
-    from tayyari.apply.worker import ApplyWorker
-
     settings = get_settings()
-    if not settings.auto_apply_enabled:
-        print("Auto-apply is off. Set AUTO_APPLY_ENABLED=true to run the worker.")
-        return 2
     if headed:
         settings = settings.model_copy(
             update={"apply": settings.apply.model_copy(update={"headless": False})}
         )
     container = await Container.build(settings)
-    browser = PlaywrightBrowser(settings.apply)
     try:
-        worker = ApplyWorker(build_engine(container, settings, browser))  # type: ignore[arg-type]
+        reason = apply_worker_skip_reason(container, in_app=False)
+        if reason is not None:
+            print(f"The apply worker does not start: {reason}.")
+            return 2
+        worker = build_apply_worker(container)
         print(
             f"apply worker {worker.name}: polling every {settings.apply.worker_poll_seconds}s (Ctrl+C to stop)"
         )
@@ -69,7 +40,6 @@ async def _worker(once: bool, headed: bool) -> int:
         else:
             await worker.run_forever()
     finally:
-        await browser.close()
         await container.aclose()
     return 0
 
@@ -94,9 +64,9 @@ async def _metrics(days: int, as_json: bool) -> int:
         print(json.dumps(metrics.to_dict(), indent=2))
         return 0
     print(f"Runs since {metrics.since[:10]} (fill and submit):")
-    print(f"{'ATS':<28}{'runs':>6}{'playbook':>10}{'AI':>6}{'AI share':>10}{'success':>9}{'cost $':>9}")
+    print(f"{'ATS':<28}{'runs':>6}{'playbook':>10}{'model':>7}{'model %':>9}{'success':>9}{'cost $':>9}")
     for row in [*metrics.byAts, metrics.total]:
-        print(f"{row.ats:<28}{row.runs:>6}{row.playbookRuns:>10}{row.aiRuns:>6}{row.aiShare:>10.0%}{row.successRate:>9.0%}"
+        print(f"{row.ats:<28}{row.runs:>6}{row.playbookRuns:>10}{row.aiRuns:>7}{row.aiShare:>9.0%}{row.successRate:>9.0%}"
               f"{row.costMicroUsd / 1e6:>9.3f}")  # fmt: skip
     if metrics.failureReasons:
         print("Failure reasons: " + ", ".join(f"{f.reason} {f.count}" for f in metrics.failureReasons))

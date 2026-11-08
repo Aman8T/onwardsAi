@@ -30,7 +30,8 @@ import type { LatestLoader } from '../jobsearch/api';
 import { OriginBarView } from '../OriginBar';
 import { DEFAULT_QUERY, mergeQuery } from '../route';
 import type { DiscoverQuery } from '../route';
-import { CITIES, DRIVETRAIN, GITLAB, HEADOUT, NOTHING_FUNNEL, ROLES, SONICWALL, ago, lastRun, trackedFixtures } from './fixtures';
+import type { DiscoverApply } from '../roles/parts';
+import { CITIES, DRIVETRAIN, GITLAB, HEADOUT, NOTHING_FUNNEL, OPENFX, PARTICLE, ROLES, SONICWALL, ago, lastRun, trackedFixtures } from './fixtures';
 import { FAILS_MIDWAY, FULL_RUN, MIDWAY, refused, scriptedStream } from './streams';
 import type { Beat } from './streams';
 import { REFERRAL_FIXTURE, ROLE_PREP_FIXTURE } from './roleFixtures';
@@ -61,6 +62,7 @@ const STATES = [
   ['share', 'Share'],
   ['compare', 'Compare'],
   ['applications', 'Your applications'],
+  ['apply', 'Apply for me'],
   ['origin', 'Match origin bar'],
 ] as const;
 type StateId = (typeof STATES)[number][0];
@@ -68,7 +70,7 @@ const isState = (s: string | null): s is StateId => STATES.some(([id]) => id ===
 
 interface Config {
   /** What `GET /api/jobsearch/latest` answers. */
-  latest: 'run' | 'none' | 'old' | 'nothing' | 'pending' | 'strong';
+  latest: 'run' | 'none' | 'old' | 'nothing' | 'pending' | 'strong' | 'apply';
   /** The stream behind the button (and, with `auto`, behind the first paint). */
   script?: Beat[];
   pace?: number;
@@ -107,7 +109,35 @@ const CONFIG: Record<Exclude<StateId, 'origin'>, Config> = {
   share: { latest: 'run', initial: { share: { jobId: HEADOUT.id } } },
   compare: { latest: 'run', query: { tab: 'compare', ids: [HEADOUT.id, SONICWALL.id, DRIVETRAIN.id] } },
   applications: { latest: 'run', query: { tab: 'applications' } },
+  apply: { latest: 'apply' },
 };
+
+/** A role on a Workday board: Apply for me says why not, and the employer's link stays the action. */
+const HOLLIS: AiJob = {
+  ...OPENFX,
+  id: 'hollis-data',
+  employer: 'Hollis Health',
+  applyUrl: 'https://hollis.wd5.myworkdayjobs.com/en-US/careers/job/1',
+  applyHost: 'hollis.wd5.myworkdayjobs.com',
+};
+
+/** The "Apply for me" state: one role offered, one being checked, one already sent, one on Workday. */
+function galleryApply(onNote: (s: string) => void): DiscoverApply {
+  return {
+    status: { enabled: true, signedIn: true, anonymous: false, agents: [] },
+    signedIn: true,
+    byListing: new Map([
+      [PARTICLE.id, {
+        id: 'dev-app-1', stage: 'sent', source: 'discover', ats: 'greenhouse', domain: PARTICLE.applyHost,
+        jobUrl: PARTICLE.applyUrl, createdAt: ago(4), updatedAt: ago(4), needsCount: 0, hasScreenshot: false,
+        company: PARTICLE.employer, title: PARTICLE.title, listingId: PARTICLE.id,
+      }],
+    ]),
+    flows: new Map([[DRIVETRAIN.id, { kind: 'checking', phase: 'match', requirements: 18, step: 'Checked 3 of 18 requirements…' }]]),
+    onApply: () => onNote('Gallery: Apply for me runs the start check, then the full match on the card.'),
+    onCancel: () => onNote('Gallery: Cancel stops waiting on the card.'),
+  };
+}
 
 /** What `GET /api/jobsearch/latest` answers for a state. */
 function loaderFor(kind: Config['latest']): LatestLoader {
@@ -125,6 +155,8 @@ function loaderFor(kind: Config['latest']): LatestLoader {
           return lastRun({ jobs: [], funnel: NOTHING_FUNNEL, note: 'Four design roles are open in Bengaluru today, and all four ask for five or more years.' });
         case 'strong':
           return lastRun({ jobs: [{ ...HEADOUT, fit: 'strong' }, ...ROLES.slice(1)] });
+        case 'apply':
+          return lastRun({ jobs: [...ROLES.slice(0, 7), HOLLIS] });
         default:
           return lastRun();
       }
@@ -246,6 +278,7 @@ function Screen({ id, onNote }: { id: Exclude<StateId, 'origin'>; onNote: (s: st
       loadReferral={async () => REFERRAL_FIXTURE}
       layout={phone ? { phone: true, frame } : undefined}
       initial={cfg.initial}
+      apply={id === 'apply' ? galleryApply(onNote) : undefined}
     />
   );
 

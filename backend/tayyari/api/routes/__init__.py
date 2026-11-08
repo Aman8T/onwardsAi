@@ -28,9 +28,13 @@
               GET, POST /api/weekly/unsubscribe?token= (The Leafout Weekly, a personal newspaper)
     card      GET, PUT /api/card; POST /api/card/new-link (the radar card's share sheet); public, no account:
               GET /r/{slug}.svg, /og/{slug}-{version}.png, /u/{slug} (registered here, so before the web app's catch-all)
-    apply     GET /api/apply/status; GET, PUT /api/apply/profile; PUT, DELETE .../profile/resume; POST, GET
-              /api/apply/applications; GET, DELETE .../{id}; GET .../screenshot; POST .../answers, .../approve, .../stage,
-              .../retry; POST /api/apply/email; GET /api/apply/metrics (auto-apply, behind AUTO_APPLY_ENABLED)
+    apply     GET /api/apply/status; POST /api/apply/consent, /api/apply/check (read-only start checks); POST, GET
+              /api/apply/applications; GET, DELETE .../{id}; GET .../screenshot?kind=review|confirmation; POST
+              .../answers, .../approve, .../cancel, .../resolve, .../applied-there, .../stage, .../retry; GET
+              /api/apply/details; PUT .../details/answer, .../details/answers/{key}, .../details/self-id; DELETE
+              .../details/answers/{key}; POST .../details/still-true, .../details/first-check; PUT, DELETE
+              /api/apply/profile/resume (GET, PUT /api/apply/profile: legacy); POST /api/apply/email; GET
+              /api/apply/metrics (auto-apply, behind AUTO_APPLY_ENABLED; signed in only, every route but the status)
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.

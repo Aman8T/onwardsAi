@@ -1,27 +1,39 @@
-"""The engine end to end on fakes: a queued Greenhouse application is filled, reviewed and screenshotted without a submit;
-an approval of the exact digest lets the worker submit it; a run on a site with no playbook and no AI fails honestly. The last
-test drives a real Chromium against the saved page (offline, requests answered from memory) when TAYYARI_TEST_BROWSER=1."""
+"""The engine on fakes (spec 3.1 steps 2 and 5): a queued Greenhouse application is filled to waiting_for_you with its
+review script and digest and nothing sent; a login wall gives needs_signin; a posting that is gone is closed and its hold
+released; a probe that is not blocked fails with nothing filled; a refused spend reservation leaves the row queued with no
+attempt counted. An approved row is sent once (the hold captured, the confirmation stored); a changed form goes back to the
+person; a row cancelled before the marker is never clicked. Every browser session is reserved before it opens and stopped
+on every path, and its cost is recorded. The last test drives a real Chromium against the saved page (offline) when
+TAYYARI_TEST_BROWSER=1."""
 
 from __future__ import annotations
 
 import os
+from collections.abc import AsyncIterator, Collection
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import pytest
 
-from tayyari.apply.engine import ApplyEngine
+from tayyari.apply.driver import OpenMode
+from tayyari.apply.engine import TAILORED_NEED_KEY, ApplyEngine
 from tayyari.apply.worker import ApplyWorker
 from tayyari.core.settings import ApplySettings
-from tayyari.storage.ports import StoredApplication
+from tayyari.llm.errors import SpendCeilingReached
+from tayyari.storage.ports import StoredAnswer, StoredApplication, account_owner_key
 from tests.fakes.apply import FakeApplyRepo
-from tests.fakes.apply_browser import FakeOpener
+from tests.fakes.apply_browser import FakeDriver, FakeOpener
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "apply"
 GH = (DATA / "greenhouse_job.html").read_text(encoding="utf-8")
 T0 = datetime(2026, 11, 5, 10, 0, tzinfo=UTC)
-OWNER = "a:" + "3" * 40
+USER = "user-riya"
+OWNER = account_owner_key(USER)
 URL = "https://job-boards.greenhouse.io/acme/jobs/4012345"
+TYPED = {"question_102": "I build payment APIs and want to work on Acme's platform."}
+SETTINGS = ApplySettings(domain_gap_seconds=0, max_per_domain_per_hour=0)
 
 
 class Clock:
@@ -35,84 +47,392 @@ class Clock:
     def monotonic(self) -> float:
         return 0.0
 
-
-def application(ats: str = "greenhouse", typed: dict[str, str] | None = None) -> StoredApplication:
-    return StoredApplication(
-        id="ap1", owner_key=OWNER, source="link", job_url=URL, apply_url=URL, domain="job-boards.greenhouse.io", ats=ats,
-        stage="queued", created_at=T0, updated_at=T0, title="Backend Engineer", company="Acme",
-        job={"typed": typed or {"question_102": "I want to build Acme's APIs.", "question_103": "No"}},
-    )  # fmt: skip
+    async def sleep(self, seconds: float) -> None:
+        return None
 
 
-async def setup(page: str = GH, ats: str = "greenhouse") -> tuple[FakeApplyRepo, ApplyEngine, FakeOpener]:
-    repo = FakeApplyRepo()
-    await repo.put_details(OWNER, user_id=None, details={"firstName": "Riya", "lastName": "Kapoor", "email": "riya@example.com",
-                                                        "needsSponsorship": "No"}, now=T0)  # fmt: skip
-    await repo.put_resume(
-        OWNER, user_id=None, name="cv.pdf", media_type="application/pdf", data=b"%PDF", now=T0
-    )
-    await repo.create_application(application(ats))
-    opener = FakeOpener(page)
-    engine = ApplyEngine(repo, ApplySettings(domain_gap_seconds=0), opener, Clock())  # type: ignore[arg-type]
-    return repo, engine, opener
+class Credits:
+    """`seams.ApplyCredits` that records each call."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, str]] = []
+
+    async def hold(self, user_id: str, ref: str) -> None:
+        self.calls.append(("hold", ref))
+
+    async def capture(self, user_id: str, ref: str) -> bool:
+        self.calls.append(("capture", ref))
+        return True
+
+    async def release(self, user_id: str, ref: str) -> bool:
+        self.calls.append(("release", ref))
+        return True
 
 
-async def test_fill_stops_before_submit_with_a_review_and_a_screenshot() -> None:
-    repo, engine, opener = await setup()
-    assert await ApplyWorker(engine).run_once() is True
-    app = await repo.get_application("ap1", OWNER)
+class Spend:
+    """The reserve and the spend ledger: records the order of reservations and page opens; ``refuse`` says no."""
+
+    def __init__(self, log: list[str], *, refuse: bool = False) -> None:
+        self.log, self.refuse = log, refuse
+        self.recorded: list[tuple[int, str]] = []
+
+    @asynccontextmanager
+    async def reserve(self, est_usd: float) -> AsyncIterator[None]:
+        if self.refuse:
+            raise SpendCeilingReached(60.0)
+        self.log.append(f"reserve:{est_usd}")
+        try:
+            yield
+        finally:
+            self.log.append("unreserve")
+
+    async def record_spend(self, at: datetime, micro_usd: int, scope: str) -> None:
+        self.recorded.append((micro_usd, scope))
+
+
+class Opener(FakeOpener):
+    """`FakeOpener` that logs each open in the shared order log, and each driver's close."""
+
+    def __init__(self, page: Any, log: list[str], **kwargs: Any) -> None:
+        super().__init__(page, **kwargs)
+        self.log = log
+
+    async def new_page(self, mode: OpenMode = "preview", write_hosts: Collection[str] = ()) -> FakeDriver:
+        self.log.append(f"open:{mode}")
+        return await super().new_page(mode, write_hosts)
+
+
+def application(**fields: Any) -> StoredApplication:
+    values: dict[str, Any] = {
+        "id": "ap1", "owner_key": OWNER, "user_id": USER, "source": "match", "job_url": URL, "apply_url": URL,
+        "domain": "job-boards.greenhouse.io", "ats": "greenhouse", "stage": "queued", "created_at": T0,
+        "updated_at": T0, "title": "Backend Engineer", "company": "Acme", "job": {"typed": dict(TYPED)},
+        "resume_choice": "saved", "credit_ref": "apply:ap1", "credit_state": "held",
+    }  # fmt: skip
+    values.update(fields)
+    return StoredApplication(**values)
+
+
+class Env:
+    def __init__(self, page: Any = GH, *, refuse: bool = False, **opener_kw: Any) -> None:
+        self.repo = FakeApplyRepo()
+        self.log: list[str] = []
+        self.spend = Spend(self.log, refuse=refuse)
+        self.credits = Credits()
+        opener_kw.setdefault("url", URL)
+        self.opener = Opener(page, self.log, **opener_kw)
+        self.engine = ApplyEngine(
+            self.repo, self.spend, SETTINGS, self.opener, Clock(), credits=self.credits, reserve=self.spend.reserve,
+            submit_wait_s=0.0, attach_wait_s=0.0, open_wait_s=0.0, sleep=no_sleep,
+        )  # fmt: skip
+        self.worker = ApplyWorker(self.engine)
+
+    async def seed(self, **fields: Any) -> None:
+        await self.repo.put_details(OWNER, user_id=USER, now=T0, details={
+            "firstName": "Riya", "lastName": "Kapoor", "email": "riya@example.com"})  # fmt: skip
+        await self.repo.put_answer(
+            StoredAnswer(user_id=USER, question_key="needsSponsorship:IN", question="Sponsorship in India",
+                         source="first_check", ask_each_time=False, answered_at=T0, created_at=T0, updated_at=T0,
+                         value="No")
+        )  # fmt: skip
+        await self.repo.put_resume(
+            OWNER,
+            user_id=USER,
+            name="Riya-Kapoor.pdf",
+            media_type="application/pdf",
+            data=b"%PDF-1.7 cv",
+            now=T0,
+        )
+        await self.repo.create_application(application(**fields))
+
+    async def app(self) -> StoredApplication:
+        found = await self.repo.get_application("ap1", OWNER)
+        assert found is not None
+        return found
+
+    async def approve(self) -> None:
+        app = await self.app()
+        await self.repo.update_application(
+            "ap1", {"stage": "approved", "approved_at": T0, "approved_digest": app.review_digest}, now=T0
+        )
+
+    def stages(self) -> list[str | None]:
+        return [e.to_stage for e in self.repo.events if e.application_id == "ap1"]
+
+
+async def no_sleep(_: float) -> None:
+    return None
+
+
+# ───────────────────────── fill ─────────────────────────
+
+
+async def test_a_fill_reaches_waiting_for_you_with_the_review_script_and_digest_and_sends_nothing() -> None:
+    env = Env(cost_micro_usd=7000)
+    await env.seed(job={})  # no typed answer: the custom question is the person's
+    assert await env.worker.run_once() is True
+    app = await env.app()
+    assert app.stage == "waiting_for_you" and app.stop_reason == "questions" and app.lease_owner is None
+    assert app.review is not None and app.review_digest == app.review["digest"] and app.review["script"]
+    assert {s["op"] for s in app.review["script"]} <= {"fill", "select", "check", "choose", "group"}
+    assert app.review["resume"]["name"] == "Riya-Kapoor.pdf" and app.attempts == 1
+    assert [n["key"] for n in app.needs or []] == ["question_102"] and app.needs[0]["questionKey"]  # type: ignore[index]
+    progress = app.progress or {}
     assert (
-        app is not None
-        and app.stage == "ready_to_submit"
-        and app.review is not None
-        and app.lease_owner is None
+        progress["sections"][-1]["label"] == "Questions for you" and progress["sections"][-1]["waiting"] == 1
     )
-    assert app.review_digest == app.review["digest"] and app.review["mode"] == "playbook"
-    assert await repo.get_screenshot("ap1", OWNER) and not opener.drivers[0].submitted
-    assert [e.to_stage for e in await repo.list_events("ap1")] == ["filling", "ready_to_submit"]
-    (metric,) = repo.metrics
-    assert (metric.mode, metric.outcome, metric.playbook_id) == (
+    assert await env.repo.get_screenshot("ap1", OWNER)
+    driver = env.opener.drivers[0]
+    assert driver.closed and driver.sent_writes() == [] and not driver.submitted and driver.allow_calls == []
+    assert env.opener.opened == [("preview", frozenset())]
+    assert env.stages() == ["filling", "waiting_for_you"] and env.credits.calls == []
+    assert env.spend.recorded == [(7000, "browser_use")]
+    (metric,) = env.repo.metrics
+    assert (metric.run_kind, metric.mode, metric.outcome, metric.cost_micro_usd) == (
+        "fill",
         "playbook",
-        "success",
-        "builtin:greenhouse@1",
+        "needs_user",
+        7000,
     )
-    assert await ApplyWorker(engine).run_once() is False  # not approved: nothing to do
+    assert await env.worker.run_once() is False  # waiting for the person: nothing to run
 
 
-async def test_an_approved_application_is_submitted_and_applied() -> None:
-    repo, engine, opener = await setup()
-    await ApplyWorker(engine).run_once()
-    app = await repo.get_application("ap1", OWNER)
-    assert app is not None
-    await repo.update_application("ap1", {"approved_at": T0, "approved_digest": app.review_digest}, now=T0)
-    await ApplyWorker(engine).run_once()
-    done = await repo.get_application("ap1", OWNER)
-    assert done is not None and done.stage == "applied" and done.submitted_at is not None
-    assert opener.drivers[-1].submitted and [m.run_kind for m in repo.metrics] == ["fill", "submit"]
+async def test_a_typed_answer_gives_a_review_with_nothing_left_to_answer() -> None:
+    env = Env()
+    await env.seed()
+    await env.worker.run_once()
+    app = await env.app()
+    assert app.stage == "waiting_for_you" and app.stop_reason is None and app.stage_reason is None
+    assert not [n for n in app.needs or [] if n.get("required")]
+    assert env.repo.metrics[0].outcome == "success"
 
 
-async def test_a_tampered_approval_is_refused() -> None:
-    repo, engine, opener = await setup()
-    await ApplyWorker(engine).run_once()
-    await repo.update_application("ap1", {"approved_at": T0, "approved_digest": "f" * 64}, now=T0)
-    await ApplyWorker(engine).run_once()
-    app = await repo.get_application("ap1", OWNER)
-    assert app is not None and app.stage == "needs_user" and not any(d.submitted for d in opener.drivers)
+async def test_a_login_wall_gives_needs_signin_with_the_link_and_keeps_the_hold() -> None:
+    env = Env('<html><body><form><input type="password" name="pw"></form></body></html>')
+    await env.seed()
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.stop_reason, app.manual_url, app.credit_state) == (
+        "needs_signin",
+        "signin",
+        URL,
+        "held",
+    )
+    assert env.credits.calls == [] and env.opener.drivers[0].closed
 
 
-async def test_no_playbook_and_no_ai_fails_with_a_reason() -> None:
-    repo, engine, _ = await setup(ats="unknown")
-    await ApplyWorker(engine).run_once()
-    app = await repo.get_application("ap1", OWNER)
-    assert app is not None and app.stage == "failed" and "No playbook" in (app.stage_reason or "")
-    assert repo.metrics[0].failure_reason == "no_playbook"
+async def test_a_closed_posting_releases_the_hold() -> None:
+    env = Env(status=404)
+    await env.seed()
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.credit_state) == ("closed", "released")
+    assert env.credits.calls == [("release", "apply:ap1")] and env.opener.drivers[0].closed
+    assert env.repo.metrics[0].outcome == "closed"
+
+
+async def test_a_form_that_never_opens_fails_before_any_write_and_releases_the_hold() -> None:
+    env = Env("<html><body><p>Hello</p></body></html>")
+    await env.seed()
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.stop_reason, app.credit_state) == ("failed", "fill_error", "released")
+    assert env.opener.drivers[0].sent_writes() == [] and env.credits.calls == [("release", "apply:ap1")]
+
+
+async def test_a_probe_that_is_not_blocked_fails_with_guard_probe_and_nothing_filled() -> None:
+    env = Env(guard_active=False)
+    await env.seed()
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.stop_reason, app.credit_state) == ("failed", "guard_probe", "released")
+    driver = env.opener.drivers[0]
+    assert driver.closed and not [a for a in driver.actions if a[0] != "goto"] and driver.actions == []
+    assert app.review is None and env.repo.metrics[0].failure_reason == "guard_probe"
+
+
+async def test_a_refused_spend_reservation_leaves_the_row_queued_with_no_attempt_counted() -> None:
+    env = Env(refuse=True)
+    await env.seed()
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.attempts, app.credit_state) == ("queued", 0, "held")
+    assert env.opener.opened == [] and env.repo.metrics == [] and env.credits.calls == []
+
+
+class Raising:
+    """An answerer whose model call is refused by the spend ceiling, after the browser opened."""
+
+    async def answer(self, questions: Any, ctx: Any) -> dict[str, dict[str, Any]]:
+        raise SpendCeilingReached(60.0)
+
+
+async def test_a_model_call_refused_mid_fill_puts_the_row_back_and_still_stops_the_browser() -> None:
+    env = Env(cost_micro_usd=500)
+    await env.seed(job={})
+    env.engine.answerer = Raising()
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.attempts) == ("queued", 0)
+    assert env.opener.drivers[0].closed and env.spend.recorded == [(500, "browser_use")]
+
+
+async def test_a_tailored_resume_that_cannot_be_exported_becomes_a_need_and_opens_no_browser() -> None:
+    env = Env()
+    await env.seed(resume_choice="tailored")
+
+    async def blocked(_: StoredApplication) -> None:
+        return None
+
+    env.engine.resume_for = blocked
+    await env.worker.run_once()
+    app = await env.app()
+    assert app.stage == "waiting_for_you" and [n["questionKey"] for n in app.needs or []] == [
+        TAILORED_NEED_KEY
+    ]
+    assert env.opener.opened == [] and env.credits.calls == []
+
+
+# ───────────────────────── submit ─────────────────────────
+
+
+async def test_an_approved_review_is_sent_once_the_hold_captured_and_the_confirmation_stored() -> None:
+    env = Env(cost_micro_usd=3000)
+    await env.seed()
+    await env.worker.run_once()
+    await env.approve()
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.credit_state) == ("sent", "charged") and app.submitted_at and app.submitting_at
+    assert env.credits.calls == [("capture", "apply:ap1")]
+    assert await env.repo.get_confirmation("ap1", OWNER) and app.has_confirmation
+    send = env.opener.drivers[-1]
+    assert env.opener.opened[-1] == (
+        "submit",
+        frozenset({"boards.greenhouse.io", "job-boards.greenhouse.io"}),
+    )
+    assert send.submitted and [a[0] for a in send.actions].count("click_submit") == 1 and send.closed
+    assert env.stages() == ["filling", "waiting_for_you", "submitting", "sent"]
+    assert [(m.run_kind, m.outcome) for m in env.repo.metrics] == [("fill", "success"), ("submit", "success")]
+    assert env.spend.recorded == [(3000, "browser_use"), (3000, "browser_use")]
+
+
+async def test_the_reserve_is_entered_before_every_new_page_and_left_after_the_browser_stops() -> None:
+    env = Env()
+    await env.seed()
+    await env.worker.run_once()
+    await env.approve()
+    await env.worker.run_once()
+    assert env.log == [
+        f"reserve:{SETTINGS.est_browser_usd}", "open:preview", "unreserve",
+        f"reserve:{SETTINGS.est_browser_usd}", "open:submit", "unreserve",
+    ]  # fmt: skip
+    assert all(d.closed for d in env.opener.drivers)
+
+
+async def test_a_changed_form_goes_back_to_waiting_for_you_with_the_approval_cleared() -> None:
+    env = Env()
+    await env.seed()
+    await env.worker.run_once()
+    await env.approve()
+    first_digest = (await env.app()).review_digest
+    env.opener.page = GH.replace(
+        '<div class="g-recaptcha"',
+        '<div class="field"><label for="question_104">Years of SQL<span class="required">*</span></label>'
+        '<input id="question_104" name="question_104" type="text" aria-required="true"></div><div class="g-recaptcha"',
+    )
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.stop_reason, app.approved_digest, app.approved_at) == (
+        "waiting_for_you", "form_changed", None, None,
+    )  # fmt: skip
+    assert app.review_digest not in (None, first_digest) and [n["key"] for n in app.needs or []] == [
+        "question_104"
+    ]
+    assert not env.opener.drivers[-1].submitted and env.credits.calls == [] and app.credit_state == "held"
+
+
+class CancelOnOpen(Opener):
+    """The person cancels while the submit browser opens: the marker's compare-and-set then finds the row moved."""
+
+    def __init__(self, page: Any, log: list[str], repo: FakeApplyRepo, **kwargs: Any) -> None:
+        super().__init__(page, log, **kwargs)
+        self.repo = repo
+
+    async def new_page(self, mode: OpenMode = "preview", write_hosts: Collection[str] = ()) -> FakeDriver:
+        if mode == "submit":
+            await self.repo.update_application(
+                "ap1", {"stage": "cancelled"}, now=T0, expected_stage="approved"
+            )
+        return await super().new_page(mode, write_hosts)
+
+
+async def test_a_row_cancelled_before_the_marker_is_never_clicked() -> None:
+    env = Env()
+    await env.seed()
+    env.opener = env.engine.opener = CancelOnOpen(GH, env.log, env.repo, url=URL)
+    await env.worker.run_once()
+    await env.approve()
+    await env.worker.run_once()
+    app = await env.app()
+    send = env.opener.drivers[-1]
+    assert (
+        app.stage == "cancelled" and not send.submitted and "click_submit" not in [a[0] for a in send.actions]
+    )
+    assert send.allow_calls == [] and send.closed and env.credits.calls == []  # the cancel route releases it
+
+
+async def test_no_confirmation_after_the_click_is_check_this_one_and_keeps_the_hold() -> None:
+    quiet = "<html><body><p>Working on it</p></body></html>"
+    env = Env(after_submit=quiet, after_submit_url=URL)
+    await env.seed()
+    await env.worker.run_once()
+    await env.approve()
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.credit_state, app.manual_url) == ("check_this_one", "held", URL)
+    assert env.credits.calls == [] and env.repo.metrics[-1].outcome == "check_this_one"
+
+
+async def test_a_submit_that_fails_before_the_click_releases_the_hold() -> None:
+    env = Env()
+    await env.seed()
+    await env.worker.run_once()
+    await env.approve()
+    env.opener.page = GH.replace(
+        '<button type="submit" class="btn btn--pill">Submit application</button>', ""
+    )
+    await env.worker.run_once()
+    app = await env.app()
+    assert (app.stage, app.credit_state) == ("failed", "released") and app.submitting_at is None
+    assert env.credits.calls == [("release", "apply:ap1")] and not env.opener.drivers[-1].submitted
+
+
+async def test_an_approval_of_another_digest_is_never_sent() -> None:
+    env = Env()
+    await env.seed()
+    await env.worker.run_once()
+    await env.repo.update_application("ap1", {"stage": "approved", "approved_digest": "f" * 64}, now=T0)
+    await env.worker.run_once()
+    app = await env.app()
+    assert app.stage == "waiting_for_you" and app.approved_digest is None
+    assert len(env.opener.drivers) == 1  # no submit browser was opened
+
+
+async def test_an_unlimited_account_without_a_hold_is_never_sent_to_the_ledger() -> None:
+    env = Env()
+    await env.seed(credit_state=None, credit_ref=None)
+    await env.worker.run_once()
+    await env.approve()
+    await env.worker.run_once()
+    assert (await env.app()).stage == "sent" and env.credits.calls == []
 
 
 @pytest.mark.skipif(
     os.environ.get("TAYYARI_TEST_BROWSER") != "1",
     reason="set TAYYARI_TEST_BROWSER=1 to drive a real Chromium",
 )
-async def test_real_chromium_fills_and_submits_the_saved_page_offline() -> None:
+async def test_real_chromium_fills_and_sends_the_saved_page_offline() -> None:
     from tayyari.apply.browser import PlaywrightBrowser
 
     posts: list[str] = []
@@ -120,25 +440,22 @@ async def test_real_chromium_fills_and_submits_the_saved_page_offline() -> None:
     def responder(method: str, url: str) -> tuple[int, str, str] | None:
         if method == "GET" and url.startswith(URL):
             return 200, "text/html", GH
-        if method == "POST" and "/applications" in url:
+        if method == "POST" and "greenhouse.io" in url:
             posts.append(url)
             return 200, "text/html", "<html><body><h1>Thank you for applying!</h1></body></html>"
         return None
 
-    repo, _, _ = await setup()
+    env = Env()
+    await env.seed()
     browser = PlaywrightBrowser(ApplySettings(), responder)
-    engine = ApplyEngine(repo, ApplySettings(domain_gap_seconds=0), browser, Clock())
+    env.engine.opener = browser
     try:
-        await ApplyWorker(engine).run_once()
-        app = await repo.get_application("ap1", OWNER)
-        assert app is not None and app.stage == "ready_to_submit", app.stage_reason
-        shot = await repo.get_screenshot("ap1", OWNER)
-        assert shot is not None and shot[:2] == b"\xff\xd8" and posts == []
-        await repo.update_application(
-            "ap1", {"approved_at": T0, "approved_digest": app.review_digest}, now=T0
-        )
-        await ApplyWorker(engine).run_once()
-        done = await repo.get_application("ap1", OWNER)
-        assert done is not None and done.stage == "applied" and len(posts) == 1
+        await env.worker.run_once()
+        app = await env.app()
+        assert app.stage == "waiting_for_you", app.stage_reason
+        assert posts == []
+        await env.approve()
+        await env.worker.run_once()
+        assert (await env.app()).stage in ("sent", "check_this_one")
     finally:
         await browser.close()

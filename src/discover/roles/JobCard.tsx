@@ -2,8 +2,9 @@
  * One role the search found, as a card (board "Main" of the Discover canvas), in the order a person needs it: the fit
  * in a word and the level in a word; the title (it opens the details) and who is hiring where; the pips and the count
  * line; the first requirement the evidence meets, in the posting's own words and the person's own; where it was found
- * and that the employer's board listed it; the apply link, naming where it goes; then Prepare, See how you fit and
- * three small buttons: Save, Compare, Not for me.
+ * and that the employer's board listed it; Apply for me with the employer's own link quietly under it (or, where Apply
+ * for me is not offered, the employer's link and why); then Prepare, See how you fit and three small buttons: Save,
+ * Compare, Not for me. Pressed on a card, Apply for me runs the full posting match first and shows its steps here.
  *
  * There is no score and no percentage anywhere on it: the fit is a word worked out in code from quotes that were
  * checked against the posting and the profile. A role the person said no to becomes a slim "Hidden" row with Undo, and
@@ -18,10 +19,15 @@ import type { NoReason } from '../jobsearch/avoid';
 import { employerLine, freshnessLine, provenanceLine } from '../jobsearch/words';
 import { IconBookmark, IconCompare } from './icons';
 import { NotForMe } from './NotForMe';
-import { ApplyLink, AskLine, FitLine, Pair } from './parts';
+import { ApplyFor, AskLine, FitLine, Pair } from './parts';
+import type { ApplyCtl } from './parts';
 
-/** Everything the buttons on a role need, made once per role by the screen that owns them. */
-export interface RoleCtl {
+/**
+ * Everything the buttons on a role need, made once per role by the screen that owns them. The Apply for me fields
+ * (`ApplyCtl`): `apply` (offer, signed out, checking, applied, own account or off; absent while auto-apply is off),
+ * `applyProgress` while it is being checked, `onApplyForMe` and `onCancelApply`.
+ */
+export interface RoleCtl extends ApplyCtl {
   /** A finished search stored this role: Prepare, See how you fit and Share work. */
   runReady: boolean;
   /** Where Prepare goes (a real link, so it opens in a new tab too). */
@@ -112,7 +118,14 @@ export function JobCard({ job, now, ctl, compact = false, popoverOpen = false, t
         {!compact && (
           <>
             <div className="dc-grow" />
-            <ApplyLink job={job} className="btn btn-primary btn-sm dc-btn-sm dc-apply" />
+            <ApplyFor
+              job={job}
+              ctl={ctl}
+              size="sm"
+              primaryClass="btn btn-primary btn-sm dc-btn-sm dc-apply"
+              buttonClass="dc-btn-sm dc-apply"
+              quietClass="btn btn-quiet btn-sm dc-btn-sm dc-apply"
+            />
             <div className="dc-card-row">
               {ctl.runReady && ctl.prepareHref ? (
                 <a

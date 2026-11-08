@@ -16,7 +16,6 @@ resume's sha256, computed the same way in both passes, so widgets that reformat 
 step names its field by selector; the replay finds that field in the submit browser's own scan and uses the frame it is in
 there, so a frame index from the preview is never trusted on its own.
 
-`fill` and `submit` (and `BrowserDriver` below) are the old engine's (legacy: package H removes them).
 """
 
 from __future__ import annotations
@@ -26,7 +25,7 @@ import re
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Final, Literal, Protocol
+from typing import Final, Literal
 
 from tayyari.apply.answers import (
     Answerer,
@@ -40,9 +39,9 @@ from tayyari.apply.answers import (
     question_key,
     stable_key,
 )
-from tayyari.apply.driver import BrowserDriver as LiveDriver
+from tayyari.apply.driver import BrowserDriver
 from tayyari.apply.fill_loop import FieldListLoop, LoopRun, hidden_from_model, injected, run_step, step_op
-from tayyari.apply.forms import FormField, blocker_of, checks_on_submit, closed_of, scan_form
+from tayyari.apply.forms import FormField, blocker_of, checks_on_submit, closed_of
 from tayyari.apply.playbook import ATTESTATION_KEYS, COUNTRY_KEYS, SELF_ID_KEYS, Playbook, rule_for
 from tayyari.apply.scan import LiveScan, resume_name_inferable
 from tayyari.apply.verify import find_live, value_matches, verify
@@ -64,25 +63,10 @@ log = get_logger(__name__)
 BOT_CHECK_WARNING = "This form runs a bot check when it is submitted. If it asks for a human check, you will get a link to finish it yourself."
 
 
-class BrowserDriver(Protocol):  # legacy: removed in H (the new driver is `apply.driver.BrowserDriver`)
-    async def goto(self, url: str) -> None: ...
-    async def content(self) -> str: ...
-    async def current_url(self) -> str: ...
-    async def visible_text(self) -> str: ...
-    async def exists(self, selector: str) -> bool: ...
-    async def click(self, selector: str) -> None: ...
-    async def fill(self, selector: str, value: str) -> None: ...
-    async def select(self, selector: str, value: str) -> None: ...
-    async def check(self, selector: str) -> None: ...
-    async def upload(self, selector: str, name: str, data: bytes, media_type: str) -> None: ...
-    async def screenshot(self) -> bytes: ...
-    def allow_submit(self, allowed: bool) -> None: ...
-
-
-FillStatus = Literal["ready", "needs_user", "blocked", "failed", "closed", "needs_signin"]
+FillStatus = Literal["ready", "needs_user", "failed", "closed", "needs_signin"]
 """``ready``: a review with nothing required left open; ``needs_user``: a review with questions for the person (both go
 to ``waiting_for_you``); ``closed``: the posting is gone; ``needs_signin``: a login wall or a CAPTCHA (``stop_reason``);
-``failed``: the form never opened. ``blocked`` is the legacy runner's."""
+``failed``: the form never opened."""
 
 
 @dataclass(slots=True)
@@ -120,10 +104,9 @@ class FillResult:
     """Clicks refused as submit-like."""
 
 
-SubmitStatus = Literal["applied", "needs_user", "failed", "sent", "check_this_one", "form_changed"]
+SubmitStatus = Literal["failed", "sent", "check_this_one", "form_changed"]
 """`submit_approved`: ``sent`` (the success signature), ``check_this_one`` (clicked, no clear outcome), ``form_changed``
-(the read-back digest differs: back to the person with ``review``), ``failed`` (nothing clicked: ``clicked`` is False).
-``applied`` and ``needs_user`` are the legacy runner's."""
+(the read-back digest differs: back to the person with ``review``), ``failed`` (nothing clicked: ``clicked`` is False)."""
 
 
 @dataclass(slots=True)
@@ -137,122 +120,6 @@ class SubmitResult:
     """True once the submit control's click was attempted: from then on the outcome is never retried."""
     review: FillResult | None = None
     """For ``form_changed``: the form as it reads now, to store as the new review (`review_of`)."""
-
-
-async def fill(
-    driver: BrowserDriver, playbook: Playbook, url: str, ctx: FillContext, answerer: Answerer | None
-) -> FillResult:
-    driver.allow_submit(False)
-    steps = 0
-    try:
-        await driver.goto(url)
-        steps += 1
-        for selector in playbook.open_clicks:
-            if await driver.exists(selector):
-                await driver.click(selector)
-                steps += 1
-        page = await driver.content()
-    except Exception as exc:
-        return FillResult(
-            "failed", reason="navigation", note=f"The page did not open ({type(exc).__name__}).", steps=steps
-        )
-    blocker = blocker_of(page)
-    if blocker is not None:
-        note = (
-            "The site asks for a human check (CAPTCHA)."
-            if blocker == "captcha"
-            else "The site wants you to sign in first."
-        )
-        return FillResult("blocked", reason=blocker, note=note, screenshot=await _shot(driver), steps=steps)
-    scan = scan_form(page)
-    if not scan.fields:
-        return FillResult("failed", reason="no_form", note="No application form on the page.", steps=steps)
-    plan, questions = plan_fields(scan.fields, playbook, ctx)
-    drafted = await answerer.answer(questions, ctx) if (answerer is not None and questions) else {}
-    apply_model_answers(plan, questions, drafted, ctx)
-    for planned in plan.filled:
-        try:
-            if planned.file is not None:
-                await driver.upload(
-                    planned.item.selector, planned.file.name, planned.file.data, planned.file.media_type
-                )
-            elif planned.item.kind in ("select", "radio"):
-                await driver.select(planned.item.selector, planned.option_value or planned.value)
-            elif planned.item.kind == "checkbox":
-                await driver.check(planned.item.selector)
-            else:
-                await driver.fill(planned.item.selector, planned.value)
-            steps += 1
-        except Exception as exc:
-            return FillResult(
-                "failed", plan, "step_failed", f'Could not fill "{planned.item.label}" ({type(exc).__name__}).',
-                await _shot(driver), scan.submit_label, fields_total=len(scan.fields), steps=steps,
-            )  # fmt: skip
-    warnings = [BOT_CHECK_WARNING] if checks_on_submit(page) else []
-    status: FillStatus = "needs_user" if any(n.required for n in plan.needs) else "ready"
-    return FillResult(
-        status, plan, "needs_answers" if status == "needs_user" else None, None, await _shot(driver), scan.submit_label,
-        warnings, len(scan.fields), steps,
-    )  # fmt: skip
-
-
-async def submit(
-    driver: BrowserDriver,
-    playbook: Playbook,
-    url: str,
-    ctx: FillContext,
-    approved_digest: str,
-    *,
-    wait_s: float = 15.0,
-) -> SubmitResult:
-    """Fill again with exactly the approved values (no model call: drafted answers come back as typed ones), check the digest,
-    then click submit and wait for the success page."""
-    filled = await fill(driver, playbook, url, ctx, None)
-    if filled.status != "ready" or filled.plan is None:
-        return SubmitResult("needs_user", filled.reason or "form_changed", filled.note or "The form changed since you approved it.",
-                            filled.screenshot, filled.steps)  # fmt: skip
-    if filled.plan.digest() != approved_digest:
-        return SubmitResult("needs_user", "form_changed", "The form changed since you approved it: check it again.",
-                            filled.screenshot, filled.steps)  # fmt: skip
-    driver.allow_submit(True)
-    steps = filled.steps
-    try:
-        await driver.click(playbook.submit_selector)
-        steps += 1
-    except Exception as exc:
-        return SubmitResult(
-            "failed",
-            "submit_missing",
-            f"No submit button ({type(exc).__name__}).",
-            await _shot(driver),
-            steps,
-        )
-    deadline = asyncio.get_running_loop().time() + wait_s
-    while True:
-        here, text, page = await driver.current_url(), await driver.visible_text(), await driver.content()
-        if (playbook.success_url and re.search(playbook.success_url, here, re.I)) or re.search(
-            playbook.success_text, text, re.I
-        ):
-            return SubmitResult("applied", screenshot=await _shot(driver), steps=steps)
-        if blocker_of(page) == "captcha":
-            return SubmitResult("needs_user", "captcha", "The site asked for a human check: open the link and submit it yourself.",
-                                await _shot(driver), steps)  # fmt: skip
-        if asyncio.get_running_loop().time() >= deadline:
-            error = re.search(playbook.error_text, text, re.I)
-            reason, note = (
-                ("form_error", "The form refused the application.")
-                if error
-                else ("no_confirmation", "No confirmation after submitting.")
-            )
-            return SubmitResult("failed", reason, note, await _shot(driver), steps)
-        await asyncio.sleep(0.5)
-
-
-async def _shot(driver: BrowserDriver) -> bytes | None:
-    try:
-        return await driver.screenshot()
-    except Exception:
-        return None
 
 
 # ───────────────────────── A1: the review (preview) ─────────────────────────
@@ -311,14 +178,14 @@ def read_back_digest(scan: LiveScan, resume_sha: str | None) -> str:
     return digest_rows(read_back_rows(scan), resume_sha)
 
 
-async def _snap(driver: LiveDriver) -> bytes | None:
+async def _snap(driver: BrowserDriver) -> bytes | None:
     try:
         return await driver.screenshot()
     except Exception:
         return None
 
 
-async def _open_form(driver: LiveDriver, playbook: Playbook, *, wait_s: float) -> LiveScan:
+async def _open_form(driver: BrowserDriver, playbook: Playbook, *, wait_s: float) -> LiveScan:
     """The live scan once the form is on screen: the playbook's open texts are clicked in turn (a cookie banner's
     "Deny", "Apply for this job") until it is."""
     scan = await driver.scan()
@@ -330,7 +197,7 @@ async def _open_form(driver: LiveDriver, playbook: Playbook, *, wait_s: float) -
     return scan
 
 
-async def _stop_of(driver: LiveDriver, scan: LiveScan) -> tuple[StopReason, str, str] | None:
+async def _stop_of(driver: BrowserDriver, scan: LiveScan) -> tuple[StopReason, str, str] | None:
     """A CAPTCHA or a login wall on screen: (stop reason, metrics reason, note)."""
     page = await driver.content()
     blocker = blocker_of(page)
@@ -383,7 +250,7 @@ def _not_stuck_need(planned_item: FormField, plan: Plan, ctx: FillContext) -> Ne
 
 
 async def _execute_plan(
-    driver: LiveDriver, plan: Plan, playbook: Playbook, keys: set[str] | None = None
+    driver: BrowserDriver, plan: Plan, playbook: Playbook, keys: set[str] | None = None
 ) -> int:
     steps = 0
     for planned in plan.filled:
@@ -449,7 +316,7 @@ def _with_live(skipped: list[FilledField], scan: LiveScan) -> list[FilledField]:
 
 
 async def preview(
-    driver: LiveDriver,
+    driver: BrowserDriver,
     playbook: Playbook,
     url: str,
     ctx: FillContext,
@@ -631,7 +498,7 @@ def _count(pattern: str | re.Pattern[str] | None, text: str) -> int:
 
 
 async def _changed(
-    driver: LiveDriver, review: ApplicationReview, final: LiveScan, ctx: FillContext, playbook: Playbook,
+    driver: BrowserDriver, review: ApplicationReview, final: LiveScan, ctx: FillContext, playbook: Playbook,
     resume: ResumePlan | None, steps: int,
 ) -> FillResult:  # fmt: skip
     """The form as it reads now, for the person to check again. The review's rows keep their live values (rows gone from
@@ -702,7 +569,7 @@ def _form_frame(scan: LiveScan) -> int:
     return max(set(frames), key=frames.count) if frames else 0
 
 
-async def _replay(driver: LiveDriver, script: list[ScriptStep], scan: LiveScan) -> int:
+async def _replay(driver: BrowserDriver, script: list[ScriptStep], scan: LiveScan) -> int:
     """Run each step on the field with its selector in this browser's scan (in the frame it is in here). A step whose
     field is gone is skipped: the read-back digest then says the form changed."""
     steps = 0
@@ -719,7 +586,7 @@ async def _replay(driver: LiveDriver, script: list[ScriptStep], scan: LiveScan) 
 
 
 async def submit_approved(
-    driver: LiveDriver,
+    driver: BrowserDriver,
     review: ApplicationReview,
     ctx: FillContext,
     *,
@@ -878,7 +745,7 @@ async def submit_approved(
 
 
 async def _outcome(
-    driver: LiveDriver, playbook: Playbook, before_url: str, before_text: str, before_fields: set[str], steps: int,
+    driver: BrowserDriver, playbook: Playbook, before_url: str, before_text: str, before_fields: set[str], steps: int,
     wait_s: float, poll_s: float, sleep: Callable[[float], Awaitable[None]], monotonic: Callable[[], float],
 ) -> SubmitResult:  # fmt: skip
     """Poll the page after the click: only the success signature (new on the page) is ``sent``."""
@@ -918,26 +785,26 @@ async def _outcome(
 
 
 __all__ = [
+    "ATTACH_WAIT_S",
     "BOT_CHECK_WARNING",
     "DECLARATION_GROUP",
     "ELIGIBILITY_GROUP",
+    "OPEN_WAIT_S",
     "PERSONAL_GROUP",
     "QUESTIONS_GROUP",
     "SELF_ID_GROUP",
-    "BrowserDriver",
+    "SUBMIT_WAIT_S",
     "FillResult",
     "FillStatus",
     "MarkSubmitting",
     "SubmitResult",
     "SubmitStatus",
     "attach_name",
-    "fill",
     "group_of",
     "preview",
     "read_back_digest",
     "read_back_rows",
     "resume_field",
     "review_of",
-    "submit",
     "submit_approved",
 ]

@@ -5,9 +5,16 @@
  * with its count. A role moves by its own stage select, a real `<select>`; moving it to Applied for the first time writes
  * today's date, which can be changed. A note is one line. Everything is kept in this browser (see `tracker.ts`), and says
  * so. Removing a role asks first.
+ *
+ * A saved role that also has an application through Leafout (looked up by its listing) shows where that application
+ * stands on the server, in words ("Waiting for you", "Sent 4 Nov"), and links to it ("Open the application"). The two
+ * lists stay separate until the saved roles move to the server (a later decision).
  */
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
+import type { ApplicationSummary } from '../../../shared/apply';
+import { appliedLabel } from '../../apply/ApplyForMe';
+import { applyPath } from '../../apply/route';
 import { NARROW_QUERY, useMediaQuery } from '../../lib/ui';
 import { actions } from '../../store';
 import '../../styles/discover-more.css';
@@ -23,12 +30,14 @@ export interface ApplicationsViewProps {
   onBack: () => void;
   /** Open the practice plan for a role; absent = Practice's plan screen for it. */
   onPractise?: (item: TrackedJob) => void;
+  /** The person's applications through Leafout by Discover listing (`useApplications().byListing`); absent while auto-apply is off. */
+  applications?: ReadonlyMap<string, ApplicationSummary>;
 }
 
 const roles = (n: number) => `${n} ${n === 1 ? 'role' : 'roles'}`;
 const nameOf = (t: TrackedJob) => `${t.job.title} at ${t.job.employer}`;
 
-export function ApplicationsView({ profileId, onPrepare, onSeeMatch, onShare, onBack, onPractise }: ApplicationsViewProps) {
+export function ApplicationsView({ profileId, onPrepare, onSeeMatch, onShare, onBack, onPractise, applications }: ApplicationsViewProps) {
   const tracker = useTracker(profileId);
   const narrow = useMediaQuery(NARROW_QUERY);
   const base = useId();
@@ -175,6 +184,7 @@ export function ApplicationsView({ profileId, onPrepare, onSeeMatch, onShare, on
                 <Item
                   key={t.job.id}
                   item={t}
+                  application={applications?.get(t.job.id)}
                   selectId={selectId(t.job.id)}
                   confirming={confirming === t.job.id}
                   onAskRemove={() => setConfirming(t.job.id)}
@@ -203,6 +213,8 @@ export function ApplicationsView({ profileId, onPrepare, onSeeMatch, onShare, on
 
 interface ItemProps {
   item: TrackedJob;
+  /** The application through Leafout for this role, if there is one. */
+  application?: ApplicationSummary;
   selectId: string;
   confirming: boolean;
   onAskRemove: () => void;
@@ -217,7 +229,7 @@ interface ItemProps {
   onShare: () => void;
 }
 
-function Item({ item, selectId, confirming, onAskRemove, onKeep, onRemove, onStage, onNote, onDate, onPrepare, onPractise, onSeeMatch, onShare }: ItemProps) {
+function Item({ item, application, selectId, confirming, onAskRemove, onKeep, onRemove, onStage, onNote, onDate, onPrepare, onPractise, onSeeMatch, onShare }: ItemProps) {
   const { job } = item;
   const ids = useId();
   const down = item.takenDownAt;
@@ -252,6 +264,18 @@ function Item({ item, selectId, confirming, onAskRemove, onKeep, onRemove, onSta
           <div className="dm-head-row dm-head-tight">
             <span className={FIT_CLASS[job.fit]}>{FIT_WORD[job.fit]}</span>
             <span className="dm-lvl">{LEVEL_WORD[job.level]}</span>
+          </div>
+        )}
+
+        {application && (
+          <div className="dm-appfield">
+            <p className="dm-small">
+              <span className="dm-muted">Through Leafout: </span>
+              <span className="dm-strong">{appliedLabel(application)}</span>
+            </p>
+            <a className="btn btn-sm dm-btn-sm" href={applyPath({ screen: 'one', id: application.id })} aria-label={`Open the application for ${nameOf(item)}`}>
+              Open the application
+            </a>
           </div>
         )}
 

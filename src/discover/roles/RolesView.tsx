@@ -9,6 +9,13 @@
  * It owns what only this screen knows (which filter is on, which role is open, which match is starting) and is handed
  * the rest: the run, what "not for me" taught, the tracker, the city and what to do when a button asks to leave. A
  * search starts only when a button here is pressed; opening the page never starts one.
+ *
+ * Apply for me on each role is worked out here (`applyView`, in code) from the host's ATS (`fillableAts`), the person's
+ * applications by listing (`useApplications().byListing`, handed in) and what Discover is doing for the role; pressing
+ * it goes to `DiscoverRoot`, which runs the start check and the full match on the card.
+ *
+ * An address that names a role (`/discover?job=<listingId>`, the Weekly paper's link) opens that role's details once
+ * the search has it.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -28,6 +35,8 @@ import { Focus } from './Focus';
 import { Funnel, NothingFitted } from './Funnel';
 import type { RoleCtl } from './JobCard';
 import { FailureNote, SampleBanner, ThinNote, isBlocked } from './Notes';
+import { applyView } from './parts';
+import type { DiscoverApply } from './parts';
 import { Sections, Toolbar, countsOf } from './ResultsParts';
 import type { Filter } from './ResultsParts';
 import { SearchBar } from './SearchBar';
@@ -63,6 +72,8 @@ export interface RolesViewProps {
   onAnalyse: () => void;
   /** Add a project or a link (a thin profile, or nothing fitted). */
   onAddProject: () => void;
+  /** Apply for me on the roles; absent where nothing can be started (the employer's link stays the action). */
+  apply?: DiscoverApply;
   /** The dev gallery opens a state at its most telling moment. */
   initial?: { focusId?: string; popoverId?: string; deckAt?: number; list?: boolean };
 }
@@ -131,6 +142,19 @@ export function RolesView(p: RolesViewProps) {
     if (focusId && data && !focusJob) setFocusId(null);
   }, [focusId, focusJob, data]);
 
+  // an address that names a role opens its details once the search has it (once per role named)
+  const named = query.tab === 'roles' ? query.job : undefined;
+  const openedNamed = useRef<string | null>(null);
+  useEffect(() => {
+    if (!named || openedNamed.current === named || !data) return;
+    // only once the role is there: a search still streaming may bring it in a later snapshot
+    if (!visible.some((j) => j.id === named)) return;
+    openedNamed.current = named;
+    setFocusId(named);
+    // the roles are read once they arrive
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [named, data]);
+
   const compared = p.compareIds.flatMap((id) => all.find((j) => j.id === id) ?? []);
 
   // a role saved while the search was still running learns which search it came from once that finishes
@@ -173,30 +197,46 @@ export function RolesView(p: RolesViewProps) {
     setNotice(text ? { id: job.id, text } : null);
   };
 
+  const applyForMe = (job: AiJob, choice?: Parameters<DiscoverApply['onApply']>[2]) => {
+    setNotice(null);
+    if (!p.apply) return;
+    if (!runId || run.running) return say(job, NEEDS_RUN);
+    p.apply.onApply(job, runId, choice);
+  };
+
   const toggleCompare = (job: AiJob) => {
     const has = p.compareIds.includes(job.id);
     if (!has && p.compareIds.length >= COMPARE_MAX) return;
     p.onCompareIds(has ? p.compareIds.filter((id) => id !== job.id) : [...p.compareIds, job.id]);
   };
 
-  const ctlOf = (job: AiJob): RoleCtl => ({
-    runReady: !!runId && !run.running,
-    prepareHref: runId ? discoverPath({ ...query, tab: 'prepare', run: runId, job: job.id }) : undefined,
-    saved: tracker.isSaved(job.id),
-    comparing: p.compareIds.includes(job.id),
-    compareFull: p.compareIds.length >= COMPARE_MAX && !p.compareIds.includes(job.id),
-    matchBusy: matching === job.id,
-    matchLocked: p.matchLocked || (matching !== null && matching !== job.id),
-    notice: notice?.id === job.id ? notice.text : undefined,
-    onOpen: () => setFocusId(job.id),
-    onPrepare: () => (runId && !run.running ? p.onQuery({ tab: 'prepare', run: runId, job: job.id }) : say(job, NEEDS_RUN)),
-    onSeeMatch: () => void seeMatch(job),
-    onToggleSave: () => tracker.toggle(job, runId),
-    onToggleCompare: () => toggleCompare(job),
-    onShare: () => (runId && !run.running ? p.onShare(job, runId) : say(job, NEEDS_RUN)),
-    onHide: (reason) => avoid.hide(job, reason),
-    onUnhide: () => avoid.undo(job),
-  });
+  const ctlOf = (job: AiJob): RoleCtl => {
+    const view = p.apply ? applyView(job, p.apply) : undefined;
+    return {
+      runReady: !!runId && !run.running,
+      prepareHref: runId ? discoverPath({ ...query, tab: 'prepare', run: runId, job: job.id }) : undefined,
+      saved: tracker.isSaved(job.id),
+      comparing: p.compareIds.includes(job.id),
+      compareFull: p.compareIds.length >= COMPARE_MAX && !p.compareIds.includes(job.id),
+      matchBusy: matching === job.id,
+      matchLocked: p.matchLocked || (matching !== null && matching !== job.id),
+      notice: notice?.id === job.id ? notice.text : view?.note,
+      onOpen: () => setFocusId(job.id),
+      onPrepare: () => (runId && !run.running ? p.onQuery({ tab: 'prepare', run: runId, job: job.id }) : say(job, NEEDS_RUN)),
+      onSeeMatch: () => void seeMatch(job),
+      onToggleSave: () => tracker.toggle(job, runId),
+      onToggleCompare: () => toggleCompare(job),
+      onShare: () => (runId && !run.running ? p.onShare(job, runId) : say(job, NEEDS_RUN)),
+      onHide: (reason) => avoid.hide(job, reason),
+      onUnhide: () => avoid.undo(job),
+      ...(view ? { apply: view.apply } : {}),
+      ...(view?.progress ? { applyProgress: view.progress } : {}),
+      ...(view?.closed ? { applyClosed: true } : {}),
+      onApplyForMe: (choice) => applyForMe(job, choice),
+      onCancelApply: () => p.apply?.onCancel(job),
+      ...(p.apply?.signInNext ? { applySignInNext: p.apply.signInNext } : {}),
+    };
+  };
 
   /* ───────── the words ───────── */
 

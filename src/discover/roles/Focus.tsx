@@ -2,21 +2,25 @@
  * One role in full (board "Focus" of the Discover canvas): the fit and the level; the title, the employer and the
  * place; what the posting says about level; the pips; every requirement the evidence meets, in the posting's words
  * and the person's own; the requirements that are not on the resume; how the role was found; and, in a framed box at
- * the end, what to do next: apply, prepare, see how you fit, save, then compare, share and "not for me".
+ * the end, what to do next: Apply for me (it opens "With which resume" inline, then the posting match runs first),
+ * the quiet "or apply yourself on <host> ↗", prepare, see how you fit, save, then compare, share and "not for me".
+ * Where Apply for me is not offered the employer's link stays the action, with the reason.
  *
  * On wide screens it is a panel beside the grid (the grid dims behind it); under 760 px it is a bottom sheet with the
  * actions pinned under the scrolling details. Escape closes either, and focus goes back to the title that opened it.
  * Nothing here is a score: counts, quotes, and words for the fit and the level. A salary shows only when the employer
  * states one.
  */
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { AiJob } from '../../../shared/jobsearch';
+import { ApplyForMeChoice } from '../../apply/ApplyForMe';
+import { useSavedResume } from '../../apply/useApplications';
 import { LEVEL_WORD, freshnessLine, placeLine, provenanceLine, salaryLine } from '../jobsearch/words';
 import { useLayout } from '../layout';
 import { IconBookmark, IconChevron, IconClose, IconPrepare, IconSearch } from './icons';
 import { NotForMe } from './NotForMe';
-import { ApplyLink, AskLine, FitChip } from './parts';
+import { ApplyFor, AskLine, FitChip } from './parts';
 import type { RoleCtl } from './JobCard';
 import { Sheet } from './Sheet';
 
@@ -171,12 +175,51 @@ function Body({ job, now, ctl, onClose, narrow = false }: FocusProps & { narrow?
 
 /* ───────────────────────── what to do next ───────────────────────── */
 
-/** The three big choices of the panel, and the apply link above them. */
+/**
+ * Apply for me on a role's page: the button opens "With which resume" inline (the compact choice), and Continue
+ * starts the posting match with that resume chosen. The employer's link follows, quiet.
+ */
+function ApplyActions({ job, ctl }: { job: AiJob; ctl: RoleCtl }) {
+  const [open, setOpen] = useState(false);
+  const choiceId = useId();
+  const offered = ctl.apply?.kind === 'offer';
+  const savedResume = useSavedResume(offered && open);
+  const choosing = offered && open;
+  return (
+    <ApplyFor
+      job={job}
+      ctl={ctl}
+      primaryClass="btn btn-primary dc-btn dc-apply"
+      buttonClass="dc-btn dc-apply"
+      quietClass="btn btn-quiet dc-btn dc-apply"
+      controls={offered ? choiceId : undefined}
+      expanded={choosing}
+      onApply={() => setOpen((o) => !o)}
+    >
+      {choosing && (
+        <ApplyForMeChoice
+          id={choiceId}
+          compact
+          company={job.employer}
+          savedResume={savedResume}
+          needsLink={false}
+          firstTime={false}
+          onContinue={(choice) => {
+            setOpen(false);
+            ctl.onApplyForMe(choice);
+          }}
+        />
+      )}
+    </ApplyFor>
+  );
+}
+
+/** The three big choices of the panel, and Apply for me (or the employer's link) above them. */
 function PanelActions({ job, ctl }: { job: AiJob; ctl: RoleCtl }) {
   return (
     <section className="dc-next" aria-label="What to do next">
       <div className="kicker">What next</div>
-      <ApplyLink job={job} className="btn btn-primary dc-btn dc-apply" />
+      <ApplyActions job={job} ctl={ctl} />
       <div className="dc-choices">
         {ctl.runReady && ctl.prepareHref ? (
           <a
@@ -251,11 +294,11 @@ function Choice({ icon, title, desc }: { icon: ReactNode; title: string; desc: s
   );
 }
 
-/** The sheet's pinned actions: full-width 44 px buttons, then Save · Compare · Share · Not for me. */
+/** The sheet's pinned actions: Apply for me (its resume choice opens inside the sheet), full-width 44 px buttons, then Save · Compare · Share · Not for me. */
 function SheetActions({ job, ctl }: { job: AiJob; ctl: RoleCtl }) {
   return (
     <>
-      <ApplyLink job={job} className="btn btn-primary dc-btn dc-apply" />
+      <ApplyActions job={job} ctl={ctl} />
       {ctl.runReady && ctl.prepareHref ? (
         <a
           className="btn dc-btn dc-apply"

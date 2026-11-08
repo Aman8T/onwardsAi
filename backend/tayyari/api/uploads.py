@@ -289,6 +289,13 @@ def require_json_content_type(request: Request) -> None:
         raise AppError(MSG_NOT_JSON, code="unsupported_media_type", status=415)
 
 
+async def read_capped_body(request: Request, max_bytes: int, *, read_timeout_s: float | None = None) -> bytes:
+    """The raw request body: 413 past ``max_bytes`` (counted on the stream, whatever Content-Length says or omits), 408
+    when ``read_timeout_s`` runs out."""
+    async with body_deadline(read_timeout_s):
+        return await _read_capped(request, max_bytes)
+
+
 async def read_json_body(
     request: Request, max_bytes: int = MAX_CHAT_BODY_BYTES, *, read_timeout_s: float | None = None
 ) -> Any:
@@ -668,6 +675,7 @@ __all__ = [
     "msg_too_many_files",
     "parse_analyze_form",
     "parse_links",
+    "read_capped_body",
     "read_json_body",
     "read_upload_form",
     "require_json_content_type",

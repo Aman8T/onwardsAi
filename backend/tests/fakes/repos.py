@@ -1023,6 +1023,36 @@ class FakeUserFactRepo:
         )
         return True
 
+    def _slot(self, profile_id: str, question: str) -> list[tuple[str, str]]:
+        return [
+            k
+            for k, f in self._s.user_facts.items()
+            if f.profile_id == profile_id and f.question == question and f.match_id is None
+        ]
+
+    async def replace(
+        self, user_id: str | None, profile_id: str, fact: Fact, *, question: str, answer: str
+    ) -> None:
+        await _yield()
+        for key in self._slot(profile_id, question):
+            del self._s.user_facts[key]
+        self._s.user_facts[(profile_id, fact.id)] = _UserFact(
+            user_id=user_id,
+            profile_id=profile_id,
+            match_id=None,
+            question=question,
+            answer=answer,
+            fact=_roundtrip(fact.model_dump(mode="json", exclude_none=True)),
+            created_at=self._s.clock.now(),
+        )
+
+    async def remove(self, profile_id: str, question: str) -> int:
+        await _yield()
+        gone = self._slot(profile_id, question)
+        for key in gone:
+            del self._s.user_facts[key]
+        return len(gone)
+
     # inspection helper (not part of the port)
     def rows(self) -> list[_UserFact]:
         return list(self._s.user_facts.values())

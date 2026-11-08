@@ -242,3 +242,23 @@ async def test_a_text_over_the_configured_limit_is_refused_with_that_number(make
     with pytest.raises(PostingTextError) as refused:
         await posting_text_of(SimpleNamespace(settings=small), MatchRequest(profileId="p", text="x " * 200))  # type: ignore[arg-type]
     assert "longer than 300 characters" in refused.value.user_message
+
+
+# ───────────────────────── facts from apply answers ─────────────────────────
+
+
+async def test_an_apply_answer_keeps_one_fact_per_question_and_a_withdrawn_one_leaves() -> None:
+    from tayyari.api.matching import ApplyFactSink
+    from tests.fakes.repos import FakeRepositories
+
+    repos = FakeRepositories()
+    sink = ApplyFactSink(SimpleNamespace(repos=repos))  # type: ignore[arg-type]
+    await sink("u1", "p1", "workAuthorization:IN", "I am authorised to work in India.")
+    await sink("u1", "p1", "workAuthorization:IN", "I am not authorised to work in India.")
+    await sink("u1", "p1", "noticePeriod", "My notice period is 30 days.")
+    texts = sorted(f.text for f in await repos.user_facts.list_for_profile("p1"))
+    assert texts == ["I am not authorised to work in India.", "My notice period is 30 days."]
+    await sink.retract("u1", "p1", "workAuthorization:IN")
+    assert [f.text for f in await repos.user_facts.list_for_profile("p1")] == ["My notice period is 30 days."]
+    await sink("u1", "p1", "ctc", "x")  # off the allowlist: never stored
+    assert len(await repos.user_facts.list_for_profile("p1")) == 1

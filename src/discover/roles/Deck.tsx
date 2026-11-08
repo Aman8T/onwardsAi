@@ -2,8 +2,9 @@
  * The phone's way through the roles (boards "PhoneDeck" and "PhoneSheet"): one large card at a time, with the next one
  * peeking out behind it. Drag a card right to save it and left for "not for me"; past a threshold it leaves the screen
  * on the house easing, and a short question ("Why not this one?") follows a "not for me". Three round 56 px buttons do
- * the same without a finger: Not for me, Details (the role in full, as a bottom sheet) and Save, with the apply link
- * under them. "Show as a list" turns the deck into the single-column list of cards.
+ * the same without a finger: Not for me, Details (the role in full, as a bottom sheet) and Save, with Apply for me under
+ * them (the posting match runs first, as steps on the screen) and the employer's own link quietly after it; where Apply
+ * for me is not offered, the employer's link and why. "Show as a list" turns the deck into the single-column list of cards.
  *
  * Under reduced motion there is no drag and no animation: the buttons do everything. The drag is written straight to
  * the card's style, not to React state, so a finger moving across the screen causes no renders. A vertical movement
@@ -22,7 +23,7 @@ import { employerLine, freshnessLine, provenanceLine } from '../jobsearch/words'
 import { IconBookmark, IconClose, IconList, IconUp } from './icons';
 import type { RoleCtl } from './JobCard';
 import { ReasonPicker } from './NotForMe';
-import { ApplyLink, AskLine, FitLine } from './parts';
+import { ApplyFor, AskLine, FitLine } from './parts';
 import { Sheet } from './Sheet';
 
 export interface DeckProps {
@@ -335,7 +336,16 @@ export function Deck({ jobs, hidden, now, ctlOf, savedCount, where, onDetails, o
 
             <p className="dc-faint dc-deck-hint">{reduced ? 'Use the buttons to save a role or hide it' : 'Swipe right to save · left for not for me'}</p>
 
-            <ApplyLink job={job} className="btn btn-primary dc-btn dc-apply dc-deck-apply" />
+            <ApplyFor
+              job={job}
+              ctl={ctl}
+              primaryClass="btn btn-primary dc-btn dc-apply dc-deck-apply"
+              buttonClass="dc-btn dc-apply dc-deck-apply"
+              quietClass="btn btn-quiet dc-btn dc-apply"
+            />
+            <p className="dc-notice" role="status">
+              {ctl.notice}
+            </p>
           </>
         )
       )}

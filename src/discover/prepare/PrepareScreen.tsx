@@ -4,7 +4,9 @@
  * It asks `POST /api/jobsearch/prepare` once on mount (a few seconds the first time, cached after) and shows, in this
  * order: the asks to lead with, the gaps with a nearest piece of evidence and a small step, the questions the posting is
  * likely to lead to with a story built from the person's own evidence, a checklist, and the interview practice that is
- * coming next. Beside it: the role in a few lines, Save and Share.
+ * coming next. Beside it: the role in a few lines, Save and Share. With auto-apply on, the checklist's apply step offers
+ * Apply for me with the tailored resume and ticks itself once the application is sent; the employer's link in the
+ * heading turns quiet.
  *
  * Honesty, as the footer says: everything quoted is word for word from the posting or the profile; what is ours is
  * marked as a suggestion; a dashed box is for what only the person knows and is never filled in for them. What they type
@@ -12,11 +14,13 @@
  */
 import { motion, useReducedMotion } from 'motion/react';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import type { ApplicationSummary } from '../../../shared/apply';
 import type { AiJob, RolePrep, RoleRequest } from '../../../shared/jobsearch';
 import { ApiError } from '../../lib/api';
 import { EASE } from '../../lib/ui';
 import '../../styles/discover-more.css';
 import { useTracker } from '../applications/tracker';
+import type { ApplyCtl } from '../roles/parts';
 import { TROUBLE, postPrepare } from './api';
 import { AskPips } from './Pips';
 import { ChecklistSection, GapSection, LeadSection, PracticeSection, QuestionsSection } from './sections';
@@ -35,6 +39,10 @@ export interface PrepareScreenProps {
   onShare: (job: AiJob, runId: string) => void;
   /** The dev gallery passes a scripted loader; the app leaves it out (the real `postPrepare`). */
   loadPrep?: (req: RoleRequest, signal?: AbortSignal) => Promise<RolePrep>;
+  /** Apply for me on this role (`applyCtlOf`); absent while auto-apply is off. */
+  apply?: ApplyCtl & { note?: string };
+  /** The application for this role through Leafout, if there is one. */
+  application?: ApplicationSummary;
 }
 
 type Load = { status: 'loading' } | { status: 'ready'; prep: RolePrep } | { status: 'error'; message: string };
@@ -52,7 +60,7 @@ export function PrepareScreen(props: PrepareScreenProps) {
   return <PrepareBody key={`${props.profileId}:${props.runId}:${props.jobId}`} {...props} />;
 }
 
-function PrepareBody({ profileId, runId, jobId, job: given, onBack, onSeeMatch, onShare, loadPrep }: PrepareScreenProps) {
+function PrepareBody({ profileId, runId, jobId, job: given, onBack, onSeeMatch, onShare, loadPrep, apply, application }: PrepareScreenProps) {
   const reduced = useReducedMotion() ?? false;
   const ids = useId();
   const h = { lead: `${ids}-lead`, gap: `${ids}-gap`, questions: `${ids}-questions`, before: `${ids}-before`, practice: `${ids}-practice` };
@@ -100,6 +108,8 @@ function PrepareBody({ profileId, runId, jobId, job: given, onBack, onSeeMatch, 
   const heading = name && employer ? `${name} at ${employer}` : name || 'Prepare for this role';
   const href = job ? applyHref(job) : undefined;
   const id = job?.id ?? jobId;
+  // Apply for me is the action on this page (the checklist): the employer's link in the heading turns quiet
+  const applyLeads = !!apply?.apply && apply.apply.kind !== 'own_account';
 
   const markApplied = (on: boolean) => {
     if (!job) return;
@@ -144,7 +154,7 @@ function PrepareBody({ profileId, runId, jobId, job: given, onBack, onSeeMatch, 
             <span className="dm-lvl">{LEVEL_WORD[job.level]}</span>
             <span className="dm-muted">{placeLine(job)}</span>
             {href && (
-              <a className="btn btn-primary btn-sm dm-btn-sm" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${applyText(job)}, opens in a new tab`}>
+              <a className={`btn ${applyLeads ? 'btn-quiet' : 'btn-primary'} btn-sm dm-btn-sm`} href={href} target="_blank" rel="noopener noreferrer" aria-label={`${applyText(job)}, opens in a new tab`}>
                 {applyText(job)}
               </a>
             )}
@@ -194,6 +204,8 @@ function PrepareBody({ profileId, runId, jobId, job: given, onBack, onSeeMatch, 
                 stage={tracked?.stage}
                 appliedAt={tracked?.appliedAt}
                 onApplied={markApplied}
+                {...(apply ? { apply } : {})}
+                {...(application ? { application } : {})}
               />
               <PracticeSection headingId={h.practice} runId={runId} jobId={jobId} />
             </motion.div>

@@ -1,4 +1,5 @@
-"""The learning loop's numbers: playbook vs AI per ATS, success rate and failure reasons, computed from run rows."""
+"""The learning loop's numbers: playbook vs model runs per ATS (the field-list loop counts as a model run), success rate,
+the A1 outcomes and failure reasons, computed from run rows."""
 
 from __future__ import annotations
 
@@ -40,4 +41,29 @@ async def test_ai_share_and_success_rate_per_ats() -> None:
     assert m.total.runs == 5 and {f.reason: f.count for f in m.failureReasons} == {
         "agent_gave_up": 1,
         "captcha": 1,
+    }
+
+
+async def test_loop_runs_count_as_model_runs_and_the_a1_outcomes_fold_in() -> None:
+    repo = FakeApplyRepo()
+    for item in [
+        run(1, "greenhouse", "loop", "success", cost=25000),
+        run(2, "greenhouse", "playbook", "needs_signin", "login_wall"),
+        run(3, "greenhouse", "playbook", "check_this_one", "no_confirmation", cost=9000),
+        run(4, "greenhouse", "playbook", "closed", "gone"),
+        run(5, "greenhouse", "loop", "needs_user", "needs_answers"),
+        run(6, "greenhouse", "playbook", "failed", "guard_probe", cost=1000),
+    ]:
+        await repo.add_run_metric(item)
+    m = await compute_metrics(repo, T0, days=30)
+    (gh,) = m.byAts
+    assert (gh.runs, gh.aiRuns, gh.playbookRuns, gh.aiShare) == (6, 2, 4, round(2 / 6, 4))
+    assert (gh.successes, gh.needsUser, gh.blocked, gh.failures) == (1, 1, 1, 1)
+    assert gh.costMicroUsd == 35000  # model calls and Browser Use sessions, as the engine recorded them
+    assert {f.reason: f.count for f in m.failureReasons} == {
+        "needs_signin:login_wall": 1,
+        "check_this_one:no_confirmation": 1,
+        "closed:gone": 1,
+        "needs_answers": 1,
+        "guard_probe": 1,
     }

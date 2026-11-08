@@ -57,6 +57,9 @@ mid-rewrite.
 from __future__ import annotations
 
 import asyncio
+import os
+import re
+import unicodedata
 from collections.abc import Awaitable, Callable, Collection
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -91,6 +94,11 @@ if TYPE_CHECKING:
     import requests
     import stripe
 
+    from tayyari.apply.answers import Resume
+    from tayyari.apply.driver import PageOpener
+    from tayyari.apply.engine import ApplyEngine
+    from tayyari.apply.seams import Reserve
+    from tayyari.apply.worker import ApplyWorker
     from tayyari.auth.email import EmailSender
     from tayyari.auth.service import AuthService
     from tayyari.billing.entitlements import EntitlementService
@@ -101,11 +109,13 @@ if TYPE_CHECKING:
     from tayyari.handoff.service import HandoffService
     from tayyari.interview.service import InterviewService
     from tayyari.jobsearch.service import JobSearchService
+    from tayyari.match.models import FactBook
     from tayyari.match.service import MatchService
     from tayyari.portfolio.service import PortfolioService
     from tayyari.prepare.service import PrepareService
     from tayyari.speech.engine import SpeechEngine
     from tayyari.speech.service import SpeechService
+    from tayyari.storage.ports import StoredApplication
     from tayyari.weekly.service import WeeklyService
 
 log = get_logger(__name__)
@@ -150,6 +160,8 @@ class ContainerOverrides:
     - ``db``: a ready `Database` (migrated here, idempotent). ``repos``: ready repositories (fakes); without a
       ``db`` the container has no database, so migrations, maintenance and the deep health check are skipped.
     - ``clock``: used by every component.
+    - ``apply_opener``: the auto-apply worker's `apply.driver.PageOpener` (otherwise Browser Use over
+      ``BROWSER_USE_API_KEY``, or a local Chromium with ``TAYYARI_TEST_BROWSER=1``); tests hand in a fake opener.
     """
 
     claude: ClaudeClient | None = None
@@ -179,6 +191,7 @@ class ContainerOverrides:
     card: CardService | None = None
     razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
+    apply_opener: PageOpener | None = None
 
 
 def _log_unknown_decision_ids(store: DecisionConfigStore) -> None:
@@ -280,6 +293,8 @@ class Container:
     """True when decisions go through Jev (it is enabled and has a key, or a client was injected)."""
     maintenance: asyncio.Task[None] | None = None
     weekly_loop: asyncio.Task[None] | None = None
+    apply_opener: PageOpener | None = None
+    """An opener handed in for the apply worker (`ContainerOverrides.apply_opener`); see `build_apply_engine`."""
     _closers: list[tuple[str, _Closer]] = field(default_factory=list, repr=False)
     _closed: bool = field(default=False, repr=False)
 
@@ -785,6 +800,7 @@ class Container:
             jev_active=jev_active,
             maintenance=maintenance,
             weekly_loop=weekly_loop,
+            apply_opener=ov.apply_opener,
             _closers=closers,
         )
 
@@ -864,4 +880,182 @@ async def _weekly_loop(service: WeeklyService, settings: Settings) -> None:
         await asyncio.sleep(settings.weekly.tick_seconds)
 
 
-__all__ = ["DRAIN_TIMEOUT_S", "IP_HASH_KEY", "Container", "ContainerOverrides"]
+# ───────────────────────────── auto-apply ─────────────────────────────
+
+TEST_BROWSER_ENV = "TAYYARI_TEST_BROWSER"
+"""``1``: the apply worker drives a local Chromium (`apply.browser.PlaywrightBrowser`) instead of Browser Use: offline
+tests and local runs only (layer 2 of the guard, no extension)."""
+
+
+def _test_browser() -> bool:
+    return os.environ.get(TEST_BROWSER_ENV) == "1"
+
+
+def apply_worker_skip_reason(container: Container, *, in_app: bool = True) -> str | None:
+    """Why the apply worker must not start, or None when it may: auto-apply is on, a browser can be opened (the Browser
+    Use key, a handed-in opener, or the local test browser) and, inside the web app, ``ApplySettings.worker_in_app``."""
+    settings = container.settings
+    if not settings.auto_apply_enabled:
+        return "auto-apply is off"
+    if in_app and not settings.apply.worker_in_app:
+        return "the worker runs as its own process"
+    if settings.browser_use_api_key is None and container.apply_opener is None and not _test_browser():
+        return "no Browser Use key"
+    return None
+
+
+def _tokens(text: str | None) -> list[str]:
+    ascii_text = unicodedata.normalize("NFKD", text or "").encode("ascii", "ignore").decode("ascii")
+    return re.findall(r"[A-Za-z0-9]+", ascii_text)
+
+
+def tailored_file_name(person: str | None, company: str | None) -> str:
+    """``Riya-Kapoor-Acme.pdf``: specific enough for the submit pass to see the form show it
+    (`apply.scan.resume_name_inferable`), never a generic ``resume.pdf``."""
+    name, firm = _tokens(person)[:4], _tokens(company)[:3]
+    stem = "-".join([*name, *firm])[:80].strip("-")
+    return f"{stem}.pdf" if name else f"{stem or 'Tailored'}-Resume.pdf"
+
+
+def build_apply_engine(container: Container) -> ApplyEngine:
+    """The apply engine over this container's parts (the composition root, so `api` and `cli` never build it):
+
+    - the opener: the one handed in (tests), else a local Chromium with ``TAYYARI_TEST_BROWSER=1``, else Browser Use
+      standalone browsers over ``BROWSER_USE_API_KEY`` (`apply.browser_use.BrowserUseOpener`, reserving each session);
+    - the answerer (`apply.answers.ClaudeAnswerer`) and the field-list loop (`apply.fill_loop.FieldListLoop`) on the
+      guarded Claude client, every call reserved with ``spend_guard.reserve``;
+    - the credit hold: ``container.entitlements`` (`apply.seams.ApplyCredits`);
+    - the resume: the match's tailored resume exported to PDF (None while it has open questions: the engine makes that a
+      need and never sends the saved file instead), or the saved file;
+    - the facts an answer may cite: the match's fact book.
+
+    Raises RuntimeError when no browser can be opened (see `apply_worker_skip_reason`)."""
+    from tayyari.apply.answers import ClaudeAnswerer, Resume
+    from tayyari.apply.engine import ApplyEngine
+    from tayyari.apply.fill_loop import FieldListLoop
+    from tayyari.apply.seams import ApplyCredits
+
+    settings = container.settings
+    reserve: Reserve = container.spend_guard.reserve
+    opener = _apply_opener(container, reserve)
+    answerer = ClaudeAnswerer(
+        container.claude,
+        settings.apply.answer_model or settings.reader_model,
+        reserve=reserve,
+        est_usd=settings.apply.est_answer_usd,
+        escalate_model=settings.apply.fill_fallback_model,
+    )
+    credits: ApplyCredits = container.entitlements
+
+    async def resume_for(app: StoredApplication) -> Resume | None:
+        if app.resume_choice == "tailored":
+            return await _tailored_resume(container, app)
+        profile = await container.repos.apply.get_profile(app.owner_key)
+        if profile is None or not profile.resume_bytes:
+            return None
+        return Resume(
+            profile.resume_name or "resume.pdf",
+            profile.resume_bytes,
+            profile.resume_type or "application/pdf",
+        )
+
+    async def facts(app: StoredApplication) -> list[dict[str, str]]:
+        book = await _book_of(container, app)
+        return [] if book is None else [{"id": f.id, "text": f.text} for f in book.facts]
+
+    return ApplyEngine(
+        repo=container.repos.apply,
+        limits=container.repos.limits,
+        settings=settings.apply,
+        opener=opener,
+        clock=container.clock,
+        answerer=answerer,
+        loop=FieldListLoop(container.claude, answerer, reserve, settings.apply),
+        credits=credits,
+        reserve=reserve,
+        resume_for=resume_for,
+        facts=facts,
+    )
+
+
+def build_apply_worker(container: Container) -> ApplyWorker:
+    """The apply worker over `build_apply_engine` (one run at a time)."""
+    from tayyari.apply.worker import ApplyWorker
+
+    return ApplyWorker(build_apply_engine(container))
+
+
+def _apply_opener(container: Container, reserve: Reserve) -> PageOpener:
+    if container.apply_opener is not None:
+        return container.apply_opener
+    settings = container.settings
+    if _test_browser():
+        from tayyari.apply.browser import PlaywrightBrowser
+
+        local = PlaywrightBrowser(settings.apply)
+        container._closers.append(("apply_test_browser", local.close))
+        return local
+    from tayyari.apply.browser_use import BrowserUseOpener, HttpBrowserUseApi
+
+    api = HttpBrowserUseApi.from_settings(settings)
+    if api is None:
+        raise RuntimeError("BROWSER_USE_API_KEY is not set")
+    return BrowserUseOpener(api, settings.apply, reserve)
+
+
+async def _book_of(container: Container, app: StoredApplication) -> FactBook | None:
+    from pydantic import ValidationError
+
+    from tayyari.match.models import FactBook
+
+    if not app.match_id:
+        return None
+    stored = await container.repos.matches.get(app.match_id, app.user_id)
+    if stored is None:
+        return None
+    try:
+        return FactBook.model_validate(stored.facts)
+    except ValidationError:
+        log.warning("apply_fact_book_unreadable", application_id=app.id)
+        return None
+
+
+async def _tailored_resume(container: Container, app: StoredApplication) -> Resume | None:
+    """The match's resume variant as a PDF (deterministic bytes, so the preview and the submit sign the same sha256);
+    None when there is none yet or it still has open questions (`match.errors.ExportBlocked`)."""
+    from pydantic import ValidationError
+
+    from tayyari.apply.answers import Resume
+    from tayyari.contract.match import ResumeVariant
+    from tayyari.match.errors import ExportBlocked
+    from tayyari.match.export import export_resume
+
+    book = await _book_of(container, app)
+    if book is None or not app.match_id:
+        return None
+    stored = await container.repos.matches.get_variant(app.match_id, "resume")
+    if stored is None:
+        return None
+    try:
+        variant = ResumeVariant.model_validate(stored.spec)
+        files = await asyncio.to_thread(export_resume, variant)
+    except ExportBlocked:
+        log.info("apply_tailored_resume_blocked", application_id=app.id)
+        return None
+    except ValidationError:
+        log.warning("apply_tailored_resume_unreadable", application_id=app.id)
+        return None
+    return Resume(tailored_file_name(book.name, app.company), files.pdf, "application/pdf")
+
+
+__all__ = [
+    "DRAIN_TIMEOUT_S",
+    "IP_HASH_KEY",
+    "TEST_BROWSER_ENV",
+    "Container",
+    "ContainerOverrides",
+    "apply_worker_skip_reason",
+    "build_apply_engine",
+    "build_apply_worker",
+    "tailored_file_name",
+]

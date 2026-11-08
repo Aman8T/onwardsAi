@@ -114,7 +114,7 @@ SCAN_JS: Final[str] = r"""(resumeName) => {
       let p = inp.parentElement; for (let i = 0; i < 3 && p && p !== document.body; i++, p = p.parentElement) boxes.push(p); }
     for (const g of document.querySelectorAll('[role=group]')) {
       const id = g.getAttribute('aria-labelledby'); const t = txt(id ? (document.getElementById(id) || {}).innerText : g.getAttribute('aria-label'));
-      if (/resume|cv|curriculum/i.test(t)) boxes.push(g); }
+      if (/resume|\bcv\b|curriculum/i.test(t)) boxes.push(g); }
     return boxes.some(b => txt(b.innerText).includes(want));
   };
   const html = document.documentElement.innerHTML.toLowerCase();

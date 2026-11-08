@@ -5,13 +5,20 @@
  * What is quoted (an ask from the posting, a line of the person's evidence) is shown word for word with its source.
  * What is ours (a step, a hint) wears the dashed "Suggestion" chip. A dashed box is for what only the person knows: it is
  * a real textarea, kept in this browser per role, and nothing in it is ever sent anywhere or written for them.
+ *
+ * The checklist's apply step offers Apply for me with the resume tailored for this role (spec 2.1), the employer's own
+ * link quietly after it, and ticks itself once the application is sent.
  */
 import { useId } from 'react';
 import type { ReactNode } from 'react';
+import type { ApplicationSummary } from '../../../shared/apply';
 import type { AiJob, AskCounts, PrepGap, PrepLead, PrepQuestion, StoryPart } from '../../../shared/jobsearch';
+import { isSent } from '../../apply/api';
 import { useFreeLine } from '../../practice/useFreeLine';
 import { actions, useApp } from '../../store';
 import '../../styles/discover-more.css';
+import { ApplyFor } from '../roles/parts';
+import type { ApplyCtl } from '../roles/parts';
 import { Evidence, Suggest, quoted } from './parts';
 import { MAX_STORY_CHARS } from './storage';
 import { asksTotal, dayLabel, hostFor } from './words';
@@ -248,6 +255,13 @@ export interface ChecklistProps {
   stage?: 'saved' | 'applied' | 'interviewing' | 'offer' | 'closed';
   appliedAt?: string;
   onApplied: (on: boolean) => void;
+  /**
+   * Apply for me on this role (`applyCtlOf`): pressed here it applies with the tailored resume. Absent while auto-apply
+   * is off: the step is the employer's link, ticked by hand.
+   */
+  apply?: ApplyCtl & { note?: string };
+  /** The application for this role through Leafout, if there is one: the step ticks itself once it is sent. */
+  application?: Pick<ApplicationSummary, 'id' | 'stage'>;
 }
 
 function Step({ id, checked, disabled, onChange, title, note, children }: { id: string; checked: boolean; disabled?: boolean; onChange: (on: boolean) => void; title: string; note: string; children?: ReactNode }) {
@@ -263,9 +277,11 @@ function Step({ id, checked, disabled, onChange, title, note, children }: { id: 
   );
 }
 
-export function ChecklistSection({ headingId, job, ticks, onTick, onSeeMatch, applyHref, stage, appliedAt, onApplied }: ChecklistProps) {
+export function ChecklistSection({ headingId, job, ticks, onTick, onSeeMatch, applyHref, stage, appliedAt, onApplied, apply, application }: ChecklistProps) {
   const base = useId();
   const host = job ? hostFor(job) : undefined;
+  const offered = !!job && !!apply?.apply && apply.apply.kind !== 'own_account';
+  const sent = !!application && isSent(application.stage);
   const moved = stage === 'applied' || stage === 'interviewing' || stage === 'offer';
   const appliedNote =
     stage === 'applied'
@@ -300,13 +316,40 @@ export function ChecklistSection({ headingId, job, ticks, onTick, onSeeMatch, ap
             </button>
           )}
         </Step>
-        <Step id={`${base}-apply`} checked={ticks.apply === true} onChange={(on) => onTick('apply', on)} title={host ? `Apply on ${host} ↗` : 'Apply on the employer’s board ↗'} note="Opens the employer's own board in a new tab.">
-          {applyHref && host && (
-            <a className="btn btn-primary btn-sm dm-btn-sm" href={applyHref} target="_blank" rel="noopener noreferrer" aria-label={`Open ${host}, in a new tab`}>
-              {`Open ${host} ↗`}
-            </a>
-          )}
-        </Step>
+        {offered && job && apply ? (
+          <Step
+            id={`${base}-apply`}
+            checked={sent || ticks.apply === true}
+            disabled={sent}
+            onChange={(on) => onTick('apply', on)}
+            title="Apply"
+            note={sent ? 'Sent through Leafout. The employer confirmed it.' : 'With the resume tailored for this role, which you check first. The step ticks itself once the employer confirms.'}
+          >
+            <div className="dm-actions dm-actions-tight">
+              <ApplyFor
+                job={job}
+                ctl={apply}
+                size="sm"
+                primaryClass="btn btn-primary btn-sm dm-btn-sm"
+                buttonClass="dm-btn-sm"
+                quietClass="btn btn-quiet btn-sm dm-btn-sm"
+                onApply={() => apply.onApplyForMe({ resume: 'tailored' })}
+              />
+            </div>
+            <p className="dc-notice" role="status">
+              {apply.note}
+            </p>
+          </Step>
+        ) : (
+          <Step id={`${base}-apply`} checked={ticks.apply === true} onChange={(on) => onTick('apply', on)} title={host ? `Apply on ${host} ↗` : 'Apply on the employer’s board ↗'} note="Opens the employer's own board in a new tab.">
+            {applyHref && host && (
+              <a className="btn btn-primary btn-sm dm-btn-sm" href={applyHref} target="_blank" rel="noopener noreferrer" aria-label={`Open ${host}, in a new tab`}>
+                {`Open ${host} ↗`}
+              </a>
+            )}
+            {apply?.apply?.kind === 'own_account' && <span className="dm-muted dm-small">{apply.apply.reason}</span>}
+          </Step>
+        )}
         <Step
           id={`${base}-applied`}
           checked={moved}

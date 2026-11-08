@@ -3,8 +3,10 @@
  *
  * One column per role and one row per thing worth comparing: the fit word, the level and the posting's own words about
  * it, the place, the pips with their count line, the asks met, what is not on the resume, how the role was found and how
- * fresh it is, the salary, and what to do next. Nothing is scored and nothing is ranked: the columns stay in the order the
- * person picked them, and every quote is the posting's or the profile's own words.
+ * fresh it is, the salary, and what to do next: Apply for me per column (the posting match runs first, as steps in the
+ * column), the employer's own link quietly after it, then Prepare and See how you fit. Where Apply for me is not offered
+ * the employer's link stays the action, with the reason. Nothing is scored and nothing is ranked: the columns stay in
+ * the order the person picked them, and every quote is the posting's or the profile's own words.
  *
  * The first column sticks while the table scrolls sideways (it is a focusable region, so a keyboard can scroll it). With
  * fewer than two roles there is nothing to put side by side, and the screen says so.
@@ -14,8 +16,10 @@ import type { ReactNode } from 'react';
 import type { AiJob } from '../../../shared/jobsearch';
 import { AskPips, PipsKey } from '../prepare/Pips';
 import { quoted } from '../prepare/parts';
-import { FIT_CLASS, FIT_WORD, LEVEL_WORD, applyHref, applyText, asksTotal, foundLine, freshLines, placeLine, salaryLine } from '../prepare/words';
+import { FIT_CLASS, FIT_WORD, LEVEL_WORD, asksTotal, foundLine, freshLines, placeLine, salaryLine } from '../prepare/words';
 import { cssVars } from '../../lib/ui';
+import { ApplyFor, NO_APPLY } from '../roles/parts';
+import type { ApplyCtl } from '../roles/parts';
 import '../../styles/discover-more.css';
 
 export interface CompareViewProps {
@@ -25,6 +29,11 @@ export interface CompareViewProps {
   onPrepare: (job: AiJob) => void;
   onSeeMatch: (job: AiJob) => void;
   onBack: () => void;
+  /**
+   * Apply for me per column: its state and the steps while it is checked, plus what pressing it does (`applyCtlOf`).
+   * Absent while auto-apply is off: the employer's link stays the action.
+   */
+  applyOf?: (job: AiJob) => ApplyCtl & { note?: string };
 }
 
 /** Most roles that sit side by side: more would not fit a screen. */
@@ -34,7 +43,7 @@ const COUNT_WORD = ['No', 'One', 'Two', 'Three'];
 
 const label = (job: Pick<AiJob, 'title' | 'employer'>) => `${job.title} at ${job.employer}`;
 
-export function CompareView({ jobs: all, onRemove, onClear, onPrepare, onSeeMatch, onBack }: CompareViewProps) {
+export function CompareView({ jobs: all, onRemove, onClear, onPrepare, onSeeMatch, onBack, applyOf }: CompareViewProps) {
   const jobs = all.slice(0, MAX_COLUMNS);
   const countRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -210,16 +219,20 @@ export function CompareView({ jobs: all, onRemove, onClear, onPrepare, onSeeMatc
               name="What next"
               jobs={jobs}
               cell={(job) => {
-                const href = applyHref(job);
+                const apply: ApplyCtl & { note?: string } = applyOf?.(job) ?? NO_APPLY;
                 return (
                   <div className="dm-stack">
-                    {href ? (
-                      <a className="btn btn-primary btn-sm dm-btn-sm" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${applyText(job)} for ${label(job)}, opens in a new tab`}>
-                        {applyText(job)}
-                      </a>
-                    ) : (
-                      <span className="dm-muted">{`Apply on ${job.applyHost}`}</span>
-                    )}
+                    <ApplyFor
+                      job={job}
+                      ctl={apply}
+                      size="sm"
+                      primaryClass="btn btn-primary btn-sm dm-btn-sm"
+                      buttonClass="dm-btn-sm"
+                      quietClass="btn btn-quiet btn-sm dm-btn-sm"
+                    />
+                    <p className="dc-notice" role="status">
+                      {apply.note}
+                    </p>
                     <div className="dm-actions dm-actions-tight">
                       <button type="button" className="btn btn-sm dm-btn-sm" onClick={() => onPrepare(job)}>
                         Prepare

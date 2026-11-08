@@ -710,6 +710,17 @@ class UserFactRepo(Protocol):
         Idempotent on ``(profile_id, fact.id)``: False, and nothing changes, when it is already stored."""
         ...
 
+    async def replace(
+        self, user_id: str | None, profile_id: str, fact: Fact, *, question: str, answer: str
+    ) -> None:
+        """One slot per ``question`` (with no match): every fact of the profile stored for ``question`` without a match
+        is removed, then ``fact`` is stored. A changed answer never leaves the old, contradicting fact behind."""
+        ...
+
+    async def remove(self, profile_id: str, question: str) -> int:
+        """Remove the facts of the profile stored for ``question`` without a match (an answer withdrawn); how many."""
+        ...
+
 
 class MatchRepo(Protocol):
     """Matches and their variants. Every match read and write is scoped by ``user_id``: another account's id is
@@ -1401,6 +1412,17 @@ def is_never_stored(question_key: str) -> bool:
     return question_key.split(":", 1)[0] in NEVER_STORED_ANSWER_KEYS
 
 
+class PostingTaken(RuntimeError):
+    """A new application for a posting the person already has one for (the unique ``(user_id, posting_key)``), as
+    `EmailTaken` is for an email. ``application_id`` is that application's id (an internal id, safe to log); nothing
+    was created. The apply service raises it when its insert loses that race; the repositories still raise their own
+    duplicate error (``IntegrityError`` in SQL, ValueError in the fake) underneath."""
+
+    def __init__(self, application_id: str) -> None:
+        super().__init__("posting_taken")
+        self.application_id = application_id
+
+
 @dataclass(frozen=True, slots=True)
 class StoredApplication:
     """One application (`ApplicationRow`) without its screenshot (`ApplyRepo.get_screenshot`). JSON columns are opaque
@@ -1788,6 +1810,7 @@ __all__ = [
     "PortfolioConflict",
     "PortfolioRepo",
     "PostingRepo",
+    "PostingTaken",
     "PrepareRepo",
     "ProfileAccess",
     "ProfileFactsRepo",

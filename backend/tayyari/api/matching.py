@@ -24,7 +24,7 @@ from __future__ import annotations
 import asyncio
 import re
 import unicodedata
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Final
@@ -33,8 +33,17 @@ from pydantic import ValidationError
 
 from tayyari import ingest
 from tayyari.api.errors import user_message_for
+from tayyari.apply.service import fact_allowed
 from tayyari.container import Container
-from tayyari.contract.match import Fact, MatchResult, Posting, Question, Requirement, ResumeVariant
+from tayyari.contract.match import (
+    Fact,
+    MatchFactKind,
+    MatchResult,
+    Posting,
+    Question,
+    Requirement,
+    ResumeVariant,
+)
 from tayyari.contract.match_api import (
     MatchCoverageEvent,
     MatchDoneEvent,
@@ -72,6 +81,7 @@ from tayyari.match.errors import (
     PostingTextError,
 )
 from tayyari.match.facts import user_fact
+from tayyari.match.gate import decide
 from tayyari.match.models import FactBook
 from tayyari.match.posting import clean_posting_text
 from tayyari.match.service import (
@@ -82,6 +92,7 @@ from tayyari.match.service import (
     PostingReady,
     RadarReady,
 )
+from tayyari.match.text import posting_hash
 from tayyari.storage.ports import StoredMatch
 
 log = get_logger(__name__)
@@ -114,9 +125,11 @@ def _blocked_message(name: str) -> str:
     )
 
 
-async def fetch_posting_text(url: str) -> str:
+async def fetch_posting_text(url: str, manual_only: Sequence[str] = ()) -> str:
     """The text of a public page at ``url`` through the SSRF-guarded ingest. 400 for something that is not a web
-    link, 422 for a job board that forbids reading, a page that cannot be read, or one with no text."""
+    link, 422 for a job board that forbids reading (`BOARDS_THAT_FORBID_READING`, and ``manual_only``: the sites
+    auto-apply never opens, `ApplySettings.manual_only_domains`, so a pasted application link can never make the match
+    read one), a page that cannot be read, or one with no text."""
     parsed = normalize_url(url)
     if parsed is None:
         raise BadRequest("That does not look like a web link. Paste the text of the posting instead.")
@@ -124,6 +137,10 @@ async def fetch_posting_text(url: str) -> str:
     for domain, name in BOARDS_THAT_FORBID_READING:
         if host_is(host, domain):
             raise PostingLinkBlocked(_blocked_message(name))
+    for domain in manual_only:
+        clean = domain.strip().lower()
+        if clean and host_is(host, strip_www(clean)):
+            raise PostingLinkBlocked(_blocked_message("This site"))
     doc = await ingest.ingest_web(parsed.url, "link", "Job posting", "Job posting", lambda _line: None)
     if not doc.ok or not doc.text.strip():
         reason = (doc.error or "").strip().rstrip(".")
@@ -140,7 +157,7 @@ async def posting_text_of(container: Container, body: MatchRequest) -> str:
     if body.text is not None and body.text.strip():
         text = body.text
     elif body.url is not None and body.url.strip():
-        text = await fetch_posting_text(body.url)
+        text = await fetch_posting_text(body.url, container.settings.apply.manual_only_domains)
     else:
         raise BadRequest("Paste the job posting, or give a link to it.")
     if len(text) > limit:
@@ -538,10 +555,82 @@ async def stream_match(
             await asyncio.gather(task, return_exceptions=True)
 
 
+# ───────────────────────── what auto-apply reads of a match ─────────────────────────
+
+
+def gate_reasons(ws: Workspace) -> tuple[bool, tuple[str, ...]]:
+    """``(blocked, the questions of the gates that block)``, decided in code by `match.gate.decide` from the stored
+    answers (the stored ``blocked`` flag counts too)."""
+    decision = decide(ws.posting.gates, ws.result.gates)
+    questions = {g.id: g.question for g in ws.posting.gates}
+    reasons = tuple(questions[g] for g in decision.blocking if g in questions)
+    return ws.result.blocked or decision.blocked, reasons
+
+
+def proves_posting(ws: Workspace, text: str | None) -> bool:
+    """Is ``text`` the posting this match read? Its hash (over the cleaned, folded text) must be the match's."""
+    if not text or not text.strip():
+        return False
+    try:
+        cleaned = clean_posting_text(text)
+    except PostingTextError:
+        return False
+    return ws.stored.posting_hash in (posting_hash(cleaned), posting_hash(text))
+
+
+async def listing_url(container: Container, ws: Workspace, listing_id: str, run_id: str | None) -> str | None:
+    """The employer's link of the Discover listing ``listing_id``, only when it is proved to be the matched posting:
+    the search run's copy of the posting (``run_id``, the match's profile's run) hashes to the match's posting, else
+    the stored listing's text does. None when nothing proves it (a listing stored without its text included: a title
+    alone is no proof): the start then has no form address."""
+    if run_id:
+        held = await container.jobsearch.posting(ws.stored.profile_id, run_id, listing_id)
+        if held is not None and held.applyUrl and proves_posting(ws, held.postingText):
+            return held.applyUrl
+    listing = await container.repos.discover.get(listing_id)
+    if listing is None or not listing.apply_url:
+        return None
+    # a listing stored without its text proves nothing: a title alone matches the same role at any employer
+    return listing.apply_url if proves_posting(ws, listing.posting_text) else None
+
+
+class ApplyFactSink:
+    """`apply.seams.FactSink` over the profile's user facts: an allowlisted answer (`apply.service.fact_allowed`) kept
+    as a fact "from you", so a match stops calling a notice period or a degree a gap. The sentence is built in code by
+    the apply service; this only refuses anything off the allowlist. Each question key has one slot: a changed answer
+    replaces the earlier fact (never two contradicting facts), and a withdrawn answer removes it."""
+
+    def __init__(self, container: Container) -> None:
+        self._container = container
+
+    async def __call__(self, user_id: str, profile_id: str, question_key: str, sentence: str) -> None:
+        if not fact_allowed(question_key):
+            return
+        kind: MatchFactKind = "education" if question_key in _EDUCATION_KEYS else "other"
+        fact = user_fact(sentence, key=f"apply/{question_key}", kind=kind)
+        await self._container.repos.user_facts.replace(
+            user_id, profile_id, fact, question=_slot(question_key), answer=sentence
+        )
+
+    async def retract(self, user_id: str, profile_id: str, question_key: str) -> None:
+        await self._container.repos.user_facts.remove(profile_id, _slot(question_key))
+
+
+def _slot(question_key: str) -> str:
+    """The one place an apply answer's fact is kept (a match's own facts carry their question text and a match id)."""
+    return f"apply/{question_key}"
+
+
+_EDUCATION_KEYS: Final = frozenset(
+    {"highestQualification", "college", "graduationYear", "graduationScore", "class12Score", "class10Score"}
+)
+
+
 __all__ = [
     "BOARDS_THAT_FORBID_READING",
     "MATCH_NOT_FOUND",
     "PROFILE_NOT_FOUND",
+    "ApplyFactSink",
     "Charge",
     "Workspace",
     "book_json",
@@ -551,9 +640,12 @@ __all__ = [
     "error_event",
     "fact_of_answer",
     "fetch_posting_text",
+    "gate_reasons",
+    "listing_url",
     "model_errors",
     "open_match",
     "posting_text_of",
+    "proves_posting",
     "remember_new_facts",
     "stream_match",
     "stream_resume",

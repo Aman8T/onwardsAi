@@ -11,6 +11,9 @@
  * The search itself (the stream, the last results, "not for me") lives in one keyed host above the tabs, so going to a
  * prep page and back never loses a search in progress; the host starts over when the profile, the city or the remote
  * choice changes. Share is a dialog any tab can open.
+ *
+ * Apply for me (`apply`, from `DiscoverRoot`; the dev gallery passes fixtures) reaches every tab: the cards, the role's
+ * page and the deck, each Compare column, the Prepare checklist, and the server stage on Your applications.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -26,6 +29,8 @@ import type { DiscoverRunOptions } from './jobsearch/useDiscoverRun';
 import { LayoutContext } from './layout';
 import { CompareView } from './compare/CompareView';
 import { PrepareScreen } from './prepare/PrepareScreen';
+import { applyCtlOf } from './roles/parts';
+import type { DiscoverApply } from './roles/parts';
 import { RolesView } from './roles/RolesView';
 import type { RolesViewProps } from './roles/RolesView';
 import { ShareDialog } from './share/ShareDialog';
@@ -55,6 +60,8 @@ export interface DiscoverScreenProps {
   /** The dev gallery shows a phone inside a frame on a desktop. */
   layout?: { phone: boolean; frame: HTMLElement | null };
   initial?: RolesViewProps['initial'] & { compareIds?: string[]; share?: { jobId: string } };
+  /** Apply for me on the roles; absent where nothing can be started (the employer's link stays the action). */
+  apply?: DiscoverApply;
 }
 
 export function DiscoverScreen(props: DiscoverScreenProps) {
@@ -141,23 +148,29 @@ function Host(props: DiscoverScreenProps) {
           onSeeMatch={(item: TrackedJob) => seeMatch(item.job, item.runId ?? runIdFor(item.job))}
           onShare={(item: TrackedJob) => setSharing({ job: item.job, runId: item.runId ?? runIdFor(item.job) })}
           onBack={back}
+          {...(props.apply?.status?.enabled ? { applications: props.apply.byListing } : {})}
         />,
       );
       break;
-    case 'prepare':
+    case 'prepare': {
+      const job = jobFor(query.job);
+      const runId = query.run ?? '';
       body = page(
         <PrepareScreen
           profileId={profileId}
           runId={query.run ?? ''}
           jobId={query.job ?? ''}
-          job={jobFor(query.job)}
+          job={job}
           onBack={back}
-          onSeeMatch={(job, runId) => seeMatch(job, runId)}
-          onShare={(job, runId) => setSharing({ job, runId })}
+          onSeeMatch={(j, r) => seeMatch(j, r)}
+          onShare={(j, r) => setSharing({ job: j, runId: r })}
           loadPrep={props.loadPrep}
+          {...(job && props.apply ? { apply: applyCtlOf(job, runId || undefined, props.apply) } : {})}
+          {...(job && props.apply?.byListing.get(job.id) ? { application: props.apply.byListing.get(job.id) } : {})}
         />,
       );
       break;
+    }
     case 'compare': {
       const jobs = (query.ids ?? []).flatMap((id) => jobFor(id) ?? []);
       body = page(
@@ -181,6 +194,7 @@ function Host(props: DiscoverScreenProps) {
             onPrepare={(job) => prepare(job, runIdFor(job))}
             onSeeMatch={(job) => seeMatch(job, runIdFor(job))}
             onBack={back}
+            {...(props.apply ? { applyOf: (job: AiJob) => applyCtlOf(job, runIdFor(job), props.apply) } : {})}
           />
         ),
       );
@@ -210,6 +224,7 @@ function Host(props: DiscoverScreenProps) {
           onAnalyse={props.onAnalyse}
           onAddProject={props.onAddProject}
           initial={props.initial}
+          {...(props.apply ? { apply: props.apply } : {})}
         />
       );
   }
