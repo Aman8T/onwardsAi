@@ -1,95 +1,135 @@
 /**
- * The top of the dashboard (boards "Dashboard idea 1" and "idea 2" on the all-screens canvas):
+ * The top of the dashboard, the person's own space:
  *
- *   Read          the three or four sentences written from the graph; every cited clause is a dotted button that opens
- *                 that skill's evidence in a drawer under the paragraph (the quote, its source, "This is wrong")
- *   NotOnResume   the strongest things the other sources proved that the resume never mentions, with the one action
- *   SinceLast     what moved since the previous analysis, when there is one to compare with
- *   AskStrip      one field and four questions worth asking about yourself; each opens the chat with that question
+ *   Hello          the greeting for the hour and the day, then the read: one line at a time, in a tone (proud, roast,
+ *                  motivational, quirky, dry, plain), changing every few seconds and on "Another"; a line that rests on
+ *                  a skill opens that skill's evidence in a drawer under it (the quote, its source, "This is wrong")
+ *   Celebrations   the shelf of what is worth celebrating, counted from the graph and what the features store
+ *   NotOnResume    the strongest things the other sources proved that the resume never mentions, with the one action
+ *   SinceLast      what moved since the previous analysis, when there is one to compare with
+ *   AskStrip       one field and four questions worth asking about yourself; each opens the chat with that question
  *
- * The read is written once, at analysis time, and stored on the profile; everything else here is counted in code.
+ * The read's lines are written once, at analysis time, and stored on the profile; everything else here is counted.
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import type { Profile } from '../../../shared/types';
+import type { Profile, ReadTone } from '../../../shared/types';
 import { useMe } from '../../auth/useMe';
 import { fetchProfile } from '../../lib/api';
 import { skillAction, sourceAction } from '../../lib/prompts';
-import { plural } from '../../lib/ui';
+import { plural, useMediaQuery } from '../../lib/ui';
 import { actions, useApp } from '../../store';
-import { askQuestions, citedCount, deltas, notOnResume } from './model';
+import type { Achievement } from './model';
+import { TONE_LABEL, askQuestions, deltas, notOnResume, readLines } from './model';
 
-/* ───────────────────────── the read ───────────────────────── */
+/* ───────────────────────── the greeting and the read ───────────────────────── */
 
-export function Read({ profile }: { profile: Profile }) {
+const ROTATE_MS = 9000;
+
+function greeting(now: Date, name: string): string {
+  const h = now.getHours();
+  const word = h < 5 ? 'Still up' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const first = name !== 'You' ? name.trim().split(/\s+/)[0] : '';
+  return first ? `${word}, ${first}.` : `${word}.`;
+}
+
+export function Hello({ profile }: { profile: Profile }) {
   const skills = useMemo(() => new Map(profile.skills.map((s) => [s.id, s])), [profile.skills]);
   const sources = useMemo(() => new Map(profile.sources.map((s) => [s.id, s])), [profile.sources]);
   const domains = useMemo(() => new Map(profile.domains.map((d) => [d.id, d])), [profile.domains]);
+  // the read's lines; a graph from before the read gets its mastery insight as the one plain line
+  const lines = useMemo(() => {
+    const own = readLines(profile);
+    return own.length ? own : [{ text: profile.mastery.insight, tone: 'plain' as ReadTone }];
+  }, [profile]);
+
+  const [at, setAt] = useState(() => Math.floor(Date.now() / ROTATE_MS) % Math.max(1, lines.length));
+  const [paused, setPaused] = useState(false);
   const [open, setOpen] = useState<{ skillId: string; at: number } | null>(null);
-  // a new profile closes the drawer
-  useEffect(() => setOpen(null), [profile.id]);
+  const still = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const today = useMemo(() => new Date(), []);
 
-  const read = profile.read ?? [];
-  if (read.length === 0) {
-    return (
-      <header className="db-greet">
-        <span className="kicker">Dashboard</span>
-        <h1 className="title db-h1">Where you stand, and what is moving.</h1>
-      </header>
-    );
-  }
+  // a new profile starts over
+  useEffect(() => {
+    setAt(0);
+    setOpen(null);
+  }, [profile.id]);
 
+  // the lines take turns; not while the person hovers, has the evidence open, or asked for no motion
+  useEffect(() => {
+    if (lines.length < 2 || paused || open || still) return;
+    const id = window.setInterval(() => setAt((i) => (i + 1) % lines.length), ROTATE_MS);
+    return () => window.clearInterval(id);
+  }, [lines.length, paused, open, still]);
+
+  const line = lines[at % lines.length];
   const skill = open ? skills.get(open.skillId) : undefined;
   const evidence = skill && skill.evidence.length ? skill.evidence[open!.at % skill.evidence.length] : undefined;
   const source = evidence ? sources.get(evidence.sourceId) : undefined;
-  const clause = open ? read.find((s) => s.skillId === open.skillId)?.text.trim() : undefined;
-  const cited = citedCount(profile);
+  const lineSkill = line.skillId ? skills.get(line.skillId) : undefined;
+  const cited = !!lineSkill && lineSkill.evidence.length > 0;
 
+  const next = () => {
+    setOpen(null);
+    setAt((i) => (i + 1) % lines.length);
+  };
   const wrong = () => {
     if (!skill) return;
     const a = skillAction(skill, domains.get(skill.domainId)?.name ?? 'Skill');
     actions.openChat(
       a.origin,
-      `My read says “${clause ?? skill.name}”, backed by “${evidence?.text ?? ''}”. That isn't right. Ask me what is, then tell me how the graph should change and what evidence would support it.`,
+      `My dashboard says “${line.text}”, backed by “${evidence?.text ?? ''}”. That isn't right. Ask me what is, then tell me how the graph should change and what evidence would support it.`,
     );
   };
   const tell = () =>
     actions.openChat(
       { kind: 'you', title: profile.person.currentRole, caption: 'Your read' },
-      "Something in my read doesn't sound like me. Ask me which part, then tell me which evidence it came from and how to put it right.",
+      "One of the lines on my dashboard doesn't sound like me. Ask me which, then tell me which evidence it came from and how to put it right.",
     );
 
   return (
-    <header className="db-greet db-readwrap">
-      <span className="kicker">
-        {[profile.person.name !== 'You' ? profile.person.name : null, profile.person.currentRole, profile.person.location?.split(',')[0]].filter(Boolean).join(' · ')} ·{' '}
-        <span className="db-kicker-strong">your read</span>, from {plural(profile.sources.filter((s) => s.ok).length, 'source')}
-      </span>
-      <p className="db-read serif">
-        {read.map((seg, i) => {
-          const s = seg.skillId ? skills.get(seg.skillId) : undefined;
-          if (!s || s.evidence.length === 0) return <span key={i}>{seg.text}</span>;
-          const isOpen = open?.skillId === s.id;
-          return (
-            <button
-              key={i}
-              type="button"
-              className={`db-ev${isOpen ? ' is-open' : ''}`}
-              aria-expanded={isOpen}
-              aria-controls="db-evidence"
-              onClick={() => setOpen(isOpen ? null : { skillId: s.id, at: 0 })}
-            >
-              {seg.text}
-            </button>
-          );
-        })}
-      </p>
+    <header className="db-hello" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
+      <div className="db-hello-row">
+        <div className="db-hello-text">
+          <span className="kicker">{today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+          <h1 className="serif db-h1">{greeting(today, profile.person.name)}</h1>
+        </div>
+        <span className="kicker db-hello-meta">
+          {[profile.person.currentRole, profile.person.location?.split(',')[0], plural(profile.sources.filter((s) => s.ok).length, 'source')].filter(Boolean).join(' · ')}
+        </span>
+      </div>
+
+      {/* one line at a time */}
+      <div className="db-lines" aria-live="polite">
+        <span className={`chip db-tone db-tone-${line.tone}`}>{TONE_LABEL[line.tone]}</span>
+        {cited ? (
+          <button
+            key={at}
+            type="button"
+            className={`db-line serif${open?.skillId === line.skillId ? ' is-open' : ''}`}
+            aria-expanded={open?.skillId === line.skillId}
+            aria-controls="db-evidence"
+            onClick={() => setOpen(open?.skillId === line.skillId ? null : { skillId: line.skillId!, at: 0 })}
+          >
+            {line.text}
+          </button>
+        ) : (
+          <p key={at} className="db-line serif">
+            {line.text}
+          </p>
+        )}
+        {lines.length > 1 && (
+          <button type="button" className="db-link db-another" onClick={next} aria-label="Another line">
+            Another →
+          </button>
+        )}
+      </div>
 
       {skill && evidence && (
         <div className="panel db-drawer" id="db-evidence" role="region" aria-label={`Evidence for ${skill.name}`}>
           <div className="db-drawer-text">
             <span className="kicker">
-              Evidence for “{clause}” · {skill.evidence.length > 1 ? `${(open!.at % skill.evidence.length) + 1} of ${skill.evidence.length} · ` : ''}
+              Evidence · {skill.evidence.length > 1 ? `${(open!.at % skill.evidence.length) + 1} of ${skill.evidence.length} · ` : ''}
               {source?.label ?? evidence.sourceId}
               {source?.sub ? ` · ${source.sub}` : ''}
             </span>
@@ -121,13 +161,62 @@ export function Read({ profile }: { profile: Profile }) {
 
       <div className="db-readmeta">
         <span className="kicker">
-          {cited > 0 ? `Every underlined clause opens its evidence · ${plural(cited, 'citation')}` : 'Written from your evidence'}
+          {cited ? 'Click the line for its evidence' : 'Written from your evidence'}
+          {lines.length > 1 ? ` · ${plural(lines.length, 'line')}` : ''}
         </span>
         <button type="button" className="db-link" onClick={tell}>
           Doesn't sound like you? Tell Leafout
         </button>
       </div>
     </header>
+  );
+}
+
+/* ───────────────────────── worth celebrating ───────────────────────── */
+
+const KIND_LABEL: Record<Achievement['kind'], string> = {
+  graph: 'Your graph',
+  moved: 'Moved',
+  applications: 'Applications',
+  practice: 'Practice',
+  match: 'Posting match',
+  prepare: 'Prepare',
+  weekly: 'The Weekly',
+};
+
+function dayOf(iso: string | undefined): string {
+  const t = iso ? Date.parse(iso) : NaN;
+  return Number.isFinite(t) ? new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+}
+
+export function Celebrations({ items }: { items: Achievement[] }) {
+  if (items.length === 0) return null;
+  const fresh = items.filter((a) => a.fresh).length;
+  return (
+    <section className="db-shelf" aria-labelledby="db-shelf-h">
+      <div className="db-card-head">
+        <h2 className="kicker" id="db-shelf-h">
+          Worth celebrating
+        </h2>
+        <span className="kicker">{fresh > 0 ? `${plural(fresh, 'new thing')} this week` : 'Counted from your records, not scored'}</span>
+      </div>
+      <ul className="db-ach-row">
+        {items.map((a) => (
+          <li key={a.id} className={`panel db-ach${a.fresh ? ' is-fresh' : ''}`}>
+            <span className="db-ach-mark" aria-hidden="true" />
+            <span className="db-ach-text">
+              <span className="kicker">
+                {KIND_LABEL[a.kind]}
+                {a.at ? ` · ${dayOf(a.at)}` : ''}
+                {a.fresh ? ' · new' : ''}
+              </span>
+              <span className="db-ach-title">{a.title}</span>
+              <span className="db-fine">{a.detail}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

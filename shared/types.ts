@@ -73,13 +73,16 @@ export interface Person {
   summary: string;
 }
 
+export type ReadTone = 'proud' | 'roast' | 'motivational' | 'quirky' | 'sarcastic' | 'plain';
+
 /**
- * One piece of the read: the three or four sentences about the person that open the dashboard. The pieces join with
- * nothing between them into the prose; a piece that rests on a skill of the graph carries that skill's id, and the
- * dashboard opens that skill's evidence under it.
+ * One line of the read: a one-liner about the person in a named tone, shown one at a time at the top of the dashboard.
+ * A line that rests on one skill of the graph carries that skill's id, and the dashboard opens that skill's evidence
+ * under it. `tone` is optional only so profiles written before the lines existed still load; the dashboard shows toned lines.
  */
-export interface ReadSegment {
+export interface ReadLine {
   text: string;
+  tone?: ReadTone;
   skillId?: string;
 }
 
@@ -97,7 +100,7 @@ export interface Profile {
   /** Model ids used, for the "built with" footnote. */
   models: { reader: string; synth: string };
   /** The read (absent on profiles built before it existed, and when the synthesizer gave too little of it). */
-  read?: ReadSegment[];
+  read?: ReadLine[];
 }
 
 /* ───────────────────────── analysis stream ───────────────────────── */

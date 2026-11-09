@@ -130,12 +130,16 @@ class ModelsUsed(_Model):
     synth: str
 
 
-class ReadSegment(_Model):
-    """One piece of the read, the three or four sentences about the person that open the dashboard. The pieces join with
-    nothing between them into the prose; a piece that rests on a skill of the graph carries that skill's id, and the
-    dashboard opens that skill's evidence under it."""
+ReadTone = Literal["proud", "roast", "motivational", "quirky", "sarcastic", "plain"]
+
+
+class ReadLine(_Model):
+    """One line of the read: a one-liner about the person in a named tone, shown one at a time on the dashboard. A line
+    that rests on one skill of the graph carries that skill's id, and the dashboard opens that skill's evidence under it.
+    ``tone`` is optional only so profiles written before the lines existed still load; the dashboard shows toned lines."""
 
     text: str
+    tone: ReadTone | None = None
     skillId: str | None = None
 
 
@@ -150,7 +154,7 @@ class Profile(_Model):
     skills: list[Skill]
     roles: list[Role]
     models: ModelsUsed
-    read: list[ReadSegment] | None = None
+    read: list[ReadLine] | None = None
 
 
 # ───────────────────────── analysis stream ─────────────────────────
@@ -210,7 +214,8 @@ __all__ = [
     "Person",
     "Phase",
     "Profile",
-    "ReadSegment",
+    "ReadLine",
+    "ReadTone",
     "ReaderState",
     "ReaderStatus",
     "Role",

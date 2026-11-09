@@ -128,21 +128,17 @@ def _short(text: str) -> str:
     return text if len(text) <= SHORT_MAX else text[: SHORT_MAX - 1].rstrip() + "…"
 
 
-_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
-LINE_MIN_CHARS: Final = 20
+LINE_MIN_CHARS: Final = 12
 
 
 def offered_lines(profile: Profile) -> list[str]:
-    """The sentences of the read, each one a line the card may carry (none for a profile without a read)."""
-    if not profile.read:
-        return []
-    prose = "".join(seg.text for seg in profile.read)
+    """The lines of the read, each one the card may carry (none for a profile without a read)."""
     out: list[str] = []
-    for raw in _SENTENCE_END.split(" ".join(prose.split())):
-        sentence = raw.strip()
-        if len(sentence) < LINE_MIN_CHARS or sentence in out:
+    for line in profile.read or []:
+        text = clip_words(" ".join(line.text.split()), CARD_LINE_MAX)
+        if len(text) < LINE_MIN_CHARS or text in out:
             continue
-        out.append(clip_words(sentence, CARD_LINE_MAX))
+        out.append(text)
     return out
 
 

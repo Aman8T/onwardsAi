@@ -256,7 +256,7 @@ INTERFACE_MODELS: dict[str, type[BaseModel]] = {
     "RoleRequirement": models.RoleRequirement,
     "Role": models.Role,
     "Person": models.Person,
-    "ReadSegment": models.ReadSegment,
+    "ReadLine": models.ReadLine,
     "Profile": models.Profile,
     "ReaderState": models.ReaderState,
     "ChatOrigin": models.ChatOrigin,
@@ -267,6 +267,7 @@ LITERAL_ALIASES: dict[str, Any] = {
     "SourceKind": models.SourceKind,
     "ReaderStatus": models.ReaderStatus,
     "ChatOriginKind": models.ChatOriginKind,
+    "ReadTone": models.ReadTone,
 }
 
 

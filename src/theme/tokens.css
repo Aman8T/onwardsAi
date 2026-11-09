@@ -176,8 +176,8 @@
   --fill-2: rgba(61, 102, 144, 0.085);
   --fill-strong: rgba(61, 102, 144, 0.19);
   --grid: rgba(20, 27, 36, 0.08);
-  --line: #d8dfe6;
-  --line-strong: #c3ccd5;
+  --line: #b3bfcd;
+  --line-strong: #6a839d;
   --selection: #bfdbf8;
   --danger: #963d3a;
 }
@@ -419,8 +419,8 @@
     --fill-2: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.085);
     --fill-strong: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.19);
     --grid: oklch(0.22 calc(0.02 * var(--k)) var(--h) / 0.08);
-    --line: oklch(0.9 calc(0.012 * var(--k)) var(--h));
-    --line-strong: oklch(0.84 calc(0.016 * var(--k)) var(--h));
+    --line: oklch(0.8 calc(0.024 * var(--k)) var(--h)); /* 2026-11-10: hairlines read on the light field (was .9) */
+    --line-strong: oklch(0.6 calc(0.05 * var(--k)) var(--h)); /* (was .84) */
     --selection: oklch(0.88 calc(0.05 * var(--k)) var(--h));
     --danger: oklch(0.48 0.12 25);
   }

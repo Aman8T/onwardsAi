@@ -219,16 +219,17 @@ SYNTH_SOURCE = _obj(
     ["id", "sub", "notes"],
 )
 
-SYNTH_READ_SEGMENT = _obj(
+SYNTH_READ_LINE = _obj(
     {
         "text": _s(
-            f"A piece of the read, at most {limits.READ_SEGMENT_MAX_CHARS} characters, with its own leading or trailing space and punctuation: the pieces are joined with nothing between them."
+            f"One line about the person, in the second person, at most {limits.READ_LINE_MAX_CHARS - 20} characters, resting on something a reader reported."
         ),
+        "tone": _s('One of "proud", "roast", "motivational", "quirky", "sarcastic", "plain".'),
         "skillId": _s(
-            "Only on a piece whose claim rests on ONE skill of the graph: that skill's id, exactly as in `skills`. Leave it out otherwise."
+            "Only when the line rests on ONE skill of the graph: that skill's id, exactly as in `skills`. Leave it out otherwise."
         ),
     },
-    ["text"],
+    ["text", "tone"],
 )
 
 SYNTH_SCHEMA = _obj(
@@ -257,8 +258,8 @@ SYNTH_SCHEMA = _obj(
         ),
         "sources": _arr(SYNTH_SOURCE, "One entry per successfully read source."),
         "read": _arr(
-            SYNTH_READ_SEGMENT,
-            f"The read (section 7 of the system prompt): three or four sentences about the person in the second person, as {limits.READ_SEGMENTS_MAX} or fewer pieces that join into the prose, {limits.READ_CITED_RANGE[0]}–{limits.READ_CITED_RANGE[1]} of them tied to a skill by id. At most {limits.READ_MAX_CHARS} characters in all.",
+            SYNTH_READ_LINE,
+            f"The read (section 7 of the system prompt): {limits.READ_LINES_RANGE[0]}–{limits.READ_LINES_RANGE[1]} one-liners about the person, each in a named tone, most of them tied to a skill by id.",
         ),
     },
     ["person", "mastery", "domains", "skills", "roles", "sources", "read"],

@@ -261,54 +261,110 @@
   }
 }
 
-/* ───────────── the read (idea 1): the serif greeting written from the graph ───────────── */
+/* ───────────── the greeting and the read: one line at a time ───────────── */
 
-.db-readwrap {
-  gap: var(--s3);
+.db-hello {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
 }
 
-.db-kicker-strong {
+.db-hello-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s2) var(--s5);
+}
+
+.db-hello-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.db-hello-meta {
+  padding-bottom: var(--s1);
+}
+
+/* the line: a tone chip, the sentence, "Another". The sentence fades in when it changes (one beat, never a loop). */
+.db-lines {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s2) var(--s3);
+  min-height: calc(var(--fs-5) * var(--lh-snug) * 2);
+}
+
+.db-tone {
+  flex: none;
+  align-self: center;
+}
+
+.db-tone-roast,
+.db-tone-sarcastic {
+  border-style: dashed;
+}
+
+.db-tone-proud {
+  background: var(--accent-soft);
+  border-color: transparent;
   color: var(--text);
 }
 
-.db-read {
-  max-width: 34em;
-  font-size: var(--fs-6);
-  line-height: 1.28;
-  text-wrap: pretty;
-}
-
-/* a cited clause: the same serif, a dotted hairline under it; open or hovered, the line is solid and in the accent */
-.db-ev {
+.db-line {
   display: inline;
   margin: 0;
   padding: 0;
   border: 0;
   background: none;
-  font: inherit;
-  letter-spacing: inherit;
-  line-height: inherit;
+  max-width: 40em;
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
   color: var(--text);
   text-align: left;
+  text-wrap: pretty;
+  animation: db-line-in var(--d-base) var(--ease) both;
+}
+
+button.db-line {
   text-decoration: underline dotted var(--line-strong);
   text-decoration-thickness: 1px;
-  text-underline-offset: 6px;
+  text-underline-offset: 5px;
   transition: text-decoration-color var(--d-fast) var(--ease);
 }
 
 @media (hover: hover) {
-  .db-ev:hover {
+  button.db-line:hover {
     text-decoration-style: solid;
     text-decoration-color: var(--accent-ui);
   }
 }
 
-.db-ev.is-open {
+button.db-line.is-open {
   text-decoration-style: solid;
   text-decoration-color: var(--accent-ui);
 }
 
-/* the evidence drawer under the paragraph: the quote, where it came from, the actions */
+.db-another {
+  flex: none;
+  white-space: nowrap;
+}
+
+@keyframes db-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .db-line {
+    animation: none;
+  }
+}
+
+/* the evidence drawer under the line: the quote, where it came from, the actions */
 .db-drawer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -348,6 +404,65 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s2) var(--s4);
+}
+
+/* ───────────── worth celebrating: the shelf ───────────── */
+
+.db-shelf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.db-ach-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(220px, 1fr);
+  gap: var(--s3);
+  margin: 0;
+  padding: 0 0 var(--s1);
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.db-ach {
+  display: flex;
+  gap: var(--s3);
+  align-items: flex-start;
+  min-width: 0;
+  padding: var(--s4);
+  scroll-snap-align: start;
+}
+
+.db-ach.is-fresh {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+/* the mark: the ring-and-dot of the brand, as a 1px ring */
+.db-ach-mark {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  border: 1px solid var(--accent-ui);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-ui) 0 2px, transparent 2.5px);
+}
+
+.db-ach-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.db-ach-title {
+  font-size: var(--fs-3);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  text-wrap: balance;
 }
 
 /* ───────────── not on your resume (idea 1) ───────────── */
@@ -478,8 +593,8 @@
 }
 
 @media (max-width: 760px) {
-  .db-read {
-    font-size: var(--fs-5);
+  .db-line {
+    font-size: var(--fs-4);
   }
 
   .db-drawer,

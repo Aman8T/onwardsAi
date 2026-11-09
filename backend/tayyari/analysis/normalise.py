@@ -21,13 +21,15 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, TypedDict, TypeGuard
+from typing import Any, TypedDict, TypeGuard, get_args
 
-from tayyari.contract import ModelsUsed, Profile, SourceKind, is_source_kind
+from tayyari.contract import ModelsUsed, Profile, ReadTone, SourceKind, is_source_kind
 from tayyari.core import limits
 from tayyari.core.ids import new_profile_id
 from tayyari.core.text import clip_words, js_round, loose_key, plural, short_label, slug, tidy
 from tayyari.ingest import PlannedSource, SourceDoc
+
+READ_TONES: frozenset[str] = frozenset(get_args(ReadTone))
 
 # ───────────────────────── numbers and ids ─────────────────────────
 
@@ -612,29 +614,25 @@ def to_profile(
         person["yearsExperience"] = years
     person["summary"] = tidy(sp.get("summary"))
 
-    # the read: pieces of prose, those that rest on a skill resolved to a skill of the graph; too little of it is none
+    # the read: one-liners in a tone, those that rest on a skill resolved to a skill of the graph; too few of them is none
     read: list[dict[str, Any]] = []
-    read_chars = 0
-    for seg in synth.get("read") or []:
-        if len(read) >= limits.READ_SEGMENTS_MAX:
+    for item in synth.get("read") or []:
+        if len(read) >= limits.READ_LINES_MAX:
             break
-        if isinstance(seg, str):
-            seg = {"text": seg}
-        if not isinstance(seg, Mapping):
+        if isinstance(item, str):
+            item = {"text": item}
+        if not isinstance(item, Mapping):
             continue
-        text = seg.get("text")
-        if not isinstance(text, str) or not text.strip():
+        text = clip_words(item.get("text"), limits.READ_LINE_MAX_CHARS)
+        if not text or any(x["text"] == text for x in read):
             continue
-        text = re.sub(r"\s+", " ", text)[: limits.READ_SEGMENT_MAX_CHARS]
-        if read_chars + len(text) > limits.READ_MAX_CHARS:
-            break
-        read_chars += len(text)
-        piece: dict[str, Any] = {"text": text}
-        skill_ref = resolve_skill(seg.get("skillId"), "") if tidy(seg.get("skillId")) else None
+        tone = tidy(item.get("tone")).lower()
+        line: dict[str, Any] = {"text": text, "tone": tone if tone in READ_TONES else "plain"}
+        skill_ref = resolve_skill(item.get("skillId"), "") if tidy(item.get("skillId")) else None
         if skill_ref:
-            piece["skillId"] = skill_ref
-        read.append(piece)
-    if len(read) < 2 or read_chars < 40:
+            line["skillId"] = skill_ref
+        read.append(line)
+    if len(read) < limits.READ_LINES_MIN:
         read = []
 
     profile: dict[str, Any] = {

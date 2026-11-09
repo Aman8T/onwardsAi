@@ -763,49 +763,43 @@
   },
   "read": [
     {
-      "text": "You build interfaces that move: "
-    },
-    {
-      "text": "three years of design-system work with numbers attached",
+      "text": "Forty-two components, three squads, one Storybook. Kite UI is yours, and it shows.",
+      "tone": "proud",
       "skillId": "design-systems"
     },
     {
-      "text": ", across Kite UI and "
-    },
-    {
-      "text": "motion-kit, 212 stars and 4.2 KB gzipped",
-      "skillId": "motion-design"
-    },
-    {
-      "text": ". You have shipped to real people: "
-    },
-    {
-      "text": "Kitebird's checkout went from 4.1 s to 1.9 s LCP",
-      "skillId": "web-performance"
-    },
-    {
-      "text": " and lifted conversion 9.4%. The backend you touch serves the front, "
-    },
-    {
-      "text": "an Express BFF over catalog, pricing and inventory",
-      "skillId": "node-bff"
-    },
-    {
-      "text": ". AI appears in "
-    },
-    {
-      "text": "two small OpenAI apps",
-      "skillId": "llm-integration"
-    },
-    {
-      "text": " and nowhere in your work history, and "
-    },
-    {
-      "text": "none of your 34 repos has an eval harness",
+      "text": "34 repos, zero eval harnesses. Your AI apps run on vibes.",
+      "tone": "roast",
       "skillId": "llm-evals"
     },
     {
-      "text": ", which is why AI Product Engineer sits fifth."
+      "text": "One eval table in notes-ai's README and AI Product Engineer stops sitting fifth.",
+      "tone": "motivational",
+      "skillId": "llm-evals"
+    },
+    {
+      "text": "You gave a talk called 'Springs, not durations'. Of course you did.",
+      "tone": "quirky",
+      "skillId": "motion-design"
+    },
+    {
+      "text": "Vitest and Jest on the resume, tests in 6 of 34 repos. Bold.",
+      "tone": "sarcastic",
+      "skillId": "testing"
+    },
+    {
+      "text": "Checkout LCP from 4.1 s to 1.9 s. Someone measured it, and it was you.",
+      "tone": "proud",
+      "skillId": "web-performance"
+    },
+    {
+      "text": "A frontend engineer at Kitebird who ships motion and design systems with numbers attached.",
+      "tone": "plain"
+    },
+    {
+      "text": "600 users on Recipe Genie and no analytics. Add one tool and meet them.",
+      "tone": "motivational",
+      "skillId": "product-analytics"
     }
   ]
 }

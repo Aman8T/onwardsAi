@@ -33,11 +33,13 @@ import { BAND_LABEL } from '../match/model';
 import { readRecent } from '../match/recent';
 import { fetchHistory } from '../practice/api';
 import { useLoad } from '../practice/hub/useLoad';
+import type { Load } from '../practice/hub/useLoad';
 import { PipsLine } from '../practice/Pips';
 import { listPlans } from '../prepare/api';
 import { actions } from '../store';
 import { useSubscription } from '../weekly/useSubscription';
-import { AskStrip, NotOnResume, Read, SinceLast, usePreviousProfile } from './dashboard/Read';
+import { AskStrip, Celebrations, Hello, NotOnResume, SinceLast, usePreviousProfile } from './dashboard/Read';
+import { achievements } from './dashboard/model';
 import { GraphHeader } from './graph/GraphHeader';
 import { NowGraph } from './graph/NowGraph';
 import '../styles/shell.css';
@@ -50,14 +52,34 @@ export function Dashboard({ profile, previous: forcedPrevious }: { profile: Prof
   const found = usePreviousProfile(profile);
   // the playground hands a previous analysis in; the app finds its own
   const previous = forcedPrevious === undefined ? found : forcedPrevious;
+  const data = useDashboardData(profile);
+  const { items: tracked } = useTracker(profile.id);
+  const { user } = useMe();
+  const { subscription } = useSubscription(user?.id);
+  const now = useNow(60_000);
+  const shelf = useMemo(
+    () =>
+      achievements({
+        profile,
+        previous,
+        tracked,
+        history: data.history.status === 'ready' ? data.history.data : null,
+        matches: data.matches,
+        plans: data.plans.status === 'ready' ? data.plans.data : [],
+        subscribed: !!subscription && subscription.status !== 'off',
+        now,
+      }),
+    [profile, previous, tracked, data.history, data.matches, data.plans, subscription, now],
+  );
   return (
     <div className="gv-view db-view">
       <GraphHeader profile={profile} current="dashboard" />
       <SaveInvite profile={profile} />
 
       <main className="db-main">
-        {/* the read: who you are, written from the graph, each cited clause to its evidence */}
-        <Read profile={profile} />
+        {/* the person's own space: the greeting, one line of the read at a time, what is worth celebrating */}
+        <Hello profile={profile} />
+        <Celebrations items={shelf} />
         <NotOnResume profile={profile} />
         <SinceLast profile={profile} previous={previous} />
         <AskStrip profile={profile} />
@@ -70,15 +92,50 @@ export function Dashboard({ profile, previous: forcedPrevious }: { profile: Prof
         <div className="db-grid">
           <NextRoles profile={profile} />
           <ApplicationsCard profile={profile} />
-          <MatchesCard />
-          <PracticeCard profile={profile} />
-          <PrepareCard profile={profile} />
+          <MatchesCard matches={data.matches} />
+          <PracticeCard load={data.history} />
+          <PrepareCard profile={profile} load={data.plans} />
           <DiscoverCard profile={profile} />
           <WeeklyCard />
         </div>
       </main>
     </div>
   );
+}
+
+/* ───────────────────────── the reads the cards and the shelf share ───────────────────────── */
+
+interface DashboardData {
+  history: Load<PracticeHistory>;
+  plans: Load<PreparePlanSummary[]>;
+  matches: MatchSummary[];
+}
+
+/** One read each of the practice history, the plans and the posting matches, shared by the cards and the celebrations. */
+function useDashboardData(profile: Profile): DashboardData {
+  const { load: history } = useLoad<PracticeHistory>((signal) => fetchHistory(profile.id, signal), [profile.id]);
+  const { load: plans } = useLoad<PreparePlanSummary[]>((signal) => listPlans(profile.id, signal), [profile.id]);
+  const { user, loaded } = useMe();
+  // an account's matches come from the server; a visitor's last few are kept on this device
+  const [matches, setMatches] = useState<MatchSummary[]>(() => readRecent());
+  useEffect(() => {
+    if (!loaded) return;
+    if (!user) {
+      setMatches(readRecent());
+      return;
+    }
+    const ctl = new AbortController();
+    listMatches(ctl.signal).then(
+      (list) => {
+        if (!ctl.signal.aborted) setMatches(list);
+      },
+      () => {
+        if (!ctl.signal.aborted) setMatches(readRecent());
+      },
+    );
+    return () => ctl.abort();
+  }, [user, loaded]);
+  return { history, plans, matches };
 }
 
 /* ───────────────────────── NEXT · the ranked roles ───────────────────────── */
@@ -211,27 +268,7 @@ function ApplicationsCard({ profile }: { profile: Profile }) {
 
 /* ───────────────────────── Posting matches ───────────────────────── */
 
-function MatchesCard() {
-  const { user, loaded } = useMe();
-  // an account's matches come from the server; a visitor's last few are kept on this device
-  const [matches, setMatches] = useState<MatchSummary[]>(() => readRecent());
-  useEffect(() => {
-    if (!loaded) return;
-    if (!user) {
-      setMatches(readRecent());
-      return;
-    }
-    const ctl = new AbortController();
-    listMatches(ctl.signal).then(
-      (list) => {
-        if (!ctl.signal.aborted) setMatches(list);
-      },
-      () => {
-        if (!ctl.signal.aborted) setMatches(readRecent());
-      },
-    );
-    return () => ctl.abort();
-  }, [user, loaded]);
+function MatchesCard({ matches }: { matches: MatchSummary[] }) {
   const shown = matches.slice(0, 3);
   const now = useNow(60_000);
 
@@ -282,8 +319,7 @@ function MatchesCard() {
 
 /* ───────────────────────── Practice ───────────────────────── */
 
-function PracticeCard({ profile }: { profile: Profile }) {
-  const { load } = useLoad<PracticeHistory>((signal) => fetchHistory(profile.id, signal), [profile.id]);
+function PracticeCard({ load }: { load: Load<PracticeHistory> }) {
   const history = load.status === 'ready' ? load.data : null;
   // newest first, as the server lists them
   const last = history?.sessions[0];
@@ -336,8 +372,7 @@ function PracticeCard({ profile }: { profile: Profile }) {
 
 /* ───────────────────────── Prepare ───────────────────────── */
 
-function PrepareCard({ profile }: { profile: Profile }) {
-  const { load } = useLoad<PreparePlanSummary[]>((signal) => listPlans(profile.id, signal), [profile.id]);
+function PrepareCard({ profile, load }: { profile: Profile; load: Load<PreparePlanSummary[]> }) {
   const plans = load.status === 'ready' ? load.data : [];
   const shown = plans.slice(0, 3);
 

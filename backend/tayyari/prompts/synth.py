@@ -26,9 +26,8 @@ def _build_synth_system() -> str:
     role_title_max = limits.ROLE_TITLE_MAX_CHARS
     role_why_max = limits.ROLE_WHY_MAX_CHARS
     skill_name_max = limits.SKILL_NAME_MAX_CHARS
-    read_cited_min, read_cited_max = limits.READ_CITED_RANGE
-    read_segments_max = limits.READ_SEGMENTS_MAX
-    read_max = limits.READ_MAX_CHARS
+    read_lines_min, read_lines_max = limits.READ_LINES_RANGE
+    read_line_max = limits.READ_LINE_MAX_CHARS - 20
 
     return f"""You are a senior engineering hiring manager and career strategist who has hired and coached hundreds of
 engineers, designers and product people. Several reader agents have each read one source about ONE person (resume, GitHub,
@@ -88,14 +87,16 @@ career map, and every number will be scrutinised by the person — so be calibra
   (≤ {profile_source_note_max} characters each), at least one an improvement opportunity specific to that source.
 
 7. The read
-- Three or four plain sentences, in the second person ("You build…"), that open the person's dashboard: who they are
-  professionally, what the sources prove, and the one gap that keeps their stretch role where it is. The last sentence
-  names that gap. At most {read_max} characters in all. No flattery, no adjectives that the evidence does not earn.
-- Write it as "read": a list of at most {read_segments_max} pieces that join with NOTHING between them into the prose, so each piece
-  carries its own spaces and punctuation ("You build interfaces that move: ", "three years of design-system work with numbers attached", ", across motion-kit and Kite UI. ").
-- {read_cited_min}–{read_cited_max} pieces carry a skillId: the id of the ONE skill on the graph whose evidence backs that clause. Such a piece is a
-  clause of a few words, never a whole sentence, and never a bare skill name. The other pieces carry no skillId.
-- Name only employers, repos, products, numbers and dates that a reader reported.
+- {read_lines_min}–{read_lines_max} one-liners about the person, in the second person, shown one at a time at the top of their dashboard. Each at most
+  {read_line_max} characters, each resting on something a reader reported (an employer, a repo, a number, a date, an absence), and each
+  carrying a tone: "proud" (what the evidence earns, said plainly), "roast" (a jab at the gap or the missing proof, never at the
+  person), "motivational" (the next concrete move), "quirky" (an odd true detail from the sources), "sarcastic" (dry, about the
+  evidence), "plain" (one sentence of who they are). Include at least one proud, one roast and one motivational line, and no
+  two lines on the same fact.
+- A line that rests on ONE skill of the graph carries that skill's id as skillId (the dashboard opens its evidence under
+  the line); a line about the person as a whole carries none.
+- Specific beats clever: "34 repos and not one eval harness" lands, "You could be great" does not. No slurs, no cruelty, no
+  jokes about anything but the work.
 
 Style: plain, specific, unsentimental. No flattery, no buzzwords. Respect every length limit. Respond ONLY through the
 structured output."""

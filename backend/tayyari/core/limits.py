@@ -179,13 +179,15 @@ ROLE_WHY_MAX_CHARS: Final[int] = 200
 ROLE_REQUIREMENTS_MAX: Final[int] = 7
 REQUIREMENT_NAME_MAX_CHARS: Final[int] = 28
 
-READ_SEGMENTS_MAX: Final[int] = 16
-"""The read (three or four sentences about the person) arrives as segments of text; a segment that rests on a skill of the
-graph carries that skill's id. This many segments at most, and in all at most `READ_MAX_CHARS`."""
-READ_SEGMENT_MAX_CHARS: Final[int] = 160
-READ_MAX_CHARS: Final[int] = 600
-READ_CITED_RANGE: Final[tuple[int, int]] = (3, 6)
-"""How many segments the prompt asks to tie to a skill."""
+READ_LINES_RANGE: Final[tuple[int, int]] = (6, 8)
+"""The read: one-liners about the person, each in a tone (proud, roast, motivational, quirky, sarcastic, plain), shown one
+at a time on the dashboard. The prompt asks for this many."""
+READ_LINES_MAX: Final[int] = 10
+"""Hard cap on the lines kept."""
+READ_LINE_MAX_CHARS: Final[int] = 120
+"""Hard clamp. The prompt asks for 100."""
+READ_LINES_MIN: Final[int] = 3
+"""Fewer usable lines than this and the profile carries no read."""
 
 PROFILE_SOURCE_SUB_MAX_CHARS: Final[int] = 48
 """Hard clamp (same as `READER_SUB_MAX_CHARS`). The synthesis schema used to ask for 40."""
