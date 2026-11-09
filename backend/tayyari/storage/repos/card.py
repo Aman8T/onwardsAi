@@ -29,6 +29,7 @@ def _item(row: Any) -> StoredCardSnapshot:
         version=row.version,
         created_at=row.created_at,
         updated_at=row.updated_at,
+        line=row.line,
     )
 
 
@@ -62,6 +63,7 @@ class SqlCardRepo:
             version=item.version,
             created_at=item.created_at,
             updated_at=item.updated_at,
+            line=item.line,
         )
         stmt = stmt.on_conflict_do_update(
             index_elements=[CardSnapshotRow.user_id],
@@ -78,6 +80,7 @@ class SqlCardRepo:
                     "role_title",
                     "version",
                     "updated_at",
+                    "line",
                 )
             },
         )

@@ -79,7 +79,7 @@ export function useCard(profileId: string, client: CardClient): CardModel {
       setProblem('');
     }
     try {
-      const next = await api.put({ profileId: id, shared: d.shared, skills: d.skills, roleId: d.roleId, theme: d.theme });
+      const next = await api.put({ profileId: id, shared: d.shared, skills: d.skills, roleId: d.roleId, theme: d.theme, line: d.line });
       if (!dead.current) take(next, dirty.current);
     } catch (err) {
       if (!dead.current) {

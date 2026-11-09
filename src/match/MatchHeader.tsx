@@ -22,22 +22,15 @@ export function MatchHeader({ onNavigate }: { onNavigate: (route: MatchRoute) =>
   const applications = applyOn(useApplyStatus()) && !!user;
   const who = profile ? [profile.person.name, profile.person.currentRole].filter(Boolean).join(' · ') : '';
 
-  const home = () => (profile ? actions.showGraph() : actions.goto('onboarding'));
-  const graph = (flipped: boolean) => {
-    actions.setFlipped(flipped);
-    actions.showGraph();
-  };
+  const home = () => (profile ? actions.showDashboard() : actions.goto('onboarding'));
 
   return (
     <header className="mt-header">
       <Brand onClick={home} />
       {profile && (
         <nav className="mt-nav" aria-label="Sections">
-          <button type="button" className="mt-navbtn" onClick={() => graph(false)}>
-            Now
-          </button>
-          <button type="button" className="mt-navbtn" onClick={() => graph(true)}>
-            Next
+          <button type="button" className="mt-navbtn" onClick={() => actions.showDashboard()}>
+            Dashboard
           </button>
           <button type="button" className="mt-navbtn" onClick={() => void actions.openPortfolio()}>
             Portfolio

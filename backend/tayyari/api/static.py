@@ -88,6 +88,7 @@ class AppRoute(NamedTuple):
 #                      rendered by development builds only, so served only on a non-prod server
 APP_ROUTES: tuple[AppRoute, ...] = (
     AppRoute(""),
+    AppRoute(r"dashboard/?", private=True),
     AppRoute(r"pricing/?"),
     AppRoute(r"match(?:/.*)?", private=True),
     AppRoute(r"discover(?:/.*)?", private=True),

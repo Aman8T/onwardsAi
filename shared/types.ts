@@ -73,6 +73,16 @@ export interface Person {
   summary: string;
 }
 
+/**
+ * One piece of the read: the three or four sentences about the person that open the dashboard. The pieces join with
+ * nothing between them into the prose; a piece that rests on a skill of the graph carries that skill's id, and the
+ * dashboard opens that skill's evidence under it.
+ */
+export interface ReadSegment {
+  text: string;
+  skillId?: string;
+}
+
 export interface Profile {
   id: string;
   createdAt: string;
@@ -86,6 +96,8 @@ export interface Profile {
   roles: Role[];
   /** Model ids used, for the "built with" footnote. */
   models: { reader: string; synth: string };
+  /** The read (absent on profiles built before it existed, and when the synthesizer gave too little of it). */
+  read?: ReadSegment[];
 }
 
 /* ───────────────────────── analysis stream ───────────────────────── */

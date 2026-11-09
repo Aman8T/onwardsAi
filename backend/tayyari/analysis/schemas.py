@@ -219,6 +219,18 @@ SYNTH_SOURCE = _obj(
     ["id", "sub", "notes"],
 )
 
+SYNTH_READ_SEGMENT = _obj(
+    {
+        "text": _s(
+            f"A piece of the read, at most {limits.READ_SEGMENT_MAX_CHARS} characters, with its own leading or trailing space and punctuation: the pieces are joined with nothing between them."
+        ),
+        "skillId": _s(
+            "Only on a piece whose claim rests on ONE skill of the graph: that skill's id, exactly as in `skills`. Leave it out otherwise."
+        ),
+    },
+    ["text"],
+)
+
 SYNTH_SCHEMA = _obj(
     {
         "person": SYNTH_PERSON,
@@ -244,6 +256,10 @@ SYNTH_SCHEMA = _obj(
             f"The {limits.SYNTH_ROLES_RANGE[0]}–{limits.SYNTH_ROLES_RANGE[1]} most probable NEXT roles.",
         ),
         "sources": _arr(SYNTH_SOURCE, "One entry per successfully read source."),
+        "read": _arr(
+            SYNTH_READ_SEGMENT,
+            f"The read (section 7 of the system prompt): three or four sentences about the person in the second person, as {limits.READ_SEGMENTS_MAX} or fewer pieces that join into the prose, {limits.READ_CITED_RANGE[0]}–{limits.READ_CITED_RANGE[1]} of them tied to a skill by id. At most {limits.READ_MAX_CHARS} characters in all.",
+        ),
     },
-    ["person", "mastery", "domains", "skills", "roles", "sources"],
+    ["person", "mastery", "domains", "skills", "roles", "sources", "read"],
 )

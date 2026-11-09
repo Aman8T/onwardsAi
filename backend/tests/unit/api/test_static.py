@@ -29,6 +29,8 @@ PAGE = "<!doctype html><title>How it works</title><h1>How it works</h1>"
 MISSING = "<!doctype html><title>Not found</title><h1>Nothing here</h1>"
 SECRET = "top secret: not part of the web build"
 PRIVATE_ROUTES = [
+    "dashboard",
+    "dashboard/",
     "match",
     "match/abc123",
     "match/abc123/resume",

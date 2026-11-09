@@ -43,6 +43,9 @@ MD: Final = (480, 330)
 SM: Final = (340, 190)
 OG: Final = (1200, 627)
 NOTICE: Final = (340, 120)
+LINE_SIZE: Final = 11.5
+LINE_ROWS: Final = 2
+"""The owner's line on the README card: at most two rows of 11.5 px, cut with an ellipsis past that."""
 LABEL_R: Final = 262
 """Rim labels sit at 262 viewBox units, outside the leaf's tips (224)."""
 VIEW_SPAN: Final = 680
@@ -352,7 +355,12 @@ def _md(content: CardContent, pal: Palette, compare: bool) -> str:
     out += _header(w, pad, pad + 9, pal)
     footer_y = h - pad
     has_skills = bool(content.skills)
-    body_top, body_bottom = 40.0, (262.0 if has_skills else 296.0)
+    line_rows = wrap(content.line, LINE_SIZE, w - 2 * pad, LINE_ROWS) if content.line else []
+    # the body ends above the chips, above the line, or above the footer: whichever comes first
+    chips_y = 270.0 if not line_rows else 236.0
+    line_y = 262.0 if has_skills or not line_rows else 236.0
+    body_top = 40.0
+    body_bottom = (chips_y - 8) if has_skills else (line_y - 8) if line_rows else 296.0
 
     if content.shape == "radar":
         scale = 0.3
@@ -384,7 +392,13 @@ def _md(content: CardContent, pal: Palette, compare: bool) -> str:
             out += _legend(content, pal, pad, body_top + 4 + 40 * len(content.areas) + 14, w - 2 * pad)
 
     if has_skills:
-        out += _chips(content, pal, pad, 270, w - 2 * pad)
+        out += _chips(content, pal, pad, chips_y, w - 2 * pad)
+    for i, row in enumerate(line_rows):
+        out.append(
+            _text(
+                pad, line_y + 12 + i * (LINE_SIZE + 4), row, pal.text, LINE_SIZE, extra=' font-style="italic"'
+            )
+        )
     out.append(
         _text(
             pad, footer_y, f"Every score rests on cited evidence · Updated {_date(content)}", pal.muted, 10.5
@@ -448,18 +462,29 @@ def og_svg(content: CardContent) -> str:
         out += _bars(content, pal, 64, 564, h / 2 - 40 * len(content.areas) / 2, compare=False, size=22)
 
     top = content.strongest()
-    headline = wrap(f"Strongest in {top.name}" if top is not None else "Skill shape", 48, col_x1 - col_x0, 2)
+    strongest = f"Strongest in {top.name}" if top is not None else "Skill shape"
     n = len(content.areas)
     pitch = min(36.0, 300 / max(n, 1))
-    block = 22 + 26 + 56 * len(headline) + 20 + n * pitch + 24 + 20
+    if content.line:
+        # the owner's sentence is the headline, in quotation marks; the strongest area follows it in a smaller line
+        headline = wrap(f"“{content.line}”", 34, col_x1 - col_x0, 3)
+        head_size, head_pitch, sub_line = 34, 42, strongest
+    else:
+        headline = wrap(strongest, 48, col_x1 - col_x0, 2)
+        head_size, head_pitch, sub_line = 48, 56, None
+    block = 22 + 26 + head_pitch * len(headline) + (30 if sub_line else 0) + 20 + n * pitch + 24 + 20
     y = (h - block) / 2 + 18
     out.append(_text(col_x0, y, KICKER, pal.muted, 18, bold=True, extra=' letter-spacing="1.08"'))
     y += 26
     for line in headline:
-        y += 52
+        y += head_pitch - 4
         out.append(
-            f'<text x="{f(col_x0)}" y="{f(y)}" font-size="48" font-weight="500" {pal.text.fill()}>{xml_text(line)}</text>'
+            f'<text x="{f(col_x0)}" y="{f(y)}" font-size="{head_size}" font-weight="500" {pal.text.fill()}>{xml_text(line)}</text>'
         )
+        y += 4
+    if sub_line:
+        y += 26
+        out.append(_text(col_x0, y, clip(sub_line, 20, col_x1 - col_x0), pal.muted, 20))
         y += 4
     y += 20
     out += _rows(content.areas, pal, col_x0, col_x1, y, pitch, 22 if pitch >= 34 else 19)
@@ -507,6 +532,8 @@ def og_notice_svg(kind: Notice) -> str:
 
 __all__ = [
     "FONT",
+    "LINE_ROWS",
+    "LINE_SIZE",
     "MD",
     "NOTICE",
     "NOTICES",

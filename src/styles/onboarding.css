@@ -770,3 +770,108 @@
 .ob-need {
   color: var(--text);
 }
+
+/* ───────────── the empty dashboard: quiet regions behind one popup (2026-11-09) ───────────── */
+
+.ob-stage {
+  position: relative;
+  min-height: 720px;
+}
+
+/* where the dashboard's pieces will go: inert, faded, never focusable */
+.ob-ghost {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--s4);
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ob-ghost-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-height: 200px;
+  padding: var(--s5);
+}
+
+.ob-ghost-cell.is-wide {
+  grid-column: span 8;
+  min-height: 360px;
+}
+.ob-ghost-cell.is-half {
+  grid-column: span 4;
+  min-height: 360px;
+}
+.ob-ghost-cell.is-third {
+  grid-column: span 4;
+}
+
+.ob-ghost-line {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+/* the popup: one panel over the regions, on the second surface tone so it reads as the thing in front */
+.ob-stage .ob-popup {
+  position: absolute;
+  inset: var(--s6) 0 auto 0;
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+  padding: var(--s7) var(--s7) var(--s6);
+  gap: var(--s5);
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+
+.ob-popup .ob-card-title {
+  font-size: var(--fs-7);
+}
+
+.ob-popup .ob-card-sub {
+  font-size: var(--fs-3);
+}
+
+.ob-optional {
+  color: var(--text-faint);
+}
+
+.ob-signin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line);
+}
+
+.ob-signin-text {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+  .ob-ghost-cell.is-wide,
+  .ob-ghost-cell.is-half,
+  .ob-ghost-cell.is-third {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 760px) {
+  .ob-stage {
+    min-height: 0;
+  }
+
+  .ob-ghost {
+    display: none;
+  }
+
+  .ob-stage .ob-popup {
+    position: static;
+    padding: var(--s5);
+  }
+}

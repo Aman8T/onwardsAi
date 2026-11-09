@@ -10,6 +10,7 @@ import { useResumeAfterSignIn } from './match/pending';
 import { useApp } from './store';
 import { Onboarding } from './views/Onboarding';
 import { Analysis } from './views/Analysis';
+import { Dashboard } from './views/Dashboard';
 import { GraphView } from './views/GraphView';
 import { ChatView } from './views/ChatView';
 
@@ -40,8 +41,11 @@ export function App() {
   // a posting pasted while signed out is matched once they are back signed in
   useResumeAfterSignIn();
 
-  // graph/chat/portfolio/discover/practice need a profile; fall back to onboarding without one
-  const shown = (view === 'graph' || view === 'chat' || view === 'portfolio' || view === 'discover' || view === 'practice') && !profile ? 'onboarding' : view;
+  // dashboard/graph/chat/portfolio/discover/practice need a profile; fall back to the empty dashboard without one
+  const shown =
+    (view === 'dashboard' || view === 'graph' || view === 'chat' || view === 'portfolio' || view === 'discover' || view === 'practice') && !profile
+      ? 'onboarding'
+      : view;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -62,6 +66,7 @@ export function App() {
         >
           {shown === 'onboarding' && <Onboarding />}
           {shown === 'analysis' && <Analysis />}
+          {shown === 'dashboard' && profile && <Dashboard profile={profile} />}
           {shown === 'graph' && profile && <GraphView profile={profile} />}
           {shown === 'chat' && profile && <ChatView profile={profile} />}
           {shown === 'portfolio' && profile && (

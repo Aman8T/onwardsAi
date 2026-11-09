@@ -13,6 +13,8 @@ The rules (spec R1, "The rules the design holds to"):
 - The link is 12 random characters of ``[a-z0-9]``, new each time sharing is turned on; "Make a new link" replaces it and the
   old one stops at once. It is the only key: never a username or a profile id.
 - The version changes only when what the card draws changes; ``updated_at`` (the date on the card) moves with it.
+- The one line under the shape is the owner's choice and theirs alone: a sentence of their read (`offered_lines`) or their own
+  words, at most `CARD_LINE_MAX` characters. It is the only prose the card carries, and it never comes from the evidence.
 """
 
 from __future__ import annotations
@@ -39,6 +41,7 @@ from tayyari.card.content import (
 )
 from tayyari.contract.card import (
     CARD_AREAS_MAX,
+    CARD_LINE_MAX,
     CARD_SKILLS_OFFERED,
     SLUG_LEN,
     CardArea,
@@ -55,6 +58,7 @@ from tayyari.contract.models import Profile
 from tayyari.core.clock import Clock
 from tayyari.core.errors import AppError, BadRequest, NotFound
 from tayyari.core.logging import get_logger
+from tayyari.core.text import clip_words
 from tayyari.storage.ports import CardRepo, ProfileRepo, StoredCardSnapshot, UserRepo
 
 log = get_logger(__name__)
@@ -122,6 +126,32 @@ def _score(value: int) -> int:
 def _short(text: str) -> str:
     text = " ".join(text.split())
     return text if len(text) <= SHORT_MAX else text[: SHORT_MAX - 1].rstrip() + "…"
+
+
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+LINE_MIN_CHARS: Final = 20
+
+
+def offered_lines(profile: Profile) -> list[str]:
+    """The sentences of the read, each one a line the card may carry (none for a profile without a read)."""
+    if not profile.read:
+        return []
+    prose = "".join(seg.text for seg in profile.read)
+    out: list[str] = []
+    for raw in _SENTENCE_END.split(" ".join(prose.split())):
+        sentence = raw.strip()
+        if len(sentence) < LINE_MIN_CHARS or sentence in out:
+            continue
+        out.append(clip_words(sentence, CARD_LINE_MAX))
+    return out
+
+
+def clean_line(value: str | None) -> str | None:
+    """The owner's line as stored: one space between words, nothing at the ends, None for nothing."""
+    if value is None:
+        return None
+    text = " ".join(value.split())
+    return clip_words(text, CARD_LINE_MAX) or None
 
 
 def offered_skills(profile: Profile) -> list[CardSkill]:
@@ -224,7 +254,17 @@ class CardService:
             slug = before.slug
         else:
             slug = self._slugs()
-        stored = self._snapshot(user_id, profile, before, skills, body.roleId, body.theme, body.shared, slug)
+        stored = self._snapshot(
+            user_id,
+            profile,
+            before,
+            skills,
+            body.roleId,
+            body.theme,
+            body.shared,
+            slug,
+            clean_line(body.line),
+        )
         await self._cards.save(stored)
         if before is None or before.shared != body.shared:
             log.info("card_sharing", shared=body.shared)
@@ -261,7 +301,15 @@ class CardService:
         skills = [str(s.get("id")) for s in before.skills if s.get("id") in offered]
         role_id = before.role_id if any(r.id == before.role_id for r in profile.roles) else None
         after = self._snapshot(
-            user_id, profile, before, skills, role_id, _theme(before.theme), before.shared, before.slug
+            user_id,
+            profile,
+            before,
+            skills,
+            role_id,
+            _theme(before.theme),
+            before.shared,
+            before.slug,
+            before.line,
         )
         if after == before:
             return before
@@ -344,6 +392,7 @@ class CardService:
         theme: CardTheme,
         shared: bool,
         slug: str | None,
+        line: str | None = None,
     ) -> StoredCardSnapshot:
         areas = drawn_areas(profile, role_id)
         by_id = {s.id: s for s in profile.skills}
@@ -353,7 +402,7 @@ class CardService:
         ]
         role = next((r for r in profile.roles if r.id == role_id), None) if role_id else None
         role_title = " ".join(role.title.split()) if role is not None else None
-        version = version_of([a for _, a in areas], [s for _, s in skills], role_title)
+        version = version_of([a for _, a in areas], [s for _, s in skills], role_title, line)
         now = self._clock.now()
         changed = before is None or before.version != version
         return StoredCardSnapshot(
@@ -369,6 +418,7 @@ class CardService:
             version=version,
             created_at=before.created_at if before is not None else now,
             updated_at=now if changed or before is None else before.updated_at,
+            line=line,
         )
 
     def _view(
@@ -383,6 +433,7 @@ class CardService:
                 skills=[str(s.get("id")) for s in stored.skills],
                 roleId=stored.role_id,
                 theme=_theme(stored.theme),
+                line=stored.line or None,
             )
             areas = [
                 CardArea(
@@ -399,6 +450,7 @@ class CardService:
             areas=areas,
             skillsOffered=offered_skills(profile),
             rolesOffered=[CardRole(id=r.id, title=r.title) for r in profile.roles],
+            linesOffered=offered_lines(profile),
             blocked=blocked,
         )
         if stored is None or not stored.shared or stored.slug is None:
@@ -465,7 +517,9 @@ __all__ = [
     "NoGraph",
     "NotShared",
     "SkillNotOffered",
+    "clean_line",
     "drawn_areas",
     "new_slug",
+    "offered_lines",
     "offered_skills",
 ]

@@ -130,6 +130,15 @@ class ModelsUsed(_Model):
     synth: str
 
 
+class ReadSegment(_Model):
+    """One piece of the read, the three or four sentences about the person that open the dashboard. The pieces join with
+    nothing between them into the prose; a piece that rests on a skill of the graph carries that skill's id, and the
+    dashboard opens that skill's evidence under it."""
+
+    text: str
+    skillId: str | None = None
+
+
 class Profile(_Model):
     id: str
     createdAt: str
@@ -141,6 +150,7 @@ class Profile(_Model):
     skills: list[Skill]
     roles: list[Role]
     models: ModelsUsed
+    read: list[ReadSegment] | None = None
 
 
 # ───────────────────────── analysis stream ─────────────────────────
@@ -200,6 +210,7 @@ __all__ = [
     "Person",
     "Phase",
     "Profile",
+    "ReadSegment",
     "ReaderState",
     "ReaderStatus",
     "Role",

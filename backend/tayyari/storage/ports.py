@@ -1343,6 +1343,8 @@ class StoredCardSnapshot:
     version: str
     created_at: datetime
     updated_at: datetime
+    line: str | None = None
+    """The one line under the shape, chosen by the owner (a sentence of their read or their own words); None for none."""
 
 
 class CardRepo(Protocol):

@@ -43,6 +43,8 @@ class CardContent:
     role_title: str | None
     updated: date
     """When what the card draws last changed: the date printed on it."""
+    line: str | None = None
+    """The one line under the shape, chosen by the owner: a sentence of their read, or their own words."""
 
     @property
     def shape(self) -> Shape:
@@ -98,16 +100,21 @@ def content_of(snapshot: StoredCardSnapshot) -> CardContent:
         skills=skills,
         role_title=snapshot.role_title if snapshot.role_id else None,
         updated=snapshot.updated_at.date(),
+        line=snapshot.line or None,
     )
 
 
-def version_of(areas: Sequence[DrawnArea], skills: Sequence[DrawnSkill], role_title: str | None) -> str:
+def version_of(
+    areas: Sequence[DrawnArea], skills: Sequence[DrawnSkill], role_title: str | None, line: str | None = None
+) -> str:
     """The first 8 hex characters of the sha256 of what the card draws (not the theme, not the link, not the date)."""
-    drawn = {
+    drawn: dict[str, Any] = {
         "areas": [[a.name, a.short, a.score, a.role_target] for a in areas],
         "skills": [[s.name, s.score] for s in skills],
         "role": role_title,
     }
+    if line:
+        drawn["line"] = line  # cards without a line keep the version they had
     blob = json.dumps(drawn, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:VERSION_LEN]
 

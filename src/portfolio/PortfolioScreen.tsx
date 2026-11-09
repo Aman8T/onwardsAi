@@ -134,7 +134,7 @@ export function PortfolioScreen({ profile }: { profile: Profile }) {
   );
 
   const back = (
-    <button type="button" className="btn" onClick={() => actions.goto('graph')}>
+    <button type="button" className="btn" onClick={() => actions.showDashboard()}>
       Back to Skill Graph
     </button>
   );
@@ -191,7 +191,7 @@ export function PortfolioScreen({ profile }: { profile: Profile }) {
         busy={working}
         onPatch={(patch) => void actions.patchPortfolio(patch)}
         onRewrite={(slotId) => void actions.rewriteSlot(slotId)}
-        onBack={() => actions.goto('graph')}
+        onBack={() => actions.showDashboard()}
         onRegenerate={() => void actions.regeneratePortfolio()}
         preview={preview}
       />

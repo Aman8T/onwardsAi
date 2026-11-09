@@ -58,6 +58,13 @@ const TARGETS: Record<string, number[]> = {
 
 export const OFF: CardSettings = { shared: false, skills: [], theme: 'light' };
 
+/** The sentences of Riya's read: the lines the card may carry. */
+export const LINES: string[] = [
+  'You build interfaces that move: three years of design-system work with numbers attached, across Kite UI and motion-kit, 212 stars and 4.2 KB gzipped.',
+  "You have shipped to real people: Kitebird's checkout went from 4.1 s to 1.9 s LCP and lifted conversion 9.4%.",
+  'AI appears in two small OpenAI apps and nowhere in your work history, and none of your 34 repos has an eval harness, which is why AI Product Engineer sits fifth.',
+];
+
 export interface ViewOptions {
   areas?: CardArea[];
   blocked?: CardBlocked;
@@ -79,12 +86,12 @@ function snippet(settings: CardSettings): string {
 /** The answer of `GET /api/card` / `PUT /api/card` for these settings. */
 export function viewFor(settings: CardSettings, opts: ViewOptions = {}): CardView {
   if (opts.blocked) {
-    return { settings: OFF, areas: [], skillsOffered: [], rolesOffered: [], blocked: opts.blocked };
+    return { settings: OFF, areas: [], skillsOffered: [], rolesOffered: [], linesOffered: [], blocked: opts.blocked };
   }
   const base = opts.areas ?? AREAS;
   const targets = settings.roleId ? TARGETS[settings.roleId] : undefined;
   const areas = base.map((a, i) => (targets && targets[i] !== undefined ? { ...a, roleTarget: targets[i] } : a));
-  const view: CardView = { settings, areas, skillsOffered: SKILLS, rolesOffered: ROLES };
+  const view: CardView = { settings, areas, skillsOffered: SKILLS, rolesOffered: ROLES, linesOffered: LINES };
   if (settings.shared) {
     return {
       ...view,

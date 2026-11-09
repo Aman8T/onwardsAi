@@ -31,6 +31,8 @@ CARD_AREAS_MAX: Final = 8
 CARD_AREAS_MIN_RADAR: Final = 3
 """Fewer areas than this make no shape: the card draws bars and no leaf."""
 SLUG_LEN: Final = 12
+CARD_LINE_MAX: Final = 160
+"""The one line the owner may put on the card: a sentence of their read, or their own words."""
 PROFILE_ID_MAX_CHARS: Final = 64
 SKILL_ID_MAX_CHARS: Final = 64
 ROLE_ID_MAX_CHARS: Final = 120
@@ -66,6 +68,7 @@ class CardSettings(_Model):
     skills: list[str] = Field(max_length=CARD_SKILLS_MAX)
     roleId: str | None = None
     theme: CardTheme
+    line: str | None = Field(default=None, max_length=CARD_LINE_MAX)
 
     _skill_ids = field_validator("skills")(_bounded_ids)
 
@@ -75,6 +78,7 @@ class CardView(_Model):
     areas: list[CardArea]
     skillsOffered: list[CardSkill]
     rolesOffered: list[CardRole]
+    linesOffered: list[str]
     blocked: CardBlocked | None = None
     slug: str | None = None
     pageUrl: str | None = None
@@ -90,6 +94,7 @@ class CardUpdate(_Model):
     skills: list[str] = Field(max_length=CARD_SKILLS_MAX)
     roleId: str | None = Field(default=None, max_length=ROLE_ID_MAX_CHARS)
     theme: CardTheme
+    line: str | None = Field(default=None, max_length=CARD_LINE_MAX)
 
     _skill_ids = field_validator("skills")(_bounded_ids)
 
@@ -101,6 +106,7 @@ class CardNewLink(_Model):
 __all__ = [
     "CARD_AREAS_MAX",
     "CARD_AREAS_MIN_RADAR",
+    "CARD_LINE_MAX",
     "CARD_SKILLS_MAX",
     "CARD_SKILLS_OFFERED",
     "PROFILE_ID_MAX_CHARS",

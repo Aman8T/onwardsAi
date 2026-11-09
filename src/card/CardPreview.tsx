@@ -2,7 +2,7 @@
  * The card drawn in the app's own colours: what the share sheet shows before sharing is on (and what it falls back to
  * if the real image cannot load). It is the same card as the server's image, drawn from the same leaf geometry
  * (`lib/radar.ts`): the areas in the graph's order, their 0-100 scores, up to three named skills, one role as a lighter
- * dashed outline, and the line that every score rests on cited evidence. Fewer than three areas make no shape, so it
+ * dashed outline, the owner's one line when they chose one, and the line that every score rests on cited evidence. Fewer than three areas make no shape, so it
  * is bars and no leaf. It follows the page's colours (tokens), so the theme choice shows only on the real image.
  *
  * The leaf and the data breathe like every radar in the app (radar.css; still under reduced motion). The card that
@@ -31,11 +31,13 @@ export interface CardPreviewProps {
   size: 'md' | 'sm';
   /** The snapshot's time (ISO); today when absent. */
   updatedAt?: string;
+  /** The owner's line under the shape (the wide card only). */
+  line?: string;
 }
 
 const clampPct = (v: number) => Math.max(0, Math.min(100, v));
 
-export function CardPreview({ areas: all, skills, roleTitle, size, updatedAt }: CardPreviewProps) {
+export function CardPreview({ areas: all, skills, roleTitle, size, updatedAt, line }: CardPreviewProps) {
   const areas = useMemo(() => shownAreas(all), [all]);
   const md = size === 'md';
   const n = areas.length;
@@ -148,6 +150,8 @@ export function CardPreview({ areas: all, skills, roleTitle, size, updatedAt }: 
           ))}
         </div>
       )}
+
+      {md && line && <p className="cs-card-line serif">“{line}”</p>}
 
       <div className="cs-card-foot">{foot}</div>
     </div>

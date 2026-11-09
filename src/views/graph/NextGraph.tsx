@@ -39,14 +39,19 @@ function pathsTitle(n: number) {
 /** Given the popover's real height, where it goes inside the plot. */
 type Placer = (height: number) => { left: number; top: number };
 
-export function NextGraph({ profile }: { profile: Profile }) {
+export function NextGraph({ profile, initialRoleId = null }: { profile: Profile; initialRoleId?: string | null }) {
   const narrow = useMediaQuery(NARROW_QUERY);
   const flipped = useApp((s) => s.flipped);
 
   const roles = useMemo(() => rankRoles(profile), [profile]);
 
-  // Selection is remembered per profile, so a new analysis starts on its top role.
-  const [picked, setPicked] = useState<{ profileId: string; roleId: string } | null>(null);
+  // Selection is remembered per profile, so a new analysis starts on its top role; the dashboard may name the role to open on.
+  const [picked, setPicked] = useState<{ profileId: string; roleId: string } | null>(() =>
+    initialRoleId ? { profileId: profile.id, roleId: initialRoleId } : null,
+  );
+  useEffect(() => {
+    if (initialRoleId) setPicked({ profileId: profile.id, roleId: initialRoleId });
+  }, [initialRoleId, profile.id]);
   const pickedId = picked && picked.profileId === profile.id ? picked.roleId : null;
   const sel: Role | undefined = roles.find((r) => r.id === pickedId) ?? roles[0];
   const selRank = sel ? roles.indexOf(sel) : -1;

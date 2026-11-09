@@ -51,6 +51,6 @@ export const liveNav: PracticeNav = {
   discover: () => actions.openDiscover({ tab: 'roles' }),
   applications: () => actions.openDiscover({ tab: 'applications' }),
   prepare: (role) => actions.openDiscover({ tab: 'prepare', run: role.runId, job: role.jobId }),
-  graph: () => actions.showGraph(),
+  graph: () => actions.showDashboard(),
   analyse: () => actions.goto('onboarding'),
 };

@@ -216,11 +216,11 @@ export function ChatView({ profile }: { profile: Profile }) {
   const [railOpen, setRailOpen] = useState(false);
 
   const goGraph = useCallback(() => {
-    // Land on the graph the thread came from: role/requirement nodes live on the career map.
+    // Land where the thread came from: a role or requirement thread on that role's screen, everything else on the dashboard.
     const k = thread?.origin.kind;
-    if (k === 'role' || k === 'requirement') actions.setFlipped(true);
-    else if (k === 'skill' || k === 'domain' || k === 'source' || k === 'you') actions.setFlipped(false);
-    actions.showGraph();
+    if (k === 'role') actions.openRole(thread?.origin.refId ?? null);
+    else if (k === 'requirement') actions.openRole(null);
+    else actions.showDashboard();
   }, [thread]);
 
   const onNew = useCallback(() => {
@@ -281,7 +281,7 @@ export function ChatView({ profile }: { profile: Profile }) {
           <h1 className="sr-only">Leafout career chat</h1>
           <div className="ch-head-l">
             <Brand />
-            <button type="button" className="btn btn-quiet ch-back" onClick={goGraph} aria-label="Back to graph">
+            <button type="button" className="btn btn-quiet ch-back" onClick={goGraph} aria-label="Back to dashboard">
               <svg
                 width="16"
                 height="16"
@@ -296,7 +296,7 @@ export function ChatView({ profile }: { profile: Profile }) {
               >
                 <path d="M19 12H5M11 6l-6 6 6 6" />
               </svg>
-              <span className="ch-back-text">Back to graph</span>
+              <span className="ch-back-text">Back to dashboard</span>
             </button>
           </div>
           <div className="ch-head-r">

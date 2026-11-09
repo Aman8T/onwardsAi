@@ -411,6 +411,17 @@
   color: var(--text-muted);
 }
 
+/* the owner's line: one sentence of their read, in the serif, cut after two rows like the image */
+.cs-card-line {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: var(--fs-3);
+  line-height: var(--lh-snug);
+  text-wrap: pretty;
+}
+
 .cs-card-foot {
   font-size: var(--fs-0);
   color: var(--text-muted);

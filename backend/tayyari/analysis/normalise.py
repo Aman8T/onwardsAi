@@ -612,6 +612,31 @@ def to_profile(
         person["yearsExperience"] = years
     person["summary"] = tidy(sp.get("summary"))
 
+    # the read: pieces of prose, those that rest on a skill resolved to a skill of the graph; too little of it is none
+    read: list[dict[str, Any]] = []
+    read_chars = 0
+    for seg in synth.get("read") or []:
+        if len(read) >= limits.READ_SEGMENTS_MAX:
+            break
+        if isinstance(seg, str):
+            seg = {"text": seg}
+        if not isinstance(seg, Mapping):
+            continue
+        text = seg.get("text")
+        if not isinstance(text, str) or not text.strip():
+            continue
+        text = re.sub(r"\s+", " ", text)[: limits.READ_SEGMENT_MAX_CHARS]
+        if read_chars + len(text) > limits.READ_MAX_CHARS:
+            break
+        read_chars += len(text)
+        piece: dict[str, Any] = {"text": text}
+        skill_ref = resolve_skill(seg.get("skillId"), "") if tidy(seg.get("skillId")) else None
+        if skill_ref:
+            piece["skillId"] = skill_ref
+        read.append(piece)
+    if len(read) < 2 or read_chars < 40:
+        read = []
+
     profile: dict[str, Any] = {
         "id": profile_id or new_profile_id(sample=sample),
         "createdAt": _iso_z(created_at or datetime.now(UTC)),
@@ -632,6 +657,8 @@ def to_profile(
             "models": models.model_dump(),
         }
     )
+    if read:
+        profile["read"] = read
     return Profile.from_dict(profile)
 
 

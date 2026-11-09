@@ -910,6 +910,8 @@ CARD_THEME_LEN = 12
 CARD_VERSION_LEN = 8
 """The first 8 hex characters of the sha256 of what the card draws."""
 CARD_ROLE_TITLE_LEN = 200
+CARD_LINE_LEN = 200
+"""The owner's one line under the shape (``contract.card.CARD_LINE_MAX`` is 160; the column leaves room)."""
 
 
 class CardSnapshotRow(Base):
@@ -936,6 +938,7 @@ class CardSnapshotRow(Base):
     version: Mapped[str] = mapped_column(String(CARD_VERSION_LEN))
     created_at: Mapped[datetime] = mapped_column(UtcDateTime)
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    line: Mapped[str | None] = mapped_column(String(CARD_LINE_LEN))
 
     __table_args__ = (UniqueConstraint("slug", name="uq_card_snapshots_slug"),)
 

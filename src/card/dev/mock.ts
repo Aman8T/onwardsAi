@@ -34,7 +34,7 @@ export function mockClient(start: CardSettings = OFF, mode: MockMode = 'stored',
       if (mode === 'fail-put') {
         return Promise.reject(new ApiError("You've changed this a lot just now. Please wait a moment and try again.", 429));
       }
-      settings = { shared: update.shared, skills: update.skills, roleId: update.roleId, theme: update.theme };
+      settings = { shared: update.shared, skills: update.skills, roleId: update.roleId, theme: update.theme, line: update.line };
       return later(() => viewFor(settings, opts));
     },
     newLink: () => later(() => viewFor(settings, opts)),

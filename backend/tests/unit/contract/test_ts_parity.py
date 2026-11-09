@@ -256,6 +256,7 @@ INTERFACE_MODELS: dict[str, type[BaseModel]] = {
     "RoleRequirement": models.RoleRequirement,
     "Role": models.Role,
     "Person": models.Person,
+    "ReadSegment": models.ReadSegment,
     "Profile": models.Profile,
     "ReaderState": models.ReaderState,
     "ChatOrigin": models.ChatOrigin,

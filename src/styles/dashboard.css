@@ -1,0 +1,504 @@
+/*
+ * The dashboard (board "Dashboard · /dashboard · the entry point"). Class prefix db-. It shares the graph shell's
+ * header, width and gutters (shell.css: --gv-max, --gv-gutter); the skill radar inside keeps now.css. Tokens only,
+ * hairlines, depth from tone and space.
+ */
+
+.db-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  width: 100%;
+  max-width: var(--gv-max);
+  margin-inline: auto;
+  padding: var(--s5) var(--gv-gutter) var(--s8);
+  /* radar labels may reach into the gutter; past it, nothing scrolls the page sideways */
+  overflow-x: clip;
+}
+
+.db-greet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.db-h1 {
+  font-size: var(--fs-6);
+}
+
+/* NOW: the whole skill radar, framed */
+.db-now {
+  padding: var(--s3) var(--s6) var(--s6);
+}
+
+/* the summaries */
+.db-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--s4);
+  align-items: stretch;
+}
+
+.db-card {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+  padding: var(--s5);
+}
+
+.db-next {
+  grid-column: span 8;
+  padding: var(--s5) var(--s6);
+}
+
+.db-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.db-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.db-h2 {
+  font-size: var(--fs-5);
+}
+
+.db-small {
+  font-size: var(--fs-2);
+}
+
+.db-small b {
+  font-weight: 500;
+}
+
+.db-fine {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.db-muted {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.db-big {
+  font-size: var(--fs-5);
+}
+
+.db-link {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .db-link:hover {
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* rows: a hairline between, the whole row a button */
+.db-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* the last row: two cards share it */
+.db-half {
+  grid-column: span 6;
+}
+
+.db-row,
+.db-role {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  color: var(--text);
+}
+
+.db-rows > li:last-child .db-row,
+.db-rows > li:last-child .db-role {
+  border-bottom: 1px solid var(--line);
+}
+
+@media (hover: hover) {
+  .db-row:hover .db-small b,
+  .db-role:hover .db-role-title {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.db-row-text,
+.db-role-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.db-role {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 20px;
+}
+
+.db-role-rank {
+  text-align: right;
+}
+
+.db-role-title {
+  font-size: var(--fs-2);
+  font-weight: 500;
+}
+
+.db-role-pct {
+  color: var(--text);
+}
+
+.db-role-glyph {
+  flex: none;
+  color: var(--accent-ui);
+}
+
+/* the stage tiles */
+.db-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s2);
+}
+
+.db-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-s);
+  background: var(--surface-2);
+}
+
+.db-stat.is-on {
+  background: var(--accent-soft);
+}
+
+.db-stat-n {
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
+}
+
+/* a line of the card, separated by a hairline, with its action on the right */
+.db-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s1) var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--line);
+}
+
+.db-line > .db-small {
+  flex: 1 1 auto;
+}
+
+.db-line > .db-fine {
+  flex: 1 1 100%;
+}
+
+.db-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: auto;
+  padding-top: var(--s2);
+}
+
+/* ───────────── responsive ───────────── */
+
+@media (max-width: 1100px) {
+  .db-next {
+    grid-column: span 12;
+  }
+
+  .db-card {
+    grid-column: span 6;
+  }
+
+  .db-next.db-card {
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 760px) {
+  .db-card,
+  .db-next.db-card,
+  .db-half.db-card {
+    grid-column: span 12;
+  }
+
+  .db-now {
+    padding: var(--s2) var(--s4) var(--s5);
+  }
+
+  .db-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ───────────── the read (idea 1): the serif greeting written from the graph ───────────── */
+
+.db-readwrap {
+  gap: var(--s3);
+}
+
+.db-kicker-strong {
+  color: var(--text);
+}
+
+.db-read {
+  max-width: 34em;
+  font-size: var(--fs-6);
+  line-height: 1.28;
+  text-wrap: pretty;
+}
+
+/* a cited clause: the same serif, a dotted hairline under it; open or hovered, the line is solid and in the accent */
+.db-ev {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  color: var(--text);
+  text-align: left;
+  text-decoration: underline dotted var(--line-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+  transition: text-decoration-color var(--d-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .db-ev:hover {
+    text-decoration-style: solid;
+    text-decoration-color: var(--accent-ui);
+  }
+}
+
+.db-ev.is-open {
+  text-decoration-style: solid;
+  text-decoration-color: var(--accent-ui);
+}
+
+/* the evidence drawer under the paragraph: the quote, where it came from, the actions */
+.db-drawer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s2) var(--s6);
+  align-items: center;
+  padding: var(--s4) var(--s5);
+  background: var(--surface-2);
+}
+
+.db-drawer-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.db-drawer-q {
+  font-size: var(--fs-4);
+  font-style: italic;
+  line-height: var(--lh-snug);
+}
+
+.db-cite {
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  color: var(--text-muted);
+}
+
+.db-drawer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.db-readmeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+}
+
+/* ───────────── not on your resume (idea 1) ───────────── */
+
+.db-surprise {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s3) var(--s5);
+  align-items: center;
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line);
+}
+
+.db-surprise-text {
+  grid-column: 1;
+  grid-row: 1;
+  max-width: 72ch;
+}
+
+.db-surprise-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  grid-column: 1 / -1;
+}
+
+.db-surprise-act {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  justify-self: end;
+}
+
+/* ───────────── since last time (idea 2) ───────────── */
+
+.db-since {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line);
+}
+
+.db-deltas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.db-delta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--s1) 0 var(--s1) var(--s3);
+  border-left: 1px solid var(--line-strong);
+}
+
+.db-delta-n {
+  font-size: var(--fs-3);
+}
+
+.db-delta-was {
+  color: var(--text-faint);
+}
+
+/* ───────────── ask about yourself (idea 2) ───────────── */
+
+.db-ask {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line);
+}
+
+.db-ask-form {
+  display: flex;
+  flex: 1 1 320px;
+  align-items: center;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+.db-ask-label {
+  white-space: nowrap;
+}
+
+.db-ask-field {
+  padding-block: 6px;
+}
+
+.db-ask-qs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.db-ask-q {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .db-ask-q:hover {
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+}
+
+@media (max-width: 1100px) {
+  .db-deltas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .db-read {
+    font-size: var(--fs-5);
+  }
+
+  .db-drawer,
+  .db-surprise {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .db-surprise-act {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: start;
+  }
+
+  .db-deltas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .db-ask-q {
+    white-space: normal;
+    text-align: left;
+  }
+}

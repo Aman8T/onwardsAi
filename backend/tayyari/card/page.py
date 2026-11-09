@@ -5,7 +5,8 @@ It links the content pages' stylesheet (``/site/site.css``, built by ``scripts/b
 site loads. The share tags make LinkedIn and others show the large picture: ``og:title`` "Strongest in {area}", ``og:image``
 the versioned PNG, ``twitter:card`` ``summary_large_image``. The page is ``noindex`` for now (spec R1: indexing comes later).
 
-Never on it: the person's name, email, username or profile id, evidence, a rank, a percentile or a match percentage.
+Never on it: the person's name, email, username or profile id, evidence, a rank, a percentile or a match percentage. The one
+line of prose is the owner's own choice (a sentence of their read, or their own words), and it is also the link preview's text.
 """
 
 from __future__ import annotations
@@ -98,7 +99,8 @@ def card_page(stored: StoredCardSnapshot, content: CardContent, *, public_url: s
     light = f"/r/{slug}.svg" + (f"?{compare}" if compare else "")
     dark = f"/r/{slug}.svg?theme=dark" + (f"&{compare}" if compare else "")
     title = headline(content)
-    description = "A skill shape from Leafout. Every score rests on cited evidence."
+    # the owner's own line, when they put one on the card, is what a link preview quotes
+    description = content.line or "A skill shape from Leafout. Every score rests on cited evidence."
     n = len(content.areas)
     alt = f"Skill shape across {n} areas. {title}." if n else "Skill shape."
     share = [
@@ -141,7 +143,8 @@ def card_page(stored: StoredCardSnapshot, content: CardContent, *, public_url: s
         '<article><header class="doc-head">'
         '<p class="kicker">Skill shape</p>'
         f'<h1 class="serif">{esc(title)}</h1>'
-        f'<p class="lede">Every score on this card rests on cited evidence. Updated {esc(updated)}.</p>'
+        + (f'<p class="lede serif">“{esc(content.line)}”</p>' if content.line else "")
+        + f'<p class="lede">Every score on this card rests on cited evidence. Updated {esc(updated)}.</p>'
         "</header>"
         '<figure class="shape-card"><picture>'
         f'<source media="(prefers-color-scheme: dark)" srcset="{esc(dark)}" />'

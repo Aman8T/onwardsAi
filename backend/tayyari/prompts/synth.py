@@ -26,6 +26,9 @@ def _build_synth_system() -> str:
     role_title_max = limits.ROLE_TITLE_MAX_CHARS
     role_why_max = limits.ROLE_WHY_MAX_CHARS
     skill_name_max = limits.SKILL_NAME_MAX_CHARS
+    read_cited_min, read_cited_max = limits.READ_CITED_RANGE
+    read_segments_max = limits.READ_SEGMENTS_MAX
+    read_max = limits.READ_MAX_CHARS
 
     return f"""You are a senior engineering hiring manager and career strategist who has hired and coached hundreds of
 engineers, designers and product people. Several reader agents have each read one source about ONE person (resume, GitHub,
@@ -83,6 +86,16 @@ career map, and every number will be scrutinised by the person — so be calibra
 6. Sources
 - One entry per successfully read source id: a refined "sub" stat line (≤ {profile_source_sub_max} characters, real counts only) and 2–3 notes
   (≤ {profile_source_note_max} characters each), at least one an improvement opportunity specific to that source.
+
+7. The read
+- Three or four plain sentences, in the second person ("You build…"), that open the person's dashboard: who they are
+  professionally, what the sources prove, and the one gap that keeps their stretch role where it is. The last sentence
+  names that gap. At most {read_max} characters in all. No flattery, no adjectives that the evidence does not earn.
+- Write it as "read": a list of at most {read_segments_max} pieces that join with NOTHING between them into the prose, so each piece
+  carries its own spaces and punctuation ("You build interfaces that move: ", "three years of design-system work with numbers attached", ", across motion-kit and Kite UI. ").
+- {read_cited_min}–{read_cited_max} pieces carry a skillId: the id of the ONE skill on the graph whose evidence backs that clause. Such a piece is a
+  clause of a few words, never a whole sentence, and never a bare skill name. The other pieces carry no skillId.
+- Name only employers, repos, products, numbers and dates that a reader reported.
 
 Style: plain, specific, unsentimental. No flattery, no buzzwords. Respect every length limit. Respond ONLY through the
 structured output."""

@@ -27,20 +27,13 @@ export function PracticeHeader({ profileId, who, onNavigate }: PracticeHeaderPro
 
   /** A button's action, or, on the dev page, a note of where it would go. */
   const go = (where: string, act: () => void) => () => (onNavigate ? onNavigate(`Gallery: opens ${where}.`) : act());
-  const graph = (flipped: boolean) => () => {
-    actions.setFlipped(flipped);
-    actions.showGraph();
-  };
 
   return (
     <header className="pc-header">
-      <Brand onClick={go('the graph', () => actions.showGraph())} />
+      <Brand onClick={go('the dashboard', () => actions.showDashboard())} />
       <nav className="pc-nav" aria-label="Sections">
-        <button type="button" className="pc-navbtn" onClick={go('the graph, Now', graph(false))}>
-          Now
-        </button>
-        <button type="button" className="pc-navbtn" onClick={go('the graph, Next', graph(true))}>
-          Next
+        <button type="button" className="pc-navbtn" onClick={go('the dashboard', () => actions.showDashboard())}>
+          Dashboard
         </button>
         <button type="button" className="pc-navbtn" onClick={go('your portfolio', () => void actions.openPortfolio())}>
           Portfolio

@@ -130,7 +130,7 @@ export function DesignPlayground() {
           ))}
         </nav>
         {s.compare && <p className="kicker dp-note">The ambient layer and the cursor light are global: both panes share one hue, one atmosphere and one cursor. Only the role tokens differ per pane.</p>}
-        {s.screen === 'home' && <p className="kicker dp-note">Home is the real Onboarding. With no server its health and sample calls fail softly, so the sample preview and the Weekly tile may be empty.</p>}
+        {s.screen === 'home' && <p className="kicker dp-note">The empty dashboard is the real Onboarding; the dashboard's summaries read the server and fail softly without it.</p>}
       </header>
       <div className={`dp-stage${s.compare ? ' is-compare' : ''}`}>
         <section className={wrap(s.look)} aria-label={`${s.look} look`}>

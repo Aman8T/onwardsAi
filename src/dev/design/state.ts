@@ -6,7 +6,7 @@
  *   look     today | quiet            absent = the default (quiet); today shows the earlier look
  *   scheme   light | dark             absent = System. ambient.ts reads this key itself, so it pins the scheme on load
  *   h        0..359                   absent = the clock's hue (ambient.ts pins it on load, and then holds Still)
- *   screen   home | graph | match | weekly
+ *   screen   home | dashboard | graph | match | weekly
  *   compare  1                        absent = single column
  *   light    off                      the cursor light is not mounted (needs a reload, so the bar reloads)
  */
@@ -15,11 +15,12 @@ import { effectiveMode, forcedHue, getHue0, getLook, getMode, setMode, setScheme
 import type { Look, SchemeChoice } from '../../theme/ambient';
 
 export type { Look };
-export type ScreenId = 'home' | 'graph' | 'match' | 'weekly';
+export type ScreenId = 'home' | 'dashboard' | 'graph' | 'match' | 'weekly';
 
 export const SCREENS: readonly (readonly [ScreenId, string])[] = [
-  ['home', 'Home'],
-  ['graph', 'Graph'],
+  ['home', 'Empty dashboard'],
+  ['dashboard', 'Dashboard'],
+  ['graph', 'Next role'],
   ['match', 'Match'],
   ['weekly', 'Weekly'],
 ];

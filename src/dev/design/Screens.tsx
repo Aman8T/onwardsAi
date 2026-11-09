@@ -1,5 +1,5 @@
 /**
- * The four screens, each the real component fed from fixtures. No server: calls that Home makes on mount
+ * The five screens, each the real component fed from fixtures. No server: calls that Home makes on mount
  * (api.health, api.sampleProfile, the Weekly tile) fail softly, and each screen sits in an error boundary.
  */
 import { Component, useMemo, useState } from 'react';
@@ -12,6 +12,7 @@ import { MatchView } from '../../match/MatchView';
 import { FIXTURES } from '../../match/dev/fixtures';
 import { SAMPLE_ARCHIVE, SAMPLE_EDITION } from '../../weekly/fixtures';
 import { WeeklyRoom } from '../../weekly/WeeklyRoom';
+import { Dashboard } from '../../views/Dashboard';
 import { GraphView } from '../../views/GraphView';
 import { Onboarding } from '../../views/Onboarding';
 import type { ScreenId } from './state';
@@ -45,6 +46,21 @@ const ACTIVE: WeeklySubscription = {
   sections: ['jobs', 'progress', 'news', 'tip'],
   unread: 1,
 };
+
+/** Riya three weeks before the sample's analysis: a lower Design & Motion, Design Engineer third, no portfolio yet; the dashboard says what moved. */
+const PREVIOUS: Profile = {
+  ...PROFILE,
+  id: 'previous-riya',
+  createdAt: '2026-09-14T09:00:00.000Z',
+  mastery: { ...PROFILE.mastery, score: 74 },
+  domains: PROFILE.domains.map((d) => (d.id === 'design-motion' ? { ...d, score: 79 } : d)),
+  roles: PROFILE.roles.map((r) => (r.id === 'design-engineer' ? { ...r, alignment: 77 } : r)),
+  sources: PROFILE.sources.filter((s) => s.kind !== 'portfolio'),
+};
+
+function DashboardScreen() {
+  return <Dashboard profile={PROFILE} previous={PREVIOUS} />;
+}
 
 function GraphScreen() {
   return <GraphView profile={PROFILE} />;
@@ -98,8 +114,9 @@ function WeeklyScreen() {
 }
 
 const VIEWS: Record<ScreenId, { name: string; View: () => ReactNode }> = {
-  home: { name: 'Home', View: () => <Onboarding /> },
-  graph: { name: 'Graph', View: GraphScreen },
+  home: { name: 'Empty dashboard', View: () => <Onboarding /> },
+  dashboard: { name: 'Dashboard', View: DashboardScreen },
+  graph: { name: 'Next role', View: GraphScreen },
   match: { name: 'Match', View: MatchScreen },
   weekly: { name: 'Weekly', View: WeeklyScreen },
 };

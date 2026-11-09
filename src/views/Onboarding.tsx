@@ -1,31 +1,24 @@
 /**
- * Home as a dashboard (board "Home as a dashboard"). Header, a left-aligned greeting row, then a 12-column grid:
- * the compact "Build your skill graph" form (span 5), "Your graph" (the person's own top roles, or a small preview
- * of the sample; span 4), tiles into the other tools (span 3), "How it works" in four columns (span 7) and the
- * recent posting matches kept on this device (span 5). Under 900px every item takes the full width.
- *
- * The ambient field is mounted once in index.html and the cursor light lives in App; this view paints neither.
+ * The empty dashboard (board "Dashboard · /dashboard · empty, upload popup"): the header, the quiet regions the
+ * dashboard will fill once a graph exists, and one popup that asks for exactly two things, a resume and public
+ * links, plus a sign-in row when nobody is signed in. No sample graph, no tiles, no how-it-works: nothing competes
+ * with the one action. The ambient field is mounted once in index.html and the cursor light lives in App.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ClipboardEvent, FormEvent, KeyboardEvent } from 'react';
 import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion/react';
-import type { Profile, SourceKind } from '../../shared/types';
+import type { SourceKind } from '../../shared/types';
 import { AccountMenu } from '../auth/AccountMenu';
+import { offersSignIn } from '../auth/links';
+import { signInSheet, useMe } from '../auth/useMe';
 import { Brand } from '../components/Brand';
 import { SchemeToggle } from '../components/SchemeToggle';
-import { Radar } from '../components/Radar';
-import type { RadarAxis } from '../components/Radar';
-import { IconArrowRight, IconDoc, IconMinus, IconPlus, IconUpload } from '../components/Icons';
-import { SiteFooter } from '../components/SiteFooter';
-import * as api from '../lib/api';
+import { IconArrowRight, IconDoc, IconUpload } from '../components/Icons';
 import { EASE, NARROW_QUERY, useMediaQuery } from '../lib/ui';
 import { useHandoffMessage } from '../lib/useHandoff';
-import { BAND_LABEL } from '../match/model';
 import { isDiscoverPath } from '../discover/route';
-import { readRecent } from '../match/recent';
 import { isPracticePath } from '../practice/route';
 import { actions, useApp } from '../store';
-import { WeeklyTile } from '../weekly/WeeklyTile';
 import '../styles/onboarding.css';
 
 /* ───────────────────────── constants ───────────────────────── */
@@ -168,32 +161,14 @@ function mergeLinks(existing: LinkItem[], raw: string): MergeResult {
 
 const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files');
 
-/* ───────────────────────── static content ───────────────────────── */
-
-const STEPS = [
-  {
-    n: '01 · Connect',
-    title: 'Share what you have',
-    body: 'Drop in a resume and add GitHub, Lovable, a portfolio or any public link. Each source adds evidence.',
-  },
-  {
-    n: '02 · Analyse',
-    title: 'One reader per source',
-    body: 'A separate reader works through each source, then a final pass reconciles them into one graph with the evidence behind every score.',
-  },
-  {
-    n: '03 · Explore',
-    title: 'Two graphs, one chat',
-    body: 'See where you stand today and the roles you could grow into next. Ask the chat what the gaps mean and what to build.',
-  },
-  {
-    n: '04 · Apply',
-    title: 'Match, practise, prepare',
-    body: 'Paste a posting to see every requirement against your evidence, rehearse the interview, and plan the weeks to a role.',
-  },
+/** The regions the dashboard fills once a graph exists, drawn behind the popup so the person sees what comes next. */
+const GHOSTS: readonly { span: 'wide' | 'half' | 'third'; name: string; line?: string }[] = [
+  { span: 'wide', name: 'Your graph', line: 'Where you stand today, and the roles you could grow into.' },
+  { span: 'half', name: 'Next roles', line: 'Ranked by how much of each role you already cover.' },
+  { span: 'third', name: 'Posting matches' },
+  { span: 'third', name: 'Discover' },
+  { span: 'third', name: 'Practice' },
 ];
-
-const PREP_NOTE = 'Needs your graph first';
 
 /* ───────────────────────── Resume dropzone ───────────────────────── */
 
@@ -350,19 +325,15 @@ export function Onboarding() {
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [linkInput, setLinkInput] = useState('');
   const [linkError, setLinkError] = useState<string | null>(null);
-  const [goal, setGoal] = useState('');
-  const [notes, setNotes] = useState('');
-  const [notesOpen, setNotesOpen] = useState(false);
   const [announce, setAnnounce] = useState('');
-
-  const [hasSample, setHasSample] = useState(false);
-  const [sampleBusy, setSampleBusy] = useState(false);
-  const [sampleError, setSampleError] = useState<string | null>(null);
 
   const [hintScope, animateHint] = useAnimate();
 
   const profile = useApp((st) => st.profile);
   const handoffMessage = useHandoffMessage();
+  const { user, loaded, providers } = useMe();
+  // the sign-in row shows only once the server has said nobody is signed in, and only when it offers a way in
+  const signedOut = loaded && !user && offersSignIn(providers);
 
   // Someone who opened /practice or /discover without a graph lands here: say why, and title the tab for it.
   const [wanted] = useState<'practice' | 'discover' | null>(() => {
@@ -381,41 +352,6 @@ export function Onboarding() {
       document.title = before;
     };
   }, [wanted, profile]);
-  const recent = useMemo(() => readRecent().slice(0, 4), []);
-  const [sample, setSample] = useState<Profile | null>(null);
-
-  // The pre-computed sample is only offered when the server actually has one.
-  useEffect(() => {
-    let live = true;
-    void api.health().then((h) => {
-      if (live) setHasSample(!!h?.hasSample);
-    });
-    return () => {
-      live = false;
-    };
-  }, []);
-
-  // The same pre-computed sample "Open the sample graph" opens, read once for the preview (no AI call).
-  useEffect(() => {
-    if (!hasSample || profile) return;
-    let live = true;
-    api
-      .sampleProfile()
-      .then((p) => {
-        if (live) setSample(p);
-      })
-      .catch(() => {});
-    return () => {
-      live = false;
-    };
-  }, [hasSample, profile]);
-
-  const shown = profile ?? sample;
-  const axes = useMemo<RadarAxis[]>(
-    () => (shown ? shown.domains.map((d) => ({ id: d.id, label: d.short || d.name, value: d.score })) : []),
-    [shown],
-  );
-  const topRoles = useMemo(() => (shown ? [...shown.roles].sort((a, b) => b.alignment - a.alignment).slice(0, 3) : []), [shown]);
 
   const pickFile = useCallback((files: FileList | File[]) => {
     const f = files[0];
@@ -475,14 +411,14 @@ export function Onboarding() {
 
   // a link typed but not yet added counts too, as long as it can actually be read
   const pendingLink = useMemo(() => linkInput.split(/[\s,]+/).some((t) => t && parseLink(t)), [linkInput]);
-  const ready = !!file || links.length > 0 || pendingLink || notes.trim().length > 0;
+  const ready = !!file || links.length > 0 || pendingLink;
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!ready) {
       // nothing to read yet: put focus on the first empty field (the drop zone) so its hint is announced,
       // and pulse the hint once (opacity only, --d-base; skipped under reduced motion)
-      (e.currentTarget as HTMLFormElement).querySelector<HTMLElement>('.ob-drop-main, input, textarea')?.focus();
+      (e.currentTarget as HTMLFormElement).querySelector<HTMLElement>('.ob-drop-main, input')?.focus();
       if (!reduce && hintScope.current) void animateHint(hintScope.current, { opacity: [1, 0.35, 1] }, { duration: 0.25, ease: EASE });
       return;
     }
@@ -500,30 +436,10 @@ export function Onboarding() {
       setLinkInput('');
       setLinkError(null);
     }
-    void actions.startAnalysis({
-      file,
-      links: finalLinks.map((l) => l.href),
-      goal: goal.trim() || undefined,
-      notes: notes.trim() || undefined,
-    });
-  };
-
-  const openSample = async () => {
-    setSampleBusy(true);
-    setSampleError(null);
-    try {
-      await actions.loadSampleProfile();
-    } catch (err) {
-      setSampleError(err instanceof Error ? err.message : 'Could not open the sample profile.');
-      setSampleBusy(false);
-    }
+    void actions.startAnalysis({ file, links: finalLinks.map((l) => l.href) });
   };
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
-  const focusForm = () => {
-    document.getElementById('ob-card-title')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-    document.getElementById('ob-link')?.focus({ preventScroll: true });
-  };
 
   return (
     <div className="ob-root" id="top">
@@ -541,35 +457,38 @@ export function Onboarding() {
           </nav>
         </header>
 
-        <main className="ob-main">
-          <motion.div
+        <main className="ob-main ob-stage">
+          {/* the empty dashboard: where things will go, quiet and inert */}
+          <div className="ob-ghost" aria-hidden="true">
+            {GHOSTS.map((g) => (
+              <div key={g.name} className={`panel ob-ghost-cell is-${g.span}`}>
+                <span className="kicker">{g.name}</span>
+                {g.line && <span className="ob-ghost-line">{g.line}</span>}
+              </div>
+            ))}
+          </div>
+
+          <motion.form
+            className="panel ob-form ob-popup"
+            role="dialog"
+            aria-labelledby="ob-card-title"
+            onSubmit={onSubmit}
+            noValidate
             initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: EASE }}
           >
-            <div className="ob-greet">
-              <h1 className="ob-h1 serif">
-                <span className="ob-h1-line">See where you stand.</span> <span className="ob-h1-line em">Then where you could go.</span>
-              </h1>
-              <p className="kicker ob-reads">
-                <span className="ob-reads-label">Reads from</span>
-                <span className="ob-reads-list">Resume · GitHub · Lovable · Portfolio · any link</span>
-              </p>
-            </div>
-
-            <div className="ob-grid">
-              <div className="ob-cell ob-c-form">
-                <form className="panel ob-form" onSubmit={onSubmit} aria-labelledby="ob-card-title" noValidate>
             <div className="ob-card-head">
-              <h2 id="ob-card-title" className="ob-card-title title">
-                Build your skill graph
-              </h2>
+              <span className="kicker">Start here</span>
+              <h1 id="ob-card-title" className="ob-card-title serif">
+                Add your resume.
+              </h1>
               {wanted && !profile && (
                 <p className="ob-card-sub ob-need" role="status">
                   {wanted === 'practice' ? 'Practice' : 'Discover'} uses your skill graph. Build it first, about two minutes.
                 </p>
               )}
-              <p className="ob-card-sub">The more you connect, the sharper it gets.</p>
+              <p className="ob-card-sub">That is all it takes. Your public links sharpen it. Every score cites a line from what you give us, and nothing else.</p>
             </div>
 
             {handoffMessage && (
@@ -583,7 +502,7 @@ export function Onboarding() {
             {/* links */}
             <div className="ob-field ob-field-links">
               <span className="kicker ob-label" id="ob-links-label">
-                Links
+                Links <span className="ob-optional">· optional</span>
               </span>
               <div>
                 <ul className="ob-links" aria-labelledby="ob-links-label">
@@ -609,9 +528,7 @@ export function Onboarding() {
                             Remove
                           </button>
                         </div>
-                        {l.kind === 'linkedin' && (
-                          <p className="ob-note">LinkedIn usually blocks automated reading. Paste your About text under extra context to be safe.</p>
-                        )}
+                        {l.kind === 'linkedin' && <p className="ob-note">LinkedIn usually blocks automated reading. A PDF of your profile, dropped as the resume, is read in full.</p>}
                       </motion.li>
                     ))}
                   </AnimatePresence>
@@ -630,7 +547,7 @@ export function Onboarding() {
                     autoCapitalize="off"
                     autoCorrect="off"
                     spellCheck={false}
-                    placeholder="Paste a GitHub, Lovable, LinkedIn or portfolio link"
+                    placeholder="GitHub, Lovable, LinkedIn or a portfolio"
                     value={linkInput}
                     aria-invalid={linkError ? true : undefined}
                     aria-describedby={linkError ? 'ob-link-error' : undefined}
@@ -653,233 +570,41 @@ export function Onboarding() {
               </div>
             </div>
 
-            {/* goal */}
-            <div className="ob-field">
-              <label htmlFor="ob-goal" className="kicker ob-label">
-                Goal
-              </label>
-              <input
-                id="ob-goal"
-                className="field"
-                type="text"
-                maxLength={200}
-                autoComplete="off"
-                placeholder="Where do you want to be in 12 months? (optional)"
-                value={goal}
-                onChange={(e) => setGoal(e.target.value)}
-              />
-            </div>
-
-            {/* extra context */}
-            <div className="ob-field ob-field-more">
-              <button
-                type="button"
-                className="btn btn-quiet ob-more"
-                aria-expanded={notesOpen}
-                aria-controls="ob-notes-panel"
-                onClick={() => setNotesOpen((o) => !o)}
-              >
-                {notesOpen ? <IconMinus size={14} strokeWidth={1.75} /> : <IconPlus size={14} strokeWidth={1.75} />}
-                Add extra context
-                {!notesOpen && notes.trim() && <span className="chip ob-more-badge">Added</span>}
-              </button>
-              <AnimatePresence initial={false}>
-                {notesOpen && (
-                  <motion.div
-                    key="notes"
-                    id="ob-notes-panel"
-                    className="ob-collapse"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2, ease: EASE }}
-                  >
-                    <label htmlFor="ob-notes" className="sr-only">
-                      Extra context
-                    </label>
-                    <textarea
-                      id="ob-notes"
-                      className="field"
-                      rows={4}
-                      maxLength={8000}
-                      placeholder="Your LinkedIn About section, achievements, certifications, anything the links cannot show…"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
-                    {notes.length > 6000 && <span className="numeral ob-count">{notes.length.toLocaleString()} / 8,000</span>}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
             {/* submit */}
             <div className="ob-submit">
               <button type="submit" className="btn btn-primary ob-cta" aria-disabled={!ready} aria-describedby={ready ? undefined : 'ob-hint'}>
                 Build my skill graph
                 <IconArrowRight size={16} strokeWidth={1.75} />
               </button>
-
-              <AnimatePresence initial={false}>
-                {!ready && (
-                  <motion.p
-                    key="hint"
-                    id="ob-hint"
-                    className="ob-hint"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2, ease: EASE }}
-                  >
+              <AnimatePresence initial={false} mode="wait">
+                {ready ? (
+                  <motion.p key="fine" className="kicker ob-fine" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2, ease: EASE }}>
+                    About a minute. Your files are read once and never shared.
+                  </motion.p>
+                ) : (
+                  <motion.p key="hint" id="ob-hint" className="ob-hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2, ease: EASE }}>
                     <span ref={hintScope} className="ob-hint-text">
-                      Add a resume, a link or a few lines of context to begin.
+                      Add a resume or a link to begin.
                     </span>
                   </motion.p>
                 )}
               </AnimatePresence>
-
-              <button type="button" className="btn btn-quiet ob-sample-btn" onClick={() => void actions.startAnalysis({ sample: true, links: [] })}>
-                Try a sample profile
-              </button>
-              <p className="kicker ob-fine">One reader per source runs in parallel, then a single pass reasons over all of it.</p>
             </div>
+
+            {signedOut && (
+              <div className="ob-signin">
+                <span className="ob-signin-text">Have an account? Sign in to keep your graph on every device.</span>
+                <button type="button" className="btn btn-sm" onClick={() => signInSheet.open('account')}>
+                  Sign in
+                </button>
+              </div>
+            )}
 
             <p className="sr-only" role="status" aria-live="polite">
               {announce}
             </p>
-          </form>
-              </div>
-
-              <section className="panel ob-cell ob-c-graph ob-graph" aria-labelledby="ob-graph-title">
-                <div className="ob-card-head">
-                  <h2 id="ob-graph-title" className="ob-card-title title">
-                    Your graph
-                  </h2>
-                  <p className="ob-card-sub">
-                    {profile
-                      ? `${profile.person.name}, ${profile.person.currentRole}`
-                      : shown
-                        ? 'A sample profile, so you can see the shape of it.'
-                        : 'Your skills and next roles show here once it is built.'}
-                  </p>
-                </div>
-                {axes.length >= 3 && (
-                  <div className="ob-radar">
-                    <Radar
-                      axes={axes}
-                      axisSetKey={profile ? 'home-mine' : 'home-sample'}
-                      series={{ primary: profile ? 'You' : 'Sample' }}
-                      ariaLabel={`${profile ? 'Your' : 'Sample'} skill radar: ${axes.length} domains`}
-                      tableCaption="Domain scores, 0 to 100"
-                    />
-                  </div>
-                )}
-                {topRoles.length > 0 && (
-                  <ol className="ob-roles" aria-label={profile ? 'Your top roles' : 'Top roles in the sample'}>
-                    {topRoles.map((r) => (
-                      <li key={r.id} className="ob-role">
-                        <span className="ob-role-title">{r.title}</span>
-                        <span className="kicker">{r.eta}</span>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-                {profile ? (
-                  <button type="button" className="btn ob-graph-cta" onClick={() => actions.showGraph()}>
-                    Open my graph
-                    <IconArrowRight size={16} strokeWidth={1.75} />
-                  </button>
-                ) : hasSample ? (
-                  <>
-                    <button type="button" className="btn ob-graph-cta" onClick={() => void openSample()} disabled={sampleBusy}>
-                      {sampleBusy ? 'Opening the sample…' : 'Open the sample graph'}
-                      {!sampleBusy && <IconArrowRight size={16} strokeWidth={1.75} />}
-                    </button>
-                    {sampleError && (
-                      <p className="ob-error" role="alert">
-                        {sampleError}
-                      </p>
-                    )}
-                  </>
-                ) : null}
-              </section>
-
-              <nav className="ob-cell ob-c-tiles ob-tiles" aria-label="Tools">
-                <button type="button" className="panel ob-tile" onClick={() => actions.openMatch()}>
-                  <span className="ob-tile-title title">Check a posting</span>
-                  <span className="ob-tile-line">Paste a posting and see each requirement against your evidence.</span>
-                </button>
-                <button type="button" className="panel ob-tile" onClick={() => actions.openPractice({ screen: 'hub' })}>
-                  <span className="ob-tile-title title">Practice the interview</span>
-                  <span className="ob-tile-line">Speak or type answers to questions drawn from your own work.</span>
-                </button>
-                <button type="button" className="panel ob-tile" onClick={() => actions.openDiscover()}>
-                  <span className="ob-tile-title title">Discover jobs</span>
-                  <span className="ob-tile-line">Search employers' own boards for roles that fit you.</span>
-                </button>
-                <button
-                  type="button"
-                  className="panel ob-tile"
-                  onClick={() => (profile ? actions.showGraph() : focusForm())}
-                  aria-describedby={profile ? undefined : 'ob-prep-note'}
-                >
-                  <span className="ob-tile-title title">Prepare for a role</span>
-                  <span className="ob-tile-line">
-                    {profile ? 'Open a role on your graph and ask how to prepare.' : 'Plan the weeks to a role from your gaps.'}
-                  </span>
-                  {!profile && (
-                    <span className="kicker" id="ob-prep-note">
-                      {PREP_NOTE}
-                    </span>
-                  )}
-                </button>
-                <WeeklyTile />
-              </nav>
-
-              <section className="panel ob-cell ob-c-how ob-how" aria-labelledby="ob-how-title">
-                <h2 className="kicker ob-how-title" id="ob-how-title">
-                  How it works
-                </h2>
-                <ol className="ob-steps" id="how" role="list">
-                  {STEPS.map((s) => (
-                    <li key={s.n} className="ob-step">
-                      <span className="kicker">{s.n}</span>
-                      <h3 className="title">{s.title}</h3>
-                      <p>{s.body}</p>
-                    </li>
-                  ))}
-                </ol>
-                <a className="btn btn-quiet ob-how-more" href="/how-it-works">
-                  Read more about how it works
-                </a>
-              </section>
-
-              <section className="panel ob-cell ob-c-recent ob-recent" aria-labelledby="ob-recent-title">
-                <h2 className="kicker ob-how-title" id="ob-recent-title">
-                  Recent
-                </h2>
-                {recent.length > 0 ? (
-                  <ul className="ob-recent-list">
-                    {recent.map((m) => (
-                      <li key={m.id}>
-                        <button type="button" className="ob-recent-row" onClick={() => actions.openMatch({ screen: 'match', id: m.id })}>
-                          <span className="ob-recent-text">
-                            <span className="ob-role-title">{m.title}</span>
-                            {m.company && <span className="ob-recent-co">{m.company}</span>}
-                          </span>
-                          <span className="chip">{BAND_LABEL[m.band]}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="ob-empty">Your matches will show here.</p>
-                )}
-              </section>
-            </div>
-          </motion.div>
+          </motion.form>
         </main>
-
-        <SiteFooter />
       </div>
     </div>
   );

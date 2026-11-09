@@ -43,7 +43,56 @@
   border-bottom: 0;
 }
 
-/* Now | Next: two text buttons and one underline that slides between them. */
+/* The sections of the app as quiet chips (the same shape as the match, Discover and Practice headers). */
+.gv-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s1);
+  min-width: 0;
+}
+
+.gv-navbtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: var(--r-m);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: color var(--d-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .gv-navbtn:hover {
+    color: var(--text);
+  }
+}
+
+.gv-navbtn.is-current {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+/* One next role, opened from the dashboard: a quiet line back, then the role view. */
+.gv-role {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+}
+
+.gv-crumb {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.gv-crumb-back {
+  padding-left: 0;
+}
+
+/* Now | Next: two text buttons and one underline that slides between them. (No longer in the header; kept for the playground.) */
 .gv-seg {
   position: relative;
   display: flex;
@@ -278,7 +327,15 @@
   }
 }
 
-/* The segmented control drops under the brand; the header stops sticking so it stays short. */
+/* The right-hand cluster may take two lines before anything overlaps. */
+@media (max-width: 1180px) {
+  .gv-actions {
+    flex-wrap: wrap;
+    row-gap: var(--s1);
+  }
+}
+
+/* The sections drop under the brand; the header stops sticking so it stays short. */
 @media (max-width: 940px) {
   .gv-header {
     position: relative;
@@ -287,7 +344,8 @@
     padding-block: var(--s3) 0;
   }
 
-  .gv-seg {
+  .gv-seg,
+  .gv-nav {
     order: 3;
     flex: 1 1 100%;
   }

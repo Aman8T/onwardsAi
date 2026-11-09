@@ -119,7 +119,7 @@ export function WeeklyView() {
   return (
     <div className="wk-page">
       <header className="wk-header">
-        <Brand onClick={() => actions.showGraph()} />
+        <Brand onClick={() => actions.showDashboard()} />
         <span className="kicker wk-header-kicker">The Leafout Weekly</span>
         <div className="wk-header-end">
           <Atmosphere />

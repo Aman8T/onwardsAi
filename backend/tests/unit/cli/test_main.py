@@ -185,7 +185,12 @@ def test_deploy_dispatch(monkeypatch: pytest.MonkeyPatch) -> None:
     run = patch_run(monkeypatch, "deploy")
     cli.main(["deploy"])
     cli.main(["deploy", "--skip-build"])
-    assert run.calls == [((), {"skip_build": False}), ((), {"skip_build": True})]
+    cli.main(["deploy", "--app-id", "app-123"])
+    assert run.calls == [
+        ((), {"skip_build": False, "app_id": None}),
+        ((), {"skip_build": True, "app_id": None}),
+        ((), {"skip_build": False, "app_id": "app-123"}),
+    ]
 
 
 def test_the_exit_code_of_the_command_is_returned(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -75,6 +75,7 @@ export function sameSettings(a: CardSettings, b: CardSettings): boolean {
     a.shared === b.shared &&
     a.theme === b.theme &&
     (a.roleId ?? '') === (b.roleId ?? '') &&
+    (a.line ?? '') === (b.line ?? '') &&
     a.skills.length === b.skills.length &&
     a.skills.every((s, i) => s === b.skills[i])
   );

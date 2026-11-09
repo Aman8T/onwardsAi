@@ -24,6 +24,8 @@ export const CARD_AREAS_MAX = 8;
 /** Fewer areas than this make no shape: the card draws bars and no leaf. */
 export const CARD_AREAS_MIN_RADAR = 3;
 export const SLUG_LEN = 12;
+/** The one line the owner may put on the card: a sentence of their read, or their own words. */
+export const CARD_LINE_MAX = 160;
 
 /** `match` is a setting only: the README snippet becomes a `<picture>` (the dark card for dark visitors). */
 export type CardTheme = 'light' | 'dark' | 'transparent' | 'match';
@@ -61,6 +63,8 @@ export interface CardSettings {
   skills: string[];
   roleId?: string;
   theme: CardTheme;
+  /** The line under the shape: a sentence of the owner's read, or one they wrote (at most CARD_LINE_MAX characters). Absent = no line. */
+  line?: string;
 }
 
 /** The owner's view of their card. The link fields are present only while sharing is on. */
@@ -70,6 +74,8 @@ export interface CardView {
   /** The top skills by score, the ones that can be named. */
   skillsOffered: CardSkill[];
   rolesOffered: CardRole[];
+  /** The sentences of the read, each one a line the card may carry. */
+  linesOffered: string[];
   blocked?: CardBlocked;
   slug?: string;
   pageUrl?: string;
@@ -86,6 +92,7 @@ export interface CardUpdate {
   skills: string[];
   roleId?: string;
   theme: CardTheme;
+  line?: string;
 }
 
 export interface CardNewLink {

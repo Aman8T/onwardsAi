@@ -17,7 +17,16 @@ import type { PracticeQuery } from './practice/route';
 import { DEFAULT_WEEKLY, isWeeklyPath, mergeWeekly, parseWeeklyUrl, weeklyPath } from './weekly/route';
 import type { WeeklyQuery } from './weekly/route';
 
-export type View = 'onboarding' | 'analysis' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing' | 'discover' | 'practice' | 'weekly';
+/**
+ * 'onboarding' is the empty dashboard (no profile yet: one popup asking for a resume and links); 'dashboard' is the
+ * entry point once a graph exists, with the skill radar, the next roles and a summary of every feature inside it;
+ * 'graph' is one next role opened from the dashboard (the role radar and its requirements).
+ */
+export type View = 'onboarding' | 'analysis' | 'dashboard' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing' | 'discover' | 'practice' | 'weekly';
+
+/** The app's own address: `/` is accepted and moved here, so one link stands for the dashboard. */
+export const DASHBOARD_PATH = '/dashboard';
+export const isDashboardPath = (path: string) => path.replace(/\/+$/, '') === DASHBOARD_PATH || path === '/';
 
 export interface Signal {
   id: number;
@@ -104,6 +113,10 @@ export interface AppState {
   profile: Profile | null;
   /** false = current-role graph, true = next-roles graph. */
   flipped: boolean;
+  /** The next role the 'graph' view opens on (chosen on the dashboard); null = the top role. */
+  openRoleId: string | null;
+  /** The analysis this one replaced (kept so the dashboard can say what moved); null for a first analysis. */
+  previous: Profile | null;
   analysis: AnalysisState;
   threads: Thread[];
   activeThreadId: string | null;
@@ -138,7 +151,9 @@ function load(): AppState {
   const base: AppState = {
     view: 'onboarding',
     profile: null,
+    previous: null,
     flipped: false,
+    openRoleId: null,
     analysis: emptyAnalysis(),
     threads: [],
     activeThreadId: null,
@@ -158,9 +173,9 @@ function load(): AppState {
       // a reload interrupts any in-flight stream
       messages: t.messages.map((m) => (m.status === 'streaming' ? { ...m, status: 'error' as const, error: 'Interrupted by reload' } : m)),
     }));
-    // only the portfolio screen is restored on reload (it refetches its document); everything else opens on the graph
-    const view = saved.view === 'portfolio' ? 'portfolio' : 'graph';
-    return { ...base, profile: saved.profile, threads, flipped: !!saved.flipped, view, activeThreadId: saved.activeThreadId ?? null };
+    // only the portfolio screen is restored on reload (it refetches its document); everything else opens on the dashboard
+    const view = saved.view === 'portfolio' ? 'portfolio' : 'dashboard';
+    return { ...base, profile: saved.profile, previous: saved.previous ?? null, threads, flipped: false, view, activeThreadId: saved.activeThreadId ?? null };
   } catch {
     return base;
   }
@@ -181,7 +196,10 @@ function fromAddress(s: AppState): AppState {
     const weekly = parseWeeklyUrl(window.location.pathname, window.location.search);
     if (weekly) return { ...s, view: 'weekly', weeklyRoute: weekly };
     const route = parseMatchPath(window.location.pathname);
-    return route ? { ...s, view: 'match', matchRoute: route } : s;
+    if (route) return { ...s, view: 'match', matchRoute: route };
+    // the app's own address: `/` moves to /dashboard (the query string, a hand-off from leafout.in, stays with it)
+    if (window.location.pathname === '/') window.history.replaceState(null, '', DASHBOARD_PATH + window.location.search);
+    return s;
   } catch {
     return s;
   }
@@ -192,10 +210,10 @@ const listeners = new Set<() => void>();
 
 function persist() {
   try {
-    const { profile, threads, flipped, activeThreadId } = state;
+    const { profile, previous, threads, flipped, activeThreadId } = state;
     // the portfolio document itself is never stored locally: the view is enough to reopen it
     const view = state.view === 'portfolio' ? 'portfolio' : undefined;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile, threads, flipped, activeThreadId, view }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile, previous, threads, flipped, activeThreadId, view }));
   } catch {
     /* storage unavailable — the app still works for this session */
   }
@@ -223,7 +241,7 @@ function set(patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) {
 /** The address reads /match/… only while the match screens are showing. */
 function leaveMatchAddress() {
   try {
-    if (state.view !== 'match' && parseMatchPath(window.location.pathname)) window.history.replaceState(null, '', '/');
+    if (state.view !== 'match' && parseMatchPath(window.location.pathname)) window.history.replaceState(null, '', DASHBOARD_PATH);
   } catch {
     /* no address bar to update */
   }
@@ -232,7 +250,7 @@ function leaveMatchAddress() {
 /** The address reads /pricing only while the pricing page is showing. */
 function leavePricingAddress() {
   try {
-    if (state.view !== 'pricing' && isPricingPath(window.location.pathname)) window.history.replaceState(null, '', '/');
+    if (state.view !== 'pricing' && isPricingPath(window.location.pathname)) window.history.replaceState(null, '', DASHBOARD_PATH);
   } catch {
     /* no address bar to update */
   }
@@ -241,7 +259,7 @@ function leavePricingAddress() {
 /** The address reads /discover only while the Discover screens are showing. */
 function leaveDiscoverAddress() {
   try {
-    if (state.view !== 'discover' && isDiscoverPath(window.location.pathname)) window.history.replaceState(null, '', '/');
+    if (state.view !== 'discover' && isDiscoverPath(window.location.pathname)) window.history.replaceState(null, '', DASHBOARD_PATH);
   } catch {
     /* no address bar to update */
   }
@@ -250,7 +268,7 @@ function leaveDiscoverAddress() {
 /** The address reads /practice only while the Practice screens are showing. */
 function leavePracticeAddress() {
   try {
-    if (state.view !== 'practice' && isPracticePath(window.location.pathname)) window.history.replaceState(null, '', '/');
+    if (state.view !== 'practice' && isPracticePath(window.location.pathname)) window.history.replaceState(null, '', DASHBOARD_PATH);
   } catch {
     /* no address bar to update */
   }
@@ -259,7 +277,7 @@ function leavePracticeAddress() {
 /** The address reads /weekly only while the Weekly is showing. */
 function leaveWeeklyAddress() {
   try {
-    if (state.view !== 'weekly' && isWeeklyPath(window.location.pathname)) window.history.replaceState(null, '', '/');
+    if (state.view !== 'weekly' && isWeeklyPath(window.location.pathname)) window.history.replaceState(null, '', DASHBOARD_PATH);
   } catch {
     /* no address bar to update */
   }
@@ -289,7 +307,7 @@ try {
     }
     const route = parseMatchPath(window.location.pathname);
     if (route) set({ view: 'match', matchRoute: route });
-    else if (state.view === 'match' || state.view === 'pricing' || state.view === 'discover' || state.view === 'practice' || state.view === 'weekly') set({ view: state.profile ? 'graph' : 'onboarding' });
+    else if (state.view === 'match' || state.view === 'pricing' || state.view === 'discover' || state.view === 'practice' || state.view === 'weekly') set({ view: state.profile ? 'dashboard' : 'onboarding' });
   });
 } catch {
   /* not in a browser */
@@ -341,6 +359,8 @@ function applyAnalysisEvent(e: AnalysisEvent) {
       case 'done':
         return {
           profile: e.profile,
+          // the graph this one replaces is kept, so the dashboard can say what moved
+          previous: s.profile && s.profile.id !== e.profile.id ? s.profile : s.previous,
           threads: [],
           activeThreadId: null,
           flipped: false,
@@ -495,17 +515,23 @@ export const actions = {
   cancelAnalysis() {
     analysisAbort?.abort();
     analysisAbort = null;
-    set({ view: state.profile ? 'graph' : 'onboarding', analysis: emptyAnalysis() });
+    set({ view: state.profile ? 'dashboard' : 'onboarding', analysis: emptyAnalysis() });
   },
 
   /** Load the pre-computed sample profile (demo fallback, no AI call). */
   async loadSampleProfile() {
     const profile = await api.sampleProfile();
-    set({ profile, threads: [], activeThreadId: null, flipped: false, view: 'graph', portfolio: emptyPortfolio() });
+    set({ profile, threads: [], activeThreadId: null, flipped: false, openRoleId: null, view: 'dashboard', portfolio: emptyPortfolio() });
   },
 
-  showGraph() {
-    set({ view: 'graph' });
+  /** The dashboard: the entry point once a graph exists (the skill radar, the next roles and every feature's summary). */
+  showDashboard() {
+    set({ view: 'dashboard', flipped: false });
+  },
+
+  /** Open one next role (its radar and requirements) from the dashboard; without an id, the top role. */
+  openRole(roleId: string | null = null) {
+    set({ view: 'graph', flipped: true, openRoleId: roleId });
   },
 
   /** Open a posting-match screen (the paste screen by default) and move the address to match it. */
@@ -581,7 +607,7 @@ export const actions = {
 
   /** Leave the pricing page for the graph (or Home, without a profile); the address goes back to / with it. */
   closePricing() {
-    set({ view: state.profile ? 'graph' : 'onboarding' });
+    set({ view: state.profile ? 'dashboard' : 'onboarding' });
   },
 
   /**
@@ -635,16 +661,26 @@ export const actions = {
     analysisAbort?.abort();
     chatAborts.forEach((c) => c.abort());
     chatAborts.clear();
-    set({ profile, threads: [], activeThreadId: null, flipped: false, view: 'graph', analysis: emptyAnalysis(), portfolio: emptyPortfolio() });
+    set({ profile, threads: [], activeThreadId: null, flipped: false, openRoleId: null, view: 'dashboard', analysis: emptyAnalysis(), portfolio: emptyPortfolio() });
     return true;
   },
 
-  /** Back to onboarding to analyse a different person (keeps nothing). */
+  /** Back to onboarding for a new analysis (keeps nothing but the graph being left, which the next dashboard compares with). */
   startOver() {
     analysisAbort?.abort();
     chatAborts.forEach((c) => c.abort());
     chatAborts.clear();
-    set({ view: 'onboarding', profile: null, threads: [], activeThreadId: null, flipped: false, analysis: emptyAnalysis(), portfolio: emptyPortfolio() });
+    set({
+      view: 'onboarding',
+      profile: null,
+      previous: state.profile ?? state.previous,
+      threads: [],
+      activeThreadId: null,
+      flipped: false,
+      openRoleId: null,
+      analysis: emptyAnalysis(),
+      portfolio: emptyPortfolio(),
+    });
   },
 
   /**

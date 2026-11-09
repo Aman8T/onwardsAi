@@ -760,5 +760,52 @@
   "models": {
     "reader": "claude-haiku-4-5",
     "synth": "claude-sonnet-5-5"
-  }
+  },
+  "read": [
+    {
+      "text": "You build interfaces that move: "
+    },
+    {
+      "text": "three years of design-system work with numbers attached",
+      "skillId": "design-systems"
+    },
+    {
+      "text": ", across Kite UI and "
+    },
+    {
+      "text": "motion-kit, 212 stars and 4.2 KB gzipped",
+      "skillId": "motion-design"
+    },
+    {
+      "text": ". You have shipped to real people: "
+    },
+    {
+      "text": "Kitebird's checkout went from 4.1 s to 1.9 s LCP",
+      "skillId": "web-performance"
+    },
+    {
+      "text": " and lifted conversion 9.4%. The backend you touch serves the front, "
+    },
+    {
+      "text": "an Express BFF over catalog, pricing and inventory",
+      "skillId": "node-bff"
+    },
+    {
+      "text": ". AI appears in "
+    },
+    {
+      "text": "two small OpenAI apps",
+      "skillId": "llm-integration"
+    },
+    {
+      "text": " and nowhere in your work history, and "
+    },
+    {
+      "text": "none of your 34 repos has an eval harness",
+      "skillId": "llm-evals"
+    },
+    {
+      "text": ", which is why AI Product Engineer sits fifth."
+    }
+  ]
 }

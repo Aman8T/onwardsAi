@@ -12,6 +12,7 @@
  * 0. The calls are an interface (`PrepareClient`) so the dev page can hand the screens a scripted one.
  */
 import type { FixTask, FixUpdate } from '../../shared/interview';
+import type { PreparePlanSummary } from '../../shared/prepare';
 import type {
   PrepareEvent,
   PrepareHeadline,
@@ -103,6 +104,11 @@ export interface PrepareClient {
 const BASE = '/api/prepare';
 const planPath = (id: string) => `${BASE}/${encodeURIComponent(id)}`;
 const withProfile = (path: string, profileId: string) => `${path}?profileId=${encodeURIComponent(profileId)}`;
+
+/** `GET /api/prepare?profileId=…`: the person's stored plans, newest first (the dashboard's Prepare summary). */
+export function listPlans(profileId: string, signal?: AbortSignal): Promise<PreparePlanSummary[]> {
+  return call('GET', withProfile(BASE, profileId), undefined, signal);
+}
 
 export const realClient: PrepareClient = {
   async stream(req, onEvent, signal) {

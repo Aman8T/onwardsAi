@@ -30,20 +30,12 @@ export function DiscoverHeader({ profileId, tab, onTab }: DiscoverHeaderProps) {
   const { user } = useMe();
   const sent = applyOn(useApplyStatus()) && !!user;
 
-  const graph = (flipped: boolean) => {
-    actions.setFlipped(flipped);
-    actions.showGraph();
-  };
-
   return (
     <header className="dc-header">
-      <Brand onClick={() => actions.showGraph()} />
+      <Brand onClick={() => actions.showDashboard()} />
       <nav className="dc-nav" aria-label="Sections">
-        <button type="button" className="dc-navbtn" onClick={() => graph(false)}>
-          Now
-        </button>
-        <button type="button" className="dc-navbtn" onClick={() => graph(true)}>
-          Next
+        <button type="button" className="dc-navbtn" onClick={() => actions.showDashboard()}>
+          Dashboard
         </button>
         <button type="button" className="dc-navbtn" onClick={() => void actions.openPortfolio()}>
           Portfolio

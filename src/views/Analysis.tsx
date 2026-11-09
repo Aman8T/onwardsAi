@@ -94,7 +94,7 @@ export function Analysis() {
   // a short pause on the finished state, then straight into the graph
   useEffect(() => {
     if (!done) return;
-    const t = setTimeout(() => actions.showGraph(), AUTO_OPEN_MS);
+    const t = setTimeout(() => actions.showDashboard(), AUTO_OPEN_MS);
     return () => clearTimeout(t);
   }, [done]);
 
@@ -216,7 +216,7 @@ export function Analysis() {
           pending={d.pending}
           total={d.total}
           canSample={a.sample || hasSample}
-          onOpen={() => actions.showGraph()}
+          onOpen={() => actions.showDashboard()}
         />
       </section>
 

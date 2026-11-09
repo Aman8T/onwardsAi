@@ -233,7 +233,7 @@ function PasteScreen() {
       roles={roles}
       onPickRole={() => {
         actions.setFlipped(true);
-        actions.showGraph();
+        actions.showDashboard();
       }}
       onNavigate={navigate}
     />

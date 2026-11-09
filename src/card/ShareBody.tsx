@@ -13,7 +13,7 @@
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { CARD_SKILLS_MAX } from '../../shared/card';
+import { CARD_LINE_MAX, CARD_SKILLS_MAX } from '../../shared/card';
 import type { CardSkill, CardView } from '../../shared/card';
 import type { CardClient } from './api';
 import { CardPreview } from './CardPreview';
@@ -199,7 +199,7 @@ function Panel({ card, view, narrow, live, initial }: PanelProps) {
         </p>
       )}
 
-      <Preview view={view} skills={skills} roleTitle={role?.title} narrow={narrow} shared={on} live={live} />
+      <Preview view={view} skills={skills} roleTitle={role?.title} line={draft.line} narrow={narrow} shared={on} live={live} />
 
       {!on && (
         <p className="cs-lede">
@@ -235,6 +235,8 @@ function Panel({ card, view, narrow, live, initial }: PanelProps) {
                   );
                 })}
               </fieldset>
+
+              <LineChoice offered={view.linesOffered} value={draft.line} onChange={(line) => card.change({ line })} idBase={`${switchId}-line`} />
 
               <div className="cs-fieldrow">
                 <label className="kicker" htmlFor={`${switchId}-role`}>
@@ -320,17 +322,97 @@ function Panel({ card, view, narrow, live, initial }: PanelProps) {
 
 /* ------------------------------------------------------------------ */
 
+interface LineChoiceProps {
+  /** The sentences of the read, each a line the card may carry. */
+  offered: string[];
+  value: string | undefined;
+  onChange: (line: string | undefined) => void;
+  idBase: string;
+}
+
+/**
+ * The one line under the shape: none, one of the read's sentences, or the owner's own words. The trend's "what the
+ * machine knows about you" is a picture; here it is a sentence the person chose, with the proof behind the link.
+ */
+function LineChoice({ offered, value, onChange, idBase }: LineChoiceProps) {
+  const isOffered = value !== undefined && offered.includes(value);
+  const [own, setOwn] = useState(value !== undefined && !isOffered);
+  const [draft, setDraft] = useState(own ? (value ?? '') : '');
+  const mode: 'none' | number | 'own' = own ? 'own' : value === undefined ? 'none' : isOffered ? offered.indexOf(value) : 'own';
+
+  const pickOwn = () => {
+    setOwn(true);
+    const text = draft.trim();
+    onChange(text ? text.slice(0, CARD_LINE_MAX) : undefined);
+  };
+
+  return (
+    <fieldset className="cs-fieldset">
+      <legend className="kicker">The line under the shape</legend>
+      <label className="cs-check">
+        <input
+          type="radio"
+          name={idBase}
+          checked={mode === 'none'}
+          onChange={() => {
+            setOwn(false);
+            onChange(undefined);
+          }}
+        />
+        <span>No line</span>
+      </label>
+      {offered.map((s, i) => (
+        <label key={i} className="cs-check">
+          <input
+            type="radio"
+            name={idBase}
+            checked={mode === i}
+            onChange={() => {
+              setOwn(false);
+              onChange(s);
+            }}
+          />
+          <span>{s}</span>
+        </label>
+      ))}
+      <label className="cs-check">
+        <input type="radio" name={idBase} checked={mode === 'own'} onChange={pickOwn} />
+        <span>{offered.length ? 'My own words' : 'A line of my own'}</span>
+      </label>
+      {mode === 'own' && (
+        <input
+          className="cs-input"
+          type="text"
+          maxLength={CARD_LINE_MAX}
+          placeholder="One sentence, in your words"
+          aria-label="Your line"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => {
+            const text = draft.trim();
+            onChange(text ? text : undefined);
+          }}
+        />
+      )}
+      <p className="cs-fine">{offered.length ? 'Your read is written from your evidence; the card shows the sentence you pick and nothing else of it.' : 'Analyse again and the sentences of your read appear here to choose from.'}</p>
+    </fieldset>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
 interface PreviewProps {
   view: CardView;
   skills: CardSkill[];
   roleTitle?: string;
+  line?: string;
   narrow: boolean;
   shared: boolean;
   live: boolean;
 }
 
 /** The real image once the server holds a shared card; the token-drawn card before that, and if the image cannot load. */
-function Preview({ view, skills, roleTitle, narrow, shared, live: allowed }: PreviewProps) {
+function Preview({ view, skills, roleTitle, line, narrow, shared, live: allowed }: PreviewProps) {
   const src = allowed ? imageSrc(view, narrow) : undefined;
   const [failed, setFailed] = useState<string | null>(null);
   const live = !!src && failed !== src;
@@ -363,7 +445,7 @@ function Preview({ view, skills, roleTitle, narrow, shared, live: allowed }: Pre
 
   return (
     <figure className="cs-figure">
-      <CardPreview areas={view.areas} skills={skills} roleTitle={roleTitle} size={narrow ? 'sm' : 'md'} updatedAt={view.updatedAt} />
+      <CardPreview areas={view.areas} skills={skills} roleTitle={roleTitle} line={line} size={narrow ? 'sm' : 'md'} updatedAt={view.updatedAt} />
       {caption && <figcaption className="cs-fine">{caption}</figcaption>}
     </figure>
   );
