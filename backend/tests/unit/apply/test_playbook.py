@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from tayyari.apply.forms import FormField, scan_form
+from tayyari.apply.netguard import extension_zip, norm_write_hosts
 from tayyari.apply.playbook import (
     ASHBY,
     ATTESTATION_KEYS,
@@ -260,6 +261,17 @@ def test_each_ats_carries_hosts_and_signatures() -> None:
         assert pb.notes
     assert "job-boards.greenhouse.io" in GREENHOUSE.submit_hosts and "jobs.lever.co" in LEVER.submit_hosts
     assert "jobs.ashbyhq.com" in ASHBY.submit_hosts
+    # the EU boards the intake accepts can be sent to as well
+    assert {"boards.eu.greenhouse.io", "job-boards.eu.greenhouse.io"} <= set(GREENHOUSE.submit_hosts)
+    # the job boards upload the resume straight to their S3 bucket (seen live 2026-11-10); without it the attach
+    # never finishes and every Greenhouse submit stops at resume_not_attached
+    assert "grnhse-prod-jben-us-east-1.s3.amazonaws.com" in GREENHOUSE.upload_hosts
+    # both guard layers take every write host a playbook names
+    for pb in (GREENHOUSE, LEVER, ASHBY):
+        hosts = [*pb.submit_hosts, *pb.upload_hosts]
+        assert norm_write_hosts(hosts) and extension_zip(allow_write_hosts=hosts)[1]
+    # only Lever's invisible hCaptcha is a check at submit rather than a wall
+    assert LEVER.captcha_on_submit and not GREENHOUSE.captcha_on_submit and not ASHBY.captcha_on_submit
     # Ashby renders through two read-only GraphQL operations; its submit operation stays blocked.
     graphql = "https://jobs.ashbyhq.com/api/non-user-graphql?op="
     allowed = [u for u in (graphql + "ApiJobPosting", graphql + "ApiOrganizationFromHostedJobsPageName",

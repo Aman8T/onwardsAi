@@ -111,6 +111,10 @@ class Playbook(BaseModel):
     read_only_posts: list[str] = Field(default_factory=list)
     """Regular expressions of POST URLs the form needs just to render (allowed in the preview; never a submit or an
     upload)."""
+    captcha_on_submit: bool = False
+    """The form carries an invisible CAPTCHA widget that runs only when it is submitted (Lever's hCaptcha is in every
+    apply page's markup). With the form on screen its marker is then a check at submit, shown in Review as a warning,
+    not a wall; a challenge with no form on screen still stops the fill."""
     domain: str | None = None
     notes: list[str] = Field(default_factory=list)
 
@@ -309,14 +313,27 @@ GREENHOUSE: Final = Playbook(
     r"(an )?error (occurred|submitting)",
     closed_text=r"(the )?job (you are looking for )?(is no longer (open|available)|has (been )?closed)|"
     r"no longer accepting applications|page you were looking for (doesn't|does not) exist",
-    submit_hosts=["boards.greenhouse.io", "job-boards.greenhouse.io"],
-    upload_hosts=["boards.greenhouse.io", "job-boards.greenhouse.io"],
+    submit_hosts=[
+        "boards.greenhouse.io",
+        "job-boards.greenhouse.io",
+        "boards.eu.greenhouse.io",
+        "job-boards.eu.greenhouse.io",
+    ],
+    upload_hosts=[
+        "boards.greenhouse.io",
+        "job-boards.greenhouse.io",
+        "boards.eu.greenhouse.io",
+        "job-boards.eu.greenhouse.io",
+        "grnhse-prod-jben-us-east-1.s3.amazonaws.com",
+    ],
     read_only_posts=[],
     notes=[
         "Seeded from the gh-gitlab and gh-cloudflare traces (keys only).",
         "No read-only POST was needed to render either form (0 blocked requests in every preview run).",
         "The resume uploads the moment it is attached, so it is attached only in the submit pass, after the marker.",
-        "submit_hosts and upload_hosts are the board hosts; the A1.6 live test confirms where the upload goes.",
+        "The job boards upload the resume straight to S3 (a presigned POST to grnhse-prod-jben-us-east-1, seen "
+        "2026-11-10 on gitlab's board with the guard up); without that host the attach never finishes. The EU "
+        "boards' bucket is not seen yet.",
     ],
 )
 
@@ -354,8 +371,11 @@ LEVER: Final = Playbook(
     submit_hosts=["jobs.lever.co", "jobs.eu.lever.co"],
     upload_hosts=["jobs.lever.co", "jobs.eu.lever.co"],
     read_only_posts=[],
+    captcha_on_submit=True,
     notes=[
         "Seeded from the lv-spotify and lv-palantir traces (keys only). The cookie banner is declined ('Deny').",
+        "Every apply page carries an invisible hCaptcha (div.h-captcha, run on submit): read as a wall it ended every "
+        "fill in needs_signin (2026-11-09 production runs).",
         "No read-only POST was needed to render either form (0 blocked requests in every preview run).",
         "submit_hosts and upload_hosts are the board hosts; the A1.6 live test confirms where the upload goes.",
     ],

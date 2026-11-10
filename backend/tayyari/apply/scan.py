@@ -106,8 +106,9 @@ SCAN_JS: Final[str] = r"""(resumeName) => {
   }
   // The resume counts as shown only when its full file name (with extension, never a generic name such as resume.pdf)
   // is inside a file widget's own container: a file input's near ancestors or a resume/CV group, never the whole page.
+  // Case is ignored: innerText follows CSS text-transform, and Lever shows the name in capitals.
   const resumeShown = () => {
-    const want = txt(resumeName);
+    const want = txt(resumeName).toLowerCase();
     if (!want || !/\.[a-z0-9]{2,5}$/i.test(want) || /^(my[ _-]?)?(resume|cv|curriculum[ _-]?vitae)\.[a-z0-9]{2,5}$/i.test(want)) return false;
     const boxes = [];
     for (const inp of document.querySelectorAll('input[type=file]')) {
@@ -115,7 +116,7 @@ SCAN_JS: Final[str] = r"""(resumeName) => {
     for (const g of document.querySelectorAll('[role=group]')) {
       const id = g.getAttribute('aria-labelledby'); const t = txt(id ? (document.getElementById(id) || {}).innerText : g.getAttribute('aria-label'));
       if (/resume|\bcv\b|curriculum/i.test(t)) boxes.push(g); }
-    return boxes.some(b => txt(b.innerText).includes(want));
+    return boxes.some(b => txt(b.innerText).toLowerCase().includes(want));
   };
   const html = document.documentElement.innerHTML.toLowerCase();
   const blockers = {

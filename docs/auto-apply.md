@@ -304,6 +304,26 @@ as proposals and the text above is left as agreed until the user says yes.
 10. **The idle worker**: while the queue is empty the wait between passes doubles from 3 s up to 2 minutes, so the
     database can scale to zero between uses; a start, an answer, an approval or a retry in the same process wakes the
     worker within one poll.
+11. **Fixes from the first live runs (2026-11-10)**: no production run had finished (logs of 2026-11-09, reproduced on
+    live postings with the guard up).
+    - Lever: every apply page carries an invisible hCaptcha (`div.h-captcha`, run on submit), which the fill read as a
+      wall, so every Lever fill ended in `needs_signin`. A playbook can now mark its CAPTCHA as a check at submit
+      (`captcha_on_submit`, Lever only): with the form on screen it is a warning in Review, and after the click only a
+      challenge that was not on the page before counts. A challenge with no form on screen is still a wall.
+    - Lever shows the attached file's name in capitals, and the "resume shown" check compared case, so every Lever
+      attach would have timed out. It now ignores case.
+    - Greenhouse's job boards upload the resume to their S3 bucket (`grnhse-prod-jben-us-east-1.s3.amazonaws.com`),
+      not to the board host, so the submit browser's guard blocked the upload and the send stopped at
+      `resume_not_attached`. The bucket is now an upload host, and the EU board hosts the intake accepts are submit
+      hosts (the EU bucket is not seen yet).
+    - When the attach changes approved values (Lever parses the resume), the submit pass types the review's own values
+      back once, with no model, and the digest must still match before the click (rule 4).
+    - Every run logs `apply_run_done` with its outcome and reason codes, so a run's end can be read from the log.
+
+    Still open: both Greenhouse (reCAPTCHA Enterprise) and Lever (hCaptcha) run an invisible check on submit, and the
+    guard blocks those providers in the submit browser too, so a send may end in `check_this_one`. Whether the submit
+    browser may load a provider's invisible check (never solving a visible one) is the user's call (rule 6). A code
+    Greenhouse emails at submit still needs the inbound-mail work (§3.2).
 
 ## 4. Cost and price
 

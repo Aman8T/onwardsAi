@@ -191,11 +191,16 @@ _LOGIN = (
 )
 
 
+def login_wall(page: str) -> bool:
+    """True when the page asks the person to sign in (a password field, "sign in to apply")."""
+    return any(p.search(page) for p in _LOGIN)
+
+
 def blocker_of(page: str) -> str | None:
     """``captcha`` or ``login_wall`` when the page shows one before anything was filled; None otherwise."""
     if any(p.search(page) for p in _CAPTCHA_BLOCKING):
         return "captcha"
-    if any(p.search(page) for p in _LOGIN):
+    if login_wall(page):
         return "login_wall"
     return None
 
@@ -227,4 +232,13 @@ def closed_of(text: str, status: int | None) -> str | None:
     return None
 
 
-__all__ = ["FormField", "FormScan", "blocker_of", "checks_on_submit", "clean", "closed_of", "scan_form"]
+__all__ = [
+    "FormField",
+    "FormScan",
+    "blocker_of",
+    "checks_on_submit",
+    "clean",
+    "closed_of",
+    "login_wall",
+    "scan_form",
+]

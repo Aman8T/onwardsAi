@@ -659,13 +659,21 @@ class ApplyEngine:
     ) -> None:  # fmt: skip
         pb_id = run.playbook_id
         status = None if pb_id is None else ("builtin" if pb_id.startswith("builtin:") else "active")
+        duration_ms = int((time.monotonic() - run.started) * 1000)
+        # How every run ended, in the log too (codes and counts only, never a value or a URL): the platform log keeps a
+        # day, and without this line a run's end could be read only from the database.
+        log.info(
+            "apply_run_done", application_id=app.id, run_kind=run.kind, ats=app.ats, mode=mode, outcome=outcome,
+            reason=reason, steps=steps, fields_total=total, fields_filled=filled, duration_ms=duration_ms,
+            cost_micro_usd=run.browser_cost + run.model_cost,
+        )  # fmt: skip
         try:
             await self.repo.add_run_metric(
                 StoredRunMetric(
                     id=self.new_id("run"), application_id=app.id, created_at=self.clock.now(), run_kind=run.kind,
                     ats=app.ats, domain=app.domain, mode=mode, outcome=outcome, playbook_id=pb_id,
                     playbook_status=status, failure_reason=reason if outcome != "success" else None, steps=steps,
-                    duration_ms=int((time.monotonic() - run.started) * 1000),
+                    duration_ms=duration_ms,
                     cost_micro_usd=run.browser_cost + run.model_cost, fields_total=total, fields_filled=filled,
                     fields_model=model,
                 )

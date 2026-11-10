@@ -25,6 +25,7 @@ import pytest
 from pydantic import SecretStr
 
 from tayyari.api.routes import apply as apply_routes
+from tayyari.apply.playbook import GREENHOUSE
 from tayyari.apply.worker import ApplyWorker
 from tayyari.container import build_apply_worker
 from tayyari.contract.match import MatchResult, Posting
@@ -232,9 +233,10 @@ async def test_start_fill_answer_approve_and_send_once_with_the_hold_captured(st
         kinds_sent = [a[0] for a in send.actions]
         assert kinds_sent.count("upload") == 1  # the resume goes on once, in the submit pass
         assert kinds_sent.index("upload") < kinds_sent.index("click_submit")
+        # writes are lifted only for the playbook's own board and upload hosts (the S3 bucket the boards upload to)
         assert send.allow_calls and set(send.allow_calls[-1]) <= {
-            "boards.greenhouse.io",
-            "job-boards.greenhouse.io",
+            *GREENHOUSE.submit_hosts,
+            *GREENHOUSE.upload_hosts,
         }
         listed = (await flow.client.get("/api/apply/applications", headers=flow.headers)).json()[
             "applications"

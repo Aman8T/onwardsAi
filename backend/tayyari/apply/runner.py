@@ -42,7 +42,7 @@ from tayyari.apply.answers import (
 )
 from tayyari.apply.driver import BrowserDriver
 from tayyari.apply.fill_loop import FieldListLoop, LoopRun, hidden_from_model, injected, run_step, step_op
-from tayyari.apply.forms import FormField, blocker_of, checks_on_submit, closed_of
+from tayyari.apply.forms import FormField, blocker_of, checks_on_submit, closed_of, login_wall
 from tayyari.apply.playbook import ATTESTATION_KEYS, COUNTRY_KEYS, SELF_ID_KEYS, Playbook, rule_for
 from tayyari.apply.scan import LiveScan, resume_name_inferable
 from tayyari.apply.verify import find_live, value_matches, verify
@@ -198,17 +198,25 @@ async def _open_form(driver: BrowserDriver, playbook: Playbook, *, wait_s: float
     return scan
 
 
-async def _stop_of(driver: BrowserDriver, scan: LiveScan) -> tuple[StopReason, str, str] | None:
+def _passive_check(playbook: Playbook, scan: LiveScan, page: str) -> bool:
+    """The playbook's invisible submit-time CAPTCHA (`Playbook.captcha_on_submit`) beside a form on screen: a check the
+    site runs when the form is sent, not a wall in front of it."""
+    return playbook.captcha_on_submit and scan.has_form and blocker_of(page) == "captcha"
+
+
+async def _stop_of(
+    driver: BrowserDriver, scan: LiveScan, playbook: Playbook
+) -> tuple[StopReason, str, str] | None:
     """A CAPTCHA or a login wall on screen: (stop reason, metrics reason, note)."""
     page = await driver.content()
     blocker = blocker_of(page)
-    if blocker == "captcha":
+    if blocker == "captcha" and not _passive_check(playbook, scan, page):
         return (
             "challenge",
             "captcha",
             "The site asks for a human check (CAPTCHA). Open the form to finish it yourself.",
         )
-    if blocker == "login_wall" or scan.blockers.password_field:
+    if blocker == "login_wall" or login_wall(page) or scan.blockers.password_field:
         return (
             "signin",
             "login_wall",
@@ -349,10 +357,10 @@ async def preview(
         )
     scan = await _open_form(driver, playbook, wait_s=open_wait_s)
     opener: LoopRun | None = None
-    if not scan.has_form and loop is not None and (await _stop_of(driver, scan)) is None:
+    if not scan.has_form and loop is not None and (await _stop_of(driver, scan, playbook)) is None:
         scan, opener = await loop.open_form(driver, ctx, request_id=request_id)
     spent = opener.cost_micro_usd if opener else 0
-    stop = await _stop_of(driver, scan)
+    stop = await _stop_of(driver, scan, playbook)
     if stop is not None:
         reason, metric, note = stop
         return FillResult("needs_signin", reason=metric, note=note, screenshot=await _snap(driver), steps=steps,
@@ -413,7 +421,9 @@ async def preview(
         ]
 
     page = await driver.content()
-    warnings = [BOT_CHECK_WARNING] if checks_on_submit(page) else []
+    warnings = (
+        [BOT_CHECK_WARNING] if (checks_on_submit(page) or _passive_check(playbook, final, page)) else []
+    )
     waiting = any(n.required for n in plan.needs)
     calls = (opener.calls if opener else 0) + (run.calls if run else 0)
     model = (run.model if run and run.model else None) or (opener.model if opener else None)
@@ -585,6 +595,16 @@ async def _replay(driver: BrowserDriver, script: list[ScriptStep], scan: LiveSca
     return steps
 
 
+def _drifted(script: list[ScriptStep], scan: LiveScan) -> list[ScriptStep]:
+    """The steps whose field is on the page but does not hold the step's value (a widget that did not keep it, or a
+    page script that wrote over it)."""
+    return [
+        s for s in script
+        if (live := next((f for f in scan.actionable if f.selector == s.selector), None)) is not None
+        and not value_matches(live.kind, s.value or "", live.value)
+    ]  # fmt: skip
+
+
 async def submit_approved(
     driver: BrowserDriver,
     review: ApplicationReview,
@@ -625,7 +645,7 @@ async def submit_approved(
     if closed_of("", status) is not None:
         return failed("closed", "The posting is no longer on the employer's site. Nothing was sent.")
     scan = await _open_form(driver, playbook, wait_s=open_wait_s)
-    stop = await _stop_of(driver, scan)
+    stop = await _stop_of(driver, scan, playbook)
     if stop is not None:
         return failed(stop[0], stop[2], await _snap(driver))
     if not scan.has_form:
@@ -637,11 +657,7 @@ async def submit_approved(
 
     steps += await _replay(driver, list(review.script or []), scan)
     after = await driver.scan()
-    retry = [
-        s for s in review.script or []
-        if (live := next((f for f in after.actionable if f.selector == s.selector), None)) is not None
-        and not value_matches(live.kind, s.value or "", live.value)
-    ]  # fmt: skip
+    retry = _drifted(list(review.script or []), after)
     if retry:
         steps += await _replay(driver, retry, after)  # one retry for a widget that did not keep the value
     final = await driver.scan()
@@ -714,13 +730,24 @@ async def submit_approved(
         # The digest once more, just before the click (CLAUDE.md rule 9): a resume parser or a page script may change
         # values on attach, and the employer must get exactly what the person approved.
         last = await driver.scan(name or "")
-        if read_back_digest(last, resume_plan.sha256 if resume_plan is not None else None) != digest:
+        resume_sha = resume_plan.sha256 if resume_plan is not None else None
+        if read_back_digest(last, resume_sha) != digest:
+            # Lever reads the attached resume and may write what it parsed into the form: put the approved values back
+            # once (the review's own script, no model), then the digest must match again before any click.
+            changed_steps = _drifted(list(review.script or []), last)
+            if changed_steps:
+                log.info("apply_submit_refill_after_attach", steps=len(changed_steps))
+                steps += await _replay(driver, changed_steps, last)
+                last = await driver.scan(name or "")
+        if read_back_digest(last, resume_sha) != digest:
             return failed(
                 "form_changed_after_attach",
                 "The form changed its values when the resume was attached. Nothing was sent: check it again.",
                 await _snap(driver),
             )
         before_url, before_text = await driver.current_url(), await driver.visible_text()
+        # a passive submit-time CAPTCHA's marker is on the page before the click; only a challenge that is new counts
+        before_captcha = blocker_of(await driver.content()) == "captcha"
     except Exception as exc:
         log.warning("apply_submit_pre_click_error", error=type(exc).__name__)
         return failed(
@@ -736,7 +763,17 @@ async def submit_approved(
                             await _snap(driver), steps, clicked=True)  # fmt: skip
     try:
         return await _outcome(
-            driver, playbook, before_url, before_text, before_fields, steps, wait_s, poll_s, sleep, monotonic
+            driver,
+            playbook,
+            before_url,
+            before_text,
+            before_fields,
+            steps,
+            wait_s,
+            poll_s,
+            sleep,
+            monotonic,
+            before_captcha=before_captcha,
         )
     except Exception as exc:
         log.warning("apply_submit_outcome_error", error=type(exc).__name__)
@@ -746,9 +783,11 @@ async def submit_approved(
 
 async def _outcome(
     driver: BrowserDriver, playbook: Playbook, before_url: str, before_text: str, before_fields: set[str], steps: int,
-    wait_s: float, poll_s: float, sleep: Callable[[float], Awaitable[None]], monotonic: Callable[[], float],
+    wait_s: float, poll_s: float, sleep: Callable[[float], Awaitable[None]], monotonic: Callable[[], float], *,
+    before_captcha: bool = False,
 ) -> SubmitResult:  # fmt: skip
-    """Poll the page after the click: only the success signature (new on the page) is ``sent``."""
+    """Poll the page after the click: only the success signature (new on the page) is ``sent``. A CAPTCHA counts only
+    when it was not on the page before the click (``before_captcha``: a passive submit-time check's marker)."""
     deadline = monotonic() + wait_s
 
     def unclear(reason: str, note: str, shot: bytes | None) -> SubmitResult:
@@ -772,7 +811,7 @@ async def _outcome(
         if asks_code:
             return unclear("verification_code", "The form asks for a code it emailed you. Open the form, type the code and send it there.",
                            await _snap(driver))  # fmt: skip
-        if blocker_of(await driver.content()) == "captcha":
+        if not before_captcha and blocker_of(await driver.content()) == "captcha":
             return unclear("challenge", "The site asked for a human check after sending. Check it on the employer's page.",
                            await _snap(driver))  # fmt: skip
         if _count(playbook.error_text, text) > _count(playbook.error_text, before_text):

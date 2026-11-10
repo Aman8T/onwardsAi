@@ -256,6 +256,56 @@ async def test_a_gone_posting_a_login_wall_and_a_captcha_stop_the_preview() -> N
     assert nothing.status == "failed" and nothing.reason == "no_form"
 
 
+LEVER_URL = "https://jobs.lever.co/acme/0f8f8b3c/apply"
+H_CAPTCHA = '<div id="h-captcha" class="h-captcha" data-sitekey="e33f87f8"></div>'
+"""Lever's invisible hCaptcha, in every live apply page's markup (seen 2026-11-10)."""
+
+
+def lever_with_hcaptcha() -> str:
+    page = LEVER_PAGE.replace("</form>", H_CAPTCHA + "</form>", 1)
+    assert H_CAPTCHA in page
+    return page
+
+
+async def test_levers_invisible_hcaptcha_is_a_check_at_submit_not_a_wall() -> None:
+    result = await preview(FakeDriver(lever_with_hcaptcha(), url=LEVER_URL), LEVER, LEVER_URL, ctx(), None)
+    assert result.status in ("ready", "questions") and result.fields
+    assert BOT_CHECK_WARNING in result.warnings
+    # with no form on screen the same marker is still a wall, and Greenhouse's playbook keeps it a wall
+    bare = f"<html><body><h1>Check</h1>{H_CAPTCHA}</body></html>"
+    walled = await preview(FakeDriver(bare, url=LEVER_URL), LEVER, LEVER_URL, ctx(), None)
+    assert (walled.status, walled.stop_reason) == ("needs_signin", "challenge")
+    gh = GH.replace("</form>", H_CAPTCHA + "</form>", 1)
+    assert (
+        await preview(FakeDriver(gh, url=GH_URL), GREENHOUSE, GH_URL, ctx(), None)
+    ).status == "needs_signin"
+
+
+async def test_a_login_wall_beside_levers_hcaptcha_still_stops_the_fill() -> None:
+    page = lever_with_hcaptcha().replace("</form>", "<p>Sign in to apply</p></form>", 1)
+    result = await preview(FakeDriver(page, url=LEVER_URL), LEVER, LEVER_URL, ctx(), None)
+    assert (result.status, result.stop_reason) == ("needs_signin", "signin")
+
+
+async def test_a_lever_form_with_its_hcaptcha_is_sent_and_the_marker_is_not_a_new_challenge() -> None:
+    page = lever_with_hcaptcha()
+    review = review_of(
+        await preview(FakeDriver(page, url=LEVER_URL), LEVER, LEVER_URL, ctx(), None), captured_at=NOW
+    )
+
+    async def submit(driver: FakeDriver) -> SubmitResult:
+        return await submit_approved(
+            driver, review, ctx(), url=LEVER_URL, playbook=LEVER, mark_submitting=Marker(driver), wait_s=0.0,
+            attach_wait_s=0.0, sleep=no_sleep,
+        )  # fmt: skip
+
+    sent = await submit(FakeDriver(page, url=LEVER_URL))
+    assert (sent.status, sent.clicked) == ("sent", True)
+    # the click led nowhere and the marker is still on the page: no confirmation, never "a human check after sending"
+    stuck = await submit(FakeDriver(page, url=LEVER_URL, after_submit=page, after_submit_url=LEVER_URL))
+    assert (stuck.status, stuck.reason) == ("check_this_one", "no_confirmation")
+
+
 async def test_a_form_behind_the_playbooks_open_text_is_opened() -> None:
     posting = '<html><body><h1>Backend Engineer</h1><a href="#">Apply for this job</a></body></html>'
     driver = FakeDriver(posting, url=GH_URL, reveals={"Apply for this job": GH})
@@ -286,7 +336,7 @@ async def test_the_digest_matches_between_the_preview_and_the_replay_and_success
     result, marker = await send(review, driver)
     assert result.status == "sent" and result.clicked and driver.submitted and result.screenshot
     assert marker.calls == 1 and marker.lifted_before == []  # the guard was lifted only after the marker
-    assert driver.allow_calls == [frozenset({"boards.greenhouse.io", "job-boards.greenhouse.io"})]
+    assert driver.allow_calls == [frozenset([*GREENHOUSE.submit_hosts, *GREENHOUSE.upload_hosts])]
     order = ops(driver)
     assert order.index("mark") < order.index("upload") < order.index("click_submit")
     assert ("upload", '[id="resume"]', "Riya-Kapoor.pdf") in driver.actions
@@ -415,9 +465,31 @@ class ParsesOnAttach(FakeDriver):
         self.values['[id="first_name"]'] = "R. Kapoor"
 
 
-async def test_the_digest_is_read_back_again_after_the_attach_and_a_change_is_never_clicked() -> None:
+class KeepsParsing(ParsesOnAttach):
+    """A parser that writes over the first name again whatever is typed into it."""
+
+    async def fill(self, selector: str, value: str, frame: int = 0) -> None:
+        await super().fill(selector, value, frame)
+        if selector == '[id="first_name"]' and any(op == "upload" for op, _, _ in self.actions):
+            self.values[selector] = "R. Kapoor"
+
+
+async def test_values_a_resume_parser_wrote_over_are_put_back_once_then_the_digest_must_match() -> None:
     review = await approved(typed=TYPED)
     driver = ParsesOnAttach(GH, url=GH_URL)
+    result, marker = await send(review, driver)
+    assert (result.status, result.clicked) == ("sent", True) and marker.calls == 1
+    # after the attach only the drifted field is typed again, with the approved value, and then the one click
+    after = driver.actions[driver.actions.index(("upload", '[id="resume"]', CV.name)) + 1 :]
+    assert after == [
+        ("fill", '[id="first_name"]', "Riya"),
+        ("click_submit", "#submit_app, button[type=submit]", ""),
+    ]
+
+
+async def test_the_digest_is_read_back_again_after_the_attach_and_a_change_is_never_clicked() -> None:
+    review = await approved(typed=TYPED)
+    driver = KeepsParsing(GH, url=GH_URL)
     result, marker = await send(review, driver)
     assert (result.status, result.reason, result.clicked) == ("failed", "form_changed_after_attach", False)
     assert marker.calls == 1 and "upload" in ops(driver) and "click_submit" not in ops(driver)

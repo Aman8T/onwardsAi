@@ -26,6 +26,7 @@ from tayyari.llm.errors import SpendCeilingReached
 from tayyari.storage.ports import StoredAnswer, StoredApplication, account_owner_key
 from tests.fakes.apply import FakeApplyRepo
 from tests.fakes.apply_browser import FakeDriver, FakeOpener
+from tests.fakes.billing import captured_events
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "apply"
 GH = (DATA / "greenhouse_job.html").read_text(encoding="utf-8")
@@ -243,6 +244,20 @@ async def test_a_closed_posting_releases_the_hold() -> None:
     assert env.repo.metrics[0].outcome == "closed"
 
 
+async def test_every_run_logs_how_it_ended_with_codes_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    env = Env('<html><body><form><input type="password" name="pw"></form></body></html>')
+    await env.seed()
+    with captured_events(monkeypatch, "tayyari.apply.engine") as logs:
+        await env.worker.run_once()
+    done = [e for e in logs if e["event"] == "apply_run_done"]
+    assert len(done) == 1
+    assert {k: done[0][k] for k in ("application_id", "run_kind", "ats", "outcome", "reason")} == {
+        "application_id": "ap1", "run_kind": "fill", "ats": "greenhouse", "outcome": "needs_signin",
+        "reason": "login_wall",
+    }  # fmt: skip
+    assert URL not in str(done[0])  # never a URL or a value
+
+
 async def test_a_form_that_never_opens_fails_before_any_write_and_releases_the_hold() -> None:
     env = Env("<html><body><p>Hello</p></body></html>")
     await env.seed()
@@ -326,8 +341,9 @@ async def test_an_approved_review_is_sent_once_the_hold_captured_and_the_confirm
     send = env.opener.drivers[-1]
     assert env.opener.opened[-1] == (
         "submit",
-        frozenset({"boards.greenhouse.io", "job-boards.greenhouse.io"}),
-    )
+        frozenset({"boards.greenhouse.io", "job-boards.greenhouse.io", "boards.eu.greenhouse.io",
+                   "job-boards.eu.greenhouse.io", "grnhse-prod-jben-us-east-1.s3.amazonaws.com"}),
+    )  # fmt: skip
     assert send.submitted and [a[0] for a in send.actions].count("click_submit") == 1 and send.closed
     assert env.stages() == ["filling", "waiting_for_you", "submitting", "sent"]
     assert [(m.run_kind, m.outcome) for m in env.repo.metrics] == [("fill", "success"), ("submit", "success")]

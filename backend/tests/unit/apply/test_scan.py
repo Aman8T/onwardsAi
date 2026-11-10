@@ -193,6 +193,10 @@ def test_the_scanner_takes_the_resume_name_as_its_argument() -> None:
     assert SCAN_JS.startswith("(resumeName) =>") and "txt(resumeName)" in SCAN_JS
     assert "document.body.innerText.includes" not in SCAN_JS  # never the whole page
     assert "aria-hidden" in SCAN_JS and "checkbox-group" in SCAN_JS
+    # innerText follows CSS text-transform and Lever shows the attached name in capitals (seen live 2026-11-10): the
+    # name is matched with case ignored, or every Lever submit stops at resume_not_attached
+    assert "const want = txt(resumeName).toLowerCase();" in SCAN_JS
+    assert "txt(b.innerText).toLowerCase().includes(want)" in SCAN_JS
 
 
 # ── the driver rules every driver shares, and the fake driver over a saved scan ──
