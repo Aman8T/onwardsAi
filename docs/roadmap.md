@@ -26,6 +26,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | D1 | Discover: personal, location-aware jobs with direct apply links | M2 | Opus + Sonnet | v1 built 2026-10-16 (employers' own boards, no map); rest in docs/discover-later.md |
 | L1 | Sign in to the app with the Leafout account (the site's Supabase login) | F1, app.leafout.in live | Opus + Sonnet | built 2026-10-19, committed, not yet deployed |
 | A1 | Auto-apply: fill the employer's ATS form from cited facts, the person approves every submit | F1, M2, D3 | Opus + Sonnet | allowed 2026-11-06 (CLAUDE.md rule 9); spec `docs/auto-apply.md`, canvas https://claude.ai/artifact/CsN9PPninRZ3Z1j5vx6Nh5 (screens agreed 2026-11-07); built 2026-11-08 on `feat/auto-apply-build` (W1 to W5: signed-in only, start checks and credit hold, the worker inside the app on Browser Use browsers over REST + CDP with no local browser, playbooks then the field-list loop, the approved one-click submit, the answer bank, the screens on match and Discover; `docs/backend.md` "Auto-apply"); tested on fakes only, not deployed; next: the fill-only live test (spec A1.6) and a price |
+| A2 | Application inbox: one opt-in tracking address per person on `apply.leafout.in` (Resend Receiving); replies move the application's stage, verification codes are kept for the worker, a copy goes to the person | A1 | Opus + Sonnet | decided 2026-11-10 (replaces paste and forward, `docs/auto-apply.md` §3.4 and §8 decision 5); built 2026-11-10 on `feat/inbound-email`, tested on fakes only, not committed or deployed; off until the owner does the Resend and DNS steps in `backend/DEPLOY.md`; next: wire the verification-code seam into the fill |
 
 Shared files are edited by one wave at a time, in this order: F1 → M2 → F2 for `storage/tables.py`, `storage/ports.py`, `core/settings.py`, `container.py`, `api/routes/__init__.py`, `api/security.py`, `backend/.env.example`. M1 touches none of them. Dependencies were added by the orchestrator (`authlib`, `reportlab`, `stripe`, `razorpay`; `pypdf` and `python-docx` were already present): no wave edits `pyproject.toml`.
 
@@ -1219,6 +1220,37 @@ app only. Needs `leafout.in` verified on Resend and `TAYYARI_WEEKLY__SENDER`; un
 **Frontend.** `/weekly`: the reading room (the edition as a newspaper page, press fonts and tokens), the subscription panel, the
 archive; a dashboard tile on Home; `/dev/weekly` gallery from fixtures.
 
+## A2 · Application inbox (a tracking address for replies and codes)
+
+Decided 2026-11-10 with the user: build it on Resend Receiving. It replaces paste and forward for employer replies;
+paste stays as the fallback. Spec in `docs/auto-apply.md` §3.4, architecture in `docs/backend.md` ("Application
+inbox"), research in `docs/research/inbound-email-tracking.md`.
+
+**Contract.** `shared/inbox.ts` ⇄ `contract/inbox.py` (parity test `tests/unit/contract/test_inbox_parity.py`):
+`InboxStatus`, `InboxAddress`, `CreateInboxAddressRequest` (consent must be true), `UpdateInboxAddressRequest` (active
+or copies), `InboxEmail`, `InboxEmailList`; `EmailStage` comes from `shared/apply.ts`.
+
+**Tables** (migration 0018, additive): `inbox_addresses` (one per account, unique local part, consent time and version),
+`inbound_emails` (metadata only, unique Resend id), `verification_codes` (15 minutes, purged once used or expired).
+
+**Routes.** `GET /api/inbox/status`, `POST` and `PATCH /api/inbox/address`, `GET /api/inbox/emails` (signed in, 404
+while off except the status); `POST /api/inbound/resend` (Resend's webhook, Svix signature checked in our own code).
+
+**Rules.** Code computes, models classify: codes are read by a pure extractor; replies go to the existing
+`EmailTracker`, under the same spend reservation as a pasted email. No body or attachment is stored or logged. One
+address per person, never reused, no plus-tags. At most 200 processed emails per address a day. Auto-apply puts the active tracking address on forms when the inbox is on (swapped in at fill time; the saved answer stays the sign-in email), else the person's own email.
+
+**Frontend.** An "Application inbox" panel on `/apply` above the paste panel: nothing while off; an explanation, a
+consent box and "Get my address" before opting in; then the address with a copy button, on/off and "send me a copy"
+switches, and the recent emails (sender domain, subject, the stage, a link to the matched application; a code shows
+only as "Verification code received").
+
+**Settings.** `INBOUND_EMAIL_ENABLED` (false), `INBOUND_EMAIL_DOMAIN`, `INBOUND_COPY_FROM`, and the secrets
+`RESEND_API_KEY` (shared, full access) and `RESEND_WEBHOOK_SECRET`.
+
+**Not in this build.** The auto-apply fill does not read codes yet (`latest_code` and `mark_used` are ready; the worker
+was being changed on another branch). No retention window for inbound rows and addresses yet; an address row outlives its account (with no owner, so the local part, which holds a first name and last initial, is never reused): decide whether to blank it after a while.
+
 ## Follow-ups
 
 Found while writing the documentation wave (2026-10-11). None blocks the landed waves; each is a change for a later wave.
@@ -1235,6 +1267,8 @@ Found while writing the documentation wave (2026-10-11). None blocks the landed 
 - **The per-match cost is not recorded.** The README and `docs/backend.md` quote about half a cent per match on Haiku 5.5, as measured, but the repository holds no recorded measurement; record it, with its method, before it is quoted again.
 - **Account deletion has no screen.** `DELETE /api/me` exists; the account menu does not offer it yet.
 - **Hand-off only without a webhook.** With `RAZORPAY_WEBHOOK_SECRET` unset, an order whose browser never returns after paying stays `created` and nothing is granted; set the secret and add the webhook on the cloud, or reconcile such orders by hand.
+- **Verification codes are not read by the fill yet (A2).** `latest_code(user_id, since, sender_domain_hint=None)` and `mark_used(id)` exist on the inbox service; wire them into the auto-apply fill where a code prompt stops a run today (`docs/auto-apply.md` §3.4).
+- **Inbound email rows have no retention window (A2).** `inbound_emails` (metadata only) and `inbox_addresses` are kept; quarantined rows belong to no account, so no account deletion ever removes them. Decide a window and add it to `storage/maintenance.py`.
 
 ## Open items (the user decides)
 
@@ -1244,3 +1278,4 @@ Found while writing the documentation wave (2026-10-11). None blocks the landed 
 - Regenerate the Razorpay test key pair after local testing (the secret was shared in a chat), and create the live pair only when going live.
 - Auto-apply worker and FastAPI Cloud idling (A1): the worker runs inside the app, so a paused app delays queued fills. The user plans to buy the $20 FastAPI Cloud plan; until then check whether idle apps pause, and add a scheduled ping if they do (`docs/auto-apply.md` §8, decision 4).
 - Auto-apply price (A1): applications run uncharged until a price is set (`docs/auto-apply.md` §4).
+- Application inbox setup (A2): the owner adds `apply.leafout.in` as a receiving domain in Resend, copies its records into Hostinger hPanel under `apply` without touching the root `@` MX records, sets `RESEND_API_KEY` and `RESEND_WEBHOOK_SECRET`, points the webhook at `https://app.leafout.in/api/inbound/resend` and then sets `INBOUND_EMAIL_ENABLED=true` (`backend/DEPLOY.md`, "Application inbox"). The privacy page needs the inbox before it is turned on in production (`docs/auto-apply.md` §5).

@@ -34,6 +34,7 @@ What is purged, with the windows from ``settings.retention``:
                        has it released; ``credit_state`` then says what the ledger says. Each row is claimed first by a
                        compare-and-set (``capturing`` / ``releasing``), so a row reopened meanwhile keeps its hold. Both
                        calls are idempotent, so this only repairs a capture or release that failed at the time
+``inbox_codes``        verification codes of the application inbox once used or expired (`InboxRepo.purge_codes`)
 =====================  ===========================================================================
 
 The permanent sample corpus is exempt from the payload and metadata steps: decision and Jev rows flagged
@@ -420,6 +421,7 @@ async def run_maintenance(
         ("interview", lambda: repos.interview.purge(now - interview_retention)),
         ("apply_filled", lambda: repos.apply.purge_filled(filled_cutoff)),
         ("apply_holds", lambda: _reconcile_holds(db, repos, now, settings.billing)),
+        ("inbox_codes", lambda: repos.inbox.purge_codes(now)),
     ]
     counts: dict[str, int] = {}
     errors = 0

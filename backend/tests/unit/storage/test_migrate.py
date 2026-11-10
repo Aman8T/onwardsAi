@@ -66,6 +66,9 @@ EXPECTED_TABLES = {
     "run_metrics",
     "apply_profiles",
     "answer_bank",
+    "inbox_addresses",
+    "inbound_emails",
+    "verification_codes",
 }
 
 

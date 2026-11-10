@@ -40,6 +40,12 @@
                                                    the bundled sample persona's profile)
     weekly_loop                                   (every 15 minutes: build and email the editions that are due; a tracked
                                                    background task, switched by ``weekly.enabled``)
+    InboxService                                  (the application inbox: tracking addresses, the Resend Receiving webhook's
+                                                   rows, codes for auto-apply; Resend's REST API over its own HTTP client
+                                                   when the inbox is on, and the apply email classifier under the spend
+                                                   reservation, handed in as a callable)
+    inbox_loop                                    (every minute while the inbox is on: process pending emails again, and
+                                                   every tenth pass list the newest received emails; a tracked task)
 
 The FastAPI lifespan builds one container per process and `aclose`s it on shutdown. The CLI builds its own
 from the same settings. Tests hand in `ContainerOverrides` to swap any part for a fake; the container closes
@@ -107,6 +113,8 @@ if TYPE_CHECKING:
     from tayyari.card.service import CardService
     from tayyari.discover.service import DiscoverService
     from tayyari.handoff.service import HandoffService
+    from tayyari.inbox.provider import InboundMailProvider
+    from tayyari.inbox.service import Classify, InboxService
     from tayyari.interview.service import InterviewService
     from tayyari.jobsearch.service import JobSearchService
     from tayyari.match.models import FactBook
@@ -126,6 +134,11 @@ MAINTENANCE_DELAY_S = 10.0
 """The retention purge starts this long after startup, so the first requests of a cold start come first."""
 MAINTENANCE_INTERVAL_S = MIN_INTERVAL.total_seconds()
 """A long-lived process tries again this often; `run_maintenance` itself runs at most once per interval."""
+INBOX_FIRST_DELAY_S = 30.0
+"""The inbox's reconcile pass starts this long after startup."""
+INBOX_TICK_S = 60.0
+INBOX_LIST_EVERY = 10
+"""Every this many reconcile passes (10 minutes) the newest received emails are listed from the provider."""
 DRAIN_TIMEOUT_S = 5.0
 """Shutdown waits this long for background decision work (shadow and audit calls) before cancelling it."""
 
@@ -160,6 +173,9 @@ class ContainerOverrides:
     - ``db``: a ready `Database` (migrated here, idempotent). ``repos``: ready repositories (fakes); without a
       ``db`` the container has no database, so migrations, maintenance and the deep health check are skipped.
     - ``clock``: used by every component.
+    - ``inbox_provider``: the application inbox's mail provider (otherwise Resend over ``RESEND_API_KEY`` while the inbox is
+      on); tests hand in `tests.fakes.inbox_provider.FakeInboundMailProvider`. The inbox still runs only with
+      ``INBOUND_EMAIL_ENABLED`` and both Resend secrets set.
     - ``apply_opener``: the auto-apply worker's `apply.driver.PageOpener` (otherwise Browser Use over
       ``BROWSER_USE_API_KEY``, or a local Chromium with ``TAYYARI_TEST_BROWSER=1``); tests hand in a fake opener.
     """
@@ -192,6 +208,7 @@ class ContainerOverrides:
     razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
     apply_opener: PageOpener | None = None
+    inbox_provider: InboundMailProvider | None = None
 
 
 def _log_unknown_decision_ids(store: DecisionConfigStore) -> None:
@@ -293,6 +310,9 @@ class Container:
     """True when decisions go through Jev (it is enabled and has a key, or a client was injected)."""
     maintenance: asyncio.Task[None] | None = None
     weekly_loop: asyncio.Task[None] | None = None
+    inbox: InboxService | None = None
+    """The application inbox (always built; ``inbox.enabled`` says whether it runs). None only for a container made by hand."""
+    inbox_loop: asyncio.Task[None] | None = None
     apply_opener: PageOpener | None = None
     """An opener handed in for the apply worker (`ContainerOverrides.apply_opener`); see `build_apply_engine`."""
     _closers: list[tuple[str, _Closer]] = field(default_factory=list, repr=False)
@@ -334,6 +354,8 @@ class Container:
         from tayyari.decisions.packs.service_impl import JevDecisionService
         from tayyari.discover.service import DiscoverService
         from tayyari.handoff.service import HandoffService
+        from tayyari.inbox.provider import ResendInboundProvider
+        from tayyari.inbox.service import InboxConfig, InboxService
         from tayyari.interview.service import InterviewService
         from tayyari.jobsearch.boards import BoardReader
         from tayyari.jobsearch.service import JobSearchService
@@ -352,6 +374,7 @@ class Container:
         closers: list[tuple[str, _Closer]] = []
         maintenance: asyncio.Task[None] | None = None
         weekly_loop: asyncio.Task[None] | None = None
+        inbox_loop: asyncio.Task[None] | None = None
         try:
             # ── storage ──
             db = ov.db
@@ -737,6 +760,35 @@ class Container:
                 )
             )
 
+            inbox_provider = ov.inbox_provider
+            if (
+                inbox_provider is None
+                and settings.inbound_email_active
+                and settings.resend_api_key is not None
+            ):
+                inbox_http = httpx2.AsyncClient(
+                    timeout=httpx2.Timeout(10.0), transport=ov.auth_transport, headers=AUTH_HTTP_HEADERS
+                )
+                closers.append(("inbox_http", inbox_http.aclose))
+                inbox_provider = ResendInboundProvider(
+                    api_key=settings.resend_api_key.get_secret_value(), client=inbox_http
+                )
+            inbox = InboxService(
+                repo=repos.inbox,
+                users=repos.users,
+                applications=repos.apply,
+                provider=inbox_provider,
+                classify=inbox_classifier(settings, repos, clock, claude, spend_guard),
+                config=InboxConfig(
+                    active=settings.inbound_email_active,
+                    domain=settings.inbound_email_domain,
+                    copy_from=settings.inbound_copy_from,
+                    app_url=settings.auth.public_url,
+                ),
+                clock=clock,
+            )
+            log.info("inbox_ready", enabled=inbox.enabled, domain=settings.inbound_email_domain)
+
             match_anonymous = settings.match.anonymous_allowed(auth.providers)
             log.info(
                 "match_anonymous",
@@ -757,11 +809,15 @@ class Container:
                 )
             if settings.weekly.enabled:
                 weekly_loop = asyncio.create_task(_weekly_loop(weekly, settings), name="tayyari-weekly")
+            if inbox.enabled:
+                inbox_loop = asyncio.create_task(_inbox_loop(inbox), name="tayyari-inbox")
         except BaseException:
             if maintenance is not None:
                 maintenance.cancel()
             if weekly_loop is not None:
                 weekly_loop.cancel()
+            if inbox_loop is not None:
+                inbox_loop.cancel()
             await _run_closers(closers)
             raise
 
@@ -800,6 +856,8 @@ class Container:
             jev_active=jev_active,
             maintenance=maintenance,
             weekly_loop=weekly_loop,
+            inbox=inbox,
+            inbox_loop=inbox_loop,
             apply_opener=ov.apply_opener,
             _closers=closers,
         )
@@ -814,11 +872,11 @@ class Container:
         if self._closed:
             return
         self._closed = True
-        for task in (self.maintenance, self.weekly_loop):
+        for task in (self.maintenance, self.weekly_loop, self.inbox_loop):
             if task is not None:
                 task.cancel()
                 await asyncio.gather(task, return_exceptions=True)
-        self.maintenance = self.weekly_loop = None
+        self.maintenance = self.weekly_loop = self.inbox_loop = None
         await _run_closers(self._closers)
 
 
@@ -878,6 +936,39 @@ async def _weekly_loop(service: WeeklyService, settings: Settings) -> None:
             log.error("weekly_loop_failed", exc_info=True)
         # Real time on purpose, like the maintenance loop: a test clock that "sleeps" instantly would spin.
         await asyncio.sleep(settings.weekly.tick_seconds)
+
+
+def inbox_classifier(
+    settings: Settings, repos: Repositories, clock: Clock, claude: ClaudeClient, spend_guard: SpendGuard
+) -> Classify:
+    """The inbox's classifier: auto-apply's `EmailTracker` (the one ``POST /api/apply/email`` uses), on the guarded Claude
+    client when a key is set (keyword rules otherwise), every call inside ``reserve(est_apply_email_usd)``."""
+    from tayyari.apply.email import EmailTracker
+
+    tracker = EmailTracker(
+        repos.apply,
+        clock,
+        claude if settings.anthropic_api_key is not None else None,
+        settings.apply.email_model or settings.reader_model,
+        reserve=spend_guard.reserve,
+        est_usd=settings.guard.est_apply_email_usd,
+    )
+    return tracker.handle
+
+
+async def _inbox_loop(inbox: InboxService) -> None:
+    """The inbox's reconcile pass: pending emails older than two minutes every minute, and every tenth pass the newest
+    received emails listed from the provider. Never raises (except cancellation)."""
+    await asyncio.sleep(INBOX_FIRST_DELAY_S)
+    tick = 0
+    while True:
+        try:
+            await inbox.reconcile(list_provider=tick % INBOX_LIST_EVERY == 0)
+        except Exception as exc:
+            log.error("inbox_reconcile_failed", error=type(exc).__name__)
+        tick += 1
+        # Real time on purpose, like the maintenance loop.
+        await asyncio.sleep(INBOX_TICK_S)
 
 
 # ───────────────────────────── auto-apply ─────────────────────────────
@@ -975,6 +1066,7 @@ def build_apply_engine(container: Container) -> ApplyEngine:
         reserve=reserve,
         resume_for=resume_for,
         facts=facts,
+        form_email=container.inbox.form_email if container.inbox is not None else None,
     )
 
 
@@ -1050,6 +1142,9 @@ async def _tailored_resume(container: Container, app: StoredApplication) -> Resu
 
 __all__ = [
     "DRAIN_TIMEOUT_S",
+    "INBOX_FIRST_DELAY_S",
+    "INBOX_LIST_EVERY",
+    "INBOX_TICK_S",
     "IP_HASH_KEY",
     "TEST_BROWSER_ENV",
     "Container",
@@ -1057,5 +1152,6 @@ __all__ = [
     "apply_worker_skip_reason",
     "build_apply_engine",
     "build_apply_worker",
+    "inbox_classifier",
     "tailored_file_name",
 ]

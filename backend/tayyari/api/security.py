@@ -23,6 +23,9 @@
     carry no cookie, and authenticate with a signature over the raw body that the route checks first. A browser
     that posts there from another site gets nothing but a refused signature.
 
+    The application inbox's webhook (``/api/inbound/``) is exempt for the same reason: Resend calls it, signed with Svix
+    over the raw body, which the route checks first.
+
 `SecurityHeadersMiddleware`
     Adds the standard hardening headers to every response (``X-Content-Type-Options``, ``Referrer-Policy``,
     ``X-Frame-Options``, ``Permissions-Policy``, and ``Strict-Transport-Security`` when the request came in
@@ -72,6 +75,8 @@ HANDOFF_PATH = "/api/handoff"
 (`HandoffSettings.origins`) instead of this guard's same-host rule."""
 WEBHOOK_PREFIX = "/api/billing/webhooks/"
 """Server-to-server callbacks of the payment providers: signed, cookie-less, never from a browser page."""
+INBOUND_PREFIX = "/api/inbound/"
+"""Server-to-server callbacks of the mail provider (Resend Receiving): signed, cookie-less, never from a browser page."""
 _DEFAULT_PORTS = frozenset({80, 443})
 
 # ───────────────────────── the client's network, for the limiter ─────────────────────────
@@ -154,6 +159,7 @@ class CrossSiteGuard:
             and scope["method"] in UNSAFE_METHODS
             and _is_api_path(scope["path"])
             and not scope["path"].startswith(WEBHOOK_PREFIX)
+            and not scope["path"].startswith(INBOUND_PREFIX)
             and not (scope["method"] == "POST" and scope["path"] == HANDOFF_PATH)
         ):
             reason = cross_site_reason(Headers(scope=scope))
@@ -344,6 +350,7 @@ __all__ = [
     "CROSS_SITE_MESSAGE",
     "HANDOFF_PATH",
     "HSTS",
+    "INBOUND_PREFIX",
     "RAZORPAY_CHECKOUT",
     "RAZORPAY_CONNECT",
     "RAZORPAY_FRAME",

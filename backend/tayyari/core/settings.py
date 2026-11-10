@@ -712,6 +712,7 @@ _SECRET_FIELDS = (
     "stripe_secret_key",
     "stripe_webhook_secret",
     "browser_use_api_key",
+    "resend_webhook_secret",
 )
 
 
@@ -1079,6 +1080,26 @@ class Settings(BaseSettings):
     )
     """Browser Use Cloud (the standalone browsers auto-apply fills forms in). Unset: the apply worker does not start."""
 
+    inbound_email_enabled: bool = Field(
+        default=False, validation_alias=AliasChoices("INBOUND_EMAIL_ENABLED", "inbound_email_enabled")
+    )
+    """The application inbox (``/api/inbox/*`` and the Resend Receiving webhook). Off by default; it runs only when this is
+    true and both ``RESEND_API_KEY`` and ``RESEND_WEBHOOK_SECRET`` are set (`inbound_email_active`)."""
+    inbound_email_domain: str = Field(
+        default="apply.leafout.in",
+        validation_alias=AliasChoices("INBOUND_EMAIL_DOMAIN", "inbound_email_domain"),
+    )
+    """The receiving subdomain: every tracking address is ``<local part>@<this>``. Not a secret."""
+    resend_webhook_secret: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("RESEND_WEBHOOK_SECRET")
+    )
+    """The ``whsec_...`` signing secret of the Resend Receiving webhook (Svix)."""
+    inbound_copy_from: str = Field(
+        default="Leafout <inbox@apply.leafout.in>",
+        validation_alias=AliasChoices("INBOUND_COPY_FROM", "inbound_copy_from"),
+    )
+    """The sender of the copy of each employer email sent to the person's own inbox. Not a secret."""
+
     synth_hints: bool = False
     """Feed the first-read results to the synthesizer as hints (off: they are stored for comparison only)."""
     synth_cache: SynthCache = "system"
@@ -1100,6 +1121,14 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             v = v.strip()
             return v or None
+        return v
+
+    @field_validator("inbound_email_domain", mode="before")
+    @classmethod
+    def _tidy_inbound_domain(cls, v: object) -> object:
+        """``@Apply.Leafout.in `` is ``apply.leafout.in``: compared with recipients' domains, which are lower-cased."""
+        if isinstance(v, str):
+            return v.strip().lstrip("@").strip().lower().rstrip(".") or "apply.leafout.in"
         return v
 
     @property
@@ -1143,6 +1172,16 @@ class Settings(BaseSettings):
         """True when Stripe can take and reconcile payments: the secret key and the webhook secret are set."""
         return self.stripe_secret_key is not None and self.stripe_webhook_secret is not None
 
+    @property
+    def inbound_email_active(self) -> bool:
+        """True when the application inbox runs: ``INBOUND_EMAIL_ENABLED`` and both Resend secrets (the API key reads the
+        received emails and sends the copies; the webhook secret checks Resend's calls)."""
+        return (
+            self.inbound_email_enabled
+            and self.resend_api_key is not None
+            and self.resend_webhook_secret is not None
+        )
+
     @cached_property
     def db(self) -> DbConfig:
         """The database configuration derived from ``database_url`` (SQLite under ``data_dir`` when unset)."""
@@ -1167,6 +1206,9 @@ class Settings(BaseSettings):
             "stripe": self.stripe_enabled,
             "auto_apply": self.auto_apply_enabled,
             "browser_use_key": self.browser_use_api_key is not None,
+            "inbound_email": self.inbound_email_enabled,
+            "inbound_email_active": self.inbound_email_active,
+            "resend_webhook_secret": self.resend_webhook_secret is not None,
             "database": self.db.safe_url,
             "storage": "ephemeral" if self.db.ephemeral else self.db.kind,
             "daily_ceiling_usd": self.guard.daily_ceiling_usd if self.guard.enabled else None,

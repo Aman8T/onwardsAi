@@ -15,6 +15,7 @@ from ..ports import (
     DecisionLogRepo,
     DiscoverRepo,
     HandoffRepo,
+    InboxRepo,
     InterviewRepo,
     JobSearchRepo,
     KvRepo,
@@ -38,6 +39,7 @@ from .claim_marks import SqlClaimMarkRepo
 from .decisions import SqlDecisionLogRepo
 from .discover import SqlDiscoverRepo
 from .handoff import SqlHandoffRepo
+from .inbox import SqlInboxRepo
 from .interview import SqlInterviewRepo
 from .jobsearch import SqlJobSearchRepo
 from .kv import SqlKvRepo
@@ -78,6 +80,7 @@ class Repositories:
     weekly: WeeklyRepo
     card: CardRepo
     apply: ApplyRepo
+    inbox: InboxRepo
 
 
 def build_repositories(db: Database, clock: Clock | None = None) -> Repositories:
@@ -105,6 +108,7 @@ def build_repositories(db: Database, clock: Clock | None = None) -> Repositories
         weekly=SqlWeeklyRepo(db),
         card=SqlCardRepo(db),
         apply=SqlApplyRepo(db),
+        inbox=SqlInboxRepo(db),
     )
 
 
@@ -117,6 +121,7 @@ __all__ = [
     "SqlDecisionLogRepo",
     "SqlDiscoverRepo",
     "SqlHandoffRepo",
+    "SqlInboxRepo",
     "SqlInterviewRepo",
     "SqlJobSearchRepo",
     "SqlKvRepo",

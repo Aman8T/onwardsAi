@@ -31,7 +31,8 @@
     "check:apply": "tsx scripts/apply-run-parity.tsx",
     "check:radar": "tsx scripts/radar-parity.ts",
     "check:discover": "tsx scripts/discover-apply-parity.tsx",
-    "check": "npm run typecheck && npm run check:palette && npm run check:restraint && npm run check:build && npm run check:portfolio && npm run check:match && npm run check:apply && npm run check:discover && npm run check:radar",
+    "check:inbox": "tsx --loader ./scripts/css-stub.mjs src/apply/InboxPanel.test.tsx",
+    "check": "npm run typecheck && npm run check:palette && npm run check:restraint && npm run check:build && npm run check:portfolio && npm run check:match && npm run check:apply && npm run check:discover && npm run check:radar && npm run check:inbox",
     "check:all": "npm run check && npm run lint:py && npm run typecheck:py && npm run test:py"
   },
   "dependencies": {

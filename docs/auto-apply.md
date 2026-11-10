@@ -7,7 +7,9 @@ Status: allowed 2026-11-06 (`CLAUDE.md` rule 9, `project-soul.md` "What it does"
 Built 2026-11-08 on `feat/auto-apply-build` (A1 W1 to W5), tested on fakes only and not deployed; how it is built is in
 `docs/backend.md` ("Auto-apply"), and where the build differs from this text is in §3.3. Evidence:
 `experiments/auto_apply/` (53 fill-only runs on 8 live postings, nothing submitted; `RESULTS.md`, `PLAN.md`). The build
-started from branch `feat/auto-apply`; `BUILD_NOTES.md` says what changed from it.
+started from branch `feat/auto-apply`; `BUILD_NOTES.md` says what changed from it. Since 2026-11-10, replies,
+confirmations and verification codes can come to a tracking address we receive (the application inbox, §3.4, branch
+`feat/inbound-email`); pasting an email stays as the fallback.
 
 Money is in rupees, with USD in brackets, at ₹94.48 per USD (2026-11-05).
 
@@ -141,7 +143,7 @@ Where the questions come from:
 
 | Group | Questions | Rules |
 |---|---|---|
-| You | Full name as on ID, email, mobile, current city, cities you'd work in, languages you can work in, date of birth (optional) | Your own email only. Date of birth is sent only where a form requires it (age limits in some drives and government roles) |
+| You | Full name as on ID, email, mobile, current city, cities you'd work in, languages you can work in, date of birth (optional) | Your tracking address (§3.4) when you have an active one and the inbox is on, else your own email (decided 2026-11-10; until then your own email only). The saved answer stays your own email; the tracking address is swapped in each time a form is filled, unless you chose to be asked each time. Date of birth is sent only where a form requires it (age limits in some drives and government roles) |
 | Work right now | Status (student / working / serving notice / between jobs), current company and designation, total experience (years, months; internships counted only if the person says so), notice period (immediate, 15, 30, 60, 90 days; buyout possible; last working day when serving notice), current CTC (₹ lakh a year), expected CTC (a figure / "open to discussion" / ask each time) | Current CTC is filled only into forms that require it, and never shown on a resume or portfolio. A number-only expected-CTC field with "open to discussion" saved goes to Needs you |
 | Education and marks | Highest qualification, college, year of passing, graduation score, class 12 and class 10 scores, active backlogs, backlogs ever (cleared), a gap of 6 months or more | Scores are copied as given: CGPA is never converted to a percentage. A form that wants the other goes to Needs you |
 | Registrations and licences | Profession-specific: nursing council registration, ICAI membership or articleship, CTET or TET, driving licence and own two-wheeler, passport | Shown when the resume or matched roles suggest them |
@@ -200,8 +202,9 @@ holds the state.
      - the confirmation signature is seen → `sent`, and the hold is charged;
      - no clear outcome → `check_this_one`, never retried;
      - an error before the click → `failed`, and the hold is released.
-6. **After**: replies come in by paste, by forwarding (§3.2) or, in v2, by mailbox access. A classifier moves the stage
-   forward only. No reply in 3 weeks gives a one-tap "Heard back?" check.
+6. **After**: replies come in by paste, by forwarding (§3.2) or, in v2, by mailbox access. Since 2026-11-10 they come
+   to the tracking address (§3.4), with paste as the fallback. A classifier moves the stage forward only. No reply in
+   3 weeks gives a one-tap "Heard back?" check.
 
 **Reuse.** Tables come from the old branch's migration `0016`: `applications` (state, lease, review JSON, digest,
 hold), `application_events`, `apply_profiles`, `ats_playbooks` and `run_metrics`. A new `answer_bank` maps a question
@@ -218,6 +221,10 @@ key to its value, source, date and "ask each time" flag.
 - The MVP leaves the Ready-for-you stack, the playbook learning loop and Gmail to v2.
 
 ### 3.2 Confirmations and replies without a proxy mailbox (agreed 2026-11-07)
+
+Replaced for replies and verification codes on 2026-11-10 by the tracking address (§3.4); the text below is kept as
+agreed. Paste stays as the fallback, the forwarding address with a filter (item 2) was not built, and the
+confirmation from the ATS's success page is unchanged.
 
 - **The application went through.** The submit pass reads the ATS's success signature (Greenhouse's thank-you page,
   Lever's `/thanks`, Ashby's success message, kept in the playbook). It stores a screenshot and the time, then marks
@@ -295,7 +302,8 @@ as proposals and the text above is left as agreed until the user says yes.
    per-hour cap and the gap count runs by it, and site playbooks are keyed by it.
 8. **Resume facts** (§2.2 layer 1, §3.1 step 2): read in code, with no model, when Your details or the first check
    first loads and only until the first check is done: the name, current role, city and years of experience from the
-   person's newest profile, the mobile from their newest match's fact book, and the email they sign in with. Education
+   person's newest profile, the mobile from their newest match's fact book, and the email they sign in with (the saved value stays the sign-in email; since 2026-11-10 forms get the active
+   tracking address instead, swapped in at fill time, §3.4). Education
    is not read (the profile holds no structured education); a form asks it and the answer is kept. A resume value
    never replaces an answer the person gave.
 9. **"Fill it again" for a file**: a form waiting only for a file (the resume added in Your details, or the tailored
@@ -304,6 +312,64 @@ as proposals and the text above is left as agreed until the user says yes.
 10. **The idle worker**: while the queue is empty the wait between passes doubles from 3 s up to 2 minutes, so the
     database can scale to zero between uses; a start, an answer, an approval or a retry in the same process wakes the
     worker within one poll.
+
+### 3.4 The application inbox (decided 2026-11-10)
+
+Replies, confirmations and verification codes come to a tracking address that we receive, instead of being pasted or
+forwarded. Paste (`POST /api/apply/email`, the panel under the inbox on `/apply`) stays as the fallback. How it is
+built is in `docs/backend.md` ("Application inbox"); the research behind it is
+`docs/research/inbound-email-tracking.md`.
+
+- **The address.** One per person, made only when they opt in. The consent is stored with its time and the version
+  `inbox-v1`. The address looks like `jordan.k7m4q@apply.leafout.in`: the first name folded to plain lower-case
+  letters (at most 20, `me` when there is none), a dot, the last-name initial, and five random characters from an
+  alphabet with no look-alike characters. It is never reused or given to anyone else, and it carries no plus-tag. The
+  person can turn it off; mail to an address that is off is noted (sender, subject, time) as `ignored` and not read.
+- **Which email goes on forms.** The person's active tracking address when they have one and the inbox is on; their
+  own email (the one they sign in with) otherwise. It is chosen in one place, the fill context of the apply engine
+  (`ApplyEngine._context`, through the `form_email` seam the container builds from the inbox service): on every
+  fill the saved email is swapped for the active tracking address; the saved answer itself (the sign-in email) is
+  not changed, and an "ask each time" email is still asked. Because the swap happens at fill time, it holds for
+  people whose first check ran before they took an address, and turning the address off puts their own email back
+  on the next form.
+- **Receiving.** Resend Receiving accepts all mail for `apply.leafout.in` and calls `POST /api/inbound/resend`, a
+  signed webhook that carries only metadata. We fetch the email from Resend's API off the request path. A verification
+  code (below) is stored and nothing else happens. Any other email goes to the existing classifier (`EmailTracker`,
+  the same one the paste uses, under the same spend reservation), which moves the matching application's stage forward
+  with a quote from the email. An email that matches no application is listed as `unmatched`. Mail to an unknown
+  address is kept as metadata only (`quarantined`) and never fetched.
+- **A copy to the person.** Each classified email is sent on to the person's own inbox from
+  `Leafout <inbox@apply.leafout.in>`, with reply-to set to the employer's sender, the subject
+  `[Leafout] <employer or sender domain>: <original subject>`, and one line on the stage it set with a link to `/apply`
+  above the original text. The person can switch copies off. No copy for verification codes or for quarantined mail.
+  A failed copy is marked and never fails the processing.
+- **What we keep.** The sender, its domain, the subject (at most 200 characters), the time, the status, the stage it
+  set (only when the email moved the application), the application, the classifier's quote and whether the copy
+  went. Never the body or the attachments (the same rule as the paste). A subject that talks about codes is stored
+  with every code-shaped token replaced by `[code]`, on every row, read or not. At most 200 emails read per address a day (emails being read count too); anything beyond is kept as `capped`
+  metadata. Mail from our own domain, and a copy that comes back (it carries an `X-Leafout-Copy` header), is
+  `ignored`: never read, classified or copied again, so a forwarding rule cannot make a loop.
+- **Verification codes, read by code.** A 4 to 8 character code that contains a digit (two when it also has
+  letters), next to a phrase that names a code: "verification code", "security code", "confirmation code",
+  "passcode", "OTP", "one-time password", or a plain "code" in an email that also says "verify", "verification" or
+  "one-time". "verify" alone never makes a code, so "please verify your availability on the 14th" is classified as a
+  reply. Order numbers, phone numbers, years, ordinals, times and role names such as "SDE2" are not codes. A
+  verification link counts only when its host is on an ATS list (greenhouse.io, lever.co, ashbyhq.com,
+  myworkdayjobs.com, myworkday.com, workday.com, smartrecruiters.com, workable.com). A code is stored in
+  `verification_codes` for 15 minutes, never logged and never shown in the app (the list says "Verification code
+  received"), and purged once used or expired. Verification emails are not classified and get no copy.
+- **The seam for the worker (not wired yet).** The inbox service offers `latest_code(user_id, since,
+  sender_domain_hint=None)`, the newest unexpired and unused code that arrived after `since`, and `mark_used(id)`.
+  The fill and submit loops do not call it yet, so a code prompt still stops a run as before: `needs_signin` with
+  `stopReason` `verification_code` before the click, `check_this_one` after it (§3.3 items 1 and 2). Proposed use, for
+  a later change to `apply/`: when the fill meets a code prompt, ask `latest_code` with `since` set to the moment the
+  form asked and the ATS host as the hint, a few times over about two minutes; type the code, call `mark_used`, read
+  the field back and go on; with no code, stop as today. It was left out of this build because another branch is
+  changing the worker.
+- **Off by default.** It runs only when `INBOUND_EMAIL_ENABLED` is true and both `RESEND_API_KEY` and
+  `RESEND_WEBHOOK_SECRET` are set. Until then the inbox panel shows nothing, forms get the person's own email, every
+  `/api/inbox` route but the status answers 404, and so does the webhook. The steps the owner takes to turn it on are
+  in `backend/DEPLOY.md` ("Application inbox").
 
 ## 4. Cost and price
 
@@ -325,6 +391,9 @@ first 10 free, and a failed or unclear application refunded. No annual plans (`p
 - Retention: screenshots and filled values purged on the same schedule as matches (`storage.maintenance`); the old
   branch defines `SCREENSHOT_DAYS` but never wires the purge.
 - Resume uploads: type and size checked (PDF or DOCX, at most 5 MB) by content, not only extension.
+- The application inbox (§3.4) has its own consent in the app. The privacy page must also say that Resend receives the
+  employers' emails for us and keeps them on its side under its own retention, what we keep (sender, subject, stage),
+  and that we send the person a copy.
 
 **Public copy to change at launch, not before:** `src/site/pages/JobSearch.tsx` ("It will not apply for you") and the
 landing page's "no mass-apply" line (still true, but should mention the approved auto-apply). Nothing public changes
@@ -376,3 +445,9 @@ Recruitee, iCIMS).
 5. **Which email goes on applications, and how replies are tracked.** Decided 2026-11-07: the person's own email on
    every form, confirmation from the ATS's success page, and replies by paste or forward, then by a forwarding address
    with a ready filter, then by mailbox access in v2 (§3.2).
+
+   **Updated 2026-11-10:** the tracking address (§3.4) replaced paste and forward. Forms carry the person's tracking
+   address on `apply.leafout.in` when they have an active one and the inbox is on, else their own email; replies are
+   read there, move the stage, and are copied to the person's own inbox. Paste stays as the fallback. The forwarding
+   address with a filter was not built; mailbox access stays v2. Verification codes are stored for the worker, which
+   does not read them yet (§3.4).

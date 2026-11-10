@@ -44,7 +44,7 @@ export function Consent({ onAgree, onCancel }: ConsentProps) {
       <section className="panel ap-panel ap-stack-s" aria-label="What is sent to the employer">
         <h2 className="ap-h3">What the employer gets</h2>
         <p>
-          Exactly the values you approve on the review: your name, your own email and phone, the answers the form asks for, and
+          Exactly the values you approve on the review: your name, your email (your application inbox address when it is on) and phone, the answers the form asks for, and
           the resume you chose. Nothing reaches the employer before you approve that set, and the resume is attached only then.
         </p>
       </section>

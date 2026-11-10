@@ -25,18 +25,38 @@ agreed spec in `docs/auto-apply.md`. This file keeps only what a reviewer of the
   per outcome (`MetricsRow`: questions, needs_signin, closed, check_this_one, interrupted, deferred).
 
 ## Run it locally
+Use placeholder secrets locally, never the production ones. With `INBOUND_EMAIL_ENABLED=true` and a real
+`RESEND_API_KEY`, a local server's reconcile loop lists and fetches the production Resend account's received emails
+(the last 100, every tenth pass) and would send copies, the same as production does. Resend's webhook cannot reach
+`localhost` either. So drive the inbox through the tests (signed webhook fixtures, `FakeInboundMailProvider`) and the
+gallery screens; nothing in the tests calls Resend.
 ```
-# backend/.env: AUTO_APPLY_ENABLED=true, BROWSER_USE_API_KEY=..., ANTHROPIC_API_KEY=...
-npm run dev                # API :8787 + web :5173 (the worker runs inside the API) -> http://localhost:5173/apply
-npm run apply-metrics
+# backend/.env (placeholders only): INBOUND_EMAIL_ENABLED=true, RESEND_API_KEY=re_placeholder, RESEND_WEBHOOK_SECRET=whsec_placeholder
+npm run dev                # http://localhost:5173/dev/apply?screen=applications-inbox shows the panel on fixtures
+uv run --directory backend pytest -q tests/unit/inbox tests/integration/test_inbox_routes.py
+npm run check:inbox        # the panel's checks
 ```
-Tests: `npm run test:py` (fakes and saved HTML in `backend/tests/data/apply/`; `tests/integration/test_apply_flow.py`
-runs start -> fill -> answers -> approve -> one click on fakes). Real Chromium on the saved page, offline:
-`TAYYARI_TEST_BROWSER=1 uv run --directory backend pytest tests/unit/apply/test_engine.py`.
+If you need real mail end to end, use a separate Resend account and receiving domain for testing.
 
-## Not done (out of A1)
-- Retention for applications abandoned before they finished (only finished ones are purged).
-- A `failed -> sent` move ("I applied there" on a failed row) is not allowed.
-- The Weekly's in-app role links (`/discover?job=<id>`) need `route.ts` to keep `job` on the roles tab.
-- Pricing: applications are uncharged until a price is set (`docs/auto-apply.md` §4).
-- Live postings were not run in this build; the fill-only live test (spec A1.6) comes before the beta.
+## Review points
+- **The email on forms.** `apply/service.py` still keeps only the sign-in email (or a `+tag` of it) as the saved
+  `email` answer. The tracking address is never saved: `ApplyEngine` swaps it in at fill time through the
+  `form_email` seam (`tests/unit/apply/test_form_email.py`), so people whose first check ran before they took an
+  address get it too, and turning the address off puts their own email back. Check the review screen shows the
+  address that went on the form.
+- **Gate fixes (2026-11-10).** The code extractor needs a phrase that names a code ("verify" alone no longer makes
+  one, so interview invitations are classified); subjects are scrubbed of code-shaped tokens on every row; our own
+  copies coming back are `ignored` (own domain, or the `X-Leafout-Copy` header); the lease is 10 minutes with a
+  5-minute classifier timeout and an in-process guard, so a slow model call is never paid twice; the stage is kept
+  only when it moved; emails being read count towards the daily cap.
+- **Received mail on Resend's side.** Resend keeps received emails under its own retention; the privacy page has to
+  say so before the inbox is turned on in production (`docs/auto-apply.md` §5).
+- **Resend's receiving API fields are unverified.** The provider reads them defensively; check one real delivery after
+  the setup in `backend/DEPLOY.md`.
+
+## Not done (out of A2)
+- The auto-apply fill does not read verification codes yet: `latest_code` and `mark_used` are ready, and the place to
+  call them is in `docs/auto-apply.md` §3.4.
+- No retention window for `inbound_emails` and `inbox_addresses` (codes are purged).
+- Not deployed, and no real email was received; the DNS records, the Resend domain and webhook, and the secrets are
+  the owner's steps.

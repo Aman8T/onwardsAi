@@ -344,6 +344,12 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
       back. "It didn’t: refund me" there gives the credit back and the row moves to Didn't go; it is never resent.
     - **Track.** Applications' tabs (Waiting, Filling, Sent, Check this one, Didn't go); a sent row with no reply for
       3 weeks (counted from when it was sent) shows "Heard back?". Paste an employer's email to move a stage forward.
+    - **Application inbox** (with `INBOUND_EMAIL_ENABLED` and both Resend secrets; otherwise the panel is absent).
+      Above the paste panel: an explanation, the consent box (exact text) and "Get my address", disabled until ticked;
+      then the address with Copy, the "Receiving mail" and "Send me a copy" switches (keyboard: Tab, Space), and the
+      recent emails with their chips; a verification email reads only "Verification code received". With the address
+      on, the paste panel reads "A reply went to your own email?". Without a server: `/dev/apply?screen=applications-inbox-new`,
+      then `applications-inbox` and `applications-inbox-off`.
     - **Without a server,** `/dev/apply` and its screens (`?screen=applications`, `details`, `first-check`, `consent`,
       `start-offer`, `run-filling`, `run-questions`, `run-review`, `run-check`, `run-sent` …).
 

@@ -1159,6 +1159,103 @@ class AnswerBankRow(Base):
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
 
 
+# ───────────────────────────── the application inbox ─────────────────────────────
+
+INBOX_LOCAL_LEN = 32
+"""A tracking address's local part: at most 20 letters, a dot, an initial and five random characters (28)."""
+INBOX_RECIPIENT_LEN = 64
+"""The local part an email was sent to, as received (RFC 5321 allows 64), cut to this for an unknown address."""
+INBOX_STATUS_LEN = 12
+INBOX_SUBJECT_LEN = 200
+INBOX_DOMAIN_LEN = 255
+INBOX_CODE_LEN = 16
+
+
+class InboxAddressRow(Base):
+    """One person's tracking address (``<local_part>@<inbound domain>``), made only when they opted in (``consent_at``,
+    ``consent_version``). ``status`` is ``active`` or ``off``; ``copies`` sends the person a copy of each employer email.
+    One per account (unique ``user_id``) and never reused or given to anyone else (unique ``local_part``): when the account
+    is deleted the row stays with ``user_id`` NULL (ON DELETE SET NULL), so its local part is never drawn again."""
+
+    __tablename__ = "inbox_addresses"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="SET NULL"))
+    local_part: Mapped[str] = mapped_column(String(INBOX_LOCAL_LEN))
+    status: Mapped[str] = mapped_column(String(INBOX_STATUS_LEN))
+    copies: Mapped[bool] = mapped_column(Boolean)
+    consent_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    consent_version: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_inbox_addresses_user_id"),
+        UniqueConstraint("local_part", name="uq_inbox_addresses_local_part"),
+    )
+
+
+class InboundEmailRow(Base):
+    """One email Resend received for the inbound domain: metadata only, never the body or the attachments.
+    ``provider_email_id`` (Resend's id, unique) makes a repeated webhook a no-op. ``status`` is an `InboxEmailStatus`;
+    ``stage``, ``application_id`` and ``quote`` are what the classifier read (the quote is the short sentence it rests on);
+    ``copy_status`` says whether the copy to the person's inbox went. ``address_id`` and ``user_id`` are NULL for mail to an
+    unknown address (``quarantined``). ``claimed_until`` is the lease of the replica processing a ``pending`` row and
+    ``attempts`` how often it was tried (internal: never shown). Goes with its account (ON DELETE CASCADE)."""
+
+    __tablename__ = "inbound_emails"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    provider_email_id: Mapped[str] = mapped_column(String(PROVIDER_ID_LEN))
+    message_id: Mapped[str | None] = mapped_column(Text)
+    address_id: Mapped[str | None] = mapped_column(
+        String(ID_LEN), ForeignKey("inbox_addresses.id", ondelete="SET NULL")
+    )
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    recipient: Mapped[str | None] = mapped_column(String(INBOX_RECIPIENT_LEN))
+    sender: Mapped[str] = mapped_column(String(EMAIL_LEN))
+    sender_domain: Mapped[str] = mapped_column(String(INBOX_DOMAIN_LEN))
+    subject: Mapped[str] = mapped_column(String(INBOX_SUBJECT_LEN))
+    received_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    status: Mapped[str] = mapped_column(String(INBOX_STATUS_LEN))
+    stage: Mapped[str | None] = mapped_column(String(16))
+    application_id: Mapped[str | None] = mapped_column(String(ID_LEN))
+    quote: Mapped[str | None] = mapped_column(Text)
+    copy_status: Mapped[str | None] = mapped_column(String(8))
+    attempts: Mapped[int] = mapped_column(Integer)
+    claimed_until: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    processed_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        UniqueConstraint("provider_email_id", name="uq_inbound_emails_provider_email_id"),
+        Index("ix_inbound_emails_user_id_received_at", "user_id", "received_at"),
+        Index("ix_inbound_emails_address_id_received_at", "address_id", "received_at"),
+        Index("ix_inbound_emails_status_received_at", "status", "received_at"),
+    )
+
+
+class VerificationCodeRow(Base):
+    """A verification code (or an ATS verification link) read in code from an email to the person's tracking address, kept
+    for the auto-apply worker until ``expires_at`` (15 minutes after receipt) or until it is used (``used_at``); the
+    maintenance purge deletes it then. The value is never logged. Goes with its account (ON DELETE CASCADE)."""
+
+    __tablename__ = "verification_codes"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    sender_domain: Mapped[str] = mapped_column(String(INBOX_DOMAIN_LEN))
+    code: Mapped[str | None] = mapped_column(String(INBOX_CODE_LEN))
+    link: Mapped[str | None] = mapped_column(Text)
+    received_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    used_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        Index("ix_verification_codes_user_id_received_at", "user_id", "received_at"),
+        Index("ix_verification_codes_expires_at", "expires_at"),
+    )
+
+
 __all__ = [
     "APPLY_ATS_LEN",
     "APPLY_DIGEST_LEN",
@@ -1186,6 +1283,12 @@ __all__ = [
     "HANDOFF_ID_LEN",
     "HASH_LEN",
     "ID_LEN",
+    "INBOX_CODE_LEN",
+    "INBOX_DOMAIN_LEN",
+    "INBOX_LOCAL_LEN",
+    "INBOX_RECIPIENT_LEN",
+    "INBOX_STATUS_LEN",
+    "INBOX_SUBJECT_LEN",
     "NAMING_CONVENTION",
     "PLAN_ID_LEN",
     "PROVIDER_ID_LEN",
@@ -1210,6 +1313,8 @@ __all__ = [
     "DiscoverRunRow",
     "EntitlementRow",
     "HandoffRow",
+    "InboundEmailRow",
+    "InboxAddressRow",
     "InterviewSessionRow",
     "JSONType",
     "JevCallRow",
@@ -1233,6 +1338,7 @@ __all__ = [
     "UserRow",
     "UtcDateTime",
     "VariantRow",
+    "VerificationCodeRow",
     "WeeklyEditionRow",
     "WeeklySubscriptionRow",
     "as_utc",

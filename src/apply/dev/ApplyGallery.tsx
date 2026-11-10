@@ -3,16 +3,20 @@
  * server and no account. Pick a screen in the bar, or link straight to one:
  *
  *   /dev/apply?screen=applications
- *   screens: applications · applications-empty · applications-check · details · details-to-check · details-no-resume ·
+ *   screens: applications · applications-empty · applications-check · applications-inbox-new · applications-inbox ·
+ *            applications-inbox-off · details · details-to-check · details-no-resume ·
  *            first-check · consent · start-offer · start-priced · start-unlimited · start-saved-none ·
  *            start-<reason> for every ApplyBlockReason · the run screens from runGallery.tsx
  *
- * Saving in Your details really updates the page; starting, consenting and pasting an email are canned.
+ * Saving in Your details and the inbox's switches really update the page; starting, consenting and pasting an email are
+ * canned. "Get my address" moves to the inbox screen.
  */
 import { useId, useState } from 'react';
 import type { ResumeChoice, SaveAnswerRequest, YourDetails } from '../../../shared/apply';
+import type { InboxStatus, UpdateInboxAddressRequest } from '../../../shared/inbox';
 import { Brand } from '../../components/Brand';
 import { ApplicationsView } from '../ApplicationsView';
+import { InboxPanel, inboxActive } from '../InboxPanel';
 import { Consent } from '../Consent';
 import { DetailsView } from '../DetailsView';
 import { FirstCheck } from '../FirstCheck';
@@ -34,6 +38,7 @@ import {
   STATUS_PRICED,
   checkFailing,
 } from './fixtures';
+import { INBOX_ADDRESS, INBOX_ADDRESS_OFF, INBOX_EMAILS, INBOX_NO_ADDRESS } from './inboxFixtures';
 import { RUN_SCREENS, RunGallery } from './runGallery';
 import '../../styles/apply.css';
 
@@ -41,6 +46,9 @@ const OWN_SCREENS: readonly (readonly [string, string])[] = [
   ['applications', 'Applications'],
   ['applications-empty', 'Applications · none yet'],
   ['applications-check', 'Applications · Check this one tab'],
+  ['applications-inbox-new', 'Applications · inbox, no address yet'],
+  ['applications-inbox', 'Applications · inbox with emails'],
+  ['applications-inbox-off', 'Applications · inbox turned off'],
   ['details', 'Your details'],
   ['details-to-check', 'Your details · To check'],
   ['details-no-resume', 'Your details · no resume'],
@@ -62,6 +70,20 @@ function readScreen(): string {
 
 const pause = () => new Promise<void>((resolve) => window.setTimeout(resolve, 250));
 
+/** The inbox each applications screen starts with; the plain ones show none (the feature off). */
+function inboxFor(screen: string): InboxStatus | null {
+  switch (screen) {
+    case 'applications-inbox-new':
+      return INBOX_NO_ADDRESS;
+    case 'applications-inbox':
+      return INBOX_ADDRESS;
+    case 'applications-inbox-off':
+      return INBOX_ADDRESS_OFF;
+    default:
+      return null;
+  }
+}
+
 function screenFor(route: ApplyRoute): string {
   switch (route.screen) {
     case 'list':
@@ -79,10 +101,12 @@ export function ApplyGallery() {
   const [screen, setScreen] = useState(readScreen);
   const [details, setDetails] = useState<YourDetails>(DETAILS);
   const [resume, setResume] = useState<ResumeChoice>('tailored');
+  const [inbox, setInbox] = useState<InboxStatus | null>(() => inboxFor(readScreen()));
   const pickId = useId();
 
   const go = (next: string) => {
     setScreen(next);
+    setInbox(inboxFor(next));
     window.history.replaceState(null, '', `/dev/apply?screen=${next}`);
     window.scrollTo({ top: 0 });
   };
@@ -127,6 +151,9 @@ export function ApplyGallery() {
     switch (screen) {
       case 'applications':
       case 'applications-check':
+      case 'applications-inbox-new':
+      case 'applications-inbox':
+      case 'applications-inbox-off':
         body = (
           <ApplicationsView
             key={screen}
@@ -139,6 +166,23 @@ export function ApplyGallery() {
               return EMAIL_RESULT;
             }}
             balance={<span className="chip">7 free left</span>}
+            inbox={
+              <InboxPanel
+                status={inbox}
+                emails={INBOX_EMAILS}
+                now={NOW}
+                navigate={navigate}
+                onCreate={async () => {
+                  await pause();
+                  go('applications-inbox');
+                }}
+                onUpdate={async (change: UpdateInboxAddressRequest) => {
+                  await pause();
+                  setInbox((s) => (s?.address ? { ...s, address: { ...s.address, ...change } } : s));
+                }}
+              />
+            }
+            inboxActive={inboxActive(inbox)}
             metrics={METRICS}
             initialTab={screen === 'applications-check' ? 'check' : undefined}
           />

@@ -35,6 +35,9 @@
               .../details/answers/{key}; POST .../details/still-true, .../details/first-check; PUT, DELETE
               /api/apply/profile/resume; POST /api/apply/email; GET
               /api/apply/metrics (auto-apply, behind AUTO_APPLY_ENABLED; signed in only, every route but the status)
+    inbox     GET /api/inbox/status; POST, PATCH /api/inbox/address; GET /api/inbox/emails?limit=; POST /api/inbound/resend
+              (the Resend Receiving webhook, Svix-signed, no session) (the application inbox, behind INBOUND_EMAIL_ENABLED
+              and both Resend secrets; signed in only, every /api/inbox route but the status)
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.
@@ -54,6 +57,7 @@ from tayyari.api.routes import (
     discover,
     handoff,
     health,
+    inbox,
     interview,
     jobsearch,
     match,
@@ -87,6 +91,7 @@ for _module in (
     weekly,
     card,
     apply,
+    inbox,
 ):
     api_router.include_router(_module.router)
 

@@ -174,6 +174,9 @@ Variables can be set in the FastAPI Cloud dashboard or with the CLI. A `.env` fi
 | --- | --- | --- |
 | `JEV_API_KEY` | (not set) | TypeSafe Jev API key for decision models. If not set, Jev is disabled. |
 | `GITHUB_TOKEN` | (not set) | GitHub personal access token to raise API rate limits for GitHub ingest. |
+| `INBOUND_EMAIL_ENABLED` | `false` | Turns on the application inbox (also needs the two secrets below). See "Application inbox" below. |
+| `RESEND_API_KEY` | (not set) | Secret. Resend key for sign-in emails, the Weekly and the application inbox (which needs a full-access key). |
+| `RESEND_WEBHOOK_SECRET` | (not set) | Secret. Signing secret (`whsec_…`) of the Resend webhook for received email. |
 
 ### Set secrets from the CLI
 
@@ -279,6 +282,51 @@ The backend reads configuration from environment variables with the `TAYYARI_` p
 | `TAYYARI_RETENTION__PROFILE_DAYS` | `60` | Delete profiles idle for this many days |
 | `TAYYARI_RETENTION__PAYLOAD_DAYS` | `30` | Purge Jev payloads after this many days |
 | `TAYYARI_RETENTION__METADATA_DAYS` | `180` | Keep decision metadata for this many days |
+
+## Application inbox (Resend Receiving)
+
+The application inbox gives each person who opts in a tracking address such as `jordan.k7m4q@apply.leafout.in`. Resend receives all mail for `apply.leafout.in` and tells the app through a signed webhook; the app reads the email, updates the application and sends the person a copy. How it works: `docs/backend.md` ("Application inbox") and `docs/auto-apply.md` §3.4.
+
+It stays off until all three of these are set: `INBOUND_EMAIL_ENABLED=true`, `RESEND_API_KEY` and `RESEND_WEBHOOK_SECRET`. While it is off, the inbox panel shows nothing, auto-apply puts the person's own email on forms, and `POST /api/inbound/resend` answers 404.
+
+The owner does these steps; an agent never sets secrets or DNS records.
+
+1. **Resend account.** Sign in at https://resend.com, or create an account. If the app already sends sign-in links or the Weekly through Resend, use that same account. The API key must have **Full access**: a key limited to sending cannot read received emails. If the current key is sending-only, create a full-access key; it replaces `RESEND_API_KEY` for sign-in and the Weekly as well.
+2. **Add the receiving domain.** In Resend, open **Domains**, add `apply.leafout.in` and turn on receiving for it. Resend then lists the DNS records for that domain: an **MX** record for receiving, and the **TXT** (and **MX**) records that verify the domain for sending. The copies go out from `inbox@apply.leafout.in` (`INBOUND_COPY_FROM`), so add the sending records too.
+3. **Copy the records into Hostinger.** In hPanel, open **Domains**, then `leafout.in`, then **DNS / Nameservers**, then the DNS records. Add each record Resend shows, with its type, value, priority and TTL. hPanel adds `.leafout.in` to every name, so enter the name without it: the receiving MX record's name is `apply`, and the other names end in `.apply` (for example `resend._domainkey.apply`). Copy each name exactly as Resend gives it, minus the trailing `.leafout.in`.
+   - **Do not touch the root records.** Leave every existing MX record with the name `@` as it is, and add no MX record at `@`: those carry mail for `leafout.in` itself. Only names under `apply` change.
+   - Check from a terminal once Resend shows the domain as verified (this can take from a few minutes to some hours): `nslookup -type=mx apply.leafout.in` should list Resend's server, and `nslookup -type=mx leafout.in` should still list the same servers as before.
+4. **Add the webhook.** In Resend, open **Webhooks** and add an endpoint with the URL `https://app.leafout.in/api/inbound/resend` and the event `email.received` only. Open it and copy its signing secret (it starts with `whsec_`). Until step 6 is deployed the endpoint answers 404, and Resend retries; that is expected.
+5. **Set the secrets on FastAPI Cloud**, from `backend/` (or with the app id, as for a deploy). The value is read from stdin, so it stays out of the shell history and the command line:
+
+   ```bash
+   # Only if RESEND_API_KEY is not set yet, or the key changed in step 1
+   printf '%s' "$RESEND_API_KEY" | uvx --from "fastapi[standard]" fastapi cloud env set \
+     --secret --value-stdin --no-redeploy RESEND_API_KEY
+   printf '%s' "$RESEND_WEBHOOK_SECRET" | uvx --from "fastapi[standard]" fastapi cloud env set \
+     --secret --value-stdin --no-redeploy RESEND_WEBHOOK_SECRET
+   ```
+
+   On Windows with PowerShell:
+
+   ```powershell
+   # Only if RESEND_API_KEY is not set yet, or the key changed in step 1
+   $env:RESEND_API_KEY | uvx --from "fastapi[standard]" fastapi cloud env set --secret --value-stdin --no-redeploy RESEND_API_KEY
+   $env:RESEND_WEBHOOK_SECRET | uvx --from "fastapi[standard]" fastapi cloud env set --secret --value-stdin --no-redeploy RESEND_WEBHOOK_SECRET
+   ```
+
+   Then check that both names are listed: `uvx --from "fastapi[standard]" fastapi cloud env list`.
+6. **Turn it on and deploy.**
+
+   ```bash
+   uvx --from "fastapi[standard]" fastapi cloud env set --no-redeploy INBOUND_EMAIL_ENABLED true
+   npm run deploy -- --app-id 599a983d-3900-4d21-8261-180cef4d1eca
+   ```
+
+   `INBOUND_EMAIL_DOMAIN` (`apply.leafout.in`) and `INBOUND_COPY_FROM` (`Leafout <inbox@apply.leafout.in>`) need setting only if they differ from these defaults. The deploy runs migration 0018 (three new tables) at startup.
+7. **Check it.** Sign in at https://app.leafout.in/apply, tick the consent box and choose "Get my address". Send a short email to that address from your own mailbox. Within a minute it should appear in the panel's list (as "unmatched" when it fits no application), and a copy should arrive in your inbox with a subject starting `[Leafout]`. In Resend, the webhook's log should show a 200 for the delivery.
+
+**Turning it off.** Set `INBOUND_EMAIL_ENABLED=false` and deploy. The webhook then answers 404 and Resend gives up after its retries. Addresses and stored rows stay. When it is turned on again, the reconcile pass lists the last 100 received emails from Resend, so mail from a short break is picked up; anything older is not.
 
 ## Verifying the deployment
 

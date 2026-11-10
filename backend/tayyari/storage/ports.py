@@ -1768,10 +1768,161 @@ class ApplyRepo(Protocol):
         ...
 
 
+# ───────────────────────────── the application inbox ─────────────────────────────
+
+INBOUND_EMAIL_COLUMNS: frozenset[str] = frozenset(
+    {
+        "message_id", "sender", "sender_domain", "subject", "status", "stage", "application_id", "quote",
+        "copy_status", "claimed_until", "processed_at",
+    }
+)  # fmt: skip
+"""The columns `InboxRepo.update_email` may change."""
+
+FETCHED_STATUSES: frozenset[str] = frozenset({"processed", "unmatched", "verification", "failed"})
+"""Statuses of an email that was fetched and read: what the per-address daily cap counts."""
+
+
+@dataclass(frozen=True, slots=True)
+class StoredInboxAddress:
+    """One tracking address (`InboxAddressRow`). ``user_id`` is None once its account is gone (the local part stays
+    taken); ``status`` is ``active`` or ``off``."""
+
+    id: str
+    user_id: str | None
+    local_part: str
+    status: str
+    copies: bool
+    consent_at: datetime
+    consent_version: str
+    created_at: datetime
+
+    @property
+    def active(self) -> bool:
+        return self.status == "active" and self.user_id is not None
+
+
+@dataclass(frozen=True, slots=True)
+class StoredInboundEmail:
+    """One received email's metadata (`InboundEmailRow`); never its body."""
+
+    id: str
+    provider_email_id: str
+    received_at: datetime
+    status: str
+    sender: str
+    sender_domain: str
+    subject: str
+    created_at: datetime
+    recipient: str | None = None
+    address_id: str | None = None
+    user_id: str | None = None
+    message_id: str | None = None
+    stage: str | None = None
+    application_id: str | None = None
+    quote: str | None = None
+    copy_status: str | None = None
+    attempts: int = 0
+    claimed_until: datetime | None = None
+    processed_at: datetime | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class StoredVerificationCode:
+    """A verification code or ATS link (`VerificationCodeRow`). The value is never logged."""
+
+    id: str
+    user_id: str
+    sender_domain: str
+    received_at: datetime
+    expires_at: datetime
+    code: str | None = field(default=None, repr=False)
+    link: str | None = field(default=None, repr=False)
+    used_at: datetime | None = None
+
+
+class InboxRepo(Protocol):
+    """Tracking addresses, the metadata of received emails, and verification codes."""
+
+    async def get_address_for_user(self, user_id: str) -> StoredInboxAddress | None:
+        """The account's address, or None when it never opted in."""
+        ...
+
+    async def get_address_by_local_part(self, local_part: str) -> StoredInboxAddress | None:
+        """The address with this (lower-case) local part, whoever holds it, or None."""
+        ...
+
+    async def get_address(self, address_id: str) -> StoredInboxAddress | None: ...
+
+    async def create_address(self, item: StoredInboxAddress) -> StoredInboxAddress | None:
+        """Insert the address; None (and nothing written) when the account already has one or the local part is taken."""
+        ...
+
+    async def update_address(
+        self, address_id: str, *, status: str | None = None, copies: bool | None = None
+    ) -> StoredInboxAddress | None:
+        """Change the status and/or the copies switch (None leaves a field); the address, or None when unknown."""
+        ...
+
+    async def insert_email(self, item: StoredInboundEmail) -> bool:
+        """Insert a received email; False (and nothing written) when its ``provider_email_id`` is already stored."""
+        ...
+
+    async def get_email(self, email_id: str) -> StoredInboundEmail | None: ...
+
+    async def known_provider_ids(self, provider_ids: Collection[str]) -> set[str]:
+        """Which of ``provider_ids`` are stored already."""
+        ...
+
+    async def claim_email(
+        self, email_id: str, *, now: datetime, until: datetime
+    ) -> StoredInboundEmail | None:
+        """Lease a ``pending`` email whose lease is free (none, or ended before ``now``) until ``until`` and count the
+        attempt, in one compare-and-set; the claimed row, or None when it is not pending or another replica holds it."""
+        ...
+
+    async def update_email(self, email_id: str, changes: Mapping[str, Any]) -> None:
+        """Set columns of `INBOUND_EMAIL_COLUMNS` (anything else raises ValueError)."""
+        ...
+
+    async def list_emails(self, user_id: str, limit: int) -> list[StoredInboundEmail]:
+        """The account's emails, newest first (by ``received_at``)."""
+        ...
+
+    async def list_pending(self, *, before: datetime, now: datetime, limit: int) -> list[StoredInboundEmail]:
+        """``pending`` emails received before ``before`` whose lease is free at ``now``, oldest first."""
+        ...
+
+    async def count_fetched_since(
+        self, address_id: str, since: datetime, *, exclude_id: str | None = None
+    ) -> int:
+        """Emails to the address received since ``since`` that were read or are being read (the daily cap): status in
+        `FETCHED_STATUSES`, or ``pending`` with at least one claim (another worker has it now, or will try it again), so
+        a burst of concurrent workers see each other. ``exclude_id`` leaves out the caller's own row."""
+        ...
+
+    async def add_code(self, item: StoredVerificationCode) -> None: ...
+
+    async def list_codes(
+        self, user_id: str, *, since: datetime, now: datetime, limit: int = 20
+    ) -> list[StoredVerificationCode]:
+        """The account's codes received at or after ``since``, unused and unexpired at ``now``, newest first."""
+        ...
+
+    async def use_code(self, code_id: str, *, now: datetime) -> bool:
+        """Mark an unused code used; False when it is unknown or was used already."""
+        ...
+
+    async def purge_codes(self, now: datetime) -> int:
+        """Delete codes that are used or expired at ``now``; how many."""
+        ...
+
+
 __all__ = [
     "ACCOUNT_OWNER_PREFIX",
     "APPLICATION_COLUMNS",
+    "FETCHED_STATUSES",
     "FILLED_TERMINAL_STAGES",
+    "INBOUND_EMAIL_COLUMNS",
     "NEVER_STORED_ANSWER_KEYS",
     "NOT_ON_SITE_OUTCOME",
     "ApplyRepo",
@@ -1789,6 +1940,7 @@ __all__ = [
     "EmailTaken",
     "HandoffRepo",
     "HoldState",
+    "InboxRepo",
     "InterviewRepo",
     "JobSearchRepo",
     "KvRepo",
@@ -1824,6 +1976,8 @@ __all__ = [
     "StoredClaimMark",
     "StoredEntitlements",
     "StoredHandoff",
+    "StoredInboundEmail",
+    "StoredInboxAddress",
     "StoredInterview",
     "StoredMagicLink",
     "StoredMatch",
@@ -1836,6 +1990,7 @@ __all__ = [
     "StoredSearchRun",
     "StoredUser",
     "StoredVariant",
+    "StoredVerificationCode",
     "StoredWeeklyEdition",
     "StoredWeeklySubscription",
     "ToolEvent",

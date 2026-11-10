@@ -2,10 +2,11 @@
  * `/apply`: Your applications (canvas 6). Status tabs with counts computed here from the list; a table of the tab's
  * applications (role, resume, where it stands with its reason, since, one action) that becomes stacked cards under
  * 760 px; the pipeline after sending, with "No reply in 3 weeks" computed from the sent time plus 21 days and a one-tap
- * "Heard back?"; the replies panel (paste an email: inline on wide screens, in a sheet on a phone); and the engine metrics
- * for admins only (the route answers 404 to anyone else, and then nothing is shown).
+ * "Heard back?"; the application inbox (InboxPanel.tsx: the tracking address auto-apply puts on forms, shown only while
+ * the feature is on); the replies panel under it, the paste fallback (inline on wide screens, in a sheet on a phone); and
+ * the engine metrics for admins only (the route answers 404 to anyone else, and then nothing is shown).
  *
- * The "Ready for you today" stack and the forwarding address are v2 (spec 3.1 Settled, 3.2) and are left out.
+ * The "Ready for you today" stack is v2 (spec 3.1 Settled) and is left out.
  *
  * `ApplicationsView` is presentational (the gallery renders it from fixtures); `ApplicationsScreen` fetches and polls
  * every 3 s while something is still moving on the worker's side.
@@ -25,6 +26,7 @@ import { shortDate } from '../billing/format';
 import { NARROW_QUERY, plural, timeAgo, useMediaQuery, useNow } from '../lib/ui';
 import { ATS_LABEL, STAGE_LABEL, STOP_REASON_TEXT, applyApi, busy, errorText, isSent, stageTone } from './api';
 import { EmailPanel } from './EmailPanel';
+import { InboxPanel, inboxActive, useInbox } from './InboxPanel';
 import { DETAILS_ROUTE, linkTo } from './route';
 import type { Navigate } from './route';
 
@@ -179,6 +181,10 @@ export interface ApplicationsViewProps {
   onEmailChanged?: () => void;
   /** The balance chip (the account's entitlement); the gallery passes a static one. */
   balance?: ReactNode;
+  /** The application inbox panel, above the paste panel (absent, or rendering nothing, while the feature is off). */
+  inbox?: ReactNode;
+  /** The person has an active tracking address: pasting reads as the fallback for mail to their own address. */
+  inboxActive?: boolean;
   /** Admins only; null hides the panel. */
   metrics?: ApplyMetrics | null;
   error?: string | null;
@@ -270,7 +276,14 @@ export function ApplicationsView(props: ApplicationsViewProps) {
 
       {anySent && <Pipeline cols={cols} now={now} navigate={navigate} onStage={onStage} />}
 
-      <Replies applications={applications.filter((a) => isSent(a.stage) || a.stage === 'check_this_one')} onEmail={props.onEmail} onChanged={props.onEmailChanged} />
+      {props.inbox}
+
+      <Replies
+        applications={applications.filter((a) => isSent(a.stage) || a.stage === 'check_this_one')}
+        onEmail={props.onEmail}
+        onChanged={props.onEmailChanged}
+        fallback={props.inboxActive === true}
+      />
 
       {props.metrics && <MetricsPanel metrics={props.metrics} />}
     </div>
@@ -333,7 +346,7 @@ function Pipeline({
         <h2 id={titleId} className="kicker">
           After sending
         </h2>
-        <p className="ap-muted ap-small">Moves only forward, from replies you paste, or when you mark it.</p>
+        <p className="ap-muted ap-small">Moves only forward, from employers' replies, or when you mark it.</p>
       </div>
       <div className="ap-pipe">
         {PIPE_COLUMNS.map(([id, label]) => (
@@ -408,10 +421,13 @@ function Replies({
   applications,
   onEmail,
   onChanged,
+  fallback = false,
 }: {
   applications: readonly ApplicationSummary[];
   onEmail: (body: EmailClassifyRequest) => Promise<EmailClassification>;
   onChanged?: () => void;
+  /** The inbox above reads employers' replies; this is for mail that went to the person's own address. */
+  fallback?: boolean;
 }) {
   const narrow = useMediaQuery(NARROW_QUERY);
   const [open, setOpen] = useState(false);
@@ -421,11 +437,22 @@ function Replies({
     <section className="panel ap-panel ap-stack-s" aria-label="Replies">
       <div className="ap-headrow">
         <div className="ap-measure">
-          <p className="ap-strong">Replies come to your own inbox</p>
-          <p className="ap-muted">
-            Employers write to the email on your form. Paste a reply here and we move its application forward. We read only what
-            you paste, and never keep it.
-          </p>
+          {fallback ? (
+            <>
+              <p className="ap-strong">A reply went to your own email?</p>
+              <p className="ap-muted">
+                Paste it here and we move its application forward. We read only what you paste, and never keep it.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="ap-strong">Replies come to your own inbox</p>
+              <p className="ap-muted">
+                Employers write to the email on your form. Paste a reply here and we move its application forward. We read only
+                what you paste, and never keep it.
+              </p>
+            </>
+          )}
         </div>
         <button type="button" className="btn" aria-expanded={open} aria-controls={narrow ? undefined : formId} onClick={() => setOpen(!open)}>
           Paste an email
@@ -531,6 +558,8 @@ export function ApplicationsScreen({ navigate }: { navigate: Navigate }) {
       .catch(() => setMetrics(null));
   }, [refresh]);
 
+  const inbox = useInbox(() => void refresh());
+
   const moving = apps?.some((a) => busy(a.stage)) ?? false;
   useEffect(() => {
     if (!moving) return;
@@ -558,6 +587,8 @@ export function ApplicationsScreen({ navigate }: { navigate: Navigate }) {
       error={error}
       metrics={metrics}
       balance={<EntitlementChip />}
+      inbox={<InboxPanel {...inbox} now={now} navigate={navigate} />}
+      inboxActive={inboxActive(inbox.status)}
       onStage={async (id, stage) => {
         await applyApi.stage(id, stage);
         await refresh();

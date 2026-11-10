@@ -95,6 +95,10 @@ RULES: dict[str, tuple[str, ...]] = {
     # A match reaches it through a Protocol the api layer implements (it never imports match); nothing imports apply except
     # api, the container and the CLI.
     "apply": (*_SERVICES, "portfolio"),
+    # the application inbox: a self-contained service like the card (its own tables, the Svix check, the Resend client); the
+    # email classifier and the spend reservation reach it as a callable the container builds, so it never imports apply or
+    # guard. Nothing imports inbox except api and the container.
+    "inbox": ("core", "contract", "storage.ports"),
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",
@@ -116,6 +120,7 @@ RULES: dict[str, tuple[str, ...]] = {
         "weekly",
         "card",
         "apply",
+        "inbox",
         "guard",
         "ingest",
         "prompts",

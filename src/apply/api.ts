@@ -26,6 +26,14 @@ import type {
   StopReason,
   YourDetails,
 } from '../../shared/apply';
+import type {
+  CreateInboxAddressRequest,
+  InboxAddress,
+  InboxEmailList,
+  InboxStatus,
+  UpdateInboxAddressRequest,
+} from '../../shared/inbox';
+import { INBOX_EMAILS_DEFAULT_LIMIT, INBOX_EMAILS_MAX_LIMIT } from '../../shared/inbox';
 
 export class ApplyError extends Error {
   constructor(
@@ -125,6 +133,26 @@ export const applyApi = {
   email: (body: EmailClassifyRequest) => call<EmailClassification>('/api/apply/email', json('POST', body)),
   /** Admins only; anyone else gets a 404. */
   metrics: () => call<ApplyMetrics>('/api/apply/metrics'),
+};
+
+/** `?limit=` for the inbox list, kept inside the contract's bounds (a whole number, 1 to the most one list returns). */
+export function inboxLimit(limit: number = INBOX_EMAILS_DEFAULT_LIMIT): number {
+  if (!Number.isFinite(limit)) return INBOX_EMAILS_DEFAULT_LIMIT;
+  return Math.min(INBOX_EMAILS_MAX_LIMIT, Math.max(1, Math.floor(limit)));
+}
+
+/**
+ * The application inbox (shared/inbox.ts, the routes listed at its top). `status` answers with the feature off
+ * (`enabled: false`); every other route is a 404 then, and a 401 without a sign-in, like the apply routes.
+ */
+export const inboxApi = {
+  status: () => call<InboxStatus>('/api/inbox/status'),
+  /** "Get my address": only with the person's consent; a person who already has one gets that one back. */
+  create: () => call<InboxAddress>('/api/inbox/address', json('POST', { consent: true } satisfies CreateInboxAddressRequest)),
+  /** Turn the address off or on, copies off or on. */
+  update: (body: UpdateInboxAddressRequest) => call<InboxAddress>('/api/inbox/address', json('PATCH', body)),
+  /** Newest first. Never a body, never a verification code. */
+  emails: (limit?: number) => call<InboxEmailList>(`/api/inbox/emails?limit=${inboxLimit(limit)}`),
 };
 
 /** The filled form (`review`) or the employer's confirmation page (`confirmation`); `v` busts the cache on a new fill. */

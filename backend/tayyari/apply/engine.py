@@ -43,7 +43,7 @@ from typing import Any, Final, Literal, Protocol
 from pydantic import ValidationError
 
 from tayyari.apply import stages
-from tayyari.apply.answers import Answerer, FillContext, Resume, bank_of
+from tayyari.apply.answers import Answerer, BankEntry, FillContext, Resume, bank_of
 from tayyari.apply.browser_use import BrowserUseBusy
 from tayyari.apply.driver import BrowserDriver, GuardNotActive, PageOpener, open_cost
 from tayyari.apply.fill_loop import FieldListLoop
@@ -89,6 +89,20 @@ TAILORED_NEED_KEY: Final = "resume:tailored"
 
 FactsSource = Callable[[StoredApplication], Awaitable[list[dict[str, str]]]]
 """The person's facts an answer may cite (a match's book): ``{"id", "text"}`` rows, [] when there are none."""
+
+FormEmail = Callable[[str], Awaitable[str | None]]
+"""``form_email(user_id)``: the address to put on forms instead of the saved email (the person's active tracking address
+while the application inbox is on), or None to keep the saved one. Built by the container from the inbox service."""
+
+
+def with_form_email(bank: dict[str, BankEntry], address: str | None) -> dict[str, BankEntry]:
+    """The answer bank with ``email`` set to ``address`` (the tracking address), unless there is none or the person
+    asked to be asked each time. The saved answer itself is not changed."""
+    entry = bank.get("email")
+    if not address or (entry is not None and entry.ask_each_time):
+        return bank
+    when = entry.answered_at if entry is not None else None
+    return {**bank, "email": BankEntry(address, "you", False, when)}
 
 
 class SpendLedger(Protocol):
@@ -202,6 +216,8 @@ class ApplyEngine:
     resume_for: ResumeSource | None = None
     """The resume of the row's choice (`seams.ResumeSource`); without one, the saved file."""
     facts: FactsSource | None = None
+    form_email: FormEmail | None = None
+    """The tracking address for the email field (`FormEmail`); without one, the saved email."""
     new_id: Callable[[str], str] = field(default=_new_id)
     submit_wait_s: float = SUBMIT_WAIT_S
     attach_wait_s: float = ATTACH_WAIT_S
@@ -281,6 +297,11 @@ class ApplyEngine:
         profile = await self.repo.get_profile(app.owner_key)
         stored = await self.repo.list_answers(app.user_id)
         bank = bank_of({a.question_key: a for a in stored})
+        if self.form_email is not None:
+            try:
+                bank = with_form_email(bank, await self.form_email(app.user_id))
+            except Exception as exc:  # the saved email stays; the review shows which one goes
+                log.warning("apply_form_email_failed", application_id=app.id, error=type(exc).__name__)
         resume: Resume | None = None
         if self.resume_for is not None:
             resume = await self.resume_for(app)
@@ -681,7 +702,9 @@ __all__ = [
     "TAILORED_NEED_KEY",
     "ApplyEngine",
     "FactsSource",
+    "FormEmail",
     "PageOpener",
     "SpendLedger",
     "filled_progress",
+    "with_form_email",
 ]
