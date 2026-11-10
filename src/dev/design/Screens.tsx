@@ -15,6 +15,7 @@ import { WeeklyRoom } from '../../weekly/WeeklyRoom';
 import { Dashboard } from '../../views/Dashboard';
 import { GraphView } from '../../views/GraphView';
 import { Onboarding } from '../../views/Onboarding';
+import { DESK_SEED, EMPTY_SEED } from './deskFixtures';
 import type { ScreenId } from './state';
 import '../../styles/match.css';
 import '../../styles/weekly.css';
@@ -58,8 +59,10 @@ const PREVIOUS: Profile = {
   sources: PROFILE.sources.filter((s) => s.kind !== 'portfolio'),
 };
 
+/** `?desk=empty` is the desk of someone with only the analysis: no previous one, nothing practised, saved or asked. */
 function DashboardScreen() {
-  return <Dashboard profile={PROFILE} previous={PREVIOUS} />;
+  const empty = new URLSearchParams(window.location.search).get('desk') === 'empty';
+  return <Dashboard profile={PROFILE} previous={empty ? null : PREVIOUS} seed={empty ? EMPTY_SEED : DESK_SEED} />;
 }
 
 function GraphScreen() {
