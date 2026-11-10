@@ -1219,6 +1219,12 @@ app only. Needs `leafout.in` verified on Resend and `TAYYARI_WEEKLY__SENDER`; un
 **Frontend.** `/weekly`: the reading room (the edition as a newspaper page, press fonts and tokens), the subscription panel, the
 archive; a dashboard tile on Home; `/dev/weekly` gallery from fixtures.
 
+## R2 · /resume: one set of blocks, many resumes
+
+Decided 2026-11-10. The spec, the user's decisions, version 1 and what comes after it are in `docs/resume.md`.
+Canvas: https://claude.ai/artifact/BCWRN3S1E3ue6w9jEY566c (last row). Contract `shared/resume.ts`, table `resumes`
+(migration 0018), routes `/api/resumes*`, package `backend/tayyari/resume/`, page `src/resume/`.
+
 ## Follow-ups
 
 Found while writing the documentation wave (2026-10-11). None blocks the landed waves; each is a change for a later wave.

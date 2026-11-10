@@ -35,6 +35,9 @@
               .../details/answers/{key}; POST .../details/still-true, .../details/first-check; PUT, DELETE
               /api/apply/profile/resume; POST /api/apply/email; GET
               /api/apply/metrics (auto-apply, behind AUTO_APPLY_ENABLED; signed in only, every route but the status)
+    resume    GET /api/resumes?profile=, /api/resumes/blocks?profile=; POST /api/resumes/path?profile=; GET, PATCH
+              /api/resumes/{id}; POST .../finalise, .../default; GET .../resume.pdf, .../resume.docx (/resume: one set
+              of blocks, many resumes)
 
 Each module only validates input, applies the guards (rate limit, spend ceiling) in the documented order and
 hands over to a service from the `Container`. Failures before a stream starts are JSON ``{"error": ...}``.
@@ -61,6 +64,7 @@ from tayyari.api.routes import (
     portfolio,
     prepare,
     profile,
+    resume,
     sample,
     speech,
     weekly,
@@ -87,6 +91,7 @@ for _module in (
     weekly,
     card,
     apply,
+    resume,
 ):
     api_router.include_router(_module.router)
 

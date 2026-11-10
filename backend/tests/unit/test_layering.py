@@ -95,6 +95,9 @@ RULES: dict[str, tuple[str, ...]] = {
     # A match reaches it through a Protocol the api layer implements (it never imports match); nothing imports apply except
     # api, the container and the CLI.
     "apply": (*_SERVICES, "portfolio"),
+    # /resume (one set of blocks, many resumes) sits beside match and reuses its fact book, selection, verifier, export and
+    # lint (no fork); nothing imports resume except api and the container.
+    "resume": (*_SERVICES, "match"),
     # api sits on top: everything except the CLI (and the legacy app).
     "api": (
         "core",
@@ -116,6 +119,7 @@ RULES: dict[str, tuple[str, ...]] = {
         "weekly",
         "card",
         "apply",
+        "resume",
         "guard",
         "ingest",
         "prompts",

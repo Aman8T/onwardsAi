@@ -24,6 +24,8 @@ const DiscoverRoot = lazy(() => import('./discover/DiscoverRoot').then((m) => ({
 const PracticeRoot = lazy(() => import('./practice/PracticeRoot').then((m) => ({ default: m.PracticeRoot })));
 // The Leafout Weekly (the reader's personal paper, its subscription and archive) likewise; it needs no profile on screen.
 const WeeklyView = lazy(() => import('./weekly/WeeklyView').then((m) => ({ default: m.WeeklyView })));
+// The resumes (one set of blocks arranged many ways: the resume in view, Finalise, the blocks) likewise; it needs a profile.
+const ResumeRoot = lazy(() => import('./resume/ResumeRoot').then((m) => ({ default: m.ResumeRoot })));
 // The pricing page (and Checkout.js, which only it loads) likewise; anyone may open it, signed in or not.
 const PricingView = lazy(() => import('./billing/PricingView').then((m) => ({ default: m.PricingView })));
 
@@ -41,9 +43,9 @@ export function App() {
   // a posting pasted while signed out is matched once they are back signed in
   useResumeAfterSignIn();
 
-  // dashboard/graph/chat/portfolio/discover/practice need a profile; fall back to the empty dashboard without one
+  // dashboard/graph/chat/portfolio/discover/practice/resume need a profile; fall back to the empty dashboard without one
   const shown =
-    (view === 'dashboard' || view === 'graph' || view === 'chat' || view === 'portfolio' || view === 'discover' || view === 'practice') && !profile
+    (view === 'dashboard' || view === 'graph' || view === 'chat' || view === 'portfolio' || view === 'discover' || view === 'practice' || view === 'resume') && !profile
       ? 'onboarding'
       : view;
 
@@ -87,6 +89,11 @@ export function App() {
           {shown === 'practice' && profile && (
             <Suspense fallback={<ViewSkeleton />}>
               <PracticeRoot profile={profile} />
+            </Suspense>
+          )}
+          {shown === 'resume' && profile && (
+            <Suspense fallback={<ViewSkeleton />}>
+              <ResumeRoot profile={profile} />
             </Suspense>
           )}
           {shown === 'weekly' && (

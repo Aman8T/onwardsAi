@@ -34,6 +34,8 @@
                                                    read, the spend guard around them, the mail provider when a key is set)
     CardService                                   (the radar card: the owner's settings and link, the snapshot drawn from the
                                                    newest profile; no model)
+    ResumeService                                 (/resume: a profile's resumes over the match's facts, export and lint;
+                                                   the guarded Claude client for one relevance call per path resume)
     match_anonymous                               (may a visitor with no sign-in match a posting: the setting
                                                    resolved against the sign-in methods this server offers)
     maintenance                                   (retention purge, a tracked background task; it keeps
@@ -113,6 +115,7 @@ if TYPE_CHECKING:
     from tayyari.match.service import MatchService
     from tayyari.portfolio.service import PortfolioService
     from tayyari.prepare.service import PrepareService
+    from tayyari.resume.service import ResumeService
     from tayyari.speech.engine import SpeechEngine
     from tayyari.speech.service import SpeechService
     from tayyari.storage.ports import StoredApplication
@@ -151,6 +154,7 @@ class ContainerOverrides:
     - ``handoff``: the marketing-site hand-off service itself.
     - ``weekly``: The Leafout Weekly service itself (``mailer`` also stands in for its mail provider).
     - ``card``: the radar card service itself.
+    - ``resume``: the resume service itself.
     - ``speech``: the speech service itself. ``speech_engine``: just its engine (the service is still built here, over the
       real ``kv`` budget); giving one switches Sarvam speech on without a ``SARVAM_API_KEY`` (the
       ``TAYYARI_SPEECH__ENABLED`` kill switch still wins). Tests hand in a fake engine; nothing calls Sarvam.
@@ -189,6 +193,7 @@ class ContainerOverrides:
     handoff: HandoffService | None = None
     weekly: WeeklyService | None = None
     card: CardService | None = None
+    resume: ResumeService | None = None
     razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
     apply_opener: PageOpener | None = None
@@ -284,6 +289,9 @@ class Container:
     """The radar card's owner side. No model is called; the public routes count in the ``card`` window."""
     card_pictures: CardPictures
     """The radar card's LinkedIn pictures, drawn by resvg off the event loop and kept in memory by link and version."""
+    resume: ResumeService
+    """/resume: a profile's resumes. The routes reserve spend before the uploaded resume or a path resume is made (the
+    sources may be read, and a path resume asks the model once); every Claude call goes through the guarded client."""
     rate_limiter: RateLimiter
     spend_guard: SpendGuard
     ip_hash_key: bytes
@@ -340,6 +348,7 @@ class Container:
         from tayyari.match.service import MatchService
         from tayyari.portfolio.service import PortfolioService
         from tayyari.prepare.service import PrepareService
+        from tayyari.resume.service import ResumeService
         from tayyari.speech.service import SpeechService
         from tayyari.weekly.compose import EditionComposer
         from tayyari.weekly.jobs import JobDesk
@@ -737,6 +746,20 @@ class Container:
                 )
             )
 
+            resume = (
+                ov.resume
+                if ov.resume is not None
+                else ResumeService(
+                    claude=claude,
+                    model=settings.match_model,
+                    match=match,
+                    resumes=repos.resumes,
+                    user_facts=repos.user_facts,
+                    clock=clock,
+                    call_timeout_s=settings.match.call_timeout_s,
+                )
+            )
+
             match_anonymous = settings.match.anonymous_allowed(auth.providers)
             log.info(
                 "match_anonymous",
@@ -793,6 +816,7 @@ class Container:
             weekly=weekly,
             card=card,
             card_pictures=CardPictures(settings.card.png_cache_size),
+            resume=resume,
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,
             ip_hash_key=ip_hash_key,

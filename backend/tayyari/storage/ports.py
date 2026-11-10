@@ -1368,6 +1368,73 @@ class CardRepo(Protocol):
         ...
 
 
+# ───────────────────────────── resumes (R2) ─────────────────────────────
+
+ResumeKind = Literal["upload", "path"]
+"""What a stored resume is: the resume as the person wrote it, or one arranged for a next role."""
+
+
+@dataclass(frozen=True, slots=True)
+class StoredResume:
+    """One resume of a profile (`ResumeRow`). ``draft`` and ``final`` are `ResumeVariant` JSON (``final`` with its lint,
+    None until the resume is finalised), ``facts`` the `match.models.FactBook` JSON the lines cite. Storage keeps all
+    three opaque: the resume service validates them. ``role_key`` is ``''`` for the upload and the `Role.id` for a path.
+    ``version`` counts the writes of the draft."""
+
+    id: str
+    user_id: str | None
+    """The account the resume belongs to; None for a profile with no account."""
+    profile_id: str
+    kind: ResumeKind
+    role_key: str
+    title: str
+    draft: dict[str, Any]
+    final: dict[str, Any] | None
+    facts: dict[str, Any]
+    is_default: bool
+    version: int
+    created_at: datetime
+    updated_at: datetime
+    finalised_at: datetime | None = None
+
+
+class ResumeRepo(Protocol):
+    """Resumes, at most one per ``(profile, kind, role_key)``. Who may open one is decided above storage, from the
+    resume's profile (`ProfileRepo.get_access`): the repository reads by id alone."""
+
+    async def create(self, item: StoredResume) -> StoredResume:
+        """Store a new resume and return it. When the profile already has one of this ``(kind, role_key)`` (two first
+        requests at once), nothing is written and the one already stored is returned."""
+        ...
+
+    async def get(self, resume_id: str) -> StoredResume | None:
+        """The resume with this id, or None."""
+        ...
+
+    async def find(self, profile_id: str, kind: ResumeKind, role_key: str) -> StoredResume | None:
+        """The profile's resume of this kind (and role), or None."""
+        ...
+
+    async def list_for_profile(self, profile_id: str) -> list[StoredResume]:
+        """Every resume of the profile, oldest first (the upload is made first)."""
+        ...
+
+    async def save(self, item: StoredResume, *, expected_version: int) -> bool:
+        """Write ``draft``, ``final``, ``facts``, ``finalised_at``, ``updated_at`` and ``version`` of ``item``, only if
+        the stored version is still ``expected_version``. False (and nothing written) when it is not, or the resume is
+        gone. Never changes the owner, the profile, the kind, the title or the default."""
+        ...
+
+    async def set_default(self, profile_id: str, resume_id: str) -> bool:
+        """Make ``resume_id`` the profile's one default (every other resume of the profile stops being it), in one
+        transaction. False (and nothing changed) when the resume is not this profile's or has no finalised version."""
+        ...
+
+    async def adopt(self, profile_id: str, user_id: str) -> int:
+        """Give the profile's resumes that have no account to ``user_id`` (the profile was claimed); returns the count."""
+        ...
+
+
 # ───────────────────────────── auto-apply ─────────────────────────────
 
 
@@ -1809,6 +1876,8 @@ __all__ = [
     "ProfileNotClaimable",
     "ProfileOwnedByAnother",
     "ProfileRepo",
+    "ResumeKind",
+    "ResumeRepo",
     "RunStatus",
     "SessionConflict",
     "SessionNotFound",
@@ -1831,6 +1900,7 @@ __all__ = [
     "StoredPlan",
     "StoredPlaybook",
     "StoredPortfolio",
+    "StoredResume",
     "StoredRunMetric",
     "StoredSearchDoc",
     "StoredSearchRun",

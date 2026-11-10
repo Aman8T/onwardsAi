@@ -598,6 +598,46 @@ class ProfileFactsRow(Base):
     created_at: Mapped[datetime] = mapped_column(UtcDateTime)
 
 
+RESUME_KIND_LEN = 8
+"""``upload`` or ``path``."""
+RESUME_ROLE_KEY_LEN = 64
+"""A path resume's role: a `Role.id` of the graph (a slug of at most 40 characters plus a counter)."""
+RESUME_TITLE_LEN = 255
+
+
+class ResumeRow(Base):
+    """One resume of a profile (R2, `/resume`): an arrangement of the person's blocks. ``kind`` is ``upload`` (the resume
+    as the person wrote it; ``role_key`` is ``''``) or ``path`` (arranged for one next role; ``role_key`` is that
+    `Role.id`), and a profile has at most one of each ``(kind, role_key)``. ``draft`` is the `ResumeVariant` being
+    edited; ``final`` the `ResumeVariant` with its lint as it was last finalised (NULL until then), the only version
+    that is downloaded; ``facts`` the person's `FactBook` as it stood (the facts the lines cite, as ``matches.facts``).
+    Exactly one resume of a profile ``is_default``. ``version`` goes up by one on every write of the draft, and a write
+    lands only on the version before it. ``user_id`` is NULL for a profile with no account, like ``matches``. Follows
+    its account and its profile (ON DELETE CASCADE)."""
+
+    __tablename__ = "resumes"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"))
+    kind: Mapped[str] = mapped_column(String(RESUME_KIND_LEN))
+    role_key: Mapped[str] = mapped_column(String(RESUME_ROLE_KEY_LEN))
+    title: Mapped[str] = mapped_column(String(RESUME_TITLE_LEN))
+    draft: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    final: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+    facts: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    is_default: Mapped[bool] = mapped_column(Boolean)
+    version: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    finalised_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        UniqueConstraint("profile_id", "kind", "role_key", name="uq_resumes_profile_id_kind_role_key"),
+        Index("ix_resumes_profile_id", "profile_id"),
+    )
+
+
 # ───────────────────────────── discover ─────────────────────────────
 
 
@@ -1189,6 +1229,9 @@ __all__ = [
     "NAMING_CONVENTION",
     "PLAN_ID_LEN",
     "PROVIDER_ID_LEN",
+    "RESUME_KIND_LEN",
+    "RESUME_ROLE_KEY_LEN",
+    "RESUME_TITLE_LEN",
     "ROLE_ID_LEN",
     "USER_AGENT_LEN",
     "WEEKLY_TOKEN_LEN",
@@ -1227,6 +1270,7 @@ __all__ = [
     "ProfileFactsRow",
     "ProfileRow",
     "RateLimitHitRow",
+    "ResumeRow",
     "RunMetricRow",
     "SpendDailyRow",
     "UserFactRow",

@@ -1,0 +1,796 @@
+/*
+ * /resume: one set of blocks, many resumes (src/resume).
+ *
+ * Tokens and the global primitives only (.btn, .panel, .field, .kicker, .serif, .title, .numeral): no colour
+ * literal, no shadow, no blur, hairlines of 1 px, no animation. Depth is tone: the resume is a well inside the page,
+ * a marked line is a soft accent fill, the pressed line is a 1 px outline.
+ *
+ * Three columns (the resumes, the one in view, the coach) become two under 1180 px and one stack under 760 px,
+ * where every control is a 44 px target.
+ */
+
+.rs-view {
+  --rs-gutter: var(--s6);
+  --rs-wrap: 1440px;
+  /* the line number's column in the sheet */
+  --rs-no: 2.2em;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ───────────── header ───────────── */
+
+.rs-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  min-height: 76px;
+  padding-block: var(--s3);
+  padding-inline: max(var(--rs-gutter), calc((100% - var(--rs-wrap)) / 2 + var(--rs-gutter)));
+  background: var(--bg);
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.rs-header-start,
+.rs-header-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+}
+
+.rs-header-end {
+  gap: var(--s2) var(--s3);
+  margin-left: auto;
+}
+
+.rs-navbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  min-height: 36px;
+  padding: 0 var(--s3);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .rs-navbtn:hover {
+    color: var(--text);
+  }
+}
+
+.rs-navbtn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+/* ───────────── page ───────────── */
+
+.rs-main {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: var(--s5);
+  width: 100%;
+  max-width: var(--rs-wrap);
+  margin-inline: auto;
+  padding: var(--s5) var(--rs-gutter) var(--s8);
+}
+
+.rs-cols {
+  display: grid;
+  grid-template-columns: calc(var(--s8) * 4) minmax(0, 1fr) calc(var(--s9) * 4);
+  gap: var(--s6);
+  align-items: start;
+}
+
+.rs-two {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--s6);
+  align-items: start;
+}
+
+.rs-stack,
+.rs-doc,
+.rs-inview,
+.rs-rail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rs-stack,
+.rs-rail {
+  gap: var(--s5);
+}
+
+.rs-doc,
+.rs-inview {
+  gap: var(--s4);
+}
+
+/* ───────────── type ───────────── */
+
+.rs-small {
+  font-size: var(--fs-2);
+}
+
+.rs-fine {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+/* a live region that has nothing to say takes no room */
+.rs-fine:empty,
+.rs-notice:empty {
+  display: none;
+}
+
+.rs-cite {
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.rs-muted {
+  color: var(--text-muted);
+}
+
+.rs-accent {
+  color: var(--accent);
+}
+
+.rs-strong {
+  font-weight: 500;
+}
+
+.rs-title {
+  font-size: var(--fs-6);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.rs-title:focus-visible,
+.rs-state-title:focus-visible {
+  outline: none;
+}
+
+.rs-lede {
+  max-width: var(--measure);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.rs-notice {
+  font-size: var(--fs-2);
+  color: var(--danger);
+}
+
+.rs-link {
+  color: var(--accent);
+}
+
+.rs-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+/* ───────────── buttons and rows ───────────── */
+
+.rs-btn {
+  justify-content: center;
+  min-height: 36px;
+  text-decoration: none;
+}
+
+.rs-view .btn[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+.rs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.rs-actions-end {
+  justify-content: flex-end;
+}
+
+.rs-rows,
+.rs-list,
+.rs-checks,
+.rs-sources {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rs-rows {
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.rs-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s3);
+  align-items: center;
+  min-height: 44px;
+  padding: var(--s3) var(--s2);
+  border-top: var(--hair) solid var(--line);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.rs-row-top {
+  align-items: start;
+}
+
+/* rows inside a panel: the panel's own edge closes the list, and its padding is the gutter */
+.rs-rows-in {
+  border-bottom: 0;
+}
+
+.rs-rows-in > .rs-row {
+  padding-inline: 0;
+}
+
+.rs-rows-in > .rs-row:first-child {
+  border-top: 0;
+}
+
+.rs-rows.panel {
+  padding: 0 var(--s5);
+}
+
+.rs-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rs-row-link {
+  border-radius: var(--r-s);
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.rs-row-link.is-on {
+  background: var(--accent-soft);
+}
+
+@media (hover: hover) {
+  .rs-row-link:not(.is-on):hover {
+    background: var(--surface-2);
+  }
+}
+
+.rs-list {
+  gap: var(--s2);
+  line-height: 1.5;
+}
+
+/* ───────────── the rail ───────────── */
+
+.rs-rail-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+/* a small turned mark: a hairline box in mono */
+.rs-stamp {
+  display: inline-block;
+  padding: 1px var(--s2);
+  border: var(--hair) solid var(--accent-ui);
+  border-radius: var(--r-s);
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  color: var(--accent);
+  white-space: nowrap;
+  transform: rotate(-2deg);
+}
+
+/* the pinned note: a tinted slip, one hairline, a pin, a turn of one degree */
+.rs-note {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: var(--s5) var(--s4) var(--s4);
+  background: var(--accent-soft);
+  border: var(--hair) solid var(--line-strong);
+  border-radius: var(--r-s);
+  transform: rotate(1deg);
+}
+
+.rs-note::before {
+  content: '';
+  position: absolute;
+  top: var(--s2);
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--accent-ui);
+}
+
+.rs-hand {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-4);
+  line-height: var(--lh-snug);
+  color: var(--text);
+}
+
+/* ───────────── the resume in view ───────────── */
+
+.rs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s4);
+}
+
+.rs-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.rs-head-acts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s2);
+  max-width: 100%;
+  text-align: right;
+}
+
+.rs-sheet-wrap,
+.rs-out,
+.rs-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.rs-group {
+  gap: var(--s3);
+}
+
+.rs-key {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.rs-key-box {
+  flex: none;
+  width: var(--s3);
+  height: var(--s3);
+  background: var(--accent-soft);
+  border: var(--hair) solid var(--line-strong);
+  border-radius: 2px;
+}
+
+/* the resume as lines of text; each bullet is a button */
+.rs-sheet {
+  padding: var(--s4) var(--s4) var(--s4) var(--s2);
+  background: var(--well);
+  border: var(--hair) solid var(--line-strong);
+  border-radius: var(--r-s);
+}
+
+.rs-line {
+  display: grid;
+  grid-template-columns: var(--rs-no) minmax(0, 1fr) auto;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: 2px var(--s2) 2px 0;
+  border-radius: var(--r-s);
+  font-size: var(--fs-2);
+  font-weight: 400;
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+
+button.rs-line {
+  width: 100%;
+  text-align: left;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.rs-line-no,
+.rs-line-mark {
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  color: var(--text-faint);
+}
+
+.rs-line-no {
+  text-align: right;
+}
+
+.rs-line-mark {
+  color: var(--accent);
+}
+
+@media (hover: hover) {
+  button.rs-line:hover .rs-line-no {
+    color: var(--text);
+  }
+
+  button.rs-line:not(.is-marked):hover {
+    background: var(--surface-2);
+  }
+}
+
+.rs-line.is-name .rs-line-t {
+  font-family: var(--font-serif);
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
+}
+
+.rs-line.is-head {
+  margin-top: var(--s3);
+}
+
+.rs-line.is-head .rs-line-t {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  letter-spacing: var(--track-open);
+}
+
+.rs-line.is-role .rs-line-t {
+  font-weight: 500;
+}
+
+.rs-line.is-marked {
+  background: var(--accent-soft);
+}
+
+.rs-line.is-on {
+  outline: 1px solid var(--accent-ui);
+}
+
+/* the pressed block: above the resume, and it stays in view while the resume scrolls under it */
+.rs-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+}
+
+.rs-block:not(.is-empty):not(.is-inline) {
+  position: sticky;
+  top: var(--s3);
+  z-index: 2;
+}
+
+/* on a phone it sits under its line, inside the sheet */
+.rs-block.is-inline {
+  margin: var(--s2) 0 var(--s3) var(--s2);
+  border-color: var(--accent-ui);
+}
+
+.rs-block-head,
+.rs-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2) var(--s3);
+}
+
+.rs-sources {
+  gap: var(--s2);
+}
+
+.rs-source {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rs-quote {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.rs-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.rs-edit-field {
+  padding: var(--s2) var(--s3);
+  border: var(--hair) solid var(--line-strong);
+  border-radius: var(--r-m);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+}
+
+.rs-edit-field:focus {
+  border-color: var(--accent-ui);
+}
+
+.rs-edit-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s3);
+}
+
+/* ───────────── the coach ───────────── */
+
+.rs-coach,
+.rs-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+  padding: var(--s5);
+}
+
+.rs-coach {
+  padding: var(--s4);
+}
+
+.rs-ask-qs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s2);
+}
+
+.rs-ask-q {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: var(--s1) var(--s3);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-l);
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  color: var(--text-muted);
+  text-align: left;
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .rs-ask-q:hover {
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+}
+
+.rs-coach-foot {
+  padding-top: var(--s3);
+  border-top: var(--hair) solid var(--line);
+}
+
+/* ───────────── finalise ───────────── */
+
+.rs-finding {
+  border-color: var(--accent-ui);
+}
+
+.rs-finding-text {
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+
+/* the passage no fact supports: marked by tone, and by the sentence under it */
+.rs-mark {
+  padding: 0 var(--s1);
+  border-radius: 2px;
+  background: var(--accent-soft);
+  color: inherit;
+}
+
+.rs-choice[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border: var(--hair) solid var(--accent-ui);
+  color: var(--text);
+}
+
+.rs-check {
+  display: grid;
+  grid-template-columns: 4.5em minmax(0, 1fr);
+  gap: var(--s3);
+  align-items: baseline;
+  padding: var(--s2) 0;
+  border-top: var(--hair) solid var(--line);
+}
+
+.rs-check-state {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.rs-check-state.is-open {
+  color: var(--accent);
+}
+
+/* ───────────── states ───────────── */
+
+.rs-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+  padding: var(--s5);
+}
+
+.rs-state-title {
+  font-size: var(--fs-5);
+}
+
+/* ───────────── narrower ───────────── */
+
+/* the coach drops under the two columns */
+@media (max-width: 1180px) {
+  .rs-cols {
+    grid-template-columns: calc(var(--s8) * 4) minmax(0, 1fr);
+  }
+
+  .rs-coach {
+    grid-column: 1 / -1;
+  }
+
+  .rs-ask-qs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 900px) {
+  .rs-two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* touch: every control is a full 44 px target */
+@media (pointer: coarse) {
+  .rs-btn,
+  .rs-navbtn,
+  .rs-ask-q,
+  button.rs-line {
+    min-height: 44px;
+  }
+
+  button.rs-line {
+    align-items: center;
+  }
+}
+
+/* ───────────── phone: one stack ───────────── */
+
+@media (max-width: 760px) {
+  .rs-view {
+    --rs-gutter: var(--s4);
+  }
+
+  .rs-header {
+    min-height: 0;
+  }
+
+  /* the header keeps the one-tap light/dark toggle and drops the Atmosphere text button, like the other sub-screens */
+  .rs-header .atmo-btn {
+    display: none;
+  }
+
+  .rs-main {
+    padding-top: var(--s4);
+    padding-bottom: var(--s7);
+  }
+
+  .rs-cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s5);
+  }
+
+  .rs-coach {
+    grid-column: auto;
+  }
+
+  .rs-ask-qs {
+    flex-direction: column;
+  }
+
+  .rs-btn,
+  .rs-navbtn,
+  .rs-ask-q,
+  button.rs-line {
+    min-height: 44px;
+  }
+
+  button.rs-line {
+    align-items: center;
+  }
+
+  /* nothing is turned on a phone */
+  .rs-note {
+    transform: none;
+  }
+
+  .rs-head-acts {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .rs-actions-end {
+    justify-content: flex-start;
+  }
+
+  .rs-sheet {
+    padding: var(--s3) var(--s3) var(--s3) var(--s1);
+  }
+
+  /* the mark goes under its line, so the line keeps the width */
+  .rs-line {
+    grid-template-columns: var(--rs-no) minmax(0, 1fr);
+    font-size: 13.5px;
+  }
+
+  .rs-line-mark {
+    grid-column: 2;
+  }
+
+  .rs-small,
+  .rs-quote,
+  .rs-edit-field {
+    font-size: 13.5px;
+  }
+
+  .rs-fine,
+  .rs-cite,
+  .rs-line-mark,
+  .rs-line-no,
+  .rs-stamp,
+  .rs-check-state {
+    font-size: 12px;
+  }
+
+  .rs-coach,
+  .rs-card,
+  .rs-state {
+    padding: var(--s4);
+  }
+
+  .rs-rows.panel {
+    padding: 0 var(--s4);
+  }
+}

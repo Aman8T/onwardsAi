@@ -16,13 +16,15 @@ import { DEFAULT_PRACTICE, isPracticePath, mergePractice, parsePracticeUrl, prac
 import type { PracticeQuery } from './practice/route';
 import { DEFAULT_WEEKLY, isWeeklyPath, mergeWeekly, parseWeeklyUrl, weeklyPath } from './weekly/route';
 import type { WeeklyQuery } from './weekly/route';
+import { DEFAULT_RESUME, isResumePath, mergeResume, parseResumeUrl, resumePath } from './resume/route';
+import type { ResumeQuery } from './resume/route';
 
 /**
  * 'onboarding' is the empty dashboard (no profile yet: one popup asking for a resume and links); 'dashboard' is the
  * entry point once a graph exists, with the skill radar, the next roles and a summary of every feature inside it;
  * 'graph' is one next role opened from the dashboard (the role radar and its requirements).
  */
-export type View = 'onboarding' | 'analysis' | 'dashboard' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing' | 'discover' | 'practice' | 'weekly';
+export type View = 'onboarding' | 'analysis' | 'dashboard' | 'graph' | 'chat' | 'portfolio' | 'match' | 'pricing' | 'discover' | 'practice' | 'weekly' | 'resume';
 
 /** The app's own address: `/` is accepted and moved here, so one link stands for the dashboard. */
 export const DASHBOARD_PATH = '/dashboard';
@@ -129,6 +131,8 @@ export interface AppState {
   practiceRoute: PracticeQuery;
   /** The Leafout Weekly's edition while `view` is 'weekly'; mirrored in the address (/weekly?e=…). */
   weeklyRoute: WeeklyQuery;
+  /** The resume screen while `view` is 'resume'; mirrored in the address (/resume?…). */
+  resumeRoute: ResumeQuery;
 }
 
 const STORAGE_KEY = 'tayyari.v1';
@@ -162,6 +166,7 @@ function load(): AppState {
     discoverRoute: DEFAULT_QUERY,
     practiceRoute: DEFAULT_PRACTICE,
     weeklyRoute: DEFAULT_WEEKLY,
+    resumeRoute: DEFAULT_RESUME,
   };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -195,6 +200,9 @@ function fromAddress(s: AppState): AppState {
     // the Weekly is the signed-in reader's own paper on the server: it needs no profile on screen
     const weekly = parseWeeklyUrl(window.location.pathname, window.location.search);
     if (weekly) return { ...s, view: 'weekly', weeklyRoute: weekly };
+    // the resumes are arrangements of a profile's blocks: like Discover and Practice, they need one on screen
+    const resume = parseResumeUrl(window.location.pathname, window.location.search);
+    if (resume) return s.profile ? { ...s, view: 'resume', resumeRoute: resume } : s;
     const route = parseMatchPath(window.location.pathname);
     if (route) return { ...s, view: 'match', matchRoute: route };
     // the app's own address: `/` moves to /dashboard (the query string, a hand-off from leafout.in, stays with it)
@@ -233,6 +241,7 @@ function set(patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) {
   leaveDiscoverAddress();
   leavePracticeAddress();
   leaveWeeklyAddress();
+  leaveResumeAddress();
   listeners.forEach((l) => l());
   clearTimeout(persistTimer);
   persistTimer = setTimeout(persist, 250);
@@ -283,6 +292,15 @@ function leaveWeeklyAddress() {
   }
 }
 
+/** The address reads /resume only while the resume screens are showing. */
+function leaveResumeAddress() {
+  try {
+    if (state.view !== 'resume' && isResumePath(window.location.pathname)) window.history.replaceState(null, '', DASHBOARD_PATH);
+  } catch {
+    /* no address bar to update */
+  }
+}
+
 // Back and Forward move between match screens, Discover, Practice and the pricing page (and out of them, to where the person came from).
 try {
   window.addEventListener('popstate', () => {
@@ -305,9 +323,14 @@ try {
       set({ view: 'weekly', weeklyRoute: weekly });
       return;
     }
+    const resume = parseResumeUrl(window.location.pathname, window.location.search);
+    if (resume) {
+      set({ view: state.profile ? 'resume' : 'onboarding', resumeRoute: resume });
+      return;
+    }
     const route = parseMatchPath(window.location.pathname);
     if (route) set({ view: 'match', matchRoute: route });
-    else if (state.view === 'match' || state.view === 'pricing' || state.view === 'discover' || state.view === 'practice' || state.view === 'weekly') set({ view: state.profile ? 'dashboard' : 'onboarding' });
+    else if (state.view === 'match' || state.view === 'pricing' || state.view === 'discover' || state.view === 'practice' || state.view === 'weekly' || state.view === 'resume') set({ view: state.profile ? 'dashboard' : 'onboarding' });
   });
 } catch {
   /* not in a browser */
@@ -593,6 +616,23 @@ export const actions = {
       /* no address bar to update */
     }
     set({ view: 'practice', practiceRoute: route });
+  },
+
+  /**
+   * Open the resumes, or change the screen: `patch` is merged into the screen the person last had (`id: undefined` goes
+   * back to the default resume), and the address follows. Moving between resumes and screens adds a history entry so
+   * Back steps through them; `replace` is for housekeeping that should not.
+   */
+  openResume(patch: Partial<ResumeQuery> = {}, opts: { replace?: boolean } = {}) {
+    const route = mergeResume(state.resumeRoute, patch);
+    // the address moves first, so leaving another screen keeps its history entry for Back
+    try {
+      const path = resumePath(route);
+      if (window.location.pathname + window.location.search !== path) window.history[opts.replace ? 'replaceState' : 'pushState'](null, '', path);
+    } catch {
+      /* no address bar to update */
+    }
+    set({ view: 'resume', resumeRoute: route });
   },
 
   /** Open the pricing page (anyone may read it) and move the address to /pricing so Back returns to where they were. */

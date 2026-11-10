@@ -26,6 +26,7 @@ from ..ports import (
     PrepareRepo,
     ProfileFactsRepo,
     ProfileRepo,
+    ResumeRepo,
     SessionRepo,
     UserFactRepo,
     UserRepo,
@@ -47,6 +48,7 @@ from .match import SqlMatchRepo, SqlPostingRepo, SqlProfileFactsRepo, SqlUserFac
 from .portfolios import SqlPortfolioRepo
 from .prepare import SqlPrepareRepo
 from .profiles import SqlProfileRepo
+from .resumes import SqlResumeRepo
 from .sessions import SqlSessionRepo
 from .users import SqlUserRepo
 from .weekly import SqlWeeklyRepo
@@ -78,6 +80,7 @@ class Repositories:
     weekly: WeeklyRepo
     card: CardRepo
     apply: ApplyRepo
+    resumes: ResumeRepo
 
 
 def build_repositories(db: Database, clock: Clock | None = None) -> Repositories:
@@ -105,6 +108,7 @@ def build_repositories(db: Database, clock: Clock | None = None) -> Repositories
         weekly=SqlWeeklyRepo(db),
         card=SqlCardRepo(db),
         apply=SqlApplyRepo(db),
+        resumes=SqlResumeRepo(db),
     )
 
 
@@ -128,6 +132,7 @@ __all__ = [
     "SqlPrepareRepo",
     "SqlProfileFactsRepo",
     "SqlProfileRepo",
+    "SqlResumeRepo",
     "SqlSessionRepo",
     "SqlUserFactRepo",
     "SqlUserRepo",
