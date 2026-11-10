@@ -4,10 +4,12 @@
  * feature: applications and Apply for me, posting matches, Practice, the running Prepare plans, Discover's last search
  * and the Weekly. A role row opens that role's screen (GraphView); every other card leads into its feature.
  *
- * It opens on the read (views/dashboard/Read.tsx): who you are in three or four sentences written from the graph at
- * analysis time, each cited clause opening its evidence; under it what the resume left out, what moved since the last
- * analysis, and questions worth asking about yourself. Every number here is counted in code from what the features
- * already store; the read is the one thing a model phrased, and it is stored on the profile.
+ * It opens on the read (views/dashboard/Read.tsx): the greeting and one line about the person at a time. Under it sits
+ * the desk (views/dashboard/Desk.tsx, board "Home · the desk"): the last thing touched with the way back into it, the
+ * person's own pinned note, weeks in a row, the last twelve weeks as squares with what moved, and further down the shelf
+ * of what is worth saying out loud. The cards are a bento of uneven sizes with a slip or two tilted a degree; on a
+ * phone it is one straight column. Every number here is counted in code from what the features already store; the read
+ * is the one thing a model phrased, and it is stored on the profile.
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { Profile } from '../../shared/types';
@@ -21,6 +23,7 @@ import { SaveInvite } from '../auth/SaveInvite';
 import { useMe } from '../auth/useMe';
 import { RadarGlyph } from '../components/Radar';
 import { STAGES, STAGE_LABEL, useTracker } from '../discover/applications/tracker';
+import type { TrackedJob } from '../discover/applications/tracker';
 import { readArea } from '../discover/area';
 import { getLatestRun } from '../discover/jobsearch/api';
 import { FIT_WORD } from '../discover/jobsearch/words';
@@ -36,10 +39,13 @@ import { useLoad } from '../practice/hub/useLoad';
 import type { Load } from '../practice/hub/useLoad';
 import { PipsLine } from '../practice/Pips';
 import { listPlans } from '../prepare/api';
-import { actions } from '../store';
+import { actions, useApp } from '../store';
 import { useSubscription } from '../weekly/useSubscription';
-import { AskStrip, Celebrations, Hello, NotOnResume, SinceLast, usePreviousProfile } from './dashboard/Read';
-import { achievements } from './dashboard/model';
+import { Momentum, PickUpCard, PinnedNote, Shelf, ShowingUp } from './dashboard/Desk';
+import { AskStrip, Hello, usePreviousProfile } from './dashboard/Read';
+import { activeDays, bestWeekday, pickUps, pinnedNote, practiceTrend, weekStreak, weeksStrip } from './dashboard/deskModel';
+import type { ThreadLike } from './dashboard/deskModel';
+import { achievements, deltas } from './dashboard/model';
 import { GraphHeader } from './graph/GraphHeader';
 import { NowGraph } from './graph/NowGraph';
 import '../styles/shell.css';
@@ -48,40 +54,102 @@ import '../styles/dashboard.css';
 /** Auto-apply stages that wait on the person (the Apply screen's "Waiting for you" and "Check this one"). */
 const WAITING = new Set(['waiting_for_you', 'needs_signin', 'check_this_one']);
 
-export function Dashboard({ profile, previous: forcedPrevious }: { profile: Profile; previous?: Profile | null }) {
+/** What the playground hands in so the desk can be looked at without the server. The app never passes it. */
+export interface DashboardSeed {
+  history?: PracticeHistory;
+  plans?: PreparePlanSummary[];
+  matches?: MatchSummary[];
+  tracked?: TrackedJob[];
+  threads?: ThreadLike[];
+}
+
+const NO_PLANS: PreparePlanSummary[] = [];
+
+const longDay = (iso: string): string | null => {
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }) : null;
+};
+
+/** Reopen a plan the way the graph seeded it: the role's question, or the gap's. */
+function openPlan(profile: Profile, p: PreparePlanSummary) {
+  const role = profile.roles.find((r) => r.id === p.roleId);
+  if (!role) return;
+  const req = p.requirement ? role.requirements.find((r) => r.name === p.requirement) : undefined;
+  const a = req ? requirementAction(req, role) : roleAction(role, roleStanding(profile, role.id));
+  // the same seed the graph uses, so an existing thread for this role (or gap) reopens with its stored plan
+  actions.openChat(a.origin, a.question, { roleId: role.id, ...(req ? { requirement: req.name } : {}) });
+}
+
+export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile: Profile; previous?: Profile | null; seed?: DashboardSeed }) {
   const found = usePreviousProfile(profile);
   // the playground hands a previous analysis in; the app finds its own
   const previous = forcedPrevious === undefined ? found : forcedPrevious;
-  const data = useDashboardData(profile);
-  const { items: tracked } = useTracker(profile.id);
+  const read = useDashboardData(profile);
+  const data = useMemo<DashboardData>(
+    () => ({
+      history: seed?.history ? { status: 'ready', data: seed.history } : read.history,
+      plans: seed?.plans ? { status: 'ready', data: seed.plans } : read.plans,
+      matches: seed?.matches ?? read.matches,
+    }),
+    [seed, read.history, read.plans, read.matches],
+  );
+  const tracker = useTracker(profile.id);
+  const tracked = seed?.tracked ?? tracker.items;
+  const stored = useApp((s) => s.threads);
+  const threads: readonly ThreadLike[] = seed?.threads ?? stored;
   const { user } = useMe();
   const { subscription } = useSubscription(user?.id);
   const now = useNow(60_000);
+  const history = data.history.status === 'ready' ? data.history.data : null;
+  const plans = data.plans.status === 'ready' ? data.plans.data : NO_PLANS;
   const shelf = useMemo(
-    () =>
-      achievements({
-        profile,
-        previous,
-        tracked,
-        history: data.history.status === 'ready' ? data.history.data : null,
-        matches: data.matches,
-        plans: data.plans.status === 'ready' ? data.plans.data : [],
-        subscribed: !!subscription && subscription.status !== 'off',
-        now,
-      }),
-    [profile, previous, tracked, data.history, data.matches, data.plans, subscription, now],
+    () => achievements({ profile, previous, tracked, history, matches: data.matches, plans, subscribed: !!subscription && subscription.status !== 'off', now }),
+    [profile, previous, tracked, history, data.matches, plans, subscription, now],
   );
+  // the desk: the last thing touched, the days something was done, the run of weeks
+  const desk = useMemo(() => {
+    const input = { profile, previous, history, plans, matches: data.matches, tracked, threads };
+    const days = activeDays(input);
+    return {
+      picks: pickUps(input),
+      note: pinnedNote(tracked),
+      streak: weekStreak(days, now),
+      strip: weeksStrip(days, now),
+      weekday: bestWeekday(days),
+      trend: practiceTrend(history),
+    };
+  }, [profile, previous, history, plans, data.matches, tracked, threads, now]);
+  const moved = useMemo(() => (previous ? deltas(previous, profile).slice(0, 3) : []), [previous, profile]);
+  const weak = history ? history.claims.filter((c) => c.best === 'shaky' || c.best === 'couldnt').length : 0;
+  const reading = data.history.status === 'loading' || data.plans.status === 'loading';
+
   return (
     <div className="gv-view db-view">
       <GraphHeader profile={profile} current="dashboard" />
       <SaveInvite profile={profile} />
 
       <main className="db-main">
-        {/* the person's own space: the greeting, one line of the read at a time, what is worth celebrating */}
+        {/* the person's own space: the greeting and one line of the read at a time */}
         <Hello profile={profile} />
-        <Celebrations items={shelf} />
-        <NotOnResume profile={profile} />
-        <SinceLast profile={profile} previous={previous} />
+
+        {/* the desk: where they left off, their own note, the weeks they showed up */}
+        <div className="db-bento">
+          <PickUpCard profile={profile} items={desk.picks} loading={reading} weak={weak} now={now} onOpenPlan={(p) => openPlan(profile, p)} />
+          <div className="db-side">
+            {desk.note && <PinnedNote job={desk.note} />}
+            <ShowingUp streak={desk.streak} />
+          </div>
+          <Momentum
+            strip={desk.strip}
+            weekday={desk.weekday}
+            trend={desk.trend}
+            loading={data.history.status === 'loading'}
+            moved={moved}
+            since={previous ? longDay(previous.createdAt) : null}
+            mastery={profile.mastery.score}
+          />
+        </div>
+
         <AskStrip profile={profile} />
 
         {/* NOW: the skill radar, whole, with its rail and its popovers */}
@@ -89,12 +157,13 @@ export function Dashboard({ profile, previous: forcedPrevious }: { profile: Prof
           <NowGraph profile={profile} />
         </section>
 
-        <div className="db-grid">
+        <div className="db-bento">
           <NextRoles profile={profile} />
-          <ApplicationsCard profile={profile} />
-          <MatchesCard matches={data.matches} />
+          <Shelf profile={profile} items={shelf} />
+          <ApplicationsCard items={tracked} />
           <PracticeCard load={data.history} />
           <PrepareCard profile={profile} load={data.plans} />
+          <MatchesCard matches={data.matches} />
           <DiscoverCard profile={profile} />
           <WeeklyCard />
         </div>
@@ -199,8 +268,7 @@ function NextRoles({ profile }: { profile: Profile }) {
 
 /* ───────────────────────── Applications ───────────────────────── */
 
-function ApplicationsCard({ profile }: { profile: Profile }) {
-  const { items } = useTracker(profile.id);
+function ApplicationsCard({ items }: { items: readonly TrackedJob[] }) {
   const apply = useApplications();
   const sent = applyOn(apply.status) && apply.ready;
   const counts = STAGES.map((stage) => ({ stage, n: items.filter((t) => t.stage === stage).length }));
@@ -210,7 +278,7 @@ function ApplicationsCard({ profile }: { profile: Profile }) {
   const open = items.filter((t) => t.stage !== 'closed').length;
 
   return (
-    <section className="panel db-card" aria-labelledby="db-apps-h">
+    <section className="panel db-card db-apps" aria-labelledby="db-apps-h">
       <div className="db-card-head">
         <h2 className="kicker" id="db-apps-h">
           Your applications
@@ -273,7 +341,7 @@ function MatchesCard({ matches }: { matches: MatchSummary[] }) {
   const now = useNow(60_000);
 
   return (
-    <section className="panel db-card" aria-labelledby="db-match-h">
+    <section className="panel db-card db-matches" aria-labelledby="db-match-h">
       <div className="db-card-head">
         <h2 className="kicker" id="db-match-h">
           Posting matches
@@ -327,7 +395,7 @@ function PracticeCard({ load }: { load: Load<PracticeHistory> }) {
   const lastAt = last ? Date.parse(last.createdAt) : NaN;
 
   return (
-    <section className="panel db-card" aria-labelledby="db-pc-h" aria-busy={load.status === 'loading'}>
+    <section className="panel db-card db-practice" aria-labelledby="db-pc-h" aria-busy={load.status === 'loading'}>
       <div className="db-card-head">
         <h2 className="kicker" id="db-pc-h">
           Practice
@@ -375,19 +443,10 @@ function PracticeCard({ load }: { load: Load<PracticeHistory> }) {
 function PrepareCard({ profile, load }: { profile: Profile; load: Load<PreparePlanSummary[]> }) {
   const plans = load.status === 'ready' ? load.data : [];
   const shown = plans.slice(0, 3);
-
-  /** Reopen a plan the way the graph seeded it: the role's question, or the gap's. */
-  const open = (p: PreparePlanSummary) => {
-    const role = profile.roles.find((r) => r.id === p.roleId);
-    if (!role) return;
-    const req = p.requirement ? role.requirements.find((r) => r.name === p.requirement) : undefined;
-    const a = req ? requirementAction(req, role) : roleAction(role, roleStanding(profile, role.id));
-    // the same seed the graph uses, so an existing thread for this role (or gap) reopens with its stored plan
-    actions.openChat(a.origin, a.question, { roleId: role.id, ...(req ? { requirement: req.name } : {}) });
-  };
+  const open = (p: PreparePlanSummary) => openPlan(profile, p);
 
   return (
-    <section className="panel db-card" aria-labelledby="db-prep-h" aria-busy={load.status === 'loading'}>
+    <section className="panel db-card db-prepare" aria-labelledby="db-prep-h" aria-busy={load.status === 'loading'}>
       <div className="db-card-head">
         <h2 className="kicker" id="db-prep-h">
           Prepare
@@ -439,7 +498,7 @@ function DiscoverCard({ profile }: { profile: Profile }) {
   const at = run ? Date.parse(run.createdAt) : NaN;
 
   return (
-    <section className="panel db-card db-half" aria-labelledby="db-dc-h" aria-busy={load.status === 'loading'}>
+    <section className="panel db-card db-discover" aria-labelledby="db-dc-h" aria-busy={load.status === 'loading'}>
       <h2 className="kicker" id="db-dc-h">
         Discover
       </h2>
@@ -477,7 +536,7 @@ function WeeklyCard() {
   const unread = subscribed ? subscription.unread : 0;
 
   return (
-    <section className="panel db-card db-half" aria-labelledby="db-wk-h">
+    <section className="panel db-card db-weekly" aria-labelledby="db-wk-h">
       <div className="db-card-head">
         <h2 className="kicker" id="db-wk-h">
           The Leafout Weekly

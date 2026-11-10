@@ -1,7 +1,8 @@
 /*
  * The dashboard (board "Dashboard · /dashboard · the entry point"). Class prefix db-. It shares the graph shell's
  * header, width and gutters (shell.css: --gv-max, --gv-gutter); the skill radar inside keeps now.css. Tokens only,
- * hairlines, depth from tone and space.
+ * hairlines, depth from tone and space. The cards are a bento: uneven widths on one 12-column grid, a slip or two
+ * tilted a degree. Under 760px it is one straight column and nothing is tilted.
  */
 
 .db-main {
@@ -31,8 +32,8 @@
   padding: var(--s3) var(--s6) var(--s6);
 }
 
-/* the summaries */
-.db-grid {
+/* the bento: one 12-column grid, cards of uneven width */
+.db-bento {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: var(--s4);
@@ -48,9 +49,49 @@
   padding: var(--s5);
 }
 
-.db-next {
-  grid-column: span 8;
+/* the desk: pick up (tall, left), the note and the weeks beside it, momentum under those */
+.db-pick {
+  grid-column: span 6;
+  grid-row: span 2;
+  gap: var(--s4);
   padding: var(--s5) var(--s6);
+}
+
+.db-side {
+  grid-column: span 6;
+  display: flex;
+  align-items: stretch;
+  gap: var(--s4);
+  min-width: 0;
+}
+
+.db-mom {
+  grid-column: span 6;
+}
+
+/* the features: 7 + 5, then 5 + 4 + 3, then 4 + 3 + 5 */
+.db-next {
+  grid-column: span 7;
+  padding: var(--s5) var(--s6);
+}
+
+.db-shelf {
+  grid-column: span 5;
+}
+
+.db-apps,
+.db-weekly {
+  grid-column: span 5;
+}
+
+.db-practice,
+.db-matches {
+  grid-column: span 4;
+}
+
+.db-prepare,
+.db-discover {
+  grid-column: span 3;
 }
 
 .db-card-head {
@@ -115,11 +156,6 @@
   list-style: none;
 }
 
-/* the last row: two cards share it */
-.db-half {
-  grid-column: span 6;
-}
-
 .db-row,
 .db-role {
   display: flex;
@@ -143,6 +179,12 @@
     text-decoration: underline;
     text-underline-offset: 3px;
   }
+}
+
+/* a row's action stays on one line beside its text */
+.db-row > .db-fine {
+  flex: none;
+  white-space: nowrap;
 }
 
 .db-row-text,
@@ -182,6 +224,9 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .db-stat {
@@ -232,28 +277,35 @@
 /* ───────────── responsive ───────────── */
 
 @media (max-width: 1100px) {
-  .db-next {
-    grid-column: span 12;
-  }
-
   .db-card {
     grid-column: span 6;
   }
 
-  .db-next.db-card {
-    grid-column: span 12;
+  .db-pick,
+  .db-side,
+  .db-mom,
+  .db-next,
+  .db-shelf {
+    grid-column: 1 / -1;
+  }
+
+  .db-pick {
+    grid-row: auto;
   }
 }
 
 @media (max-width: 760px) {
-  .db-card,
-  .db-next.db-card,
-  .db-half.db-card {
-    grid-column: span 12;
+  .db-bento > * {
+    grid-column: 1 / -1;
   }
 
   .db-now {
     padding: var(--s2) var(--s4) var(--s5);
+  }
+
+  .db-pick,
+  .db-next {
+    padding: var(--s5);
   }
 
   .db-stats {
@@ -312,7 +364,7 @@
   color: var(--text);
 }
 
-.db-line {
+.db-read-line {
   display: inline;
   margin: 0;
   padding: 0;
@@ -327,7 +379,7 @@
   animation: db-line-in var(--d-base) var(--ease) both;
 }
 
-button.db-line {
+button.db-read-line {
   text-decoration: underline dotted var(--line-strong);
   text-decoration-thickness: 1px;
   text-underline-offset: 5px;
@@ -335,13 +387,13 @@ button.db-line {
 }
 
 @media (hover: hover) {
-  button.db-line:hover {
+  button.db-read-line:hover {
     text-decoration-style: solid;
     text-decoration-color: var(--accent-ui);
   }
 }
 
-button.db-line.is-open {
+button.db-read-line.is-open {
   text-decoration-style: solid;
   text-decoration-color: var(--accent-ui);
 }
@@ -359,7 +411,7 @@ button.db-line.is-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .db-line {
+  .db-read-line {
     animation: none;
   }
 }
@@ -406,38 +458,287 @@ button.db-line.is-open {
   gap: var(--s2) var(--s4);
 }
 
-/* ───────────── worth celebrating: the shelf ───────────── */
+/* ───────────── the desk: where you left off ───────────── */
 
-.db-shelf {
+.db-pick-hero {
   display: flex;
   flex-direction: column;
   gap: var(--s3);
 }
 
-.db-ach-row {
+.db-pick-title {
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
+  text-wrap: balance;
+}
+
+.db-pick-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+}
+
+.db-pick-hero .db-foot {
+  margin-top: 0;
+}
+
+/* the newest of the other features sit at the foot of the card */
+.db-pick-rows {
+  margin-top: auto;
+}
+
+.db-pick-rows > li:last-child .db-row {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+/* ───────────── slips, handwriting, a stamp: the hand-touched details ───────────── */
+
+/* a slip of paper held by one pin. Tilted a degree or two on a wide screen, straight on a phone. */
+.db-note {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+  padding: var(--s5) var(--s4) var(--s4);
+  background: var(--accent-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-s);
+  color: var(--text);
+  text-align: left;
+  transform: rotate(-1.5deg);
+}
+
+.db-note::before {
+  content: '';
+  position: absolute;
+  top: var(--s2);
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--accent-ui);
+}
+
+.db-note-pin {
+  flex: 1.2 1 0;
+  align-self: center;
+}
+
+@media (hover: hover) {
+  .db-note-pin:hover {
+    border-color: var(--accent-ui);
+  }
+}
+
+.db-note-r {
+  margin-top: var(--s2);
+  transform: rotate(1deg);
+}
+
+.db-note-act {
+  align-self: flex-start;
+  margin-top: var(--s1);
+}
+
+.db-hand {
+  font-family: var(--font-serif);
+  font-size: var(--fs-4);
+  font-style: italic;
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+/* a line written in the margin of a card */
+.db-margin {
+  color: var(--text-muted);
+  transform: rotate(-2deg);
+  transform-origin: left center;
+}
+
+.db-stamp {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--accent-ui);
+  border-radius: var(--r-s);
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  color: var(--accent);
+  transform: rotate(-2deg);
+}
+
+/* ───────────── showing up ───────────── */
+
+.db-streak {
+  flex: 1 1 0;
+  justify-content: space-between;
+}
+
+.db-streak-n {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s1) var(--s2);
+}
+
+.db-streak-big {
+  font-size: var(--fs-6);
+  line-height: 1;
+}
+
+.db-streak-fresh {
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
+}
+
+/* ───────────── momentum: the days as squares, then what moved ───────────── */
+
+.db-mom-body {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(220px, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s4) var(--s5);
+  align-items: start;
+}
+
+.db-mom-days {
+  display: flex;
+  flex-direction: column;
   gap: var(--s3);
+}
+
+.db-days {
+  display: flex;
+  gap: var(--s2);
+}
+
+.db-days-keys,
+.db-dots {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  gap: 3px;
+}
+
+.db-days-keys {
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  line-height: 12px;
+  color: var(--text-faint);
+}
+
+/* a column is a week, Monday at the top; the last column is this week */
+.db-dots {
+  grid-auto-flow: column;
+  grid-auto-columns: 12px;
+}
+
+.db-dot {
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+
+.db-dot.is-l1 {
+  background: var(--fill-strong);
+  border-color: transparent;
+}
+
+.db-dot.is-l2 {
+  background: var(--accent-ui);
+  border-color: transparent;
+}
+
+/* later this week: not a missed day */
+.db-dot.is-ahead {
+  border-style: dashed;
+}
+
+.db-dot.is-today {
+  border-color: var(--text);
+}
+
+.db-trends {
+  display: flex;
+  flex-direction: column;
   margin: 0;
-  padding: 0 0 var(--s1);
+  padding: 0;
   list-style: none;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
+}
+
+.db-trend {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) 0;
+  border-top: 1px solid var(--line);
+}
+
+.db-trend:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.db-trend-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.db-trend-n {
+  flex: none;
+  font-size: var(--fs-3);
+  white-space: nowrap;
+}
+
+.db-delta-was {
+  color: var(--text-faint);
+}
+
+/* the share defended, one bar a session, the newest in the accent */
+.db-spark {
+  display: inline-flex;
+  flex: none;
+  align-items: flex-end;
+  gap: 2px;
+  height: 28px;
+}
+
+.db-spark-bar {
+  width: 8px;
+  border-radius: 2px 2px 0 0;
+  background: var(--fill-strong);
+}
+
+.db-spark-bar.is-last {
+  background: var(--accent-ui);
+}
+
+/* ───────────── the shelf: worth saying out loud ───────────── */
+
+.db-achs {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .db-ach {
   display: flex;
-  gap: var(--s3);
   align-items: flex-start;
+  gap: var(--s3);
   min-width: 0;
-  padding: var(--s4);
-  scroll-snap-align: start;
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--line);
 }
 
-.db-ach.is-fresh {
-  background: var(--accent-soft);
-  border-color: transparent;
+.db-achs > .db-ach:first-child {
+  padding-top: 0;
+  border-top: 0;
 }
 
 /* the mark: the ring-and-dot of the brand, as a 1px ring */
@@ -453,6 +754,7 @@ button.db-line.is-open {
 
 .db-ach-text {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
@@ -465,74 +767,7 @@ button.db-line.is-open {
   text-wrap: balance;
 }
 
-/* ───────────── not on your resume (idea 1) ───────────── */
-
-.db-surprise {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--s3) var(--s5);
-  align-items: center;
-  padding-top: var(--s4);
-  border-top: 1px solid var(--line);
-}
-
-.db-surprise-text {
-  grid-column: 1;
-  grid-row: 1;
-  max-width: 72ch;
-}
-
-.db-surprise-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s2);
-  grid-column: 1 / -1;
-}
-
-.db-surprise-act {
-  grid-column: 2;
-  grid-row: 1;
-  align-self: center;
-  justify-self: end;
-}
-
-/* ───────────── since last time (idea 2) ───────────── */
-
-.db-since {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  padding-top: var(--s4);
-  border-top: 1px solid var(--line);
-}
-
-.db-deltas {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--s4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.db-delta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  padding: var(--s1) 0 var(--s1) var(--s3);
-  border-left: 1px solid var(--line-strong);
-}
-
-.db-delta-n {
-  font-size: var(--fs-3);
-}
-
-.db-delta-was {
-  color: var(--text-faint);
-}
-
-/* ───────────── ask about yourself (idea 2) ───────────── */
+/* ───────────── ask about yourself ───────────── */
 
 .db-ask {
   display: flex;
@@ -586,34 +821,36 @@ button.db-line.is-open {
   }
 }
 
-@media (max-width: 1100px) {
-  .db-deltas {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 760px) {
-  .db-line {
+  .db-read-line {
     font-size: var(--fs-4);
   }
 
-  .db-drawer,
-  .db-surprise {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .db-surprise-act {
-    grid-column: 1;
-    grid-row: 3;
-    justify-self: start;
-  }
-
-  .db-deltas {
+  .db-drawer {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .db-ask-q {
     white-space: normal;
     text-align: left;
+  }
+
+  /* the desk on a phone: one column, nothing tilted */
+  .db-side {
+    flex-direction: column;
+  }
+
+  .db-note,
+  .db-margin,
+  .db-stamp {
+    transform: none;
+  }
+
+  .db-note-pin {
+    align-self: stretch;
+  }
+
+  .db-mom-body {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

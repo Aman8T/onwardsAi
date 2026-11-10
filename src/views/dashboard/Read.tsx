@@ -1,26 +1,25 @@
 /**
  * The top of the dashboard, the person's own space:
  *
- *   Hello          the greeting for the hour and the day, then the read: one line at a time, in a tone (proud, roast,
- *                  motivational, quirky, dry, plain), changing every few seconds and on "Another"; a line that rests on
- *                  a skill opens that skill's evidence in a drawer under it (the quote, its source, "This is wrong")
- *   Celebrations   the shelf of what is worth celebrating, counted from the graph and what the features store
- *   NotOnResume    the strongest things the other sources proved that the resume never mentions, with the one action
- *   SinceLast      what moved since the previous analysis, when there is one to compare with
- *   AskStrip       one field and four questions worth asking about yourself; each opens the chat with that question
+ *   Hello                the greeting for the hour and the day, then the read: one line at a time, in a tone (proud,
+ *                        roast, motivational, quirky, dry, plain), changing every few seconds and on "Another"; a line
+ *                        that rests on a skill opens that skill's evidence in a drawer under it (the quote, its source,
+ *                        "This is wrong")
+ *   usePreviousProfile   the analysis before this one, for what moved since
+ *   AskStrip             one field and four questions worth asking about yourself; each opens the chat with that question
  *
- * The read's lines are written once, at analysis time, and stored on the profile; everything else here is counted.
+ * The read's lines are written once, at analysis time, and stored on the profile. The desk under it (Desk.tsx) holds
+ * what is counted: where the person left off, their weeks, the shelf.
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Profile, ReadTone } from '../../../shared/types';
 import { useMe } from '../../auth/useMe';
 import { fetchProfile } from '../../lib/api';
-import { skillAction, sourceAction } from '../../lib/prompts';
+import { skillAction } from '../../lib/prompts';
 import { plural, useMediaQuery } from '../../lib/ui';
 import { actions, useApp } from '../../store';
-import type { Achievement } from './model';
-import { TONE_LABEL, askQuestions, deltas, notOnResume, readLines } from './model';
+import { TONE_LABEL, askQuestions, readLines } from './model';
 
 /* ───────────────────────── the greeting and the read ───────────────────────── */
 
@@ -106,7 +105,7 @@ export function Hello({ profile }: { profile: Profile }) {
           <button
             key={at}
             type="button"
-            className={`db-line serif${open?.skillId === line.skillId ? ' is-open' : ''}`}
+            className={`db-read-line serif${open?.skillId === line.skillId ? ' is-open' : ''}`}
             aria-expanded={open?.skillId === line.skillId}
             aria-controls="db-evidence"
             onClick={() => setOpen(open?.skillId === line.skillId ? null : { skillId: line.skillId!, at: 0 })}
@@ -114,7 +113,7 @@ export function Hello({ profile }: { profile: Profile }) {
             {line.text}
           </button>
         ) : (
-          <p key={at} className="db-line serif">
+          <p key={at} className="db-read-line serif">
             {line.text}
           </p>
         )}
@@ -172,100 +171,7 @@ export function Hello({ profile }: { profile: Profile }) {
   );
 }
 
-/* ───────────────────────── worth celebrating ───────────────────────── */
-
-const KIND_LABEL: Record<Achievement['kind'], string> = {
-  graph: 'Your graph',
-  moved: 'Moved',
-  applications: 'Applications',
-  practice: 'Practice',
-  match: 'Posting match',
-  prepare: 'Prepare',
-  weekly: 'The Weekly',
-};
-
-function dayOf(iso: string | undefined): string {
-  const t = iso ? Date.parse(iso) : NaN;
-  return Number.isFinite(t) ? new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
-}
-
-export function Celebrations({ items }: { items: Achievement[] }) {
-  if (items.length === 0) return null;
-  const fresh = items.filter((a) => a.fresh).length;
-  return (
-    <section className="db-shelf" aria-labelledby="db-shelf-h">
-      <div className="db-card-head">
-        <h2 className="kicker" id="db-shelf-h">
-          Worth celebrating
-        </h2>
-        <span className="kicker">{fresh > 0 ? `${plural(fresh, 'new thing')} this week` : 'Counted from your records, not scored'}</span>
-      </div>
-      <ul className="db-ach-row">
-        {items.map((a) => (
-          <li key={a.id} className={`panel db-ach${a.fresh ? ' is-fresh' : ''}`}>
-            <span className="db-ach-mark" aria-hidden="true" />
-            <span className="db-ach-text">
-              <span className="kicker">
-                {KIND_LABEL[a.kind]}
-                {a.at ? ` · ${dayOf(a.at)}` : ''}
-                {a.fresh ? ' · new' : ''}
-              </span>
-              <span className="db-ach-title">{a.title}</span>
-              <span className="db-fine">{a.detail}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-/* ───────────────────────── not on your resume ───────────────────────── */
-
-export function NotOnResume({ profile }: { profile: Profile }) {
-  const found = useMemo(() => notOnResume(profile), [profile]);
-  if (!found) return null;
-  const { resume, items, role } = found;
-  const names = items.map((it) => it.skill.name);
-  const add = () => {
-    const a = sourceAction(resume);
-    actions.openChat(
-      a.origin,
-      `My resume doesn't mention ${names.join(' or ')}, which ${items.map((it) => it.source.label).filter((v, i, arr) => arr.indexOf(v) === i).join(' and ')} prove${items.length === 1 ? 's' : ''}. Help me add ${items.length === 1 ? 'it' : 'them'} as resume bullets in my own voice, using only the cited facts.`,
-    );
-  };
-  return (
-    <section className="db-surprise" aria-labelledby="db-surprise-h">
-      <p className="db-small db-surprise-text">
-        <b id="db-surprise-h">Not on your resume.</b>{' '}
-        {items.map((it, i) => (
-          <span key={it.skill.id}>
-            {i > 0 ? ' and ' : ''}
-            {it.skill.name} ({it.source.label}: “{it.evidence.text}”)
-          </span>
-        ))}
-        .{role ? ` ${items.length === 1 ? 'It counts' : 'Both count'} towards ${role.title}; ${items.length === 1 ? 'it appears' : 'neither appears'} in the resume you uploaded.` : ''}
-      </p>
-      <div className="db-surprise-chips">
-        {items
-          .map((it) => it.source)
-          .filter((s, i, arr) => arr.indexOf(s) === i)
-          .map((s) => (
-            <span key={s.id} className="chip">
-              {s.label}
-              {s.sub ? ` · ${s.sub}` : ''}
-            </span>
-          ))}
-        <span className="chip is-gap">resume · not mentioned</span>
-      </div>
-      <button type="button" className="btn btn-sm db-surprise-act" onClick={add}>
-        Add {items.length === 1 ? 'it' : 'both'} to my resume
-      </button>
-    </section>
-  );
-}
-
-/* ───────────────────────── since last time ───────────────────────── */
+/* ───────────────────────── the analysis before this one ───────────────────────── */
 
 const isSample = (id: string) => id.startsWith('sample-');
 
@@ -306,44 +212,6 @@ export function usePreviousProfile(profile: Profile): Profile | null {
     };
   }, [olderId]);
   return local ?? fetched;
-}
-
-function sinceLabel(iso: string): string {
-  const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return 'last time';
-  return new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
-}
-
-export function SinceLast({ profile, previous }: { profile: Profile; previous: Profile | null }) {
-  const moved = useMemo(() => (previous ? deltas(previous, profile) : []), [previous, profile]);
-  if (!previous || moved.length === 0) return null;
-  return (
-    <section className="db-since" aria-labelledby="db-since-h">
-      <div className="db-card-head">
-        <h2 className="kicker" id="db-since-h">
-          Since {sinceLabel(previous.createdAt)}
-        </h2>
-        <span className="kicker">{plural(profile.sources.filter((s) => s.ok).length, 'source')} · analysed {sinceLabel(profile.createdAt)}</span>
-      </div>
-      <ul className="db-deltas">
-        {moved.map((d) => (
-          <li key={d.label} className="db-delta">
-            <span className="numeral db-delta-n">
-              {d.was ? (
-                <>
-                  <span className="db-delta-was">{d.was}</span> → {d.now}
-                </>
-              ) : (
-                d.now
-              )}
-            </span>
-            <span className="db-small">{d.label}</span>
-            <span className="db-fine">{d.note}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
 }
 
 /* ───────────────────────── ask about yourself ───────────────────────── */
