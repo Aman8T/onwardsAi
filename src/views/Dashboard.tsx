@@ -261,6 +261,9 @@ function NextRoles({ profile }: { profile: Profile }) {
             Open a role →
           </button>
         )}
+        <button type="button" className="btn btn-quiet" onClick={() => actions.openResume({ screen: 'resume' })}>
+          {top ? 'Your resumes →' : 'Your resume →'}
+        </button>
       </div>
     </section>
   );
