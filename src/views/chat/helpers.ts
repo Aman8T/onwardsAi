@@ -115,7 +115,7 @@ export function sourcesPhrase(profile: Profile): string {
 }
 
 /**
- * Hide the failed reply and the repeated ask after a Retry, so the thread
+ * Hide the failed (or stopped) reply and the repeated ask after a Retry, so the thread
  * reads user → answer instead of user → error → user → answer.
  */
 export function collapseRetries(messages: ChatMessage[]): ChatMessage[] {
@@ -124,7 +124,7 @@ export function collapseRetries(messages: ChatMessage[]): ChatMessage[] {
     const m = messages[i];
     const prev = messages[i - 1];
     const prev2 = messages[i - 2];
-    if (m.role === 'user' && prev?.role === 'assistant' && prev.status === 'error' && prev2?.role === 'user' && prev2.text === m.text) {
+    if (m.role === 'user' && prev?.role === 'assistant' && (prev.status === 'error' || prev.status === 'stopped') && prev2?.role === 'user' && prev2.text === m.text) {
       if (out[out.length - 1] === prev) out.pop();
       continue;
     }

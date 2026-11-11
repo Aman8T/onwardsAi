@@ -6,14 +6,12 @@
  *                        changing every few seconds and on "Another"; a line that rests on a skill opens that skill's
  *                        evidence in a drawer under it (the quote, its source, "This is wrong")
  *   usePreviousProfile   the analysis before this one, for what moved since
- *   AskStrip             one field and four questions worth asking about yourself; each opens the chat with that question
  *
  * The read's lines are written once, at analysis time, and stored on the profile; the rest of the lines are counted
  * from the records or come from the quotes and tips in lines.ts. The desk under it (Desk.tsx) holds what is counted:
  * where the person left off, their weeks, the shelf.
  */
 import { useEffect, useMemo, useState } from 'react';
-import type { FormEvent } from 'react';
 import type { PracticeHistory } from '../../../shared/interview';
 import type { Profile } from '../../../shared/types';
 import { useMe } from '../../auth/useMe';
@@ -24,7 +22,6 @@ import { actions, useApp } from '../../store';
 import type { LineOrigin } from './lines';
 import { THEME_LABEL, deskLines, localDay } from './lines';
 import type { Achievement } from './model';
-import { askQuestions } from './model';
 import { useDeskNotes } from './notes';
 
 /** What the small print under the line says about where it came from. */
@@ -242,45 +239,4 @@ export function usePreviousProfile(profile: Profile): Profile | null {
     };
   }, [olderId]);
   return local ?? fetched;
-}
-
-/* ───────────────────────── ask about yourself ───────────────────────── */
-
-export function AskStrip({ profile }: { profile: Profile }) {
-  const questions = useMemo(() => askQuestions(profile), [profile]);
-  const [text, setText] = useState('');
-  // a free thread each time: the same question asked twice is two threads, and the existing "you" thread is left alone
-  const ask = (q: string) => actions.openChat({ kind: 'free', title: 'About you', caption: 'Asked from the dashboard' }, q);
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    const q = text.trim();
-    if (!q) return;
-    setText('');
-    ask(q);
-  };
-  return (
-    <section className="db-ask" aria-label="Ask about yourself">
-      <form className="db-ask-form" onSubmit={submit}>
-        <label className="kicker db-ask-label" htmlFor="db-ask-field">
-          Ask about yourself
-        </label>
-        <input
-          id="db-ask-field"
-          className="field db-ask-field"
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Anything your graph can answer, with the evidence…"
-          autoComplete="off"
-        />
-      </form>
-      <div className="db-ask-qs">
-        {questions.map((q) => (
-          <button key={q} type="button" className="db-ask-q" onClick={() => ask(q)}>
-            {q}
-          </button>
-        ))}
-      </div>
-    </section>
-  );
 }

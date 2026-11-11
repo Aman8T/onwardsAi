@@ -5,8 +5,9 @@
  */
 import { useSyncExternalStore } from 'react';
 import type { Portfolio, PortfolioPatch } from '../shared/portfolio';
-import type { AnalysisEvent, ChatOrigin, Profile, ReaderState, SourceKind } from '../shared/types';
+import type { AnalysisEvent, ChatDeskTracked, ChatEvent, ChatOrigin, Profile, ReaderState, SourceKind } from '../shared/types';
 import * as api from './lib/api';
+import { applicationsKey, parseTracked } from './discover/applications/tracker';
 import { PASTE_ROUTE, matchPath, parseMatchPath } from './match/route';
 import type { MatchRoute } from './match/route';
 import { PRICING_PATH, isPricingPath } from './billing/route';
@@ -66,13 +67,29 @@ export interface ChatTool {
   detail: string;
 }
 
+/** The one button the coach proposed after its text: the action event's fields. It only opens a screen. */
+export type ChatAction = Omit<Extract<ChatEvent, { type: 'action' }>, 'type'>;
+
+/** Why an answer did not arrive: a failed stream, too many questions in a short time, or the day's spend ceiling. */
+export type ChatFailure = 'failed' | 'rate' | 'ceiling';
+
+/**
+ * `stopped` is a message the person stopped: its text is kept. Threads saved before it existed marked a stopped message
+ * `done`, and those stay as they were (they cannot be told from a finished one). Every new field is optional, so those
+ * threads still load; an `error` message without a `failure` reads as `failed`.
+ */
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   text: string;
   tools: ChatTool[];
-  status: 'streaming' | 'done' | 'error';
+  status: 'streaming' | 'done' | 'error' | 'stopped';
   error?: string;
+  /** For an error: which kind. */
+  failure?: ChatFailure;
+  /** For `rate`: seconds to wait, from the server's Retry-After header, when it sent one. */
+  retryAfter?: number;
+  action?: ChatAction;
 }
 
 /**
@@ -122,6 +139,8 @@ export interface AppState {
   analysis: AnalysisState;
   threads: Thread[];
   activeThreadId: string | null;
+  /** The thread the dashboard's Ask dock is answering in; not saved (the thread itself is). */
+  dockThreadId: string | null;
   portfolio: PortfolioState;
   /** Which posting-match screen is showing while `view` is 'match'; mirrored in the address (/match/…). */
   matchRoute: MatchRoute;
@@ -161,6 +180,7 @@ function load(): AppState {
     analysis: emptyAnalysis(),
     threads: [],
     activeThreadId: null,
+    dockThreadId: null,
     portfolio: emptyPortfolio(),
     matchRoute: PASTE_ROUTE,
     discoverRoute: DEFAULT_QUERY,
@@ -386,6 +406,7 @@ function applyAnalysisEvent(e: AnalysisEvent) {
           previous: s.profile && s.profile.id !== e.profile.id ? s.profile : s.previous,
           threads: [],
           activeThreadId: null,
+          dockThreadId: null,
           flipped: false,
           portfolio: emptyPortfolio(),
           analysis: { ...a, phase: 'done', phaseLabel: 'Your graph is ready', synthStep: 3 },
@@ -509,6 +530,41 @@ function queuePortfolioJob(busy: string | undefined, job: (profileId: string) =>
   return next;
 }
 
+/**
+ * The person's tracked roles for a profile, read from the browser's own list (the tracker's hook cannot be called from an
+ * action), in the shape the coach is given: at most 20, the newest change first, so the server's clip drops the oldest.
+ */
+export function deskFor(profileId: string): ChatDeskTracked[] {
+  try {
+    const raw = window.localStorage.getItem(applicationsKey(profileId));
+    if (!raw) return [];
+    return parseTracked(JSON.parse(raw))
+      .slice()
+      .sort((a, b) => (b.updatedAt || b.savedAt).localeCompare(a.updatedAt || a.savedAt))
+      .slice(0, 20)
+      .map((t) => ({
+        id: t.job.id,
+        title: t.job.title,
+        employer: t.job.employer,
+        stage: t.stage,
+        ...(t.note.trim() ? { note: t.note.trim() } : {}),
+        ...(t.appliedAt ? { appliedAt: t.appliedAt } : {}),
+      }));
+  } catch {
+    return [];
+  }
+}
+
+/** What a failed chat call tells the person: 429 is too many questions (with the wait), 503 is the day's ceiling. */
+function chatFailure(err: unknown): Pick<ChatMessage, 'error' | 'failure' | 'retryAfter'> {
+  const error = err instanceof Error ? err.message : String(err);
+  if (err instanceof api.ApiError) {
+    if (err.status === 429) return { error, failure: 'rate', ...(err.retryAfter ? { retryAfter: err.retryAfter } : {}) };
+    if (err.status === 503) return { error, failure: 'ceiling' };
+  }
+  return { error, failure: 'failed' };
+}
+
 export const actions = {
   goto(view: View) {
     set({ view });
@@ -544,7 +600,7 @@ export const actions = {
   /** Load the pre-computed sample profile (demo fallback, no AI call). */
   async loadSampleProfile() {
     const profile = await api.sampleProfile();
-    set({ profile, threads: [], activeThreadId: null, flipped: false, openRoleId: null, view: 'dashboard', portfolio: emptyPortfolio() });
+    set({ profile, threads: [], activeThreadId: null, dockThreadId: null, flipped: false, openRoleId: null, view: 'dashboard', portfolio: emptyPortfolio() });
   },
 
   /** The dashboard: the entry point once a graph exists (the skill radar, the next roles and every feature's summary). */
@@ -701,7 +757,7 @@ export const actions = {
     analysisAbort?.abort();
     chatAborts.forEach((c) => c.abort());
     chatAborts.clear();
-    set({ profile, threads: [], activeThreadId: null, flipped: false, openRoleId: null, view: 'dashboard', analysis: emptyAnalysis(), portfolio: emptyPortfolio() });
+    set({ profile, threads: [], activeThreadId: null, dockThreadId: null, flipped: false, openRoleId: null, view: 'dashboard', analysis: emptyAnalysis(), portfolio: emptyPortfolio() });
     return true;
   },
 
@@ -716,6 +772,7 @@ export const actions = {
       previous: state.profile ?? state.previous,
       threads: [],
       activeThreadId: null,
+      dockThreadId: null,
       flipped: false,
       openRoleId: null,
       analysis: emptyAnalysis(),
@@ -745,6 +802,24 @@ export const actions = {
     const thread: Thread = { id: uid(), origin, createdAt: Date.now(), messages: [], ...(prepare ? { prepare } : {}) };
     set((s) => ({ view: 'chat', threads: [thread, ...s.threads], activeThreadId: thread.id }));
     if (!prepare && question.trim()) void actions.send(thread.id, question);
+  },
+
+  /**
+   * Start a thread from the dashboard's Ask dock and send the question, without leaving the dashboard. The thread is
+   * saved like any other; `dockThreadId` remembers it so a second question or "Open full view" continues the same one.
+   */
+  openDockThread(origin: ChatOrigin, question: string): string | null {
+    const q = question.trim();
+    if (!state.profile || !q) return null;
+    const thread: Thread = { id: uid(), origin, createdAt: Date.now(), messages: [] };
+    set((s) => ({ threads: [thread, ...s.threads], dockThreadId: thread.id }));
+    void actions.send(thread.id, q);
+    return thread.id;
+  },
+
+  /** Let go of the dock's thread (the dock was closed with nothing running); the thread stays in the chat's list. */
+  clearDockThread() {
+    if (state.dockThreadId) set({ dockThreadId: null });
   },
 
   /** Keep what Prepare learned about a thread (the stored plan's id), so it reopens the same plan. */
@@ -779,19 +854,23 @@ export const actions = {
     chatAborts.set(threadId, ctrl);
     try {
       await api.chat(
-        { profileId: profile.id, message: user.text, origin: thread.origin, sessionId: thread.sessionId },
+        { profileId: profile.id, message: user.text, origin: thread.origin, sessionId: thread.sessionId, desk: { tracked: deskFor(profile.id) } },
         (e) => {
           if (e.type === 'delta') patch((m) => ({ ...m, text: m.text + e.text }));
           else if (e.type === 'tool') patch((m) => ({ ...m, tools: [...m.tools, { name: e.name, detail: e.detail }] }));
-          else if (e.type === 'done') patch((m) => ({ ...m, status: 'done' }), e.sessionId);
-          else if (e.type === 'error') patch((m) => ({ ...m, status: 'error', error: e.message }));
+          else if (e.type === 'action') {
+            const { type: _type, ...action } = e;
+            patch((m) => ({ ...m, action }));
+          } else if (e.type === 'done') patch((m) => ({ ...m, status: 'done' }), e.sessionId);
+          else if (e.type === 'error') patch((m) => ({ ...m, status: 'error', failure: 'failed', error: e.message }));
         },
         ctrl.signal,
       );
       patch((m) => (m.status === 'streaming' ? { ...m, status: 'done' } : m));
     } catch (err) {
-      if (ctrl.signal.aborted) patch((m) => ({ ...m, status: 'done' }));
-      else patch((m) => ({ ...m, status: 'error', error: err instanceof Error ? err.message : String(err) }));
+      // a stopped answer keeps its text and says it was stopped
+      if (ctrl.signal.aborted) patch((m) => (m.status === 'streaming' ? { ...m, status: 'stopped' } : m));
+      else patch((m) => ({ ...m, status: 'error', ...chatFailure(err) }));
     } finally {
       chatAborts.delete(threadId);
     }

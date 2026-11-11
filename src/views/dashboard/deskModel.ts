@@ -18,6 +18,8 @@ import type { PracticeHistory, SessionSummary } from '../../../shared/interview'
 import type { PreparePlanSummary } from '../../../shared/prepare';
 import type { TrackedJob } from '../../discover/applications/tracker';
 import type { MatchSummary } from '../../match/types';
+import { BAND_LABEL } from '../../match/model';
+import { askQuestions } from './model';
 
 /** The part of a chat thread the desk reads (the store's Thread fits). */
 export interface ThreadLike {
@@ -253,4 +255,80 @@ export function practiceTrend(history: PracticeHistory | null): PracticeTrend | 
     claims: history.claims.length,
     bars: bars.slice(-BARS_MAX),
   };
+}
+
+/* ───────────────────────── what to ask ───────────────────────── */
+
+export interface AskStarter {
+  q: string;
+  /** Why this one is offered, built from a stored field; never a claim the data does not carry. */
+  reason: string;
+}
+
+export interface AskStartersInput {
+  profile: Profile;
+  history: PracticeHistory | null;
+  plans: readonly PreparePlanSummary[];
+  matches: readonly MatchSummary[];
+  tracked: readonly TrackedJob[];
+  now: number;
+}
+
+/** "just now", "3 days ago", "yesterday", then "on 4 Oct". The same words as `timeAgo`, kept here so this file stays free of the UI module. */
+function whenLabel(at: number, now: number): string {
+  const days = Math.floor(Math.max(0, now - at) / DAY_MS);
+  if (days < 1) return 'today';
+  if (days < 2) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  return `on ${new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
+}
+
+const clip = (text: string, max: number): string => {
+  const t = text.replace(/\s+/g, ' ').trim();
+  return t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t;
+};
+
+/**
+ * Up to four questions worth asking now, newest change first, each with the stored field it comes from: a role that moved
+ * to interviewing, the weak claim of the last practice session, the newest plan, the newest posting match. A desk with
+ * none of these falls back to `askQuestions(profile)`, said to come from the graph. Nothing is invented: a tracked role's
+ * "moved" date is the date its record last changed, which is when its stage was set unless the person edited its note
+ * since; the sentence says only that it moved, as the record shows.
+ */
+export function askStarters(input: AskStartersInput): AskStarter[] {
+  const { profile, history, plans, matches, tracked, now } = input;
+  const found: Array<AskStarter & { at: number }> = [];
+
+  const interviewing = newest(
+    tracked.filter((t) => t.stage === 'interviewing'),
+    (t) => ms(t.updatedAt) || ms(t.savedAt),
+  );
+  if (interviewing) {
+    const at = ms(interviewing.updatedAt) || ms(interviewing.savedAt);
+    const employer = interviewing.job.employer.trim() || interviewing.job.title;
+    const practised = (history?.sessions ?? []).some((s) => ms(s.createdAt) > at);
+    found.push({
+      q: `What should I rehearse for ${employer}?`,
+      reason: practised ? `${employer} is interviewing` : `${employer} moved to interviewing ${whenLabel(at, now)} and you have not practised for it`,
+      at,
+    });
+  }
+
+  const last = newest(history?.sessions ?? [], (s) => ms(s.createdAt));
+  if (last && history) {
+    const weak = history.claims.find((c) => c.marks.some((m) => m.sessionId === last.id && (m.verdict === 'shaky' || m.verdict === 'couldnt')));
+    if (weak && weak.text.trim()) found.push({ q: `Why could I not defend “${clip(weak.text, 60)}”?`, reason: 'your last session', at: ms(last.createdAt) });
+  }
+
+  const plan = newest(plans, (p) => ms(p.createdAt));
+  if (plan) found.push({ q: `What should I do next in my ${plan.roleTitle} plan?`, reason: `started ${whenLabel(ms(plan.createdAt), now)}`, at: ms(plan.createdAt) });
+
+  const match = newest(matches, (m) => ms(m.createdAt));
+  if (match) found.push({ q: `How do I close the gaps for ${match.title}?`, reason: `${BAND_LABEL[match.band]} · ${whenLabel(ms(match.createdAt), now)}`, at: ms(match.createdAt) });
+
+  if (found.length === 0) return askQuestions(profile).map((q) => ({ q, reason: 'from your graph' }));
+  return found
+    .sort((a, b) => b.at - a.at)
+    .slice(0, 4)
+    .map(({ q, reason }) => ({ q, reason }));
 }

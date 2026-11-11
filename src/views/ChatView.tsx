@@ -206,6 +206,13 @@ export function ChatView({ profile }: { profile: Profile }) {
     if (threadId) actions.stop(threadId);
   }, [threadId]);
 
+  // a stopped answer: its question goes back into the composer to be changed
+  const onEdit = useCallback(() => {
+    if (!lastUserText) return;
+    setDraft(lastUserText);
+    inputRef.current?.focus();
+  }, [lastUserText, setDraft]);
+
   const onRetry = useCallback(() => {
     if (threadId && lastUserText) {
       stick.current = true;
@@ -380,7 +387,10 @@ export function ChatView({ profile }: { profile: Profile }) {
                             message={m}
                             sources={okSources}
                             lines={lines}
-                            onRetry={m.id === lastId && m.status === 'error' ? onRetry : undefined}
+                            profile={profile}
+                            onRetry={m.id === lastId && (m.status === 'error' || m.status === 'stopped') ? onRetry : undefined}
+                            onEdit={m.id === lastId && m.status === 'stopped' ? onEdit : undefined}
+                            question={m.id === lastId && m.status === 'error' ? lastUserText : undefined}
                           />
                         ),
                       )}

@@ -347,6 +347,30 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     - **Without a server,** `/dev/apply` and its screens (`?screen=applications`, `details`, `first-check`, `consent`,
       `start-offer`, `run-filling`, `run-questions`, `run-review`, `run-check`, `run-sent` …).
 
+23. **The Ask dock** (`src/ask/`; an answer makes one chat call; needs a graph and the API on :8787). On `/dashboard`:
+    - **Resting.** One opaque bar sticks to the foot of the window while you scroll: an icon, the labelled input
+      ("Ask about your graph, your roles, or how anything here works"), two starter chips, a 44px send button. No
+      shadow, one hairline. Under 760px only the input and the send button show.
+    - **Open.** Click or tab into the input: a panel grows upward (`role="dialog"`, "Ask Leafout"): "From your desk
+      today" (up to four starters, each with its reason, e.g. a tracked role in Interviewing and "you have not practised
+      for it"), then "It can …" and "It cannot …". Escape, or Close, closes it and the focus is back in the input without
+      the panel opening again. A new account (`&desk=empty` in the gallery) shows today's four fixed questions with
+      "from your graph".
+    - **Answering in place.** Pick a starter or type and press Enter: the question shows as a bubble, the status lines
+      rotate before the first token, the answer streams with the caret, and Send becomes Stop. When a question is
+      about opening something ("Where do I practise?"), the answer ends with a card: the label, "Nothing has started.
+      This button opens it.", and "Open Practice" (or the matching noun); the button opens that screen and the text
+      never says it was done. "Share your radar card" shows its own sheet; "New analysis" asks "Keep graph / Start over"
+      first; "Apply for me" is a link.
+    - **Stop and failure.** Stop mid-answer: the text stays, "Stopped. What arrived is kept.", Retry and "Edit the
+      question" (the question returns to the input). Stop the API and ask: "The answer did not arrive", Retry and "Copy
+      my question". A 429 reads "Too many questions in a short time. Try again in N seconds."; a 503 reads "The coach has
+      reached today's limit. It is back tomorrow."
+    - **Continuing.** Ask a second question, or press "Open full view →": the chat view opens on the same thread with the
+      first exchange intact (the chat's own Retry and "Edit the question" work there too).
+    - **Without a server,** `/dev/design?screen=dashboard` shows the dock resting and open (starters, can and cannot);
+      an answer cannot stream there.
+
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`), except the
 role's, which Prepare changed on purpose (no percentage).

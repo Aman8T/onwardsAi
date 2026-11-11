@@ -15,11 +15,14 @@ export class ApiError extends Error {
   readonly status: number;
   /** Why a 402 `payment_required` was refused (`no_credits`); absent for every other failure. */
   readonly reason?: string;
-  constructor(message: string, status: number, reason?: string) {
+  /** The `Retry-After` header of the failed response, in whole seconds (a 429 says how long to wait); absent when not sent. */
+  readonly retryAfter?: number;
+  constructor(message: string, status: number, reason?: string, retryAfter?: number) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.reason = reason;
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -39,7 +42,10 @@ async function failure(res: Response): Promise<ApiError> {
   } catch {
     /* not JSON */
   }
-  return new ApiError(message, res.status, reason);
+  // Retry-After is delta-seconds; an HTTP date is not used by this server and reads as absent
+  const header = Number(res.headers.get('Retry-After'));
+  const retryAfter = Number.isFinite(header) && header > 0 ? Math.ceil(header) : undefined;
+  return new ApiError(message, res.status, reason, retryAfter);
 }
 
 /** Read a newline-delimited JSON response body as it streams in. */

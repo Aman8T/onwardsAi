@@ -5,10 +5,10 @@
  *   the read        the greeting and one line at a time (views/dashboard/Read.tsx, lines.ts)
  *   the profile     the skill radar, whole, with its rail and popovers (NowGraph) and "Share my skill shape";
  *                   beside it the slips (views/dashboard/Slips.tsx): the person's notes as a pile, their card, their resume
- *   ask             questions worth asking about yourself
  *   next            the ranked next roles, and the shelf of what is worth saying out loud
  *   your week       one card: pick up where you left off, the weeks in a row, the last twelve weeks as squares
  *   the features    Applications (with Discover's search), Practice and Prepare, Posting matches; the Weekly as a line
+ *   ask             the dock (src/ask/AskDock.tsx), sticky at the foot: starters from the desk, one answer in place
  *
  * Nothing here shows a score going down. Every number is counted in code from what the features already store; the
  * read's lines are the one thing a model phrased, and they are stored on the profile. Cards are a bento of uneven
@@ -21,6 +21,7 @@ import type { PreparePlanSummary } from '../../shared/prepare';
 import type { JobSearchRun } from '../../shared/jobsearch';
 import type { MatchSummary } from '../match/types';
 import { applyPath } from '../apply/route';
+import { AskDock } from '../ask/AskDock';
 import { applyOn, useApplications } from '../apply/useApplications';
 import { SaveInvite } from '../auth/SaveInvite';
 import { ShareButton } from '../card/ShareButton';
@@ -46,8 +47,8 @@ import { listPlans } from '../prepare/api';
 import { actions, useApp } from '../store';
 import { useSubscription } from '../weekly/useSubscription';
 import { Shelf, WeekCard } from './dashboard/Desk';
-import { AskStrip, Hello, usePreviousProfile } from './dashboard/Read';
-import { activeDays, bestWeekday, pickUps, practiceTrend, weekStreak, weeksStrip } from './dashboard/deskModel';
+import { Hello, usePreviousProfile } from './dashboard/Read';
+import { activeDays, askStarters, bestWeekday, pickUps, practiceTrend, weekStreak, weeksStrip } from './dashboard/deskModel';
 import type { ThreadLike } from './dashboard/deskModel';
 import { achievements } from './dashboard/model';
 import { Slips } from './dashboard/Slips';
@@ -120,6 +121,8 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
   }, [profile, previous, history, plans, data.matches, tracked, threads, now]);
   const weak = history ? history.claims.filter((c) => c.best === 'shaky' || c.best === 'couldnt').length : 0;
   const reading = data.history.status === 'loading' || data.plans.status === 'loading';
+  // what is worth asking now, from what changed most recently on the desk
+  const starters = useMemo(() => askStarters({ profile, history, plans, matches: data.matches, tracked, now }), [profile, history, plans, data.matches, tracked, now]);
 
   return (
     <div className="gv-view db-view">
@@ -144,8 +147,6 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
           <Slips profile={profile} tracked={tracked} />
         </div>
 
-        <AskStrip profile={profile} />
-
         <div className="db-bento">
           <NextRoles profile={profile} />
           <Shelf items={shelf} />
@@ -167,6 +168,9 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
         </div>
 
         <WeeklyLine />
+
+        {/* ask: one bar at the foot of the window, on every scroll position; it opens where you are */}
+        <AskDock profile={profile} starters={starters} />
       </main>
     </div>
   );

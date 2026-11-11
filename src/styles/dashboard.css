@@ -18,11 +18,6 @@
   overflow-x: clip;
 }
 
-.db-greet {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s1);
-}
 
 .db-h1 {
   font-size: var(--fs-6);
@@ -149,9 +144,6 @@
   color: var(--text-muted);
 }
 
-.db-big {
-  font-size: var(--fs-5);
-}
 
 .db-link {
   font-size: var(--fs-2);
@@ -847,58 +839,6 @@ button.db-read-line.is-open {
   color: var(--text-muted);
 }
 
-/* ───────────── ask about yourself ───────────── */
-
-.db-ask {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s3);
-}
-
-.db-ask-form {
-  display: flex;
-  flex: 1 1 320px;
-  align-items: center;
-  gap: var(--s3);
-  min-width: 0;
-}
-
-.db-ask-label {
-  white-space: nowrap;
-}
-
-.db-ask-field {
-  padding-block: 6px;
-}
-
-.db-ask-qs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s2);
-}
-
-.db-ask-q {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-size: var(--fs-2);
-  color: var(--text-muted);
-  white-space: nowrap;
-  transition:
-    color var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease);
-}
-
-@media (hover: hover) {
-  .db-ask-q:hover {
-    color: var(--text);
-    border-color: var(--line-strong);
-  }
-}
-
 @media (max-width: 760px) {
   .db-read-line {
     font-size: var(--fs-4);
@@ -906,11 +846,6 @@ button.db-read-line.is-open {
 
   .db-drawer {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .db-ask-q {
-    white-space: normal;
-    text-align: left;
   }
 
   /* your week on a phone: the weeks go under the pick-up */
