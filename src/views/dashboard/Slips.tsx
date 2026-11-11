@@ -3,7 +3,8 @@
  *
  *   NotePile     their notes as a small pile, the newest on top: a note written on a tracked role, a note written
  *                to themselves here, a line pinned from under the greeting. "Write a note" turns the top slip into a field.
- *   ShareSlip    their skill shape as a taped picture; pressing it opens the share sheet
+ *   ShareSlip    their skill shape as a taped picture; pressing it opens the share sheet. When the card is already
+ *                shared it says so ("Your card is live") and, as two real buttons, opens sharing or copies the link
  *   ResumeSlip   what the resume leaves out (skills the other sources proved), and the way to /resume
  *
  * The words on a note are the person's, shown as written. The slips are turned a degree or two on a wide screen
@@ -12,7 +13,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Profile } from '../../../shared/types';
-import { ShareButton } from '../../card/ShareButton';
+import { ShareButton, useShareSheet } from '../../card/ShareButton';
+import { useCardLink } from '../../card/useCardLink';
 import { RadarGlyph } from '../../components/Radar';
 import { STAGE_LABEL } from '../../discover/applications/tracker';
 import type { TrackedJob } from '../../discover/applications/tracker';
@@ -168,18 +170,67 @@ function NotePile({ profileId, tracked }: { profileId: string; tracked: readonly
 
 /* ───────────────────────── the share slip ───────────────────────── */
 
+const COPIED_MS = 2000;
+
 function ShareSlip({ profile }: { profile: Profile }) {
   const values = useMemo(() => profile.domains.map((d) => d.score), [profile.domains]);
+  // the card's own state, read once; null (off, unknown, no API) leaves the slip as it always was
+  const link = useCardLink(profile.id);
+  const { show, open, sheet } = useShareSheet(profile.id);
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  if (link === null) {
+    return (
+      <ShareButton profileId={profile.id} look="slip" className="slip slip-tape tilt-r db-share-slip">
+        <RadarGlyph className="db-share-glyph" values={values} size={76} />
+        <span className="db-share-text">
+          <span className="kicker">Your skill shape, as a card</span>
+          <span className="hand">Put it where recruiters look.</span>
+          <span className="db-fine">For your LinkedIn and your GitHub README, drawn from this graph.</span>
+          <span className="btn btn-sm btn-primary db-share-go">Share my skill shape</span>
+        </span>
+      </ShareButton>
+    );
+  }
+
+  const copy = () => {
+    window.clearTimeout(timer.current);
+    const done = navigator.clipboard?.writeText(link);
+    if (!done) return show();
+    // the browser would not copy it: the sheet shows the link in a field to select
+    void done.then(
+      () => {
+        setCopied(true);
+        timer.current = window.setTimeout(() => setCopied(false), COPIED_MS);
+      },
+      () => show(),
+    );
+  };
+
   return (
-    <ShareButton profileId={profile.id} look="slip" className="slip slip-tape tilt-r db-share-slip">
+    <div className="slip slip-tape tilt-r is-live db-share-slip" role="group" aria-labelledby="db-share-live-h">
       <RadarGlyph className="db-share-glyph" values={values} size={76} />
       <span className="db-share-text">
-        <span className="kicker">Your skill shape, as a card</span>
-        <span className="hand">Put it where recruiters look.</span>
-        <span className="db-fine">For your LinkedIn and your GitHub README, drawn from this graph.</span>
-        <span className="btn btn-sm btn-primary db-share-go">Share my skill shape</span>
+        <span className="kicker" id="db-share-live-h">
+          Your card is live
+        </span>
+        <span className="hand">It is out there. Keep it current.</span>
+        <span className="db-slip-foot">
+          <button type="button" className="btn btn-sm btn-primary" aria-haspopup="dialog" aria-expanded={open} onClick={show}>
+            Open sharing
+          </button>
+          <button type="button" className="btn btn-sm" onClick={copy}>
+            {copied ? 'Copied' : 'Copy the link'}
+          </button>
+        </span>
+        <span className="sr-only" role="status">
+          {copied ? 'Link copied' : ''}
+        </span>
       </span>
-    </ShareButton>
+      {sheet}
+    </div>
   );
 }
 

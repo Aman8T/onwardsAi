@@ -660,6 +660,11 @@ button.db-read-line.is-open {
   cursor: pointer;
 }
 
+/* live: the slip holds two buttons, so it is not itself pressable */
+.db-share-slip.is-live {
+  cursor: default;
+}
+
 .db-share-glyph {
   flex: none;
 }

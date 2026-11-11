@@ -8,16 +8,13 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { ChatOrigin, Profile } from '../../shared/types';
-import { IconStop } from '../components/Icons';
 import { actions, useApp } from '../store';
-import { DockPanel } from './DockPanel';
 import type { Starter } from './DockPanel';
+import { DockView } from './DockView';
 import '../styles/ask.css';
 
 /** A free thread each time, like the strip it replaces: the same question asked twice is two threads. */
 const DOCK_ORIGIN: ChatOrigin = { kind: 'free', title: 'About you', caption: 'Asked from the dashboard' };
-
-const PLACEHOLDER = 'Ask about your graph, your roles, or how anything here works';
 
 export function AskDock({ profile, starters }: { profile: Profile; starters: Starter[] }) {
   const threads = useApp((s) => s.threads);
@@ -96,71 +93,40 @@ export function AskDock({ profile, starters }: { profile: Profile; starters: Sta
     if (thread && lastUser) void actions.send(thread.id, lastUser);
   };
 
-  const chips = starters.slice(0, 2);
-
   return (
-    <div className={`ak-dock${open ? ' is-open' : ''}`} ref={root}>
-      {open && (
-        <DockPanel
-          id={panelId}
-          profile={profile}
-          starters={starters}
-          thread={thread}
-          onAsk={ask}
-          onClose={close}
-          onFull={() => thread && actions.selectThread(thread.id)}
-          onRetry={onRetry}
-          onEdit={onEdit}
-          closeRef={closeBtn}
-        />
-      )}
-      <form className="ak-bar" onSubmit={submit}>
-        <svg className="ak-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-          <path d="M12 3v4m0 10v4M3 12h4m10 0h4M6 6l2.5 2.5m7 7L18 18M6 18l2.5-2.5m7-7L18 6" />
-        </svg>
-        <label className="sr-only" htmlFor={`${panelId}-in`}>
-          {thread ? 'Ask a follow-up' : PLACEHOLDER}
-        </label>
-        <input
-          ref={input}
-          id={`${panelId}-in`}
-          className="ak-input"
-          type="text"
-          value={text}
-          placeholder={thread ? 'Ask a follow-up' : PLACEHOLDER}
-          autoComplete="off"
-          enterKeyHint="send"
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          aria-controls={open ? panelId : undefined}
-          onChange={(e) => setText(e.target.value)}
-          onFocus={() => {
-            if (!quiet.current) setOpen(true);
-          }}
-          onClick={() => setOpen(true)}
-        />
-        {!open && chips.length > 0 && (
-          <span className="ak-chips">
-            {chips.map((s) => (
-              <button key={s.q} type="button" className="ak-chip" onClick={() => ask(s.q)}>
-                {s.q}
-              </button>
-            ))}
-          </span>
-        )}
-        {streaming ? (
-          <button type="button" className="btn ak-send ak-stop" onClick={() => thread && actions.stop(thread.id)}>
-            <IconStop size={14} strokeWidth={1.5} />
-            <span>Stop</span>
-          </button>
-        ) : (
-          <button type="submit" className="btn btn-primary ak-send" aria-label="Send" disabled={!text.trim()}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-              <path d="M12 19V5m0 0-6 6m6-6 6 6" />
-            </svg>
-          </button>
-        )}
-      </form>
-    </div>
+    <DockView
+      open={open}
+      frameRef={root}
+      panel={{
+        id: panelId,
+        profile,
+        starters,
+        thread,
+        onAsk: ask,
+        onClose: close,
+        onFull: () => thread && actions.selectThread(thread.id),
+        onRetry,
+        onEdit,
+        closeRef: closeBtn,
+      }}
+      bar={{
+        inputId: `${panelId}-in`,
+        panelId,
+        open,
+        text,
+        following: !!thread,
+        streaming,
+        chips: starters.slice(0, 2),
+        inputRef: input,
+        onText: setText,
+        onSubmit: submit,
+        onFocus: () => {
+          if (!quiet.current) setOpen(true);
+        },
+        onOpen: () => setOpen(true),
+        onChip: ask,
+        onStop: () => thread && actions.stop(thread.id),
+      }}
+    />
   );
 }

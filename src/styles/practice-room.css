@@ -279,7 +279,7 @@
 /* ───────────────────────── the room ───────────────────────── */
 
 .rm-room {
-  --rm-gutter: var(--s6);
+  --rm-gutter: var(--s5);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -317,7 +317,7 @@
   width: 100%;
   max-width: 1320px;
   margin-inline: auto;
-  padding: var(--s6) var(--rm-gutter) var(--s8);
+  padding: var(--s4) var(--rm-gutter) var(--s6);
 }
 
 .rm-cols {
@@ -325,14 +325,14 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: center;
-  gap: var(--s6) var(--s7);
+  gap: var(--s4) var(--s6);
 }
 
 .rm-col {
   display: flex;
   flex: 999 1 560px;
   flex-direction: column;
-  gap: var(--s6);
+  gap: var(--s4);
   min-width: 0;
   max-width: 760px;
 }
@@ -508,7 +508,7 @@
   flex-direction: column;
   gap: var(--s4);
   min-width: 0;
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
 }
 
 .rm-listenrow {
@@ -699,7 +699,7 @@
 /* ending early */
 .rm-dialog {
   width: min(440px, calc(100vw - 2 * var(--s4)));
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
   border: var(--hair) solid var(--line-strong);
   border-radius: var(--r-l);
   background: var(--surface);
@@ -717,7 +717,7 @@
 }
 
 .rm-dialog-title {
-  font-size: var(--fs-5);
+  font-size: var(--fs-4);
   font-weight: 500;
   line-height: 1.25;
 }
@@ -1316,7 +1316,7 @@
 .rm-page {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s4);
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
@@ -1369,7 +1369,7 @@
 .rm-setup-cols {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
-  gap: var(--s5);
+  gap: var(--s4);
   align-items: start;
 }
 
@@ -1385,18 +1385,18 @@
   display: flex;
   flex-direction: column;
   gap: var(--s4);
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
 }
 
 .rm-sec .rm-h2 {
   font-family: var(--font-serif);
-  font-size: var(--fs-7);
+  font-size: var(--fs-6);
   font-weight: 400;
   letter-spacing: var(--track-tight);
 }
 
 .rm-sec .rm-h2-sm {
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
 }
 
 .rm-lede {
@@ -1417,7 +1417,7 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--s3) var(--s4);
-  padding: var(--s4) 0;
+  padding: var(--s3) 0;
   border-top: var(--hair) solid var(--line);
 }
 
@@ -1612,7 +1612,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s3);
-  padding: var(--s3) 0;
+  padding: var(--s2) 0;
   border-top: var(--hair) solid var(--line);
 }
 
@@ -1740,10 +1740,6 @@
 
   .rm-frame {
     padding-inline: var(--s4);
-  }
-
-  .rm-main {
-    padding-top: var(--s5);
   }
 
   .rm-answer {

@@ -90,7 +90,7 @@
 }
 
 .pe-outline {
-  height: 34px;
+  height: 36px;
   padding: 0 var(--s3);
   border: var(--hair) solid var(--line);
   border-radius: var(--r-s);
@@ -112,7 +112,7 @@
 }
 
 .pe-solid {
-  height: 34px;
+  height: 36px;
   padding: 0 var(--s4);
   border: var(--hair) solid var(--accent-strong);
   border-radius: var(--r, var(--r-s));
@@ -130,7 +130,7 @@
 }
 
 .pe-quiet {
-  height: 34px;
+  height: 36px;
   padding: 0 var(--s4);
   border: var(--hair) solid var(--line);
   border-radius: var(--r, var(--r-s));
@@ -196,7 +196,7 @@
 }
 
 .pe-seg button {
-  height: 28px;
+  height: 32px;
   padding: 0 var(--s3);
   border: 0;
   border-radius: var(--r-s);
@@ -279,8 +279,8 @@
   display: inline-grid;
   place-items: center;
   flex: none;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: var(--hair) solid transparent;
   border-radius: var(--r-s);
@@ -316,7 +316,7 @@
 
 /* Select. */
 .pe-sel {
-  height: 28px;
+  height: 36px;
   padding: 0 var(--s1) 0 var(--s1);
   border: var(--hair) solid var(--line);
   border-radius: var(--r-s);
@@ -341,7 +341,7 @@
   display: flex;
   align-items: center;
   gap: var(--s2);
-  min-height: 32px;
+  min-height: 36px;
   font-size: var(--fs-1);
   color: var(--text);
   cursor: pointer;
@@ -592,8 +592,8 @@
 .pe-swc {
   display: inline-grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: var(--hair) solid transparent;
   border-radius: 50%;
@@ -788,8 +788,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--s3);
-  padding: var(--s4) var(--s5) var(--s5);
+  gap: var(--s4);
+  padding: var(--s4) var(--s5);
 }
 
 .pe-main-head {
@@ -798,7 +798,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s2) var(--s4);
-  min-height: 28px;
+  min-height: 36px;
 }
 
 .pe-main-title {
@@ -992,7 +992,7 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
     /* The sections list spans all four rows; its extra height goes to the last one, not between the others. */
     grid-template-rows: auto auto auto 1fr;
-    column-gap: var(--s6);
+    column-gap: var(--s5);
     align-items: start;
     overflow: visible;
     border-right: 0;
@@ -1033,6 +1033,24 @@
 
   .pe-vsep {
     display: none;
+  }
+
+  /* under 760px every control is a thumb's height, as on a touch screen */
+  .pe-ghost,
+  .pe-outline,
+  .pe-solid,
+  .pe-quiet,
+  .pe-seg button,
+  .pe-switch,
+  .pe-sel,
+  .pe-check {
+    min-height: 44px;
+  }
+
+  .pe-ib,
+  .pe-swc {
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .pe-title {

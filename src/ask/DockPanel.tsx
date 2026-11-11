@@ -17,7 +17,7 @@ export interface Starter {
   reason: string;
 }
 
-interface PanelProps {
+export interface PanelProps {
   id: string;
   profile: Profile;
   starters: Starter[];
@@ -43,12 +43,20 @@ export function DockPanel({ id, profile, starters, thread, onAsk, onClose, onFul
   const lastUser = [...messages].reverse().find((m) => m.role === 'user');
   const reply = [...messages].reverse().find((m) => m.role === 'assistant');
   const live = !!reply && reply.status === 'streaming';
+  const sources = profile.sources.filter((s) => s.ok).length;
   const settled = !!reply && reply.status !== 'streaming';
 
   return (
     <div id={id} className="ak-panel" role="dialog" aria-label="Ask Leafout">
       <div className="ak-panel-head">
-        <span className="kicker">Ask Leafout</span>
+        <span className="ak-panel-title">
+          <span className="kicker">Ask Leafout</span>
+          {!thread && (
+            <span className="ak-fine">
+              It can see your graph and its {sources} {sources === 1 ? 'source' : 'sources'}, your applications, your practice history, your plan and your matches.
+            </span>
+          )}
+        </span>
         <span className="ak-panel-tools">
           {thread && (
             <button type="button" className="btn btn-sm btn-quiet" onClick={onFull}>

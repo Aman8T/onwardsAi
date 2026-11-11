@@ -19,6 +19,12 @@
   margin: var(--s4) auto 0;
 }
 
+/* the gallery: the same dock, in the page's flow */
+.ak-dock.is-flow {
+  position: static;
+  margin: 0;
+}
+
 .ak-bar {
   display: flex;
   align-items: center;
@@ -93,6 +99,12 @@
   border-color: var(--line-strong);
 }
 
+/* "Enter to send", where the starters rode while the bar rested */
+.ak-hint {
+  flex: none;
+  white-space: nowrap;
+}
+
 .ak-send {
   flex: none;
   min-width: 44px;
@@ -118,6 +130,13 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s4);
+}
+
+.ak-panel-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .ak-panel-tools {
@@ -305,4 +324,62 @@
   .ak-bubble {
     max-width: 92%;
   }
+}
+
+/* ───────────── the dev gallery (/dev/ask) ───────────── */
+
+.ak-dev {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.ak-dev-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  min-height: 64px;
+  padding: var(--s2) var(--s5);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.ak-dev-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-left: auto;
+}
+
+.ak-dev-btn {
+  min-height: 36px;
+  padding: 0 var(--s3);
+  font: inherit;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  white-space: nowrap;
+  background: var(--surface-2);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ak-dev-btn[aria-pressed='true'] {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.ak-dev-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  width: 100%;
+  max-width: 920px;
+  margin: var(--s5) auto;
+  padding-inline: var(--s5);
+}
+
+.ak-dev-said {
+  min-height: 1.5em;
 }

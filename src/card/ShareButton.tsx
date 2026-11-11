@@ -16,7 +16,12 @@ const ShareSheet = lazy(() => import('./ShareSheet').then((m) => ({ default: m.S
 
 export type ShareLook = 'header' | 'primary' | 'slip';
 
-export function ShareButton({ profileId, look = 'header', className, children }: { profileId: string; look?: ShareLook; className?: string; children?: ReactNode }) {
+
+/**
+ * The sheet and the way to open it, for a caller that draws its own controls (the dashboard's slip, once the card is
+ * live, has two buttons and so cannot itself be one). Render `sheet` anywhere in the output; call `show` to open it.
+ */
+export function useShareSheet(profileId: string): { show: () => void; open: boolean; sheet: ReactNode } {
   const [open, setOpen] = useState(false);
   // once asked for, the sheet stays mounted so it can play its exit
   const [asked, setAsked] = useState(false);
@@ -26,6 +31,34 @@ export function ShareButton({ profileId, look = 'header', className, children }:
     setAsked(true);
     setOpen(true);
   };
+
+  const sheet = asked ? (
+    <Suspense fallback={null}>
+      <ShareSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        profileId={profileId}
+        onAnalyse={() => {
+          setOpen(false);
+          actions.startOver();
+        }}
+        onSignIn={
+          loaded && offersSignIn(providers)
+            ? () => {
+                setOpen(false);
+                signInSheet.open('save');
+              }
+            : undefined
+        }
+      />
+    </Suspense>
+  ) : null;
+
+  return { show, open, sheet };
+}
+
+export function ShareButton({ profileId, look = 'header', className, children }: { profileId: string; look?: ShareLook; className?: string; children?: ReactNode }) {
+  const { show, open, sheet } = useShareSheet(profileId);
 
   return (
     <>
@@ -51,27 +84,7 @@ export function ShareButton({ profileId, look = 'header', className, children }:
           (children ?? 'Share my skill shape')
         )}
       </button>
-      {asked && (
-        <Suspense fallback={null}>
-          <ShareSheet
-            open={open}
-            onClose={() => setOpen(false)}
-            profileId={profileId}
-            onAnalyse={() => {
-              setOpen(false);
-              actions.startOver();
-            }}
-            onSignIn={
-              loaded && offersSignIn(providers)
-                ? () => {
-                    setOpen(false);
-                    signInSheet.open('save');
-                  }
-                : undefined
-            }
-          />
-        </Suspense>
-      )}
+      {sheet}
     </>
   );
 }

@@ -51,6 +51,9 @@ if (pathname.startsWith('/p/')) {
 } else if (import.meta.env.DEV && pathname === '/dev/resume') {
   // the resume screens (the resume in view, Finalise, the blocks) on typed fixtures: no server, no account
   Root = lazy(() => import('./resume/dev/ResumeGallery').then((m) => ({ default: m.ResumeGallery })));
+} else if (import.meta.env.DEV && pathname === '/dev/ask') {
+  // every state of the Ask dock (resting, open, waiting, streaming, done, stopped, failed, rate-limited, ceiling) on fixtures: no server, no account
+  Root = lazy(() => import('./ask/dev/AskGallery').then((m) => ({ default: m.AskGallery })));
 } else if (import.meta.env.DEV && pathname === '/dev/design') {
   // the real screens under either look, scheme and hue, alone or side by side, on fixtures: no server, no account
   Root = lazy(() => import('./dev/design/DesignPlayground').then((m) => ({ default: m.DesignPlayground })));
