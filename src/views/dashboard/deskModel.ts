@@ -2,7 +2,7 @@
  * Pure helpers for the dashboard's desk, the cards that show what the person has been doing here:
  *
  *   pickUps         the last thing touched in each feature, newest first ("Pick up where you left off")
- *   pinnedNote      the person's own newest note on a tracked role
+ *   trackedNotes    the person's own notes on tracked roles, newest first
  *   activeDays      the days something was done here, counted from the dates the features already store
  *   weekStreak      weeks in a row with at least one such day, and the longest run on record
  *   weeksStrip      the last twelve weeks as columns of days, for the squares
@@ -91,14 +91,10 @@ export function pickUps(input: Pick<DeskInput, 'history' | 'plans' | 'matches' |
   return out.sort((a, b) => b.at - a.at);
 }
 
-/** The newest note the person wrote on a tracked role, or null. The words on the pinned slip are theirs. */
-export function pinnedNote(tracked: readonly TrackedJob[]): TrackedJob | null {
-  return (
-    newest(
-      tracked.filter((t) => t.note.trim()),
-      (t) => ms(t.updatedAt) || ms(t.savedAt),
-    ) ?? null
-  );
+/** The tracked roles the person wrote a note on, newest first. The words on each slip are theirs. */
+export function trackedNotes(tracked: readonly TrackedJob[]): TrackedJob[] {
+  const at = (t: TrackedJob) => ms(t.updatedAt) || ms(t.savedAt);
+  return tracked.filter((t) => t.note.trim()).sort((a, b) => at(b) - at(a));
 }
 
 /* ───────────────────────── the days ───────────────────────── */

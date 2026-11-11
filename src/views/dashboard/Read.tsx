@@ -25,6 +25,7 @@ import type { LineOrigin } from './lines';
 import { THEME_LABEL, deskLines, localDay } from './lines';
 import type { Achievement } from './model';
 import { askQuestions } from './model';
+import { useDeskNotes } from './notes';
 
 /** What the small print under the line says about where it came from. */
 const ORIGIN_NOTE: Record<LineOrigin, string> = {
@@ -56,6 +57,7 @@ export function Hello({ profile, shelf, history }: { profile: Profile; shelf: re
   const [paused, setPaused] = useState(false);
   const [open, setOpen] = useState<{ skillId: string; at: number } | null>(null);
   const still = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const desk = useDeskNotes(profile.id);
 
   // a new profile starts over
   useEffect(() => {
@@ -133,11 +135,21 @@ export function Hello({ profile, shelf, history }: { profile: Profile; shelf: re
             {line.note}
           </span>
         )}
-        {lines.length > 1 && (
-          <button type="button" className="db-link db-another" onClick={next} aria-label="Another line">
-            Another →
+        <span className="db-line-acts">
+          {lines.length > 1 && (
+            <button type="button" className="db-link db-another" onClick={next} aria-label="Another line">
+              Another →
+            </button>
+          )}
+          <button
+            type="button"
+            className="db-link db-another"
+            aria-pressed={desk.isPinned(line.text)}
+            onClick={() => desk.togglePin({ text: line.text, label: THEME_LABEL[line.theme], by: line.theme === 'quote' ? line.note : undefined })}
+          >
+            {desk.isPinned(line.text) ? 'Pinned ✓' : 'Pin it'}
           </button>
-        )}
+        </span>
       </div>
 
       {skill && evidence && (

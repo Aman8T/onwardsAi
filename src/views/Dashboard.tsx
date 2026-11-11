@@ -1,15 +1,18 @@
 /**
- * The dashboard (board "Dashboard · /dashboard · the entry point"): where the app opens once a graph exists. The skill
- * radar (NowGraph, whole, with its rail and popovers) and the ranked next roles live here, next to a summary from every
- * feature: applications and Apply for me, posting matches, Practice, the running Prepare plans, Discover's last search
- * and the Weekly. A role row opens that role's screen (GraphView); every other card leads into its feature.
+ * The dashboard (board "Home · /dashboard"): where the app opens once a graph exists, and the person's own space.
+ * Top to bottom:
  *
- * It opens on the read (views/dashboard/Read.tsx): the greeting and one line about the person at a time. Under it sits
- * the desk (views/dashboard/Desk.tsx, board "Home · the desk"): the last thing touched with the way back into it, the
- * person's own pinned note, weeks in a row, the last twelve weeks as squares with what moved, and further down the shelf
- * of what is worth saying out loud. The cards are a bento of uneven sizes with a slip or two tilted a degree; on a
- * phone it is one straight column. Every number here is counted in code from what the features already store; the read
- * is the one thing a model phrased, and it is stored on the profile.
+ *   the read        the greeting and one line at a time (views/dashboard/Read.tsx, lines.ts)
+ *   the profile     the skill radar, whole, with its rail and popovers (NowGraph) and "Share my skill shape";
+ *                   beside it the slips (views/dashboard/Slips.tsx): the person's notes as a pile, their card, their resume
+ *   ask             questions worth asking about yourself
+ *   next            the ranked next roles, and the shelf of what is worth saying out loud
+ *   your week       one card: pick up where you left off, the weeks in a row, the last twelve weeks as squares
+ *   the features    Applications (with Discover's search), Practice and Prepare, Posting matches; the Weekly as a line
+ *
+ * Nothing here shows a score going down. Every number is counted in code from what the features already store; the
+ * read's lines are the one thing a model phrased, and they are stored on the profile. Cards are a bento of uneven
+ * widths; the slips are turned a degree or two; on a phone it is one straight column.
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { Profile } from '../../shared/types';
@@ -20,6 +23,7 @@ import type { MatchSummary } from '../match/types';
 import { applyPath } from '../apply/route';
 import { applyOn, useApplications } from '../apply/useApplications';
 import { SaveInvite } from '../auth/SaveInvite';
+import { ShareButton } from '../card/ShareButton';
 import { useMe } from '../auth/useMe';
 import { RadarGlyph } from '../components/Radar';
 import { STAGES, STAGE_LABEL, useTracker } from '../discover/applications/tracker';
@@ -41,11 +45,12 @@ import { PipsLine } from '../practice/Pips';
 import { listPlans } from '../prepare/api';
 import { actions, useApp } from '../store';
 import { useSubscription } from '../weekly/useSubscription';
-import { Momentum, PickUpCard, PinnedNote, Shelf, ShowingUp } from './dashboard/Desk';
+import { Shelf, WeekCard } from './dashboard/Desk';
 import { AskStrip, Hello, usePreviousProfile } from './dashboard/Read';
-import { activeDays, bestWeekday, pickUps, pinnedNote, practiceTrend, weekStreak, weeksStrip } from './dashboard/deskModel';
+import { activeDays, bestWeekday, pickUps, practiceTrend, weekStreak, weeksStrip } from './dashboard/deskModel';
 import type { ThreadLike } from './dashboard/deskModel';
-import { achievements, deltas } from './dashboard/model';
+import { achievements } from './dashboard/model';
+import { Slips } from './dashboard/Slips';
 import { GraphHeader } from './graph/GraphHeader';
 import { NowGraph } from './graph/NowGraph';
 import '../styles/shell.css';
@@ -64,11 +69,6 @@ export interface DashboardSeed {
 }
 
 const NO_PLANS: PreparePlanSummary[] = [];
-
-const longDay = (iso: string): string | null => {
-  const t = Date.parse(iso);
-  return Number.isFinite(t) ? new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }) : null;
-};
 
 /** Reopen a plan the way the graph seeded it: the role's question, or the gap's. */
 function openPlan(profile: Profile, p: PreparePlanSummary) {
@@ -112,14 +112,12 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
     const days = activeDays(input);
     return {
       picks: pickUps(input),
-      note: pinnedNote(tracked),
       streak: weekStreak(days, now),
       strip: weeksStrip(days, now),
       weekday: bestWeekday(days),
       trend: practiceTrend(history),
     };
   }, [profile, previous, history, plans, data.matches, tracked, threads, now]);
-  const moved = useMemo(() => (previous ? deltas(previous, profile).slice(0, 3) : []), [previous, profile]);
   const weak = history ? history.claims.filter((c) => c.best === 'shaky' || c.best === 'couldnt').length : 0;
   const reading = data.history.status === 'loading' || data.plans.status === 'loading';
 
@@ -132,41 +130,43 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
         {/* the person's own space: the greeting and one line at a time (an achievement, a roast, a tip, a quote…) */}
         <Hello profile={profile} shelf={shelf} history={history} />
 
-        {/* the desk: where they left off, their own note, the weeks they showed up */}
-        <div className="db-bento">
-          <PickUpCard profile={profile} items={desk.picks} loading={reading} weak={weak} now={now} onOpenPlan={(p) => openPlan(profile, p)} />
-          <div className="db-side">
-            {desk.note && <PinnedNote job={desk.note} />}
-            <ShowingUp streak={desk.streak} />
-          </div>
-          <Momentum
-            strip={desk.strip}
-            weekday={desk.weekday}
-            trend={desk.trend}
-            loading={data.history.status === 'loading'}
-            moved={moved}
-            since={previous ? longDay(previous.createdAt) : null}
-            mastery={profile.mastery.score}
-          />
+        {/* the main thing: the profile, with the way to share it; beside it the slips that are the person's own */}
+        <div className="db-bento db-top">
+          <section className="panel db-now" aria-labelledby="db-now-h">
+            <div className="db-card-head db-now-head">
+              <h2 className="kicker" id="db-now-h">
+                Your profile · the skill graph
+              </h2>
+              <ShareButton profileId={profile.id} look="primary" className="btn-sm" />
+            </div>
+            <NowGraph profile={profile} />
+          </section>
+          <Slips profile={profile} tracked={tracked} />
         </div>
 
         <AskStrip profile={profile} />
 
-        {/* NOW: the skill radar, whole, with its rail and its popovers */}
-        <section className="panel db-now" aria-label="Current role: skill radar">
-          <NowGraph profile={profile} />
-        </section>
-
         <div className="db-bento">
           <NextRoles profile={profile} />
-          <Shelf profile={profile} items={shelf} />
-          <ApplicationsCard items={tracked} />
-          <PracticeCard load={data.history} />
-          <PrepareCard profile={profile} load={data.plans} />
+          <Shelf items={shelf} />
+          <WeekCard
+            profile={profile}
+            items={desk.picks}
+            loading={reading}
+            weak={weak}
+            now={now}
+            onOpenPlan={(p) => openPlan(profile, p)}
+            streak={desk.streak}
+            strip={desk.strip}
+            weekday={desk.weekday}
+            trend={desk.trend}
+          />
+          <ApplicationsCard profile={profile} items={tracked} />
+          <PracticeCard profile={profile} load={data.history} plans={data.plans} />
           <MatchesCard matches={data.matches} />
-          <DiscoverCard profile={profile} />
-          <WeeklyCard />
         </div>
+
+        <WeeklyLine />
       </main>
     </div>
   );
@@ -261,9 +261,6 @@ function NextRoles({ profile }: { profile: Profile }) {
             Open a role →
           </button>
         )}
-        <button type="button" className="btn btn-quiet" onClick={() => actions.openResume({ screen: 'resume' })}>
-          {top ? 'Your resumes →' : 'Your resume →'}
-        </button>
       </div>
     </section>
   );
@@ -271,7 +268,7 @@ function NextRoles({ profile }: { profile: Profile }) {
 
 /* ───────────────────────── Applications ───────────────────────── */
 
-function ApplicationsCard({ items }: { items: readonly TrackedJob[] }) {
+function ApplicationsCard({ profile, items }: { profile: Profile; items: readonly TrackedJob[] }) {
   const apply = useApplications();
   const sent = applyOn(apply.status) && apply.ready;
   const counts = STAGES.map((stage) => ({ stage, n: items.filter((t) => t.stage === stage).length }));
@@ -326,6 +323,7 @@ function ApplicationsCard({ items }: { items: readonly TrackedJob[] }) {
           </a>
         </div>
       )}
+      <DiscoverLine profile={profile} />
       {!sent && open > 0 && (
         <div className="db-foot">
           <button type="button" className="btn btn-sm" onClick={() => actions.openPractice({ screen: 'hub' })}>
@@ -340,7 +338,7 @@ function ApplicationsCard({ items }: { items: readonly TrackedJob[] }) {
 /* ───────────────────────── Posting matches ───────────────────────── */
 
 function MatchesCard({ matches }: { matches: MatchSummary[] }) {
-  const shown = matches.slice(0, 3);
+  const shown = matches.slice(0, 2);
   const now = useNow(60_000);
 
   return (
@@ -349,7 +347,7 @@ function MatchesCard({ matches }: { matches: MatchSummary[] }) {
         <h2 className="kicker" id="db-match-h">
           Posting matches
         </h2>
-        {matches.length > 3 && (
+        {matches.length > 2 && (
           <button type="button" className="db-link" onClick={() => actions.openMatch()}>
             All {matches.length} →
           </button>
@@ -372,7 +370,7 @@ function MatchesCard({ matches }: { matches: MatchSummary[] }) {
                       {[m.company, Number.isFinite(at) ? timeAgo(at, now) : null].filter(Boolean).join(' · ')}
                     </span>
                   </span>
-                  <span className="chip">{BAND_LABEL[m.band]}</span>
+                  <span className={`stamp${m.band === 'strong' ? ' stamp-ok' : ' stamp-quiet'}`}>{BAND_LABEL[m.band]}</span>
                 </button>
               </li>
             );
@@ -390,18 +388,19 @@ function MatchesCard({ matches }: { matches: MatchSummary[] }) {
 
 /* ───────────────────────── Practice ───────────────────────── */
 
-function PracticeCard({ load }: { load: Load<PracticeHistory> }) {
+function PracticeCard({ profile, load, plans: plansLoad }: { profile: Profile; load: Load<PracticeHistory>; plans: Load<PreparePlanSummary[]> }) {
   const history = load.status === 'ready' ? load.data : null;
   // newest first, as the server lists them
   const last = history?.sessions[0];
   const weak = history ? history.claims.filter((c) => c.best === 'shaky' || c.best === 'couldnt').length : 0;
   const lastAt = last ? Date.parse(last.createdAt) : NaN;
+  const plans = plansLoad.status === 'ready' ? plansLoad.data.slice(0, 2) : [];
 
   return (
     <section className="panel db-card db-practice" aria-labelledby="db-pc-h" aria-busy={load.status === 'loading'}>
       <div className="db-card-head">
         <h2 className="kicker" id="db-pc-h">
-          Practice
+          Practice and Prepare
         </h2>
         <button type="button" className="db-link" onClick={() => actions.openPractice({ screen: 'hub' })}>
           Open →
@@ -427,6 +426,25 @@ function PracticeCard({ load }: { load: Load<PracticeHistory> }) {
           <span className="db-fine">The ones you did not fully back up, each brought back where it wobbled.</span>
         </div>
       )}
+      {plans.length > 0 && (
+        <ul className="db-rows" aria-label="Your plans">
+          {plans.map((p) => (
+            <li key={p.id}>
+              <button type="button" className="db-row" onClick={() => openPlan(profile, p)}>
+                <span className="db-row-text">
+                  <span className="db-small">
+                    <b>Plan · {p.roleTitle}</b>
+                    {p.requirement ? ` · ${p.requirement}` : ''}
+                  </span>
+                  <span className="db-fine">Started {dayLabel(p.createdAt.slice(0, 10))}</span>
+                </span>
+                <span className="db-fine">Open →</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {plansLoad.status === 'ready' && plans.length === 0 && last && <p className="db-fine">Ask how to prepare for a role and the answer becomes a plan, kept here.</p>}
       <div className="db-foot">
         <button type="button" className={`btn btn-sm${last ? '' : ' btn-primary'}`} onClick={() => actions.openPractice({ screen: 'hub' })}>
           {last ? 'Practise again' : 'Start practising'}
@@ -441,58 +459,9 @@ function PracticeCard({ load }: { load: Load<PracticeHistory> }) {
   );
 }
 
-/* ───────────────────────── Prepare ───────────────────────── */
+/* ───────────────────────── Discover, as a line of the applications card ───────────────────────── */
 
-function PrepareCard({ profile, load }: { profile: Profile; load: Load<PreparePlanSummary[]> }) {
-  const plans = load.status === 'ready' ? load.data : [];
-  const shown = plans.slice(0, 3);
-  const open = (p: PreparePlanSummary) => openPlan(profile, p);
-
-  return (
-    <section className="panel db-card db-prepare" aria-labelledby="db-prep-h" aria-busy={load.status === 'loading'}>
-      <div className="db-card-head">
-        <h2 className="kicker" id="db-prep-h">
-          Prepare
-        </h2>
-        {plans.length > 3 && <span className="db-fine">{plural(plans.length, 'plan')}</span>}
-      </div>
-      {load.status === 'loading' && <p className="db-muted">Reading your plans…</p>}
-      {load.status === 'error' && <p className="db-muted">Your plans could not be read just now.</p>}
-      {load.status === 'ready' && shown.length === 0 && (
-        <p className="db-muted">Ask how to prepare for a role and the answer becomes a plan: where you stand, the one move, the weeks.</p>
-      )}
-      {shown.length > 0 && (
-        <ul className="db-rows">
-          {shown.map((p) => (
-            <li key={p.id}>
-              <button type="button" className="db-row" onClick={() => open(p)}>
-                <span className="db-row-text">
-                  <span className="db-small">
-                    <b>{p.roleTitle}</b>
-                    {p.requirement ? ` · ${p.requirement}` : ''}
-                  </span>
-                  <span className="db-fine">Started {dayLabel(p.createdAt.slice(0, 10))}</span>
-                </span>
-                <span className="db-fine">Open →</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {load.status === 'ready' && shown.length === 0 && (
-        <div className="db-foot">
-          <button type="button" className="btn btn-sm" onClick={() => actions.openRole(null)}>
-            Pick a role
-          </button>
-        </div>
-      )}
-    </section>
-  );
-}
-
-/* ───────────────────────── Discover ───────────────────────── */
-
-function DiscoverCard({ profile }: { profile: Profile }) {
+function DiscoverLine({ profile }: { profile: Profile }) {
   const area = useMemo(() => readArea(profile.id), [profile.id]);
   const { load } = useLoad<JobSearchRun | null>((signal) => getLatestRun(profile.id, area.city, area.remote !== false, signal), [profile.id, area.city, area.remote]);
   const run = load.status === 'ready' ? load.data : null;
@@ -501,58 +470,49 @@ function DiscoverCard({ profile }: { profile: Profile }) {
   const at = run ? Date.parse(run.createdAt) : NaN;
 
   return (
-    <section className="panel db-card db-discover" aria-labelledby="db-dc-h" aria-busy={load.status === 'loading'}>
-      <h2 className="kicker" id="db-dc-h">
-        Discover
-      </h2>
-      {run ? (
-        <>
-          <p className="db-small">
-            <span className="numeral db-big">{run.jobs.length}</span> {plural(run.jobs.length, 'role', 'roles')} found{Number.isFinite(at) ? ` ${timeAgo(at, now)}` : ''} ·{' '}
-            <span className="numeral">{good}</span> {FIT_WORD.good.toLowerCase()}
+    <div className="db-line db-line-act" aria-busy={load.status === 'loading'}>
+      <span className="db-small">
+        <b>Discover</b>
+        {run ? (
+          <>
+            {' · '}
+            <span className="numeral">{run.jobs.length}</span> {plural(run.jobs.length, 'role', 'roles')} found{Number.isFinite(at) ? ` ${timeAgo(at, now)}` : ''} · <span className="numeral">{good}</span>{' '}
+            {FIT_WORD.good.toLowerCase()}
             {good === 1 ? '' : 's'}
-          </p>
-          <p className="db-fine">
-            {[run.city, run.remote ? 'remote in India' : null].filter(Boolean).join(' · ') || 'India'} · employers' own boards only
-          </p>
-        </>
-      ) : (
-        <p className="db-muted">
-          {load.status === 'loading' ? 'Looking for your last search…' : "Claude searches employers' own job sites for roles like yours and checks each posting against your evidence."}
-        </p>
-      )}
-      <div className="db-foot">
-        <button type="button" className="btn btn-sm" onClick={() => actions.openDiscover({ tab: 'roles' })}>
-          {run ? 'See the roles' : 'Search with AI'}
-        </button>
-      </div>
-    </section>
+          </>
+        ) : (
+          <span className="db-fine"> · {load.status === 'loading' ? 'looking for your last search…' : "roles like yours, from employers' own job sites"}</span>
+        )}
+      </span>
+      <button type="button" className="btn btn-sm" onClick={() => actions.openDiscover({ tab: 'roles' })}>
+        {run ? 'See the roles' : 'Search with AI'}
+      </button>
+    </div>
   );
 }
 
-/* ───────────────────────── The Leafout Weekly ───────────────────────── */
+/* ───────────────────────── The Leafout Weekly, as one line ───────────────────────── */
 
-function WeeklyCard() {
+function WeeklyLine() {
   const { user } = useMe();
   const { subscription } = useSubscription(user?.id);
   const subscribed = !!subscription && subscription.status !== 'off';
   const unread = subscribed ? subscription.unread : 0;
 
   return (
-    <section className="panel db-card db-weekly" aria-labelledby="db-wk-h">
-      <div className="db-card-head">
-        <h2 className="kicker" id="db-wk-h">
-          The Leafout Weekly
-        </h2>
-        {unread > 0 && <span className="chip">{unread} new</span>}
-      </div>
-      <p className="db-small">{subscribed ? 'Openings that fit your graph, your week and news from your field.' : 'Openings that fit your graph, your week and news from your field. Every Monday, every line cited.'}</p>
-      {subscribed && subscription.email && <p className="db-fine">Every {subscription.day === 'mon' ? 'Monday' : subscription.day} · {subscription.email}</p>}
-      <div className="db-foot">
-        <button type="button" className={`btn btn-sm${subscribed ? '' : ' btn-primary'}`} onClick={() => actions.openWeekly()}>
-          {subscribed ? "Read this week's" : 'Subscribe, free'}
-        </button>
-      </div>
+    <section className="db-weekly" aria-labelledby="db-wk-h">
+      <h2 className="kicker" id="db-wk-h">
+        The Leafout Weekly
+      </h2>
+      <p className="db-small db-weekly-text">
+        {subscribed
+          ? `Every ${subscription.day === 'mon' ? 'Monday' : subscription.day}${subscription.email ? ` · ${subscription.email}` : ''}`
+          : 'Openings that fit your graph, your week and news from your field. Every Monday, every line cited.'}
+      </p>
+      {unread > 0 && <span className="stamp">{unread} new</span>}
+      <button type="button" className={`btn btn-sm${subscribed ? '' : ' btn-primary'}`} onClick={() => actions.openWeekly()}>
+        {subscribed ? "Read this week's" : 'Subscribe, free'}
+      </button>
     </section>
   );
 }

@@ -1,18 +1,19 @@
 /*
- * The dashboard (board "Dashboard · /dashboard · the entry point"). Class prefix db-. It shares the graph shell's
- * header, width and gutters (shell.css: --gv-max, --gv-gutter); the skill radar inside keeps now.css. Tokens only,
- * hairlines, depth from tone and space. The cards are a bento: uneven widths on one 12-column grid, a slip or two
- * tilted a degree. Under 760px it is one straight column and nothing is tilted.
+ * The dashboard (board "Home · /dashboard"). Class prefix db-. It shares the graph shell's header, width and gutters
+ * (shell.css: --gv-max, --gv-gutter); the skill radar inside keeps now.css. Tokens only, hairlines, depth from tone
+ * and space. The cards are a bento: uneven widths on one 12-column grid. The profile comes first with the slips
+ * beside it (the hand-touched kit of global.css: turned a degree or two). Under 760px it is one straight column and
+ * nothing is turned. Density: section gap s4, card padding s4 by s5, row padding s2.
  */
 
 .db-main {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s4);
   width: 100%;
   max-width: var(--gv-max);
   margin-inline: auto;
-  padding: var(--s5) var(--gv-gutter) var(--s8);
+  padding: var(--s4) var(--gv-gutter) var(--s7);
   /* radar labels may reach into the gutter; past it, nothing scrolls the page sideways */
   overflow-x: clip;
 }
@@ -25,11 +26,6 @@
 
 .db-h1 {
   font-size: var(--fs-6);
-}
-
-/* NOW: the whole skill radar, framed */
-.db-now {
-  padding: var(--s3) var(--s6) var(--s6);
 }
 
 /* the bento: one 12-column grid, cards of uneven width */
@@ -46,51 +42,75 @@
   flex-direction: column;
   gap: var(--s3);
   min-width: 0;
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
 }
 
-/* the desk: pick up (tall, left), the note and the weeks beside it, momentum under those */
-.db-pick {
-  grid-column: span 6;
-  grid-row: span 2;
-  gap: var(--s4);
-  padding: var(--s5) var(--s6);
-}
-
-.db-side {
-  grid-column: span 6;
-  display: flex;
+/* the profile: the whole skill radar, framed, with the way to share it in its head */
+.db-top {
   align-items: stretch;
-  gap: var(--s4);
+}
+
+.db-now {
+  grid-column: span 8;
   min-width: 0;
+  padding: var(--s3) var(--s5) var(--s4);
 }
 
-.db-mom {
-  grid-column: span 6;
+.db-now-head {
+  align-items: center;
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--line);
 }
 
-/* the features: 7 + 5, then 5 + 4 + 3, then 4 + 3 + 5 */
+/* inside the card the radar's own heading is a card title, not the page's hero */
+.db-view .db-now .now-head .now-title {
+  font-size: var(--fs-5);
+}
+
+.db-now .now-row {
+  padding-top: var(--s3);
+}
+
+.db-now .now-plot {
+  max-width: 460px;
+}
+
+/* the slips beside it: the person's notes, their card, their resume */
+.db-slips {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--s5);
+  min-width: 0;
+  padding: var(--s3) var(--s2) var(--s3);
+}
+
+/* next (7) and the shelf (5); your week across; then applications (5), practice and prepare (4), matches (3) */
 .db-next {
   grid-column: span 7;
-  padding: var(--s5) var(--s6);
 }
 
 .db-shelf {
   grid-column: span 5;
 }
 
-.db-apps,
-.db-weekly {
+.db-week {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--s4) var(--s6);
+}
+
+.db-apps {
   grid-column: span 5;
 }
 
-.db-practice,
-.db-matches {
+.db-practice {
   grid-column: span 4;
 }
 
-.db-prepare,
-.db-discover {
+.db-matches {
   grid-column: span 3;
 }
 
@@ -162,7 +182,7 @@
   align-items: center;
   gap: var(--s3);
   width: 100%;
-  padding: var(--s3) 0;
+  padding: var(--s2) 0;
   border-top: 1px solid var(--line);
   text-align: left;
   color: var(--text);
@@ -281,16 +301,28 @@
     grid-column: span 6;
   }
 
-  .db-pick,
-  .db-side,
-  .db-mom,
+  .db-now,
+  .db-slips,
   .db-next,
-  .db-shelf {
+  .db-shelf,
+  .db-week {
     grid-column: 1 / -1;
   }
 
-  .db-pick {
-    grid-row: auto;
+  /* the slips sit side by side under the profile */
+  .db-slips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: var(--s2) 0 0;
+  }
+
+  .db-slips > * {
+    flex: 1 1 260px;
+  }
+
+  .db-matches {
+    grid-column: 1 / -1;
   }
 }
 
@@ -300,12 +332,25 @@
   }
 
   .db-now {
-    padding: var(--s2) var(--s4) var(--s5);
+    padding: var(--s2) var(--s4) var(--s4);
   }
 
-  .db-pick,
-  .db-next {
-    padding: var(--s5);
+  .db-card {
+    padding: var(--s4);
+  }
+
+  .db-week {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .db-slips {
+    flex-direction: column;
+    gap: var(--s4);
+  }
+
+  .db-slips > * {
+    flex: none;
+    width: 100%;
   }
 
   .db-stats {
@@ -392,6 +437,12 @@ button.db-read-line.is-open {
   text-decoration-color: var(--accent-ui);
 }
 
+.db-line-acts {
+  display: inline-flex;
+  flex: none;
+  gap: var(--s3);
+}
+
 .db-another {
   flex: none;
   white-space: nowrap;
@@ -454,12 +505,26 @@ button.db-read-line.is-open {
   gap: var(--s2) var(--s4);
 }
 
-/* ───────────── the desk: where you left off ───────────── */
+/* ───────────── your week: where you left off, and the weeks you showed up ───────────── */
+
+.db-pick,
+.db-up {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+/* the weeks sit beside the pick-up, behind one hairline */
+.db-up {
+  padding-left: var(--s6);
+  border-left: 1px solid var(--line);
+}
 
 .db-pick-hero {
   display: flex;
   flex-direction: column;
-  gap: var(--s3);
+  gap: var(--s2);
 }
 
 .db-pick-title {
@@ -479,111 +544,62 @@ button.db-read-line.is-open {
   margin-top: 0;
 }
 
-/* the newest of the other features sit at the foot of the card */
-.db-pick-rows {
-  margin-top: auto;
-}
-
 .db-pick-rows > li:last-child .db-row {
   padding-bottom: 0;
   border-bottom: 0;
 }
 
-/* ───────────── slips, handwriting, a stamp: the hand-touched details ───────────── */
+.db-up-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s4) var(--s5);
+}
 
-/* a slip of paper held by one pin. Tilted a degree or two on a wide screen, straight on a phone. */
-.db-note {
-  position: relative;
+.db-up-run {
+  display: flex;
+  flex: 1 1 150px;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.db-up-days {
   display: flex;
   flex-direction: column;
   gap: var(--s2);
+}
+
+.db-up-hand {
+  font-size: var(--fs-3);
+}
+
+.db-up-claims {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-top: auto;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--line);
+}
+
+.db-up-claims > .db-small {
+  flex: 1 1 auto;
   min-width: 0;
-  padding: var(--s5) var(--s4) var(--s4);
-  background: var(--accent-soft);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-s);
-  color: var(--text);
-  text-align: left;
-  transform: rotate(-1.5deg);
-}
-
-.db-note::before {
-  content: '';
-  position: absolute;
-  top: var(--s2);
-  left: 50%;
-  width: 8px;
-  height: 8px;
-  margin-left: -4px;
-  border-radius: 50%;
-  background: var(--accent-ui);
-}
-
-.db-note-pin {
-  flex: 1.2 1 0;
-  align-self: center;
-}
-
-@media (hover: hover) {
-  .db-note-pin:hover {
-    border-color: var(--accent-ui);
-  }
-}
-
-.db-note-r {
-  margin-top: var(--s2);
-  transform: rotate(1deg);
-}
-
-.db-note-act {
-  align-self: flex-start;
-  margin-top: var(--s1);
-}
-
-.db-hand {
-  font-family: var(--font-serif);
-  font-size: var(--fs-4);
-  font-style: italic;
-  line-height: var(--lh-snug);
-  overflow-wrap: anywhere;
-  text-wrap: pretty;
-}
-
-/* a line written in the margin of a card */
-.db-margin {
-  color: var(--text-muted);
-  transform: rotate(-2deg);
-  transform-origin: left center;
-}
-
-.db-stamp {
-  flex: none;
-  padding: 1px 6px;
-  border: 1px solid var(--accent-ui);
-  border-radius: var(--r-s);
-  font-family: var(--font-mono);
-  font-size: var(--fs-0);
-  color: var(--accent);
-  transform: rotate(-2deg);
-}
-
-/* ───────────── showing up ───────────── */
-
-.db-streak {
-  flex: 1 1 0;
-  justify-content: space-between;
 }
 
 .db-streak-n {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--s1) var(--s2);
+  align-items: center;
+  gap: var(--s1) var(--s3);
 }
 
 .db-streak-big {
+  display: inline-block;
+  min-width: 1.2em;
   font-size: var(--fs-6);
   line-height: 1;
+  text-align: center;
 }
 
 .db-streak-fresh {
@@ -591,20 +607,93 @@ button.db-read-line.is-open {
   line-height: var(--lh-snug);
 }
 
-/* ───────────── momentum: the days as squares, then what moved ───────────── */
+/* ───────────── the slips beside the profile ───────────── */
 
-.db-mom-body {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--s4) var(--s5);
-  align-items: start;
-}
-
-.db-mom-days {
+.db-pile {
   display: flex;
   flex-direction: column;
   gap: var(--s3);
 }
+
+.db-pile-stack {
+  border-radius: var(--r-s);
+}
+
+.db-pile-slip {
+  width: 100%;
+}
+
+.db-pile-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s3);
+  padding-inline: var(--s1);
+}
+
+.db-pile-add {
+  margin-left: auto;
+}
+
+.db-slip-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  margin-top: var(--s1);
+}
+
+.db-slip-end {
+  margin-left: auto;
+}
+
+/* the note being written: a field on the slip, straight */
+.db-note-field {
+  width: 100%;
+  min-height: 4.2em;
+  padding: var(--s2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-s);
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical;
+}
+
+.db-share-slip {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--s4);
+  width: 100%;
+  cursor: pointer;
+}
+
+.db-share-glyph {
+  flex: none;
+}
+
+.db-share-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s1);
+  min-width: 0;
+}
+
+.db-share-text .hand {
+  font-size: var(--fs-4);
+}
+
+.db-share-go {
+  margin-top: var(--s1);
+}
+
+.db-resume-slip .hand {
+  font-size: var(--fs-4);
+}
+
+/* ───────────── the days as squares ───────────── */
+/* ───────────── momentum: the days as squares, then what moved ───────────── */
 
 .db-days {
   display: flex;
@@ -653,35 +742,6 @@ button.db-read-line.is-open {
 
 .db-dot.is-today {
   border-color: var(--text);
-}
-
-.db-trends {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.db-trend {
-  display: flex;
-  align-items: center;
-  gap: var(--s3);
-  padding: var(--s2) 0;
-  border-top: 1px solid var(--line);
-}
-
-.db-trend:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-
-.db-trend-text {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
 }
 
 .db-trend-n {
@@ -763,6 +823,30 @@ button.db-read-line.is-open {
   text-wrap: balance;
 }
 
+/* ───────────── a card line that ends in a button; the Weekly as one line ───────────── */
+
+.db-line-act {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.db-weekly {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--line);
+}
+
+.db-weekly-text {
+  flex: 1 1 280px;
+  min-width: 0;
+  color: var(--text-muted);
+}
+
 /* ───────────── ask about yourself ───────────── */
 
 .db-ask {
@@ -770,8 +854,6 @@ button.db-read-line.is-open {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s3);
-  padding-top: var(--s4);
-  border-top: 1px solid var(--line);
 }
 
 .db-ask-form {
@@ -831,22 +913,15 @@ button.db-read-line.is-open {
     text-align: left;
   }
 
-  /* the desk on a phone: one column, nothing tilted */
-  .db-side {
-    flex-direction: column;
+  /* your week on a phone: the weeks go under the pick-up */
+  .db-up {
+    padding-left: 0;
+    padding-top: var(--s4);
+    border-left: 0;
+    border-top: 1px solid var(--line);
   }
 
-  .db-note,
-  .db-margin,
-  .db-stamp {
-    transform: none;
-  }
-
-  .db-note-pin {
-    align-self: stretch;
-  }
-
-  .db-mom-body {
-    grid-template-columns: minmax(0, 1fr);
+  .db-share-slip {
+    align-items: flex-start;
   }
 }

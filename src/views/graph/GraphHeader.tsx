@@ -52,6 +52,9 @@ export function GraphHeader({ profile, current }: { profile: Profile; current: G
         <button type="button" className="gv-navbtn" onClick={() => actions.openPractice({ screen: 'hub' })}>
           Practice
         </button>
+        <button type="button" className="gv-navbtn" onClick={() => actions.openResume()}>
+          Resumes
+        </button>
       </nav>
 
       <div className="gv-actions">
