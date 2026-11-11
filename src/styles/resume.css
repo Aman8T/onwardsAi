@@ -794,3 +794,247 @@ button.rs-line {
     padding: 0 var(--s4);
   }
 }
+
+/* ───────────── version 2: grammar, wordings elsewhere, the coach's second wording, saved from a posting ───────────── */
+
+/* a proposed fix and a wording from another resume are measured things: straight rows, no tilt */
+.rs-proposal-main {
+  gap: var(--s1);
+}
+
+.rs-was {
+  color: var(--text-muted);
+}
+
+.rs-view del,
+.rs-rewrite del {
+  text-decoration: line-through;
+  text-decoration-thickness: var(--hair);
+  color: var(--text-muted);
+}
+
+.rs-view ins,
+.rs-rewrite ins {
+  padding: 0 var(--s1);
+  border-radius: 2px;
+  background: var(--accent-soft);
+  color: inherit;
+  text-decoration: none;
+}
+
+.rs-elsewhere {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding-top: var(--s2);
+  border-top: var(--hair) solid var(--line);
+}
+
+.rs-rewrite {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+  max-width: 62ch;
+  margin-top: var(--s3);
+  padding: var(--s4);
+  border-color: var(--accent-ui);
+}
+
+.rs-rewrite-done {
+  margin-top: var(--s2);
+}
+
+.rs-row.is-on {
+  background: var(--accent-soft);
+}
+
+.rs-save {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s1);
+  margin-top: var(--s2);
+}
+
+@media (max-width: 760px) {
+  .rs-proposal {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ───────────── version 3: a second file ───────────── */
+
+.rs-danger {
+  color: var(--danger);
+}
+
+/* the line under the header: a file being read, or the plain-words reason it was not added */
+.rs-upnote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding-block: var(--s3);
+  padding-inline: max(var(--rs-gutter), calc((100% - var(--rs-wrap)) / 2 + var(--rs-gutter)));
+  background: var(--surface-2);
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.rs-upnote:empty {
+  display: none;
+}
+
+/* a text button that reads as a link */
+.rs-linkbtn {
+  display: inline;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* a measured card: straight, no tilt. The accent edge says it is the news of this visit. */
+.rs-merge {
+  border-color: var(--accent-ui);
+}
+
+.rs-merge-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rs-merge-name {
+  font-size: var(--fs-5);
+  overflow-wrap: anywhere;
+}
+
+.rs-merge-groups {
+  display: flex;
+  flex-direction: column;
+}
+
+.rs-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding-block: var(--s3);
+  border-top: var(--hair) solid var(--line);
+}
+
+.rs-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s1) var(--s3);
+}
+
+summary.rs-group-head {
+  min-height: 36px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.rs-row.rs-row-single {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+/* two wordings side by side; one under the other on a phone */
+.rs-sides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s2) var(--s4);
+  min-width: 0;
+}
+
+.rs-side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* on a block: another wording, and the quiet flag that opens the two texts */
+.rs-also {
+  overflow-wrap: anywhere;
+}
+
+.rs-flag {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.rs-flagbtn {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  line-height: 1.5;
+  color: var(--accent);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.rs-flagbtn::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--s2);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.rs-file-acts {
+  gap: var(--s2) var(--s4);
+}
+
+.rs-file-note {
+  grid-column: 1 / -1;
+}
+
+@media (pointer: coarse) {
+  .rs-flagbtn,
+  .rs-linkbtn,
+  summary.rs-group-head {
+    min-height: 44px;
+  }
+
+  .rs-linkbtn {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+@media (max-width: 760px) {
+  .rs-flagbtn,
+  .rs-linkbtn,
+  summary.rs-group-head {
+    min-height: 44px;
+  }
+
+  .rs-linkbtn {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .rs-sides {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

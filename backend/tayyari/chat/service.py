@@ -13,9 +13,11 @@ an error event, everything else degrades:
  3. Decide whether the model may use the web tools: a link in the message always allows them, otherwise the
     decision gate answers, and any failure of it allows them (tools are only ever withheld on a confident "no").
  4. Stream through the Claude client as system blocks (rules, profile with the cache breakpoint, thread origin, and
-    after them the desk: practice, plans and matches loaded here, tracked roles from the request), mapping text and
-    tool events to `ChatEvent`s. The text goes through a `TrailerFilter`: an `[[action: ...]]` last line is held back,
-    checked against this turn's ids and sent as one `action` event (or dropped and logged), never as text.
+    after them the desk: practice, plans and matches loaded here, tracked roles from the request; and, when the API layer
+    handed one in, the resume in view with its lines), mapping text and tool events to `ChatEvent`s. The text goes through a
+    `TrailerFilter`: a last line of ``[[action: ...]]`` or ``[[rewrite: ...]]`` is held back, checked against this turn's ids
+    (and, for a rewrite, against the facts the line cites) and sent as one `action` or `rewrite` event (or dropped and
+    logged), never as text. With more than one trailer, the first valid one is kept.
  5. At the end of the turn, store the user and assistant messages (without the trailer) together and emit ``done``. A
     failure to store is logged and does not fail the turn. A cancelled turn (the client went away) stores nothing.
 
@@ -36,6 +38,7 @@ from tayyari.contract.events import (
     ev_chat_done,
     ev_chat_error,
     ev_delta,
+    ev_rewrite,
     ev_tool,
 )
 from tayyari.contract.requests import ChatRequestBody, RequestContext
@@ -69,7 +72,17 @@ from tayyari.storage.ports import (
 )
 from tayyari.storage.ports import ToolEvent as StoredToolEvent
 
-from .actions import Dropped, Proposal, TrailerFilter, extract, validate
+from .actions import (
+    Dropped,
+    Proposal,
+    RewriteProposal,
+    RewriteTrailer,
+    TrailerFilter,
+    destination_of,
+    extract,
+    validate,
+    validate_rewrite,
+)
 from .context import (
     ChatPromptBlocks,
     ChatPromptRenderer,
@@ -79,9 +92,12 @@ from .context import (
     DeskPlan,
     DeskSession,
     DeskTracked,
+    RenderedResume,
     action_targets,
     render_desk_block,
+    render_resume_block,
 )
+from .ports import ResumeInView
 from .tools import ui_tool_name, url_in_message
 
 log = get_logger(__name__)
@@ -230,8 +246,11 @@ class CoachChatService:
 
     # ───────────────────────── the turn ─────────────────────────
 
-    async def stream_turn(self, req: ChatRequestBody, rc: RequestContext) -> AsyncIterator[ChatEvent]:
-        """Stream the events of one turn, ending with one ``done`` (with the ``sessionId``) or one ``error``."""
+    async def stream_turn(
+        self, req: ChatRequestBody, rc: RequestContext, *, resume: ResumeInView | None = None
+    ) -> AsyncIterator[ChatEvent]:
+        """Stream the events of one turn, ending with one ``done`` (with the ``sessionId``) or one ``error``. ``resume`` is
+        the resume the request named, when the API layer found the caller may open it (else None: it is ignored)."""
         started = self._clock.monotonic()
         pid = req.profileId
 
@@ -252,7 +271,12 @@ class CoachChatService:
         mode, gate_reason = await self._tool_mode(req, rc, origin, is_sample)
         desk = await self._load_desk(req, rc)
         targets = action_targets(profile, desk)
-        blocks = self.renderer.render(profile, context, origin, render_desk_block(desk))
+        in_view: RenderedResume | None = (
+            render_resume_block(resume) if resume is not None and resume.lines else None
+        )
+        blocks = self.renderer.render(
+            profile, context, origin, render_desk_block(desk), in_view.block if in_view is not None else ""
+        )
         stream = self._claude.stream_chat(
             model=self._settings.chat_model,
             system=blocks.system_blocks(),
@@ -305,17 +329,32 @@ class CoachChatService:
         finished = trailer_filter.finish()
         if finished.text:
             yield ev_delta(finished.text)
-        trailer, dropped = finished.trailer, list(finished.dropped)
+        trailers, dropped = list(finished.trailers), list(finished.dropped)
         text = trailer_filter.text
         if end is not None and end.text != "".join(parts):
             # the client's final text differs from the deltas (it should not): the stored answer follows the final text
             whole = extract(end.text)
-            text, trailer, dropped = whole.text, whole.trailer, list(whole.dropped)
+            text, trailers, dropped = whole.text, list(whole.trailers), list(whole.dropped)
         proposal: Proposal | None = None
-        if trailer is not None:
-            checked = validate(trailer, targets)
+        rewrite: RewriteProposal | None = None
+        for trailer in trailers:
+            if proposal is not None or rewrite is not None:
+                dropped.append(Dropped("multiple", destination_of(trailer)))  # the first valid one is kept
+                continue
+            checked: Proposal | RewriteProposal | Dropped
+            if isinstance(trailer, RewriteTrailer):
+                checked = validate_rewrite(
+                    trailer,
+                    resume if in_view is not None else None,
+                    in_view.ids if in_view is not None else {},
+                    in_view.current if in_view is not None else {},
+                )
+            else:
+                checked = validate(trailer, targets)
             if isinstance(checked, Proposal):
                 proposal = checked
+            elif isinstance(checked, RewriteProposal):
+                rewrite = checked
             else:
                 dropped.append(checked)
         for item in dropped:
@@ -324,8 +363,10 @@ class CoachChatService:
             yield ev_delta(CUT_OFF_NOTE)
         if proposal is not None:
             yield ev_action(proposal.destination, proposal.target, proposal.label, proposal.title)
+        if rewrite is not None:
+            yield ev_rewrite(rewrite.resume_id, rewrite.line_id, rewrite.before, rewrite.after)
         await self._store_turn(thread, user_text, text if text.strip() else None, tools, rc)
-        self._log_turn(rc, pid, thread, blocks, mode, gate_reason, end, started, proposal)
+        self._log_turn(rc, pid, thread, blocks, mode, gate_reason, end, started, proposal, rewrite)
         yield ev_chat_done(thread.id)
 
     # ───────────────────────── steps ─────────────────────────
@@ -531,7 +572,7 @@ class CoachChatService:
             log.warning("chat_turn_not_saved", session_id=thread.id, request_id=rc.request_id, exc_info=True)
 
     def _log_dropped(self, rc: RequestContext, pid: str, thread: _Thread, item: Dropped) -> None:
-        """A proposed button that was not shown: the reason and the destination only, never the model's text."""
+        """A proposed button or rewrite that was not shown: the reason and the destination only, never the model's text."""
         log.info(
             "chat_action_dropped",
             request_id=rc.request_id,
@@ -552,6 +593,7 @@ class CoachChatService:
         end: TurnEnd | None,
         started: float,
         proposal: Proposal | None = None,
+        rewrite: RewriteProposal | None = None,
     ) -> None:
         """One line per finished turn: sizes and cache numbers only, never message or profile text."""
         usage: Usage | None = end.usage if end is not None else None
@@ -566,7 +608,9 @@ class CoachChatService:
             gate=gate_reason,
             profile_chars=len(blocks.profile),
             desk_chars=len(blocks.desk),
+            resume_chars=len(blocks.resume),
             action=proposal.destination if proposal is not None else None,
+            rewrite=rewrite is not None,
             stop_reason=end.stop_reason if end is not None else None,
             input_tokens=usage.input_tokens if usage else None,
             output_tokens=usage.output_tokens if usage else None,

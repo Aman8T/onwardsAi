@@ -6,7 +6,7 @@
 import type { ApplicationDetail, ApplicationReview, FilledField, NeedsInput, ProgressSection } from '../../../shared/apply';
 import type { ReviewMatch } from '../ReviewView';
 import type { ReviewField } from '../ReviewGroup';
-import { NOW } from './fixtures';
+import { DEFAULT_RESUME, NOW } from './fixtures';
 
 const at = (ms: number) => new Date(NOW - ms).toISOString();
 const MIN = 60_000;
@@ -275,6 +275,15 @@ export const RUN_REVIEW_ONSITE = with_({
   needsCount: 1,
 });
 
+/** "Apply with my current resume" sent the default resume: the review names it and keeps the frozen copy. */
+const DEFAULT_REVIEW: ApplicationReview = {
+  ...REVIEW,
+  resume: { name: DEFAULT_RESUME.fileName, sha256: 'c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2a1b2c3d4e5f6a7b8', choice: 'saved' },
+};
+const COPY = { ...DEFAULT_RESUME, sha256: DEFAULT_REVIEW.resume!.sha256 };
+
+export const RUN_REVIEW_DEFAULT = with_({ id: 'a_kestrel_5', resumeChoice: 'saved', review: DEFAULT_REVIEW, resumeCopy: COPY });
+
 export const RUN_REVIEW_WARNINGS = with_({
   id: 'a_kestrel_4',
   review: { ...REVIEW, warnings: ['This form showed a "verify you are human" box on the last page. If it appears when sending, we stop and hand it to you.'] },
@@ -365,6 +374,9 @@ export const RUN_SENT = with_({
   creditState: 'charged',
   hasConfirmation: true,
 });
+
+/** Sent with the default resume: the application's page says which one, as finalised then. */
+export const RUN_SENT_DEFAULT = with_({ ...RUN_SENT, id: 'a_kestrel_6', resumeChoice: 'saved', review: DEFAULT_REVIEW, resumeCopy: COPY });
 
 export const RUN_INTERVIEWING = with_({
   ...RUN_SENT,

@@ -9,6 +9,9 @@
  *   POST  /api/resumes/{id}/finalise         FinaliseRequest → FinaliseResponse
  *   POST  /api/resumes/{id}/default          ResumeDetail (409 without a finalised version)
  *   GET   /api/resumes/{id}/resume.pdf|.docx the file of the finalised version (409 without one)
+ *   POST  /api/resumes/upload?profile=<id>   multipart, field `resume` → UploadResponse (a second file; 400 unreadable_file · 409 too_many_files · 413)
+ *   GET   /api/resumes/files?profile=<id>    ResumeFilesResponse
+ *   GET   /api/resumes/{id}/original         the stored bytes of an uploaded resume (404 no_original)
  *
  * Failures keep the HTTP status, because the screens decide what to do from it: 401 sign in · 404 not yours or gone ·
  * 409 not finalised yet · 422 an op that does not fit · 429 slow down. An error body is `{error: "<sentence>"}` like
@@ -23,12 +26,22 @@ import type {
   FileKind,
   FinaliseRequest,
   FinaliseResponse,
+  FromMatchRequest,
+  GrammarResponse,
+  MergeItem,
+  MergeReport,
+  WordingsResponse,
   PathRequest,
   ResumeDetail,
+  ResumeFile,
+  ResumeFilesResponse,
   ResumeList,
   ResumeOp,
   ResumeOpsRequest,
+  UploadFailure,
+  UploadResponse,
 } from './types';
+import { GENERIC, TOO_LARGE, TOO_MANY, UNREADABLE, WRONG_TYPE } from './upload';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
@@ -182,4 +195,88 @@ export type { DownloadResult };
 export async function downloadResume(id: string, file: FileKind, filename: string): Promise<DownloadResult> {
   const result = await fetchFile(resumeFileUrl(id, file), filename);
   return !result.ok && result.status === 409 ? { ...result, message: NOT_FINALISED_MESSAGE } : result;
+}
+
+/* ───────────────────────── version 2 ───────────────────────── */
+
+/** The grammar check (one model call; no body). `ran: false` means it could not run. Nothing is stored. */
+export async function checkGrammar(id: string, signal?: AbortSignal): Promise<GrammarResponse> {
+  const res = await fetch(resumeUrl(id, '/grammar'), { method: 'POST', headers: JSON_HEADERS, body: '{}', signal });
+  const raw = (await readJson(res)) as unknown as Partial<GrammarResponse>;
+  const proposals = Array.isArray(raw.proposals) ? raw.proposals.filter((p) => typeof p?.bulletId === 'string' && typeof p.after === 'string' && typeof p.before === 'string') : [];
+  return { proposals, ran: raw.ran === true };
+}
+
+/** Wordings of this draft's lines that other resumes of the profile use. Pure code on the server; no model call. */
+export async function getWordings(id: string, signal?: AbortSignal): Promise<WordingsResponse> {
+  const raw = (await readJson(await fetch(resumeUrl(id, '/wordings'), { signal }))) as unknown as Partial<WordingsResponse>;
+  return { wordings: Array.isArray(raw.wordings) ? raw.wordings : [] };
+}
+
+/** Save a match's tailored resume into the list (idempotent). */
+export async function saveFromMatch(matchId: string, signal?: AbortSignal): Promise<ResumeDetail> {
+  const body: FromMatchRequest = { matchId };
+  const res = await fetch('/api/resumes/from-match', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(body), signal });
+  return detailOf(await readJson(res));
+}
+
+/* ───────────────────────── version 3: a second file ───────────────────────── */
+
+const asList = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+
+/** What went wrong with an upload, in words for the page; the status and code decide, the server's text does not. */
+function uploadError(e: ResumeApiError): ResumeApiError {
+  const fail = (f: UploadFailure) => new ResumeApiError(f.message, e.status, e.code);
+  if (e.status === 409) return fail(TOO_MANY);
+  if (e.status === 413) return fail(TOO_LARGE);
+  if (e.status === 400) return fail(e.code === 'unreadable_file' ? UNREADABLE : WRONG_TYPE);
+  if (e.status === 415 || e.status === 422) return fail(WRONG_TYPE);
+  if (e.status === 401 || e.status === 402 || e.status === 404 || e.status === 429) return e;
+  return fail(GENERIC);
+}
+
+/**
+ * Send a second file (`POST /api/resumes/upload?profile=<id>`, multipart, the field `resume`). It takes a model call, so
+ * it can take a while; the answer is the file's own resume and how its lines merged. The same bytes twice answer with
+ * the first result.
+ */
+export async function uploadResume(profileId: string, file: File, signal?: AbortSignal): Promise<UploadResponse> {
+  const body = new FormData();
+  body.append('resume', file, file.name);
+  let res: Response;
+  try {
+    res = await fetch(withProfile('/upload', profileId), { method: 'POST', body, signal });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') throw err;
+    throw new ResumeApiError(GENERIC.message, 0);
+  }
+  if (!res.ok) throw uploadError(await failure(res));
+  const raw = await readJson(res);
+  if (!isObj(raw.resume) || !isObj(raw.merge) || typeof raw.merge.fileId !== 'string') throw new ResumeApiError(GENERIC.message, 502);
+  const m = raw.merge as unknown as Partial<MergeReport>;
+  return {
+    resume: detailOf(raw.resume),
+    merge: {
+      fileId: m.fileId ?? '',
+      filename: typeof m.filename === 'string' ? m.filename : file.name,
+      same: asList<MergeItem>(m.same),
+      new: asList<MergeItem>(m.new),
+      near: asList<MergeItem>(m.near),
+      disagree: asList<MergeItem>(m.disagree),
+    },
+  };
+}
+
+/** The files the blocks came from: the one the profile was analysed from, then each upload. */
+export async function getFiles(profileId: string, signal?: AbortSignal): Promise<ResumeFilesResponse> {
+  const raw = (await readJson(await fetch(withProfile('/files', profileId), { signal }))) as unknown as Partial<ResumeFilesResponse>;
+  return { profileId: typeof raw.profileId === 'string' ? raw.profileId : profileId, files: asList<ResumeFile>(raw.files) };
+}
+
+/**
+ * The original bytes of an uploaded resume, saved under the file's own name. A 404 means none was kept
+ * (`no_original`: a profile analysed before files were stored), which the caller turns into a sentence.
+ */
+export async function downloadOriginal(resumeId: string, filename: string): Promise<DownloadResult> {
+  return fetchFile(resumeUrl(resumeId, '/original'), filename);
 }

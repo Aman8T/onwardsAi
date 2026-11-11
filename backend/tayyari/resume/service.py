@@ -1,7 +1,11 @@
 """`ResumeService`: a profile's resumes, over the stored rows.
 
     listing        the profile's resumes and its next roles; makes the uploaded resume on the first call
-    blocks         every block the person has, with how many resumes use it
+    blocks         every block the person has, with how many resumes use it, its other wordings and open disagreements
+    upload_file    a second resume file: its facts (the analysis's own extractor), merged into the blocks by code
+                   (`resume.merge`), kept with its original bytes and made a resume of its own
+    file_list      the profile's resume files; original: the bytes of the file a resume came from
+    all_resume_texts  every stored file's text, newest first
     path           the resume for one next role: the one already made, else made now (one relevance call)
     detail         one resume: the draft, its marks against the uploaded resume, the facts it cites, what it leaves out
     edit           the draft with a request's operations applied (all or none)
@@ -9,6 +13,11 @@
                    read back; the exported variant with its lint is stored as the finalised version
     make_default   this resume becomes the profile's one default (it must have a finalised version)
     files          the PDF and DOCX of the finalised version
+    grammar        proposals for the lines of a draft whose grammar, spelling or punctuation can be fixed, one Haiku call
+                   (`resume.grammar`); nothing is stored, the person accepts one with the ``edit`` op
+    wordings       the finalised wordings of the same blocks that the profile's other resumes use, per line (no model)
+    save_match     a match's tailored resume saved into the list as a ``posting`` resume (see `resume.posting`)
+    coach_view     the draft as the coach beside the page is shown it, with the check a rewrite it proposes must pass
 
 Who may call is decided by the routes (`api/routes/resume.py`), from the resume's profile; they hand in a `Holder`.
 The routes also reserve spend before `listing`, `blocks` or `path` has to make something, because making the uploaded
@@ -20,6 +29,8 @@ book, so a block has the same id on every resume. Every write of a draft is a co
 
 from __future__ import annotations
 
+import asyncio
+import hashlib
 import secrets
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
@@ -36,21 +47,30 @@ from tayyari.contract.resume import (
     FinaliseReport,
     FinaliseRequest,
     FinaliseResponse,
+    GrammarResponse,
     PathSlot,
     ResumeBlock,
     ResumeDetail,
+    ResumeFilesResponse,
     ResumeList,
     ResumeOp,
     ResumeState,
     ResumeSummary,
+    UploadResponse,
+    WordingsResponse,
 )
-from tayyari.contract.stored import StoredContext
+from tayyari.contract.stored import StoredContext, StoredSource
+from tayyari.core import limits
 from tayyari.core.clock import Clock
+from tayyari.core.files import stored_media_type
 from tayyari.core.logging import get_logger
+from tayyari.ingest.resume import ResumeError as IngestError
+from tayyari.ingest.resume import parse_resume
 from tayyari.llm.claude import ClaudeClient
 from tayyari.llm.types import CallContext
 from tayyari.match.calls import call_timeout
 from tayyari.match.export import ExportedFiles, plain
+from tayyari.match.facts import build_facts, extract_portfolio_facts
 from tayyari.match.models import FactBook
 from tayyari.match.service import MatchService
 from tayyari.resume.arrange import (
@@ -61,11 +81,33 @@ from tayyari.resume.arrange import (
     score_role,
     upload_variant,
 )
-from tayyari.resume.errors import NotFinalised, ResumeChanged, ResumeNotFound, RoleNotFound
+from tayyari.resume.coach import CoachView, coach_view
+from tayyari.resume.errors import (
+    NoOriginal,
+    NotFinalised,
+    ResumeChanged,
+    ResumeNotFound,
+    RoleNotFound,
+    TooManyFiles,
+    UnreadableFile,
+)
+from tayyari.resume.files import (
+    ResumeText,
+    clean_filename,
+    decorations,
+    file_title,
+    listing,
+    merged_book,
+    report_of,
+)
 from tayyari.resume.finalise import finalise
+from tayyari.resume.grammar import propose
 from tayyari.resume.marks import changes, cited_facts, cited_ids, left_out, marks, used_blocks
+from tayyari.resume.merge import merge
 from tayyari.resume.ops import apply_ops, entries_of
-from tayyari.storage.ports import ResumeRepo, StoredResume, UserFactRepo
+from tayyari.resume.posting import as_posting_resume
+from tayyari.resume.wordings import WordingSource, offered
+from tayyari.storage.ports import ResumeFileRepo, ResumeRepo, StoredResume, StoredResumeFile, UserFactRepo
 
 log = get_logger(__name__)
 
@@ -87,6 +129,15 @@ class Holder:
     profile_id: str
     user_id: str | None
     shares_facts: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class OriginalFile:
+    """The bytes a resume came from, as they were uploaded."""
+
+    data: bytes
+    mime: str
+    filename: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,6 +207,7 @@ class ResumeService:
         user_facts: UserFactRepo,
         clock: Clock,
         call_timeout_s: float | None = None,
+        files: ResumeFileRepo | None = None,
     ) -> None:
         self._claude = claude
         self._model = model
@@ -164,6 +216,8 @@ class ResumeService:
         self._user_facts = user_facts
         self._clock = clock
         self._timeout = call_timeout_s
+        self._files = files
+        self._locks: dict[str, asyncio.Lock] = {}
 
     # ── reading rows ──
 
@@ -213,6 +267,7 @@ class ResumeService:
             kind=stored.kind,
             title=stored.title,
             roleId=stored.role_key if stored.kind == "path" else None,
+            matchId=stored.role_key if stored.kind == "posting" else None,
             state=state,
             isDefault=stored.is_default,
             changes=changes(opened.draft, upload),
@@ -291,6 +346,8 @@ class ResumeService:
         rows = await self._resumes.list_for_profile(holder.profile_id)
         if holder.user_id is not None and any(r.user_id is None for r in rows):
             await self._resumes.adopt(holder.profile_id, holder.user_id)
+            if self._files is not None:
+                await self._files.adopt(holder.profile_id, holder.user_id)
             rows = [replace(r, user_id=holder.user_id) if r.user_id is None else r for r in rows]
         return rows
 
@@ -300,6 +357,7 @@ class ResumeService:
         """The profile's resumes (the uploaded one first) and its next roles, each with the resume made for it."""
         upload = self._open(await self.ensure_upload(holder, profile, context, call_ctx))
         opened = self._readable(await self._rows(holder))
+        files = await self._file_rows(holder.profile_id)
         by_role = {o.stored.role_key: o.stored.id for o in opened if o.stored.kind == "path"}
         ordered = sorted(opened, key=lambda o: o.stored.kind != "upload")
         return ResumeList(
@@ -309,12 +367,25 @@ class ResumeService:
                 PathSlot(roleId=r.id, title=r.title, alignment=r.alignment, resumeId=by_role.get(r.id))
                 for r in profile.roles
             ],
-            blocks=len(self._blocks(upload.book, opened)),
+            blocks=len(self._blocks(merged_book(upload.book, files), opened, files)),
         )
 
-    def _blocks(self, book: FactBook, opened: Sequence[_Opened]) -> list[ResumeBlock]:
+    async def _file_rows(self, profile_id: str) -> list[StoredResumeFile]:
+        return [] if self._files is None else await self._files.list_for_profile(profile_id)
+
+    def _blocks(
+        self, book: FactBook, opened: Sequence[_Opened], files: Sequence[StoredResumeFile] = ()
+    ) -> list[ResumeBlock]:
         """One block per job, project and degree, one per bullet under it, and one per line the person typed and
-        vouched for; each with how many of the resumes use it."""
+        vouched for; each with how many of the resumes use it, the other wordings files gave it and what they disagree on."""
+        wordings, clashes = decorations(files, [o.stored for o in opened])
+
+        def extra(fact_id: str) -> dict[str, Any]:
+            return {
+                "wordings": wordings.get(fact_id) or None,
+                "disagreements": clashes.get(fact_id) or None,
+            }
+
         facts = book.by_id()
         placed = [
             ({e.entryFactId for e in entries_of(o.draft)} | {e.factId for e in o.draft.education})
@@ -334,7 +405,9 @@ class ResumeService:
 
         def said(entry_id: str | None) -> list[ResumeBlock]:
             return [
-                ResumeBlock(fact=f, entryFactId=entry_id, usedIn=sum(1 for ids in named if f.id in ids))
+                ResumeBlock(
+                    fact=f, entryFactId=entry_id, usedIn=sum(1 for ids in named if f.id in ids), **extra(f.id)
+                )
                 for f in own_by_entry.get(entry_id, [])
             ]
 
@@ -343,7 +416,11 @@ class ResumeService:
             head = facts.get(entry.factId)
             if head is None:
                 continue
-            out.append(ResumeBlock(fact=head, usedIn=sum(1 for ids in placed if entry.factId in ids)))
+            out.append(
+                ResumeBlock(
+                    fact=head, usedIn=sum(1 for ids in placed if entry.factId in ids), **extra(entry.factId)
+                )
+            )
             for fid in block_ids(entry):
                 if fid == entry.factId or fid not in facts:
                     continue
@@ -352,6 +429,7 @@ class ResumeService:
                         fact=facts[fid],
                         entryFactId=entry.factId,
                         usedIn=sum(1 for ids in written if fid in ids),
+                        **extra(fid),
                     )
                 )
             out.extend(said(entry.factId))
@@ -364,13 +442,15 @@ class ResumeService:
         """Every block the person has (see `_blocks`), from the fact book the uploaded resume was made from."""
         upload = self._open(await self.ensure_upload(holder, profile, context, call_ctx))
         opened = self._readable(await self._rows(holder))
+        files = await self._file_rows(holder.profile_id)
+        book = merged_book(upload.book, files)
         return BlocksResponse(
             profileId=holder.profile_id,
             entries=[
                 BlockEntry(factId=e.factId, kind=e.kind, title=e.title, org=e.org, dates=e.dates)
-                for e in upload.book.entries
+                for e in book.entries
             ],
-            blocks=self._blocks(upload.book, opened),
+            blocks=self._blocks(book, opened, files),
             resumes=len(opened),
         )
 
@@ -391,7 +471,8 @@ class ResumeService:
         existing = await self.find_path(holder.profile_id, role.id)
         if existing is not None:
             return self.detail(existing)
-        book = self._open(await self.ensure_upload(holder, profile, context, call_ctx)).book
+        base = self._open(await self.ensure_upload(holder, profile, context, call_ctx)).book
+        book = merged_book(base, await self._file_rows(holder.profile_id))
         if holder.shares_facts:
             book = book.with_facts(await self._user_facts.list_for_profile(holder.profile_id))
         with call_timeout(self._timeout):
@@ -506,6 +587,239 @@ class ResumeService:
                 )
         return FinaliseResponse(detail=self.detail(saved), report=report)
 
+    async def grammar(
+        self, stored: StoredResume, *, terms: Sequence[str] = (), call_ctx: CallContext
+    ) -> GrammarResponse:
+        """The grammar fixes for the draft that pass the guard (`resume.grammar`): one Haiku call, thinking off. Nothing is
+        stored. ``terms`` are the role's requirement words for a path resume (a fix may not bring one in). With no key, or
+        when the call fails, there are no proposals and ``ran`` is False; only the daily spend ceiling propagates."""
+        opened = self._open(stored)
+        with call_timeout(self._timeout):
+            result = await propose(
+                self._claude, model=self._model, variant=opened.draft, terms=terms, call_ctx=call_ctx
+            )
+        return GrammarResponse(proposals=result.proposals, ran=result.ran)
+
+    def coach_view(self, stored: StoredResume, terms: Sequence[str] = ()) -> CoachView:
+        """The draft as the coach is shown it (see `resume.coach`). The caller has decided that the person may open this
+        resume. Raises `ResumeNotFound` for a row this build cannot read."""
+        opened = self._open(stored)
+        return coach_view(stored.id, stored.title, opened.draft, opened.book, terms)
+
+    async def wordings(self, stored: StoredResume) -> WordingsResponse:
+        """The finalised wordings of the same blocks that the profile's other resumes use, for each line of this draft
+        (see `resume.wordings`). Pure code over the stored resumes: no model call."""
+        opened = self._open(stored)
+        others = [
+            o
+            for o in self._readable(await self._resumes.list_for_profile(stored.profile_id))
+            if o.stored.id != stored.id and o.final is not None
+        ]
+        others.sort(
+            key=lambda o: (o.stored.finalised_at or o.stored.updated_at, o.stored.id), reverse=True
+        )  # newest finalised first
+        sources = [
+            WordingSource(o.stored.id, o.stored.title, o.final, o.book) for o in others if o.final is not None
+        ]
+        return WordingsResponse(wordings=offered(opened.draft, opened.book, sources))
+
+    async def save_match(
+        self, holder: Holder, *, match_id: str, title: str, variant: ResumeVariant, book: FactBook
+    ) -> ResumeDetail:
+        """Save a match's tailored resume into the profile's list as a ``posting`` resume (role key: the match id), with
+        the facts as they stood. Already finalised when the match had exported it. Saving the same match again returns the
+        resume saved the first time."""
+        if not match_id or len(match_id) > ROLE_KEY_MAX:
+            raise ResumeNotFound()
+        existing = await self._resumes.find(holder.profile_id, "posting", match_id)
+        if existing is not None:
+            return self.detail(existing)
+        draft, finalised = as_posting_resume(variant, book)
+        now = self._clock.now()
+        stored = await self._resumes.create(
+            StoredResume(
+                id=secrets.token_hex(16),
+                user_id=holder.user_id,
+                profile_id=holder.profile_id,
+                kind="posting",
+                role_key=match_id,
+                title=(" ".join(title.split()) or "Posting resume")[:255],
+                draft=draft.to_dict(),
+                final=draft.to_dict() if finalised else None,
+                facts=book_json(book),
+                is_default=False,
+                version=1,
+                created_at=now,
+                updated_at=now,
+                finalised_at=now if finalised else None,
+            )
+        )
+        log.info(
+            "resume_posting_saved",
+            resume_id=stored.id,
+            lines=sum(len(e.bullets) for e in entries_of(draft)),
+            finalised=finalised,
+        )
+        return self.detail(stored)
+
+    # ── a second file ──
+
+    def _lock(self, profile_id: str) -> asyncio.Lock:
+        return self._locks.setdefault(profile_id, asyncio.Lock())
+
+    async def upload_file(
+        self,
+        holder: Holder,
+        profile: Profile,
+        context: StoredContext,
+        *,
+        filename: str,
+        content_type: str | None,
+        data: bytes,
+        call_ctx: CallContext,
+    ) -> UploadResponse:
+        """Merge a resume file into the profile's blocks and keep it as a resume of its own.
+
+        The file is read by the existing resume reader (`ingest.resume.parse_resume`), its facts come from the analysis's own
+        extractor (`match.facts`: the portfolio's line-cited extraction, one Haiku call, the file's text fenced as data, every
+        quote checked against the file by code), and `resume.merge` places each fact by code. The file's resume is
+        `upload_variant` over the file's facts under the block ids they were placed on, finalised at once like the first one,
+        and never the default. The same bytes uploaded twice answer with the first upload's result and no model call. The
+        caller reserves spend first (one extraction, two when the profile has no uploaded resume yet).
+        Raises `UnreadableFile`, `TooManyFiles`."""
+        if self._files is None:
+            raise RuntimeError("resume files are not wired")
+        name = clean_filename(filename)
+        digest = hashlib.sha256(data).hexdigest()
+        async with self._lock(holder.profile_id):
+            rows = await self._files.list_for_profile(holder.profile_id)
+            resumes = await self._resumes.list_for_profile(holder.profile_id)
+            for row in rows:
+                report = report_of(row)
+                made = next((r for r in resumes if r.kind == "upload" and r.role_key == row.id), None)
+                if row.sha256 == digest and report is not None and made is not None:
+                    return UploadResponse(resume=self.detail(made), merge=report)
+            if len(rows) >= limits.MAX_RESUME_FILES_PER_PROFILE:
+                raise TooManyFiles()
+            text = await self._read(data, name)
+            base = self._open(await self.ensure_upload(holder, profile, context, call_ctx)).book
+            current = merged_book(base, rows)
+            file_id = secrets.token_hex(16)
+            source = StoredContext(
+                sources=[StoredSource(id=file_id, label=name, kind="resume", content=text)]
+            )
+            with call_timeout(self._timeout):
+                extracted = await extract_portfolio_facts(
+                    self._claude,
+                    model=self._model,
+                    context=source,
+                    profile=profile,
+                    call_ctx=replace(call_ctx, purpose="match.facts"),
+                )
+            found = await asyncio.to_thread(build_facts, profile, source, extracted.facts)
+            if not found.facts:
+                raise UnreadableFile("We could not find any experience, projects or education in that file.")
+            result = merge(current, found, file_id=file_id, filename=name)
+            variant = upload_variant(result.file_book)
+            final = await self._export(variant, result.file_book)
+            now = self._clock.now()
+            stored = await self._resumes.create(
+                StoredResume(
+                    id=secrets.token_hex(16),
+                    user_id=holder.user_id,
+                    profile_id=holder.profile_id,
+                    kind="upload",
+                    role_key=file_id,
+                    title=file_title(name),
+                    draft=(final or variant).to_dict(),
+                    final=None if final is None else final.to_dict(),
+                    facts=book_json(result.file_book),
+                    is_default=False,
+                    version=1,
+                    created_at=now,
+                    updated_at=now,
+                    finalised_at=None if final is None else now,
+                )
+            )
+            await self._files.add(
+                StoredResumeFile(
+                    id=file_id,
+                    user_id=holder.user_id,
+                    profile_id=holder.profile_id,
+                    origin="upload",
+                    filename=name,
+                    mime=stored_media_type(name, content_type, data),
+                    size=len(data),
+                    sha256=digest,
+                    text=text,
+                    facts=book_json(found),
+                    merge=result.report.to_dict(),
+                    merged_book=book_json(result.merged),
+                    created_at=now,
+                ),
+                data,
+            )
+        report = result.report
+        log.info(
+            "resume_file_merged",
+            file_id=file_id,
+            same=len(report.same),
+            new=len(report.new),
+            near=len(report.near),
+            disagree=len(report.disagree),
+        )
+        return UploadResponse(resume=self.detail(stored), merge=report)
+
+    async def _read(self, data: bytes, name: str) -> str:
+        """The text of a resume file (the analysis's own reader), or `UnreadableFile` with the reason in words."""
+        try:
+            text = (await parse_resume(data, name)).replace("\x00", "")
+        except IngestError as exc:
+            raise UnreadableFile(str(exc)) from None
+        text = text[: limits.RESUME_MAX_CHARS]
+        if len(text.strip()) < limits.RESUME_MIN_TEXT_CHARS:
+            raise UnreadableFile(
+                "No readable text was found in that file. A scanned PDF cannot be read: export a text version."
+            )
+        return text
+
+    async def file_list(self, holder: Holder) -> ResumeFilesResponse:
+        """The profile's resume files, oldest first: the one it was analysed from, then each upload."""
+        files = await self._file_rows(holder.profile_id)
+        resumes = await self._resumes.list_for_profile(holder.profile_id)
+        return ResumeFilesResponse(profileId=holder.profile_id, files=listing(files, resumes))
+
+    async def original(self, stored: StoredResume) -> OriginalFile:
+        """The bytes the resume came from. Raises `NoOriginal` for a path or posting resume, and for the first resume of a
+        profile analysed before originals were kept."""
+        if self._files is None or stored.kind != "upload":
+            raise NoOriginal()
+        rows = await self._files.list_for_profile(stored.profile_id)
+        row = next(
+            (
+                r
+                for r in rows
+                if (r.origin == "analysis" if stored.role_key == "" else r.id == stored.role_key)
+            ),
+            None,
+        )
+        data = None if row is None else await self._files.get_data(row.id)
+        if row is None or data is None:
+            raise NoOriginal()
+        return OriginalFile(data=data, mime=row.mime, filename=row.filename)
+
+    async def all_resume_texts(self, profile_id: str) -> list[ResumeText]:
+        """The text of every resume file stored for the profile with its file name and date, newest first (empty for a
+        profile analysed before files were kept: its one resume text is in the profile's stored context)."""
+        rows = await self._file_rows(profile_id)
+        ordered = sorted(rows, key=lambda r: (r.created_at, r.id), reverse=True)
+        return [
+            ResumeText(
+                file_id=r.id, filename=r.filename, text=r.text, created_at=r.created_at, origin=r.origin
+            )
+            for r in ordered
+        ]
+
     async def make_default(self, stored: StoredResume) -> ResumeDetail:
         """Make this resume the profile's default. Raises `NotFinalised` unless it has a finalised version."""
         if stored.final is None or not await self._resumes.set_default(stored.profile_id, stored.id):
@@ -527,6 +841,7 @@ __all__ = [
     "MINE_QUESTION",
     "UPLOAD_TITLE",
     "Holder",
+    "OriginalFile",
     "ResumeService",
     "book_json",
     "export_notes",

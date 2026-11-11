@@ -87,12 +87,15 @@ from tayyari.storage.repos import Repositories
 from tayyari.storage.repos.match import posting_listing_fields
 from tests.fakes.apply import FakeApplyRepo
 from tests.fakes.card import FakeCardRepo
+from tests.fakes.carry import FakeProfileCarryRepo
 from tests.fakes.claim_marks import FakeClaimMarkRepo
+from tests.fakes.desk_notes import FakeDeskNoteRepo
 from tests.fakes.discover import FakeDiscoverRepo
 from tests.fakes.handoff import FakeHandoffRepo
 from tests.fakes.interview import FakeInterviewRepo
 from tests.fakes.jobsearch import FakeJobSearchRepo
 from tests.fakes.prepare import FakePrepareRepo
+from tests.fakes.resume_files import FakeResumeFileRepo
 from tests.fakes.resumes import FakeResumeRepo
 from tests.fakes.weekly import FakeWeeklyRepo
 
@@ -1428,6 +1431,9 @@ class FakeRepositories:
         self.card = FakeCardRepo()
         self.apply = FakeApplyRepo()
         self.resumes = FakeResumeRepo()
+        self.resume_files = FakeResumeFileRepo()
+        self.desk_notes = FakeDeskNoteRepo()
+        self.carry = FakeProfileCarryRepo(self._state, self.resumes, self.resume_files, self.desk_notes)
         self.bundle = Repositories(
             profiles=self.profiles,
             sessions=self.sessions,
@@ -1452,6 +1458,9 @@ class FakeRepositories:
             card=self.card,
             apply=self.apply,
             resumes=self.resumes,
+            resume_files=self.resume_files,
+            desk_notes=self.desk_notes,
+            carry=self.carry,
         )
 
 

@@ -11,7 +11,7 @@
  * screen-reader user starts reading where a sighted one does.
  */
 import { motion, useReducedMotion } from 'motion/react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Profile } from '../../shared/types';
 import { AccountMenu } from '../auth/AccountMenu';
 import { signInSheet, useMe } from '../auth/useMe';
@@ -24,7 +24,9 @@ import { BlocksView } from './BlocksView';
 import { FinaliseView } from './FinaliseView';
 import { StatePanel } from './parts';
 import { ResumeHeader } from './ResumeHeader';
+import { RereadGraph } from './RereadGraph';
 import { ResumePage } from './ResumePage';
+import { UploadStrip } from './UploadParts';
 import { resumePath } from './route';
 import type { ResumeQuery } from './route';
 import type { FileKind } from './types';
@@ -44,7 +46,7 @@ export function ResumeRoot({ profile }: { profile: Profile }) {
   const mustSignIn = signedOut && matchAccess === 'sign-in';
   const stuck = signedOut && matchAccess === 'stuck';
   const r = useResumes(sample || mustSignIn || stuck ? undefined : profile.id, route.id);
-  const { reload, ensureBlocks, runFinalise, listStatus } = r;
+  const { reload, ensureBlocks, ensureFiles, runFinalise, listStatus } = r;
 
   // a profile that was just attached to the account: a list the server refused a moment ago is asked for again
   const owned = profiles.some((p) => p.id === profile.id);
@@ -55,8 +57,22 @@ export function ResumeRoot({ profile }: { profile: Profile }) {
   }, [owned, listStatus, reload]);
 
   useEffect(() => {
-    if (route.screen === 'blocks' && listStatus === 'ready') ensureBlocks();
-  }, [route.screen, listStatus, ensureBlocks]);
+    if (route.screen === 'blocks' && listStatus === 'ready') {
+      ensureBlocks();
+      ensureFiles();
+    }
+  }, [route.screen, listStatus, ensureBlocks, ensureFiles]);
+
+  const noOriginal = useMemo(() => new Set(r.noOriginal), [r.noOriginal]);
+  const merged = useMemo(() => new Set(Object.keys(r.merges)), [r.merges]);
+  const canUpload = r.listStatus === 'ready' && !!r.list;
+  const reading = r.busy?.kind === 'upload' ? r.busy.filename : undefined;
+  const addFile = (file: File) => {
+    void r.upload(file).then((added) => {
+      // the result opens on Your blocks, unless the person has gone to another part of the app while it was read
+      if (added && getState().view === 'resume') navigate({ screen: 'blocks', id: getState().resumeRoute.id });
+    });
+  };
 
   // a new screen: top of the page, and the heading takes focus (not on first paint, which would pull focus off the address bar)
   const key = `${route.screen}:${route.id ?? ''}`;
@@ -90,8 +106,12 @@ export function ResumeRoot({ profile }: { profile: Profile }) {
   };
   const ask = (question: string) => {
     const title = r.detail?.resume.title;
-    actions.openChat({ kind: 'free', title: 'Your resume', caption: title ? `Asked from ${title}` : 'Asked from your resumes' }, question);
+    // the thread carries the resume in view, so the coach sees its lines and may propose a wording for one
+    actions.openChat({ kind: 'free', title: 'Your resume', caption: title ? `Asked from ${title}` : 'Asked from your resumes' }, question, undefined, viewId);
   };
+
+  const ownWords = r.blocks ? r.blocks.blocks.filter((b) => b.fact.refs.some((ref) => ref.source === 'user')).length : 0;
+  const newestFinalised = (r.list?.resumes ?? []).map((x) => x.finalisedAt).filter((v): v is string => !!v).sort().pop();
 
   let body;
   if (sample) {
@@ -146,6 +166,27 @@ export function ResumeRoot({ profile }: { profile: Profile }) {
         onRetry={() => ensureBlocks(true)}
         back={{ screen: 'resume', id: route.id }}
         onNavigate={navigate}
+        merge={r.mergeOpen ? (r.merges[r.mergeOpen] ?? null) : null}
+        onCloseMerge={() => r.openMerge(null)}
+        files={{
+          files: r.files.data?.files ?? null,
+          status: r.files.status,
+          busy: r.busy,
+          noOriginal,
+          merged,
+          onRetry: () => ensureFiles(true),
+          onOpenMerge: r.openMerge,
+          onDownloadOriginal: (resumeId, filename) => void r.downloadOriginal(resumeId, filename),
+        }}
+        graphSlot={
+          <RereadGraph
+            profileId={profile.id}
+            files={r.files.data?.files.length ?? 0}
+            ownWords={ownWords}
+            // a line in the person's own words is made when a resume is finalised, so the newest finalise dates it
+            ownWordsNewest={ownWords > 0 ? newestFinalised : undefined}
+          />
+        }
       />
     );
   } else if (route.screen === 'finalise' && route.id) {
@@ -161,6 +202,10 @@ export function ResumeRoot({ profile }: { profile: Profile }) {
         wantsDefault={fz?.makeDefault ?? false}
         busy={r.busy}
         notice={r.notice}
+        grammar={r.grammar}
+        onCheckGrammar={() => void r.checkGrammar(id)}
+        onAcceptProposal={(bulletId, text) => void r.op({ op: 'edit', bulletId, text })}
+        onKeepMine={r.keepMine}
         onRun={({ makeDefault, answers }) => void runFinalise(id, { makeDefault, ...(answers.length > 0 ? { answers } : {}) })}
         onMakeDefault={() => void r.makeDefault(id)}
         onDownload={(file) => void r.download(id, file)}
@@ -191,6 +236,9 @@ export function ResumeRoot({ profile }: { profile: Profile }) {
         viewId={viewId}
         busy={r.busy}
         notice={r.notice}
+        wordings={r.wordings.id === viewId ? r.wordings.items : undefined}
+        initialSelected={route.line}
+        onOpenMatch={(matchId) => actions.openMatch({ screen: 'match', id: matchId })}
         onNavigate={navigate}
         onMake={(roleId) => {
           void r.makePath(roleId).then((id) => {
@@ -203,6 +251,8 @@ export function ResumeRoot({ profile }: { profile: Profile }) {
         onMakeDefault={() => viewId && void r.makeDefault(viewId)}
         onDownload={(file) => viewId && void r.download(viewId, file)}
         hrefFor={hrefFor}
+        onDownloadOriginal={() => viewId && void r.downloadOriginal(viewId, r.detail?.resume.title ?? 'resume')}
+        originalMissing={viewId ? noOriginal.has(viewId) : false}
         onAsk={ask}
         onRetry={r.reloadDetail}
       />
@@ -216,6 +266,9 @@ export function ResumeRoot({ profile }: { profile: Profile }) {
         blocks={r.list?.blocks}
         onHome={() => actions.showDashboard()}
         onNavigate={navigate}
+        onUpload={canUpload ? addFile : undefined}
+        uploading={reading !== undefined}
+        locked={r.busy !== null}
         end={
           <>
             <Atmosphere />
@@ -223,6 +276,7 @@ export function ResumeRoot({ profile }: { profile: Profile }) {
           </>
         }
       />
+      <UploadStrip reading={reading} filename={r.uploadNote.filename} failure={r.uploadNote.failure} onRetry={r.retryUpload} onDismiss={r.dismissUpload} />
       <motion.main key={route.screen} className="rs-main" initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: EASE }}>
         {body}
       </motion.main>

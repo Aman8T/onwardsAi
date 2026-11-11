@@ -3,6 +3,7 @@
  * that exists opens; one that does not is made on request), then the line that holds the page together: every resume
  * is the same blocks in another arrangement.
  */
+import { matchPath } from '../match/route';
 import { statusOf } from './model';
 import { ScreenLink, Stamp } from './parts';
 import type { ResumeQuery } from './route';
@@ -15,6 +16,38 @@ interface RailProps {
   busy: Busy | null;
   onNavigate: (to: ResumeQuery) => void;
   onMake: (roleId: string) => void;
+  /** Open the match a posting resume was saved from. */
+  onOpenMatch: (matchId: string) => void;
+}
+
+/** A resume saved from a posting: it opens like the others, and says which match it came from. */
+function PostingRow({ resume, viewId, onNavigate, onOpenMatch }: { resume: ResumeSummary; viewId?: string; onNavigate: (to: ResumeQuery) => void; onOpenMatch: (matchId: string) => void }) {
+  const on = resume.id === viewId;
+  const matchId = resume.matchId;
+  return (
+    <li className={`rs-row rs-row-top${on ? ' is-on' : ''}`}>
+      <span className="rs-row-main">
+        <ScreenLink to={{ screen: 'resume', id: resume.id }} onNavigate={onNavigate} className="rs-small rs-strong" current={on}>
+          {resume.title}
+        </ScreenLink>
+        <span className="rs-fine">{statusOf(resume)}</span>
+        {matchId && (
+          <a
+            href={matchPath({ screen: 'match', id: matchId })}
+            className="rs-link rs-small"
+            onClick={(e) => {
+              if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
+              onOpenMatch(matchId);
+            }}
+          >
+            from a match
+          </a>
+        )}
+      </span>
+      <Stamp>saved</Stamp>
+    </li>
+  );
 }
 
 function ResumeRow({ resume, slot, viewId, onNavigate }: { resume: ResumeSummary; slot?: PathSlot; viewId?: string; onNavigate: (to: ResumeQuery) => void }) {
@@ -38,12 +71,13 @@ function ResumeRow({ resume, slot, viewId, onNavigate }: { resume: ResumeSummary
   );
 }
 
-export function Rail({ list, viewId, busy, onNavigate, onMake }: RailProps) {
+export function Rail({ list, viewId, busy, onNavigate, onMake, onOpenMatch }: RailProps) {
   const byId = new Map(list.resumes.map((r) => [r.id, r]));
   const uploads = list.resumes.filter((r) => r.kind === 'upload');
   const slotted = new Set(list.paths.map((p) => p.resumeId).filter(Boolean));
   // a resume made for a role that has since left the next roles is kept, and listed after them
   const kept = list.resumes.filter((r) => r.kind === 'path' && !slotted.has(r.id));
+  const postings = list.resumes.filter((r) => r.kind === 'posting');
   const making = busy?.kind === 'make' ? list.paths.find((p) => p.roleId === busy.roleId) : undefined;
 
   return (
@@ -109,6 +143,20 @@ export function Rail({ list, viewId, busy, onNavigate, onMake }: RailProps) {
           {making ? `Ranking your blocks against ${making.title} and choosing the ones that speak to it. This takes a few seconds.` : ''}
         </p>
         <p className="rs-fine">A resume for a role is made when you ask for it. It stays here even if the role later leaves your next roles.</p>
+      </section>
+
+      <section className="rs-rail-group" aria-labelledby="rs-posts">
+        <h2 id="rs-posts" className="kicker">
+          Saved from a posting
+        </h2>
+        {postings.length > 0 && (
+          <ul className="rs-rows">
+            {postings.map((r) => (
+              <PostingRow key={r.id} resume={r} viewId={viewId} onNavigate={onNavigate} onOpenMatch={onOpenMatch} />
+            ))}
+          </ul>
+        )}
+        <p className="rs-fine">A resume tailored in Match stays with its match. It joins this list only when you save it.</p>
       </section>
 
       <div className="slip rs-note" role="note" aria-label="One set of blocks">

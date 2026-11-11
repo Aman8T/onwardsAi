@@ -77,6 +77,9 @@ class SynthEvent(_Model):
 class DoneEvent(_Model):
     type: Literal["done"] = "done"
     profile: Profile
+    carried: bool | None = None
+    """Only on an analysis that started from a profile (``fromProfile``): did the person's resumes, own-words lines and
+    dashboard notes move to the new profile?"""
 
 
 class ErrorEvent(_Model):
@@ -116,6 +119,20 @@ class ActionEvent(_Model):
     title: str | None = None
 
 
+class RewriteEvent(_Model):
+    """The coach proposes different words for one line of the resume in view, after its text. Code has checked it: the line
+    is on that resume, the words rest only on the facts the line cites, and they differ from ``before``. The person accepts
+    it (the client sends the ``edit`` op for ``lineId`` with ``after`` as its text, through the resume's PATCH) or dismisses
+    it; nothing has changed until they do."""
+
+    type: Literal["rewrite"] = "rewrite"
+    resumeId: str
+    lineId: str
+    """The line's ``bulletId`` on that resume (what the ``edit`` op addresses)."""
+    before: str
+    after: str
+
+
 class ChatDoneEvent(_Model):
     type: Literal["done"] = "done"
     sessionId: str
@@ -127,7 +144,7 @@ class ChatErrorEvent(_Model):
 
 
 ChatEvent = Annotated[
-    DeltaEvent | ToolEvent | ActionEvent | ChatDoneEvent | ChatErrorEvent,
+    DeltaEvent | ToolEvent | ActionEvent | RewriteEvent | ChatDoneEvent | ChatErrorEvent,
     Field(discriminator="type"),
 ]
 
@@ -190,9 +207,9 @@ def ev_synth(step: SynthStep, chars: int | None = None) -> SynthEvent:
     return SynthEvent(step=step, chars=chars)
 
 
-def ev_done(profile: Profile | Mapping[str, Any]) -> DoneEvent:
+def ev_done(profile: Profile | Mapping[str, Any], carried: bool | None = None) -> DoneEvent:
     snapshot = profile.model_copy(deep=True) if isinstance(profile, Profile) else Profile.from_dict(profile)
-    return DoneEvent(profile=snapshot)
+    return DoneEvent(profile=snapshot, carried=carried)
 
 
 def ev_error(message: str) -> ErrorEvent:
@@ -213,6 +230,10 @@ def ev_tool(name: str, detail: str) -> ToolEvent:
 
 def ev_action(destination: Destination, target: str | None, label: str, title: str | None) -> ActionEvent:
     return ActionEvent(destination=destination, target=target, label=label, title=title)
+
+
+def ev_rewrite(resume_id: str, line_id: str, before: str, after: str) -> RewriteEvent:
+    return RewriteEvent(resumeId=resume_id, lineId=line_id, before=before, after=after)
 
 
 def ev_chat_done(session_id: str) -> ChatDoneEvent:
@@ -240,6 +261,7 @@ __all__ = [
     "PhaseEvent",
     "ReaderEvent",
     "ReadersEvent",
+    "RewriteEvent",
     "SignalEvent",
     "SynthEvent",
     "SynthStep",
@@ -255,6 +277,7 @@ __all__ = [
     "ev_phase",
     "ev_reader",
     "ev_readers",
+    "ev_rewrite",
     "ev_signal",
     "ev_synth",
     "ev_tool",

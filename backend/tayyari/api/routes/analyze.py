@@ -5,7 +5,7 @@ The order of the guards is part of the contract (everything before the stream is
 0. ``deps.unlimited``: an account on the unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``) skips steps 1 and 4; steps 2,
    3, 5 and 6 (the upload limits, the spend ceiling, the slots) apply to everyone.
 1. ``rate_limiter.shed``: the in-memory bucket turns hammering away before the body is read.
-2. ``parse_analyze_form``: streamed multipart with hard caps (413 / 400), a deadline for the whole read (408),
+2. ``parse_analyze_form`` (and, for ``fromProfile``, ``resolve_reread``: the access rule, 404 or 409 before any cost): streamed multipart with hard caps (413 / 400), a deadline for the whole read (408),
    one upload being read per client (429) and a process-wide budget of buffered upload bytes (503).
 3. a quick look at the per-process slots, so a busy server does not charge the caller's rate-limit windows.
 4. ``rate_limiter.check(memory=False)``: the shared per-IP and global counters (429).
@@ -31,6 +31,7 @@ from starlette.types import Receive, Scope, Send
 from tayyari.api.deps import get_request_context, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.ndjson import NdjsonResponse, StreamEvent
+from tayyari.api.reread import resolve_reread
 from tayyari.api.security import subnet_hash
 from tayyari.api.uploads import parse_analyze_form, upload_gate
 from tayyari.core.errors import RateLimited
@@ -82,6 +83,8 @@ async def analyze(request: Request) -> Response:
         gate=upload_gate(request, guard),
         client_key=rc.ip_hash,
     )
+    if req.reread is not None:  # ``fromProfile``: who may open it, then the inputs (404 / 409 cost nothing)
+        req = await resolve_reread(request, container, req)
 
     slots = container.analysis_slots
     if slots.locked():

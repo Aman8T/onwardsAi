@@ -9,8 +9,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError } from '../lib/api';
 import * as api from './api';
-import type { BlocksResponse, Busy, Failure, FileKind, FinaliseReport, FinaliseRequest, LoadStatus, ResumeDetail, ResumeList, ResumeOp, ResumeSummary } from './types';
+import type {
+  BlocksResponse,
+  Busy,
+  Failure,
+  FileKind,
+  FinaliseReport,
+  FinaliseRequest,
+  GrammarProposal,
+  LineWording,
+  LoadStatus,
+  MergeEntry,
+  ResumeDetail,
+  ResumeFilesResponse,
+  ResumeList,
+  ResumeOp,
+  ResumeSummary,
+  UploadFailure,
+} from './types';
 import { fileNameOf, pickResumeId } from './model';
+import { GENERIC, checkFile } from './upload';
 
 export interface FinaliseState {
   /** The resume the report is about. */
@@ -20,6 +38,31 @@ export interface FinaliseState {
   error?: string;
   /** The person asked for "make default" with it. */
   makeDefault: boolean;
+}
+
+/** The grammar check for one resume, this visit: nothing is stored on the server. */
+export interface GrammarState {
+  /** The resume it ran on. */
+  id?: string;
+  status: 'idle' | 'running' | 'ready';
+  proposals: GrammarProposal[];
+  /** False when the check could not run. */
+  ran: boolean;
+  /** Bullet ids the person kept as they are. */
+  kept: string[];
+}
+
+const NO_GRAMMAR: GrammarState = { status: 'idle', proposals: [], ran: true, kept: [] };
+
+/** A second file's failure, shown above the page until the person dismisses it or sends a file again. */
+export interface UploadState {
+  filename?: string;
+  failure?: UploadFailure;
+}
+
+export interface FilesState {
+  status: LoadStatus;
+  data: ResumeFilesResponse | null;
 }
 
 interface State {
@@ -36,6 +79,17 @@ interface State {
   /** A transient sentence about the last action that failed. */
   notice?: string;
   finalise: FinaliseState;
+  grammar: GrammarState;
+  /** Wordings other resumes use for lines of the resume in view (`id` says which one). */
+  wordings: { id?: string; items: LineWording[] };
+  /** The last second file that was refused or failed. */
+  uploadNote: UploadState;
+  /** How each file added this visit merged (no route returns an old report), and the one on screen. */
+  merges: Record<string, MergeEntry>;
+  mergeOpen: string | null;
+  files: FilesState;
+  /** Resumes whose original answered `no_original`: the button stays hidden for the rest of the visit. */
+  noOriginal: string[];
 }
 
 const NO_FINALISE: FinaliseState = { status: 'idle', makeDefault: false };
@@ -49,6 +103,13 @@ const EMPTY: State = {
   blocksStatus: 'idle',
   busy: null,
   finalise: NO_FINALISE,
+  grammar: NO_GRAMMAR,
+  wordings: { items: [] },
+  uploadNote: {},
+  merges: {},
+  mergeOpen: null,
+  files: { status: 'idle', data: null },
+  noOriginal: [],
 };
 
 const failureOf = (err: unknown): Failure => ({
@@ -94,10 +155,24 @@ export interface Resumes extends State {
   /** Send one operation; resolves with the resume as it now stands, or null when it was refused. */
   op: (op: ResumeOp) => Promise<ResumeDetail | null>;
   runFinalise: (id: string, req: FinaliseRequest) => Promise<void>;
+  /** Run the grammar check (a model call) on a resume; only when the person asks. */
+  checkGrammar: (id: string) => Promise<void>;
+  /** Keep a line as it is: its proposal leaves the list for this visit. */
+  keepMine: (bulletId: string) => void;
   makeDefault: (id: string) => Promise<void>;
   download: (id: string, file: FileKind) => Promise<void>;
   ensureBlocks: (force?: boolean) => void;
   clearNotice: () => void;
+  /** Add a second file: it is read (a model call), merged into the blocks and kept as its own resume. Resolves true when it was added. */
+  upload: (file: File) => Promise<boolean>;
+  /** Send the file that just failed once more. */
+  retryUpload: () => void;
+  dismissUpload: () => void;
+  /** Show (or with null, close) the merge result of a file added this visit. */
+  openMerge: (fileId: string | null) => void;
+  ensureFiles: (force?: boolean) => void;
+  /** Save the stored original of an uploaded resume; a 404 hides its button for the rest of the visit. */
+  downloadOriginal: (resumeId: string, filename: string) => Promise<void>;
 }
 
 /**
@@ -252,6 +327,27 @@ export function useResumes(profileId: string | undefined, wantedId: string | und
     [profileId, begin, end, patch],
   );
 
+  const checkGrammar = useCallback(
+    async (id: string): Promise<void> => {
+      const mine = begin({ kind: 'grammar' });
+      if (mine === null) return;
+      patch({ grammar: { id, status: 'running', proposals: [], ran: true, kept: [] } });
+      try {
+        const res = await api.checkGrammar(id);
+        end(mine, { grammar: { id, status: 'ready', proposals: res.proposals, ran: res.ran, kept: [] } });
+      } catch {
+        // a check that could not run is said as such: the resume is unchanged
+        end(mine, { grammar: { id, status: 'ready', proposals: [], ran: false, kept: [] } });
+      }
+    },
+    [begin, end, patch],
+  );
+
+  const keepMine = useCallback(
+    (bulletId: string) => patch((prev) => ({ grammar: { ...prev.grammar, kept: [...prev.grammar.kept, bulletId] } })),
+    [patch],
+  );
+
   const makeDefault = useCallback(
     async (id: string): Promise<void> => {
       const mine = begin({ kind: 'default' });
@@ -295,9 +391,127 @@ export function useResumes(profileId: string | undefined, wantedId: string | und
     [profileId, patch],
   );
 
+  /** The blocks again, quietly: what is on screen stays until the new ones arrive. */
+  const refreshBlocks = useCallback(
+    (mine: number) => {
+      if (!profileId) return;
+      blocksAsked.current = true;
+      api
+        .getBlocks(profileId)
+        .then((blocks) => {
+          if (mine === gen.current) patch({ blocks, blocksStatus: 'ready', blocksError: undefined });
+        })
+        .catch((err: unknown) => {
+          if (mine === gen.current) patch((prev) => (prev.blocks ? {} : { blocksStatus: 'error', blocksError: failureOf(err) }));
+        });
+    },
+    [profileId, patch],
+  );
+
+  const ensureFiles = useCallback(
+    (force = false) => {
+      if (!profileId || (!force && latest.current.files.status !== 'idle')) return;
+      const mine = gen.current;
+      patch((prev) => ({ files: { ...prev.files, status: 'loading' } }));
+      api
+        .getFiles(profileId)
+        .then((data) => {
+          if (mine === gen.current) patch({ files: { status: 'ready', data } });
+        })
+        .catch(() => {
+          if (mine === gen.current) patch((prev) => ({ files: { ...prev.files, status: 'error' } }));
+        });
+    },
+    [profileId, patch],
+  );
+
+  const lastFile = useRef<File | null>(null);
+  const upload = useCallback(
+    async (file: File): Promise<boolean> => {
+      if (!profileId) return false;
+      lastFile.current = file;
+      const refused = checkFile(file);
+      if (refused) {
+        patch({ uploadNote: { filename: file.name, failure: refused } });
+        return false;
+      }
+      const mine = begin({ kind: 'upload', filename: file.name });
+      if (mine === null) return false;
+      patch({ uploadNote: { filename: file.name } });
+      try {
+        const res = await api.uploadResume(profileId, file);
+        if (mine !== gen.current) return false;
+        const entry: MergeEntry = { report: res.merge, resumeId: res.resume.resume.id };
+        // the new resume is in the list at once; the list, the files and the blocks are then read again from the server
+        end(mine, (prev) => ({
+          list: prev.list ? mergeSummary(prev.list, res.resume.resume) : prev.list,
+          merges: { ...prev.merges, [res.merge.fileId]: entry },
+          mergeOpen: res.merge.fileId,
+          uploadNote: {},
+        }));
+        lastFile.current = null;
+        void api
+          .listResumes(profileId)
+          .then((list) => {
+            if (mine === gen.current) patch({ list });
+          })
+          .catch(() => undefined);
+        ensureFiles(true);
+        refreshBlocks(mine);
+        return true;
+      } catch (err) {
+        const failure: UploadFailure =
+          err instanceof ApiError ? { message: err.message, retry: err.status === 0 || err.status === 429 || err.status >= 500 } : GENERIC;
+        end(mine, { uploadNote: { filename: file.name, failure } });
+        return false;
+      }
+    },
+    [profileId, begin, end, patch, ensureFiles, refreshBlocks],
+  );
+
+  const retryUpload = useCallback(() => {
+    if (lastFile.current) void upload(lastFile.current);
+  }, [upload]);
+  const dismissUpload = useCallback(() => {
+    lastFile.current = null;
+    patch({ uploadNote: {} });
+  }, [patch]);
+  const openMerge = useCallback((fileId: string | null) => patch({ mergeOpen: fileId }), [patch]);
+
+  const downloadOriginal = useCallback(
+    async (resumeId: string, filename: string): Promise<void> => {
+      const mine = begin({ kind: 'original', resumeId });
+      if (mine === null) return;
+      const result = await api.downloadOriginal(resumeId, filename);
+      if (result.ok) end(mine);
+      // none was stored: say so once, and the button is not offered again this visit
+      else if (result.status === 404) end(mine, (prev) => ({ noOriginal: prev.noOriginal.includes(resumeId) ? prev.noOriginal : [...prev.noOriginal, resumeId] }));
+      else end(mine, { notice: result.message });
+    },
+    [begin, end],
+  );
+
+  /* the wordings other resumes use: once per resume in view, and again after the draft changed */
+  const shownAt = s.detail?.resume.updatedAt;
+  useEffect(() => {
+    if (!profileId || !shownId) return;
+    const mine = gen.current;
+    const ctrl = new AbortController();
+    api
+      .getWordings(shownId, ctrl.signal)
+      .then((res) => {
+        if (mine === gen.current && !ctrl.signal.aborted) patch({ wordings: { id: shownId, items: res.wordings } });
+      })
+      .catch(() => {
+        // evidence only: with none, the panel shows nothing
+        if (mine === gen.current && !ctrl.signal.aborted) patch({ wordings: { id: shownId, items: [] } });
+      });
+    return () => ctrl.abort();
+  }, [profileId, shownId, shownAt, patch]);
+
   const reload = useCallback(() => setAttempt((n) => n + 1), []);
   const reloadDetail = useCallback(() => setDetailAttempt((n) => n + 1), []);
   const clearNotice = useCallback(() => patch({ notice: undefined }), [patch]);
 
-  return { ...s, viewId, reload, reloadDetail, makePath, op, runFinalise, makeDefault, download, ensureBlocks, clearNotice };
+  return { ...s, viewId, reload, reloadDetail, makePath, op, runFinalise, checkGrammar, keepMine, makeDefault, download, ensureBlocks, clearNotice, upload, retryUpload, dismissUpload, openMerge, ensureFiles, downloadOriginal };
 }

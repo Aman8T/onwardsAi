@@ -13,6 +13,7 @@ from ..ports import (
     CardRepo,
     ClaimMarkRepo,
     DecisionLogRepo,
+    DeskNoteRepo,
     DiscoverRepo,
     HandoffRepo,
     InterviewRepo,
@@ -24,8 +25,10 @@ from ..ports import (
     PortfolioRepo,
     PostingRepo,
     PrepareRepo,
+    ProfileCarryRepo,
     ProfileFactsRepo,
     ProfileRepo,
+    ResumeFileRepo,
     ResumeRepo,
     SessionRepo,
     UserFactRepo,
@@ -35,8 +38,10 @@ from ..ports import (
 from .apply import SqlApplyRepo
 from .billing import SqlBillingRepo
 from .card import SqlCardRepo
+from .carry import SqlProfileCarryRepo
 from .claim_marks import SqlClaimMarkRepo
 from .decisions import SqlDecisionLogRepo
+from .desk_notes import SqlDeskNoteRepo
 from .discover import SqlDiscoverRepo
 from .handoff import SqlHandoffRepo
 from .interview import SqlInterviewRepo
@@ -48,6 +53,7 @@ from .match import SqlMatchRepo, SqlPostingRepo, SqlProfileFactsRepo, SqlUserFac
 from .portfolios import SqlPortfolioRepo
 from .prepare import SqlPrepareRepo
 from .profiles import SqlProfileRepo
+from .resume_files import SqlResumeFileRepo
 from .resumes import SqlResumeRepo
 from .sessions import SqlSessionRepo
 from .users import SqlUserRepo
@@ -81,6 +87,9 @@ class Repositories:
     card: CardRepo
     apply: ApplyRepo
     resumes: ResumeRepo
+    resume_files: ResumeFileRepo
+    desk_notes: DeskNoteRepo
+    carry: ProfileCarryRepo
 
 
 def build_repositories(db: Database, clock: Clock | None = None) -> Repositories:
@@ -109,6 +118,9 @@ def build_repositories(db: Database, clock: Clock | None = None) -> Repositories
         card=SqlCardRepo(db),
         apply=SqlApplyRepo(db),
         resumes=SqlResumeRepo(db),
+        resume_files=SqlResumeFileRepo(db),
+        desk_notes=SqlDeskNoteRepo(db),
+        carry=SqlProfileCarryRepo(db),
     )
 
 
@@ -119,6 +131,7 @@ __all__ = [
     "SqlCardRepo",
     "SqlClaimMarkRepo",
     "SqlDecisionLogRepo",
+    "SqlDeskNoteRepo",
     "SqlDiscoverRepo",
     "SqlHandoffRepo",
     "SqlInterviewRepo",
@@ -130,8 +143,10 @@ __all__ = [
     "SqlPortfolioRepo",
     "SqlPostingRepo",
     "SqlPrepareRepo",
+    "SqlProfileCarryRepo",
     "SqlProfileFactsRepo",
     "SqlProfileRepo",
+    "SqlResumeFileRepo",
     "SqlResumeRepo",
     "SqlSessionRepo",
     "SqlUserFactRepo",

@@ -246,6 +246,9 @@ class Resume:
     name: str
     data: bytes = field(repr=False)
     media_type: str = "application/pdf"
+    frozen: dict[str, Any] | None = field(default=None, repr=False, compare=False)
+    """For the person's default resume: what the application freezes with its review (`contract.apply.ResumeRef` plus the
+    finalised ``variant``). None for the tailored resume and the saved upload."""
 
     @property
     def sha256(self) -> str:

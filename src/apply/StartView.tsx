@@ -21,6 +21,7 @@ import { BAND_LABEL, WORK_MODE_LABEL } from '../match/model';
 import { ATS_LABEL, ApplyError, applyApi, errorText } from './api';
 import { Consent } from './Consent';
 import { FirstCheck } from './FirstCheck';
+import { DefaultStamp, ResumeLink, defaultLine } from './ResumeNamed';
 import { DETAILS_ROUTE, LIST_ROUTE, applyPath, linkTo } from './route';
 import { applyLinkFor, clearApplyIntent } from './useApplications';
 import type { ApplyRoute, Navigate } from './route';
@@ -217,7 +218,8 @@ export function StartView(props: StartViewProps) {
   const company = match?.company ?? check.host ?? 'the employer';
   const host = check.host ?? match?.company ?? 'the employer';
   const rows = checkRows(check);
-  const noSaved = resume === 'saved' && details !== null && !details.hasResume;
+  const def = check.defaultResume;
+  const noSaved = resume === 'saved' && !def && details !== null && !details.hasResume;
 
   const start = async () => {
     setStarting(true);
@@ -311,11 +313,20 @@ export function StartView(props: StartViewProps) {
                 <label className="ap-opt">
                   <input type="radio" name={`${titleId}-resume`} checked={resume === 'saved'} onChange={() => props.onResume('saved')} />
                   <span>
-                    <span className="ap-block">Your saved resume</span>
+                    <span className="ap-block">
+                      {def ? defaultLine(def) : 'Your saved resume'} {def && <DefaultStamp />}
+                    </span>
                     <span className="ap-muted ap-small">
-                      {details?.hasResume
-                        ? `${details.resumeName ?? 'Your resume'}, as you uploaded it. Attached only when you approve.`
-                        : 'None saved yet: upload one in Your details.'}
+                      {def ? (
+                        <>
+                          The finalised resume, as you uploaded it if you have not edited it; a draft is never sent. Attached only when you approve.{' '}
+                          <ResumeLink />
+                        </>
+                      ) : details?.hasResume ? (
+                        `${details.resumeName ?? 'Your resume'}, as you uploaded it. Attached only when you approve.`
+                      ) : (
+                        'None saved yet: upload one in Your details.'
+                      )}
                     </span>
                   </span>
                 </label>

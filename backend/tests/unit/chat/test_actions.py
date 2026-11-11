@@ -147,9 +147,20 @@ def test_a_trailer_in_the_middle_of_the_text_is_dropped_and_not_shown() -> None:
     assert dropped == (Dropped("mid_text", "practice"),)
 
 
-def test_two_trailers_are_both_dropped() -> None:
-    streamed, final, trailer, dropped = run([f"{ANSWER}\n[[action: practice]]\n[[action: weekly]]"])
-    assert final == streamed == ANSWER
+def test_two_trailers_at_the_end_are_handed_back_in_order_and_none_is_shown() -> None:
+    filt = TrailerFilter()
+    streamed = filt.feed(f"{ANSWER}\n[[action: practice]]\n[[action: weekly]]")
+    finished = filt.finish()
+    assert streamed + finished.text == filt.text == ANSWER
+    assert finished.trailers == (Trailer("practice", None), Trailer("weekly", None))
+    assert (
+        finished.trailer == Trailer("practice", None) and finished.dropped == ()
+    )  # the caller keeps the first valid one
+
+
+def test_a_trailer_in_the_middle_makes_a_later_one_at_the_end_multiple() -> None:
+    streamed, final, trailer, dropped = run(["A [[action: practice]] b.\n[[action: weekly]]"])
+    assert final == streamed == "A  b."
     assert trailer is None
     assert [d.reason for d in dropped] == ["mid_text", "multiple"]
     assert dropped[-1].destination == "weekly"

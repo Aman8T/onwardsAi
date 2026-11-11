@@ -11,6 +11,7 @@ import type {
   ApplyMetrics,
   ApplyStatus,
   EmailClassification,
+  ResumeRef,
   YourDetails,
 } from '../../../shared/apply';
 import type { StartMatch } from '../StartView';
@@ -189,6 +190,17 @@ export const MATCH: StartMatch = {
 };
 
 export const CHECK_OFFERED: ApplyCheck = { offered: true, host: 'job-boards.greenhouse.io', ats: 'greenhouse' };
+
+/** The profile's default resume on /resume, finalised on 6 Nov: what "my current resume" sends. */
+export const DEFAULT_RESUME: ResumeRef = {
+  resumeId: 'res_upload',
+  title: 'Resume',
+  finalisedAt: new Date(NOW - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  fileName: 'Asha-Verma-Resume.pdf',
+};
+
+/** The check of a person whose default resume is finalised: the start screen names it. */
+export const CHECK_OFFERED_DEFAULT: ApplyCheck = { ...CHECK_OFFERED, defaultResume: DEFAULT_RESUME };
 
 export function checkFailing(reason: ApplyBlockReason): ApplyCheck {
   const check: ApplyCheck = { offered: false, reason, host: 'job-boards.greenhouse.io', ats: 'greenhouse' };

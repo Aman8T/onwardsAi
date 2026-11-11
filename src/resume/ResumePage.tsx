@@ -14,7 +14,7 @@ import { bulletOfFact, factIndex, kickerOf, sheetLines, shortDate, slotOf, sourc
 import { FileLinks, StatePanel } from './parts';
 import { Rail } from './Rail';
 import type { ResumeQuery } from './route';
-import type { Busy, Failure, FileKind, LoadStatus, ResumeDetail, ResumeList, ResumeOp } from './types';
+import type { Busy, Failure, FileKind, LineWording, LoadStatus, ResumeDetail, ResumeList, ResumeOp } from './types';
 
 export interface ResumePageProps {
   list: ResumeList;
@@ -28,6 +28,10 @@ export interface ResumePageProps {
   notice?: string;
   /** The bullet pressed when the screen opens (the gallery uses it). */
   initialSelected?: string;
+  /** Wordings other resumes use for lines of this one. */
+  wordings?: readonly LineWording[];
+  /** Open the match a posting resume was saved from. */
+  onOpenMatch: (matchId: string) => void;
   onNavigate: (to: ResumeQuery) => void;
   onMake: (roleId: string) => void;
   onOp: (op: ResumeOp) => Promise<ResumeDetail | null>;
@@ -36,6 +40,10 @@ export interface ResumePageProps {
   onMakeDefault: () => void;
   onDownload: (file: FileKind) => void;
   hrefFor: (file: FileKind) => string;
+  /** Save the file the person uploaded, as it was (an uploaded resume only). */
+  onDownloadOriginal?: () => void;
+  /** The original of this resume was not kept: the button is not offered for the rest of the visit. */
+  originalMissing?: boolean;
   onAsk: (question: string) => void;
   onRetry: () => void;
 }
@@ -47,7 +55,7 @@ export function ResumePage(props: ResumePageProps) {
 
   return (
     <div className="rs-cols">
-      <Rail list={list} viewId={viewId} busy={busy} onNavigate={onNavigate} onMake={onMake} />
+      <Rail list={list} viewId={viewId} busy={busy} onNavigate={onNavigate} onMake={onMake} onOpenMatch={props.onOpenMatch} />
 
       <div className="rs-doc">
         {inView ? (
@@ -94,7 +102,7 @@ export function ResumePage(props: ResumePageProps) {
   );
 }
 
-function InView({ list, detail, busy, notice, initialSelected, onOp, onFinalise, onMakeDefault, onDownload, hrefFor }: ResumePageProps & { detail: ResumeDetail }) {
+function InView({ list, detail, busy, notice, initialSelected, wordings, onOp, onFinalise, onMakeDefault, onDownload, hrefFor, onDownloadOriginal, originalMissing }: ResumePageProps & { detail: ResumeDetail }) {
   const narrow = useMediaQuery(NARROW_QUERY);
   const [picked, setPicked] = useState<string | null>(initialSelected ?? null);
   const { resume, variant, marks, facts, leftOut } = detail;
@@ -116,7 +124,7 @@ function InView({ list, detail, busy, notice, initialSelected, onOp, onFinalise,
     });
   };
 
-  const panel = <BlockPanel line={line} facts={byId} state={resume.state} busy={busy} onOp={onOp} inline={narrow} />;
+  const panel = <BlockPanel line={line} facts={byId} state={resume.state} busy={busy} onOp={onOp} inline={narrow} wordings={wordings} />;
 
   return (
     <section className="rs-inview" aria-labelledby="rs-title">
@@ -151,7 +159,17 @@ function InView({ list, detail, busy, notice, initialSelected, onOp, onFinalise,
                 )}
               </>
             )}
+            {resume.kind === 'upload' && onDownloadOriginal && !originalMissing && (
+              <button type="button" className="btn btn-sm rs-btn" disabled={locked} aria-busy={busy?.kind === 'original'} onClick={onDownloadOriginal}>
+                {busy?.kind === 'original' ? 'Preparing…' : 'Download your file'}
+              </button>
+            )}
           </div>
+          {resume.kind === 'upload' && originalMissing && (
+            <p className="rs-fine" role="status">
+              The original of this file was not kept. Files added from today are.
+            </p>
+          )}
           <p className="rs-fine">
             {draft
               ? resume.isDefault

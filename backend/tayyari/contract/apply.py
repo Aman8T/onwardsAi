@@ -260,6 +260,18 @@ class ReviewResume(_Model):
     choice: ResumeChoice
 
 
+class ResumeRef(_Model):
+    """One of the person's resumes (`/resume`) as Apply for me names it: the default (``defaultResume`` of a check) or the
+    frozen copy an application was prepared with (``resumeCopy``). ``finalisedAt`` is when the finalised version was made;
+    ``sha256`` (frozen copies only) is the file hash in the approval digest."""
+
+    resumeId: str
+    title: str
+    finalisedAt: str
+    fileName: str
+    sha256: str | None = None
+
+
 class ScriptStep(_Model):
     """One executable step of the review's fill script; the submit pass replays it with no model."""
 
@@ -379,6 +391,8 @@ class ApplicationDetail(_Model):
     progress: ApplyProgress | None = None
     sentAt: str | None = None
     """When it went to the employer (as on `ApplicationSummary`)."""
+    resumeCopy: ResumeRef | None = None
+    """The default resume as it stood when the values were prepared; absent when the application used another resume."""
 
 
 class ApplicationList(_Model):
@@ -408,6 +422,8 @@ class ApplyCheck(_Model):
     """The match's hard requirements that blocked (``blocked_by_requirement``)."""
     applyUrl: str | None = None
     """The employer's own page for the posting, for "Open on <host>'s site" when it is not offered."""
+    defaultResume: ResumeRef | None = None
+    """The profile's default resume when it has a finalised version: the file "my current resume" sends (given a match)."""
 
 
 class StartApplicationRequest(_Model):
@@ -650,6 +666,7 @@ __all__ = [
     "ResolveOutcome",
     "ResolveRequest",
     "ResumeChoice",
+    "ResumeRef",
     "ReviewResume",
     "RunMode",
     "RunOutcome",

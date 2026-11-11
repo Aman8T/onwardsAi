@@ -22,6 +22,7 @@ import {
   APPLICATIONS,
   BLOCK_REASONS,
   CHECK_OFFERED,
+  CHECK_OFFERED_DEFAULT,
   DETAILS,
   DETAILS_FIRST_TIME,
   DETAILS_NO_RESUME,
@@ -49,6 +50,7 @@ const OWN_SCREENS: readonly (readonly [string, string])[] = [
   ['start-offer', 'Apply for me · offered'],
   ['start-priced', 'Apply for me · priced, no free left'],
   ['start-unlimited', 'Apply for me · unlimited account'],
+  ['start-default', 'Apply for me · default resume named'],
   ['start-saved-none', 'Apply for me · saved resume missing'],
   ...BLOCK_REASONS.map((r) => [`start-${r}`, `Apply for me · ${r.replace(/_/g, ' ')}`] as const),
 ];
@@ -185,6 +187,22 @@ export function ApplyGallery() {
         break;
       case 'start-unlimited':
         body = start(STATUS, CHECK_OFFERED, details, true);
+        break;
+      case 'start-default':
+        body = (
+          <StartView
+            status={STATUS}
+            check={CHECK_OFFERED_DEFAULT}
+            matchId={MATCH.id}
+            match={MATCH}
+            details={details}
+            resume="saved"
+            onResume={() => undefined}
+            onStart={pause}
+            navigate={navigate}
+            employerUrl={EMPLOYER_URL}
+          />
+        );
         break;
       case 'start-saved-none':
         body = (

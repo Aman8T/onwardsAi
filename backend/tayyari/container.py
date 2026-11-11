@@ -118,7 +118,7 @@ if TYPE_CHECKING:
     from tayyari.resume.service import ResumeService
     from tayyari.speech.engine import SpeechEngine
     from tayyari.speech.service import SpeechService
-    from tayyari.storage.ports import StoredApplication
+    from tayyari.storage.ports import StoredApplication, StoredResume
     from tayyari.weekly.service import WeeklyService
 
 log = get_logger(__name__)
@@ -450,6 +450,8 @@ class Container:
                     profiles=repos.profiles,
                     sample=sample,
                     clock=clock,
+                    resume_files=repos.resume_files,
+                    carry=repos.carry,
                 )
             chat: ChatService
             if ov.chat is not None:
@@ -761,6 +763,7 @@ class Container:
                     user_facts=repos.user_facts,
                     clock=clock,
                     call_timeout_s=settings.match.call_timeout_s,
+                    files=repos.resume_files,
                 )
             )
 
@@ -958,7 +961,7 @@ def build_apply_engine(container: Container) -> ApplyEngine:
     - the facts an answer may cite: the match's fact book.
 
     Raises RuntimeError when no browser can be opened (see `apply_worker_skip_reason`)."""
-    from tayyari.apply.answers import ClaudeAnswerer, Resume
+    from tayyari.apply.answers import ClaudeAnswerer
     from tayyari.apply.engine import ApplyEngine
     from tayyari.apply.fill_loop import FieldListLoop
     from tayyari.apply.seams import ApplyCredits
@@ -976,16 +979,7 @@ def build_apply_engine(container: Container) -> ApplyEngine:
     credits: ApplyCredits = container.entitlements
 
     async def resume_for(app: StoredApplication) -> Resume | None:
-        if app.resume_choice == "tailored":
-            return await _tailored_resume(container, app)
-        profile = await container.repos.apply.get_profile(app.owner_key)
-        if profile is None or not profile.resume_bytes:
-            return None
-        return Resume(
-            profile.resume_name or "resume.pdf",
-            profile.resume_bytes,
-            profile.resume_type or "application/pdf",
-        )
+        return await resume_of_application(container, app)
 
     async def facts(app: StoredApplication) -> list[dict[str, str]]:
         book = await _book_of(container, app)
@@ -1048,6 +1042,102 @@ async def _book_of(container: Container, app: StoredApplication) -> FactBook | N
         return None
 
 
+async def default_resume_of(container: Container, profile_id: str | None) -> StoredResume | None:
+    """The profile's default resume when it has a finalised version, else None. A draft is never the file: a row marked
+    default with no finalised version (it cannot be made so by the routes) is passed over. Read-only; no export."""
+    if not profile_id:
+        return None
+    for stored in await container.repos.resumes.list_for_profile(profile_id):
+        if stored.is_default and stored.final is not None and stored.finalised_at is not None:
+            return stored
+    return None
+
+
+async def resume_of_application(container: Container, app: StoredApplication) -> Resume | None:
+    """The resume that goes with one application, in the fill and again in the submit pass (so the digest's resume hash is
+    always that of the file as it is *now*): the match's tailored resume for ``tailored``; else "my current resume", which is
+    the profile's default resume when it has a finalised version (if its file cannot be made, none goes out: never the saved
+    upload under a default's name), and with no finalised default the saved upload as it is."""
+    from tayyari.apply.answers import Resume
+
+    if app.resume_choice == "tailored":
+        return await _tailored_resume(container, app)
+    if await default_resume_of(container, app.profile_id) is not None:
+        return await _default_resume(container, app)
+    profile = await container.repos.apply.get_profile(app.owner_key)
+    if profile is None or not profile.resume_bytes:
+        return None
+    return Resume(
+        profile.resume_name or "resume.pdf",
+        profile.resume_bytes,
+        profile.resume_type or "application/pdf",
+    )
+
+
+def default_file_name(person: str | None) -> str:
+    """``Riya-Kapoor-Resume.pdf``: the name the default resume is attached under."""
+    stem = "-".join(_tokens(person)[:4])[:80].strip("-")
+    return f"{stem}-Resume.pdf" if stem else "Resume.pdf"
+
+
+async def _default_resume(container: Container, app: StoredApplication) -> Resume | None:
+    """The default resume's finalised PDF, the very bytes `/resume` downloads (`ResumeService.files`), with the frozen copy
+    the review stores beside its digest. None when it cannot be exported."""
+    from tayyari.apply.answers import Resume
+    from tayyari.core.errors import AppError
+
+    stored = await default_resume_of(container, app.profile_id)
+    if stored is None or stored.final is None or stored.finalised_at is None:
+        return None
+    try:
+        files, person = await container.resume.files(stored)
+    except AppError:
+        log.warning("apply_default_resume_unavailable", application_id=app.id, resume_id=stored.id)
+        return None
+    name = default_file_name(person)
+    frozen = {
+        "resumeId": stored.id, "title": stored.title, "finalisedAt": stored.finalised_at.isoformat(),
+        "fileName": name, "variant": stored.final,
+    }  # fmt: skip
+    profile = await container.repos.apply.get_profile(app.owner_key)
+    if profile is not None and profile.resume_bytes and _is_unchanged_upload(stored):
+        # an uploaded file nobody edited goes as it is, not as our rendering of it
+        original = profile.resume_name or "resume.pdf"
+        return Resume(
+            original, profile.resume_bytes, profile.resume_type or "application/pdf",
+            frozen={**frozen, "fileName": original, "source": "upload"},
+        )  # fmt: skip
+    return Resume(name, files.pdf, "application/pdf", frozen=frozen)
+
+
+def _is_unchanged_upload(stored: StoredResume) -> bool:
+    """Is this the uploaded resume with its finalised version exactly as the file said it (`resume.marks`: no edit, move,
+    put-back or leave-out)? The export only writes special characters in plain form, which is not an edit."""
+    from pydantic import ValidationError
+
+    from tayyari.contract.match import ResumeVariant
+    from tayyari.match.export import plain
+    from tayyari.match.models import FactBook
+    from tayyari.resume.arrange import upload_variant
+    from tayyari.resume.marks import left_out_lines, marks
+    from tayyari.resume.ops import entries_of
+
+    if stored.kind != "upload" or stored.final is None:
+        return False
+    try:
+        final = ResumeVariant.model_validate(stored.final)
+        upload = upload_variant(FactBook.model_validate(stored.facts))
+    except ValidationError:
+        return False
+    if left_out_lines(final, upload):
+        return False
+    wording = {line.id: line.text for entry in entries_of(upload) for line in entry.bullets}
+    texts = {line.id: line.text for entry in entries_of(final) for line in entry.bullets}
+    return all(
+        m.kind == "edited" and texts[m.bulletId] == plain(wording[m.bulletId]) for m in marks(final, upload)
+    )
+
+
 async def _tailored_resume(container: Container, app: StoredApplication) -> Resume | None:
     """The match's resume variant as a PDF (deterministic bytes, so the preview and the submit sign the same sha256);
     None when there is none yet or it still has open questions (`match.errors.ExportBlocked`)."""
@@ -1085,5 +1175,8 @@ __all__ = [
     "apply_worker_skip_reason",
     "build_apply_engine",
     "build_apply_worker",
+    "default_file_name",
+    "default_resume_of",
+    "resume_of_application",
     "tailored_file_name",
 ]

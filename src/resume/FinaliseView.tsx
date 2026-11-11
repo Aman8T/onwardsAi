@@ -10,7 +10,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { countOf, factIndex, findingNote, sheetLines, shortDate, sourceOf, splitFinding } from './model';
 import { FileLinks, ScreenLink, Stamp } from './parts';
+import { Now, Was } from './diff';
 import type { ResumeQuery } from './route';
+import type { GrammarState } from './useResumes';
 import type { Busy, FileKind, FinaliseReport, Finding, FindingAnswer, FindingChoice, LintReport, ResumeDetail } from './types';
 
 export interface FinaliseViewProps {
@@ -29,6 +31,12 @@ export interface FinaliseViewProps {
   onDownload: (file: FileKind) => void;
   hrefFor: (file: FileKind) => string;
   onNavigate: (to: ResumeQuery) => void;
+  /** The grammar check of this visit; it runs only when the person presses the button. */
+  grammar: GrammarState;
+  onCheckGrammar: () => void;
+  /** Send the edit op for a proposal. */
+  onAcceptProposal: (bulletId: string, text: string) => void;
+  onKeepMine: (bulletId: string) => void;
 }
 
 const CHOICE_LABEL: Record<FindingChoice, string> = {
@@ -38,7 +46,7 @@ const CHOICE_LABEL: Record<FindingChoice, string> = {
 const CHOICE_ORDER: readonly FindingChoice[] = ['mine', 'undo'];
 
 export function FinaliseView(props: FinaliseViewProps) {
-  const { detail, status, report, error, wantsDefault, busy, notice, onRun, onMakeDefault, onDownload, hrefFor, onNavigate } = props;
+  const { detail, status, report, error, wantsDefault, busy, notice, onRun, onMakeDefault, onDownload, hrefFor, onNavigate, grammar, onCheckGrammar, onAcceptProposal, onKeepMine } = props;
   const { resume } = detail;
   const findings = report && !report.done ? report.findings : [];
   const [answers, setAnswers] = useState<ReadonlyMap<string, FindingChoice>>(new Map());
@@ -58,6 +66,10 @@ export function FinaliseView(props: FinaliseViewProps) {
   const left = findings.filter((f) => !answers.has(f.bulletId)).length;
   const ready = !running && busy === null && left === 0;
   const lint: LintReport | undefined = report?.lint ?? (already ? detail.variant.lint : undefined);
+  // a proposal is shown while its line still reads as it did when the check ran, and the person has not kept it
+  const proposals = grammar.id === resume.id ? grammar.proposals.filter((p) => !grammar.kept.includes(p.bulletId) && lines.some((l) => l.bullet?.id === p.bulletId && l.bullet.text === p.before)) : [];
+  const grammarHere = grammar.id === resume.id ? grammar : undefined;
+  const checking = busy?.kind === 'grammar' || grammarHere?.status === 'running';
   const back: ResumeQuery = { screen: 'resume', id: resume.id };
 
   const run = (makeDefault: boolean) => {
@@ -124,6 +136,69 @@ export function FinaliseView(props: FinaliseViewProps) {
               <p className="rs-fine">Kept as your words, a line becomes a block of its own, labelled as yours wherever it shows. Undone, the line goes back to the words of its source.</p>
             )}
           </section>
+
+          {!done && !already && (
+            <section className="rs-group" aria-labelledby="rs-fz-gram">
+              <h2 id="rs-fz-gram" className="kicker">
+                {proposals.length > 0 ? (
+                  <>
+                    Proposed · yours to accept · <span className="numeral">{proposals.length}</span>
+                  </>
+                ) : (
+                  'Grammar and spelling'
+                )}
+              </h2>
+              {proposals.length > 0 && (
+                <ul className="panel rs-rows rs-rows-in rs-grammar">
+                  {proposals.map((p) => {
+                    const line = lines.find((l) => l.bullet?.id === p.bulletId);
+                    const working = busy?.kind === 'op' && busy.target === p.bulletId;
+                    return (
+                      <li key={p.bulletId} className="rs-row rs-row-top rs-proposal" data-proposal={p.bulletId}>
+                        <span className="rs-row-main rs-proposal-main">
+                          <span className="rs-cite">{line ? `block ${line.no}` : 'a line'} · grammar check</span>
+                          <span className="rs-small rs-was">
+                            <span className="sr-only">Before: </span>
+                            <Was before={p.before} after={p.after} />
+                          </span>
+                          <span className="rs-small">
+                            <span className="sr-only">After: </span>
+                            <Now before={p.before} after={p.after} />
+                          </span>
+                          <span className="rs-fine">{p.why}</span>
+                        </span>
+                        <span className="rs-actions">
+                          <button type="button" className="btn btn-sm rs-btn" disabled={busy !== null} aria-busy={working} onClick={() => onAcceptProposal(p.bulletId, p.after)}>
+                            {working ? 'Accepting…' : 'Accept'}
+                          </button>
+                          <button type="button" className="btn btn-sm btn-quiet rs-btn" disabled={busy !== null} onClick={() => onKeepMine(p.bulletId)}>
+                            Keep mine
+                          </button>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <div className="rs-actions">
+                <button type="button" className="btn btn-sm rs-btn" disabled={busy !== null} aria-busy={checking} onClick={onCheckGrammar}>
+                  {checking ? 'Checking…' : grammarHere?.status === 'ready' ? 'Check again' : 'Check grammar and spelling'}
+                </button>
+              </div>
+              <p className="rs-fine" role="status">
+                {checking
+                  ? 'Reading every line for grammar and spelling.'
+                  : grammarHere?.status !== 'ready'
+                    ? 'This uses a model call, so it runs only when you press it. Finalise works without it.'
+                    : !grammarHere.ran
+                      ? 'The grammar check could not run just now. Your resume is unchanged.'
+                      : proposals.length === 0
+                        ? 'Nothing to fix.'
+                        : ''}
+              </p>
+              {proposals.length > 0 && <p className="rs-fine">An accepted fix is an edit to your draft, and Finalise checks the line again, so a grammar change can never move a number, a name or who did the work.</p>}
+            </section>
+          )}
 
           {report && report.fixed.length > 0 && (
             <section className="rs-group" aria-labelledby="rs-fz-fixed">

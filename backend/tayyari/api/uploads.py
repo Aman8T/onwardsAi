@@ -47,7 +47,7 @@ from python_multipart.exceptions import FormParserError
 from python_multipart.multipart import MultipartParser, MultipartState, parse_options_header
 from starlette.requests import Request
 
-from tayyari.contract.requests import AnalyzeRequest
+from tayyari.contract.requests import AnalyzeRequest, Reread
 from tayyari.core.errors import AppError, BadRequest, PayloadTooLarge, RateLimited, ServiceUnavailable
 from tayyari.core.files import is_accepted_upload
 from tayyari.core.limits import (
@@ -88,6 +88,8 @@ UPLOAD_RETRY_AFTER_S = 5.0
 MSG_BAD_FILE_TYPE = "Upload your resume as a PDF, DOCX, TXT or Markdown file."
 MSG_WRONG_FILE_FIELD = f'Attach the resume file in the "{RESUME_FIELD}" field.'
 MSG_NO_INPUT = "Add a resume, a link or some notes to analyse."
+FROM_PROFILE_MAX_CHARS = 120
+"""The form field ``fromProfile`` (a profile id; the route checks its shape)."""
 MSG_BAD_LINKS = (
     "None of those links look like valid web addresses. Add a resume or a full URL such as github.com/you."
 )
@@ -618,6 +620,12 @@ async def parse_analyze_form(
     fields, upload = await read_upload_form(
         request, limits=limits, read_timeout_s=read_timeout_s, gate=gate, client_key=client_key
     )
+
+    from_profile = clean_field(_last(fields, "fromProfile"), FROM_PROFILE_MAX_CHARS)
+    if from_profile:
+        # A re-read of an existing profile: the route builds the inputs from what the profile holds, so every other field
+        # of the form (a file, links, notes, a goal, sample) is ignored.
+        return AnalyzeRequest(reread=Reread(profile_id=from_profile))
 
     sample = _last(fields, "sample") in ("1", "true")
     links = parse_links([value for name, value in fields if name == "links"])

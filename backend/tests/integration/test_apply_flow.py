@@ -13,10 +13,11 @@ place of `BrowserUseOpener`). Nothing calls the network or a model.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +34,8 @@ from tayyari.core.settings import ApplySettings, Settings
 from tayyari.storage.ports import StoredAnswer
 from tests.fakes.apply_browser import FakeOpener
 from tests.integration.support import running
-from tests.unit.match.support import js
+from tests.unit.match.support import Persona, js, riya
+from tests.unit.resume.support import rig
 
 MakeSettings = Callable[..., Settings]
 SESSION_COOKIE = "tayyari_session"
@@ -152,9 +154,28 @@ class Flow:
     def clicks(self) -> int:
         return sum(1 for d in self.opener.drivers for a in d.actions if a[0] == "click_submit")
 
-    async def to_review(self) -> str:
+    async def default_resume(
+        self, persona: Persona | None = None, *, role_key: str = "", make_default: bool = True
+    ) -> Any:
+        """A finalised resume of the person's profile (made by the resume service over the fakes, then stored on this
+        app's database), the default unless ``make_default`` is off. Returns the stored row."""
+        r = rig(persona)
+        [summary] = (await r.listing()).resumes
+        kept = await r.stored(summary.id)
+        row = replace(
+            kept, id=f"res-{role_key or 'upload'}".ljust(32, "0"), profile_id="p" * 32, user_id=self.user_id,
+            kind="path" if role_key else "upload", role_key=role_key, is_default=False,
+        )  # fmt: skip
+        repo = self.env.container.repos.resumes
+        stored = await repo.create(row)
+        if make_default:
+            assert await repo.set_default("p" * 32, stored.id)
+        return await repo.get(stored.id)
+
+    async def to_review(self, *, default: bool = False) -> str:
         """Sign in, consent, upload the resume, check and start, then fill, answer and fill again: the id of an
-        application waiting for its approval with nothing left to answer."""
+        application waiting for its approval with nothing left to answer. With ``default`` the person's default
+        resume (finalised, on /resume) is what "my current resume" sends, not the uploaded file."""
         await self.sign_in()
         assert (await self.post("/api/apply/consent"))["consentAt"]
         uploaded = await self.client.put(
@@ -163,8 +184,11 @@ class Flow:
         )  # fmt: skip
         assert uploaded.status_code == 200 and uploaded.json()["hasResume"] is True
         match_id = await self.match()
+        if default:
+            await self.default_resume()
         check = await self.post("/api/apply/check", {"matchId": match_id, "applyUrl": FORM})
         assert check["offered"] is True and check["applyUrl"] == FORM
+        assert ("defaultResume" in check) is default
         assert self.opener.opened == []  # the check opens no browser
         started = await self.post(
             "/api/apply/applications", {"matchId": match_id, "resume": "saved", "applyUrl": FORM}
@@ -192,7 +216,7 @@ class Flow:
         assert await self.worker.run_once() is True
         review = await self.get(app_id)
         assert review["stage"] == "waiting_for_you" and review["needs"] == [] and review["review"]["digest"]
-        assert review["review"]["resume"]["name"] == "Meera-Nair-CV.pdf"
+        assert review["review"]["resume"]["name"] == ("Meera-Nair-CV.pdf")
         assert all(row["selector"] for row in review["review"]["fields"])  # every row names its field
         assert self.clicks() == 0 and all(d.sent_writes() == [] for d in self.opener.drivers)
         # the resume goes on only in the submit pass, never in a guarded preview
@@ -277,6 +301,91 @@ async def test_an_unclear_outcome_is_check_this_one_and_not_sent_releases_the_ho
         assert (
             await flow.worker.run_once() is False and flow.clicks() == 1
         )  # a failed row is never sent again
+
+
+async def test_my_current_resume_is_the_finalised_default_named_in_the_prepared_application(
+    start: Any,
+) -> None:
+    async with start() as flow:
+        app_id = await flow.to_review(default=True)
+        detail = await flow.get(app_id)
+        default = await flow.env.container.repos.resumes.find("p" * 32, "upload", "")
+        wanted = hashlib.sha256(b"%PDF-1.7 Meera's resume").hexdigest()  # the unedited upload goes as it is
+        copy = detail["resumeCopy"]
+        assert (copy["resumeId"], copy["title"], copy["fileName"], copy["sha256"]) == (
+            default.id, default.title, "Meera-Nair-CV.pdf", wanted,
+        )  # fmt: skip
+        assert (
+            detail["review"]["resume"]["sha256"] == wanted
+            and copy["finalisedAt"] == default.finalised_at.isoformat()
+        )
+        assert "variant" not in copy
+        file = await flow.client.get(f"/api/apply/applications/{app_id}/resume-copy", headers=flow.headers)
+        assert file.status_code == 200 and file.headers["content-type"] == "application/pdf"
+        assert file.content.startswith(b"%PDF")  # exported from the frozen variant (not the original bytes)
+        assert await flow.worker.run_once() is True  # the submit pass sends that same file once
+        assert (await flow.get(app_id))["stage"] == "sent" and flow.clicks() == 1
+        assert (await flow.get(app_id))["resumeCopy"] == copy
+
+
+async def test_a_default_changed_after_the_values_were_prepared_is_not_sent(start: Any) -> None:
+    async with start() as flow:
+        app_id = await flow.to_review(default=True)  # approved, waiting for the submit pass
+        prepared = (await flow.get(app_id))["resumeCopy"]
+        newer = await flow.default_resume(
+            riya(), role_key="other"
+        )  # another resume becomes the default meanwhile
+        assert newer.is_default
+
+        assert await flow.worker.run_once() is True
+        after = await flow.get(app_id)
+
+        assert (after["stage"], after["stopReason"]) == ("waiting_for_you", "form_changed")
+        assert flow.clicks() == 0 and all(d.sent_writes() == [] for d in flow.opener.drivers)
+        assert after["creditState"] == "held" and "approvedAt" not in after
+        assert (
+            after["resumeCopy"]["resumeId"] == newer.id != prepared["resumeId"]
+        )  # reviewed again, then re-approved
+        assert after["review"]["resume"]["sha256"] == after["resumeCopy"]["sha256"] != prepared["sha256"]
+        old_copy = await flow.client.get(
+            f"/api/apply/applications/{app_id}/resume-copy", headers=flow.headers
+        )
+        assert old_copy.status_code == 200  # the frozen copy is now the new default's, as reviewed
+
+
+async def test_a_default_that_is_only_a_draft_is_never_the_file(start: Any) -> None:
+    async with start() as flow:
+        await flow.sign_in()
+        assert (await flow.post("/api/apply/consent"))["consentAt"]
+        uploaded = await flow.client.put(
+            "/api/apply/profile/resume", content=b"%PDF-1.7 Meera's resume",
+            headers={**flow.headers, "content-type": "application/pdf", "x-file-name": "Meera-Nair-CV.pdf"},
+        )  # fmt: skip
+        assert uploaded.status_code == 200
+        match_id = await flow.match()
+        row = await flow.default_resume()
+        repo = flow.env.container.repos.resumes
+        assert await repo.save(replace(row, final=None, finalised_at=None), expected_version=row.version)
+        assert (await repo.get(row.id)).is_default  # still marked default, but a draft
+
+        checked = await flow.post("/api/apply/check", {"matchId": match_id, "applyUrl": FORM})
+        assert (
+            checked["offered"] is True and "defaultResume" not in checked
+        )  # nothing named: nothing finalised
+        started = await flow.post(
+            "/api/apply/applications", {"matchId": match_id, "resume": "saved", "applyUrl": FORM}
+        )
+        assert await flow.worker.run_once() is True
+        detail = await flow.get(started["id"])
+
+        assert (
+            detail["review"]["resume"]["name"] == "Meera-Nair-CV.pdf"
+        )  # today's behaviour: the saved upload
+        assert "resumeCopy" not in detail
+        none = await flow.client.get(
+            f"/api/apply/applications/{started['id']}/resume-copy", headers=flow.headers
+        )
+        assert none.status_code == 404
 
 
 def sent_since(detail: dict[str, Any]) -> Any:

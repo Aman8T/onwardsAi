@@ -150,6 +150,18 @@ for (const d of [fx.RUN_REVIEW_SIGN, fx.RUN_REVIEW_ONSITE, fx.RUN_REVIEW_NEEDS])
 }
 const readyHtml = render(h(rev.ReviewView, reviewProps(fx.RUN_REVIEW)));
 check('approve on when nothing is left', !approveButton(readyHtml).includes('aria-disabled'), approveButton(readyHtml));
+
+/* ───── the default resume: named on the review and on the sent page, with the frozen copy ───── */
+const defReviewHtml = render(h(rev.ReviewView, reviewProps(fx.RUN_REVIEW_DEFAULT)));
+const defReviewText = textOf(defReviewHtml);
+check('review: names the default resume and its date', defReviewText.includes('Your default resume: Resume, finalised 3 Nov'));
+check('review: the default resume carries the stamp', defReviewHtml.includes('class="stamp">default</span>'));
+check('review: links to /resume', defReviewHtml.includes('href="/resume"'));
+check('review: a tailored resume is not called the default', !textOf(render(h(rev.ReviewView, reviewProps(fx.RUN_REVIEW)))).includes('Your default resume'));
+const sentDefault = render(h(out.OutcomeView, outcomeProps(fx.RUN_SENT_DEFAULT)));
+check('sent: "Sent with" names the resume as finalised', textOf(sentDefault).includes('Sent with Resume, as finalised 3 Nov'));
+check('sent: the frozen copy is linked', sentDefault.includes('/api/apply/applications/a_kestrel_6/resume-copy'));
+check('sent: an application without a frozen copy has no "Sent with"', !sentText.includes('Sent with'));
 const readyText = textOf(readyHtml);
 for (const w of ['Applications · Ready to review', '2 of 5 ready', 'Form · 15 values', 'Where these 15 values come from', 'Attached only when you approve', 'Not now', "Don't apply", 'The match', 'Good match.', 'Emails about this application', 'Written from 2 of your facts · 1 sentence dropped', 'Dropped: “I have deep expertise in distributed ledgers.”', 'Typed by you, for this form only', 'Locked'])
   check(`review shows: ${w}`, readyText.includes(w), w);

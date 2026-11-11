@@ -24,6 +24,7 @@ first read and triage task and waits for them before it returns.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 from collections.abc import AsyncIterator, Iterable, Sequence
 from typing import Any, NoReturn
 
@@ -44,6 +45,7 @@ from tayyari.contract import (
 )
 from tayyari.core import context as log_context
 from tayyari.core.clock import Clock, SystemClock
+from tayyari.core.files import stored_media_type
 from tayyari.core.ids import new_profile_id, uuid7
 from tayyari.core.logging import get_logger
 from tayyari.core.settings import Settings
@@ -53,7 +55,7 @@ from tayyari.llm.claude import ClaudeClient
 from tayyari.llm.errors import SpendCeilingReached
 from tayyari.prompts import build_synth_prompt
 from tayyari.sample.provider import SampleProvider
-from tayyari.storage.ports import ProfileRepo
+from tayyari.storage.ports import ProfileCarryRepo, ProfileRepo, ResumeFileRepo, StoredResumeFile
 
 from .evidence import check_evidence
 from .failures import is_auth_error, is_spend_error, user_message
@@ -88,7 +90,11 @@ class PipelineAnalysisService:
         profiles: ProfileRepo,
         sample: SampleProvider,
         clock: Clock | None = None,
+        resume_files: ResumeFileRepo | None = None,
+        carry: ProfileCarryRepo | None = None,
     ) -> None:
+        self._resume_files = resume_files
+        self._carry = carry
         self._settings = settings
         self._claude = claude
         self._decisions = decisions
@@ -176,6 +182,8 @@ class PipelineAnalysisService:
         states = initial_states(planned)
         send(ev_readers(list(states.values())))
         send(ev_phase("reading", "Haiku readers in progress"))
+        if req.reread is not None and req.reread.note:
+            send(ev_log("resume", req.reread.note, "resume"))  # what a re-read takes in, and what it left out
         channels = {
             pid: ReaderChannel(
                 state, send, now=run.clock.monotonic, throttle_s=CHANNEL_THROTTLE_S * run.scale
@@ -264,11 +272,12 @@ class PipelineAnalysisService:
             )
 
             # (f) persist and finish
-            await self._persist(run, profile, results, goal)
+            saved = await self._persist(run, profile, results, goal)
+            carried = (await self._carry_over(run) if saved else False) if req.reread is not None else None
             await signals.settle()
             send(ev_synth(3))
             send(ev_phase("done", "Your graph is ready"))
-            send(ev_done(profile))
+            send(ev_done(profile, carried=carried))
             self._shadow(run, profile, results)
         finally:
             await self._shutdown(first_read, signals, reader_tasks, channels.values())
@@ -293,8 +302,8 @@ class PipelineAnalysisService:
 
     async def _persist(
         self, run: RunContext, profile: Profile, results: Sequence[ReadResult], goal: str | None
-    ) -> None:
-        """Save the profile and the context chat needs. A failure is logged and never fails the analysis."""
+    ) -> bool:
+        """Save the profile and the context chat needs; True when it is stored. A failure is logged and never fails the analysis."""
         context = StoredContext(
             sources=[
                 StoredSource(
@@ -321,6 +330,71 @@ class PipelineAnalysisService:
             raise
         except Exception as exc:
             log.error("profile_save_failed", error_type=type(exc).__name__, exc_info=True)
+            return False
+        if run.req.reread is None:  # a re-read keeps no new file: the person's own move over
+            await self._keep_resume_file(run, context)
+        return True
+
+    async def _carry_over(self, run: RunContext) -> bool:
+        """A re-read: move the person's resumes, resume files, own-words lines and dashboard notes from the profile it
+        started from to the new one, in one transaction. False (logged, nothing moved, the new profile stands) on any
+        failure, so the final event can say so."""
+        reread = run.req.reread
+        if reread is None or self._carry is None:
+            return False
+        try:
+            moved = await self._carry.carry(reread.profile_id, run.profile_id, reread.user_id)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            log.error(
+                "reread_carry_failed",
+                old_profile_id=reread.profile_id,
+                error_type=type(exc).__name__,
+                exc_info=True,
+            )
+            return False
+        log.info(
+            "reread_carried",
+            old_profile_id=reread.profile_id,
+            resumes=moved.resumes,
+            resume_files=moved.resume_files,
+            user_facts=moved.user_facts,
+            desk_notes=moved.desk_notes,
+        )
+        return True
+
+    async def _keep_resume_file(self, run: RunContext, context: StoredContext) -> None:
+        """Keep the uploaded resume file (its bytes and text) with the saved profile, so the first resume's original can be
+        downloaded. A failure is logged and never fails the analysis."""
+        data, req = run.req.resume_bytes, run.req
+        if self._resume_files is None or req.sample or not data:
+            return
+        try:
+            source = next((x for x in context.sources if x.kind == "resume"), None)
+            name = " ".join((req.resume_name or "resume").split())[:255] or "resume"
+            await self._resume_files.add(
+                StoredResumeFile(
+                    id=uuid7().hex,
+                    user_id=None,
+                    profile_id=run.profile_id,
+                    origin="analysis",
+                    filename=name,
+                    mime=stored_media_type(name, None, data),
+                    size=len(data),
+                    sha256=hashlib.sha256(data).hexdigest(),
+                    text=(source.content if source else "").replace("\x00", ""),
+                    facts={},
+                    merge=None,
+                    merged_book=None,
+                    created_at=run.clock.now(),
+                ),
+                data,
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            log.warning("resume_file_not_kept", error_type=type(exc).__name__, exc_info=True)
 
     def _shadow(self, run: RunContext, profile: Profile, results: Sequence[ReadResult]) -> None:
         """Queue the shadow decisions after `done`: fire and forget, never delays or breaks the stream."""

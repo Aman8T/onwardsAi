@@ -266,6 +266,7 @@ INTERFACE_MODELS: dict[str, type[BaseModel]] = {
     "ChatOrigin": models.ChatOrigin,
     "ChatDeskTracked": requests.ChatDeskTracked,
     "ChatDesk": requests.ChatDesk,
+    "ChatResume": requests.ChatResume,
     "ChatRequest": requests.ChatRequestBody,
 }
 

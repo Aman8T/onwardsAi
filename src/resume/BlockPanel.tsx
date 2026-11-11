@@ -9,7 +9,7 @@ import { markText, sourceOf } from './model';
 import type { SheetLine, Source } from './model';
 import { SourceLine } from './parts';
 import { MAX_LINE_CHARS } from './types';
-import type { Busy, Fact, ResumeDetail, ResumeOp, ResumeState } from './types';
+import type { Busy, Fact, LineWording, ResumeDetail, ResumeOp, ResumeState } from './types';
 
 interface BlockPanelProps {
   /** The pressed line; undefined when nothing is pressed. */
@@ -20,12 +20,14 @@ interface BlockPanelProps {
   onOp: (op: ResumeOp) => Promise<ResumeDetail | null>;
   /** Under the pressed line (a phone), instead of above the resume. */
   inline?: boolean;
+  /** What other resumes use for the lines of this one (the panel shows the pressed line's). */
+  wordings?: readonly LineWording[];
 }
 
 /** One line of text, as a resume line is: line breaks become spaces. */
 const oneLine = (text: string) => text.replace(/\s*[\r\n]+\s*/g, ' ');
 
-export function BlockPanel({ line, facts, state, busy, onOp, inline = false }: BlockPanelProps) {
+export function BlockPanel({ line, facts, state, busy, onOp, inline = false, wordings = [] }: BlockPanelProps) {
   const bullet = line?.bullet;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -68,6 +70,7 @@ export function BlockPanel({ line, facts, state, busy, onOp, inline = false }: B
   const text = oneLine(draft).trim();
   const canSave = !locked && text.length > 0 && text.length <= MAX_LINE_CHARS && text !== bullet.text;
 
+  const elsewhere = wordings.filter((w) => w.lineId === bullet.id && w.text !== bullet.text);
   const send = (op: ResumeOp) => void onOp(op);
   const startEdit = () => {
     setDraft(bullet.text);
@@ -146,6 +149,28 @@ export function BlockPanel({ line, facts, state, busy, onOp, inline = false }: B
         </ul>
       ) : (
         <p className="rs-fine">The source of this line did not come with the resume.</p>
+      )}
+
+      {!editing && elsewhere.length > 0 && (
+        <section className="rs-elsewhere" aria-label="Worded differently elsewhere">
+          <h3 className="kicker">Worded differently elsewhere</h3>
+          <ul className="rs-rows rs-rows-in">
+            {elsewhere.map((w) => {
+              const working = saving && busy?.kind === 'op';
+              return (
+                <li key={`${w.fromResumeId}:${w.text}`} className="rs-row rs-row-top">
+                  <span className="rs-row-main">
+                    <span className="rs-small">{w.text}</span>
+                    <span className="rs-cite">from {w.fromTitle}</span>
+                  </span>
+                  <button type="button" className="btn btn-sm rs-btn" disabled={locked} aria-busy={working} onClick={() => send({ op: 'edit', bulletId: bullet.id, text: w.text })}>
+                    Use this wording
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
 
       {!editing && (

@@ -23,6 +23,7 @@ import { NeedCard, answerBatch, answerable, initialDrafts, keyOf, missingRequire
 import type { NeedDraft } from './NeedCard';
 import { LockIcon, ReviewGroup, groupFields, sourceSummary } from './ReviewGroup';
 import type { ReviewField } from './ReviewGroup';
+import { DefaultStamp, CopyLink, ResumeLink, defaultLine } from './ResumeNamed';
 import { LIST_ROUTE, linkTo } from './route';
 import type { Navigate } from './route';
 
@@ -202,7 +203,19 @@ export function ReviewView({ detail, navigate, queue = [], match, shot, onApprov
       <span className="ap-q">Resume</span>
       <span className="ap-v">
         {review.resume.name}
-        <span className="ap-muted ap-small"> · {review.resume.choice === 'tailored' ? "this match's resume" : 'your saved resume'}</span>
+        <span className="ap-muted ap-small">
+          {' '}
+          · {review.resume.choice === 'tailored' ? "this match's resume" : detail.resumeCopy ? defaultLine(detail.resumeCopy) : 'your saved resume'}
+        </span>
+        {detail.resumeCopy && review.resume.choice === 'saved' && (
+          <>
+            {' '}
+            <DefaultStamp />{' '}
+            <span className="ap-small">
+              <ResumeLink>Open /resume</ResumeLink>
+            </span>
+          </>
+        )}
       </span>
       <span className="ap-src">
         <span className="ar-lock">
@@ -396,7 +409,9 @@ export function ReviewView({ detail, navigate, queue = [], match, shot, onApprov
                   <p className="ap-small">
                     {review.resume.choice === 'tailored'
                       ? 'The resume this match built, every line from your facts.'
-                      : 'The resume you saved in Your details, as it is.'}
+                      : detail.resumeCopy
+                        ? `${defaultLine(detail.resumeCopy)}. Copied when these values were prepared: a later edit or a new default does not change this application, and a changed default stops the send until you review again.`
+                        : 'The resume you saved in Your details, as it is.'}
                   </p>
                   <p className="ap-src">
                     <span className="ar-lock">
@@ -408,6 +423,11 @@ export function ReviewView({ detail, navigate, queue = [], match, shot, onApprov
                     <a className="ap-small" href={matchPath({ screen: 'resume', id: detail.matchId })}>
                       Open the resume
                     </a>
+                  )}
+                  {detail.resumeCopy && review.resume.choice === 'saved' && (
+                    <p className="ap-small">
+                      <CopyLink applicationId={detail.id} /> · <ResumeLink />
+                    </p>
                   )}
                 </>
               ) : (

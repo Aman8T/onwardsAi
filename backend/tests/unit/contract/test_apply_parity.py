@@ -23,7 +23,7 @@ INTERFACES: dict[str, type[BaseModel]] = {
                  "ApplicationDetail", "ApplicationList", "ApproveRequest", "StageChangeRequest", "EmailClassifyRequest",
                  "EmailClassification", "MetricsRow", "FailureCount", "PlaybookSummary", "ApplyMetrics", "ApplyCheckRequest",
                  "ApplyCheck", "StartApplicationRequest", "QuestionAnswer", "AnswerRequest", "AnswerResult",
-                 "ResolveRequest", "CitedFact", "ReviewResume", "ScriptStep", "AlsoWaiting", "SavedAnswer", "BankQuestion",
+                 "ResolveRequest", "CitedFact", "ReviewResume", "ResumeRef", "ScriptStep", "AlsoWaiting", "SavedAnswer", "BankQuestion",
                  "WorkAuthorization", "YourDetails", "SaveAnswerRequest", "FirstCheckRequest", "SelfIdRequest",
                  "StillTrueRequest", "ProgressSection", "ApplyProgress"]
 }  # fmt: skip

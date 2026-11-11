@@ -21,6 +21,7 @@ import { plural } from '../lib/ui';
 import { matchPath } from '../match/route';
 import { APPROVED_LINE, STAGE_LABEL, STOP_REASON_TEXT, TRACKING_STAGES, errorText, isSent, stageTone } from './api';
 import { EmailPanel } from './EmailPanel';
+import { ResumeLink, CopyLink, sentWithLine } from './ResumeNamed';
 import { ReviewGroup, groupFields } from './ReviewGroup';
 import { LIST_ROUTE, linkTo } from './route';
 import type { Navigate } from './route';
@@ -392,6 +393,15 @@ export function OutcomeView({ detail, navigate, confirmation, onResolve, onAppli
               <>
                 <dt className="ap-muted">Resume</dt>
                 <dd>{detail.review.resume.name}</dd>
+              </>
+            )}
+            {detail.resumeCopy && (
+              <>
+                <dt className="ap-muted">Sent with</dt>
+                <dd>
+                  {sentWithLine(detail.resumeCopy)}.{' '}
+                  <CopyLink applicationId={detail.id} /> · <ResumeLink />
+                </dd>
               </>
             )}
           </dl>

@@ -4,19 +4,26 @@
  * worked out from a resume on screen.
  */
 import { useState } from 'react';
-import { groupBlocks, sourceCounts, sourceOf } from './model';
+import type { ReactNode } from 'react';
+import { Now } from './diff';
+import { FilesPanel } from './FilesPanel';
+import type { FilesPanelProps } from './FilesPanel';
+import { MergeCard } from './MergeCard';
+import { differsShort, groupBlocks, sourceCounts, sourceOf } from './model';
 import { ScreenLink, SourceLine, StatePanel } from './parts';
 import type { ResumeQuery } from './route';
-import type { BlocksResponse, Failure, LoadStatus, ResumeBlock } from './types';
+import type { BlockDisagreement, BlocksResponse, Failure, LoadStatus, MergeEntry, ResumeBlock } from './types';
 
 type Kind = 'resume' | 'other' | 'user';
-type Filter = 'all' | Kind;
+type Filter = 'all' | Kind | 'disagree';
 
 const FILTERS: readonly { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'resume', label: 'From your file' },
   { id: 'other', label: 'From GitHub or other sources' },
   { id: 'user', label: 'Your words' },
+  // shown only while at least one block has a disagreement
+  { id: 'disagree', label: 'Disagreements' },
 ];
 
 /** Where a block comes from, told apart by its sources: the person's own words, their resume file, anything else. */
@@ -30,9 +37,44 @@ export interface BlocksViewProps {
   /** Where "Your resumes" goes back to. */
   back: ResumeQuery;
   onNavigate: (to: ResumeQuery) => void;
+  /** The merge result of the file just added (or opened from the files list); null when none is open. */
+  merge?: MergeEntry | null;
+  onCloseMerge?: () => void;
+  /** "Your files". Left out, the list is not shown. */
+  files?: Omit<FilesPanelProps, 'onNavigate'>;
+  /** Another part of the page's card, shown after the files list. */
+  graphSlot?: ReactNode;
 }
 
-export function BlocksView({ data, status, error, onRetry, back, onNavigate }: BlocksViewProps) {
+/** A block's quiet flag: "differs in riya-2025.pdf: a figure", which opens the two texts. */
+function Disagreement({ text, d }: { text: string; d: BlockDisagreement }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="rs-flag">
+      <button type="button" className="rs-flagbtn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        differs in {d.filename}: {differsShort(d.differs)}
+      </button>
+      {open && (
+        <span className="rs-sides">
+          <span className="rs-side">
+            <span className="rs-cite">your block</span>
+            <span className="rs-small">
+              <Now before={d.text} after={text} />
+            </span>
+          </span>
+          <span className="rs-side">
+            <span className="rs-cite">{d.filename}</span>
+            <span className="rs-small">
+              <Now before={text} after={d.text} />
+            </span>
+          </span>
+        </span>
+      )}
+    </span>
+  );
+}
+
+export function BlocksView({ data, status, error, onRetry, back, onNavigate, merge, onCloseMerge, files, graphSlot }: BlocksViewProps) {
   const [filter, setFilter] = useState<Filter>('all');
   if (!data) {
     if (status === 'error') {
@@ -55,10 +97,12 @@ export function BlocksView({ data, status, error, onRetry, back, onNavigate }: B
   const kinds = new Map<Kind, number>();
   for (const b of data.blocks) kinds.set(kindOf(b), (kinds.get(kindOf(b)) ?? 0) + 1);
   // a chip only where the blocks really fall on both sides of it
-  const chips = FILTERS.filter((f) => f.id === 'all' || (kinds.get(f.id) ?? 0) > 0);
+  const disagreeing = data.blocks.filter((b) => (b.disagreements?.length ?? 0) > 0).length;
+  const countOf = (id: Filter) => (id === 'all' ? data.blocks.length : id === 'disagree' ? disagreeing : (kinds.get(id) ?? 0));
+  const chips = FILTERS.filter((f) => f.id === 'all' || countOf(f.id) > 0);
   const active: Filter = chips.some((c) => c.id === filter) ? filter : 'all';
   const groups = groupBlocks(data)
-    .map((g) => (active === 'all' ? g : { ...g, blocks: g.blocks.filter((b) => kindOf(b) === active) }))
+    .map((g) => (active === 'all' ? g : { ...g, blocks: g.blocks.filter((b) => (active === 'disagree' ? (b.disagreements?.length ?? 0) > 0 : kindOf(b) === active)) }))
     .filter((g) => active === 'all' || g.blocks.length > 0);
   const n = data.blocks.length;
   const from = sourceCounts(data);
@@ -86,12 +130,14 @@ export function BlocksView({ data, status, error, onRetry, back, onNavigate }: B
           <div className="rs-chips" role="group" aria-label="Show blocks">
             {chips.map((c) => (
               <button key={c.id} type="button" className="rs-chipbtn" aria-pressed={active === c.id} onClick={() => setFilter(c.id)}>
-                {c.label} <span className="numeral">{c.id === 'all' ? n : kinds.get(c.id)}</span>
+                {c.label} <span className="numeral">{countOf(c.id)}</span>
               </button>
             ))}
           </div>
         )}
       </header>
+
+      {merge && onCloseMerge && <MergeCard entry={merge} onClose={onCloseMerge} onNavigate={onNavigate} />}
 
       <div className="rs-two">
           <div className="rs-stack">
@@ -115,6 +161,12 @@ export function BlocksView({ data, status, error, onRetry, back, onNavigate }: B
                               in <span className="numeral">{b.usedIn}</span> of your <span className="numeral">{data.resumes}</span> {data.resumes === 1 ? 'resume' : 'resumes'}
                             </span>
                             {source && <SourceLine source={source} quote={source.quote !== b.fact.text} />}
+                            {b.wordings?.map((w) => (
+                              <span key={`${w.fileId}:${w.text}`} className="rs-fine rs-also">
+                                <span className="rs-cite">Also worded</span> {w.text} <span className="rs-cite">{w.filename}</span>
+                              </span>
+                            ))}
+                            {b.disagreements?.map((d) => <Disagreement key={d.fileId} text={b.fact.text} d={d} />)}
                           </span>
                           {source?.fromUser && <span className="rs-cite rs-accent">your words</span>}
                         </li>
@@ -129,6 +181,8 @@ export function BlocksView({ data, status, error, onRetry, back, onNavigate }: B
           </div>
 
           <div className="rs-stack">
+            {files && <FilesPanel {...files} onNavigate={onNavigate} />}
+            {graphSlot}
             <section className="panel rs-card" aria-labelledby="rs-bl-how">
               <h2 id="rs-bl-how" className="kicker">
                 What changes, and what never does

@@ -35,6 +35,17 @@ from tayyari.core.limits import (
 
 
 @dataclass(frozen=True, slots=True)
+class Reread:
+    """An analysis that starts from an existing profile (``fromProfile``) instead of a new upload: whose profile it is
+    (``user_id`` None for one nobody has claimed) and, once the route has built the inputs, one plain sentence that says
+    what is read and what was left out (it goes into the run's log)."""
+
+    profile_id: str
+    user_id: str | None = None
+    note: str = field(default="", repr=False)
+
+
+@dataclass(frozen=True, slots=True)
 class AnalyzeRequest:
     """One POST /api/analyze after multipart parsing. The content fields stay out of ``repr`` (logs)."""
 
@@ -44,6 +55,7 @@ class AnalyzeRequest:
     goal: str | None = field(default=None, repr=False)
     notes: str | None = field(default=None, repr=False)
     sample: bool = False
+    reread: Reread | None = None
 
 
 def _strip_nul(value: object) -> object:
@@ -124,6 +136,18 @@ class ChatDesk(_Model):
         return out
 
 
+class ChatResume(_Model):
+    """The resume the person has open beside the coach. It only names the resume: whether the caller may open it is the
+    server's call (the rule of the resume routes), and one they may not open is ignored without a word."""
+
+    id: str = Field(min_length=1, max_length=CHAT_PROFILE_ID_MAX_CHARS)
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def _drop_nul(cls, v: object) -> object:
+        return _strip_nul(v)
+
+
 class ChatRequestBody(_Model):
     """`ChatRequest` from shared/types.ts, with the same limits as the Node server."""
 
@@ -136,6 +160,7 @@ class ChatRequestBody(_Model):
     origin: ChatOriginBody | None = None
     sessionId: str | None = Field(default=None, max_length=CHAT_SESSION_ID_MAX_CHARS)
     desk: ChatDesk | None = None
+    resume: ChatResume | None = None
 
     @field_validator("profileId", "message", "sessionId", mode="before")
     @classmethod
@@ -163,5 +188,7 @@ __all__ = [
     "ChatDeskTracked",
     "ChatOriginBody",
     "ChatRequestBody",
+    "ChatResume",
     "RequestContext",
+    "Reread",
 ]

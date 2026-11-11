@@ -8,6 +8,7 @@
  * never filled in: a missing figure is a question to the person, not something the page may guess.
  */
 import { useEffect, useId, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { Bullet, Change, Decision, DecisionChoice, DecisionChoiceKey, LintReport, Posting, ResumeVariant } from '../../shared/match';
 import { CHANGE_LABEL, DECISION_CHIP, DECISION_LABEL, allBullets, groupFactIds, shownBullets, splitPlaceholders } from './model';
 import { Cites, FactIds, RouteLink, Tick } from './parts';
@@ -338,10 +339,12 @@ export interface ResumeViewProps {
    * (`/apply/new?match=<id>&resume=tailored`). It opens, like the downloads, once every decision is settled.
    */
   applyHref?: string;
+  /** "Save to my resumes" (the resume's own control): shown under the downloads when the screen is given one. */
+  saveSlot?: ReactNode;
 }
 
 export function ResumeView(props: ResumeViewProps) {
-  const { posting, facts, variant, matchId, saving, notice, downloading, onDecide, onNavigate, onDownload, onFact, hrefFor, applyHref } = props;
+  const { posting, facts, variant, matchId, saving, notice, downloading, onDecide, onNavigate, onDownload, onFact, hrefFor, applyHref, saveSlot } = props;
   const pending = variant.decisions.length;
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const prev = useRef(pending);
@@ -432,6 +435,7 @@ export function ResumeView(props: ResumeViewProps) {
           </button>
         </>
       )}
+      {saveSlot}
       <p className={`mt-status${notice ? ' is-error' : ''}`} role={notice ? 'alert' : 'status'}>
         {notice}
       </p>

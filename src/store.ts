@@ -60,6 +60,8 @@ export interface AnalysisState {
   error?: string;
   /** True when this run uses the bundled sample persona. */
   sample: boolean;
+  /** A re-read of the graph that finished: false when the resumes, own-words lines and notes could not be moved to the new profile. */
+  carried?: boolean;
 }
 
 export interface ChatTool {
@@ -69,6 +71,12 @@ export interface ChatTool {
 
 /** The one button the coach proposed after its text: the action event's fields. It only opens a screen. */
 export type ChatAction = Omit<Extract<ChatEvent, { type: 'action' }>, 'type'>;
+
+/** The wording the coach proposed for one line of the resume in view: the rewrite event's fields. Nothing has changed until the person accepts it. */
+export type ChatRewrite = Omit<Extract<ChatEvent, { type: 'rewrite' }>, 'type'>;
+
+/** What the person did with a proposed wording; kept with the message so a reopened thread does not offer it again. */
+export type RewriteState = 'accepted' | 'dismissed';
 
 /** Why an answer did not arrive: a failed stream, too many questions in a short time, or the day's spend ceiling. */
 export type ChatFailure = 'failed' | 'rate' | 'ceiling';
@@ -90,6 +98,9 @@ export interface ChatMessage {
   /** For `rate`: seconds to wait, from the server's Retry-After header, when it sent one. */
   retryAfter?: number;
   action?: ChatAction;
+  /** The coach's proposed wording for a line (`/resume` threads only). */
+  rewrite?: ChatRewrite;
+  rewriteState?: RewriteState;
 }
 
 /**
@@ -110,6 +121,11 @@ export interface Thread {
   messages: ChatMessage[];
   /** Present on a thread seeded from a role or a gap: the blocks come first, chat follow-ups after. */
   prepare?: ThreadPrepare;
+  /**
+   * The resume in view when the thread was started from `/resume`: every turn sends it as `ChatRequest.resume`, so the
+   * coach sees its lines. Absent on every other thread, and on threads saved before it existed.
+   */
+  resumeId?: string;
 }
 
 /**
@@ -409,7 +425,7 @@ function applyAnalysisEvent(e: AnalysisEvent) {
           dockThreadId: null,
           flipped: false,
           portfolio: emptyPortfolio(),
-          analysis: { ...a, phase: 'done', phaseLabel: 'Your graph is ready', synthStep: 3 },
+          analysis: { ...a, phase: 'done', phaseLabel: 'Your graph is ready', synthStep: 3, ...(e.carried === undefined ? {} : { carried: e.carried }) },
         };
       case 'error':
         return { analysis: { ...a, phase: 'error', error: e.message, phaseLabel: 'Analysis failed' } };
@@ -589,6 +605,17 @@ export const actions = {
       if (ctrl.signal.aborted) return;
       applyAnalysisEvent({ type: 'error', message: err instanceof Error ? err.message : String(err) });
     }
+  },
+
+  /**
+   * "Update my graph from all my blocks": a full analysis of the current profile's stored resume files, own-words lines and
+   * links (`fromProfile`), through the same flow as any analysis (the Analysis screen, `previous` kept, the dashboard after).
+   * The person's resumes move to the new profile; `analysis.carried === false` says when that did not work.
+   */
+  async rereadGraph() {
+    const profile = state.profile;
+    if (!profile || profile.id.startsWith('sample-')) return;
+    await actions.startAnalysis({ links: [], fromProfile: profile.id });
   },
 
   cancelAnalysis() {
@@ -785,7 +812,7 @@ export const actions = {
    * sends the seed question. With `prepare` (a role, or one gap of a role) the new thread opens with Prepare's
    * blocks instead: nothing is sent to the chat, and the question shows as the thread's first line.
    */
-  openChat(origin: ChatOrigin, question: string, prepare?: Omit<ThreadPrepare, 'planId'>) {
+  openChat(origin: ChatOrigin, question: string, prepare?: Omit<ThreadPrepare, 'planId'>, resumeId?: string) {
     const existing = state.threads.find(
       // caption carries the role for requirement origins, so the same skill under two roles gets two threads
       (t) =>
@@ -799,7 +826,7 @@ export const actions = {
       set({ view: 'chat', activeThreadId: existing.id });
       return;
     }
-    const thread: Thread = { id: uid(), origin, createdAt: Date.now(), messages: [], ...(prepare ? { prepare } : {}) };
+    const thread: Thread = { id: uid(), origin, createdAt: Date.now(), messages: [], ...(prepare ? { prepare } : {}), ...(resumeId ? { resumeId } : {}) };
     set((s) => ({ view: 'chat', threads: [thread, ...s.threads], activeThreadId: thread.id }));
     if (!prepare && question.trim()) void actions.send(thread.id, question);
   },
@@ -829,6 +856,13 @@ export const actions = {
     }));
   },
 
+  /** Remember what the person did with a proposed wording (the message is found by id in any thread). */
+  settleRewrite(messageId: string, state: RewriteState) {
+    set((s) => ({
+      threads: s.threads.map((t) => (t.messages.some((m) => m.id === messageId) ? { ...t, messages: t.messages.map((m) => (m.id === messageId ? { ...m, rewriteState: state } : m)) } : t)),
+    }));
+  },
+
   selectThread(id: string) {
     set({ activeThreadId: id, view: 'chat' });
   },
@@ -854,13 +888,16 @@ export const actions = {
     chatAborts.set(threadId, ctrl);
     try {
       await api.chat(
-        { profileId: profile.id, message: user.text, origin: thread.origin, sessionId: thread.sessionId, desk: { tracked: deskFor(profile.id) } },
+        { profileId: profile.id, message: user.text, origin: thread.origin, sessionId: thread.sessionId, desk: { tracked: deskFor(profile.id) }, ...(thread.resumeId ? { resume: { id: thread.resumeId } } : {}) },
         (e) => {
           if (e.type === 'delta') patch((m) => ({ ...m, text: m.text + e.text }));
           else if (e.type === 'tool') patch((m) => ({ ...m, tools: [...m.tools, { name: e.name, detail: e.detail }] }));
           else if (e.type === 'action') {
             const { type: _type, ...action } = e;
             patch((m) => ({ ...m, action }));
+          } else if (e.type === 'rewrite') {
+            const { type: _type, ...rewrite } = e;
+            patch((m) => ({ ...m, rewrite }));
           } else if (e.type === 'done') patch((m) => ({ ...m, status: 'done' }), e.sessionId);
           else if (e.type === 'error') patch((m) => ({ ...m, status: 'error', failure: 'failed', error: e.message }));
         },

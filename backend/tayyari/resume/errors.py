@@ -54,4 +54,37 @@ class ResumeChanged(ResumeError):
     user_message = "This resume changed in another tab. Reload it and try again."
 
 
-__all__ = ["NotFinalised", "OpRefused", "ResumeChanged", "ResumeError", "ResumeNotFound", "RoleNotFound"]
+class NoOriginal(ResumeError):
+    """The resume did not come from a stored file (a path or posting resume, or the first resume of a profile analysed before
+    originals were kept)."""
+
+    status = 404
+    code = "no_original"
+    user_message = "There is no original file for this resume."
+
+
+class TooManyFiles(ResumeError):
+    status = 409
+    code = "too_many_files"
+    user_message = "This profile already holds as many resume files as it can keep."
+
+
+class UnreadableFile(ResumeError):
+    """The uploaded file cannot be read as a resume; the message says why, in words for the person."""
+
+    status = 400
+    code = "unreadable_file"
+    user_message = "That file could not be read as a resume."
+
+
+__all__ = [
+    "NoOriginal",
+    "NotFinalised",
+    "OpRefused",
+    "ResumeChanged",
+    "ResumeError",
+    "ResumeNotFound",
+    "RoleNotFound",
+    "TooManyFiles",
+    "UnreadableFile",
+]

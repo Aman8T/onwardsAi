@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from typing import Final
 
 from tayyari.match.aliases import term_variants
-from tayyari.portfolio.ground import Corpus, tokens_of
+from tayyari.portfolio.ground import Corpus, measures_of, tokens_of
 
 _QUOTES: Final = str.maketrans(
     {
@@ -165,12 +165,14 @@ __all__ = [
     "MIN_QUOTE_CHARS",
     "clip",
     "fold_text",
+    "measures_of",
     "posting_hash",
     "quote_in",
     "short_hash",
     "term_in_corpus",
     "terms_in_text",
     "tidy",
+    "tokens_of",
     "urls_in",
     "word_count",
 ]

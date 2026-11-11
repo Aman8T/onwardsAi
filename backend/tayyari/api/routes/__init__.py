@@ -61,6 +61,7 @@ from tayyari.api.routes import (
     jobsearch,
     match,
     me,
+    notes,
     portfolio,
     prepare,
     profile,
@@ -92,6 +93,7 @@ for _module in (
     card,
     apply,
     resume,
+    notes,
 ):
     api_router.include_router(_module.router)
 

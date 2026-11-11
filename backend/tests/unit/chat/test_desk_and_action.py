@@ -442,20 +442,26 @@ async def test_an_invalid_trailer_gives_no_event_no_text_and_one_log_line(
     assert "advice" not in json.dumps(drops, default=str)  # the model's text is never logged
 
 
-async def test_a_trailer_in_the_middle_and_two_trailers_give_no_event(
+async def test_a_trailer_in_the_middle_gives_no_event_and_of_two_at_the_end_the_first_valid_one_is_kept(
     stored_rig: Rig, logs: RecordingLog
 ) -> None:
     rig = stored_rig
     rig.claude.script_chat(
         text_turn("Do [[action: practice]] this.\nOk?"),
         text_turn("A.\n[[action: practice]]\n[[action: weekly]]"),
+        text_turn("B.\n[[action: launch_missiles]]\n[[action: weekly]]"),
     )
     first = await rig.run("one")
     second = await rig.run("two")
-    assert actions_of(first) == [] and actions_of(second) == []
-    assert "[[" not in shown(first) and "[[" not in shown(second)
+    third = await rig.run("three")
+    assert actions_of(first) == []
+    assert [a.destination for a in actions_of(second)] == ["practice"]  # the first valid one
+    assert [a.destination for a in actions_of(third)] == [
+        "weekly"
+    ]  # an invalid first does not use up the one
+    assert all("[[" not in shown(events) for events in (first, second, third))
     reasons = [f["reason"] for lvl, ev, f in logs.records if ev == "chat_action_dropped"]
-    assert reasons == ["mid_text", "mid_text", "multiple"]
+    assert reasons == ["mid_text", "multiple", "unknown_destination"]
 
 
 async def test_a_cut_off_half_trailer_is_not_shown_and_the_note_still_comes(stored_rig: Rig) -> None:

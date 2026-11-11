@@ -86,6 +86,7 @@ from tayyari.contract.apply import (
     QuestionAnswer,
     ResolveOutcome,
     ResumeChoice,
+    ResumeRef,
     SaveAnswerRequest,
     SavedAnswer,
     StartApplicationRequest,
@@ -434,6 +435,21 @@ def summary_of(app: StoredApplication) -> ApplicationSummary:
         hasConfirmation=True if app.has_confirmation else None, progress=_progress(app),
         sentAt=_iso(app.submitted_at) if app.stage in stages.SENT_AND_LATER else None,
     )  # fmt: skip
+
+
+def copy_ref(app: StoredApplication) -> ResumeRef | None:
+    """The frozen copy of the default resume as the page names it (never its lines), None when the application used
+    another resume or the stored copy is unreadable."""
+    raw = app.resume_copy
+    if not raw:
+        return None
+    try:
+        return ResumeRef.model_validate(
+            {k: raw.get(k) for k in ResumeRef.model_fields if raw.get(k) is not None}
+        )
+    except ValidationError:
+        log.warning("apply_resume_copy_unreadable", application_id=app.id)
+        return None
 
 
 def user_of(owner: str) -> str:
@@ -793,6 +809,7 @@ class ApplyService:
         return ApplicationDetail(
             **base, needs=needs, events=events, applyUrl=app.apply_url, manualUrl=app.manual_url,
             description=(app.job or {}).get("description"), submittedAt=_iso(app.submitted_at), review=review,
+            resumeCopy=copy_ref(app),
         )  # fmt: skip
 
     async def list(self, owner: str) -> ApplicationList:
@@ -1322,6 +1339,7 @@ __all__ = [
     "MatchInfo",
     "StartRefused",
     "apply_ref",
+    "copy_ref",
     "fact_allowed",
     "fact_sentence",
     "id_shaped",

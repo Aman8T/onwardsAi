@@ -1370,8 +1370,9 @@ class CardRepo(Protocol):
 
 # ───────────────────────────── resumes (R2) ─────────────────────────────
 
-ResumeKind = Literal["upload", "path"]
-"""What a stored resume is: the resume as the person wrote it, or one arranged for a next role."""
+ResumeKind = Literal["upload", "path", "posting"]
+"""What a stored resume is: the resume as the person wrote it, one arranged for a next role, or the one tailored for a
+posting that the person saved from Match (``role_key`` is then the match id)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -1435,6 +1436,55 @@ class ResumeRepo(Protocol):
         ...
 
 
+ResumeFileOrigin = Literal["analysis", "upload"]
+
+
+@dataclass(frozen=True, slots=True)
+class StoredResumeFile:
+    """A resume file of a profile (`ResumeFileRow`) without its bytes (`ResumeFileRepo.get_data` reads those). ``facts``,
+    ``merge`` and ``merged_book`` are opaque JSON (a `FactBook`, a `MergeReport`, a `FactBook`); the resume service validates
+    them. ``merge`` and ``merged_book`` are None for the file a profile was analysed from."""
+
+    id: str
+    user_id: str | None
+    profile_id: str
+    origin: ResumeFileOrigin
+    filename: str
+    mime: str
+    size: int
+    sha256: str
+    text: str
+    facts: dict[str, Any]
+    merge: dict[str, Any] | None
+    merged_book: dict[str, Any] | None
+    created_at: datetime
+
+
+class ResumeFileRepo(Protocol):
+    """The resume files of a profile, with their original bytes. Who may open one is decided above storage, from the
+    file's profile (`ProfileRepo.get_access`)."""
+
+    async def add(self, item: StoredResumeFile, data: bytes) -> StoredResumeFile:
+        """Store a file with its bytes. A second add of the same id changes nothing and returns the stored one."""
+        ...
+
+    async def get(self, file_id: str) -> StoredResumeFile | None:
+        """The file with this id (without its bytes), or None."""
+        ...
+
+    async def get_data(self, file_id: str) -> bytes | None:
+        """The original bytes of the file, or None when there is no such file."""
+        ...
+
+    async def list_for_profile(self, profile_id: str) -> list[StoredResumeFile]:
+        """Every file of the profile, oldest first, without bytes."""
+        ...
+
+    async def adopt(self, profile_id: str, user_id: str) -> int:
+        """Give the profile's files that have no account to ``user_id`` (the profile was claimed); returns the count."""
+        ...
+
+
 # ───────────────────────────── auto-apply ─────────────────────────────
 
 
@@ -1443,7 +1493,7 @@ APPLICATION_COLUMNS: frozenset[str] = frozenset(
         "profile_id", "match_id", "apply_url", "manual_url", "domain", "ats", "company", "title", "location", "job",
         "stage", "stage_reason", "needs", "review", "review_digest", "approved_at", "approved_digest", "submitted_at",
         "attempts", "lease_owner", "lease_until", "posting_key", "resume_choice", "listing_id", "submitting_at",
-        "credit_ref", "credit_state", "stop_reason", "progress",
+        "credit_ref", "credit_state", "stop_reason", "progress", "resume_copy",
     }
 )  # fmt: skip
 """The columns `ApplyRepo.update_application` may change (the owner, source, job link and creation time never change; the
@@ -1545,6 +1595,9 @@ class StoredApplication:
     has_confirmation: bool = False
     """Whether a confirmation screenshot is stored (`ApplyRepo.get_confirmation`)."""
     progress: dict[str, Any] | None = None
+    resume_copy: dict[str, Any] | None = None
+    """The default resume as it stood when the values were prepared (`contract.apply.ResumeCopy` and its ``variant``):
+    written with the review, never by a later edit of the resume or a new default."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -1835,6 +1888,58 @@ class ApplyRepo(Protocol):
         ...
 
 
+@dataclass(frozen=True, slots=True)
+class StoredDeskNote:
+    """One desk slip of the dashboard (`DeskNoteRow`); ``at`` is the browser's timestamp in milliseconds."""
+
+    id: str
+    kind: str
+    text: str
+    at: int
+    label: str | None = None
+    by: str | None = None
+
+
+class DeskNoteRepo(Protocol):
+    """The dashboard's notes of an account's profile. The caller has checked that the profile is the account's own;
+    every call is scoped by both ids, so one account's notes never read as another's."""
+
+    async def list(self, user_id: str, profile_id: str) -> list[StoredDeskNote]:
+        """The notes, newest ``at`` first (ties by id)."""
+        ...
+
+    async def replace(
+        self, user_id: str, profile_id: str, notes: Sequence[StoredDeskNote], now: datetime
+    ) -> None:
+        """Make ``notes`` the whole list: rows not in it are deleted, the others written, in one transaction."""
+        ...
+
+
+@dataclass(frozen=True, slots=True)
+class CarriedRows:
+    """How many rows `ProfileCarryRepo.carry` moved to the new profile."""
+
+    resumes: int = 0
+    resume_files: int = 0
+    user_facts: int = 0
+    desk_notes: int = 0
+
+
+class ProfileCarryRepo(Protocol):
+    """Moves what a person keeps on a profile (resumes, resume files, the lines they said in their own words, the
+    dashboard's notes) to the profile a re-read of their graph made. Applications, matches, practice sessions and plans
+    stay with the profile they were made for."""
+
+    async def carry(self, old_profile_id: str, new_profile_id: str, user_id: str | None) -> CarriedRows:
+        """Move the rows of ``old_profile_id`` to ``new_profile_id`` in ONE transaction: all of them, or none (an error
+        leaves both profiles as they were). Allowed only when ``user_id`` may open the old profile (the account that owns
+        it; with None, a profile nobody has claimed) and the new one is that account's or unclaimed, and neither is a
+        sample run; otherwise `PermissionError` and nothing changes. A signed-in ``user_id`` also claims the new profile.
+        The new profile's own clashing rows (same resume kind and role, same note, same own-words line) are replaced by
+        the moved ones, and the moved default resume stays the one default."""
+        ...
+
+
 __all__ = [
     "ACCOUNT_OWNER_PREFIX",
     "APPLICATION_COLUMNS",
@@ -1844,12 +1949,14 @@ __all__ = [
     "ApplyRepo",
     "BillingRepo",
     "CardRepo",
+    "CarriedRows",
     "ChatMessage",
     "ChatSession",
     "ClaimMarkRepo",
     "ConsumeOutcome",
     "ConsumeSource",
     "DecisionLogRepo",
+    "DeskNoteRepo",
     "DiscoverListing",
     "DiscoverRepo",
     "DiscoverRun",
@@ -1872,10 +1979,13 @@ __all__ = [
     "PostingTaken",
     "PrepareRepo",
     "ProfileAccess",
+    "ProfileCarryRepo",
     "ProfileFactsRepo",
     "ProfileNotClaimable",
     "ProfileOwnedByAnother",
     "ProfileRepo",
+    "ResumeFileOrigin",
+    "ResumeFileRepo",
     "ResumeKind",
     "ResumeRepo",
     "RunStatus",
@@ -1891,6 +2001,7 @@ __all__ = [
     "StoredAuthSession",
     "StoredCardSnapshot",
     "StoredClaimMark",
+    "StoredDeskNote",
     "StoredEntitlements",
     "StoredHandoff",
     "StoredInterview",
@@ -1901,6 +2012,7 @@ __all__ = [
     "StoredPlaybook",
     "StoredPortfolio",
     "StoredResume",
+    "StoredResumeFile",
     "StoredRunMetric",
     "StoredSearchDoc",
     "StoredSearchRun",

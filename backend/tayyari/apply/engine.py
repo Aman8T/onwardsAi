@@ -114,6 +114,15 @@ def _choice(app: StoredApplication) -> ResumeChoice:
     return "tailored" if app.resume_choice == "tailored" else "saved"
 
 
+def frozen_copy(resume: Resume | None, plan_sha: str | None) -> dict[str, Any] | None:
+    """The default resume's frozen copy to store with a review, only when it is the very file the review's digest signs
+    (``plan_sha``, the resume sha256 in the digest): never a copy of a different file. None for the tailored resume, the
+    saved upload and a form with no resume input."""
+    if resume is None or not resume.frozen or plan_sha is None or resume.sha256 != plan_sha:
+        return None
+    return {**resume.frozen, "sha256": plan_sha}
+
+
 def _opening() -> dict[str, Any]:
     return ApplyProgress(
         sections=[ProgressSection(label="Opening the form", state="now", filled=0, total=0)],
@@ -389,7 +398,7 @@ class ApplyEngine:
         if result is None:  # pragma: no cover - every path above sets it or returns
             return
         run.model_cost = result.cost_micro_usd
-        await self._finish_fill(app, result, run)
+        await self._finish_fill(app, result, run, resume=ctx.resume)
 
     async def interrupted(
         self, app: StoredApplication, run: _Run | None = None, *, reason: str = "lease_expired"
@@ -427,7 +436,9 @@ class ApplyEngine:
                      "approved_digest": None},
         )  # fmt: skip
 
-    async def _finish_fill(self, app: StoredApplication, result: FillResult, run: _Run) -> None:
+    async def _finish_fill(
+        self, app: StoredApplication, result: FillResult, run: _Run, resume: Resume | None = None
+    ) -> None:
         now = self.clock.now()
         if result.screenshot is not None:
             await self.repo.put_screenshot(app.id, result.screenshot)
@@ -441,6 +452,7 @@ class ApplyEngine:
             to = "waiting_for_you"
             changes = {
                 "review": review.to_dict(), "review_digest": review.digest,
+                "resume_copy": frozen_copy(resume, review.resume.sha256 if review.resume else None),
                 "needs": [n.to_dict() for n in result.needs], "approved_at": None, "approved_digest": None,
                 "stop_reason": "questions" if waiting else None,
                 "stage_reason": "Some questions need your answer." if waiting else None,
@@ -569,7 +581,7 @@ class ApplyEngine:
         result = result_or_none
         if result is None:  # pragma: no cover - every path above sets it or returns
             return
-        await self._finish_submit(app, current, marked, result, run)
+        await self._finish_submit(app, current, marked, result, run, ctx.resume)
 
     async def _finish_submit(
         self,
@@ -578,6 +590,7 @@ class ApplyEngine:
         marked: bool,
         result: SubmitResult,
         run: _Run,
+        resume: Resume | None = None,
     ) -> None:
         now = self.clock.now()
         if result.status == "sent" and marked:
@@ -609,6 +622,7 @@ class ApplyEngine:
             await stages.move(
                 self.repo, app, "waiting_for_you", source="engine", now=now, note=result.note,
                 changes={"review": review.to_dict(), "review_digest": review.digest,
+                         "resume_copy": frozen_copy(resume, review.resume.sha256 if review.resume else None),
                          "needs": [n.to_dict() for n in result.review.needs], "approved_at": None,
                          "approved_digest": None, "stop_reason": "form_changed",
                          "stage_reason": result.note or "The form changed since you approved it: check it again."},

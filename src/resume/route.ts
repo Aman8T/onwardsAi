@@ -5,6 +5,7 @@
  *   /resume                          the resumes, with the default one in view
  *   /resume?r=<id>                   one resume in view
  *   /resume?r=<id>&screen=finalise   Finalise for that resume
+ *   /resume?r=<id>&l=<bulletId>      one resume in view with that line pressed (the coach's "Edit the wording")
  *   /resume?screen=blocks            your blocks (`r` is kept, so "Your resumes" returns to the same one)
  *
  * Finalise needs a resume; without one it is the resumes screen.
@@ -19,6 +20,8 @@ export interface ResumeQuery {
   screen: ResumeScreen;
   /** The resume in view; the default one when absent. */
   id?: string;
+  /** The line pressed when the resume opens (a `bulletId`); only on the resume screen, and only with a resume. */
+  line?: string;
 }
 
 export const DEFAULT_RESUME: ResumeQuery = { screen: 'resume' };
@@ -34,7 +37,8 @@ export function isResumePath(pathname: string): boolean {
 function settle(query: ResumeQuery): ResumeQuery {
   const id = idOf(query.id);
   const screen: ResumeScreen = query.screen === 'blocks' ? 'blocks' : query.screen === 'finalise' && id ? 'finalise' : 'resume';
-  return id ? { screen, id } : { screen };
+  const line = screen === 'resume' && id ? idOf(query.line) : undefined;
+  return id ? { screen, id, ...(line ? { line } : {}) } : { screen };
 }
 
 /** The query an address names, or null when it is not the resume address. */
@@ -42,12 +46,12 @@ export function parseResumeUrl(pathname: string, search: string): ResumeQuery | 
   if (!isResumePath(pathname)) return null;
   const p = new URLSearchParams(search);
   const screen = p.get('screen');
-  return settle({ screen: screen === 'finalise' || screen === 'blocks' ? screen : 'resume', id: idOf(p.get('r')) });
+  return settle({ screen: screen === 'finalise' || screen === 'blocks' ? screen : 'resume', id: idOf(p.get('r')), line: idOf(p.get('l')) });
 }
 
-/** `{ ...query, ...patch }`, settled; a patch clears the resume by setting `id` to undefined. */
+/** `{ ...query, ...patch }`, settled; a patch clears the resume by setting `id` to undefined. A line is kept only when the patch names it. */
 export function mergeResume(query: ResumeQuery, patch: Partial<ResumeQuery>): ResumeQuery {
-  return settle({ screen: patch.screen ?? query.screen, id: 'id' in patch ? patch.id : query.id });
+  return settle({ screen: patch.screen ?? query.screen, id: 'id' in patch ? patch.id : query.id, line: patch.line });
 }
 
 /** The pathname and search of a query; the resumes screen with the default in view is the bare path. */
@@ -55,6 +59,7 @@ export function resumePath(query: ResumeQuery): string {
   const q = settle(query);
   const p = new URLSearchParams();
   if (q.id) p.set('r', q.id);
+  if (q.line) p.set('l', q.line);
   if (q.screen !== 'resume') p.set('screen', q.screen);
   const search = p.toString();
   return search ? `${RESUME_PATH}?${search}` : RESUME_PATH;

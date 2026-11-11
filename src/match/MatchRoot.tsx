@@ -47,6 +47,7 @@ import { ResumeView } from './ResumeView';
 import { coverFileUrl, resumeFileUrl } from './api';
 import { matchActions, useMatch } from './useMatch';
 import { matchPath } from './route';
+import { SaveToResumes } from '../resume/SaveToResumes';
 import type { MatchRoute } from './route';
 import '../styles/match.css';
 
@@ -322,6 +323,7 @@ function ResumeScreen({ id }: { id: string }) {
           onFact={(fid) => setFactId(fid)}
           hrefFor={(kind) => resumeFileUrl(id, kind)}
           applyHref={applyHref}
+          saveSlot={<SaveToResumes matchId={id} />}
         />
         <FactSheet id={factId} fact={factId ? byId.get(factId) : undefined} onClose={() => setFactId(null)} />
       </>

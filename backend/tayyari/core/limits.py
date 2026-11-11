@@ -120,6 +120,38 @@ CHAT_DESK_LINE_MAX_CHARS: Final[int] = 160
 """One server-loaded string on the desk (a claim, a title) is clipped to this."""
 CHAT_ACTION_TRAILER_MAX_CHARS: Final[int] = 160
 """A `[[action: ...]]` longer than this is not a trailer; the stream filter stops holding it back."""
+CHAT_REWRITE_TRAILER_MAX_CHARS: Final[int] = 700
+"""A `[[rewrite: ...]]` longer than this is not a trailer. It is longer than an action because it carries a line of
+text (up to `MAX_LINE_CHARS`, which the validator enforces, so a too-long line is dropped with a reason, not shown)."""
+CHAT_RESUME_VIEW_MAX_LINES: Final[int] = 40
+"""Lines of the resume in view the coach is shown (the rest are not valid targets of a rewrite)."""
+CHAT_RESUME_VIEW_QUOTES: Final[int] = 2
+"""Quotes of the facts a line rests on shown under it."""
+CHAT_RESUME_VIEW_TEXT_MAX_CHARS: Final[int] = 340
+"""One line's text, and one quote, are clipped to this in the resume block."""
+
+# ───────────────────────────── resume grammar check ─────────────────────────────
+
+GRAMMAR_MAX_LINES: Final[int] = 60
+"""Lines of a draft one grammar call looks at."""
+GRAMMAR_WHY_MAX_CHARS: Final[int] = 160
+"""A proposal's reason is cut to this."""
+
+# ───────────────────────────── resume merge (a second file) ─────────────────────────────
+
+MERGE_SAME_MIN_JACCARD: Final[float] = 0.85
+"""Two lines with the same figures and dates are the same block when their content words overlap at least this much
+(Jaccard): a stop word, a plural or a punctuation mark apart."""
+MERGE_NEAR_MIN_OVERLAP: Final[float] = 0.5
+"""Two lines of the same entry are about the same thing when this share of the shorter one's content words is in the other."""
+MERGE_NEAR_MIN_SHARED: Final[int] = 3
+"""...and they share at least this many content words."""
+MERGE_ENTRY_NAME_MIN_OVERLAP: Final[float] = 0.6
+"""Two titles, or two employers, name the same thing when this share of the shorter one's words is in the other."""
+MERGE_DATE_WINDOW_MONTHS: Final[int] = 3
+"""Two entries' start dates (and end dates) agree when they are no more than this many months apart."""
+MAX_RESUME_FILES_PER_PROFILE: Final[int] = 8
+"""Resume files one profile keeps (the one it was analysed from included); each holds the original bytes."""
 
 # ───────────────────────────── prompt budgets ─────────────────────────────
 

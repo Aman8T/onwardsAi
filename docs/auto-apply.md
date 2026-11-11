@@ -83,7 +83,10 @@ can fill, **Apply for me becomes the primary action**. The employer's link stays
 The button opens one choice:
 - **Fit my resume to this role, then apply.** The match's resume, the one "Build my resume for this role" makes today.
   The person checks it before the fill.
-- **Apply with my current resume.** The saved upload, as it is.
+- **Apply with my current resume.** The person's default resume on `/resume` when it has a finalised version (the very
+  file the `/resume` download gives, §3.4); with no finalised default, the saved upload as it is. The start screen and
+  the review name it ("Your default resume: <title>, finalised <date>", a `.stamp` "default", a link to `/resume`). A
+  draft is never sent.
 
 | Place today | File | What changes |
 |---|---|---|
@@ -304,6 +307,35 @@ as proposals and the text above is left as agreed until the user says yes.
 10. **The idle worker**: while the queue is empty the wait between passes doubles from 3 s up to 2 minutes, so the
     database can scale to zero between uses; a start, an answer, an approval or a retry in the same process wakes the
     worker within one poll.
+
+### 3.4 The default resume and its frozen copy (2026-11-11)
+
+- **Which file.** `container.resume_of_application` is the one place that decides it, for the fill and again for the
+  submit pass: `tailored` is the match's resume; anything else ("my current resume") is the profile's default resume
+  (`resumes.is_default`) when it has a finalised version (`final` and `finalised_at`). An uploaded resume
+  with no edit, move, put-back or leave-out (`resume.marks`; the export's plain-character folding is not an edit) goes as
+  the person's ORIGINAL saved file, name and type as uploaded; if no saved bytes exist, or the default is an edited
+  upload, a `path` or a `posting` resume, it is the PDF from `ResumeService.files` (the `/resume` download, attached as
+  `<First>-<Last>-Resume.pdf`). A row marked
+  default with no finalised version is passed over (a draft is never the file). With no finalised default the saved
+  upload goes as before. If the default's file cannot be made, no file goes out and the form asks for one: the saved
+  upload is never sent under the default's name.
+- **Named before anything starts.** `POST /api/apply/check` with a match carries `defaultResume` (`ResumeRef`: id, title,
+  finalised date, file name) when there is one, so the start screen names it.
+- **Frozen copy.** When a fill finishes (and when a changed form is re-prepared) the review is stored together with
+  `applications.resume_copy` (migration 0020): the resume's id and title, the finalised date, the variant as it stood,
+  and the sha256 of the file in the digest. It is written only when its hash is the one the digest signs, and it is
+  cleared when the application is prepared with another resume. A later edit, a new finalised version or a new default
+  never changes a copy already stored; a sent application keeps it. The application's page says "Sent with: <title>, as
+  finalised <date>" and `GET /api/apply/applications/{id}/resume-copy` returns the PDF exported from the frozen variant
+  (the digest's hash, except for an unedited upload, whose original bytes are not kept with the application: its copy
+  is marked ``source: upload`` and the download is our rendering).
+- **The digest covers it.** The resume's sha256 is part of the digest (§1 rule 4). The submit pass asks
+  `resume_of_application` again, so a default that changed after preparation (another resume made the default, or the
+  same one finalised again) gives another sha256, the re-check fails closed, nothing is sent, and the row goes back to
+  `waiting_for_you` ("form changed") with the new resume named and a new copy frozen for the person to review.
+- **Kept.** The copy holds the person's finalised resume and is not purged with the filled values (`purge_filled`): it is
+  the record of what went out. Deleting the application deletes it.
 
 ## 4. Cost and price
 

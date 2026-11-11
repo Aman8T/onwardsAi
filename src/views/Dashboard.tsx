@@ -97,6 +97,8 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
   const tracker = useTracker(profile.id);
   const tracked = seed?.tracked ?? tracker.items;
   const stored = useApp((s) => s.threads);
+  // a graph re-read from /resume moves the person's resumes and notes to the new profile; false says it did not
+  const carried = useApp((s) => s.analysis.carried);
   const threads: readonly ThreadLike[] = seed?.threads ?? stored;
   const { user } = useMe();
   const { subscription } = useSubscription(user?.id);
@@ -130,6 +132,11 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
       <SaveInvite profile={profile} />
 
       <main className="db-main">
+        {carried === false && (
+          <p className="db-fine db-carry" role="status">
+            Your graph was updated, but your resumes and notes did not move with it. They are still saved with your earlier analysis.
+          </p>
+        )}
         {/* the person's own space: the greeting and one line at a time (an achievement, a roast, a tip, a quote…) */}
         <Hello profile={profile} shelf={shelf} history={history} />
 

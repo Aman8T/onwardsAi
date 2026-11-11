@@ -1,0 +1,89 @@
+/**
+ * "Your graph reads every block" (`resume/RereadGraph.tsx`): the card that starts a re-read of the whole graph from every
+ * resume file, the lines said in the person's own words and the links. Measured content, so straight and flat: the
+ * global primitives (`.panel`, `.btn`, `.kicker`) and the tokens, one inline confirm and nothing that moves on its own.
+ */
+
+.rr-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+  padding: var(--s4) var(--s5);
+}
+
+.rr-title {
+  font-size: var(--fs-4);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  text-wrap: balance;
+}
+
+.rr-text {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.rr-takes {
+  color: var(--text);
+}
+
+.rr-reason {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.rr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+}
+
+.rr-actions .btn {
+  min-height: 44px;
+}
+
+.rr-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border: var(--hair) solid var(--line-strong);
+  border-radius: var(--r-m);
+}
+
+.rr-confirm-title {
+  font-size: var(--fs-3);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  text-wrap: balance;
+}
+
+.rr-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s2);
+  margin-top: var(--s2);
+}
+
+.rr-confirm-actions .btn {
+  min-height: 44px;
+  font-size: var(--fs-2);
+}
+
+@media (max-width: 759px) {
+  .rr-card {
+    padding: var(--s4);
+  }
+
+  .rr-confirm-actions {
+    justify-content: stretch;
+  }
+
+  .rr-confirm-actions .btn {
+    flex: 1 1 0;
+  }
+}

@@ -94,7 +94,7 @@ def start(build_settings: MakeSettings):  # type: ignore[no-untyped-def]
     async def run(**overrides: Any) -> AsyncIterator[Rig]:
         persona = meera()
         claude = RecordingClaude()
-        script_pipeline(claude, persona)
+        script_pipeline(claude, persona, phrase=overrides.pop("phrase", None))
         claude.script_structured("match.facts", lambda call: scripted_facts(persona.context), repeat=True)
         match = {"allow_anonymous": "false", **overrides.pop("match", {})}
         values: dict[str, Any] = {
@@ -123,6 +123,9 @@ ROUTES = [
     ("PATCH", "/api/resumes/abc"),
     ("POST", "/api/resumes/abc/finalise"),
     ("POST", "/api/resumes/abc/default"),
+    ("POST", "/api/resumes/abc/grammar"),
+    ("GET", "/api/resumes/abc/wordings"),
+    ("POST", "/api/resumes/from-match"),
     ("GET", "/api/resumes/abc/resume.pdf"),
     ("GET", "/api/resumes/abc/resume.docx"),
 ]
@@ -146,6 +149,8 @@ async def test_another_accounts_profile_and_resume_are_exactly_unknown_ones(star
         for method, path in [
             ("GET", f"/api/resumes/{mine['id']}"),
             ("POST", f"/api/resumes/{mine['id']}/default"),
+            ("POST", f"/api/resumes/{mine['id']}/grammar"),
+            ("GET", f"/api/resumes/{mine['id']}/wordings"),
             ("GET", f"/api/resumes/{mine['id']}/resume.pdf"),
         ]:
             response = await rig.client.request(method, path, headers=ben.headers)

@@ -13,6 +13,7 @@ for an application whose approval matches its review.
                                        resume must be ready. 409 with the reason (and ``existingApplicationId`` or
                                        ``gateReasons``) when a check fails, 402 when no credit is left
     .../{id}/answers, approve, cancel, resolve, applied-there, stage, retry, screenshot?kind=review|confirmation
+    .../{id}/resume-copy               the frozen copy of the default resume the application was prepared with, as a PDF
     /api/apply/details[...], /api/apply/profile/resume, /api/apply/consent, /api/apply/email, /api/apply/metrics
 
 The check and the email routes are light on their own but fetch an employer's page or call a model, so each is shed per
@@ -22,6 +23,7 @@ shared ``chat`` windows per account: an unlimited account is exempt from both.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Final
 from urllib.parse import unquote
 
@@ -44,7 +46,7 @@ from tayyari.api.uploads import read_capped_body, read_json_body, require_json_c
 from tayyari.apply.intake import IngestFetcher, IngestStatusFetcher
 from tayyari.apply.seams import ApplyCredits
 from tayyari.apply.service import ALREADY_APPLIED, ApplyService, MatchInfo, StartRefused
-from tayyari.container import Container
+from tayyari.container import Container, default_file_name, default_resume_of
 from tayyari.contract.apply import (
     APPLY_RESUME_MAX_BYTES,
     AnswerRequest,
@@ -55,6 +57,7 @@ from tayyari.contract.apply import (
     FirstCheckRequest,
     ResolveRequest,
     ResumeChoice,
+    ResumeRef,
     SaveAnswerRequest,
     SelfIdRequest,
     StageChangeRequest,
@@ -201,7 +204,23 @@ async def check(request: Request) -> JSONResponse:
         match = await _match(
             container, user, body.matchId, listing_id=listing_id, run_id=run_id, apply_url=body.applyUrl
         )
-        return _json((await svc.check(owner, match, match.posting_url)).to_dict())
+        checked = await svc.check(owner, match, match.posting_url)
+        default = await default_resume_of(
+            container, match.profile_id
+        )  # named, so the person sees which file goes out
+        if default is not None and default.finalised_at is not None:
+            name = default_file_name(str(default.facts.get("name") or ""))
+            checked = checked.model_copy(
+                update={
+                    "defaultResume": ResumeRef(
+                        resumeId=default.id,
+                        title=default.title,
+                        finalisedAt=default.finalised_at.isoformat(),
+                        fileName=name,
+                    )
+                }
+            )
+        return _json(checked.to_dict())
     url = body.applyUrl
     if listing_id is not None:
         url = await _listing_link(container, user, listing_id, run_id) or url
@@ -270,6 +289,44 @@ async def list_applications(request: Request) -> JSONResponse:
 async def get_application(application_id: str, request: Request) -> JSONResponse:
     _, svc, _, owner = await _start(request)
     return _json((await svc.detail(owner, application_id)).to_dict())
+
+
+@router.get("/api/apply/applications/{application_id}/resume-copy")
+async def get_resume_copy(application_id: str, request: Request) -> Response:
+    """The frozen copy of the default resume as a PDF: exported from the finalised variant stored with the application,
+    so a later edit or a new default never changes it. 404 for an application that used another resume."""
+    from pydantic import ValidationError
+
+    from tayyari.apply.service import copy_ref, user_of
+    from tayyari.contract.match import ResumeVariant
+    from tayyari.match.errors import ExportBlocked
+    from tayyari.match.export import export_resume
+
+    container, _, _, owner = await _start(request)
+    user_of(owner)
+    app = await container.repos.apply.get_application(application_id, owner)
+    ref = None if app is None else copy_ref(app)
+    if (
+        app is None
+        or ref is None
+        or not app.resume_copy
+        or not isinstance(app.resume_copy.get("variant"), dict)
+    ):
+        raise NotFound("No frozen resume on this application.")
+    try:
+        variant = ResumeVariant.model_validate(app.resume_copy["variant"])
+        files = await asyncio.to_thread(export_resume, variant)
+    except (ValidationError, ExportBlocked):
+        raise NotFound("No frozen resume on this application.") from None
+    return Response(
+        files.pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{ref.fileName}"',
+            "X-Robots-Tag": "noindex",
+            "Cache-Control": "private, no-store",
+        },
+    )
 
 
 @router.get("/api/apply/applications/{application_id}/screenshot")

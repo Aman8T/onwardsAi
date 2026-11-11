@@ -37,4 +37,17 @@ def resume_media_type(filename: str, content_type: str | None) -> str | None:
     return (content_type or "").split(";", 1)[0].strip().lower()
 
 
-__all__ = ["is_accepted_upload", "resume_media_type"]
+def stored_media_type(filename: str, content_type: str | None, data: bytes) -> str:
+    """The media type to keep with the bytes of an accepted resume file: `resume_media_type`, else what the first bytes
+    say (a PDF, a zip that is a DOCX), else plain text."""
+    known = resume_media_type(filename, content_type)
+    if known is not None:
+        return known
+    if data[:5] == b"%PDF-":
+        return "application/pdf"
+    if data[:2] == b"PK":
+        return _EXTENSION_TYPES[".docx"]
+    return "text/plain"
+
+
+__all__ = ["is_accepted_upload", "resume_media_type", "stored_media_type"]

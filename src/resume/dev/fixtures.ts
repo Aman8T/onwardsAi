@@ -13,8 +13,13 @@ import type {
   ExperienceEntry,
   Fact,
   FinaliseReport,
+  GrammarProposal,
+  LineWording,
   LintReport,
+  MergeEntry,
+  MergeReport,
   ResumeDetail,
+  ResumeFile,
   ResumeList,
   ResumeOp,
   ResumeSummary,
@@ -369,3 +374,147 @@ export function applyOp(detail: ResumeDetail, op: ResumeOp): ResumeDetail | stri
   const next = describe({ ...detail.resume, state: 'draft', updatedAt: '2026-11-10T09:30:00Z' }, variant);
   return { ...next, canDownload: detail.canDownload };
 }
+
+/* ───────────────────────── version 2: grammar, wordings elsewhere, a posting resume ───────────────────────── */
+
+/** The draft with two lines the person typed, each with a slip in it: what the grammar check is shown against. */
+export const GRAMMAR_DETAIL: ResumeDetail = (() => {
+  let detail: ResumeDetail = PATH_DETAIL;
+  const edits: [string, string][] = [
+    ['b-f10', 'Cut bundle size 31% with route-level code splitting accross the app.'],
+    ['b-f8', 'Mentored interns through there first production release.'],
+  ];
+  for (const [bulletId, text] of edits) {
+    const next = applyOp(detail, { op: 'edit', bulletId, text });
+    if (typeof next !== 'string') detail = next;
+  }
+  return detail;
+})();
+
+export const GRAMMAR_PROPOSALS: GrammarProposal[] = [
+  { bulletId: 'b-f10', before: 'Cut bundle size 31% with route-level code splitting accross the app.', after: 'Cut bundle size 31% with route-level code splitting across the app.', why: 'Spelling: "across" has one c.' },
+  { bulletId: 'b-f8', before: 'Mentored interns through there first production release.', after: 'Mentored interns through their first production release.', why: 'Grammar: "their" is the one that belongs to the interns.' },
+];
+
+/** What the other resumes use for lines of the draft: finalised wordings, newest first. */
+export const WORDINGS: LineWording[] = [
+  { lineId: 'b-f10', text: 'Cut bundle size by 31% with route-level code splitting.', fromResumeId: 'rs_path_dse', fromTitle: 'Design Systems Engineer' },
+  { lineId: 'b-f10', text: 'Reduced the JavaScript shipped on first load by 31%, using route-level code splitting.', fromResumeId: 'rs_upload', fromTitle: 'riya-kapoor-2026.pdf' },
+  { lineId: 'b-f6', text: 'Own the component library that every product team builds on.', fromResumeId: 'rs_path_dse', fromTitle: 'Design Systems Engineer' },
+];
+
+/** A resume she saved from a match in Match: it keeps its link back. */
+const POSTING_SUMMARY: ResumeSummary = {
+  id: 'rs_posting_headout',
+  kind: 'posting',
+  title: 'Design Engineer at Headout',
+  matchId: 'm_headout',
+  state: 'final',
+  isDefault: false,
+  changes: 4,
+  updatedAt: '2026-11-01T10:20:00Z',
+  finalisedAt: '2026-11-01T10:20:00Z',
+};
+
+export const LIST_WITH_POSTING: ResumeList = { ...LIST, resumes: [...LIST.resumes, POSTING_SUMMARY] };
+
+/** The coach's second wording for the checkout line (it adds only what she said in the conversation). */
+export const REWRITE_FIXTURE = {
+  resumeId: 'rs_path_de',
+  lineId: 'b-f14',
+  before: 'Checkout LCP 4.1s to 1.9s, conversion +9.4%.',
+  after: 'Cut checkout LCP from 4.1s to 1.9s (Lighthouse, mobile, median of five runs). Conversion rose 9.4%, four weeks before against four weeks after.',
+};
+
+/* ───────────────────────── a second file ───────────────────────── */
+
+/** The 2025 file she adds: kept as its own resume. */
+const UPLOAD_2025: ResumeSummary = {
+  id: 'rs_upload_2025',
+  kind: 'upload',
+  title: 'riya-kapoor-2025.pdf',
+  state: 'final',
+  isDefault: false,
+  changes: 0,
+  updatedAt: '2026-11-10T09:30:00Z',
+  finalisedAt: '2026-11-10T09:30:00Z',
+};
+
+/** How the 2025 file merged: 12 lines the same, 3 new, 2 worded differently, 2 that disagree. */
+export const MERGE_REPORT: MergeReport = {
+  fileId: 'file_2025',
+  filename: 'riya-kapoor-2025.pdf',
+  same: [
+    'Frontend Engineer, Lumen Pay, 2024 - Present',
+    'Own the component library every product team builds on.',
+    'Led the move from CSS modules to design tokens.',
+    'Mentored interns through their first production release.',
+    'Frontend Developer, Tessel Labs, 2023 - 2024',
+    'Rebuilt the checkout in React and TypeScript.',
+    'Wrote the motion guidelines the design team still uses.',
+    'Junior Developer, Pixelcraft Studio, 2022 - 2023',
+    'Built marketing sites for 9 clients on Next.js.',
+    "Shipped a client's storefront redesign in 3 weeks.",
+    'B.Tech, Computer Science, 2022',
+    'React, TypeScript, Next.js, CSS, Framer Motion, Storybook, Figma',
+  ].map((text, i) => ({ blockId: `s-${i}`, kind: i % 4 === 0 ? ('experience' as const) : ('accomplishment' as const), text })),
+  new: [
+    { blockId: 'm-3f9a1c0b27', kind: 'accomplishment', text: 'Ran the checkout accessibility audit: 23 issues fixed.' },
+    { blockId: 'm-8d20e45a11', kind: 'accomplishment', text: 'Spoke at a React Bengaluru meetup on design tokens.' },
+    { blockId: 'm-c71b6e9d05', kind: 'accomplishment', text: 'Reviewed pull requests for a team of 11 engineers.' },
+  ],
+  near: [
+    { blockId: 'f10', kind: 'accomplishment', text: 'Cut bundle size by a third with code splitting.', existing: 'Cut bundle size 31% with route-level code splitting.' },
+    { blockId: 'f20', kind: 'project', text: 'Open-source spring-physics primitives for React.', existing: 'Spring-physics primitives for React, open source.' },
+  ],
+  disagree: [
+    { blockId: 'f9', kind: 'accomplishment', text: 'Built Kite UI: 38 components.', existing: 'Built Kite UI: 42 components, documented in Storybook.', differs: ['figure'] },
+    { blockId: 'e2', kind: 'experience', text: 'Frontend Developer, Tessel Labs, 2022 - 2023', existing: 'Frontend Developer, Tessel Labs, 2023 - 2024', differs: ['date'] },
+  ],
+};
+
+export const MERGE_ENTRY: MergeEntry = { report: MERGE_REPORT, resumeId: UPLOAD_2025.id };
+
+/** Her blocks after the 2025 file: one block with a second wording, one that two files disagree on, and a new block. */
+export const BLOCKS_WITH_FILES: BlocksResponse = {
+  ...BLOCKS,
+  blocks: [
+    ...BLOCKS.blocks.map((b) =>
+      b.fact.id === 'f10'
+        ? { ...b, wordings: [{ fileId: 'file_2025', filename: 'riya-kapoor-2025.pdf', text: MERGE_REPORT.near[0].text, resumeId: UPLOAD_2025.id }] }
+        : b.fact.id === 'f9'
+          ? {
+              ...b,
+              disagreements: [{ fileId: 'file_2025', filename: 'riya-kapoor-2025.pdf', text: MERGE_REPORT.disagree[0].text, differs: ['figure' as const], resumeId: UPLOAD_2025.id }],
+            }
+          : b,
+    ),
+    {
+      fact: {
+        id: 'm-3f9a1c0b27',
+        text: MERGE_REPORT.new[0].text,
+        kind: 'accomplishment',
+        refs: [{ source: 'resume', docId: 'file_2025', lines: [11, 11], quote: MERGE_REPORT.new[0].text }],
+        evidenceTier: 'used',
+      },
+      entryFactId: 'e2',
+      usedIn: 1,
+    },
+  ],
+  resumes: RESUMES + 1,
+};
+
+/** Both of her files: the one she was analysed from (no stored original: analysed before files were kept) and the 2025 file. */
+export const FILES: ResumeFile[] = [
+  { id: 'file_2026', filename: 'riya-kapoor-2026.pdf', mime: 'application/pdf', size: 86_400, origin: 'analysis', uploadedAt: '2026-11-02T09:12:00Z', resumeId: UPLOAD_DETAIL.resume.id },
+  {
+    id: 'file_2025',
+    filename: 'riya-kapoor-2025.pdf',
+    mime: 'application/pdf',
+    size: 1_310_000,
+    origin: 'upload',
+    uploadedAt: '2026-11-10T09:30:00Z',
+    resumeId: UPLOAD_2025.id,
+    counts: { same: 12, new: 3, near: 2, disagree: 2 },
+  },
+];

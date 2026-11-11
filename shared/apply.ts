@@ -9,6 +9,7 @@
  *                                                    when no credit is left)
  *   GET    /api/apply/applications                   `ApplicationList`, newest first
  *   GET    /api/apply/applications/{id}              `ApplicationDetail`
+ *   GET    /api/apply/applications/{id}/resume-copy  application/pdf, the frozen copy of the default resume (404 without)
  *   GET    /api/apply/applications/{id}/screenshot   image/jpeg, `?kind=review|confirmation` (404 until there is one)
  *   POST   /api/apply/applications/{id}/answers      `AnswerRequest` -> `AnswerResult` (queued again, with every other
  *                                                    waiting application that asks the same question)
@@ -247,6 +248,18 @@ export interface ReviewResume {
   choice: ResumeChoice;
 }
 
+/**
+ * One of the person's resumes (`/resume`) as Apply for me names it: the default (`ApplyCheck.defaultResume`) or the frozen
+ * copy an application was prepared with (`ApplicationDetail.resumeCopy`). `sha256` (frozen copies only) is in the digest.
+ */
+export interface ResumeRef {
+  resumeId: string;
+  title: string;
+  finalisedAt: string;
+  fileName: string;
+  sha256?: string;
+}
+
 /** One executable step of the review's fill script; the submit pass replays it with no model. */
 export interface ScriptStep {
   selector: string;
@@ -361,6 +374,8 @@ export interface ApplicationDetail {
   progress?: ApplyProgress;
   /** When it went to the employer (as on `ApplicationSummary`). */
   sentAt?: string;
+  /** The default resume as it stood when the values were prepared (`GET .../resume-copy` is its file); absent otherwise. */
+  resumeCopy?: ResumeRef;
 }
 
 export interface ApplicationList {
@@ -388,6 +403,8 @@ export interface ApplyCheck {
   gateReasons?: string[];
   /** The employer's own page for the posting, for "Open on <host>'s site" when it is not offered. */
   applyUrl?: string;
+  /** The profile's default resume when it has a finalised version: what "my current resume" sends (given a match). */
+  defaultResume?: ResumeRef;
 }
 
 /** Start an application. The posting match always runs first, so `matchId` is required. */

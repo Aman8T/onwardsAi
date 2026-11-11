@@ -130,7 +130,7 @@ export type AnalysisEvent =
   | { type: 'log'; who: string; text: string; kind?: SourceKind | 'sonnet' }
   | { type: 'phase'; phase: 'reading' | 'synthesizing' | 'done'; label: string }
   | { type: 'synth'; step: 0 | 1 | 2 | 3; chars?: number }
-  | { type: 'done'; profile: Profile }
+  | { type: 'done'; profile: Profile; /** Only on a re-read from a profile: did the resumes, own-words lines and notes move to the new profile? */ carried?: boolean }
   | { type: 'error'; message: string };
 
 /* ───────────────────────── chat ───────────────────────── */
@@ -165,6 +165,11 @@ export interface ChatDesk {
   tracked: ChatDeskTracked[];
 }
 
+/** The resume the person has open beside the coach (`/resume`). It only names it: a resume the caller may not open is ignored. */
+export interface ChatResume {
+  id: string;
+}
+
 export interface ChatRequest {
   profileId: string;
   message: string;
@@ -173,6 +178,11 @@ export interface ChatRequest {
   sessionId?: string;
   /** The person's tracked roles (at most 20), so the coach can answer about them and hand a button to one. */
   desk?: ChatDesk;
+  /**
+   * The resume in view. When the caller may open it, the coach sees its lines (each with a short id, its text and the quotes
+   * of the facts it rests on) and may propose one rewrite against a line (a `rewrite` event).
+   */
+  resume?: ChatResume;
 }
 
 export type ChatEvent =
@@ -185,5 +195,13 @@ export type ChatEvent =
    * prose rides on it. The button only opens a screen.
    */
   | { type: 'action'; destination: Destination; target?: string; label: string; title?: string }
+  /**
+   * The coach proposes different words for one line of the resume in view, after its text. Code has checked it: the line is
+   * on that resume, the words rest only on the facts the line cites (no new figure, name, term or scope verb), they fit
+   * `MAX_LINE_CHARS` and differ from `before`. Nothing has changed: the person accepts it, and the client then sends the
+   * `edit` op `{ op: 'edit', bulletId: lineId, text: after }` through `PATCH /api/resumes/{resumeId}`, so Finalise still
+   * checks the line; or dismisses it. At most one `rewrite` or `action` per answer.
+   */
+  | { type: 'rewrite'; resumeId: string; lineId: string; before: string; after: string }
   | { type: 'done'; sessionId: string }
   | { type: 'error'; message: string };

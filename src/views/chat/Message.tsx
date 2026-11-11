@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import type { Profile, SourceSummary } from '../../../shared/types';
 import type { ChatMessage } from '../../store';
 import { ActionCard } from '../../ask/ActionCard';
+import { ChatRewrite } from '../../resume/RewriteCard';
 import { IconRefresh } from '../../components/Icons';
 import { Markdown } from './MarkdownLazy';
 import { toolText } from './helpers';
@@ -159,6 +160,8 @@ export function AnswerBody({ message, lines, profile, onRetry, onEdit, question 
           )}
         </div>
       )}
+
+      {message.rewrite && !streaming && <ChatRewrite message={message} />}
 
       {message.action && profile && !streaming && <ActionCard action={message.action} profile={profile} />}
     </>

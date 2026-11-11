@@ -17,6 +17,10 @@ import type {
   Finding,
   FindingKind,
   MarkKind,
+  MergeCounts,
+  MergeDiffer,
+  MergeReport,
+  ResumeFile,
   PathSlot,
   ResumeBlock,
   ResumeDetail,
@@ -168,7 +172,7 @@ export const slotOf = (list: ResumeList | null, resume: ResumeSummary): PathSlot
 
 /** The line above the title. */
 export function kickerOf(resume: ResumeSummary, slot: PathSlot | undefined): string {
-  const parts = [resume.kind === 'upload' ? 'Uploaded by you' : 'Built for a next role'];
+  const parts = [resume.kind === 'upload' ? 'Uploaded by you' : resume.kind === 'posting' ? 'Saved from a posting' : 'Built for a next role'];
   if (resume.kind === 'path' && slot) parts.push(`${Math.round(slot.alignment)}% aligned today`);
   if (resume.isDefault) parts.push('your default');
   return parts.join(' · ');
@@ -211,19 +215,24 @@ export function fileNameOf(resume: ResumeSummary, ext: string): string {
 
 /* ───────────────────────── the coach's starter questions ───────────────────────── */
 
-/** Two or three fixed questions about the resume in view, for the existing coach. Templates, never model text. */
+/** The one starter that invites a rewrite: the coach may answer with proposed words for one line. */
+const REWRITE_QUESTION = 'Suggest stronger words for one line';
+
+/** Fixed questions about the resume in view, for the existing coach. Templates, never model text. */
 export function starterQuestions(resume: ResumeSummary | undefined): string[] {
   if (resume?.kind === 'path') {
     return [
       `What does a ${resume.title} posting usually ask for that my resume cannot show yet?`,
       `Which lines of my resume are strongest for ${resume.title}, and why?`,
       'Which lines on my resume state a result without a number?',
+      REWRITE_QUESTION,
     ];
   }
   return [
     'Which lines on my resume state a result without a number?',
     'Which line on my resume is weakest, and what would make it hold up?',
     'What do my other sources show that my resume does not say?',
+    REWRITE_QUESTION,
   ];
 }
 
@@ -309,3 +318,50 @@ export function sourceCounts(data: BlocksResponse): string {
 }
 
 export { count as countOf, shortDate };
+
+/* ───────────────────────── a second file ───────────────────────── */
+
+const DIFFERS_SENTENCE: Record<MergeDiffer, string> = {
+  figure: 'a figure differs',
+  date: 'the dates differ',
+  title: 'the title differs',
+  employer: 'the employer differs',
+};
+const DIFFERS_SHORT: Record<MergeDiffer, string> = { figure: 'a figure', date: 'the dates', title: 'the title', employer: 'the employer' };
+
+/** "a figure differs" or "the dates differ, the title differs": what two files disagree on, in words. */
+export const differsSentence = (differs: readonly MergeDiffer[]): string => differs.map((d) => DIFFERS_SENTENCE[d]).join(', ');
+
+/** "a figure" or "a figure and the dates": the short form for a flag. */
+export function differsShort(differs: readonly MergeDiffer[]): string {
+  const words = differs.map((d) => DIFFERS_SHORT[d]);
+  return words.length < 2 ? (words[0] ?? 'something') : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
+/** "12 lines matched what you already have, 3 are new, 2 are worded differently, 1 disagrees": one sentence per file. */
+export function mergeSentence(c: MergeCounts): string {
+  const parts: string[] = [];
+  if (c.same > 0) parts.push(`${c.same} ${c.same === 1 ? 'line matched' : 'lines matched'} what you already have`);
+  if (c.new > 0) parts.push(`${c.new} ${c.new === 1 ? 'is' : 'are'} new`);
+  if (c.near > 0) parts.push(`${c.near} ${c.near === 1 ? 'is' : 'are'} worded differently`);
+  if (c.disagree > 0) parts.push(`${c.disagree} ${c.disagree === 1 ? 'disagrees' : 'disagree'}`);
+  return parts.length > 0 ? `${parts.join(', ')}.` : 'No lines were found in that file.';
+}
+
+export const countsOfReport = (r: MergeReport): MergeCounts => ({ same: r.same.length, new: r.new.length, near: r.near.length, disagree: r.disagree.length });
+
+/** Where a file came from, in the person's words. */
+export const originText = (file: ResumeFile): string => (file.origin === 'analysis' ? 'with your first analysis' : 'added here');
+
+/** "12 same · 3 new · 2 worded differently · 1 disagrees", or '' for the file the profile was analysed from. */
+export function countsLine(counts: MergeCounts | undefined): string {
+  if (!counts) return '';
+  return [
+    counts.same > 0 ? `${counts.same} same` : '',
+    counts.new > 0 ? `${counts.new} new` : '',
+    counts.near > 0 ? `${counts.near} worded differently` : '',
+    counts.disagree > 0 ? `${counts.disagree} ${counts.disagree === 1 ? 'disagrees' : 'disagree'}` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}

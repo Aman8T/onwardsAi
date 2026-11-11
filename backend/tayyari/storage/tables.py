@@ -638,6 +638,33 @@ class ResumeRow(Base):
     )
 
 
+class ResumeFileRow(Base):
+    """A resume file of a profile: the one it was analysed from (``origin`` ``analysis``, no merge) or one uploaded
+    later in `/resume` (``upload``). Keeps the original ``data`` bytes, the extracted ``text``, the ``facts`` as extracted
+    (a `FactBook`), the ``merge`` report (NULL for the analysis file) and ``merged_book``, the person's blocks as they stood
+    after this file (NULL for the analysis file). ``user_id`` is NULL for a profile with no account. Follows its account
+    and its profile (ON DELETE CASCADE)."""
+
+    __tablename__ = "resume_files"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    user_id: Mapped[str | None] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"))
+    origin: Mapped[str] = mapped_column(String(8))
+    filename: Mapped[str] = mapped_column(String(255))
+    mime: Mapped[str] = mapped_column(String(100))
+    size: Mapped[int] = mapped_column(Integer)
+    sha256: Mapped[str] = mapped_column(String(HASH_LEN))
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    text: Mapped[str] = mapped_column(Text)
+    facts: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    merge: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+    merged_book: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (Index("ix_resume_files_profile_id", "profile_id"),)
+
+
 # ───────────────────────────── discover ─────────────────────────────
 
 
@@ -1057,6 +1084,7 @@ class ApplicationRow(Base):
     stop_reason: Mapped[str | None] = mapped_column(String(APPLY_STAGE_LEN))
     confirmation_screenshot: Mapped[bytes | None] = mapped_column(LargeBinary)
     progress: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+    resume_copy: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
 
     __table_args__ = (
         Index("ix_applications_owner_key_created_at", "owner_key", "created_at"),
@@ -1199,6 +1227,38 @@ class AnswerBankRow(Base):
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
 
 
+# ───────────────────────────── desk notes ─────────────────────────────
+
+DESK_NOTE_ID_LEN = 64
+DESK_NOTE_KIND_LEN = 8
+DESK_NOTE_LABEL_LEN = 60
+DESK_NOTE_BY_LEN = 120
+
+
+class DeskNoteRow(Base):
+    """One slip on the dashboard's desk (a note to self or a pinned line) of one account's profile. ``note_id`` is made
+    by the browser, so the key is ``(user_id, profile_id, note_id)``. ``text`` is the person's own words, stored as data
+    and never read by a model. ``at`` is the browser's timestamp in milliseconds (the newer one wins when two devices
+    disagree); ``updated_at`` is when the server last wrote the row. Follows its account and its profile (ON DELETE
+    CASCADE)."""
+
+    __tablename__ = "desk_notes"
+
+    user_id: Mapped[str] = mapped_column(
+        String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    profile_id: Mapped[str] = mapped_column(
+        String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True
+    )
+    note_id: Mapped[str] = mapped_column(String(DESK_NOTE_ID_LEN), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(DESK_NOTE_KIND_LEN))
+    text: Mapped[str] = mapped_column(Text)
+    label: Mapped[str | None] = mapped_column(String(DESK_NOTE_LABEL_LEN))
+    by: Mapped[str | None] = mapped_column(String(DESK_NOTE_BY_LEN))
+    at: Mapped[int] = mapped_column(BigInteger)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+
 __all__ = [
     "APPLY_ATS_LEN",
     "APPLY_DIGEST_LEN",
@@ -1249,6 +1309,7 @@ __all__ = [
     "CreditLedgerRow",
     "DecisionLogRow",
     "DecisionStateRow",
+    "DeskNoteRow",
     "DiscoverListingRow",
     "DiscoverRunRow",
     "EntitlementRow",

@@ -96,6 +96,7 @@ def _app(row: Any) -> StoredApplication:
         stop_reason=row.stop_reason,
         has_confirmation=bool(row.has_confirmation),
         progress=None if row.progress is None else dict(row.progress),
+        resume_copy=None if row.resume_copy is None else dict(row.resume_copy),
     )
 
 
@@ -247,6 +248,7 @@ class SqlApplyRepo:
                     stop_reason=item.stop_reason,
                     confirmation_screenshot=None,
                     progress=item.progress,
+                    resume_copy=item.resume_copy,
                 )
             )
 

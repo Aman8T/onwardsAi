@@ -27,6 +27,7 @@ Purpose = Literal[
     "match.relevance",
     "match.phrase",
     "match.cover",
+    "resume.grammar",
     "jobsearch.scout",
     "jobsearch.judge",
     "jobsearch.prepare",

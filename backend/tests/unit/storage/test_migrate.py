@@ -26,6 +26,7 @@ from tayyari.storage.migrate import MIGRATIONS_DIR, head_revision, migrate_to_he
 from tayyari.storage.tables import metadata
 
 EXPECTED_TABLES = {
+    "desk_notes",
     "profiles",
     "profile_contexts",
     "chat_sessions",
@@ -61,6 +62,7 @@ EXPECTED_TABLES = {
     "claim_marks",
     "card_snapshots",
     "resumes",
+    "resume_files",
     "applications",
     "application_events",
     "ats_playbooks",

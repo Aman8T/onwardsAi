@@ -49,6 +49,19 @@ INTERFACE_MODELS: dict[str, type[BaseModel]] = {
     "BlockEntry": r.BlockEntry,
     "ResumeBlock": r.ResumeBlock,
     "BlocksResponse": r.BlocksResponse,
+    "GrammarProposal": r.GrammarProposal,
+    "GrammarResponse": r.GrammarResponse,
+    "LineWording": r.LineWording,
+    "WordingsResponse": r.WordingsResponse,
+    "FromMatchRequest": r.FromMatchRequest,
+    "BlockWording": r.BlockWording,
+    "BlockDisagreement": r.BlockDisagreement,
+    "MergeItem": r.MergeItem,
+    "MergeCounts": r.MergeCounts,
+    "MergeReport": r.MergeReport,
+    "UploadResponse": r.UploadResponse,
+    "ResumeFile": r.ResumeFile,
+    "ResumeFilesResponse": r.ResumeFilesResponse,
 }
 
 LITERAL_ALIASES: dict[str, Any] = {
@@ -60,6 +73,9 @@ LITERAL_ALIASES: dict[str, Any] = {
     "FindingKind": r.FindingKind,
     "FindingChoice": r.FindingChoice,
     "BlockEntryKind": r.BlockEntryKind,
+    "MergeSection": r.MergeSection,
+    "MergeDiffer": r.MergeDiffer,
+    "ResumeFileOrigin": r.ResumeFileOrigin,
 }
 
 
@@ -93,6 +109,8 @@ def _ts_const(name: str) -> int:
         ("RESUME_VERSION", r.RESUME_VERSION),
         ("MAX_RESUME_OPS", r.MAX_RESUME_OPS),
         ("MAX_LINE_CHARS", r.MAX_LINE_CHARS),
+        ("MAX_WORDINGS_PER_LINE", r.MAX_WORDINGS_PER_LINE),
+        ("MAX_RESUME_FILES", r.MAX_RESUME_FILES),
     ],
 )
 def test_constants_match(ts_name: str, py_value: int) -> None:
@@ -101,7 +119,13 @@ def test_constants_match(ts_name: str, py_value: int) -> None:
 
 def test_every_typescript_constant_is_checked() -> None:
     declared = set(re.findall(r"export const (\w+)\s*=", RESUME_TS.read_text(encoding="utf-8")))
-    assert declared == {"RESUME_VERSION", "MAX_RESUME_OPS", "MAX_LINE_CHARS"}
+    assert declared == {
+        "RESUME_VERSION",
+        "MAX_RESUME_OPS",
+        "MAX_LINE_CHARS",
+        "MAX_WORDINGS_PER_LINE",
+        "MAX_RESUME_FILES",
+    }
 
 
 def test_the_checker_would_catch_a_drifted_field() -> None:
@@ -135,6 +159,6 @@ def test_json_omits_unset_optionals_like_undefined_in_typescript() -> None:
         updatedAt="2026-11-10T09:00:00+00:00",
     )
     data = summary.to_dict()
-    assert "roleId" not in data and "finalisedAt" not in data
+    assert "roleId" not in data and "matchId" not in data and "finalisedAt" not in data
     assert r.ResumeSummary.from_dict(data) == summary
     assert r.FinaliseRequest.model_validate({}).answers is None

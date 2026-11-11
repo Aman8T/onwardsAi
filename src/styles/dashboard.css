@@ -865,3 +865,11 @@ button.db-read-line.is-open {
     align-items: flex-start;
   }
 }
+
+/* a re-read whose resumes did not move with it: said once, plainly */
+.db-carry {
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-m);
+  color: var(--text);
+}

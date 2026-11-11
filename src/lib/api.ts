@@ -76,10 +76,18 @@ export interface AnalyzeInput {
   notes?: string;
   /** Use the bundled sample persona (fixture sources, live AI). */
   sample?: boolean;
+  /** Read the graph again from a profile's stored resume files, own-words lines and links; the rest of the input is ignored. */
+  fromProfile?: string;
 }
 
 export async function analyze(input: AnalyzeInput, onEvent: (e: AnalysisEvent) => void, signal?: AbortSignal) {
   const form = new FormData();
+  if (input.fromProfile) {
+    form.append('fromProfile', input.fromProfile);
+    const res = await fetch('/api/analyze', { method: 'POST', body: form, signal });
+    await readNdjson<AnalysisEvent>(res, onEvent);
+    return;
+  }
   if (input.file) form.append('resume', input.file);
   form.append('links', JSON.stringify(input.links));
   if (input.goal) form.append('goal', input.goal);
