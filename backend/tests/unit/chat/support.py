@@ -69,6 +69,9 @@ class RecordingProfiles:
     async def get_for_chat(self, pid: str) -> tuple[dict[str, Any], StoredContext] | None:
         return await self._inner.get_for_chat(pid)
 
+    async def get_access(self, pid: str) -> Any:
+        return await self._inner.get_access(pid)
+
     async def purge_expired(self, cutoff: datetime) -> int:
         return await self._inner.purge_expired(cutoff)
 

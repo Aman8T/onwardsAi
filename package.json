@@ -22,6 +22,7 @@
     "test:py": "uv run --directory backend pytest -q",
     "lint:py": "uv run --directory backend ruff check . && uv run --directory backend ruff format --check .",
     "typecheck:py": "uv run --directory backend mypy tayyari",
+    "check:thinking": "tsx scripts/thinking-check.ts",
     "check:palette": "tsx scripts/palette-check.ts",
     "emit:fallback": "tsx scripts/palette-check.ts --fallback 250",
     "check:restraint": "tsx scripts/restraint-check.ts",
@@ -30,8 +31,9 @@
     "check:match": "tsx scripts/match-parity.tsx",
     "check:apply": "tsx scripts/apply-run-parity.tsx",
     "check:radar": "tsx scripts/radar-parity.ts",
+    "check:capabilities": "tsx scripts/capabilities-parity.ts",
     "check:discover": "tsx scripts/discover-apply-parity.tsx",
-    "check": "npm run typecheck && npm run check:palette && npm run check:restraint && npm run check:build && npm run check:portfolio && npm run check:match && npm run check:apply && npm run check:discover && npm run check:radar",
+    "check": "npm run typecheck && npm run check:palette && npm run check:restraint && npm run check:build && npm run check:portfolio && npm run check:match && npm run check:apply && npm run check:discover && npm run check:radar && npm run check:thinking && npm run check:capabilities",
     "check:all": "npm run check && npm run lint:py && npm run typecheck:py && npm run test:py"
   },
   "dependencies": {

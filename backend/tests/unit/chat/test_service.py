@@ -842,7 +842,8 @@ async def test_cancelling_the_turn_stores_nothing_and_closes_the_model_stream(st
 
     task = asyncio.create_task(consume())
     await asyncio.wait_for(hanging.started.wait(), timeout=5)
-    assert deltas(seen) == "Partial "
+    # the blank after "Partial" is held back: it could be the start of the action line's lead
+    assert deltas(seen) == "Partial"
 
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
@@ -860,7 +861,7 @@ async def test_closing_the_stream_early_stores_nothing_and_closes_the_model_stre
     stream = rig.service_with(hanging).stream_turn(rig.request("hello"), rig.rc)
 
     first = await stream.__anext__()
-    assert first == DeltaEvent(text="Partial ")
+    assert first == DeltaEvent(text="Partial")
     await stream.aclose()  # type: ignore[attr-defined]  # what the HTTP layer does when the client disconnects
 
     assert hanging.closed is True

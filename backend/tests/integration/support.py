@@ -545,9 +545,12 @@ class Env:
         profile_id: str | None = None,
         session_id: str | None = None,
         origin: Mapping[str, str] | None = None,
+        desk: Mapping[str, Any] | None = None,
         headers: Mapping[str, str] | None = None,
     ) -> httpx.Response:
         body: dict[str, Any] = {"profileId": profile_id or self.sample_id, "message": message}
+        if desk is not None:
+            body["desk"] = dict(desk)
         if session_id is not None:
             body["sessionId"] = session_id
         if origin is not None:

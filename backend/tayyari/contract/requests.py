@@ -9,6 +9,7 @@ bodies are validated pydantic models with the limits of the Node server (the num
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Annotated
@@ -17,6 +18,13 @@ from pydantic import Field, StringConstraints, field_validator
 
 from tayyari.contract.models import ChatOrigin, _Model
 from tayyari.core.limits import (
+    CHAT_DESK_DATE_MAX_CHARS,
+    CHAT_DESK_EMPLOYER_MAX_CHARS,
+    CHAT_DESK_ID_MAX_CHARS,
+    CHAT_DESK_NOTE_MAX_CHARS,
+    CHAT_DESK_STAGE_MAX_CHARS,
+    CHAT_DESK_TITLE_MAX_CHARS,
+    CHAT_DESK_TRACKED_MAX,
     CHAT_MESSAGE_MAX_CHARS,
     CHAT_ORIGIN_CAPTION_MAX_CHARS,
     CHAT_ORIGIN_REF_ID_MAX_CHARS,
@@ -57,6 +65,65 @@ class ChatOriginBody(ChatOrigin):
         return _strip_nul(v)
 
 
+_DESK_ID_CHARS = re.compile(r"[^A-Za-z0-9_.:-]")
+_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+
+
+def _clean_line(value: object, limit: int) -> str:
+    """One line of text from the browser: control characters (NULs included) gone, whitespace collapsed, clipped."""
+    if not isinstance(value, str):
+        return ""
+    flat = " ".join(_CONTROL_CHARS.sub(" ", value).split())
+    return flat[:limit]
+
+
+class ChatDeskTracked(_Model):
+    """One tracked role from the person's browser. Its ``id`` can only become a button target; the rest is shown to the
+    coach as data, never as instructions."""
+
+    id: str
+    title: str
+    employer: str
+    stage: str
+    note: str | None = None
+    appliedAt: str | None = None
+
+
+class ChatDesk(_Model):
+    """What only the browser knows (tracked roles live there). Read leniently: an entry without a usable id or title is
+    dropped, strings are cleaned and clipped, and only the first `CHAT_DESK_TRACKED_MAX` entries are kept."""
+
+    tracked: list[ChatDeskTracked]
+
+    @field_validator("tracked", mode="before")
+    @classmethod
+    def _clean(cls, raw: object) -> object:
+        if not isinstance(raw, list):
+            return raw
+        out: list[dict[str, str]] = []
+        for entry in raw:
+            if not isinstance(entry, dict):
+                continue
+            ident = _DESK_ID_CHARS.sub("", _clean_line(entry.get("id"), CHAT_DESK_ID_MAX_CHARS))
+            title = _clean_line(entry.get("title"), CHAT_DESK_TITLE_MAX_CHARS)
+            if not ident or not title:
+                continue
+            item = {
+                "id": ident,
+                "title": title,
+                "employer": _clean_line(entry.get("employer"), CHAT_DESK_EMPLOYER_MAX_CHARS),
+                "stage": _clean_line(entry.get("stage"), CHAT_DESK_STAGE_MAX_CHARS),
+            }
+            if note := _clean_line(entry.get("note"), CHAT_DESK_NOTE_MAX_CHARS):
+                item["note"] = note
+            if applied := _clean_line(entry.get("appliedAt"), CHAT_DESK_DATE_MAX_CHARS):
+                item["appliedAt"] = applied
+            out.append(item)
+            if len(out) >= CHAT_DESK_TRACKED_MAX:
+                break
+        return out
+
+
 class ChatRequestBody(_Model):
     """`ChatRequest` from shared/types.ts, with the same limits as the Node server."""
 
@@ -68,6 +135,7 @@ class ChatRequestBody(_Model):
     ]
     origin: ChatOriginBody | None = None
     sessionId: str | None = Field(default=None, max_length=CHAT_SESSION_ID_MAX_CHARS)
+    desk: ChatDesk | None = None
 
     @field_validator("profileId", "message", "sessionId", mode="before")
     @classmethod
@@ -91,6 +159,8 @@ class RequestContext:
 
 __all__ = [
     "AnalyzeRequest",
+    "ChatDesk",
+    "ChatDeskTracked",
     "ChatOriginBody",
     "ChatRequestBody",
     "RequestContext",

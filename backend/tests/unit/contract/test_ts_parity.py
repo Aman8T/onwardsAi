@@ -16,10 +16,11 @@ from typing import Any, Literal, Union, get_args, get_origin
 import pytest
 from pydantic import BaseModel
 
-from tayyari.contract import events, models, requests
+from tayyari.contract import capabilities, events, models, requests
 from tayyari.core.paths import REPO_ROOT
 
 TYPES_TS = REPO_ROOT / "shared" / "types.ts"
+CAPABILITIES_TS = REPO_ROOT / "shared" / "capabilities.ts"
 API_TS = REPO_ROOT / "src" / "lib" / "api.ts"
 
 if not (TYPES_TS.is_file() and API_TS.is_file()):
@@ -142,7 +143,10 @@ class TsTypes:
 
 
 def _ts() -> TsTypes:
-    return TsTypes(TYPES_TS.read_text(encoding="utf-8"))
+    ts = TsTypes(TYPES_TS.read_text(encoding="utf-8"))
+    # `Destination` is imported from shared/capabilities.ts, the one list of the Ask coach's buttons
+    ts.aliases.update(TsTypes(CAPABILITIES_TS.read_text(encoding="utf-8")).aliases)
+    return ts
 
 
 def _ts_health() -> Shape:
@@ -260,6 +264,8 @@ INTERFACE_MODELS: dict[str, type[BaseModel]] = {
     "Profile": models.Profile,
     "ReaderState": models.ReaderState,
     "ChatOrigin": models.ChatOrigin,
+    "ChatDeskTracked": requests.ChatDeskTracked,
+    "ChatDesk": requests.ChatDesk,
     "ChatRequest": requests.ChatRequestBody,
 }
 
@@ -268,6 +274,7 @@ LITERAL_ALIASES: dict[str, Any] = {
     "ReaderStatus": models.ReaderStatus,
     "ChatOriginKind": models.ChatOriginKind,
     "ReadTone": models.ReadTone,
+    "Destination": capabilities.Destination,
 }
 
 

@@ -3,6 +3,7 @@
  * the synthesizer produces a `Profile`, the graphs render it, and the chat
  * receives it as context.
  */
+import type { Destination } from './capabilities';
 
 export type SourceKind = 'resume' | 'github' | 'lovable' | 'linkedin' | 'portfolio' | 'link' | 'notes';
 
@@ -147,16 +148,42 @@ export interface ChatOrigin {
   caption: string;
 }
 
+/** One tracked role from the person's browser (tracked roles live only there). The server clips every string, strips NULs and
+ * keeps at most 20; `id` is only ever a valid button target (`open_application`), and the rest is shown to the coach as
+ * data, never as instructions. */
+export interface ChatDeskTracked {
+  id: string;
+  title: string;
+  employer: string;
+  stage: string;
+  note?: string;
+  appliedAt?: string;
+}
+
+/** What only the browser knows, sent with a chat turn. */
+export interface ChatDesk {
+  tracked: ChatDeskTracked[];
+}
+
 export interface ChatRequest {
   profileId: string;
   message: string;
   origin?: ChatOrigin;
   /** Agent SDK session id returned by the previous turn of this thread. */
   sessionId?: string;
+  /** The person's tracked roles (at most 20), so the coach can answer about them and hand a button to one. */
+  desk?: ChatDesk;
 }
 
 export type ChatEvent =
   | { type: 'delta'; text: string }
   | { type: 'tool'; name: string; detail: string }
+  /**
+   * The coach proposes one button, after the text. `destination` is one of `shared/capabilities.ts`; `target` is the id
+   * its kind needs (a role, plan, match, tracked role or skill id) or absent; `label` is the capability's button text;
+   * `title` is the target's own title (role title, plan role, match title, tracked title and employer) or absent. No model
+   * prose rides on it. The button only opens a screen.
+   */
+  | { type: 'action'; destination: Destination; target?: string; label: string; title?: string }
   | { type: 'done'; sessionId: string }
   | { type: 'error'; message: string };

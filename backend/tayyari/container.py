@@ -463,6 +463,10 @@ class Container:
                     sessions=repos.sessions,
                     sample=sample,
                     clock=clock,
+                    interviews=repos.interview,
+                    claim_marks=repos.claim_marks,
+                    plans=repos.prepare,
+                    matches=repos.matches,
                 )
             portfolio: PortfolioService
             if ov.portfolio is not None:

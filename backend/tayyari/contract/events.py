@@ -20,6 +20,7 @@ from typing import Annotated, Any, Final, Literal
 from pydantic import Field, TypeAdapter
 from pydantic_core import PydanticSerializationError
 
+from tayyari.contract.capabilities import Destination
 from tayyari.contract.jobsearch import JobSearchEvent
 from tayyari.contract.match_api import MatchStreamEvent
 from tayyari.contract.models import Phase, Profile, ReaderState, SourceKind, _Model
@@ -104,6 +105,17 @@ class ToolEvent(_Model):
     detail: str
 
 
+class ActionEvent(_Model):
+    """The coach proposes one button after its text (`shared/capabilities.ts`). No model prose rides on it: ``label`` is
+    the capability's button text and ``title`` the target's own title."""
+
+    type: Literal["action"] = "action"
+    destination: Destination
+    target: str | None = None
+    label: str
+    title: str | None = None
+
+
 class ChatDoneEvent(_Model):
     type: Literal["done"] = "done"
     sessionId: str
@@ -115,7 +127,7 @@ class ChatErrorEvent(_Model):
 
 
 ChatEvent = Annotated[
-    DeltaEvent | ToolEvent | ChatDoneEvent | ChatErrorEvent,
+    DeltaEvent | ToolEvent | ActionEvent | ChatDoneEvent | ChatErrorEvent,
     Field(discriminator="type"),
 ]
 
@@ -199,6 +211,10 @@ def ev_tool(name: str, detail: str) -> ToolEvent:
     return ToolEvent(name=name, detail=detail[:CHAT_TOOL_DETAIL_MAX_CHARS])
 
 
+def ev_action(destination: Destination, target: str | None, label: str, title: str | None) -> ActionEvent:
+    return ActionEvent(destination=destination, target=target, label=label, title=title)
+
+
 def ev_chat_done(session_id: str) -> ChatDoneEvent:
     return ChatDoneEvent(sessionId=session_id)
 
@@ -209,6 +225,7 @@ def ev_chat_error(message: str) -> ChatErrorEvent:
 
 __all__ = [
     "HEARTBEAT",
+    "ActionEvent",
     "AnalysisEvent",
     "AnalysisEventAdapter",
     "ChatDoneEvent",
@@ -228,6 +245,7 @@ __all__ = [
     "SynthStep",
     "ToolEvent",
     "encode_event",
+    "ev_action",
     "ev_chat_done",
     "ev_chat_error",
     "ev_delta",

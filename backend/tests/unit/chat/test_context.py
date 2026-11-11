@@ -32,6 +32,7 @@ from tayyari.contract.stored import StoredSource
 from tayyari.core import limits
 from tayyari.llm.types import TextBlock
 from tayyari.prompts import chat as ported_chat
+from tayyari.prompts.chat import ACTION_RULES, render_capabilities_section
 from tayyari.prompts.common import _json
 from tayyari.sample.provider import SampleProvider
 
@@ -112,12 +113,15 @@ def test_blocks_keep_every_legacy_line(
         "You are Leafout, a candid, specific and warm career coach for Riya. You have already analysed their",
         "- You may use WebSearch / WebFetch sparingly — to pull current, high-quality resources (docs, courses, papers) or to",
     ]
-    assert added == [
+    # Intentional difference 3: the rules block now also says what the coach can see, hand over and refuse.
+    new_sections = lines_of(render_capabilities_section() + "\n\n" + ACTION_RULES)
+    assert [line for line in added if line not in new_sections] == [
         "You are Leafout, a candid, specific and warm career coach for the user. You have already analysed their",
         "- You may use web search and web fetch sparingly — to pull current, high-quality resources (docs, courses, papers) or to",
         "## About the user",
         'Their first name is Riya: address them as "Riya" (sparingly).',
     ]
+    assert [line for line in added if line in new_sections] == new_sections
 
 
 @pytest.mark.parametrize("builder", _legacy_builders(), ids=lambda b: b.__module__)
@@ -133,10 +137,9 @@ def test_the_legacy_section_text_is_unchanged_except_for_those_lines(
     why = legacy[legacy.index("## Why they are here") : legacy.index("## How to answer")].rstrip("\n")
     assert blocks.origin == why
     how = legacy[legacy.index("## How to answer") : legacy.index("## Their profile")].rstrip("\n")
-    assert (
-        how.replace("WebSearch / WebFetch", "web search and web fetch")
-        == CHAT_RULES[CHAT_RULES.index("## How to answer") :]
-    )
+    assert how.replace("WebSearch / WebFetch", "web search and web fetch") == CHAT_RULES[
+        CHAT_RULES.index("## How to answer") : CHAT_RULES.index("## What you can see")
+    ].rstrip("\n")
 
 
 def test_the_sections_come_in_cache_order(profile: dict[str, Any], context: StoredContext) -> None:

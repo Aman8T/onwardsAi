@@ -100,6 +100,27 @@ WEB_FETCH_MAX_USES: Final[int] = 5
 CHAT_MAX_PAUSE_CONTINUATIONS: Final[int] = 6
 """Times a `pause_turn` stop is continued before the turn is ended."""
 
+# ───────────────────────────── ask: the desk and the action trailer ─────────────────────────────
+
+CHAT_DESK_TRACKED_MAX: Final[int] = 20
+"""Tracked roles the browser may send with a chat request (the rest are dropped)."""
+CHAT_DESK_ID_MAX_CHARS: Final[int] = 80
+CHAT_DESK_TITLE_MAX_CHARS: Final[int] = 120
+CHAT_DESK_EMPLOYER_MAX_CHARS: Final[int] = 80
+CHAT_DESK_STAGE_MAX_CHARS: Final[int] = 24
+CHAT_DESK_NOTE_MAX_CHARS: Final[int] = 300
+CHAT_DESK_DATE_MAX_CHARS: Final[int] = 32
+CHAT_DESK_SESSIONS_MAX: Final[int] = 5
+"""Newest practice sessions the coach is shown."""
+CHAT_DESK_WEAK_CLAIMS_MAX: Final[int] = 8
+"""Claims that wobbled (shaky or could not defend) the coach is shown."""
+CHAT_DESK_PLANS_MAX: Final[int] = 5
+CHAT_DESK_MATCHES_MAX: Final[int] = 8
+CHAT_DESK_LINE_MAX_CHARS: Final[int] = 160
+"""One server-loaded string on the desk (a claim, a title) is clipped to this."""
+CHAT_ACTION_TRAILER_MAX_CHARS: Final[int] = 160
+"""A `[[action: ...]]` longer than this is not a trailer; the stream filter stops holding it back."""
+
 # ───────────────────────────── prompt budgets ─────────────────────────────
 
 CHAT_EXCERPT_BUDGET_CHARS: Final[int] = 60_000

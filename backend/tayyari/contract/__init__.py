@@ -13,6 +13,7 @@ Everything public is re-exported here, so ``from tayyari.contract import Profile
 
 from tayyari.contract.events import (
     HEARTBEAT,
+    ActionEvent,
     AnalysisEvent,
     AnalysisEventAdapter,
     ChatDoneEvent,
@@ -32,6 +33,7 @@ from tayyari.contract.events import (
     SynthStep,
     ToolEvent,
     encode_event,
+    ev_action,
     ev_chat_done,
     ev_chat_error,
     ev_delta,
@@ -79,17 +81,27 @@ from tayyari.contract.records import (
     LlmCallRecord,
     StateBlob,
 )
-from tayyari.contract.requests import AnalyzeRequest, ChatOriginBody, ChatRequestBody, RequestContext
+from tayyari.contract.requests import (
+    AnalyzeRequest,
+    ChatDesk,
+    ChatDeskTracked,
+    ChatOriginBody,
+    ChatRequestBody,
+    RequestContext,
+)
 from tayyari.contract.stored import StoredContext, StoredSource
 from tayyari.contract.wire import profile_from_json, profile_to_json
 
 __all__ = [
     "HEARTBEAT",
     "SOURCE_KINDS",
+    "ActionEvent",
     "AnalysisEvent",
     "AnalysisEventAdapter",
     "AnalyzeRequest",
     "CallStatus",
+    "ChatDesk",
+    "ChatDeskTracked",
     "ChatDoneEvent",
     "ChatErrorEvent",
     "ChatEvent",
@@ -139,6 +151,7 @@ __all__ = [
     "SynthStep",
     "ToolEvent",
     "encode_event",
+    "ev_action",
     "ev_chat_done",
     "ev_chat_error",
     "ev_delta",

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, Final
 
+from tayyari.contract.capabilities import CAN_SEE, CANNOT, CAPABILITIES, Capability
 from tayyari.core import limits
 
 from .common import _drop_none, _json, _num, clip, escape_attr
@@ -163,3 +164,50 @@ def budget_excerpts(sources: Sequence[Mapping[str, Any]], total: int) -> list[di
         remaining = max(0, remaining - len(text))
         out.append({**s, "text": text})
     return out
+
+
+# ───────────────────────── what the coach can see, hand over and refuse ─────────────────────────
+
+_TARGET_WORDS: dict[str, str] = {
+    "role": "target: the id of one of their next roles, from `roles` in their profile",
+    "plan": "target: a plan id from their desk",
+    "match": "target: a posting-match id from their desk",
+    "tracked": "target: a tracked-role id from their desk",
+    "skill": "target: a skill id from `skills` in their profile",
+}
+
+ACTION_RULES: Final[str] = """## Handing over a button
+- When exactly one destination above fits what they asked, end your answer with one final line of its own, after your closing
+  question: [[action: <destination> | <target id>]]. For a destination with no target, write just [[action: <destination>]].
+- At most one. Nothing after it, never in the middle of the text, and do not mention or explain the line: the app draws the button.
+- A target id must be one that appears in their profile or on their desk. If you do not have one, do not offer that button.
+- A button only opens a screen. No tool here does anything for them, so never say that anything is done, sent, saved or started,
+  not even for the action you offer. You may say "the button below opens it", and that the next step is theirs.
+- When they ask for something outside this list or in "What you do not do", say no first, in one plain sentence, then name the
+  nearest real thing here (and offer its button when one fits)."""
+"""The rules for the `[[action: ...]]` line. The coach's button is never proposed for anything outside `CAPABILITIES`."""
+
+
+def render_capabilities_section(
+    capabilities: Sequence[Capability] = CAPABILITIES,
+    can_see: Sequence[str] = CAN_SEE,
+    cannot: Sequence[str] = CANNOT,
+) -> str:
+    """What the coach can see, the destinations it may hand over (each with its target kind) and what it does not do.
+
+    Generated from the one list in `tayyari.contract.capabilities`, so the prompt, the validator and the Ask panel agree.
+    A pure function of its arguments: the text is part of the cached rules block and must be byte-stable.
+    """
+    see = "\n".join(f"- {line}" for line in can_see)
+    dests = "\n".join(
+        f"- {c.destination}"
+        + (f" ({_TARGET_WORDS[c.target]})" if c.target != "none" else "")
+        + f': {c.can}. Button: "{c.label}".'
+        for c in capabilities
+    )
+    no = "\n".join(f"- {line}" for line in cannot)
+    return (
+        f"## What you can see\n{see}\n\n"
+        f"## Buttons you can hand over\nThese are the only destinations; each opens a screen of the app.\n{dests}\n\n"
+        f"## What you do not do\n{no}"
+    )
