@@ -125,4 +125,6 @@ The quiet look is the default (`data-look`, 29bbd73 plus the change that made it
 
 Resumes (R2, `docs/resume.md`, canvas https://claude.ai/artifact/BCWRN3S1E3ue6w9jEY566c) built 2026-11-11: `/resume` holds the uploaded resume and one resume per next role, each an arrangement of the profile's cited facts (`resumes`, migration 0018); a draft is edited freely, Finalise checks every typed line in code and only a finalised resume is downloaded or made the default (`backend/tayyari/resume/`, `src/resume/`). Not yet: merging a second upload, the coach proposing rewrites, a grammar check, Apply for me sending the default.
 
+Home, Ask and the thinking stream (H1, `docs/roadmap.md`, same canvas) built 2026-11-11, committed, not deployed: the dashboard's new order (profile first, the slips, one "Your week" card, nothing that shows a score going down), the hand-touched kit and density scale across every screen (`design.md` 7b), the Ask dock with buttons the coach proposes from one capability list (`shared/capabilities.ts`, `chat/actions.py`, `src/ask/`), and the thinking stream on the analysis screen. The dev server's first start after a cache wipe takes minutes; `vite.config.ts` limits its scan to `index.html`.
+
 Next: the skills table (X1).

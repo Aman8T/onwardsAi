@@ -1225,6 +1225,29 @@ Decided 2026-11-10. The spec, the user's decisions, version 1 and what comes aft
 Canvas: https://claude.ai/artifact/BCWRN3S1E3ue6w9jEY566c (last row). Contract `shared/resume.ts`, table `resumes`
 (migration 0018), routes `/api/resumes*`, package `backend/tayyari/resume/`, page `src/resume/`.
 
+## H1 · Home, Ask and the thinking stream (2026-11-11)
+
+Canvas: https://claude.ai/artifact/BCWRN3S1E3ue6w9jEY566c (rows Home, Ask, Analysis).
+
+- **Home.** The profile first with "Share my skill shape", the slips beside it (notes pile, card, resume), next roles and
+  the shelf, one "Your week" card, three feature cards and the Weekly as a line. No score going down is shown.
+  `src/views/Dashboard.tsx`, `src/views/dashboard/` (`Desk.tsx`, `Slips.tsx`, `notes.ts`, `lines.ts`). The hand-touched
+  kit and the density scale are in `design.md` 7b.
+- **Ask.** One capability list, `shared/capabilities.ts`, mirrored in `contract/capabilities.py` and checked by
+  `npm run check:capabilities` and `tests/unit/contract/test_capabilities_parity.py` (a destination must be a real
+  route or be marked as a sheet, and must appear in the prompt). The coach may end an answer with
+  `[[action: destination | target]]`; `chat/actions.py` strips it from the stream, validates the target against this
+  turn's context and emits an `action` event; the app draws the button (`src/ask/ActionCard.tsx`, `dispatch.ts`) and the
+  answer never says a thing was done. The coach also sees a desk block after the cached blocks: practice sessions, weak
+  claims, plans and matches from the server, tracked roles from the request's `desk` field (untrusted, capped). The dock
+  (`src/ask/AskDock.tsx`) is sticky at the foot of the dashboard: starters from the desk with their reasons
+  (`askStarters` in `deskModel.ts`), one answer in place, then the same thread in the chat view. Stopped, failed,
+  rate-limited and ceiling states have their own words.
+- **Thinking stream.** `src/views/analysis/thinkingLines.ts` is the one content file; `thinking.ts` picks from it by the
+  run's real step; `npm run check:thinking` proves the rules.
+
+Not done: a dev gallery state for a streamed dock answer; the walkthrough's step 23 has not been run against a live key.
+
 ## Follow-ups
 
 Found while writing the documentation wave (2026-10-11). None blocks the landed waves; each is a change for a later wave.
