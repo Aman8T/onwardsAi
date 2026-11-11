@@ -4,7 +4,6 @@
  *   readLines       the read's one-liners (each in a tone); lines.ts mixes them with the day's other lines
  *   achievements    what is worth celebrating, counted from the graph and what the features store
  *   notOnResume     the strongest skills the other sources proved that the resume never mentions
- *   deltas          what moved between two analyses of the same person
  *   askQuestions    four questions worth asking about yourself, from the top role and the gap
  *
  * Everything here is counted from stored data; the read's lines are the one thing a model phrased, at analysis time.
@@ -195,95 +194,6 @@ export function notOnResume(profile: Profile): NotOnResume | null {
   if (items.length === 0) return null;
   items.sort((a, b) => Number(wanted.has(b.skill.id)) - Number(wanted.has(a.skill.id)) || b.skill.score - a.skill.score);
   return { resume, items: items.slice(0, SURPRISE_MAX), role };
-}
-
-/* ───────────────────────── since last time ───────────────────────── */
-
-export interface Delta {
-  /** What moved: a domain, a role, the mastery, a source. */
-  label: string;
-  /** The old value, shown faint; empty when there was none. */
-  was: string;
-  /** The new value, shown plain. */
-  now: string;
-  note: string;
-}
-
-const DOMAIN_MIN_MOVE = 3;
-
-const key = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
-
-export function ordinal(n: number): string {
-  const rem100 = n % 100;
-  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
-  switch (n % 10) {
-    case 1:
-      return `${n}st`;
-    case 2:
-      return `${n}nd`;
-    case 3:
-      return `${n}rd`;
-    default:
-      return `${n}th`;
-  }
-}
-
-/** Two profiles of the same person, older then newer: at most four things that moved, the biggest first. */
-export function deltas(prev: Profile, next: Profile): Delta[] {
-  const out: Delta[] = [];
-
-  // the domain that moved most
-  const prevDomains = new Map(prev.domains.map((d) => [key(d.name), d]));
-  let best: { name: string; was: number; now: number } | null = null;
-  for (const d of next.domains) {
-    const before = prevDomains.get(key(d.name)) ?? prev.domains.find((p) => p.id === d.id);
-    if (!before) continue;
-    const move = d.score - before.score;
-    if (Math.abs(move) < DOMAIN_MIN_MOVE) continue;
-    if (!best || Math.abs(move) > Math.abs(best.now - best.was)) best = { name: d.name, was: before.score, now: d.score };
-  }
-  if (best) {
-    const move = best.now - best.was;
-    out.push({ label: best.name, was: String(best.was), now: String(best.now), note: move > 0 ? `up ${move} since the last analysis` : `down ${-move} since the last analysis` });
-  }
-
-  // a role that changed rank, the new top role first
-  const prevRoles = rankRoles(prev);
-  const nextRoles = rankRoles(next);
-  for (const [i, role] of nextRoles.entries()) {
-    const j = prevRoles.findIndex((r) => key(r.title) === key(role.title));
-    if (j === -1 || j === i) continue;
-    out.push({
-      label: role.title,
-      was: ordinal(j + 1),
-      now: ordinal(i + 1),
-      note: i === 0 ? `now your most probable next role · ${role.alignment}% aligned` : `${role.alignment}% aligned · ${role.eta}`,
-    });
-    break;
-  }
-
-  // role mastery
-  if (next.mastery.score !== prev.mastery.score) {
-    out.push({ label: 'Role mastery', was: String(prev.mastery.score), now: String(next.mastery.score), note: next.mastery.insight });
-  }
-
-  // a source that was not there before
-  const had = new Set(prev.sources.map((s) => key(s.url ?? s.label)));
-  const added = next.sources.filter((s) => s.ok && !had.has(key(s.url ?? s.label)));
-  if (added.length) {
-    const first = added[0];
-    out.push({ label: 'New source', was: '', now: first.label, note: added.length > 1 ? `and ${added.length - 1} more · ${first.sub}` : first.sub });
-  }
-
-  // the gap, whether or not it moved
-  if (out.length < 4 && next.domains.length) {
-    const gap = next.domains.reduce((a, b) => (b.score < a.score ? b : a));
-    const before = prevDomains.get(key(gap.name));
-    if (!best || key(best.name) !== key(gap.name)) {
-      out.push({ label: gap.name, was: before && before.score !== gap.score ? String(before.score) : '', now: String(gap.score), note: before && before.score === gap.score ? 'the gap · unchanged' : 'the gap' });
-    }
-  }
-  return out.slice(0, 4);
 }
 
 /* ───────────────────────── ask about yourself ───────────────────────── */
