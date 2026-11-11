@@ -609,3 +609,31 @@
     gap: var(--s4);
   }
 }
+
+/* the thinking line under the heading: a kicker label, then one line of body text, a one-shot opacity fade */
+.an-think {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  color: var(--text);
+}
+
+.an-think-type {
+  flex: none;
+  min-width: 4.5em;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.an-think-text {
+  font-size: var(--fs-4);
+  transition: opacity 240ms ease;
+}
+
+.an-think-text.is-out {
+  opacity: 0;
+}
+
+.an-think-text.is-still {
+  transition: none;
+}

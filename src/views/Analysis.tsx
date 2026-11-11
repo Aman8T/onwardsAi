@@ -11,6 +11,8 @@ import { health } from '../lib/api';
 import { EASE, useTween } from '../lib/ui';
 import { Brand } from '../components/Brand';
 import { Ring } from '../components/Ring';
+import { ThinkingLine } from './analysis/ThinkingLine';
+import { MIN_SHOW_MS, thinkingPhase, thinkingValues } from './analysis/thinking';
 import '../styles/analysis.css';
 
 const READER_MODEL = 'claude-haiku-4-5';
@@ -91,11 +93,20 @@ export function Analysis() {
   const elapsed = useElapsed(a.startedAt, running);
   const overallShown = useTween(d.overall, { duration: 700 });
 
+  // the stream's last line holds at least MIN_SHOW_MS, so a fast or cached run cannot flicker it
+  const shownAt = useRef(0);
+  const [released, setReleased] = useState(false);
+
   // a short pause on the finished state, then straight into the graph
   useEffect(() => {
     if (!done) return;
-    const t = setTimeout(() => actions.showDashboard(), AUTO_OPEN_MS);
-    return () => clearTimeout(t);
+    const hold = shownAt.current ? Math.max(0, MIN_SHOW_MS - (Date.now() - shownAt.current)) : 0;
+    const t1 = setTimeout(() => setReleased(true), hold);
+    const t = setTimeout(() => actions.showDashboard(), AUTO_OPEN_MS + hold);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(t1);
+    };
   }, [done]);
 
   // when a run fails, find out whether the server can offer the pre-computed sample
@@ -136,6 +147,8 @@ export function Analysis() {
           ? `${d.finished} of ${d.total} source${plural} read. Sonnet is merging the evidence into your graph.`
           : `${NUMBER_WORD[d.total] ?? d.total} reader${d.total === 1 ? ' is' : 's are'} working in parallel. Your graph appears the moment the synthesizer finishes.`;
 
+  const tPhase = thinkingPhase(a);
+  const streaming = (running && tPhase !== null) || (done && !released && shownAt.current > 0);
   const announce = done
     ? 'Your graph is ready.'
     : failed
@@ -180,7 +193,19 @@ export function Analysis() {
               </motion.span>
             </AnimatePresence>
           </h1>
-          <p className="an-sub">{sub}</p>
+          {streaming ? (
+            <ThinkingLine
+              phase={tPhase ?? 'rank'}
+              vals={thinkingValues(a)}
+              reduce={!!reduce}
+              fallback={sub}
+              onShown={(at) => {
+                shownAt.current = at;
+              }}
+            />
+          ) : (
+            <p className="an-sub">{sub}</p>
+          )}
         </div>
 
         <div className="an-overall">
