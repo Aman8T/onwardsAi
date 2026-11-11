@@ -15,7 +15,7 @@
 .dm-page {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s4);
   width: 100%;
   min-width: 0;
   color: var(--text);
@@ -386,7 +386,7 @@ textarea.field.dm-box {
 .dm-cols {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
-  gap: var(--s5);
+  gap: var(--s4);
   align-items: start;
 }
 
@@ -408,8 +408,8 @@ textarea.field.dm-box {
 .dm-sec {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
-  padding: var(--s5);
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
 }
 
 .dm-sec-head {
@@ -419,14 +419,14 @@ textarea.field.dm-box {
 }
 
 .dm-h2 {
-  font-size: var(--fs-7);
+  font-size: var(--fs-5);
   font-weight: 400;
   text-wrap: balance;
   overflow-wrap: anywhere;
 }
 
 .dm-h2s {
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
   font-weight: 400;
 }
 
@@ -437,7 +437,7 @@ textarea.field.dm-box {
 }
 
 .dm-h3s {
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
   font-weight: 400;
   text-wrap: balance;
   overflow-wrap: anywhere;
@@ -479,8 +479,8 @@ textarea.field.dm-box {
 }
 
 .dm-gapitem + .dm-gapitem {
-  padding-top: var(--s5);
-  border-top: var(--hair) solid var(--line);
+  padding-top: var(--s4);
+  border-top: var(--hair) solid var(--line-strong);
 }
 
 .dm-gapline {
@@ -608,7 +608,7 @@ textarea.field.dm-box {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s3) var(--s5);
-  padding-block: var(--s5);
+  padding-block: var(--s3);
   border-style: dashed;
   border-color: var(--line-strong);
   background: transparent;
@@ -737,7 +737,7 @@ textarea.field.dm-box {
   width: min(560px, 100%);
   max-height: min(92vh, 880px);
   max-height: min(92dvh, 880px);
-  padding: var(--s5) var(--s6);
+  padding: var(--s4) var(--s5);
 }
 
 .dm-share {
@@ -1094,11 +1094,11 @@ textarea.field.dm-box {
   align-items: baseline;
   gap: var(--s2);
   padding-bottom: var(--s2);
-  border-bottom: var(--hair) solid var(--line);
+  border-bottom: var(--hair) solid var(--line-strong);
 }
 
 .dm-empty {
-  padding: var(--s4) var(--s3);
+  padding: var(--s3);
   border: var(--hair) dashed var(--line-strong);
   border-radius: var(--r-l);
   font-size: var(--fs-2);
@@ -1194,7 +1194,7 @@ textarea.field.dm-box {
   }
 
   .dm-h2 {
-    font-size: var(--fs-6);
+    font-size: var(--fs-4);
   }
 
   .dm-question {

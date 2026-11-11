@@ -90,6 +90,7 @@ export function PlanBlock({ move, state, narrow, phaseIndex, onPhase, onHours, o
                     {i + 1}
                   </span>
                   <span className="pp-phase-row-title">{p.title}</span>
+                  {prog.all > 0 && prog.done === prog.all && <span className="stamp stamp-ok">done</span>}
                   <span className="numeral pp-meta">{spans[i].label}</span>
                 </button>
                 <div id={panelId} hidden={!on}>
@@ -110,6 +111,7 @@ export function PlanBlock({ move, state, narrow, phaseIndex, onPhase, onHours, o
                 <button key={i} type="button" className={`pp-pill${on ? ' is-on' : ''}`} aria-pressed={on} onClick={() => onPhase(i)}>
                   <span className="numeral pp-meta">{spans[i].label}</span>
                   <span className="pp-pill-title">{p.title}</span>
+                  {prog.all > 0 && prog.done === prog.all && <span className="stamp stamp-ok">done</span>}
                   <span className="pp-track" aria-hidden="true">
                     <span className="pp-track-bar" style={{ transform: `scaleX(${frac})` }} />
                   </span>

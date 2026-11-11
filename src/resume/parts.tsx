@@ -35,9 +35,9 @@ export function ScreenLink({
   );
 }
 
-/** A small turned mark: `default`, `done`. */
+/** A rubber stamp (the shared `.stamp`): a stage reached, `default` or `done`. `done` is the filled one. */
 export function Stamp({ children }: { children: ReactNode }) {
-  return <span className="rs-stamp">{children}</span>;
+  return <span className={children === 'done' ? 'stamp stamp-ok' : 'stamp'}>{children}</span>;
 }
 
 /** "your resume · line 14" then the words of the source. */
@@ -51,13 +51,27 @@ export function SourceLine({ source, quote = true }: { source: Source; quote?: b
 }
 
 /** Loading, empty, error and signed-out states: a title, one sentence, and the next step. */
-export function StatePanel({ title, children, action, busy = false }: { title: string; children?: ReactNode; action?: ReactNode; busy?: boolean }) {
+export function StatePanel({
+  title,
+  children,
+  hand,
+  action,
+  busy = false,
+}: {
+  title: string;
+  children?: ReactNode;
+  /** One handwritten line, for an empty state only: a human nudge before the next step. */
+  hand?: ReactNode;
+  action?: ReactNode;
+  busy?: boolean;
+}) {
   return (
     <section className="panel rs-state" role="status" aria-busy={busy}>
       <h1 className="title rs-state-title" data-rs-h1 tabIndex={-1}>
         {title}
       </h1>
       {children && <p className="rs-lede">{children}</p>}
+      {hand && <p className="hand">{hand}</p>}
       {action && <div className="rs-actions">{action}</div>}
     </section>
   );

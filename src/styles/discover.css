@@ -110,11 +110,11 @@
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s4);
   min-width: 0;
   max-width: calc(var(--dc-max) + 2 * var(--dc-gutter));
   margin-inline: auto;
-  padding: var(--s6) var(--dc-gutter) var(--s8);
+  padding: var(--s5) var(--dc-gutter) var(--s7);
   transition: opacity var(--d-base) var(--ease);
 }
 
@@ -694,13 +694,13 @@
 .dc-nothing {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
-  padding: var(--s5);
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
 }
 
 .dc-nothing-title {
   margin: 0 0 var(--s1);
-  font-size: var(--fs-7);
+  font-size: var(--fs-5);
   font-weight: 400;
 }
 
@@ -718,7 +718,7 @@
   flex-direction: column;
   gap: var(--s1);
   padding-top: var(--s2);
-  border-top: var(--hair) solid var(--line);
+  border-top: var(--hair) solid var(--line-strong);
 }
 
 .dc-nothing-list li.is-last {
@@ -726,7 +726,7 @@
 }
 
 .dc-nothing-n {
-  font-size: var(--fs-7);
+  font-size: var(--fs-5);
   line-height: var(--lh-tight);
 }
 
@@ -815,7 +815,7 @@
 
 .dc-section-title {
   margin: 0;
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
   font-weight: 400;
 }
 
@@ -1093,13 +1093,13 @@
   display: flex;
   flex: 0 0 560px;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s4);
   align-self: flex-start;
   max-width: 100%;
   max-height: 100vh;
   max-height: 100dvh;
   overflow-y: auto;
-  padding: var(--s5) var(--s5) var(--s6);
+  padding: var(--s4) var(--s5);
   background: var(--surface);
   border-left: var(--hair) solid var(--line-strong);
 }
@@ -1111,7 +1111,7 @@
 .dc-detail {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s4);
 }
 
 .dc-detail-top {
@@ -1129,7 +1129,7 @@
 
 .dc-detail-title {
   margin: 0;
-  font-size: var(--fs-8);
+  font-size: var(--fs-7);
   font-weight: 400;
   text-wrap: balance;
   overflow-wrap: anywhere;
@@ -1214,8 +1214,8 @@
   gap: var(--s3);
   align-items: center;
   width: 100%;
-  min-height: 68px;
-  padding: var(--s3) var(--s4);
+  min-height: 56px;
+  padding: var(--s2) var(--s4);
   border-radius: var(--r-m);
   text-align: left;
   text-decoration: none;
@@ -1615,12 +1615,12 @@
   flex-direction: column;
   gap: var(--s3);
   margin-top: var(--s3);
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
 }
 
 .dc-deck-end-title {
   margin: 0;
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
   font-weight: 400;
 }
 
@@ -1661,7 +1661,7 @@
 
 .dc-search-title {
   margin: 0;
-  font-size: var(--fs-7);
+  font-size: var(--fs-6);
   font-weight: 400;
 }
 
@@ -1669,7 +1669,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--s6) var(--s5);
+  gap: var(--s4);
 }
 
 .dc-trail-panel {
@@ -1678,7 +1678,7 @@
   flex-direction: column;
   gap: var(--s4);
   max-width: 100%;
-  padding: var(--s5) var(--s4);
+  padding: var(--s4) var(--s5);
 }
 
 .dc-live {
@@ -1816,7 +1816,7 @@
 .dc-loading {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s4);
 }
 
 .dc-loading-bar {
@@ -1832,8 +1832,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--s6) var(--s7);
-  padding-top: var(--s5);
+  gap: var(--s5) var(--s6);
+  padding-top: var(--s4);
 }
 
 .dc-start-copy {
@@ -1847,7 +1847,7 @@
 .dc-start-title {
   margin: 0;
   max-width: 14em;
-  font-size: var(--fs-7);
+  font-size: var(--fs-6);
   font-weight: 400;
   text-wrap: balance;
 }
@@ -1867,7 +1867,7 @@
   flex-direction: column;
   gap: var(--s4);
   min-width: 0;
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
 }
 
 .dc-start-where {
@@ -1904,7 +1904,7 @@
 .dc-how-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
-  gap: var(--s5) var(--s6);
+  gap: var(--s4) var(--s5);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1959,7 +1959,7 @@
 
 .dc-apps-title {
   margin: 0;
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
   font-weight: 400;
 }
 
@@ -2133,7 +2133,7 @@
   }
 
   .dc-main {
-    gap: var(--s5);
+    gap: var(--s4);
     padding-top: var(--s5);
     padding-bottom: var(--s7);
   }

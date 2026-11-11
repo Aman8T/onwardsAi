@@ -217,13 +217,14 @@ export function ApplicationsView(props: ApplicationsViewProps) {
 
       {applications.length === 0 ? (
         <section className="panel ap-panel ap-empty">
+          <p className="hand">Nothing sent yet, and nothing goes out without you.</p>
           <p className="ap-strong">No applications yet.</p>
           <p className="ap-muted">
             An application starts from a posting match: open a match, or a role in Discover, and choose Apply for me. Nothing is
             sent until you approve the filled form.
           </p>
           <div className="ap-actions">
-            <a className="btn" href="/match">
+            <a className="btn btn-primary" href="/match">
               Match a posting
             </a>
             <a className="btn btn-quiet" href="/discover">

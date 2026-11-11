@@ -3,10 +3,24 @@
  * source it comes from and how many of the person's resumes use it. The counts are the server's; nothing here is
  * worked out from a resume on screen.
  */
+import { useState } from 'react';
 import { groupBlocks, sourceCounts, sourceOf } from './model';
 import { ScreenLink, SourceLine, StatePanel } from './parts';
 import type { ResumeQuery } from './route';
-import type { BlocksResponse, Failure, LoadStatus } from './types';
+import type { BlocksResponse, Failure, LoadStatus, ResumeBlock } from './types';
+
+type Kind = 'resume' | 'other' | 'user';
+type Filter = 'all' | Kind;
+
+const FILTERS: readonly { id: Filter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'resume', label: 'From your file' },
+  { id: 'other', label: 'From GitHub or other sources' },
+  { id: 'user', label: 'Your words' },
+];
+
+/** Where a block comes from, told apart by its sources: the person's own words, their resume file, anything else. */
+const kindOf = (b: ResumeBlock): Kind => (b.fact.refs.some((r) => r.source === 'user') ? 'user' : b.fact.refs[0]?.source === 'resume' ? 'resume' : 'other');
 
 export interface BlocksViewProps {
   data: BlocksResponse | null;
@@ -19,6 +33,7 @@ export interface BlocksViewProps {
 }
 
 export function BlocksView({ data, status, error, onRetry, back, onNavigate }: BlocksViewProps) {
+  const [filter, setFilter] = useState<Filter>('all');
   if (!data) {
     if (status === 'error') {
       return (
@@ -37,7 +52,14 @@ export function BlocksView({ data, status, error, onRetry, back, onNavigate }: B
     return <StatePanel title="Opening your blocks…" busy />;
   }
 
-  const groups = groupBlocks(data);
+  const kinds = new Map<Kind, number>();
+  for (const b of data.blocks) kinds.set(kindOf(b), (kinds.get(kindOf(b)) ?? 0) + 1);
+  // a chip only where the blocks really fall on both sides of it
+  const chips = FILTERS.filter((f) => f.id === 'all' || (kinds.get(f.id) ?? 0) > 0);
+  const active: Filter = chips.some((c) => c.id === filter) ? filter : 'all';
+  const groups = groupBlocks(data)
+    .map((g) => (active === 'all' ? g : { ...g, blocks: g.blocks.filter((b) => kindOf(b) === active) }))
+    .filter((g) => active === 'all' || g.blocks.length > 0);
   const n = data.blocks.length;
   const from = sourceCounts(data);
 
@@ -60,6 +82,15 @@ export function BlocksView({ data, status, error, onRetry, back, onNavigate }: B
           A block is one fact, kept with the words of its source. The fact never changes. What changes from resume to resume is whether the block is in, where it sits, and which words it uses.
         </p>
         {from && <p className="rs-fine">{from}</p>}
+        {chips.length > 2 && (
+          <div className="rs-chips" role="group" aria-label="Show blocks">
+            {chips.map((c) => (
+              <button key={c.id} type="button" className="rs-chipbtn" aria-pressed={active === c.id} onClick={() => setFilter(c.id)}>
+                {c.label} <span className="numeral">{c.id === 'all' ? n : kinds.get(c.id)}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       <div className="rs-two">

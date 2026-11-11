@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s4);
-  min-height: 76px;
+  min-height: 64px;
 }
 
 .bl-header-end {
@@ -36,8 +36,8 @@
 .bl-main {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
-  padding-top: var(--s5);
+  gap: var(--s4);
+  padding-top: var(--s4);
 }
 
 /* ───────────── title and currency switch ───────────── */
@@ -111,7 +111,7 @@
 .bl-plans {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s5);
+  gap: var(--s4);
   align-items: stretch;
 }
 
@@ -119,7 +119,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s4);
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
 }
 
 /* The suggested plan carries the accent hairline; nothing else about it is louder. */
@@ -209,7 +209,7 @@
 .bl-notes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--s5);
+  gap: var(--s4);
 }
 
 .bl-note {

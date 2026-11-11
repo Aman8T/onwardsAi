@@ -28,8 +28,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s2) var(--s4);
-  min-height: 76px;
-  padding-block: var(--s3);
+  min-height: 64px;
+  padding-block: var(--s2);
   padding-inline: max(var(--rs-gutter), calc((100% - var(--rs-wrap)) / 2 + var(--rs-gutter)));
   background: var(--bg);
   border-bottom: var(--hair) solid var(--line);
@@ -82,24 +82,24 @@
   display: flex;
   flex: 1 0 auto;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s4);
   width: 100%;
   max-width: var(--rs-wrap);
   margin-inline: auto;
-  padding: var(--s5) var(--rs-gutter) var(--s8);
+  padding: var(--s4) var(--rs-gutter) var(--s7);
 }
 
 .rs-cols {
   display: grid;
   grid-template-columns: calc(var(--s8) * 4) minmax(0, 1fr) calc(var(--s9) * 4);
-  gap: var(--s6);
+  gap: var(--s5);
   align-items: start;
 }
 
 .rs-two {
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: var(--s6);
+  gap: var(--s5);
   align-items: start;
 }
 
@@ -114,7 +114,7 @@
 
 .rs-stack,
 .rs-rail {
-  gap: var(--s5);
+  gap: var(--s4);
 }
 
 .rs-doc,
@@ -234,7 +234,7 @@
   gap: var(--s3);
   align-items: center;
   min-height: 44px;
-  padding: var(--s3) var(--s2);
+  padding: var(--s2);
   border-top: var(--hair) solid var(--line);
   color: var(--text);
   text-decoration: none;
@@ -259,6 +259,11 @@
 
 .rs-rows.panel {
   padding: 0 var(--s5);
+}
+
+/* the blocks left out: a pile of the person's own papers behind the list */
+.rs-leftout.stack {
+  margin: 0 5px 5px 0;
 }
 
 .rs-row-main {
@@ -297,50 +302,9 @@
   gap: var(--s2);
 }
 
-/* a small turned mark: a hairline box in mono */
-.rs-stamp {
-  display: inline-block;
-  padding: 1px var(--s2);
-  border: var(--hair) solid var(--accent-ui);
-  border-radius: var(--r-s);
-  font-family: var(--font-mono);
-  font-size: var(--fs-0);
-  color: var(--accent);
-  white-space: nowrap;
-  transform: rotate(-2deg);
-}
-
-/* the pinned note: a tinted slip, one hairline, a pin, a turn of one degree */
+/* the note about one set of blocks: a straight slip (the coach holds the pin and the turn) */
 .rs-note {
-  position: relative;
-  display: flex;
-  flex-direction: column;
   gap: var(--s1);
-  padding: var(--s5) var(--s4) var(--s4);
-  background: var(--accent-soft);
-  border: var(--hair) solid var(--line-strong);
-  border-radius: var(--r-s);
-  transform: rotate(1deg);
-}
-
-.rs-note::before {
-  content: '';
-  position: absolute;
-  top: var(--s2);
-  left: 50%;
-  width: 8px;
-  height: 8px;
-  margin-left: -4px;
-  border-radius: 50%;
-  background: var(--accent-ui);
-}
-
-.rs-hand {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: var(--fs-4);
-  line-height: var(--lh-snug);
-  color: var(--text);
 }
 
 /* ───────────── the resume in view ───────────── */
@@ -481,7 +445,7 @@ button.rs-line {
   display: flex;
   flex-direction: column;
   gap: var(--s3);
-  padding: var(--s4);
+  padding: var(--s4) var(--s5);
 }
 
 .rs-block:not(.is-empty):not(.is-inline) {
@@ -549,17 +513,17 @@ button.rs-line {
 
 /* ───────────── the coach ───────────── */
 
-.rs-coach,
 .rs-card {
   display: flex;
   flex-direction: column;
   gap: var(--s3);
   min-width: 0;
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
 }
 
+/* the coach is a slip (global .slip .slip-pin): its padding and turn come from there */
 .rs-coach {
-  padding: var(--s4);
+  gap: var(--s3);
 }
 
 .rs-ask-qs {
@@ -574,7 +538,8 @@ button.rs-line {
   align-items: center;
   min-height: 36px;
   padding: var(--s1) var(--s3);
-  border: var(--hair) solid var(--line);
+  background: var(--surface);
+  border: var(--hair) solid var(--line-strong);
   border-radius: var(--r-l);
   font-size: var(--fs-2);
   line-height: var(--lh-snug);
@@ -588,13 +553,13 @@ button.rs-line {
 @media (hover: hover) {
   .rs-ask-q:hover {
     color: var(--text);
-    border-color: var(--line-strong);
+    border-color: var(--accent-ui);
   }
 }
 
 .rs-coach-foot {
   padding-top: var(--s3);
-  border-top: var(--hair) solid var(--line);
+  border-top: var(--hair) solid var(--line-strong);
 }
 
 /* ───────────── finalise ───────────── */
@@ -641,6 +606,41 @@ button.rs-line {
   color: var(--accent);
 }
 
+/* the filter on Your blocks */
+.rs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.rs-chipbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 36px;
+  padding: 0 var(--s3);
+  background: transparent;
+  border: var(--hair) solid var(--line-strong);
+  border-radius: 999px;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  transition:
+    color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.rs-chipbtn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent-ui);
+  color: var(--text);
+}
+
+@media (hover: hover) {
+  .rs-chipbtn:not([aria-pressed='true']):hover {
+    color: var(--text);
+  }
+}
+
 /* ───────────── states ───────────── */
 
 .rs-state {
@@ -651,7 +651,11 @@ button.rs-line {
   width: 100%;
   max-width: 640px;
   margin-inline: auto;
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
+}
+
+.rs-state .hand {
+  color: var(--text-muted);
 }
 
 .rs-state-title {
@@ -682,13 +686,22 @@ button.rs-line {
   }
 }
 
-/* touch: every control is a full 44 px target */
+/* touch: every control is a full 44 px target (the same list applies under 760 px below) */
 @media (pointer: coarse) {
   .rs-btn,
   .rs-navbtn,
   .rs-ask-q,
+  .rs-choice,
+  .rs-row-link,
+  .rs-link,
+  .rs-chipbtn,
   button.rs-line {
     min-height: 44px;
+  }
+
+  .rs-link {
+    display: inline-flex;
+    align-items: center;
   }
 
   button.rs-line {
@@ -719,7 +732,7 @@ button.rs-line {
 
   .rs-cols {
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--s5);
+    gap: var(--s4);
   }
 
   .rs-coach {
@@ -733,17 +746,21 @@ button.rs-line {
   .rs-btn,
   .rs-navbtn,
   .rs-ask-q,
+  .rs-choice,
+  .rs-row-link,
+  .rs-link,
+  .rs-chipbtn,
   button.rs-line {
     min-height: 44px;
   }
 
-  button.rs-line {
+  .rs-link {
+    display: inline-flex;
     align-items: center;
   }
 
-  /* nothing is turned on a phone */
-  .rs-note {
-    transform: none;
+  button.rs-line {
+    align-items: center;
   }
 
   .rs-head-acts {
@@ -762,29 +779,12 @@ button.rs-line {
   /* the mark goes under its line, so the line keeps the width */
   .rs-line {
     grid-template-columns: var(--rs-no) minmax(0, 1fr);
-    font-size: 13.5px;
   }
 
   .rs-line-mark {
     grid-column: 2;
   }
 
-  .rs-small,
-  .rs-quote,
-  .rs-edit-field {
-    font-size: 13.5px;
-  }
-
-  .rs-fine,
-  .rs-cite,
-  .rs-line-mark,
-  .rs-line-no,
-  .rs-stamp,
-  .rs-check-state {
-    font-size: 12px;
-  }
-
-  .rs-coach,
   .rs-card,
   .rs-state {
     padding: var(--s4);

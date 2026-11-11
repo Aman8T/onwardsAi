@@ -340,7 +340,10 @@ function YourPractice({ history, onReload, nav, paused }: { history: Load<Practi
         </p>
       )}
       {history.status === 'ready' && history.data.sessions.length === 0 && (
-        <p className="pc-muted">Nothing practised yet. Pick a kind above, and your debriefs are kept here for 30 days.</p>
+        <>
+          <p className="hand">Your first one starts the pile.</p>
+          <p className="pc-muted">Nothing practised yet. Pick a kind above, and your debriefs are kept here for 30 days.</p>
+        </>
       )}
       {history.status === 'ready' && history.data.sessions.length > 0 && <SessionRows sessions={history.data.sessions} nav={nav} />}
     </section>

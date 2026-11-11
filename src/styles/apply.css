@@ -87,7 +87,7 @@
 .ap-page {
   max-width: var(--wrap);
   margin: 0 auto;
-  padding: var(--s6) var(--s5) var(--s8);
+  padding: var(--s5) var(--s5) var(--s7);
   min-width: 0;
 }
 
@@ -96,7 +96,7 @@
 .ap-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s4);
   min-width: 0;
 }
 
@@ -126,7 +126,7 @@
 
 .ap-title {
   margin: 0;
-  font-size: var(--fs-8);
+  font-size: var(--fs-7);
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
@@ -194,7 +194,7 @@
 }
 
 .ap-panel {
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
   min-width: 0;
 }
 
@@ -223,7 +223,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--s5);
+  gap: var(--s4);
 }
 
 .ap-main {
@@ -239,7 +239,7 @@
 .ap-two {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
-  gap: var(--s5);
+  gap: var(--s4);
   align-items: start;
 }
 
@@ -248,7 +248,7 @@
 }
 
 .ap-textarea {
-  min-height: 120px;
+  min-height: 96px;
 }
 
 /* ───────────── chips by tone ───────────── */
@@ -709,7 +709,7 @@
 }
 
 .ap-price {
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
   font-weight: 500;
 }
 
@@ -721,11 +721,11 @@
   }
 
   .ap-page {
-    padding: var(--s5) var(--s4) var(--s7);
+    padding: var(--s4) var(--s4) var(--s7);
   }
 
   .ap-title {
-    font-size: var(--fs-7);
+    font-size: var(--fs-6);
   }
 
   .ap-panel {

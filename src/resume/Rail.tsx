@@ -111,9 +111,9 @@ export function Rail({ list, viewId, busy, onNavigate, onMake }: RailProps) {
         <p className="rs-fine">A resume for a role is made when you ask for it. It stays here even if the role later leaves your next roles.</p>
       </section>
 
-      <div className="rs-note" role="note" aria-label="One set of blocks">
+      <div className="slip rs-note" role="note" aria-label="One set of blocks">
         <span className="kicker">One set of blocks</span>
-        <p className="rs-hand">Every resume here is the same blocks, arranged another way.</p>
+        <p className="hand">Every resume here is the same blocks, arranged another way.</p>
         <ScreenLink to={{ screen: 'blocks', id: viewId }} onNavigate={onNavigate} className="rs-small">
           See all <span className="numeral">{list.blocks}</span> blocks →
         </ScreenLink>

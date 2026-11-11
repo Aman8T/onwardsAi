@@ -43,6 +43,7 @@ export interface ResumePageProps {
 export function ResumePage(props: ResumePageProps) {
   const { list, detail, detailStatus, detailError, viewId, busy, onNavigate, onMake, onAsk, onRetry } = props;
   const inView = detail && (!viewId || detail.resume.id === viewId) ? detail : null;
+  const firstToMake = list.paths.find((p) => !p.resumeId);
 
   return (
     <div className="rs-cols">
@@ -63,7 +64,17 @@ export function ResumePage(props: ResumePageProps) {
             {detailError?.message}
           </StatePanel>
         ) : !viewId ? (
-          <StatePanel title="No resume here yet">
+          <StatePanel
+            title="No resume here yet"
+            hand="Start with the role you want most."
+            action={
+              firstToMake && (
+                <button type="button" className="btn btn-primary rs-btn" disabled={busy !== null} onClick={() => onMake(firstToMake.roleId)}>
+                  {`Make a resume for ${firstToMake.title}`}
+                </button>
+              )
+            }
+          >
             {list.paths.length > 0
               ? 'Pick one of your next roles in the list and press "Make it": Leafout arranges your blocks for that role, each in the words of its source.'
               : 'Your blocks come from the resume and the sources you gave. Analyse a resume first, and it shows here as lines.'}
@@ -178,7 +189,7 @@ function InView({ list, detail, busy, notice, initialSelected, onOp, onFinalise,
           In your blocks, left out of this resume · <span className="numeral">{leftOut.length}</span>
         </h2>
         {leftOut.length > 0 ? (
-          <ul className="rs-rows">
+          <ul className={`panel rs-rows rs-rows-in rs-leftout stack${leftOut.length === 1 ? ' is-single' : ''}`}>
             {leftOut.map((fact) => {
               const source = sourceOf(fact);
               const working = busy?.kind === 'op' && busy.target === fact.id;

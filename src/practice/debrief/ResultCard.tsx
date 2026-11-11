@@ -74,7 +74,7 @@ export function CardTop({ result, index, ctx, exchange }: { result: SlotResult; 
     <div className="pc-card-top">
       <span className="kicker">Question {index + 1}</span>
       <KindChip kind={result.kind} />
-      <VerdictChip verdict={result.verdict} />
+      <VerdictChip verdict={result.verdict} stamped />
       <span className="pc-grow" />
       {yours.length > 0 && (
         <span className="pc-times">

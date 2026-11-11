@@ -27,7 +27,10 @@ export function Archive({ editions, current, onOpen }: ArchiveProps) {
         The archive
       </h2>
       {editions.length === 0 ? (
-        <p className="wk-hint">Nothing printed yet. Your first edition will be here.</p>
+        <>
+          <p className="hand">The first edition is on its way.</p>
+          <p className="wk-hint">Nothing printed yet. Your first edition will be here.</p>
+        </>
       ) : (
         <ul className="wk-archive" role="list">
           {editions.map((e) => (

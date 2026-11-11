@@ -85,7 +85,16 @@ export function PipsLine({ verdicts, counts }: { verdicts: readonly Verdict[]; c
 }
 
 /** A verdict as a word in a chip, with its square: Defended, Shaky, Couldn't defend, Not assessed. */
-export function VerdictChip({ verdict }: { verdict: Verdict }) {
+export function VerdictChip({ verdict, stamped = false }: { verdict: Verdict; stamped?: boolean }) {
+  // A verdict the person earned reads as a rubber stamp; "Not assessed" was never earned, so it stays a plain chip.
+  if (stamped && verdict !== 'not_assessed') {
+    return (
+      <span className="pc-v-stamp">
+        <Pip verdict={verdict} />
+        <span className={`stamp ${verdict === 'defended' ? 'stamp-ok' : 'stamp-quiet'}`}>{VERDICT_LABEL[verdict]}</span>
+      </span>
+    );
+  }
   return (
     <span className={`pc-v pc-v-${VERDICT_KEY[verdict]}`}>
       <Pip verdict={verdict} />

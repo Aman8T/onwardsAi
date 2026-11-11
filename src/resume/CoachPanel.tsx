@@ -10,7 +10,7 @@ import type { ResumeSummary } from './types';
 export function CoachPanel({ resume, onAsk }: { resume?: ResumeSummary; onAsk: (question: string) => void }) {
   const questions = starterQuestions(resume);
   return (
-    <section className="panel rs-coach" aria-labelledby="rs-ask">
+    <section className="slip slip-pin tilt-r rs-coach" aria-labelledby="rs-ask">
       <h2 id="rs-ask" className="kicker">
         Ask · about this resume
       </h2>

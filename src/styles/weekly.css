@@ -25,7 +25,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s2) var(--s4);
-  padding: var(--s4) var(--s6);
+  padding: var(--s3) var(--s6);
   background: var(--bg);
   border-bottom: var(--hair) solid var(--line);
 }
@@ -43,7 +43,7 @@
   width: 100%;
   max-width: 1560px;
   margin: 0 auto;
-  padding: var(--s6) var(--s6) var(--s8);
+  padding: var(--s5) var(--s6) var(--s8);
   container-type: inline-size;
   container-name: wk;
 }
@@ -51,7 +51,7 @@
 .wk-room {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--s5);
+  gap: var(--s4);
 }
 
 .wk-paper-col {
@@ -579,7 +579,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s3);
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
 }
 
 .wk-panel > p,
@@ -588,7 +588,7 @@
 }
 
 .wk-panel-h {
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
 }
 
 .wk-lede {

@@ -239,6 +239,21 @@ export function FinaliseView(props: FinaliseViewProps) {
               </p>
             )}
           </section>
+
+          <section className="panel rs-card" aria-labelledby="rs-fz-src">
+            <h2 id="rs-fz-src" className="kicker">
+              Where each check comes from
+            </h2>
+            <ul className="rs-list rs-small">
+              <li>
+                <span className="rs-strong">Facts:</span> in the app today, used by Match.
+              </li>
+              <li>
+                <span className="rs-strong">The read-back:</span> in the app today, used by Match.
+              </li>
+            </ul>
+            <p className="rs-fine">Nothing stops you typing, and nothing unchecked leaves.</p>
+          </section>
         </div>
       </div>
     </>

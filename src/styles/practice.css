@@ -88,13 +88,13 @@
   min-width: 0;
   max-width: calc(1320px + 2 * var(--pc-gutter));
   margin-inline: auto;
-  padding: var(--s6) var(--pc-gutter) var(--s8);
+  padding: var(--s5) var(--pc-gutter) var(--s8);
 }
 
 .pc-page {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s4);
   width: 100%;
   min-width: 0;
   color: var(--text);
@@ -170,7 +170,7 @@
 }
 
 .pc-h3 {
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
   font-weight: 400;
 }
 
@@ -388,7 +388,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s4);
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
   min-width: 0;
 }
 
@@ -637,7 +637,7 @@
   flex-direction: column;
   gap: var(--s3);
   min-width: 0;
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
 }
 
 .pc-card-blurb {
@@ -756,7 +756,7 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--s5) var(--s7);
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
 }
 
 .pc-summary-main {
@@ -830,7 +830,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--s5);
+  gap: var(--s4);
 }
 
 .pc-main-col {
@@ -870,7 +870,7 @@
   flex-direction: column;
   gap: var(--s4);
   min-width: 0;
-  padding: var(--s5);
+  padding: var(--s4) var(--s5);
   scroll-margin-top: var(--s4);
 }
 
@@ -898,7 +898,7 @@
 .pc-q {
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: var(--fs-5);
+  font-size: var(--fs-4);
   font-weight: 400;
   line-height: 1.15;
   text-wrap: pretty;
@@ -1047,7 +1047,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s2);
-  padding: var(--s3) 0;
+  padding: var(--s2) 0;
   border-top: var(--hair) solid var(--line);
 }
 
@@ -1078,7 +1078,7 @@
 }
 
 .pc-side-panel .pc-h2 {
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
 }
 
 .pc-side-body {
@@ -1099,7 +1099,7 @@
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
   gap: var(--s1) var(--s3);
-  padding: var(--s3) var(--s2);
+  padding: var(--s2);
   border-bottom: var(--hair) solid var(--line);
   border-radius: var(--r-s);
   scroll-margin-top: var(--s2);
@@ -1459,7 +1459,7 @@
 }
 
 .pc-narrow .pc-q {
-  font-size: var(--fs-5);
+  font-size: var(--fs-4);
 }
 
 .pc-narrow .pc-cells {
@@ -1503,12 +1503,12 @@
   }
 
   .pc-main {
-    padding-top: var(--s5);
+    padding-top: var(--s4);
     padding-bottom: var(--s7);
   }
 
   .pc-page {
-    gap: var(--s5);
+    gap: var(--s4);
   }
 
   .pc-title {
@@ -1569,7 +1569,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--s5);
+  gap: var(--s4);
 }
 
 .pc-rd-list {
@@ -1660,7 +1660,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s1);
-  padding: var(--s3) 0;
+  padding: var(--s2) 0;
   border-top: var(--hair) solid var(--line);
 }
 
@@ -1710,4 +1710,11 @@
 
 .pc-rd-fix .pc-rd-body {
   flex-basis: 140px;
+}
+
+/* a verdict the person earned, stamped beside its square */
+.pc-v-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
 }

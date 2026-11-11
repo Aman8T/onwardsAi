@@ -131,6 +131,7 @@ export function ApplicationsView({ profileId, onPrepare, onSeeMatch, onShare, on
 
       {tracker.items.length === 0 && (
         <section className="panel dm-sec">
+          <p className="hand">Your first saved role starts the pile.</p>
           <p className="dm-muted">Nothing saved yet. Press Save on a role and it is kept here, with its stage, the date you applied and a note.</p>
           <div className="dm-actions">
             <button type="button" className="btn btn-primary dm-btn" onClick={onBack}>
