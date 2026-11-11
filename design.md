@@ -233,6 +233,26 @@ When pages must look different for every person *and* must never break, variety 
 
 In dark, the spotlight (`src/light/Spot.tsx`) is white at 10 % under the wake. Escape hatch: `localStorage tayyari.look = 'today'` or `?look=today` brings back the earlier look; `?look=quiet` pins quiet. `boot.js` writes the attribute before first paint; `setLook` / `useLook` in `theme/ambient.ts` change it at runtime. Compare the two, scheme by scheme and screen by screen, at `/dev/design`.
 
+## 7b. The hand-touched kit and the density scale (2026-11-11)
+
+**Hand-touched means yours, clean means measured.** A small kit in `src/styles/global.css` marks what the person wrote, did or earned, and gives an empty state a human nudge. Everything the code or a model computed (scores, evidence, requirement tables, analysis, forms) stays straight and precise. That contrast is the point: the page tells you at a glance which parts are you and which parts are the measurement.
+
+| Class | What it is | Use it for |
+| --- | --- | --- |
+| `.slip` (+ `.slip-pin`, `.slip-tape`, `.slip-fold`) | a slip of paper on `--accent-soft` with a 1px `--line-strong` edge, held by a pin, a strip of tape, or with a folded corner | the person's own note, their card, a nudge about their resume, the coach's nudge |
+| `.tilt-l`, `.tilt-r` | a turn of 1.5 or 1.2 degrees; a pressable slip straightens on hover and focus | slips only |
+| `.hand`, `.hand-margin` | Instrument Serif italic; the margin form is turned 2 degrees | the person's own words; one line in an empty state |
+| `.stamp` (+ `.stamp-ok`, `.stamp-quiet`) | a small mono rubber stamp, turned 2 degrees | a stage reached, a verdict earned, "new", "done", "default" |
+| `.hl` | a highlighter swipe behind a phrase | the one freshest win in a list |
+| `.scribble` | a ring or underline drawn by hand, an inline SVG path with a 1.25 stroke | one number the person earned (weeks in a row) |
+| `.stack` | one or two offset edges behind a sheet | a pile of the person's own things (notes, left-out blocks) |
+
+Rules: at most three turned pieces in view; nothing turned holds a field, a table or a long list; no shadow (a slip is lifted by its tone and its turn); under 760px and under reduced motion nothing is turned. The kit handles both, so screens never add their own rotation.
+
+**Density.** Gap between page sections `--s4`; card padding `--s4` top and bottom, `--s5` left and right; row padding `--s2`; headers 64px; one hero type size per screen and everything else a step down. Controls stay at least 36px tall on desktop and 44px on touch and under 760px.
+
+**Contrast (quiet look).** Since 2026-11-11 a light card is one step lighter than the field (`--surface` .953 over `--bg` .935), hairlines are `--line` .73 light and .38 dark, and small text is `--text-muted` .38 / .84 and `--text-faint` .47 / .72. Prominence comes from these, never from a shadow.
+
 ## 8. Exception one: the liquid cursor
 
 Every screen (2026-10-20; canvas https://claude.ai/artifact/U8LW9zvPXdYNAT5T769WfU, "The cursor as liquid"). A soft drop of dye follows the pointer like a hand moving through coloured liquid: it leans the way you move, stretches and thins with speed, trails a short wake, and settles with at most a small overshoot when you stop. It bends "no spatial motion" and "no effects", and it is bounded so that it stays one exception.

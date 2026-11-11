@@ -45,6 +45,9 @@ function calmBoot(): Plugin {
 
 export default defineConfig({
   plugins: [react(), calmBoot()],
+  // the app has one entry. Left alone, the dev server's first scan crawls every .html in the repo (experiments, built
+  // pages, design sync) and can hang before it serves a module.
+  optimizeDeps: { entries: ['index.html'] },
   server: {
     port: Number(process.env.PORT ?? 5173),
     proxy: {

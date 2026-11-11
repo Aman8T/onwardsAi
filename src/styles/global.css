@@ -515,3 +515,233 @@ textarea.field {
     display: none;
   }
 }
+
+/* ───────────── the hand-touched kit ─────────────
+ *
+ * Hand-touched means YOURS, clean means MEASURED. These pieces mark what the person wrote, did or earned (their note,
+ * their words, a win, a stage they reached) and a human nudge in an empty state. Scores, evidence, tables and anything
+ * the code or a model computed stay straight. At most three turned pieces in view; never on a field or a table.
+ * Tokens only, 1px lines, no shadow: a slip is lifted by its tone and its turn. Under 760px, and when the person asks
+ * for less motion, nothing is turned.
+ */
+
+/* a slip of paper */
+.slip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+  padding: var(--s4);
+  background: var(--accent-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-s);
+  color: var(--text);
+  text-align: left;
+  transition: transform var(--d-base) var(--ease);
+}
+
+/* held by one pin */
+.slip-pin {
+  padding-top: var(--s5);
+}
+
+.slip-pin::before {
+  content: '';
+  position: absolute;
+  top: var(--s2);
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--accent-ui);
+}
+
+/* held by a strip of tape across the top edge */
+.slip-tape {
+  margin-top: var(--s2);
+}
+
+.slip-tape::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 64px;
+  height: 18px;
+  margin-left: -32px;
+  background: var(--fill-strong);
+  border: 1px solid var(--line);
+  transform: rotate(-3deg);
+}
+
+/* a corner folded over */
+.slip-fold {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  border-top-right-radius: 0;
+}
+
+.slip-fold::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 14px;
+  height: 14px;
+  background: var(--fill-strong);
+  border-left: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+/* a turn of a degree or two; a slip you point at straightens, as if picked up */
+.tilt-l {
+  transform: rotate(-1.5deg);
+}
+
+.tilt-r {
+  transform: rotate(1.2deg);
+}
+
+@media (hover: hover) {
+  :is(a, button).slip:hover,
+  .slip.is-live:hover {
+    transform: none;
+    border-color: var(--accent-ui);
+  }
+}
+
+:is(a, button).slip:focus-visible,
+.slip:focus-within {
+  transform: none;
+}
+
+/* handwriting: the person's own words, or a line written in the margin */
+.hand {
+  font-family: var(--font-serif);
+  font-size: var(--fs-4);
+  font-style: italic;
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.hand-margin {
+  display: inline-block;
+  color: var(--text-muted);
+  transform: rotate(-2deg);
+  transform-origin: left center;
+}
+
+/* a rubber stamp: a stage reached, a thing that is new */
+.stamp {
+  display: inline-block;
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--accent-ui);
+  border-radius: var(--r-s);
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  line-height: 1.5;
+  letter-spacing: var(--track-open);
+  text-transform: lowercase;
+  color: var(--accent);
+  white-space: nowrap;
+  transform: rotate(-2deg);
+}
+
+.stamp-ok {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.stamp-quiet {
+  border-color: var(--line-strong);
+  color: var(--text-muted);
+}
+
+/* a highlighter swipe behind a phrase */
+.hl {
+  padding: 0 0.2em;
+  background: linear-gradient(-2deg, transparent 12%, var(--accent-soft) 12%, var(--accent-soft) 88%, transparent 88%);
+  border-radius: 2px;
+}
+
+/* a ring or an underline drawn by hand: an inline SVG behind one number or word */
+.scribble {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+.scribble > svg {
+  position: absolute;
+  inset: -22% -18%;
+  width: 136%;
+  height: 144%;
+  z-index: -1;
+  overflow: visible;
+  fill: none;
+  stroke: var(--accent-ui);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.scribble-under > svg {
+  inset: auto -4% -0.3em;
+  width: 108%;
+  height: 0.5em;
+}
+
+/* a pile of papers: one or two edges showing behind the top sheet */
+.stack {
+  position: relative;
+  isolation: isolate;
+}
+
+.stack::before,
+.stack::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1px solid var(--line-strong);
+  border-radius: inherit;
+  background: var(--surface-2);
+}
+
+.stack::before {
+  transform: translate(5px, 5px) rotate(1.2deg);
+}
+
+.stack::after {
+  transform: translate(2px, 3px) rotate(-0.8deg);
+}
+
+.stack.is-single::before,
+.stack.is-single::after {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .tilt-l,
+  .tilt-r,
+  .hand-margin,
+  .stamp,
+  .slip-tape::before,
+  .stack::before,
+  .stack::after {
+    transform: none;
+  }
+
+  .stack::before {
+    translate: 3px 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slip {
+    transition: none;
+  }
+}

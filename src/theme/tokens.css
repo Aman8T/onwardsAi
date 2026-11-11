@@ -405,12 +405,12 @@
     --lobe-2-clear: oklch(0.9 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h2) / 0);
     --lobe-3-clear: oklch(0.915 calc(0.022 * var(--k) * var(--kw) * var(--kb)) var(--h3) / 0);
     --lobe-4-clear: oklch(0.905 calc(0.025 * var(--k) * var(--kw) * var(--kb)) var(--h4) / 0);
-    --surface: oklch(0.935 calc(0.018 * var(--k) * var(--kw)) var(--h));
-    --surface-2: oklch(0.955 calc(0.012 * var(--k)) var(--h));
-    --well: oklch(0.96 calc(0.01 * var(--k)) var(--h));
+    --surface: oklch(0.953 calc(0.014 * var(--k) * var(--kw)) var(--h)); /* 2026-11-11: a card is one step lighter than the field (was the field, .935) */
+    --surface-2: oklch(0.968 calc(0.01 * var(--k)) var(--h));
+    --well: oklch(0.975 calc(0.008 * var(--k)) var(--h));
     --text: oklch(0.22 calc(0.02 * var(--k)) var(--h));
-    --text-muted: oklch(0.42 calc(0.02 * var(--k)) var(--h));
-    --text-faint: oklch(0.52 calc(0.022 * var(--k)) var(--h));
+    --text-muted: oklch(0.38 calc(0.02 * var(--k)) var(--h)); /* 2026-11-11: small text reads (was .42, faint .52) */
+    --text-faint: oklch(0.47 calc(0.022 * var(--k)) var(--h));
     --accent: oklch(0.46 calc(0.076 * var(--k)) var(--h));
     --accent-ui: oklch(0.5 calc(0.082 * var(--k)) var(--h));
     --accent-strong: oklch(0.38 calc(0.063 * var(--k)) var(--h));
@@ -419,8 +419,8 @@
     --fill-2: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.085);
     --fill-strong: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.19);
     --grid: oklch(0.22 calc(0.02 * var(--k)) var(--h) / 0.08);
-    --line: oklch(0.8 calc(0.024 * var(--k)) var(--h)); /* 2026-11-10: hairlines read on the light field (was .9) */
-    --line-strong: oklch(0.6 calc(0.05 * var(--k)) var(--h)); /* (was .84) */
+    --line: oklch(0.73 calc(0.026 * var(--k)) var(--h)); /* 2026-11-11: hairlines and card edges read (was .8, before that .9) */
+    --line-strong: oklch(0.53 calc(0.05 * var(--k)) var(--h)); /* (was .6) */
     --selection: oklch(0.88 calc(0.05 * var(--k)) var(--h));
     --danger: oklch(0.48 0.12 25);
   }
@@ -439,8 +439,8 @@
       --surface-2: oklch(0.25 calc(0.028 * var(--k)) var(--h));
       --well: oklch(0.11 calc(0.017 * var(--k)) var(--h));
       --text: oklch(0.96 calc(0.008 * var(--k)) var(--h));
-      --text-muted: oklch(0.8 calc(0.016 * var(--k)) var(--h));
-      --text-faint: oklch(0.67 calc(0.02 * var(--k)) var(--h));
+      --text-muted: oklch(0.84 calc(0.016 * var(--k)) var(--h));
+      --text-faint: oklch(0.72 calc(0.02 * var(--k)) var(--h));
       --accent: oklch(0.78 calc(0.1 * var(--k)) var(--h));
       --accent-ui: oklch(0.72 calc(0.108 * var(--k)) var(--h));
       --accent-strong: oklch(0.9 calc(0.045 * var(--k)) var(--h));
@@ -450,8 +450,8 @@
       --fill-strong: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.3);
       --spot: oklch(1 0 0 / 0.1);
       --grid: oklch(0.96 calc(0.008 * var(--k)) var(--h) / 0.12);
-      --line: oklch(0.31 calc(0.026 * var(--k)) var(--h));
-      --line-strong: oklch(0.48 calc(0.03 * var(--k)) var(--h));
+      --line: oklch(0.38 calc(0.028 * var(--k)) var(--h));
+      --line-strong: oklch(0.56 calc(0.03 * var(--k)) var(--h));
       --selection: oklch(0.37 calc(0.058 * var(--k)) var(--h));
       --danger: oklch(0.72 0.12 25);
     }
@@ -471,8 +471,8 @@
     --surface-2: oklch(0.25 calc(0.028 * var(--k)) var(--h));
     --well: oklch(0.11 calc(0.017 * var(--k)) var(--h));
     --text: oklch(0.96 calc(0.008 * var(--k)) var(--h));
-    --text-muted: oklch(0.8 calc(0.016 * var(--k)) var(--h));
-    --text-faint: oklch(0.67 calc(0.02 * var(--k)) var(--h));
+    --text-muted: oklch(0.84 calc(0.016 * var(--k)) var(--h));
+    --text-faint: oklch(0.72 calc(0.02 * var(--k)) var(--h));
     --accent: oklch(0.78 calc(0.1 * var(--k)) var(--h));
     --accent-ui: oklch(0.72 calc(0.108 * var(--k)) var(--h));
     --accent-strong: oklch(0.9 calc(0.045 * var(--k)) var(--h));
@@ -482,8 +482,8 @@
     --fill-strong: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.3);
     --spot: oklch(1 0 0 / 0.1);
     --grid: oklch(0.96 calc(0.008 * var(--k)) var(--h) / 0.12);
-    --line: oklch(0.31 calc(0.026 * var(--k)) var(--h));
-    --line-strong: oklch(0.48 calc(0.03 * var(--k)) var(--h));
+    --line: oklch(0.38 calc(0.028 * var(--k)) var(--h));
+    --line-strong: oklch(0.56 calc(0.03 * var(--k)) var(--h));
     --selection: oklch(0.37 calc(0.058 * var(--k)) var(--h));
     --danger: oklch(0.72 0.12 25);
   }

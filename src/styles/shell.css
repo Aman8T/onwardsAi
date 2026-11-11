@@ -29,7 +29,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s5);
-  min-height: 76px;
+  min-height: 64px;
   /* Full-bleed band, content aligned to the stack's column. */
   padding-inline: max(var(--gv-gutter), calc((100% - var(--gv-max)) / 2 + var(--gv-gutter)));
   background: var(--bg);
