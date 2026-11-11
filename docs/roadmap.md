@@ -1246,7 +1246,23 @@ Canvas: https://claude.ai/artifact/BCWRN3S1E3ue6w9jEY566c (rows Home, Ask, Analy
 - **Thinking stream.** `src/views/analysis/thinkingLines.ts` is the one content file; `thinking.ts` picks from it by the
   run's real step; `npm run check:thinking` proves the rules.
 
-Not done: a dev gallery state for a streamed dock answer; the walkthrough's step 23 has not been run against a live key.
+The dock's states have a gallery at `/dev/ask`. Not done: the walkthrough's step 23 has not been run against a live key.
+
+## H2 · The rest of /resume, Apply with the default, notes that follow the account (2026-11-11)
+
+Specs: `docs/resume.md` (Versions 2 and 3, "The graph reads every block") and `docs/auto-apply.md` §3.4.
+
+- `/resume`: the grammar check at Finalise; the coach's rewrite card; wordings from other resumes; a Match resume saved
+  into the list; a second resume file merged into the same blocks in code (`resume/merge.py`), each file kept as its own
+  resume with its original bytes (`resume_files`, migration 0021); "Update my graph" (`POST /api/analyze` with
+  `fromProfile`, then `storage/repos/carry.py` moves resumes, files, own-words facts and notes to the new profile).
+- Apply for me: "my current resume" is the default finalised resume, an unedited upload still as its original file, and
+  each application keeps a frozen copy the digest covers (`applications.resume_copy`, migration 0020).
+- Dashboard notes follow a signed-in account (`desk_notes`, migration 0019, `/api/notes`); the share slip knows when the
+  card is live.
+
+Open: resolving a disagreement between two files; contact lines in the merge; "How it merged" for files added in an
+earlier visit (no route returns an old merge report); the frozen copy of an unedited upload as its original bytes.
 
 ## Follow-ups
 
