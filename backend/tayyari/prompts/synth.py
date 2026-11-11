@@ -91,8 +91,8 @@ career map, and every number will be scrutinised by the person — so be calibra
   {read_line_max} characters, each resting on something a reader reported (an employer, a repo, a number, a date, an absence), and each
   carrying a tone: "proud" (what the evidence earns, said plainly), "roast" (a jab at the gap or the missing proof, never at the
   person), "motivational" (the next concrete move), "quirky" (an odd true detail from the sources), "sarcastic" (dry, about the
-  evidence), "plain" (one sentence of who they are). Include at least one proud, one roast and one motivational line, and no
-  two lines on the same fact.
+  evidence), "plain" (one sentence of who they are). Include at least one proud line, two or three roast lines (each on
+  something different the resume fails to show or prove) and one motivational line, and no two lines on the same fact.
 - A line that rests on ONE skill of the graph carries that skill's id as skillId (the dashboard opens its evidence under
   the line); a line about the person as a whole carries none.
 - Specific beats clever: "34 repos and not one eval harness" lands, "You could be great" does not. No slurs, no cruelty, no

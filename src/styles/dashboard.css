@@ -339,7 +339,7 @@
   padding-bottom: var(--s1);
 }
 
-/* the line: a tone chip, the sentence, "Another". The sentence fades in when it changes (one beat, never a loop). */
+/* the line: its theme in small print, the sentence, who said it, "Another". It fades in when it changes (one beat, never a loop). */
 .db-lines {
   display: flex;
   flex-wrap: wrap;
@@ -348,20 +348,14 @@
   min-height: calc(var(--fs-5) * var(--lh-snug) * 2);
 }
 
-.db-tone {
+.db-theme,
+.db-line-note {
   flex: none;
-  align-self: center;
+  animation: db-line-in var(--d-base) var(--ease) both;
 }
 
-.db-tone-roast,
-.db-tone-sarcastic {
-  border-style: dashed;
-}
-
-.db-tone-proud {
-  background: var(--accent-soft);
-  border-color: transparent;
-  color: var(--text);
+.db-read-line.is-quote {
+  font-style: italic;
 }
 
 .db-read-line {
@@ -411,7 +405,9 @@ button.db-read-line.is-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .db-read-line {
+  .db-read-line,
+  .db-theme,
+  .db-line-note {
     animation: none;
   }
 }

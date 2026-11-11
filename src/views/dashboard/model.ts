@@ -1,7 +1,7 @@
 /**
  * Pure helpers for the top of the dashboard, the person's own space:
  *
- *   readLines       the read's one-liners (each in a tone), the ones the top of the page rotates through
+ *   readLines       the read's one-liners (each in a tone); lines.ts mixes them with the day's other lines
  *   achievements    what is worth celebrating, counted from the graph and what the features store
  *   notOnResume     the strongest skills the other sources proved that the resume never mentions
  *   deltas          what moved between two analyses of the same person
@@ -19,16 +19,7 @@ import { rankRoles } from '../../lib/layout';
 
 /* ───────────────────────── the read ───────────────────────── */
 
-export const TONE_LABEL: Record<ReadTone, string> = {
-  proud: 'Proud',
-  roast: 'Roast',
-  motivational: 'Next move',
-  quirky: 'Quirky',
-  sarcastic: 'Dry',
-  plain: 'Plainly',
-};
-
-/** The lines of the read that carry a tone; a profile written before the lines existed has none. */
+/** The lines of the read that carry a tone; a profile written before the lines existed has none. lines.ts gives each a theme. */
 export function readLines(profile: Profile): Array<ReadLine & { tone: ReadTone }> {
   return (profile.read ?? []).filter((l): l is ReadLine & { tone: ReadTone } => !!l.tone && !!l.text.trim());
 }

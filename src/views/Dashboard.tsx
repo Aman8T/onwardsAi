@@ -129,8 +129,8 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
       <SaveInvite profile={profile} />
 
       <main className="db-main">
-        {/* the person's own space: the greeting and one line of the read at a time */}
-        <Hello profile={profile} />
+        {/* the person's own space: the greeting and one line at a time (an achievement, a roast, a tip, a quote…) */}
+        <Hello profile={profile} shelf={shelf} history={history} />
 
         {/* the desk: where they left off, their own note, the weeks they showed up */}
         <div className="db-bento">

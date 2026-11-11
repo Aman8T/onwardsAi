@@ -1,25 +1,37 @@
 /**
  * The top of the dashboard, the person's own space:
  *
- *   Hello                the greeting for the hour and the day, then the read: one line at a time, in a tone (proud,
- *                        roast, motivational, quirky, dry, plain), changing every few seconds and on "Another"; a line
- *                        that rests on a skill opens that skill's evidence in a drawer under it (the quote, its source,
- *                        "This is wrong")
+ *   Hello                the greeting for the hour and the day, then one line at a time from a theme (an achievement, a
+ *                        roast, a next move, a did-you-know, the tip of the day, a quote; lines.ts builds them),
+ *                        changing every few seconds and on "Another"; a line that rests on a skill opens that skill's
+ *                        evidence in a drawer under it (the quote, its source, "This is wrong")
  *   usePreviousProfile   the analysis before this one, for what moved since
  *   AskStrip             one field and four questions worth asking about yourself; each opens the chat with that question
  *
- * The read's lines are written once, at analysis time, and stored on the profile. The desk under it (Desk.tsx) holds
- * what is counted: where the person left off, their weeks, the shelf.
+ * The read's lines are written once, at analysis time, and stored on the profile; the rest of the lines are counted
+ * from the records or come from the quotes and tips in lines.ts. The desk under it (Desk.tsx) holds what is counted:
+ * where the person left off, their weeks, the shelf.
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import type { Profile, ReadTone } from '../../../shared/types';
+import type { PracticeHistory } from '../../../shared/interview';
+import type { Profile } from '../../../shared/types';
 import { useMe } from '../../auth/useMe';
 import { fetchProfile } from '../../lib/api';
 import { skillAction } from '../../lib/prompts';
 import { plural, useMediaQuery } from '../../lib/ui';
 import { actions, useApp } from '../../store';
-import { TONE_LABEL, askQuestions, readLines } from './model';
+import type { LineOrigin } from './lines';
+import { THEME_LABEL, deskLines, localDay } from './lines';
+import type { Achievement } from './model';
+import { askQuestions } from './model';
+
+/** What the small print under the line says about where it came from. */
+const ORIGIN_NOTE: Record<LineOrigin, string> = {
+  read: 'Written from your evidence',
+  counted: 'Counted from your records',
+  written: 'Changes every day',
+};
 
 /* ───────────────────────── the greeting and the read ───────────────────────── */
 
@@ -32,21 +44,18 @@ function greeting(now: Date, name: string): string {
   return first ? `${word}, ${first}.` : `${word}.`;
 }
 
-export function Hello({ profile }: { profile: Profile }) {
+export function Hello({ profile, shelf, history }: { profile: Profile; shelf: readonly Achievement[]; history: PracticeHistory | null }) {
   const skills = useMemo(() => new Map(profile.skills.map((s) => [s.id, s])), [profile.skills]);
   const sources = useMemo(() => new Map(profile.sources.map((s) => [s.id, s])), [profile.sources]);
   const domains = useMemo(() => new Map(profile.domains.map((d) => [d.id, d])), [profile.domains]);
-  // the read's lines; a graph from before the read gets its mastery insight as the one plain line
-  const lines = useMemo(() => {
-    const own = readLines(profile);
-    return own.length ? own : [{ text: profile.mastery.insight, tone: 'plain' as ReadTone }];
-  }, [profile]);
+  const today = useMemo(() => new Date(), []);
+  // today's lines, the themes taking turns; never empty (the quotes and the tip need no data)
+  const lines = useMemo(() => deskLines({ profile, shelf, history, day: localDay(today.getTime()) }), [profile, shelf, history, today]);
 
   const [at, setAt] = useState(() => Math.floor(Date.now() / ROTATE_MS) % Math.max(1, lines.length));
   const [paused, setPaused] = useState(false);
   const [open, setOpen] = useState<{ skillId: string; at: number } | null>(null);
   const still = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const today = useMemo(() => new Date(), []);
 
   // a new profile starts over
   useEffect(() => {
@@ -98,12 +107,14 @@ export function Hello({ profile }: { profile: Profile }) {
         </span>
       </div>
 
-      {/* one line at a time */}
+      {/* one line at a time: its theme in small print, the sentence, who said it */}
       <div className="db-lines" aria-live="polite">
-        <span className={`chip db-tone db-tone-${line.tone}`}>{TONE_LABEL[line.tone]}</span>
+        <span key={`theme-${line.id}`} className="kicker db-theme">
+          {THEME_LABEL[line.theme]}
+        </span>
         {cited ? (
           <button
-            key={at}
+            key={line.id}
             type="button"
             className={`db-read-line serif${open?.skillId === line.skillId ? ' is-open' : ''}`}
             aria-expanded={open?.skillId === line.skillId}
@@ -113,9 +124,14 @@ export function Hello({ profile }: { profile: Profile }) {
             {line.text}
           </button>
         ) : (
-          <p key={at} className="db-read-line serif">
+          <p key={line.id} className={`db-read-line serif${line.theme === 'quote' ? ' is-quote' : ''}`}>
             {line.text}
           </p>
+        )}
+        {line.note && (
+          <span key={`note-${line.id}`} className="db-fine db-line-note">
+            {line.note}
+          </span>
         )}
         {lines.length > 1 && (
           <button type="button" className="db-link db-another" onClick={next} aria-label="Another line">
@@ -160,12 +176,14 @@ export function Hello({ profile }: { profile: Profile }) {
 
       <div className="db-readmeta">
         <span className="kicker">
-          {cited ? 'Click the line for its evidence' : 'Written from your evidence'}
-          {lines.length > 1 ? ` · ${plural(lines.length, 'line')}` : ''}
+          {cited ? 'Click the line for its evidence' : ORIGIN_NOTE[line.origin]}
+          {lines.length > 1 ? ` · ${(at % lines.length) + 1} of ${lines.length}` : ''}
         </span>
-        <button type="button" className="db-link" onClick={tell}>
-          Doesn't sound like you? Tell Leafout
-        </button>
+        {line.origin === 'read' && (
+          <button type="button" className="db-link" onClick={tell}>
+            Doesn't sound like you? Tell Leafout
+          </button>
+        )}
       </div>
     </header>
   );
