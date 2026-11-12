@@ -1,8 +1,8 @@
 /*
  * Boot — runs inline in <head> before any stylesheet, immediately after hue.js
  * (inlined with its exports stripped by the calmBoot() plugin in vite.config.ts),
- * so `hueAt` and `applyHue` are already in scope. It writes data-scheme, the five
- * hue custom properties and data-atmo on <html> so the very first paint has the
+ * so `hueAt` and `applyHue` are already in scope. It writes data-scheme, the hue and chroma
+ * custom properties (--h … --kb and the --c-* numbers) and data-atmo on <html> so the very first paint has the
  * right scheme, look and colour. The look is quiet unless tayyari.look is 'today' or ?look=today.
  *
  * No imports, no exports, no module syntax. Everything is guarded: if anything

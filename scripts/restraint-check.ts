@@ -3,7 +3,8 @@
  *
  * Scans src/**\/*.{css,ts,tsx} and index.html. Zero dependencies.
  * Run with `npx tsx scripts/restraint-check.ts`; exits 1 and lists file:line on:
- *   - box-shadow, text-shadow, drop-shadow(), backdrop-filter, blur(<length>)
+ *   - box-shadow, text-shadow, drop-shadow(), backdrop-filter, blur(<length>); the one exception (2026-11-12, the
+ *     user's decision) is a box-shadow declaration whose every colour is var(--paper-shade) or var(--paper-shade-soft)
  *   - any border (or side / width longhand) thicker than 1px — outline is allowed
  *   - colour literals (#hex, rgb/rgba/hsl/hsla, color-mix; in stylesheets also literal
  *     oklch/oklab/lab/lch/hwb/color) outside src/theme/tokens.css and the favicon line of index.html
@@ -11,7 +12,7 @@
  *     stroke-dashoffset, offset-distance, width, height, left, top)
  *   - `infinite` animations outside .ch-typing, .ch-caret, .ch-live, .ch-tool.is-busy, and the radar's leaf and heartbeat
  *     (.radar-leaf, .radar-heart: a 1-2 % scale, still under reduced motion; the user asked for a radar that feels alive)
- *   - a transition naming a hue property (--h, --h2, --h3, --k, --kw, --kb) or `all`,
+ *   - a transition naming a hue property (--h, --h2, --h3, --h4, --k, --kw, --kb, the --c-* chroma numbers) or `all`,
  *     which would animate the registered hue properties on every 7 s step
  *   - the old theme files still existing
  */
@@ -112,9 +113,34 @@ function thickerThanOnePx(value: string): boolean {
 
 type Rule = (text: string, file: string, report: (index: number, rule: string) => void) => void;
 
+/**
+ * The one shadow the user allows (2026-11-12): a short shadow on paper pieces. A `box-shadow` declaration passes only
+ * when every colour in it is var(--paper-shade) or var(--paper-shade-soft); anything else (another colour, a literal,
+ * `none`, a transition that names it) is still forbidden. Returns the length of the declaration when it passes, else 0.
+ */
+function paperShadowAt(text: string, index: number, word: string): number {
+  const after = text.slice(index + word.length);
+  const head = /^\s*:\s*/.exec(after);
+  if (!head) return 0;
+  const rest = after.slice(head[0].length);
+  // CSS: up to ; or }.  JS/TS: a quoted string.
+  const quoted = /^(['"`])((?:(?!\1)[^\\]|\\.)*)\1/.exec(rest);
+  const value = quoted ? quoted[2] : (/^[^;}]*/.exec(rest)?.[0] ?? '');
+  const colours = value.match(/var\(\s*--[\w-]+\s*\)/g) ?? [];
+  if (!colours.length || !colours.every((c) => /^var\(\s*--paper-shade(?:-soft)?\s*\)$/.test(c))) return 0;
+  const residue = value
+    .replace(/var\(\s*--paper-shade(?:-soft)?\s*\)/g, '')
+    .replace(/\binset\b|[,\s]/g, '')
+    .replace(/-?\d*\.?\d+(?:px|r?em)?/g, '');
+  return residue === '' ? head[0].length + (quoted ? quoted[0].length : value.length) : 0;
+}
+
 const effects: Rule = (text, _file, report) => {
   const re = /\b(?:box-shadow|text-shadow|backdrop-filter|boxShadow|textShadow|backdropFilter)\b|drop-shadow\(|blur\(\s*[\d.]/g;
-  for (const m of text.matchAll(re)) report(m.index, `forbidden effect: ${m[0].replace(/\(.*$/, '(')}`);
+  for (const m of text.matchAll(re)) {
+    if ((m[0] === 'box-shadow' || m[0] === 'boxShadow') && paperShadowAt(text, m.index, m[0])) continue;
+    report(m.index, `forbidden effect: ${m[0].replace(/\(.*$/, '(')}`);
+  }
 };
 
 const borders: Rule = (text, _file, report) => {
@@ -161,7 +187,7 @@ const infiniteAnimations: Rule = (text, _file, report) => {
 
 const hueTransitions: Rule = (text, _file, report) => {
   for (const m of text.matchAll(/\btransition(?:-property|Property)?\s*:\s*([^;}]*)/g)) {
-    if (/--(?:h[23]?|kw|kb|k)\b/.test(m[1])) report(m.index, 'transition names a hue property');
+    if (/--(?:h[234]?|kw|kb|k|c-[a-z0-9]+-[dl])(?![\w-])/.test(m[1])) report(m.index, 'transition names a hue property');
     else if (/(?:^|[\s,'"`])all\b/.test(m[1])) report(m.index, 'transition: all would animate the registered hue properties');
   }
 };

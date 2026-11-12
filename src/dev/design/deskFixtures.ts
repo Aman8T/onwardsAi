@@ -1,10 +1,11 @@
 /**
  * What the dashboard's desk reads, as fixtures for `/dev/design?screen=dashboard`: a few weeks of practice, a plan, a
  * match, tracked roles (one with a note) and a conversation, dated back from today so the squares and the streak have
- * something to show. `?desk=empty` shows the desk of someone who has only the analysis.
+ * something to show, and Discover's last search. `?desk=empty` shows the desk of someone who has only the analysis;
+ * `?desk=nonotes` is the full desk with no note written on any saved role (the yellow post-it then offers its three prompts).
  */
 import type { PracticeHistory, SessionSummary, Verdict } from '../../../shared/interview';
-import type { AiJob } from '../../../shared/jobsearch';
+import type { AiJob, JobSearchRun } from '../../../shared/jobsearch';
 import type { TrackedJob } from '../../discover/applications/tracker';
 import type { DashboardSeed } from '../../views/Dashboard';
 
@@ -86,3 +87,24 @@ export const DESK_SEED: DashboardSeed = {
 };
 
 export const EMPTY_SEED: DashboardSeed = { history: { sessions: [], claims: [], facts: [] }, plans: [], matches: [], tracked: [], threads: [] };
+
+/** The last Discover search: eight roles found yesterday, a few of them good fits. */
+function aJob(id: string, fit: AiJob['fit']): AiJob {
+  return { id, title: 'Design Engineer', employer: 'Fixture Co', place: { label: 'Bengaluru', precision: 'city' }, workMode: 'hybrid', checkedAt: ago(1), applyUrl: '#', applyHost: 'job-boards.greenhouse.io', foundVia: 'web', fit, level: 'at', met: [], gaps: [], asks: { met: 4, partly: 1, notShown: 1 } } as unknown as AiJob;
+}
+
+const RUN: JobSearchRun = {
+  runId: 'run1',
+  createdAt: ago(1),
+  city: 'Bengaluru',
+  remote: true,
+  jobs: [aJob('r1', 'strong'), aJob('r2', 'good'), aJob('r3', 'good'), aJob('r4', 'good'), aJob('r5', 'stretch'), aJob('r6', 'stretch'), aJob('r7', 'stretch'), aJob('r8', 'stretch')],
+  funnel: [],
+  trail: [],
+};
+
+DESK_SEED.run = RUN;
+EMPTY_SEED.run = null;
+
+/** The full desk with no note on any saved role. */
+export const NO_NOTES_SEED: DashboardSeed = { ...DESK_SEED, tracked: (DESK_SEED.tracked ?? []).map((t) => ({ ...t, note: '' })) };

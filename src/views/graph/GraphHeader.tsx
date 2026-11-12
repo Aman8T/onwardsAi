@@ -7,6 +7,7 @@
  */
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useId, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { Profile } from '../../../shared/types';
 import { AccountMenu } from '../../auth/AccountMenu';
 import { Atmosphere } from '../../components/Atmosphere';
@@ -19,7 +20,7 @@ import { actions } from '../../store';
 
 export type GraphHeaderCurrent = 'dashboard' | 'role';
 
-export function GraphHeader({ profile, current }: { profile: Profile; current: GraphHeaderCurrent }) {
+export function GraphHeader({ profile, current, extra }: { profile: Profile; current: GraphHeaderCurrent; /** Optional controls placed first in the right-hand cluster (the dashboard puts the Weekly there). */ extra?: ReactNode }) {
   const now = useNow(30_000);
   const nSources = profile.sources.filter((s) => s.ok).length;
   const name = profile.person.name || 'You';
@@ -61,6 +62,7 @@ export function GraphHeader({ profile, current }: { profile: Profile; current: G
         <span className="kicker gv-status">
           {plural(nSources, 'source')} · analysed {Number.isFinite(analysedAt) ? timeAgo(analysedAt, now) : 'recently'}
         </span>
+        {extra}
         <button type="button" className="gv-navbtn" onClick={() => actions.openDiscover({ tab: 'applications' })}>
           Your applications{open > 0 ? ` · ${open}` : ''}
         </button>

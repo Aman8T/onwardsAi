@@ -4,7 +4,7 @@
  * Owns the Drift / Still / Off choice, the Light / Dark / System choice, the quiet / today look, the ?h=
  * ?scheme= and ?look= overrides, the reduced-motion and slow-update fallbacks, and the
  * 7-second stepper that writes the hue custom properties. The only DOM writes
- * anywhere in this module are the five custom properties (through applyHue) and
+ * anywhere in this module are the hue and chroma custom properties (through applyHue) and
  * data-atmo / data-scheme / data-look on <html>. No requestAnimationFrame: between steps the
  * page produces zero frames.
  */

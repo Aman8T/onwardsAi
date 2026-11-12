@@ -8,28 +8,21 @@
  *   usePreviousProfile   the analysis before this one, for what moved since
  *
  * The read's lines are written once, at analysis time, and stored on the profile; the rest of the lines are counted
- * from the records or come from the quotes and tips in lines.ts. The desk under it (Desk.tsx) holds what is counted:
- * where the person left off, their weeks, the shelf.
+ * from the records or come from the quotes and tips in lines.ts. It is the top of the one-screen Home: the greeting and the
+ * line on the left, the share button and "Worth saying out loud" (`end`) on the right.
  */
 import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { PracticeHistory } from '../../../shared/interview';
 import type { Profile } from '../../../shared/types';
 import { useMe } from '../../auth/useMe';
 import { fetchProfile } from '../../lib/api';
 import { skillAction } from '../../lib/prompts';
-import { plural, useMediaQuery } from '../../lib/ui';
+import { useMediaQuery } from '../../lib/ui';
 import { actions, useApp } from '../../store';
-import type { LineOrigin } from './lines';
 import { THEME_LABEL, deskLines, localDay } from './lines';
 import type { Achievement } from './model';
 import { useDeskNotes } from './notes';
-
-/** What the small print under the line says about where it came from. */
-const ORIGIN_NOTE: Record<LineOrigin, string> = {
-  read: 'Written from your evidence',
-  counted: 'Counted from your records',
-  written: 'Changes every day',
-};
 
 /* ───────────────────────── the greeting and the read ───────────────────────── */
 
@@ -42,7 +35,7 @@ function greeting(now: Date, name: string): string {
   return first ? `${word}, ${first}.` : `${word}.`;
 }
 
-export function Hello({ profile, shelf, history }: { profile: Profile; shelf: readonly Achievement[]; history: PracticeHistory | null }) {
+export function Hello({ profile, shelf, history, end }: { profile: Profile; shelf: readonly Achievement[]; history: PracticeHistory | null; end?: ReactNode }) {
   const skills = useMemo(() => new Map(profile.skills.map((s) => [s.id, s])), [profile.skills]);
   const sources = useMemo(() => new Map(profile.sources.map((s) => [s.id, s])), [profile.sources]);
   const domains = useMemo(() => new Map(profile.domains.map((d) => [d.id, d])), [profile.domains]);
@@ -95,108 +88,101 @@ export function Hello({ profile, shelf, history }: { profile: Profile; shelf: re
     );
 
   return (
-    <header className="db-hello" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
-      <div className="db-hello-row">
-        <div className="db-hello-text">
-          <span className="kicker">{today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-          <h1 className="serif db-h1">{greeting(today, profile.person.name)}</h1>
-        </div>
-        <span className="kicker db-hello-meta">
-          {[profile.person.currentRole, profile.person.location?.split(',')[0], plural(profile.sources.filter((s) => s.ok).length, 'source')].filter(Boolean).join(' · ')}
-        </span>
+    <header className="os-top" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
+      <div className="os-top-text">
+        <p className="kicker">
+          {[today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }), profile.person.currentRole, profile.person.location?.split(',')[0]].filter(Boolean).join(' · ')}
+        </p>
+        <h1 className="serif os-h1">{greeting(today, profile.person.name)}</h1>
       </div>
+      {end && <div className="os-top-end">{end}</div>}
 
       {/* one line at a time: its theme in small print, the sentence, who said it */}
-      <div className="db-lines" aria-live="polite">
-        <span key={`theme-${line.id}`} className="kicker db-theme">
+      <div className="os-line" aria-live="polite">
+        <span key={`theme-${line.id}`} className="kicker os-line-k">
           {THEME_LABEL[line.theme]}
         </span>
         {cited ? (
           <button
             key={line.id}
             type="button"
-            className={`db-read-line serif${open?.skillId === line.skillId ? ' is-open' : ''}`}
+            className={`serif os-line-t os-line-btn${open?.skillId === line.skillId ? ' is-open' : ''}`}
             aria-expanded={open?.skillId === line.skillId}
             aria-controls="db-evidence"
+            title="Press the line for its evidence"
             onClick={() => setOpen(open?.skillId === line.skillId ? null : { skillId: line.skillId!, at: 0 })}
           >
             {line.text}
           </button>
         ) : (
-          <p key={line.id} className={`db-read-line serif${line.theme === 'quote' ? ' is-quote' : ''}`}>
+          <p key={line.id} className={`serif os-line-t${line.theme === 'quote' ? ' is-quote' : ''}`}>
             {line.text}
           </p>
         )}
         {line.note && (
-          <span key={`note-${line.id}`} className="db-fine db-line-note">
+          <span key={`note-${line.id}`} className="fine os-line-note">
             {line.note}
           </span>
         )}
-        <span className="db-line-acts">
-          {lines.length > 1 && (
-            <button type="button" className="db-link db-another" onClick={next} aria-label="Another line">
-              Another →
+        <span className="os-line-acts">
+          {line.origin === 'read' && (
+            <button type="button" className="btn btn-sm btn-quiet" aria-label="Doesn't sound like you? Tell Leafout" title="Doesn't sound like you? Tell Leafout" onClick={tell}>
+              Not you?
             </button>
           )}
           <button
             type="button"
-            className="db-link db-another"
+            className="btn btn-sm btn-quiet"
             aria-pressed={desk.isPinned(line.text)}
             onClick={() => desk.togglePin({ text: line.text, label: THEME_LABEL[line.theme], by: line.theme === 'quote' ? line.note : undefined })}
           >
             {desk.isPinned(line.text) ? 'Pinned ✓' : 'Pin it'}
           </button>
+          {lines.length > 1 && (
+            <button type="button" className="btn btn-sm" onClick={next} aria-label="Another line">
+              Another →
+            </button>
+          )}
         </span>
-      </div>
 
-      {skill && evidence && (
-        <div className="panel db-drawer" id="db-evidence" role="region" aria-label={`Evidence for ${skill.name}`}>
-          <div className="db-drawer-text">
-            <span className="kicker">
-              Evidence · {skill.evidence.length > 1 ? `${(open!.at % skill.evidence.length) + 1} of ${skill.evidence.length} · ` : ''}
-              {source?.label ?? evidence.sourceId}
-              {source?.sub ? ` · ${source.sub}` : ''}
-            </span>
-            <p className="db-drawer-q serif">“{evidence.text}”</p>
-            <span className="db-cite">
-              {skill.name} · <span className="numeral">{skill.score}</span>/100 · {domains.get(skill.domainId)?.name ?? ''}
-            </span>
-          </div>
-          <div className="db-drawer-actions">
-            {source?.url && (
-              <a className="btn btn-sm" href={source.url} target="_blank" rel="noopener noreferrer">
-                Open the source
-              </a>
-            )}
-            {skill.evidence.length > 1 && (
-              <button type="button" className="btn btn-sm btn-quiet" onClick={() => setOpen({ skillId: skill.id, at: open!.at + 1 })}>
-                Next citation →
+        {skill && evidence && (
+          <div className="panel db-drawer" id="db-evidence" role="region" aria-label={`Evidence for ${skill.name}`}>
+            <div className="db-drawer-text">
+              <span className="kicker">
+                Evidence · {skill.evidence.length > 1 ? `${(open!.at % skill.evidence.length) + 1} of ${skill.evidence.length} · ` : ''}
+                {source?.label ?? evidence.sourceId}
+                {source?.sub ? ` · ${source.sub}` : ''}
+              </span>
+              <p className="db-drawer-q serif">“{evidence.text}”</p>
+              <span className="db-cite">
+                {skill.name} · <span className="numeral">{skill.score}</span>/100 · {domains.get(skill.domainId)?.name ?? ''}
+              </span>
+            </div>
+            <div className="db-drawer-actions">
+              {source?.url && (
+                <a className="btn btn-sm" href={source.url} target="_blank" rel="noopener noreferrer">
+                  Open the source
+                </a>
+              )}
+              {skill.evidence.length > 1 && (
+                <button type="button" className="btn btn-sm btn-quiet" onClick={() => setOpen({ skillId: skill.id, at: open!.at + 1 })}>
+                  Next citation →
+                </button>
+              )}
+              <button type="button" className="btn btn-sm btn-quiet" onClick={wrong}>
+                This is wrong
               </button>
-            )}
-            <button type="button" className="btn btn-sm btn-quiet" onClick={wrong}>
-              This is wrong
-            </button>
-            <button type="button" className="btn btn-sm btn-quiet" aria-label="Close the evidence" onClick={() => setOpen(null)}>
-              Close
-            </button>
+              <button type="button" className="btn btn-sm btn-quiet" aria-label="Close the evidence" onClick={() => setOpen(null)}>
+                Close
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-
-      <div className="db-readmeta">
-        <span className="kicker">
-          {cited ? 'Click the line for its evidence' : ORIGIN_NOTE[line.origin]}
-          {lines.length > 1 ? ` · ${(at % lines.length) + 1} of ${lines.length}` : ''}
-        </span>
-        {line.origin === 'read' && (
-          <button type="button" className="db-link" onClick={tell}>
-            Doesn't sound like you? Tell Leafout
-          </button>
         )}
       </div>
     </header>
   );
 }
+
 
 /* ───────────────────────── the analysis before this one ───────────────────────── */
 

@@ -745,3 +745,226 @@ textarea.field {
     transition: none;
   }
 }
+
+/* ───────────── the kit, paper and pen (the one-screen Home, design.md 7b) ─────────────
+ *
+ * The pen is for what the person wrote or did; paper pieces (a post-it, the notebook page, the calendar page) are the only
+ * things that carry a short shadow (--paper-shade, --paper-shade-soft) and nothing else may. Tokens only.
+ */
+
+/* the pen: handwriting */
+.pen {
+  font-family: var(--font-pen);
+  font-weight: 500;
+  font-size: 23px;
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+
+/* the highlighter on a loud field: paper yellow behind a phrase, ink on top */
+.hl-paper {
+  padding: 0 0.2em;
+  background: linear-gradient(-2deg, transparent 14%, var(--paper-yellow) 14%, var(--paper-yellow) 86%, transparent 86%);
+  color: var(--paper-ink);
+  border-radius: 0;
+}
+
+/* a post-it: its own colour (--pp), a lighter curl at the foot, a short shadow under the lifted corner */
+.stick {
+  position: absolute;
+  isolation: isolate;
+}
+
+.postit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 150px;
+  padding: 20px 14px 12px;
+  color: var(--paper-ink);
+  background: linear-gradient(180deg, var(--paper-shade-soft) 0, transparent 24px), var(--pp);
+  border-bottom-right-radius: 46px 6px;
+  text-align: left;
+}
+
+.postit::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  right: 5px;
+  bottom: 9px;
+  width: 62%;
+  height: 18px;
+  box-shadow: 0 12px 10px var(--paper-shade);
+  transform: rotate(3deg);
+}
+
+/* a pile: another sheet shows behind the top one */
+.stick.pile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--paper-blue);
+  transform: rotate(3.5deg) translate(5px, 3px);
+}
+
+.postit .pen {
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.pen-under {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pcite {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--paper-ink-2);
+}
+
+.pcite-end {
+  margin-top: auto;
+}
+
+.pfoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s1) var(--s2);
+  margin-top: auto;
+  font-size: var(--fs-1);
+}
+
+.pfoot-start {
+  justify-content: flex-start;
+  gap: var(--s1) var(--s3);
+}
+
+.postit :is(a, button) {
+  color: var(--paper-ink);
+}
+
+.pbtn {
+  padding: 2px 10px;
+  border: 1px solid var(--paper-ink);
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+.plink {
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--paper-ink-2);
+  text-underline-offset: 3px;
+}
+
+/* a to-do written on paper: a small pen box in front of a line */
+.ptodo {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  text-align: left;
+  text-decoration: none;
+}
+
+.ptodo::before {
+  content: '';
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--paper-ink);
+  border-radius: 2px 3px 2px 4px;
+  transform: translateY(1px) rotate(-3deg);
+}
+
+.pnote-field {
+  width: 100%;
+  min-height: 5.5em;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--paper-ink);
+  resize: none;
+}
+
+.pnote-field::placeholder {
+  color: var(--paper-ink-2);
+}
+
+/* an empty place to put a note: a dashed square */
+.ghost {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border: 1px dashed var(--line-strong);
+  color: var(--text-muted);
+  text-decoration: none;
+  transform: rotate(4deg);
+}
+
+/* the tick box: drawn by hand, ticked in pen. aria-pressed true is done, "mixed" is half done. */
+.tick {
+  display: block;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  padding: 0;
+}
+
+.tick svg {
+  width: 24px;
+  height: 24px;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tick .bx {
+  stroke: var(--text-muted);
+  stroke-width: 1.2;
+}
+
+.tick .ck,
+.tick .hf {
+  display: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+}
+
+.tick[aria-pressed='true'] .ck,
+.tick[aria-pressed='mixed'] .hf {
+  display: block;
+}
+
+/* a ruled row: a line of the notebook, a hairline of ruled blue under each item */
+.ruled {
+  border-bottom: 1px solid var(--rule);
+}
+
+@media (max-width: 760px) {
+  .ghost {
+    transform: none;
+  }
+
+  .stick.pile::before {
+    transform: none;
+    translate: 3px 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost,
+  .stick.pile::before {
+    transform: none;
+  }
+}

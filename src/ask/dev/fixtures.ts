@@ -30,13 +30,15 @@ const thread = (reply: Omit<ChatMessage, 'id' | 'role' | 'tools'> & { tools?: Ch
   messages: [user, { id: 'a1', role: 'assistant', tools: [], ...reply }],
 });
 
-export type StateId = 'resting' | 'open' | 'waiting' | 'streaming' | 'done' | 'stopped' | 'failed' | 'rate' | 'ceiling';
+export type StateId = 'resting' | 'small' | 'open' | 'waiting' | 'streaming' | 'done' | 'stopped' | 'failed' | 'rate' | 'ceiling';
 
 export interface DockState {
   id: StateId;
   label: string;
   /** The panel is open. */
   open: boolean;
+  /** The small resting bar (the page is not scrolled to its end). */
+  compact?: boolean;
   /** The thread in the panel; null shows the starters. */
   thread: Thread | null;
   streaming: boolean;
@@ -44,6 +46,7 @@ export interface DockState {
 
 export const STATES: DockState[] = [
   { id: 'resting', label: 'Resting bar', open: false, thread: null, streaming: false },
+  { id: 'small', label: 'Small bar', open: false, compact: true, thread: null, streaming: false },
   { id: 'open', label: 'Open · starters', open: true, thread: null, streaming: false },
   { id: 'waiting', label: 'Waiting', open: true, thread: thread({ text: '', status: 'streaming' }), streaming: true },
   {

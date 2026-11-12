@@ -1,416 +1,193 @@
 /*
- * The dashboard (board "Home · /dashboard"). Class prefix db-. It shares the graph shell's header, width and gutters
- * (shell.css: --gv-max, --gv-gutter); the skill radar inside keeps now.css. Tokens only, hairlines, depth from tone
- * and space. The cards are a bento: uneven widths on one 12-column grid. The profile comes first with the slips
- * beside it (the hand-touched kit of global.css: turned a degree or two). Under 760px it is one straight column and
- * nothing is turned. Density: section gap s4, card padding s4 by s5, row padding s2.
+ * The dashboard, "Home", one screen (board "Home · one screen"). Class prefix os- for the frame and the hero, t- for the
+ * tiles of the mosaic. It shares the graph shell's sticky header (shell.css). Tokens only; the pieces that are the person's
+ * own (pen, post-its, tick box, highlighter) come from the kit at the end of global.css, and only paper pieces carry a
+ * shadow (the post-its there, the calendar page here).
+ *
+ * At 1280 x 800 and larger nothing scrolls: the body is the viewport minus the header, a hero (46 %) beside a mosaic
+ * (54 %). Below 800 px of height the page has a minimum height and scrolls. Between 760 and 1100 px wide the hero stacks
+ * above the mosaic. Under 760 px it is one straight column and nothing is turned.
  */
 
-.db-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s4);
-  width: 100%;
-  max-width: var(--gv-max);
-  margin-inline: auto;
-  padding: var(--s4) var(--gv-gutter) var(--s7);
-  /* radar labels may reach into the gutter; past it, nothing scrolls the page sideways */
-  overflow-x: clip;
+/* ───────────── the frame ───────────── */
+
+.db-view {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 800px;
+  overflow: hidden;
 }
 
-
-.db-h1 {
-  font-size: var(--fs-6);
-}
-
-/* the bento: one 12-column grid, cards of uneven width */
-.db-bento {
+.os-body {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: var(--s4);
-  align-items: stretch;
+  grid-template-columns: minmax(0, 46fr) minmax(0, 54fr);
+  flex: 1 1 0;
+  min-height: 0;
 }
 
-.db-card {
-  grid-column: span 4;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  min-width: 0;
-  padding: var(--s4) var(--s5);
+.db-view :is(.small, .fine, .mono) {
+  margin: 0;
 }
 
-/* the profile: the whole skill radar, framed, with the way to share it in its head */
-.db-top {
-  align-items: stretch;
-}
-
-.db-now {
-  grid-column: span 8;
-  min-width: 0;
-  padding: var(--s3) var(--s5) var(--s4);
-}
-
-.db-now-head {
-  align-items: center;
-  padding-bottom: var(--s2);
-  border-bottom: 1px solid var(--line);
-}
-
-/* inside the card the radar's own heading is a card title, not the page's hero */
-.db-view .db-now .now-head .now-title {
-  font-size: var(--fs-5);
-}
-
-.db-now .now-row {
-  padding-top: var(--s3);
-}
-
-.db-now .now-plot {
-  max-width: 460px;
-}
-
-/* the slips beside it: the person's notes, their card, their resume */
-.db-slips {
-  grid-column: span 4;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: var(--s5);
-  min-width: 0;
-  padding: var(--s3) var(--s2) var(--s3);
-}
-
-/* next (7) and the shelf (5); your week across; then applications (5), practice and prepare (4), matches (3) */
-.db-next {
-  grid-column: span 7;
-}
-
-.db-shelf {
-  grid-column: span 5;
-}
-
-.db-week {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: var(--s4) var(--s6);
-}
-
-.db-apps {
-  grid-column: span 5;
-}
-
-.db-practice {
-  grid-column: span 4;
-}
-
-.db-matches {
-  grid-column: span 3;
-}
-
-.db-card-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s3);
-}
-
-.db-card-title {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.db-h2 {
-  font-size: var(--fs-5);
-}
-
-.db-small {
+.db-view .small {
   font-size: var(--fs-2);
 }
 
-.db-small b {
-  font-weight: 500;
-}
-
-.db-fine {
+.db-view .fine {
   font-size: var(--fs-1);
   color: var(--text-muted);
 }
 
-.db-muted {
-  font-size: var(--fs-2);
+.db-view .mono {
+  font-family: var(--font-mono);
+}
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.card-head > * {
+  margin: 0;
+}
+
+.cite {
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
   color: var(--text-muted);
 }
 
-
-.db-link {
-  font-size: var(--fs-2);
+.db-cite {
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
   color: var(--text-muted);
-  white-space: nowrap;
 }
 
-@media (hover: hover) {
-  .db-link:hover {
-    color: var(--text);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
+/* a number in the sans, large */
+.big {
+  font-family: var(--font-sans);
+  font-size: 44px;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
 }
 
-/* rows: a hairline between, the whole row a button */
-.db-rows {
+.big-unit {
+  font-size: var(--fs-4);
+  letter-spacing: 0;
+}
+
+.gv-stamp {
+  margin-left: 6px;
+}
+
+/* ───────────── the hero: the greeting, the skill graph, the month and the ask ───────────── */
+
+.os-hero {
+  position: relative;
   display: flex;
   flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: var(--s3);
+  min-width: 0;
+  min-height: 0;
+  padding: 20px 28px 18px 32px;
 }
 
-.db-row,
-.db-role {
-  display: flex;
-  align-items: center;
-  gap: var(--s3);
-  width: 100%;
-  padding: var(--s2) 0;
-  border-top: 1px solid var(--line);
-  text-align: left;
+.os-carry {
+  padding: var(--s1) var(--s3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-m);
   color: var(--text);
 }
 
-.db-rows > li:last-child .db-row,
-.db-rows > li:last-child .db-role {
-  border-bottom: 1px solid var(--line);
-}
-
-@media (hover: hover) {
-  .db-row:hover .db-small b,
-  .db-role:hover .db-role-title {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-}
-
-/* a row's action stays on one line beside its text */
-.db-row > .db-fine {
+.os-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s2) var(--s4);
+  align-items: end;
   flex: none;
-  white-space: nowrap;
 }
 
-.db-row-text,
-.db-role-text {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 2px;
+.os-top-text {
+  overflow-wrap: normal;
   min-width: 0;
 }
 
-.db-role {
-  display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) 20px;
-}
-
-.db-role-rank {
-  text-align: right;
-}
-
-.db-role-title {
-  font-size: var(--fs-2);
-  font-weight: 500;
-}
-
-.db-role-pct {
-  color: var(--text);
-}
-
-.db-role-glyph {
-  flex: none;
-  color: var(--accent-ui);
-}
-
-/* the stage tiles */
-.db-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--s2);
+.os-top-text .kicker {
   margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
-.db-stat {
+.os-h1 {
+  margin: 0;
+  font-size: 52px;
+}
+
+.os-top-end {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: var(--s2) var(--s3);
-  border-radius: var(--r-s);
-  background: var(--surface-2);
-}
-
-.db-stat.is-on {
-  background: var(--accent-soft);
-}
-
-.db-stat-n {
-  font-size: var(--fs-5);
-  line-height: var(--lh-snug);
-}
-
-/* a line of the card, separated by a hairline, with its action on the right */
-.db-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s1) var(--s3);
-  padding-top: var(--s3);
-  border-top: 1px solid var(--line);
-}
-
-.db-line > .db-small {
-  flex: 1 1 auto;
-}
-
-.db-line > .db-fine {
-  flex: 1 1 100%;
-}
-
-.db-foot {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s2);
-  margin-top: auto;
-  padding-top: var(--s2);
-}
-
-/* ───────────── responsive ───────────── */
-
-@media (max-width: 1100px) {
-  .db-card {
-    grid-column: span 6;
-  }
-
-  .db-now,
-  .db-slips,
-  .db-next,
-  .db-shelf,
-  .db-week {
-    grid-column: 1 / -1;
-  }
-
-  /* the slips sit side by side under the profile */
-  .db-slips {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    padding: var(--s2) 0 0;
-  }
-
-  .db-slips > * {
-    flex: 1 1 260px;
-  }
-
-  .db-matches {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 760px) {
-  .db-bento > * {
-    grid-column: 1 / -1;
-  }
-
-  .db-now {
-    padding: var(--s2) var(--s4) var(--s4);
-  }
-
-  .db-card {
-    padding: var(--s4);
-  }
-
-  .db-week {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .db-slips {
-    flex-direction: column;
-    gap: var(--s4);
-  }
-
-  .db-slips > * {
-    flex: none;
-    width: 100%;
-  }
-
-  .db-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* ───────────── the greeting and the read: one line at a time ───────────── */
-
-.db-hello {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s4);
-}
-
-.db-hello-row {
-  display: flex;
-  flex-wrap: wrap;
   align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--s2) var(--s5);
+  gap: var(--s2);
 }
 
-.db-hello-text {
-  display: flex;
-  flex-direction: column;
+.os-shelf {
+  position: relative;
+}
+
+.os-shelf-btn {
+  display: inline-flex;
+  align-items: center;
   gap: var(--s1);
+  padding: var(--s1) 0;
+  color: var(--text);
+  white-space: nowrap;
 }
 
-.db-hello-meta {
-  padding-bottom: var(--s1);
+.os-shelf-stamp {
+  margin-left: var(--s1);
 }
 
-/* the line: its theme in small print, the sentence, who said it, "Another". It fades in when it changes (one beat, never a loop). */
-.db-lines {
+/* the line: its theme in small print, the sentence, who said it; it changes every few seconds and on "Another" */
+.os-line {
+  position: relative;
+  grid-column: 1 / -1;
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--s2) var(--s3);
-  min-height: calc(var(--fs-5) * var(--lh-snug) * 2);
+  gap: var(--s1) var(--s3);
+  min-height: 50px;
+  padding: var(--s2) 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
-.db-theme,
-.db-line-note {
+.os-line-k {
   flex: none;
-  animation: db-line-in var(--d-base) var(--ease) both;
+  animation: os-line-in var(--d-base) var(--ease) both;
 }
 
-.db-read-line.is-quote {
-  font-style: italic;
-}
-
-.db-read-line {
-  display: inline;
+.os-line-t {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  min-width: 0;
   margin: 0;
   padding: 0;
-  border: 0;
+  overflow: hidden;
   background: none;
-  max-width: 40em;
-  font-size: var(--fs-5);
-  line-height: var(--lh-snug);
+  border: 0;
+  font-size: 20px;
+  line-height: 1.2;
   color: var(--text);
   text-align: left;
   text-wrap: pretty;
-  animation: db-line-in var(--d-base) var(--ease) both;
+  animation: os-line-in var(--d-base) var(--ease) both;
 }
 
-button.db-read-line {
+.os-line-t.is-quote {
+  font-style: italic;
+}
+
+button.os-line-t {
   text-decoration: underline dotted var(--line-strong);
   text-decoration-thickness: 1px;
   text-underline-offset: 5px;
@@ -418,29 +195,30 @@ button.db-read-line {
 }
 
 @media (hover: hover) {
-  button.db-read-line:hover {
+  button.os-line-t:hover {
     text-decoration-style: solid;
     text-decoration-color: var(--accent-ui);
   }
 }
 
-button.db-read-line.is-open {
+button.os-line-t.is-open {
   text-decoration-style: solid;
   text-decoration-color: var(--accent-ui);
 }
 
-.db-line-acts {
+.os-line-note {
+  flex: none;
+  animation: os-line-in var(--d-base) var(--ease) both;
+}
+
+.os-line-acts {
   display: inline-flex;
   flex: none;
-  gap: var(--s3);
+  gap: var(--s1);
+  margin-left: auto;
 }
 
-.db-another {
-  flex: none;
-  white-space: nowrap;
-}
-
-@keyframes db-line-in {
+@keyframes os-line-in {
   from {
     opacity: 0;
     transform: translateY(2px);
@@ -448,18 +226,23 @@ button.db-read-line.is-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .db-read-line,
-  .db-theme,
-  .db-line-note {
+  .os-line-k,
+  .os-line-t,
+  .os-line-note {
     animation: none;
   }
 }
 
-/* the evidence drawer under the line: the quote, where it came from, the actions */
+/* the evidence drawer under the line: laid over the chart, so the screen does not grow */
 .db-drawer {
+  position: absolute;
+  top: calc(100% + var(--s1));
+  right: 0;
+  left: 0;
+  z-index: 30;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--s2) var(--s6);
+  gap: var(--s2) var(--s5);
   align-items: center;
   padding: var(--s4) var(--s5);
   background: var(--surface-2);
@@ -473,15 +256,10 @@ button.db-read-line.is-open {
 }
 
 .db-drawer-q {
+  margin: 0;
   font-size: var(--fs-4);
   font-style: italic;
   line-height: var(--lh-snug);
-}
-
-.db-cite {
-  font-family: var(--font-mono);
-  font-size: var(--fs-0);
-  color: var(--text-muted);
 }
 
 .db-drawer-actions {
@@ -490,386 +268,1238 @@ button.db-read-line.is-open {
   gap: var(--s2);
 }
 
-.db-readmeta {
+/* ───────────── the skill graph ───────────── */
+
+.rz-wrap {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
+  flex: 1 1 0;
   align-items: center;
-  gap: var(--s2) var(--s4);
-}
-
-/* ───────────── your week: where you left off, and the weeks you showed up ───────────── */
-
-.db-pick,
-.db-up {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
+  justify-content: center;
   min-width: 0;
+  min-height: 0;
+  container-type: size;
 }
 
-/* the weeks sit beside the pick-up, behind one hairline */
-.db-up {
-  padding-left: var(--s6);
-  border-left: 1px solid var(--line);
+.rz {
+  position: relative;
+  /* the biggest box of the chart's own proportions that fits the room */
+  width: min(100cqw, calc(100cqh * 600 / 430));
+  aspect-ratio: 600 / 430;
 }
 
-.db-pick-hero {
+/* one light behind the graph; the centre score stays plain text */
+.rz::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 94%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: var(--stage-light);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.rz-plot,
+.rz-labels {
+  display: contents;
+}
+
+.rz svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.rz-ring,
+.rz-spoke {
+  fill: none;
+  stroke: var(--grid);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.rz-shape {
+  fill: var(--fill);
+  stroke: var(--accent-ui);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.rz .lead {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.rz .halo {
+  fill: none;
+  stroke: var(--accent-ui);
+  stroke-width: 1;
+  opacity: 0.45;
+  vector-effect: non-scaling-stroke;
+}
+
+.rz-dot {
+  fill: var(--accent-ui);
+}
+
+/* a floating callout: the score large, the domain's name, a level chip. Real HTML over the SVG. */
+.co {
+  position: absolute;
   display: flex;
   flex-direction: column;
-  gap: var(--s2);
-}
-
-.db-pick-title {
-  font-size: var(--fs-5);
-  line-height: var(--lh-snug);
-  text-wrap: balance;
-}
-
-.db-pick-detail {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s2) var(--s3);
-}
-
-.db-pick-hero .db-foot {
-  margin-top: 0;
-}
-
-.db-pick-rows > li:last-child .db-row {
-  padding-bottom: 0;
-  border-bottom: 0;
-}
-
-.db-up-body {
-  display: flex;
-  flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--s4) var(--s5);
+  gap: 2px;
+  padding: 0 0 0 6px;
+  color: var(--text);
+  background: none;
+  border: 0;
+  line-height: 1.1;
+  text-align: left;
+  white-space: nowrap;
+  transform: translateY(-50%);
 }
 
-.db-up-run {
+.co.r {
+  align-items: flex-end;
+  padding: 0 6px 0 0;
+  text-align: right;
+  transform: translate(-100%, -50%);
+}
+
+.co-n {
+  font-family: var(--font-sans);
+  font-size: 30px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.co-l {
+  max-width: 168px;
+  overflow: hidden;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+@media (hover: hover) {
+  .co:hover .co-l {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.co .chip {
+  padding: 0 8px;
+  font-size: var(--fs-0);
+}
+
+.co .chip.is-on {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--text);
+}
+
+.co .chip.is-gap {
+  border-style: dashed;
+}
+
+.co-mid {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   display: flex;
-  flex: 1 1 150px;
   flex-direction: column;
-  gap: var(--s2);
-}
-
-.db-up-days {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-}
-
-.db-up-hand {
-  font-size: var(--fs-3);
-}
-
-.db-up-claims {
-  display: flex;
   align-items: center;
-  gap: var(--s3);
-  margin-top: auto;
-  padding-top: var(--s3);
-  border-top: 1px solid var(--line);
+  padding: var(--s1);
+  background: none;
+  border: 0;
+  color: var(--text);
+  transform: translate(-50%, -50%);
 }
 
-.db-up-claims > .db-small {
-  flex: 1 1 auto;
+.co-mid b {
+  font-family: var(--font-sans);
+  font-size: 60px;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.rz-up {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
+
+/* ───────────── the bottom band: the month, the run of weeks, the ask ───────────── */
+
+.os-band {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s5);
+  align-items: end;
+  flex: none;
+}
+
+.os-band-r {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
   min-width: 0;
 }
 
-.db-streak-n {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s1) var(--s3);
+.os-ask {
+  margin-top: var(--s1);
 }
 
-.db-streak-big {
+/* the Ask bar in place: the full bar where it is put, and its panel laid over the hero, above the bar */
+.os-ask .ak-dock.is-flow {
+  margin: 0;
+}
+
+/* beside the calendar the bar is narrow: the starters wait in the panel that opens above it */
+.os-ask .ak-chips {
+  display: none;
+}
+
+.os-hero .ak-dock.is-open .ak-panel {
+  position: absolute;
+  right: 28px;
+  bottom: calc(18px + 2px + 2 * var(--s2) + 44px + var(--s2));
+  left: 32px;
+  z-index: 30;
+  max-height: min(60vh, 440px);
+}
+
+/* the month: a sheet torn off a calendar and taped down; the lines and the crosses are drawn by hand, in code */
+.cal {
+  position: relative;
+  padding: 14px 14px 12px;
+  background: var(--paper-sheet);
+  color: var(--text);
+  box-shadow:
+    0 1px 2px var(--paper-shade-soft),
+    0 10px 14px -10px var(--paper-shade);
+  transform: rotate(-2deg);
+}
+
+.cal .tape {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 70px;
+  height: 20px;
+  margin-left: -35px;
+  background: var(--tape);
+  transform: rotate(3deg);
+}
+
+.cal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 4px;
+}
+
+.cal-month {
+  font-size: var(--fs-5);
+}
+
+.cal-wd {
+  display: grid;
+  grid-template-columns: repeat(7, 32px);
+  font: 400 9.5px/14px var(--font-mono);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.cal-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, 32px);
+  grid-auto-rows: 22px;
+}
+
+.cal-lines {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 236px;
+  height: 144px;
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.cal-d {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 400 10px/1 var(--font-mono);
+  color: var(--text-muted);
+}
+
+.cal-d.out {
+  opacity: 0.4;
+}
+
+.cal-d.today {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.cal-d svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cal-d .mk {
+  stroke-width: 1.6;
+}
+
+.cal-d .sc {
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.cal-d .rg {
+  stroke-width: 1.3;
+  stroke: var(--text);
+}
+
+/* the run of weeks, in the person's pen */
+.run {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.run p {
+  margin: 0;
+}
+
+.run-n {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.run-arrow {
+  flex: none;
+  overflow: visible;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.run-big {
   display: inline-block;
-  min-width: 1.2em;
-  font-size: var(--fs-6);
+  min-width: 1em;
+  font-size: 40px;
   line-height: 1;
   text-align: center;
 }
 
-.db-streak-fresh {
-  font-size: var(--fs-5);
-  line-height: var(--lh-snug);
+.run-ring > svg {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  inset: -18% -30%;
+  width: 160%;
+  height: 136%;
 }
 
-/* ───────────── the slips beside the profile ───────────── */
+.run-fresh {
+  font-size: 30px;
+}
 
-.db-pile {
+.run-margin {
+  color: var(--text-muted);
+  font-size: 20px;
+}
+
+/* ───────────── the mosaic: tiles of different sizes and materials, edge to edge ───────────── */
+
+.os-mosaic {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(12, minmax(0, 1fr));
+  gap: 2px;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid var(--bg);
+}
+
+.t {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--s3);
+  gap: var(--s2);
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 18px;
+  overflow: hidden;
+  color: var(--text);
 }
 
-.db-pile-stack {
-  border-radius: var(--r-s);
+.t h2,
+.t h3 {
+  margin: 0;
 }
 
-.db-pile-slip {
-  width: 100%;
+.t-todo {
+  grid-column: 1 / 7;
+  grid-row: 1 / 8;
 }
 
-.db-pile-foot {
+.t-pick {
+  grid-column: 7 / 13;
+  grid-row: 1 / 5;
+}
+
+.t-next {
+  grid-column: 7 / 13;
+  grid-row: 5 / 9;
+}
+
+.t-notes {
+  grid-column: 1 / 7;
+  grid-row: 8 / 13;
+  z-index: 2;
+  overflow: visible;
+}
+
+.t-apps {
+  grid-column: 7 / 11;
+  grid-row: 9 / 11;
+}
+
+.t-disc {
+  grid-column: 11 / 13;
+  grid-row: 9 / 11;
+}
+
+.t-prac {
+  grid-column: 7 / 10;
+  grid-row: 11 / 13;
+}
+
+.t-mtch {
+  grid-column: 10 / 13;
+  grid-row: 11 / 13;
+}
+
+.t-ink {
+  color: var(--text);
+}
+
+.t-foot {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s2) var(--s3);
-  padding-inline: var(--s1);
-}
-
-.db-pile-add {
-  margin-left: auto;
-}
-
-.db-slip-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s2) var(--s3);
-  margin-top: var(--s1);
-}
-
-.db-slip-end {
-  margin-left: auto;
-}
-
-/* the note being written: a field on the slip, straight */
-.db-note-field {
-  width: 100%;
-  min-height: 4.2em;
-  padding: var(--s2);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-s);
-  background: var(--surface);
-  color: var(--text);
-  resize: vertical;
-}
-
-.db-share-slip {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--s4);
-  width: 100%;
-  cursor: pointer;
-}
-
-/* live: the slip holds two buttons, so it is not itself pressable */
-.db-share-slip.is-live {
-  cursor: default;
-}
-
-.db-share-glyph {
-  flex: none;
-}
-
-.db-share-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s1);
-  min-width: 0;
-}
-
-.db-share-text .hand {
-  font-size: var(--fs-4);
-}
-
-.db-share-go {
-  margin-top: var(--s1);
-}
-
-.db-resume-slip .hand {
-  font-size: var(--fs-4);
-}
-
-/* ───────────── the days as squares ───────────── */
-/* ───────────── momentum: the days as squares, then what moved ───────────── */
-
-.db-days {
-  display: flex;
   gap: var(--s2);
+  margin-top: auto;
 }
 
-.db-days-keys,
-.db-dots {
-  display: grid;
-  grid-template-rows: repeat(7, 12px);
-  gap: 3px;
+.t-foot-end {
+  margin-top: auto;
 }
 
-.db-days-keys {
-  font-family: var(--font-mono);
-  font-size: var(--fs-0);
-  line-height: 12px;
-  color: var(--text-faint);
-}
-
-/* a column is a week, Monday at the top; the last column is this week */
-.db-dots {
-  grid-auto-flow: column;
-  grid-auto-columns: 12px;
-}
-
-.db-dot {
-  border: 1px solid var(--line);
-  border-radius: 3px;
-}
-
-.db-dot.is-l1 {
-  background: var(--fill-strong);
-  border-color: transparent;
-}
-
-.db-dot.is-l2 {
-  background: var(--accent-ui);
-  border-color: transparent;
-}
-
-/* later this week: not a missed day */
-.db-dot.is-ahead {
-  border-style: dashed;
-}
-
-.db-dot.is-today {
-  border-color: var(--text);
-}
-
-.db-trend-n {
-  flex: none;
-  font-size: var(--fs-3);
+.t-clip {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.db-delta-was {
-  color: var(--text-faint);
-}
-
-/* the share defended, one bar a session, the newest in the accent */
-.db-spark {
-  display: inline-flex;
-  flex: none;
-  align-items: flex-end;
-  gap: 2px;
-  height: 28px;
-}
-
-.db-spark-bar {
-  width: 8px;
-  border-radius: 2px 2px 0 0;
-  background: var(--fill-strong);
-}
-
-.db-spark-bar.is-last {
-  background: var(--accent-ui);
-}
-
-/* ───────────── the shelf: worth saying out loud ───────────── */
-
-.db-achs {
+.t-number {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.t-go {
+  padding: 0;
+  background: none;
+  border: 0;
+  font-size: var(--fs-1);
+  color: inherit;
+  white-space: nowrap;
+}
+
+.t-stamp {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+/* to do today: a page from a spiral notebook, written in pen */
+.t-todo {
+  gap: 0;
+  padding: 14px 18px 12px 52px;
+  background: var(--paper-sheet);
+  color: var(--text);
+}
+
+.t-todo .fine,
+.t-todo .cite {
+  color: var(--text-muted);
+}
+
+.t-todo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 13px;
+  width: 12px;
+  background: radial-gradient(circle at 6px 6px, var(--bg) 5px, transparent 5.6px) 0 12px / 12px 34px repeat-y;
+}
+
+.t-todo::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 39px;
+  width: 1px;
+  background: var(--danger);
+  opacity: 0.35;
+}
+
+.todo-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.todo-title {
+  margin: 0;
+  font-size: 34px;
+}
+
+.todo-list {
+  flex: 0 1 auto;
+  min-height: 0;
   margin: 0;
   padding: 0;
+  overflow-y: auto;
   list-style: none;
 }
 
-.db-ach {
+.todo {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 8px 0 7px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.todo-main {
   display: flex;
-  align-items: flex-start;
-  gap: var(--s3);
-  min-width: 0;
-  padding: var(--s3) 0;
-  border-top: 1px solid var(--line);
-}
-
-.db-achs > .db-ach:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-
-/* the mark: the ring-and-dot of the brand, as a 1px ring */
-.db-ach-mark {
-  flex: none;
-  width: 14px;
-  height: 14px;
-  margin-top: 3px;
-  border: 1px solid var(--accent-ui);
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--accent-ui) 0 2px, transparent 2.5px);
-}
-
-.db-ach-text {
-  display: flex;
-  flex: 1 1 auto;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
 
-.db-ach-title {
+.todo-t {
+  position: relative;
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+a.todo-t:hover {
+  color: var(--accent);
+}
+
+.todo .cite {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todo-go {
+  padding-top: 5px;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.todo-x {
+  padding: 4px 6px;
   font-size: var(--fs-3);
-  font-weight: 500;
-  line-height: var(--lh-snug);
-  text-wrap: balance;
+  color: var(--text-muted);
 }
 
-/* ───────────── a card line that ends in a button; the Weekly as one line ───────────── */
-
-.db-line-act {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+.todo .strike {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  overflow: visible;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
 }
 
-.db-weekly {
+.todo.is-done .strike {
+  display: block;
+}
+
+.todo.is-done .todo-t {
+  color: var(--text-muted);
+}
+
+.t-todo .tick .bx {
+  stroke: var(--text-muted);
+}
+
+.todo-add {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  padding: 8px 0 0 34px;
+  color: var(--text-muted);
+}
+
+.todo-add-btn {
+  background: none;
+  border: 0;
+  text-align: left;
+}
+
+.todo-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--text);
+}
+
+.t-todo .plink {
+  color: var(--text);
+  font-size: var(--fs-1);
+}
+
+/* pick up where you left off: the loudest field of colour */
+.t-pick {
+  background:
+    radial-gradient(120% 95% at 92% 0%, var(--tile-2) 0%, transparent 62%),
+    radial-gradient(90% 90% at 0% 100%, var(--tile-4) 0%, transparent 66%),
+    var(--tile-1);
+}
+
+.t-title {
+  font-size: 30px;
+}
+
+.t-detail {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s2) var(--s4);
-  padding-top: var(--s3);
-  border-top: 1px solid var(--line);
+  margin: 0;
 }
 
-.db-weekly-text {
-  flex: 1 1 280px;
-  min-width: 0;
-  color: var(--text-muted);
+.t-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
 }
+
+.t-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-top: auto;
+}
+
+.t-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  align-items: center;
+}
+
+.t-btn {
+  border-color: var(--line-strong);
+}
+
+.t-also {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.t-link {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* next roles: measured, so it sits on dotted graph paper and nothing is turned */
+.t-next {
+  background:
+    radial-gradient(circle, var(--grid) 1px, transparent 1.3px) 0 0 / 16px 16px,
+    var(--surface-2);
+}
+
+.next-body {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  flex: 1 1 auto;
+  gap: var(--s4);
+  min-height: 0;
+}
+
+.next-top {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.next-open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text);
+  text-align: left;
+}
+
+.next-name {
+  font-weight: 500;
+}
+
+.gauge {
+  width: 122px;
+  height: 63px;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.gauge .trk {
+  stroke: var(--grid);
+  stroke-width: 1;
+}
+
+.gauge .oth {
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+
+.gauge .top {
+  stroke: var(--accent-ui);
+  stroke-width: 3;
+}
+
+.next-rows {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--s2);
+  align-items: baseline;
+  padding: 5px 0;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+  font-size: var(--fs-2);
+  text-align: left;
+}
+
+.nrow:last-of-type {
+  border-bottom: 1px solid var(--line);
+}
+
+.nrow span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.next-prep {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+/* your notes: a patch of the desk with two real post-its on it; they lap over the tiles around them */
+.t-notes {
+  background: var(--well);
+}
+
+.notes-count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  align-self: flex-end;
+  gap: 2px;
+  margin: 0;
+  text-align: right;
+}
+
+.stick-a {
+  top: -16px;
+  left: 18px;
+  width: clamp(160px, 15vw, 192px);
+}
+
+.stick-b {
+  bottom: 12px;
+  left: 52%;
+  width: clamp(160px, 15vw, 192px);
+}
+
+/* a post-it holds a few lines; a long note or a long quote is cut, never spilled out of the screen */
+.t-notes .postit .pen:not(textarea):not(a):not(.ptodo) {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+}
+
+.t-notes .postit .pcite {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.t-notes .ghost {
+  top: 64%;
+  left: 8%;
+  width: clamp(84px, 8vw, 112px);
+  height: clamp(84px, 8vw, 112px);
+}
+
+/* the small tiles: one number each */
+.t-apps {
+  gap: 4px;
+  padding: 12px 14px;
+  background:
+    radial-gradient(110% 120% at 100% 100%, var(--tile-1) 0%, transparent 70%),
+    var(--tile-4);
+}
+
+.t-disc {
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--accent-strong);
+  color: var(--surface);
+}
+
+.t-disc .kicker,
+.t-disc .fine {
+  color: inherit;
+  opacity: 0.82;
+}
+
+.t-prac {
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+}
+
+.t-mtch {
+  gap: 4px;
+  padding: 12px 14px;
+  background:
+    radial-gradient(120% 110% at 0% 0%, var(--tile-3) 0%, transparent 70%),
+    var(--tile-2);
+}
+
+.stages {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 3px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-0);
+  line-height: 1.3;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.stages b {
+  margin-right: 4px;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.stages .is-on {
+  margin: 0 -5px;
+  padding: 0 5px;
+  background: var(--paper-yellow);
+  color: var(--paper-ink);
+}
+
+.t-match {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.t-match-title {
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.spark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 22px;
+}
+
+.spark i {
+  display: block;
+  width: 5px;
+  background: var(--line-strong);
+}
+
+.spark i.last {
+  background: var(--accent-ui);
+}
+
+/* ───────────── between 760 and 1100 wide: the hero above the mosaic ───────────── */
+
+@media (max-width: 1100px) {
+  .db-view {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .os-body {
+    grid-template-columns: minmax(0, 1fr);
+    flex: 1 1 auto;
+  }
+
+  .rz-wrap {
+    min-height: 400px;
+  }
+
+  .os-mosaic {
+    min-height: 760px;
+    border-left: 0;
+    border-top: 1px solid var(--bg);
+  }
+}
+
+/* ───────────── under 760 wide: one straight column, nothing turned ───────────── */
 
 @media (max-width: 760px) {
-  .db-read-line {
-    font-size: var(--fs-4);
+  .os-hero {
+    padding: var(--s4) var(--gv-gutter, 16px);
+  }
+
+  .os-h1 {
+    font-size: 40px;
+  }
+
+  .os-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .os-top-end {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .os-line {
+    flex-wrap: wrap;
+  }
+
+  .os-line-acts {
+    margin-left: 0;
   }
 
   .db-drawer {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* your week on a phone: the weeks go under the pick-up */
-  .db-up {
-    padding-left: 0;
-    padding-top: var(--s4);
-    border-left: 0;
-    border-top: 1px solid var(--line);
+  /* the graph: the chart on top, the callouts as a two-column list under it */
+  .rz-wrap {
+    display: block;
+    flex: none;
+    min-height: 0;
+    container-type: normal;
   }
 
-  .db-share-slip {
+  .rz,
+  .rz.is-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s3);
+    width: 100%;
+    aspect-ratio: auto;
+  }
+
+  .rz::before {
+    top: 0;
+    width: 100%;
+    transform: translate(-50%, 0);
+  }
+
+  .rz-plot {
+    position: relative;
+    display: block;
+    aspect-ratio: 600 / 430;
+  }
+
+  .rz.is-list .rz-plot {
+    aspect-ratio: auto;
+    height: 120px;
+  }
+
+  .rz-labels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s3);
+  }
+
+  .co,
+  .co.r {
+    position: static;
     align-items: flex-start;
+    padding: var(--s2) 0;
+    border-top: 1px solid var(--line);
+    text-align: left;
+    transform: none;
+    white-space: normal;
+  }
+
+  .rz .lead,
+  .rz .halo {
+    display: none;
+  }
+
+  .os-band {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s5);
+  }
+
+  .cal {
+    transform: none;
+    justify-self: start;
+  }
+
+  .cal .tape {
+    transform: none;
+  }
+
+  .os-hero .ak-dock.is-open .ak-panel {
+    right: var(--gv-gutter, 16px);
+    left: var(--gv-gutter, 16px);
+  }
+
+  .os-mosaic {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+    min-height: 0;
+  }
+
+  .t-todo,
+  .t-pick,
+  .t-next,
+  .t-notes {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .t-apps,
+  .t-disc,
+  .t-prac,
+  .t-mtch {
+    grid-column: auto;
+    grid-row: auto;
+    min-height: 132px;
+  }
+
+  .t-todo {
+    padding-left: 44px;
+  }
+
+  .next-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* the notes: the two post-its one above the other, straight */
+  .t-notes {
+    gap: var(--s4);
+    overflow: visible;
+  }
+
+  .stick-a,
+  .stick-b,
+  .t-notes .ghost {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    width: min(100%, 260px);
+  }
+
+  .t-notes .ghost {
+    height: 88px;
+    transform: none;
+  }
+
+  .notes-count {
+    align-self: flex-start;
+    align-items: flex-start;
+    text-align: left;
   }
 }
 
-/* a re-read whose resumes did not move with it: said once, plainly */
-.db-carry {
-  padding: var(--s2) var(--s3);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-m);
-  color: var(--text);
+@media (prefers-reduced-motion: reduce) {
+  .cal,
+  .cal .tape {
+    transform: none;
+  }
+}
+
+/* the hero's primary button shares the graph, so the header's quiet one steps aside on this screen (it keeps the room for the Weekly) */
+.db-view .gv-header .gv-share {
+  display: none;
+}
+
+/* ───────────── fitting 1280 x 800: the greeting scales with the screen, the small tiles stay small ───────────── */
+
+.os-h1 {
+  font-size: clamp(32px, 3.1vw, 52px);
+}
+
+.t-pick {
+  gap: 6px;
+  padding: 14px 18px 12px;
+}
+
+.t-pick .t-title {
+  font-size: 26px;
+}
+
+.t-pick .t-count .big {
+  font-size: 34px;
+}
+
+:is(.t-apps, .t-disc, .t-prac, .t-mtch) {
+  padding: 10px 12px;
+}
+
+:is(.t-apps, .t-disc, .t-prac) .big {
+  font-size: 36px;
+}
+
+.t-disc .t-go {
+  white-space: normal;
+}
+
+.t-match-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* review pass (2026-11-12), from a 1280 x 800 screen: the pink note keeps to its own patch, and the small tiles hold one line each */
+@media (min-width: 1101px) {
+  .stick-b {
+    right: -6px;
+    left: auto;
+  }
+
+  .t-disc {
+    gap: 2px;
+  }
+
+  .t-disc .fine,
+  .t-match-title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 1101px) and (max-height: 860px) {
+  .t-pick {
+    gap: 4px;
+    padding-bottom: 10px;
+  }
+}
+
+/* review pass (2026-11-12): on a phone every control is at least 44 px tall */
+@media (max-width: 760px) {
+  .todo {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .todo .tick {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    place-items: center;
+  }
+
+  .nrow {
+    min-height: 44px;
+  }
+
+  :is(.todo-t, .todo-add-btn, .os-shelf-btn, .pbtn, .plink, .t-go, .t-link) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
 }

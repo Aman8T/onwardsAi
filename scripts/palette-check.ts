@@ -8,6 +8,11 @@
  * scheme's own --bg. The cursor light's dye (src/light/palette.ts) is checked in
  * both schemes, at its peak alpha over the field and every lobe.
  *
+ * The neutral stage (2026-11-12): in the quiet look the accents, fills, selection and tile fields take their chroma from
+ * src/theme/hue.js (CHROMA_SPEC and hueAt, imported, not re-implemented), which depends on the hue each role is drawn
+ * at. The check therefore samples hueAt at 780 wall-clock instants per base hue (every phase of the h2 / h3 breath)
+ * and proves every colour such a token can take: in gamut, and every pair below.
+ *
  * Zero dependencies. Run with `npx tsx scripts/palette-check.ts`.
  *   --fallback <hue>   print the hex blocks for that hue (the light ':root', then the
  *                      dark media and attribute copies) instead of checking
@@ -19,6 +24,8 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { LIGHT, MAX_WANDER, warmEasing, wakePalette } from '../src/light/palette';
+import { CHROMA_SPEC, hueAt } from '../src/theme/hue';
+import type { HueValues } from '../src/theme/hue';
 
 const TOKENS_PATH = resolve(process.cwd(), 'src/theme/tokens.css');
 
@@ -32,8 +39,12 @@ interface Token {
   name: string;
   /** OKLCH lightness, 0..1. */
   L: number;
-  /** Base chroma before the --k / --kw / --kb multipliers. */
+  /** Base chroma before the --k / --kw / --kb multipliers (0 when `cvar` supplies it). */
   C: number;
+  /** The hue.js chroma property this token's chroma comes from (for example 'c-ui-d'), or undefined for a fixed chroma. */
+  cvar?: string;
+  /** Chroma is multiplied by --k, so Off collapses it. False only for a plain number (danger, paper, shades). */
+  kScaled: boolean;
   hue: HueRef;
   /** Uses the warm-sector easing multiplier --kw. */
   kw: boolean;
@@ -51,12 +62,12 @@ type Lin = readonly [number, number, number];
  * ------------------------------------------------------------------------- */
 
 /**
- * Matches `--name: oklch(L <C> <H> [/ a])` where <C> is a number or
- * `calc(number * var(--k)[ * var(--kw)][ * var(--kb)])` and <H> is
- * var(--h) | var(--h2) | var(--h3) | number.
+ * Matches `--name: oklch(L <C> <H> [/ a])` where <C> is a number,
+ * `calc(number * var(--k)[ * var(--kw)][ * var(--kb)])` or `calc(var(--c-<role>-<d|l>) * var(--k))` (a number
+ * from hue.js), and <H> is var(--h) | var(--h2) | var(--h3) | var(--h4) | number.
  */
 const TOKEN_RE =
-  /--([a-z0-9-]+)\s*:\s*oklch\(\s*([\d.]+)\s+(?:([\d.]+)|calc\(\s*([\d.]+)\s*\*\s*var\(--k\)((?:\s*\*\s*var\(--k[wb]\))*)\s*\))\s+(?:var\(--(h[234]?)\)|([\d.]+))\s*(?:\/\s*([\d.]+))?\s*\)/g;
+  /--([a-z0-9-]+)\s*:\s*oklch\(\s*([\d.]+)\s+(?:([\d.]+)|calc\(\s*(?:([\d.]+)|var\(--(c-[a-z0-9]+-[dl])\))\s*\*\s*var\(--k\)((?:\s*\*\s*var\(--k[wb]\))*)\s*\))\s+(?:var\(--(h[234]?)\)|([\d.]+))\s*(?:\/\s*([\d.]+))?\s*\)/g;
 
 /**
  * Reads every oklch token from a stretch of the sheet. The first definition of a
@@ -66,12 +77,14 @@ const TOKEN_RE =
 function parseTokens(css: string): Token[] {
   const seen = new Map<string, Token>();
   for (const m of css.matchAll(TOKEN_RE)) {
-    const [, name, L, plainC, calcC, multipliers, hueVar, hueNum, alpha] = m;
+    const [, name, L, plainC, calcC, cvar, multipliers, hueVar, hueNum, alpha] = m;
     if (seen.has(name)) continue;
     seen.set(name, {
       name,
       L: Number(L),
-      C: Number(plainC ?? calcC),
+      C: cvar ? 0 : Number(plainC ?? calcC),
+      cvar,
+      kScaled: plainC === undefined,
       hue: hueVar ? (hueVar as 'h' | 'h2' | 'h3' | 'h4') : Number(hueNum),
       kw: (multipliers ?? '').includes('--kw'),
       kb: (multipliers ?? '').includes('--kb'),
@@ -118,10 +131,22 @@ const QUIET_DARK_FORCED_RE =
   /:root:where\(\[data-look=['"]quiet['"]\]\[data-scheme=['"]dark['"]\]\)\s*,\s*\.look-quiet\.scheme-dark\s*\{/g;
 
 const sameToken = (a: Token, b: Token): boolean =>
-  a.L === b.L && a.C === b.C && a.hue === b.hue && a.kw === b.kw && a.kb === b.kb && a.alpha === b.alpha;
+  a.L === b.L && a.C === b.C && a.cvar === b.cvar && a.hue === b.hue && a.kw === b.kw && a.kb === b.kb && a.alpha === b.alpha;
 
 /** Tokens that hold their value in both schemes: the Old Newspaper skin's fixed paper and ink. */
 const schemeFree = (name: string): boolean => name.startsWith('press-');
+
+/** Dark tokens that are not an oklch literal in the dark table: --paper-sheet is var(--surface-2) there (tokens.css c1c). */
+const DARK_DERIVED = new Set(['paper-sheet']);
+
+/** The dark token list with --paper-sheet set to the dark --surface-2, as the stylesheet does it. */
+function withDerived(tokens: Token[]): Token[] {
+  const surface2 = tokens.find((t) => t.name === 'surface-2');
+  if (!surface2) return tokens;
+  const out = tokens.filter((t) => !DARK_DERIVED.has(t.name));
+  out.push({ ...surface2, name: 'paper-sheet' });
+  return out;
+}
 
 interface DarkTable {
   /** The dark tokens laid over the light ones, as the cascade does it. */
@@ -133,7 +158,14 @@ interface DarkTable {
 }
 
 /** Reads the dark table, proves its two copies agree and that it redefines every light role. */
-function darkTable(css: string, light: Token[], mediaRe: RegExp = DARK_MEDIA_RE, forcedRe: RegExp = DARK_FORCED_RE): DarkTable {
+function darkTable(
+  css: string,
+  light: Token[],
+  mediaRe: RegExp = DARK_MEDIA_RE,
+  forcedRe: RegExp = DARK_FORCED_RE,
+  /** Roles the dark table need not redefine: fixed in both schemes, or inherited from another table. */
+  exempt: (name: string) => boolean = () => false,
+): DarkTable {
   const media = firstTokenBlock(css, mediaRe);
   const forced = firstTokenBlock(css, forcedRe);
   const problems: string[] = [];
@@ -150,11 +182,11 @@ function darkTable(css: string, light: Token[], mediaRe: RegExp = DARK_MEDIA_RE,
   }
   const darkNames = new Set(media.map((t) => t.name));
   for (const t of light) {
-    if (!schemeFree(t.name) && !darkNames.has(t.name)) problems.push(`--${t.name} is not redefined in the dark table`);
+    if (!schemeFree(t.name) && !DARK_DERIVED.has(t.name) && !exempt(t.name) && !darkNames.has(t.name)) problems.push(`--${t.name} is not redefined in the dark table`);
   }
   const merged = new Map(light.map((t) => [t.name, t]));
   for (const t of media) merged.set(t.name, t);
-  return { tokens: [...merged.values()], own: media, problems };
+  return { tokens: withDerived([...merged.values()]), own: media, problems };
 }
 
 /* ----------------------------------------------------------------------------
@@ -230,8 +262,47 @@ const KB_RANGE = [0.85, 1];
 
 const mod360 = (x: number): number => ((x % 360) + 360) % 360;
 
+/**
+ * hueAt sampled at 780 instants for a base hue pinned to `baseHue` (the same rebase the app uses for ?h=). The instants
+ * are 37 s apart, so mod the 13 and 11 minute breaths they land on 780 distinct phases, among them both extremes.
+ */
+const SAMPLE_TIMES = Array.from({ length: 780 }, (_, i) => i * 37000);
+
+type HueKey = 'h' | 'h2' | 'h3' | 'h4';
+
+interface HueSamples {
+  /** One sample per distinct hue the role's hue variable takes (its chroma depends on that hue only). */
+  byVar: Record<HueKey, HueValues[]>;
+  /** The nominal instant: no breath, h2 = h + 35, h3 = h - 45. */
+  nominal: HueValues;
+}
+
+const sampleCache = new Map<number, HueSamples>();
+
+function samplesAt(baseHue: number): HueSamples {
+  const hit = sampleCache.get(baseHue);
+  if (hit) return hit;
+  const all = SAMPLE_TIMES.map((t) => hueAt(t, baseHue - hueAt(t, 0).h));
+  const distinct = (key: HueKey): HueValues[] => [...new Map(all.map((v) => [v[key], v])).values()];
+  const out: HueSamples = {
+    byVar: { h: [all[0]], h2: distinct('h2'), h3: distinct('h3'), h4: [all[0]] },
+    nominal: hueAt(0, baseHue - hueAt(0, 0).h),
+  };
+  sampleCache.set(baseHue, out);
+  return out;
+}
+
+const chromaOf = (v: HueValues, cvar: string): number => (v as unknown as Record<string, number>)[cvar];
+
+/** The colours a hue.js-driven token can take at a base hue: one per distinct hue its variable reaches. */
+function chromaVariants(t: Token, baseHue: number): Lin[] {
+  const key = t.hue as HueKey;
+  return samplesAt(baseHue).byVar[key].map((v) => oklchToLinear(t.L, chromaOf(v, t.cvar as string), v[key]));
+}
+
 /** Every (linear RGB, alpha) a token can take at a given base hue, with --k = 1. */
 function variants(t: Token, baseHue: number): Lin[] {
+  if (t.cvar) return chromaVariants(t, baseHue);
   const hues =
     t.hue === 'h'
       ? [baseHue]
@@ -251,6 +322,10 @@ function variants(t: Token, baseHue: number): Lin[] {
 
 /** A token's nominal colour (offsets +35 / −45, all multipliers 1), as used for the fallback. */
 function nominal(t: Token, baseHue: number): Lin {
+  if (t.cvar) {
+    const v = samplesAt(baseHue).nominal;
+    return oklchToLinear(t.L, chromaOf(v, t.cvar), v[t.hue as HueKey]);
+  }
   const h = t.hue === 'h' ? baseHue : t.hue === 'h2' ? mod360(baseHue + 35) : t.hue === 'h3' ? mod360(baseHue - 45) : t.hue === 'h4' ? mod360(baseHue + H4_OFFSET) : t.hue;
   return oklchToLinear(t.L, t.C, h);
 }
@@ -259,6 +334,8 @@ interface Pair {
   fg: string;
   bg: string;
   min: number;
+  /** Only proved in this scheme (the paper sheet is a light page; at night it is the dark surface, which carries --text). */
+  only?: 'light' | 'dark';
 }
 
 /**
@@ -294,6 +371,23 @@ const PAIRS: Pair[] = [
   { fg: 'text-faint', bg: 'lobe-3', min: 3 },
   { fg: 'text-faint', bg: 'lobe-4', min: 3 },
   { fg: 'accent', bg: 'bg', min: 4.5 },
+  { fg: 'accent', bg: 'surface', min: 4.5 },
+  { fg: 'accent-2', bg: 'bg', min: 4.5 },
+  { fg: 'accent-2', bg: 'surface', min: 4.5 },
+  { fg: 'text-muted', bg: 'surface', min: 4.5 },
+  // the dashboard's tile fields (--tile-1..4): body and secondary text on every one, in both looks and schemes
+  ...[1, 2, 3, 4].flatMap((n) => [
+    { fg: 'text', bg: `tile-${n}`, min: 4.5 },
+    { fg: 'text-muted', bg: `tile-${n}`, min: 4.5 },
+  ]),
+  // paper: ink at 7:1 and the second ink at 4.5:1 on every paper colour (fixed in every look); the sheet is a light page
+  ...['paper-yellow', 'paper-pink', 'paper-blue'].flatMap((p) => [
+    { fg: 'paper-ink', bg: p, min: 7 },
+    { fg: 'paper-ink-2', bg: p, min: 4.5 },
+  ]),
+  { fg: 'paper-ink', bg: 'paper-sheet', min: 7, only: 'light' as const },
+  { fg: 'paper-ink-2', bg: 'paper-sheet', min: 4.5, only: 'light' as const },
+  // the inverted tile: surface-coloured text on the strong accent (the primary button, the inverted tile)
   { fg: 'surface', bg: 'accent-strong', min: 4.5 },
   { fg: 'danger', bg: 'bg', min: 4.5 },
   { fg: 'accent-ui', bg: 'bg', min: 3 },
@@ -384,7 +478,7 @@ function headroomFailures(tokens: Token[]): string[] {
   const out: string[] = [];
   const memo = new Map<number, number>();
   for (const t of tokens) {
-    if (schemeFree(t.name) || t.alpha < 1 && t.name.startsWith('lobe-')) continue;
+    if (schemeFree(t.name) || t.cvar || (t.alpha < 1 && t.name.startsWith('lobe-'))) continue;
     const hues = typeof t.hue === 'number' ? [t.hue] : [...Array(360).keys()];
     const key = t.L * 1000 + (typeof t.hue === 'number' ? t.hue / 1000 : 0);
     let floor = memo.get(key);
@@ -580,7 +674,11 @@ function quietTables(css: string, today: Token[]): { light: { own: Token[]; toke
   const merged = new Map(today.map((t) => [t.name, t]));
   for (const t of own) merged.set(t.name, t);
   const tokens = [...merged.values()];
-  return { light: { own, tokens }, dark: darkTable(css, tokens, QUIET_DARK_MEDIA_RE, QUIET_DARK_FORCED_RE) };
+  const ownNames = new Set(own.map((t) => t.name));
+  // a role the quiet table does not define comes from today's tables, light or dark, so the quiet dark table owes nothing for it
+  const todayDark = darkTable(css, today).tokens;
+  const darkBase = tokens.map((t) => (ownNames.has(t.name) ? t : (todayDark.find((d) => d.name === t.name) ?? t)));
+  return { light: { own, tokens }, dark: darkTable(css, darkBase, QUIET_DARK_MEDIA_RE, QUIET_DARK_FORCED_RE, (name) => !ownNames.has(name)) };
 }
 
 /** The quiet hex blocks for one base hue, laid out like their oklch tables (light, dark media, dark forced). */
@@ -604,6 +702,55 @@ function quietFallbackBlocks(light: Token[], dark: Token[], hue: number): string
  * CLI
  * ------------------------------------------------------------------------- */
 
+/**
+ * What tokens.css says about each hue.js-driven token must agree with CHROMA_SPEC: the property exists, it is the
+ * scheme's own (-d dark, -l light), and the lightness and hue variable are the ones the number was computed for.
+ */
+function specProblems(tokens: Token[], dark: boolean): string[] {
+  const out: string[] = [];
+  const spec = CHROMA_SPEC as Record<string, { L: number; cap: number; hue: string }>;
+  for (const t of tokens) {
+    if (!t.cvar) continue;
+    const s = spec[t.cvar];
+    if (!s) out.push(`--${t.name} uses --${t.cvar}, which hue.js does not write`);
+    else if (s.L !== t.L) out.push(`--${t.name} is drawn at L ${t.L} but hue.js computed --${t.cvar} for L ${s.L}`);
+    else if (s.hue !== t.hue) out.push(`--${t.name} is drawn at --${String(t.hue)} but hue.js computed --${t.cvar} for --${s.hue}`);
+    if (!t.cvar.endsWith(dark ? '-d' : '-l')) out.push(`--${t.name} uses --${t.cvar}, the other scheme's number`);
+  }
+  return out;
+}
+
+/** Off (--k: 0) must collapse every chroma: any token that takes a hue variable has to multiply its chroma by --k. */
+function offProblems(tokens: Token[]): string[] {
+  return tokens
+    .filter((t) => typeof t.hue === 'string' && !t.kScaled)
+    .map((t) => `--${t.name} follows a hue but is not multiplied by --k, so Off would not collapse it`);
+}
+
+/**
+ * hue.js on its own: every chroma number it writes is finite, between 0 and its cap, and a multiple of 0.001, at every
+ * base hue and every sampled breath; and every role of CHROMA_SPEC is written.
+ */
+function hueJsProblems(): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (let hue = 0; hue < 360; hue++) {
+    const smp = samplesAt(hue);
+    for (const v of [...smp.byVar.h2, ...smp.byVar.h3, ...smp.byVar.h, smp.nominal]) {
+      for (const [key, spec] of Object.entries(CHROMA_SPEC)) {
+        const c = chromaOf(v, key);
+        seen.add(key);
+        if (!Number.isFinite(c) || c < 0 || c > spec.cap + 1e-9 || Math.abs(c * 1000 - Math.round(c * 1000)) > 1e-6) {
+          out.push(`hue.js: --${key} = ${c} at hue ${hue} (cap ${spec.cap})`);
+          if (out.length > 5) return out;
+        }
+      }
+    }
+  }
+  for (const key of Object.keys(CHROMA_SPEC)) if (!seen.has(key)) out.push(`hue.js: --${key} never written`);
+  return out;
+}
+
 const HEADER = ['pair', 'worst', 'at hue', 'min', 'result'];
 
 function printTable(rows: string[][]): void {
@@ -615,9 +762,13 @@ function printTable(rows: string[][]): void {
 }
 
 /** Runs the pair and gamut checks for one scheme's tokens and prints them; returns true when all pass. */
-function reportScheme(scheme: string, tokens: Token[], pairList: Pair[] = PAIRS): boolean {
+function reportScheme(scheme: string, tokens: Token[], allPairs: Pair[] = PAIRS): boolean {
+  const dark = scheme.includes('dark');
+  const pairList = allPairs.filter((p) => !p.only || (p.only === 'dark') === dark);
   const { pairs, gamut, missing } = check(tokens, pairList);
-  let ok = true;
+  const problems = [...specProblems(tokens, dark), ...offProblems(tokens)];
+  for (const p of problems) console.log(`  ${scheme}: ${p}`);
+  let ok = problems.length === 0;
   console.log(`palette-check, ${scheme}: ${tokens.length} tokens, 360 hues\n`);
   printTable(
     pairs.map((r) => {
@@ -674,7 +825,15 @@ function main(): number {
     return 0;
   }
 
-  let failed = !reportScheme('light', tokens);
+  let failed = false;
+  const hueProblems = hueJsProblems();
+  if (hueProblems.length) {
+    failed = true;
+    for (const p of hueProblems) console.log(p);
+  } else {
+    console.log('hue.js: every chroma number is finite, in 0..cap and rounded to 3 decimals, at every base hue and breath phase.\n');
+  }
+  failed = !reportScheme('light', tokens) || failed;
 
   if (dark.problems.length) {
     failed = true;

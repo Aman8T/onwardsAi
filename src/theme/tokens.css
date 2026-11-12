@@ -1,10 +1,10 @@
 /*
  * Tayyari — calm visual layer: design tokens.
  *
- * One hue (--h) feeds every colour; lightness and chroma are fixed per role so
- * contrast never moves while the hue drifts. --h2 / --h3 are the side-lobe hues,
- * --k the global chroma multiplier (0 under Off), --kw the warm-sector easing
- * and --kb the lobe-chroma breath. The five hue properties are written by
+ * One hue (--h) feeds every colour; lightness is fixed per role and chroma is fixed (today look) or computed per
+ * hue (quiet look, the neutral stage: src/theme/hue.js, the --c-* numbers) so contrast never moves while the hue
+ * drifts. --h2 / --h3 / --h4 are the side hues (the dashboard's tiles), --k the global chroma multiplier (0 under
+ * Off), --kw the warm-sector easing and --kb the lobe-chroma breath. The hue and chroma properties are written by
  * src/theme/boot.js (first paint) and src/theme/ambient.ts (every 7 s).
  *
  * Two schemes, one rule set. The light table is the default; the dark table
@@ -57,6 +57,110 @@
   inherits: true;
   initial-value: 1;
 }
+/* The chroma numbers (neutral stage, 2026-11-12), one per role and scheme (-d dark, -l light). Written by
+ * src/theme/hue.js beside the hues: min(cap, 0.94 x the most chroma that hue holds in sRGB at that lightness).
+ * The initial values are hue 250's, so a first paint before the script already has sane numbers. Every use
+ * multiplies by --k, so Off collapses them to grey. Never transitioned. */
+@property --c-ui-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.131;
+}
+@property --c-ui-l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.139;
+}
+@property --c-accent-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.088;
+}
+@property --c-accent-l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.123;
+}
+@property --c-accent2-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.135;
+}
+@property --c-accent2-l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.14;
+}
+@property --c-strong-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.048;
+}
+@property --c-strong-l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.09;
+}
+@property --c-sel-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.05;
+}
+@property --c-sel-l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.05;
+}
+@property --c-glow-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.134;
+}
+@property --c-glow-l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.068;
+}
+@property --c-tile1-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.092;
+}
+@property --c-tile2-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.095;
+}
+@property --c-tile3-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.049;
+}
+@property --c-tile4-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.095;
+}
+@property --c-tile1-l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.062;
+}
+@property --c-tile2-l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.052;
+}
+@property --c-tile3-l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.08;
+}
+@property --c-tile4-l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.074;
+}
 
 /* (b) Hex fallback for hue 250 (engines without oklch). Generated — do not edit by hand. */
 :root {
@@ -82,11 +186,27 @@
   --fill: rgba(61, 102, 144, 0.12);
   --fill-2: rgba(61, 102, 144, 0.08);
   --fill-strong: rgba(61, 102, 144, 0.18);
+  --spot: rgba(255, 255, 255, 0);
   --grid: rgba(18, 30, 43, 0.08);
   --line: #c4d7eb;
   --line-strong: #5f7d9d;
   --selection: #b1d5fb;
   --danger: #963d3a;
+  --accent-2: #6b4a72;
+  --rule: rgba(61, 102, 144, 0.22);
+  --tile-1: #bad8f8;
+  --tile-2: #d6d7fd;
+  --tile-3: #b3e3e9;
+  --tile-4: #edd4f2;
+  --paper-yellow: #fae996;
+  --paper-pink: #ffc1d0;
+  --paper-blue: #b4dff6;
+  --paper-ink: #191f2b;
+  --paper-ink-2: #485061;
+  --paper-sheet: #fbfaf6;
+  --paper-shade: rgba(18, 22, 31, 0.3);
+  --paper-shade-soft: rgba(18, 22, 31, 0.12);
+  --tape: rgba(221, 209, 165, 0.6);
 }
 
 /* (b2) Hex fallback for hue 250, dark. Generated — do not edit by hand. */
@@ -114,11 +234,26 @@
     --fill: rgba(123, 185, 250, 0.18);
     --fill-2: rgba(123, 185, 250, 0.12);
     --fill-strong: rgba(123, 185, 250, 0.26);
+    --spot: rgba(255, 255, 255, 0);
     --grid: rgba(221, 230, 239, 0.12);
     --line: #202f3f;
     --line-strong: #5e7791;
     --selection: #2a4a6a;
     --danger: #e6857e;
+    --accent-2: #dfb7e8;
+    --rule: rgba(123, 185, 250, 0.24);
+    --tile-1: #1f3a55;
+    --tile-2: #373659;
+    --tile-3: #00353a;
+    --tile-4: #452e4b;
+    --paper-yellow: #d8c472;
+    --paper-pink: #e796aa;
+    --paper-blue: #7bb3d4;
+    --paper-ink: #191f2b;
+    --paper-ink-2: #384050;
+    --paper-shade: rgba(0, 0, 0, 0.6);
+    --paper-shade-soft: rgba(0, 0, 0, 0.35);
+    --tape: rgba(200, 190, 154, 0.32);
   }
 }
 :root:where([data-scheme='dark']) {
@@ -144,102 +279,143 @@
   --fill: rgba(123, 185, 250, 0.18);
   --fill-2: rgba(123, 185, 250, 0.12);
   --fill-strong: rgba(123, 185, 250, 0.26);
+  --spot: rgba(255, 255, 255, 0);
   --grid: rgba(221, 230, 239, 0.12);
   --line: #202f3f;
   --line-strong: #5e7791;
   --selection: #2a4a6a;
   --danger: #e6857e;
+  --accent-2: #dfb7e8;
+  --rule: rgba(123, 185, 250, 0.24);
+  --tile-1: #1f3a55;
+  --tile-2: #373659;
+  --tile-3: #00353a;
+  --tile-4: #452e4b;
+  --paper-yellow: #d8c472;
+  --paper-pink: #e796aa;
+  --paper-blue: #7bb3d4;
+  --paper-ink: #191f2b;
+  --paper-ink-2: #384050;
+  --paper-shade: rgba(0, 0, 0, 0.6);
+  --paper-shade-soft: rgba(0, 0, 0, 0.35);
+  --tape: rgba(200, 190, 154, 0.32);
 }
 
 /* (b3) Hex fallback for hue 250, quiet look (light, dark media, dark forced). Generated — do not edit by hand. */
 :root:where([data-look='quiet']) {
-  --bg: #e1ebf5;
-  --lobe-1: #cbdbed;
-  --lobe-2: #dcdcef;
-  --lobe-3: #d3e8ea;
-  --lobe-4: #e7dbea;
-  --lobe-1-clear: rgba(203, 219, 237, 0);
-  --lobe-2-clear: rgba(220, 220, 239, 0);
-  --lobe-3-clear: rgba(211, 232, 234, 0);
-  --lobe-4-clear: rgba(231, 219, 234, 0);
-  --surface: #e1ebf5;
-  --surface-2: #eaf1f8;
-  --well: #edf2f8;
-  --text: #141b24;
-  --text-muted: #454e58;
-  --text-faint: #606a75;
-  --accent: #355b81;
-  --accent-ui: #3d6690;
-  --accent-strong: #274563;
-  --accent-soft: #cde0f5;
-  --fill: rgba(61, 102, 144, 0.13);
-  --fill-2: rgba(61, 102, 144, 0.085);
-  --fill-strong: rgba(61, 102, 144, 0.19);
-  --grid: rgba(20, 27, 36, 0.08);
-  --line: #b3bfcd;
-  --line-strong: #6a839d;
+  --bg: #eff0f2;
+  --lobe-1: #eff0f2;
+  --lobe-2: #eff0f2;
+  --lobe-3: #eff0f2;
+  --lobe-4: #eff0f2;
+  --lobe-1-clear: rgba(239, 240, 242, 0);
+  --lobe-2-clear: rgba(239, 240, 242, 0);
+  --lobe-3-clear: rgba(239, 240, 242, 0);
+  --lobe-4-clear: rgba(239, 240, 242, 0);
+  --surface: #f9fafb;
+  --surface-2: #f5f6f7;
+  --well: #eaebed;
+  --text: #151618;
+  --text-muted: #4c4d4f;
+  --text-faint: #68696b;
+  --accent: #0e5a99;
+  --accent-2: #793887;
+  --accent-ui: #136bb5;
+  --accent-strong: #154470;
+  --accent-soft: #d3e7fd;
+  --fill: rgba(19, 107, 181, 0.14);
+  --fill-2: rgba(19, 107, 181, 0.07);
+  --fill-strong: rgba(19, 107, 181, 0.2);
+  --rule: rgba(19, 107, 181, 0.22);
+  --spot: rgba(255, 255, 255, 0);
+  --grid: rgba(0, 0, 0, 0.09);
+  --line: #cfd1d4;
+  --line-strong: #919295;
   --selection: #bfdbf8;
   --danger: #963d3a;
+  --tile-1: #b6d8fc;
+  --tile-2: #d6d7fd;
+  --tile-3: #98e9f2;
+  --tile-4: #f4cffd;
 }
 @media (prefers-color-scheme: dark) {
   :root:where([data-look='quiet']:not([data-scheme='light'])) {
-    --bg: #040b13;
-    --lobe-1: #11111f;
-    --lobe-2: #021517;
-    --lobe-3: #08111b;
-    --lobe-4: #160d18;
-    --lobe-1-clear: rgba(17, 17, 31, 0);
-    --lobe-2-clear: rgba(2, 21, 23, 0);
-    --lobe-3-clear: rgba(8, 17, 27, 0);
-    --lobe-4-clear: rgba(22, 13, 24, 0);
-    --surface: #0f1822;
-    --surface-2: #17232f;
-    --well: #020509;
-    --text: #eef2f7;
-    --text-muted: #b6bfc8;
-    --text-faint: #8c96a1;
-    --accent: #85bcf5;
-    --accent-ui: #6ea9e6;
-    --accent-strong: #c8e1fb;
-    --accent-soft: #142537;
-    --fill: rgba(110, 169, 230, 0.22);
-    --fill-2: rgba(110, 169, 230, 0.14);
-    --fill-strong: rgba(110, 169, 230, 0.3);
-    --grid: rgba(238, 242, 247, 0.12);
-    --line: #26313d;
-    --line-strong: #515f6e;
-    --selection: #27425d;
+    --bg: #090a0c;
+    --lobe-1: #090a0c;
+    --lobe-2: #090a0c;
+    --lobe-3: #090a0c;
+    --lobe-4: #090a0c;
+    --lobe-1-clear: rgba(9, 10, 12, 0);
+    --lobe-2-clear: rgba(9, 10, 12, 0);
+    --lobe-3-clear: rgba(9, 10, 12, 0);
+    --lobe-4-clear: rgba(9, 10, 12, 0);
+    --surface: #131416;
+    --surface-2: #1b1c1e;
+    --well: #050506;
+    --text: #eff0f1;
+    --text-muted: #b0b1b4;
+    --text-faint: #858689;
+    --accent: #99c9fc;
+    --accent-2: #eba7fa;
+    --accent-ui: #66b0fa;
+    --accent-strong: #c7e1fd;
+    --accent-soft: #14283c;
+    --fill: rgba(102, 176, 250, 0.22);
+    --fill-2: rgba(102, 176, 250, 0.1);
+    --fill-strong: rgba(102, 176, 250, 0.3);
+    --rule: rgba(102, 176, 250, 0.24);
+    --spot: rgba(255, 255, 255, 0.1);
+    --grid: rgba(255, 255, 255, 0.1);
+    --line: #2d2e30;
+    --line-strong: #545557;
+    --selection: #283f57;
     --danger: #e6857e;
+    --tile-1: #053965;
+    --tile-2: #373169;
+    --tile-3: #043539;
+    --tile-4: #4d2556;
   }
 }
 :root:where([data-look='quiet'][data-scheme='dark']) {
-  --bg: #040b13;
-  --lobe-1: #11111f;
-  --lobe-2: #021517;
-  --lobe-3: #08111b;
-  --lobe-4: #160d18;
-  --lobe-1-clear: rgba(17, 17, 31, 0);
-  --lobe-2-clear: rgba(2, 21, 23, 0);
-  --lobe-3-clear: rgba(8, 17, 27, 0);
-  --lobe-4-clear: rgba(22, 13, 24, 0);
-  --surface: #0f1822;
-  --surface-2: #17232f;
-  --well: #020509;
-  --text: #eef2f7;
-  --text-muted: #b6bfc8;
-  --text-faint: #8c96a1;
-  --accent: #85bcf5;
-  --accent-ui: #6ea9e6;
-  --accent-strong: #c8e1fb;
-  --accent-soft: #142537;
-  --fill: rgba(110, 169, 230, 0.22);
-  --fill-2: rgba(110, 169, 230, 0.14);
-  --fill-strong: rgba(110, 169, 230, 0.3);
-  --grid: rgba(238, 242, 247, 0.12);
-  --line: #26313d;
-  --line-strong: #515f6e;
-  --selection: #27425d;
+  --bg: #090a0c;
+  --lobe-1: #090a0c;
+  --lobe-2: #090a0c;
+  --lobe-3: #090a0c;
+  --lobe-4: #090a0c;
+  --lobe-1-clear: rgba(9, 10, 12, 0);
+  --lobe-2-clear: rgba(9, 10, 12, 0);
+  --lobe-3-clear: rgba(9, 10, 12, 0);
+  --lobe-4-clear: rgba(9, 10, 12, 0);
+  --surface: #131416;
+  --surface-2: #1b1c1e;
+  --well: #050506;
+  --text: #eff0f1;
+  --text-muted: #b0b1b4;
+  --text-faint: #858689;
+  --accent: #99c9fc;
+  --accent-2: #eba7fa;
+  --accent-ui: #66b0fa;
+  --accent-strong: #c7e1fd;
+  --accent-soft: #14283c;
+  --fill: rgba(102, 176, 250, 0.22);
+  --fill-2: rgba(102, 176, 250, 0.1);
+  --fill-strong: rgba(102, 176, 250, 0.3);
+  --rule: rgba(102, 176, 250, 0.24);
+  --spot: rgba(255, 255, 255, 0.1);
+  --grid: rgba(255, 255, 255, 0.1);
+  --line: #2d2e30;
+  --line-strong: #545557;
+  --selection: #283f57;
   --danger: #e6857e;
+  --tile-1: #053965;
+  --tile-2: #373169;
+  --tile-3: #043539;
+  --tile-4: #4d2556;
+}
+
+/* (b4) --stage-light needs oklch: engines without it get none (a gradient is only ever decoration). */
+:root {
+  --stage-light: none;
 }
 
 /* (c) The living palette, light ("Dye on paper", 2026-10-20). Only hue varies; L and C are fixed per role.
@@ -278,6 +454,22 @@
     --line-strong: oklch(0.58 calc(0.06 * var(--k)) var(--h));
     --selection: oklch(0.86 calc(0.066 * var(--k)) var(--h));
     --danger: oklch(0.48 0.12 25);
+    --accent-2: oklch(0.46 calc(0.075 * var(--k)) var(--h4));
+    --rule: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.22);
+    --tile-1: oklch(0.87 calc(0.055 * var(--k)) var(--h));
+    --tile-2: oklch(0.89 calc(0.053 * var(--k)) var(--h2)); /* .06 leaves sRGB at some hues (min of the ceiling .0532) */
+    --tile-3: oklch(0.885 calc(0.05 * var(--k)) var(--h3));
+    --tile-4: oklch(0.9 calc(0.048 * var(--k)) var(--h4)); /* .055: ceiling .0482 */
+    --stage-light: radial-gradient(closest-side, oklch(0.86 calc(var(--c-glow-l) * var(--k)) var(--h) / 0.8) 0%, oklch(0.86 calc(var(--c-glow-l) * var(--k)) var(--h) / 0.3) 60%, transparent 100%);
+    --paper-yellow: oklch(0.93 0.105 98);
+    --paper-pink: oklch(0.87 0.074 2); /* proved: .085 is outside sRGB at L .87, hue 2 (max .0744) */
+    --paper-blue: oklch(0.88 0.055 232);
+    --paper-ink: oklch(0.24 0.025 265);
+    --paper-ink-2: oklch(0.43 0.03 265);
+    --paper-sheet: oklch(0.985 0.006 95);
+    --paper-shade: oklch(0.2 0.02 265 / 0.3);
+    --paper-shade-soft: oklch(0.2 0.02 265 / 0.12);
+    --tape: oklch(0.86 0.06 95 / 0.6);
   }
   /* A portfolio keeps the earlier, paler light table: it is the person's page, not the app's ambient
    * state, and its skins were designed against it. */
@@ -348,6 +540,21 @@
       --line-strong: oklch(0.56 calc(0.05 * var(--k)) var(--h));
       --selection: oklch(0.4 calc(0.066 * var(--k)) var(--h));
       --danger: oklch(0.72 0.12 25);
+      --accent-2: oklch(0.83 calc(0.081 * var(--k)) var(--h4));
+      --rule: oklch(0.77 calc(0.113 * var(--k)) var(--h) / 0.24);
+      --tile-1: oklch(0.34 calc(0.058 * var(--k)) var(--h)); /* .07: ceiling .0586 */
+      --tile-2: oklch(0.35 calc(0.06 * var(--k)) var(--h2)); /* .075: ceiling .0602 */
+      --tile-3: oklch(0.3 calc(0.051 * var(--k)) var(--h3)); /* .06: ceiling .0520 */
+      --tile-4: oklch(0.34 calc(0.058 * var(--k)) var(--h4)); /* .07: ceiling .0586 */
+      --stage-light: radial-gradient(closest-side, oklch(0.5 calc(var(--c-glow-d) * var(--k)) var(--h) / 0.36) 0%, oklch(0.5 calc(var(--c-glow-d) * var(--k)) var(--h) / 0.1) 60%, transparent 100%);
+      --paper-yellow: oklch(0.82 0.105 96);
+      --paper-pink: oklch(0.76 0.1 4);
+      --paper-blue: oklch(0.74 0.075 235);
+      --paper-ink: oklch(0.24 0.025 265);
+      --paper-ink-2: oklch(0.37 0.03 265); /* night: .43 gives 3.6:1 on pink and blue */
+      --paper-shade: oklch(0 0 0 / 0.6);
+      --paper-shade-soft: oklch(0 0 0 / 0.35);
+      --tape: oklch(0.8 0.05 95 / 0.32);
     }
   }
   :root:where([data-scheme='dark']),
@@ -380,113 +587,162 @@
     --line-strong: oklch(0.56 calc(0.05 * var(--k)) var(--h));
     --selection: oklch(0.4 calc(0.066 * var(--k)) var(--h));
     --danger: oklch(0.72 0.12 25);
+    --accent-2: oklch(0.83 calc(0.081 * var(--k)) var(--h4));
+    --rule: oklch(0.77 calc(0.113 * var(--k)) var(--h) / 0.24);
+    --tile-1: oklch(0.34 calc(0.058 * var(--k)) var(--h)); /* .07: ceiling .0586 */
+    --tile-2: oklch(0.35 calc(0.06 * var(--k)) var(--h2)); /* .075: ceiling .0602 */
+    --tile-3: oklch(0.3 calc(0.051 * var(--k)) var(--h3)); /* .06: ceiling .0520 */
+    --tile-4: oklch(0.34 calc(0.058 * var(--k)) var(--h4)); /* .07: ceiling .0586 */
+    --stage-light: radial-gradient(closest-side, oklch(0.5 calc(var(--c-glow-d) * var(--k)) var(--h) / 0.36) 0%, oklch(0.5 calc(var(--c-glow-d) * var(--k)) var(--h) / 0.1) 60%, transparent 100%);
+    --paper-yellow: oklch(0.82 0.105 96);
+    --paper-pink: oklch(0.76 0.1 4);
+    --paper-blue: oklch(0.74 0.075 235);
+    --paper-ink: oklch(0.24 0.025 265);
+    --paper-ink-2: oklch(0.37 0.03 265); /* night: .43 gives 3.6:1 on pink and blue */
+    --paper-shade: oklch(0 0 0 / 0.6);
+    --paper-shade-soft: oklch(0 0 0 / 0.35);
+    --tape: oklch(0.8 0.05 95 / 0.32);
   }
 }
 
-/* (c1b) The "quiet" look (opt-in, <html data-look="quiet">; absent = today's look above, unchanged). A quiet field,
- * panels that are regions rather than boxes, colour kept for the accent, the fill and the cursor. Same roles, same
- * hue variables; the light table sits on the field (surface = bg), the dark table makes panels one step LIGHTER than
- * the field (surface .205 over bg .145, a step of .06). Dark since 2026-11-07 (canvas "Leafout Dark Mode
- * Explorations", direction D): the field carries the dye again (C .022, the sRGB ceiling at L .145) under three
- * faint lobes (~.028, a quarter of the earlier dark's), ink is .96, hairlines carry chroma, and the accents sit at
- * L .78 / .72 with C .10 / .108, the lightness where a real blue fits inside sRGB (at L .84 the gamut capped it near
- * .08, the pastel). `.look-quiet.scheme-light|dark` re-declare the tables inside a wrapper (the playground).
- * Selectors carry :where() so they stay at :root specificity and file order decides: this block comes after
- * today's tables. The dark table exists twice (media + forced); palette-check asserts the copies agree. */
+/* (c1b) The "quiet" look (<html data-look="quiet">, the default; absent = today's look above, unchanged): a neutral stage.
+ * 2026-11-12, the user's decision ("the neutral stage"). The stage (field, panels, wells, ink, hairlines, grid) is a
+ * fixed neutral, chroma .002-.005 at hue 264, and never follows --h. Colour is kept for the accents, the fills, the
+ * selection, the tile fields and one soft light behind the skill graph (--stage-light), and it takes the hue with the
+ * chroma function: min(cap, 0.94 x the most that hue holds in sRGB at that lightness), computed once in
+ * src/theme/hue.js and written as --c-*-d / --c-*-l (used as var(--c-ui-d) x --k and so on). So every hour is equally
+ * alive and green or yellow hours are not olive. No lobes: --lobe-N is the field's own colour (the ambient layer
+ * paints a flat fill in this look). Light: panels are one step lighter than the field (.985 over .955); dark: one
+ * step lighter again (.19 over .145). `.look-quiet.scheme-light|dark` re-declare the tables inside a wrapper (the
+ * playground). Selectors carry :where() so they stay at :root specificity and file order decides: this block comes
+ * after today's tables. The dark table exists twice (media + forced); palette-check asserts the copies agree. */
 @supports (color: oklch(0 0 0)) {
   :root:where([data-look='quiet']),
   .look-quiet.scheme-light {
-    --bg: oklch(0.935 calc(0.018 * var(--k) * var(--kw)) var(--h));
-    --lobe-1: oklch(0.885 calc(0.03 * var(--k) * var(--kw) * var(--kb)) var(--h));
-    --lobe-2: oklch(0.9 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h2));
-    --lobe-3: oklch(0.915 calc(0.022 * var(--k) * var(--kw) * var(--kb)) var(--h3));
-    --lobe-4: oklch(0.905 calc(0.025 * var(--k) * var(--kw) * var(--kb)) var(--h4));
-    --lobe-1-clear: oklch(0.885 calc(0.03 * var(--k) * var(--kw) * var(--kb)) var(--h) / 0);
-    --lobe-2-clear: oklch(0.9 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h2) / 0);
-    --lobe-3-clear: oklch(0.915 calc(0.022 * var(--k) * var(--kw) * var(--kb)) var(--h3) / 0);
-    --lobe-4-clear: oklch(0.905 calc(0.025 * var(--k) * var(--kw) * var(--kb)) var(--h4) / 0);
-    --surface: oklch(0.953 calc(0.014 * var(--k) * var(--kw)) var(--h)); /* 2026-11-11: a card is one step lighter than the field (was the field, .935) */
-    --surface-2: oklch(0.968 calc(0.01 * var(--k)) var(--h));
-    --well: oklch(0.975 calc(0.008 * var(--k)) var(--h));
-    --text: oklch(0.22 calc(0.02 * var(--k)) var(--h));
-    --text-muted: oklch(0.38 calc(0.02 * var(--k)) var(--h)); /* 2026-11-11: small text reads (was .42, faint .52) */
-    --text-faint: oklch(0.47 calc(0.022 * var(--k)) var(--h));
-    --accent: oklch(0.46 calc(0.076 * var(--k)) var(--h));
-    --accent-ui: oklch(0.5 calc(0.082 * var(--k)) var(--h));
-    --accent-strong: oklch(0.38 calc(0.063 * var(--k)) var(--h));
-    --accent-soft: oklch(0.9 calc(0.035 * var(--k)) var(--h));
-    --fill: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.13);
-    --fill-2: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.085);
-    --fill-strong: oklch(0.5 calc(0.082 * var(--k)) var(--h) / 0.19);
-    --grid: oklch(0.22 calc(0.02 * var(--k)) var(--h) / 0.08);
-    --line: oklch(0.73 calc(0.026 * var(--k)) var(--h)); /* 2026-11-11: hairlines and card edges read (was .8, before that .9) */
-    --line-strong: oklch(0.53 calc(0.05 * var(--k)) var(--h)); /* (was .6) */
-    --selection: oklch(0.88 calc(0.05 * var(--k)) var(--h));
+    --bg: oklch(0.955 calc(0.003 * var(--k)) 264);
+    --lobe-1: oklch(0.955 calc(0.003 * var(--k)) 264);
+    --lobe-2: oklch(0.955 calc(0.003 * var(--k)) 264);
+    --lobe-3: oklch(0.955 calc(0.003 * var(--k)) 264);
+    --lobe-4: oklch(0.955 calc(0.003 * var(--k)) 264);
+    --lobe-1-clear: oklch(0.955 calc(0.003 * var(--k)) 264 / 0);
+    --lobe-2-clear: oklch(0.955 calc(0.003 * var(--k)) 264 / 0);
+    --lobe-3-clear: oklch(0.955 calc(0.003 * var(--k)) 264 / 0);
+    --lobe-4-clear: oklch(0.955 calc(0.003 * var(--k)) 264 / 0);
+    --surface: oklch(0.985 calc(0.002 * var(--k)) 264);
+    --surface-2: oklch(0.972 calc(0.002 * var(--k)) 264);
+    --well: oklch(0.94 calc(0.003 * var(--k)) 264);
+    --text: oklch(0.2 calc(0.004 * var(--k)) 264);
+    --text-muted: oklch(0.42 calc(0.004 * var(--k)) 264);
+    --text-faint: oklch(0.52 calc(0.004 * var(--k)) 264);
+    --accent: oklch(0.46 calc(var(--c-accent-l) * var(--k)) var(--h));
+    --accent-2: oklch(0.46 calc(var(--c-accent2-l) * var(--k)) var(--h4));
+    --accent-ui: oklch(0.52 calc(var(--c-ui-l) * var(--k)) var(--h));
+    --accent-strong: oklch(0.38 calc(var(--c-strong-l) * var(--k)) var(--h));
+    --accent-soft: oklch(0.92 calc(0.037 * var(--k)) var(--h)); /* .04 leaves sRGB at some hues (ceiling .0383) */
+    --fill: oklch(0.52 calc(var(--c-ui-l) * var(--k)) var(--h) / 0.14);
+    --fill-2: oklch(0.52 calc(var(--c-ui-l) * var(--k)) var(--h) / 0.07);
+    --fill-strong: oklch(0.52 calc(var(--c-ui-l) * var(--k)) var(--h) / 0.2);
+    --rule: oklch(0.52 calc(var(--c-ui-l) * var(--k)) var(--h) / 0.22);
+    --spot: oklch(1 0 0 / 0);
+    --grid: oklch(0 0 0 / 0.09);
+    --line: oklch(0.86 calc(0.004 * var(--k)) 264);
+    --line-strong: oklch(0.66 calc(0.005 * var(--k)) 264);
+    --selection: oklch(0.88 calc(var(--c-sel-l) * var(--k)) var(--h));
     --danger: oklch(0.48 0.12 25);
+    --tile-1: oklch(0.87 calc(var(--c-tile1-l) * var(--k)) var(--h));
+    --tile-2: oklch(0.89 calc(var(--c-tile2-l) * var(--k)) var(--h2));
+    --tile-3: oklch(0.885 calc(var(--c-tile3-l) * var(--k)) var(--h3));
+    --tile-4: oklch(0.9 calc(var(--c-tile4-l) * var(--k)) var(--h4));
+    --stage-light: radial-gradient(closest-side, oklch(0.86 calc(var(--c-glow-l) * var(--k)) var(--h) / 0.8) 0%, oklch(0.86 calc(var(--c-glow-l) * var(--k)) var(--h) / 0.3) 60%, transparent 100%);
   }
   @media (prefers-color-scheme: dark) {
     :root:where([data-look='quiet']:not([data-scheme='light'])) {
-      --bg: oklch(0.145 calc(0.022 * var(--k) * var(--kw)) var(--h));
-      --lobe-1: oklch(0.185 calc(0.028 * var(--k) * var(--kw) * var(--kb)) var(--h2));
-      --lobe-2: oklch(0.18 calc(0.027 * var(--k) * var(--kw) * var(--kb)) var(--h3));
-      --lobe-3: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h));
-      --lobe-4: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h4));
-      --lobe-1-clear: oklch(0.185 calc(0.028 * var(--k) * var(--kw) * var(--kb)) var(--h2) / 0);
-      --lobe-2-clear: oklch(0.18 calc(0.027 * var(--k) * var(--kw) * var(--kb)) var(--h3) / 0);
-      --lobe-3-clear: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h) / 0);
-      --lobe-4-clear: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h4) / 0);
-      --surface: oklch(0.205 calc(0.024 * var(--k) * var(--kw)) var(--h));
-      --surface-2: oklch(0.25 calc(0.028 * var(--k)) var(--h));
-      --well: oklch(0.11 calc(0.017 * var(--k)) var(--h));
-      --text: oklch(0.96 calc(0.008 * var(--k)) var(--h));
-      --text-muted: oklch(0.84 calc(0.016 * var(--k)) var(--h));
-      --text-faint: oklch(0.72 calc(0.02 * var(--k)) var(--h));
-      --accent: oklch(0.78 calc(0.1 * var(--k)) var(--h));
-      --accent-ui: oklch(0.72 calc(0.108 * var(--k)) var(--h));
-      --accent-strong: oklch(0.9 calc(0.045 * var(--k)) var(--h));
-      --accent-soft: oklch(0.26 calc(0.04 * var(--k)) var(--h));
-      --fill: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.22);
-      --fill-2: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.14);
-      --fill-strong: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.3);
+      --bg: oklch(0.145 calc(0.004 * var(--k)) 264);
+      --lobe-1: oklch(0.145 calc(0.004 * var(--k)) 264);
+      --lobe-2: oklch(0.145 calc(0.004 * var(--k)) 264);
+      --lobe-3: oklch(0.145 calc(0.004 * var(--k)) 264);
+      --lobe-4: oklch(0.145 calc(0.004 * var(--k)) 264);
+      --lobe-1-clear: oklch(0.145 calc(0.004 * var(--k)) 264 / 0);
+      --lobe-2-clear: oklch(0.145 calc(0.004 * var(--k)) 264 / 0);
+      --lobe-3-clear: oklch(0.145 calc(0.004 * var(--k)) 264 / 0);
+      --lobe-4-clear: oklch(0.145 calc(0.004 * var(--k)) 264 / 0);
+      --surface: oklch(0.19 calc(0.004 * var(--k)) 264);
+      --surface-2: oklch(0.225 calc(0.004 * var(--k)) 264);
+      --well: oklch(0.115 calc(0.003 * var(--k)) 264);
+      --text: oklch(0.955 calc(0.002 * var(--k)) 264);
+      --text-muted: oklch(0.76 calc(0.004 * var(--k)) 264);
+      --text-faint: oklch(0.62 calc(0.004 * var(--k)) 264);
+      --accent: oklch(0.82 calc(var(--c-accent-d) * var(--k)) var(--h));
+      --accent-2: oklch(0.82 calc(var(--c-accent2-d) * var(--k)) var(--h4));
+      --accent-ui: oklch(0.74 calc(var(--c-ui-d) * var(--k)) var(--h));
+      --accent-strong: oklch(0.9 calc(var(--c-strong-d) * var(--k)) var(--h));
+      --accent-soft: oklch(0.27 calc(0.045 * var(--k)) var(--h));
+      --fill: oklch(0.74 calc(var(--c-ui-d) * var(--k)) var(--h) / 0.22);
+      --fill-2: oklch(0.74 calc(var(--c-ui-d) * var(--k)) var(--h) / 0.1);
+      --fill-strong: oklch(0.74 calc(var(--c-ui-d) * var(--k)) var(--h) / 0.3);
+      --rule: oklch(0.74 calc(var(--c-ui-d) * var(--k)) var(--h) / 0.24);
       --spot: oklch(1 0 0 / 0.1);
-      --grid: oklch(0.96 calc(0.008 * var(--k)) var(--h) / 0.12);
-      --line: oklch(0.38 calc(0.028 * var(--k)) var(--h));
-      --line-strong: oklch(0.56 calc(0.03 * var(--k)) var(--h));
-      --selection: oklch(0.37 calc(0.058 * var(--k)) var(--h));
+      --grid: oklch(1 0 0 / 0.1);
+      --line: oklch(0.3 calc(0.004 * var(--k)) 264);
+      --line-strong: oklch(0.45 calc(0.004 * var(--k)) 264);
+      --selection: oklch(0.36 calc(var(--c-sel-d) * var(--k)) var(--h));
       --danger: oklch(0.72 0.12 25);
+      --tile-1: oklch(0.34 calc(var(--c-tile1-d) * var(--k)) var(--h));
+      --tile-2: oklch(0.35 calc(var(--c-tile2-d) * var(--k)) var(--h2));
+      --tile-3: oklch(0.3 calc(var(--c-tile3-d) * var(--k)) var(--h3));
+      --tile-4: oklch(0.34 calc(var(--c-tile4-d) * var(--k)) var(--h4));
+      --stage-light: radial-gradient(closest-side, oklch(0.5 calc(var(--c-glow-d) * var(--k)) var(--h) / 0.36) 0%, oklch(0.5 calc(var(--c-glow-d) * var(--k)) var(--h) / 0.1) 60%, transparent 100%);
     }
   }
   :root:where([data-look='quiet'][data-scheme='dark']),
   .look-quiet.scheme-dark {
-    --bg: oklch(0.145 calc(0.022 * var(--k) * var(--kw)) var(--h));
-    --lobe-1: oklch(0.185 calc(0.028 * var(--k) * var(--kw) * var(--kb)) var(--h2));
-    --lobe-2: oklch(0.18 calc(0.027 * var(--k) * var(--kw) * var(--kb)) var(--h3));
-    --lobe-3: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h));
-    --lobe-4: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h4));
-    --lobe-1-clear: oklch(0.185 calc(0.028 * var(--k) * var(--kw) * var(--kb)) var(--h2) / 0);
-    --lobe-2-clear: oklch(0.18 calc(0.027 * var(--k) * var(--kw) * var(--kb)) var(--h3) / 0);
-    --lobe-3-clear: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h) / 0);
-    --lobe-4-clear: oklch(0.175 calc(0.026 * var(--k) * var(--kw) * var(--kb)) var(--h4) / 0);
-    --surface: oklch(0.205 calc(0.024 * var(--k) * var(--kw)) var(--h));
-    --surface-2: oklch(0.25 calc(0.028 * var(--k)) var(--h));
-    --well: oklch(0.11 calc(0.017 * var(--k)) var(--h));
-    --text: oklch(0.96 calc(0.008 * var(--k)) var(--h));
-    --text-muted: oklch(0.84 calc(0.016 * var(--k)) var(--h));
-    --text-faint: oklch(0.72 calc(0.02 * var(--k)) var(--h));
-    --accent: oklch(0.78 calc(0.1 * var(--k)) var(--h));
-    --accent-ui: oklch(0.72 calc(0.108 * var(--k)) var(--h));
-    --accent-strong: oklch(0.9 calc(0.045 * var(--k)) var(--h));
-    --accent-soft: oklch(0.26 calc(0.04 * var(--k)) var(--h));
-    --fill: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.22);
-    --fill-2: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.14);
-    --fill-strong: oklch(0.72 calc(0.108 * var(--k)) var(--h) / 0.3);
+    --bg: oklch(0.145 calc(0.004 * var(--k)) 264);
+    --lobe-1: oklch(0.145 calc(0.004 * var(--k)) 264);
+    --lobe-2: oklch(0.145 calc(0.004 * var(--k)) 264);
+    --lobe-3: oklch(0.145 calc(0.004 * var(--k)) 264);
+    --lobe-4: oklch(0.145 calc(0.004 * var(--k)) 264);
+    --lobe-1-clear: oklch(0.145 calc(0.004 * var(--k)) 264 / 0);
+    --lobe-2-clear: oklch(0.145 calc(0.004 * var(--k)) 264 / 0);
+    --lobe-3-clear: oklch(0.145 calc(0.004 * var(--k)) 264 / 0);
+    --lobe-4-clear: oklch(0.145 calc(0.004 * var(--k)) 264 / 0);
+    --surface: oklch(0.19 calc(0.004 * var(--k)) 264);
+    --surface-2: oklch(0.225 calc(0.004 * var(--k)) 264);
+    --well: oklch(0.115 calc(0.003 * var(--k)) 264);
+    --text: oklch(0.955 calc(0.002 * var(--k)) 264);
+    --text-muted: oklch(0.76 calc(0.004 * var(--k)) 264);
+    --text-faint: oklch(0.62 calc(0.004 * var(--k)) 264);
+    --accent: oklch(0.82 calc(var(--c-accent-d) * var(--k)) var(--h));
+    --accent-2: oklch(0.82 calc(var(--c-accent2-d) * var(--k)) var(--h4));
+    --accent-ui: oklch(0.74 calc(var(--c-ui-d) * var(--k)) var(--h));
+    --accent-strong: oklch(0.9 calc(var(--c-strong-d) * var(--k)) var(--h));
+    --accent-soft: oklch(0.27 calc(0.045 * var(--k)) var(--h));
+    --fill: oklch(0.74 calc(var(--c-ui-d) * var(--k)) var(--h) / 0.22);
+    --fill-2: oklch(0.74 calc(var(--c-ui-d) * var(--k)) var(--h) / 0.1);
+    --fill-strong: oklch(0.74 calc(var(--c-ui-d) * var(--k)) var(--h) / 0.3);
+    --rule: oklch(0.74 calc(var(--c-ui-d) * var(--k)) var(--h) / 0.24);
     --spot: oklch(1 0 0 / 0.1);
-    --grid: oklch(0.96 calc(0.008 * var(--k)) var(--h) / 0.12);
-    --line: oklch(0.38 calc(0.028 * var(--k)) var(--h));
-    --line-strong: oklch(0.56 calc(0.03 * var(--k)) var(--h));
-    --selection: oklch(0.37 calc(0.058 * var(--k)) var(--h));
+    --grid: oklch(1 0 0 / 0.1);
+    --line: oklch(0.3 calc(0.004 * var(--k)) 264);
+    --line-strong: oklch(0.45 calc(0.004 * var(--k)) 264);
+    --selection: oklch(0.36 calc(var(--c-sel-d) * var(--k)) var(--h));
     --danger: oklch(0.72 0.12 25);
+    --tile-1: oklch(0.34 calc(var(--c-tile1-d) * var(--k)) var(--h));
+    --tile-2: oklch(0.35 calc(var(--c-tile2-d) * var(--k)) var(--h2));
+    --tile-3: oklch(0.3 calc(var(--c-tile3-d) * var(--k)) var(--h3));
+    --tile-4: oklch(0.34 calc(var(--c-tile4-d) * var(--k)) var(--h4));
+    --stage-light: radial-gradient(closest-side, oklch(0.5 calc(var(--c-glow-d) * var(--k)) var(--h) / 0.36) 0%, oklch(0.5 calc(var(--c-glow-d) * var(--k)) var(--h) / 0.1) 60%, transparent 100%);
   }
+}
+
+/* (c1c) Tokens that are not an oklch literal, so they sit outside the tables the palette check parses (it mirrors them:
+ * paper-sheet in dark is --surface-2). The notebook page at night is a dark sheet. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-scheme='light'])) {
+    --paper-sheet: var(--surface-2);
+  }
+}
+:root:where([data-scheme='dark']) {
+  --paper-sheet: var(--surface-2);
 }
 
 /* (c2) The portfolio's Old Newspaper skin: fixed paper and ink, no hue drift (ink on paper ≥ 7:1).
@@ -522,6 +778,7 @@
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: 'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-pen: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
 
   --fs-0: 11.5px;
   --fs-1: 12.5px;
@@ -618,6 +875,12 @@ body {
     radial-gradient(46% 42% at 74% 62% in oklab, var(--lobe-4) 0%, var(--lobe-4-clear) 70%);
 }
 
+/* The quiet look is a neutral stage: no dyed lobes, so the layer is one flat fill and paints no gradients. */
+:root[data-look='quiet'] .ambient,
+.look-quiet .ambient {
+  background-image: none;
+}
+
 /* (f) Degrade with grace. */
 @media (prefers-contrast: more) {
   .ambient {
@@ -649,6 +912,32 @@ body {
       --accent-ui: oklch(0.84 calc(0.1 * var(--k)) var(--h));
       --line: oklch(0.46 calc(0.035 * var(--k)) var(--h));
       --grid: oklch(0.93 calc(0.01 * var(--k)) var(--h) / 0.3);
+    }
+  }
+}
+
+/* The quiet look's stage stays neutral under more contrast: the roles move, the hue does not follow. */
+@media (prefers-contrast: more) {
+  @supports (color: oklch(0 0 0)) {
+    :root:where([data-look='quiet']) {
+      --text: oklch(0.15 calc(0.004 * var(--k)) 264);
+      --text-muted: oklch(0.33 calc(0.004 * var(--k)) 264);
+      --line: oklch(0.7 calc(0.004 * var(--k)) 264);
+      --grid: oklch(0 0 0 / 0.2);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:where([data-look='quiet']:not([data-scheme='light'])) {
+        --text: oklch(0.98 calc(0.002 * var(--k)) 264);
+        --text-muted: oklch(0.86 calc(0.004 * var(--k)) 264);
+        --line: oklch(0.5 calc(0.004 * var(--k)) 264);
+        --grid: oklch(1 0 0 / 0.3);
+      }
+    }
+    :root:where([data-look='quiet'][data-scheme='dark']) {
+      --text: oklch(0.98 calc(0.002 * var(--k)) 264);
+      --text-muted: oklch(0.86 calc(0.004 * var(--k)) 264);
+      --line: oklch(0.5 calc(0.004 * var(--k)) 264);
+      --grid: oklch(1 0 0 / 0.3);
     }
   }
 }
@@ -686,6 +975,22 @@ body {
     --line-strong: CanvasText;
     --selection: Highlight;
     --danger: CanvasText;
+    --accent-2: LinkText;
+    --rule: GrayText;
+    --tile-1: Canvas;
+    --tile-2: Canvas;
+    --tile-3: Canvas;
+    --tile-4: Canvas;
+    --stage-light: none;
+    --paper-yellow: Canvas;
+    --paper-pink: Canvas;
+    --paper-blue: Canvas;
+    --paper-ink: CanvasText;
+    --paper-ink-2: CanvasText;
+    --paper-sheet: Canvas;
+    --paper-shade: transparent;
+    --paper-shade-soft: transparent;
+    --tape: transparent;
     --press-paper: Canvas;
     --press-ink: CanvasText;
     --press-ink-2: CanvasText;

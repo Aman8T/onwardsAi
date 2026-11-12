@@ -17,6 +17,7 @@ import { join, resolve } from 'node:path';
 import { COMPANY_LINKS, COMPANY_URL, OPERATOR_LINE, SITE_PAGES } from '../src/site/links';
 import { HOME_HEAD, MAX_DESCRIPTION, OG_IMAGE, ORG_ID, PRICING_HEAD, SITE_LINE, absoluteUrl, resolveSiteUrl } from '../src/site/seo';
 import type { AppHead } from '../src/site/seo';
+import { CHROMA_SPEC } from '../src/theme/hue';
 
 const DIST = resolve(process.cwd(), 'dist');
 const MIN_HUE_COLOURS = 20;
@@ -28,7 +29,27 @@ interface Check {
 }
 
 /**
- * Counts oklch() colours whose arguments reference --h / --h2 / --h3.
+ * True when every box-shadow in the stylesheet is the paper shadow the user allowed (2026-11-12): every colour in the
+ * declaration is var(--paper-shade) or var(--paper-shade-soft). Any other box-shadow (or the property named in a
+ * transition) fails, as scripts/restraint-check.ts does for the sources.
+ */
+function onlyPaperShadows(css: string): boolean {
+  for (const m of css.matchAll(/box-shadow(\s*:\s*([^;}]*))?/g)) {
+    const value = m[2];
+    if (value === undefined) return false;
+    const colours = value.match(/var\(\s*--[\w-]+\s*\)/g) ?? [];
+    if (!colours.length || !colours.every((c) => /^var\(\s*--paper-shade(?:-soft)?\s*\)$/.test(c))) return false;
+    const residue = value
+      .replace(/var\(\s*--paper-shade(?:-soft)?\s*\)/g, '')
+      .replace(/\binset\b|[,\s]/g, '')
+      .replace(/-?\d*\.?\d+(?:px|r?em)?/g, '');
+    if (residue !== '') return false;
+  }
+  return true;
+}
+
+/**
+ * Counts oklch() colours whose arguments reference --h / --h2 / --h3 / --h4.
  * Paren-aware, because every token nests calc(… var(--k) …) before the hue.
  */
 function countHueColours(css: string): number {
@@ -43,7 +64,7 @@ function countHueColours(css: string): number {
       if (css[end] === '(') depth++;
       else if (css[end] === ')' && --depth === 0) break;
     }
-    if (/var\(--h[23]?\)/.test(css.slice(start, end))) count++;
+    if (/var\(--h[234]?\)/.test(css.slice(start, end))) count++;
     from = end + 1;
   }
 }
@@ -405,8 +426,8 @@ function pageChecks(): Check[] {
 
   const css = readIfExists('site/site.css');
   checks.push({
-    name: 'site/site.css carries the tokens, the primitives and the page styles, and no box-shadow',
-    ok: css !== null && css.includes('@property --h') && css.includes('.btn-primary') && css.includes('.site-header') && !css.includes('box-shadow'),
+    name: 'site/site.css carries the tokens, the primitives and the page styles, and no box-shadow but the paper one',
+    ok: css !== null && css.includes('@property --h') && css.includes('.btn-primary') && css.includes('.site-header') && onlyPaperShadows(css),
     detail: css === null ? 'dist/site/site.css is missing' : undefined,
   });
 
@@ -425,6 +446,13 @@ function main(): number {
   const css = cssFiles.map((f) => readFileSync(join(assetsDir, f), 'utf8')).join('\n');
 
   const hueColours = countHueColours(css);
+  const chromaKeys = Object.keys(CHROMA_SPEC);
+  const registered = (k: string): boolean => new RegExp(`@property\\s+--${k}\\s*\\{`).test(css);
+  const declared = (t: string): boolean => new RegExp(`--${t}\\s*:`).test(css);
+  const stageTokens = [
+    'tile-1', 'tile-2', 'tile-3', 'tile-4', 'paper-yellow', 'paper-pink', 'paper-blue', 'paper-ink', 'paper-ink-2', 'paper-sheet',
+    'paper-shade', 'paper-shade-soft', 'tape', 'rule', 'stage-light', 'font-pen', 'accent-2',
+  ];
   const bootAt = html.indexOf('tayyari.hue0');
   const stylesheetAt = html.search(/<link[^>]*rel="stylesheet"/);
 
@@ -437,7 +465,30 @@ function main(): number {
       detail: `${hueColours} found`,
     },
     { name: '@supports (color: oklch(…)) block', ok: /@supports\s*\(\s*color\s*:\s*oklch\(/.test(css) },
-    { name: 'no box-shadow', ok: !css.includes('box-shadow') && !html.includes('box-shadow') },
+    { name: 'no box-shadow but the paper one (var(--paper-shade) colours only)', ok: onlyPaperShadows(css) && !html.includes('box-shadow') },
+    {
+      name: 'every chroma number of src/theme/hue.js registered with @property',
+      ok: chromaKeys.every(registered),
+      detail: chromaKeys.filter((k) => !registered(k)).join(', ') || undefined,
+    },
+    {
+      name: 'the stage tokens are in the stylesheet (tiles, paper, shades, tape, rule, stage light, pen font)',
+      ok: stageTokens.every(declared),
+      detail: stageTokens.filter((t) => !declared(t)).join(', ') || undefined,
+    },
+    {
+      name: 'the stage light is a var()-based gradient (esbuild would turn literal oklch into hex)',
+      ok: /--stage-light\s*:\s*radial-gradient\([^;]*var\(--c-glow-[dl]\)/.test(css) && !/--stage-light\s*:[^;]*\bin oklch\b/.test(css),
+    },
+    {
+      name: 'the quiet look paints no lobes (flat ambient fill)',
+      ok: /\[data-look=["']?quiet["']?\]\s*\.ambient[^{]*\{[^}]*background-image:\s*none/.test(css),
+    },
+    { name: 'index.html loads Caveat 500 and 600', ok: /family=Caveat:wght@500;600/.test(html) },
+    {
+      name: 'the inline boot script computes and writes the chroma numbers',
+      ok: html.includes('c-ui-d') && html.includes('c-tile4-l') && html.includes('c-glow-l'),
+    },
     { name: 'meta color-scheme light dark', ok: /<meta\s+name="color-scheme"\s+content="light dark"\s*\/?>/.test(html) },
     {
       name: 'dark table under prefers-color-scheme and data-scheme',

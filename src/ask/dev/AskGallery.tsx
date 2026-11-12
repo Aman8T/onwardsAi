@@ -4,7 +4,7 @@
  *
  *   /dev/ask?state=done
  *
- *   resting · open · waiting · streaming · done · stopped · failed · rate · ceiling
+ *   resting · small · open · waiting · streaming · done · stopped · failed · rate · ceiling
  *
  * It renders `DockView`, the same component the dashboard's `AskDock` renders, so nothing here is a copy of the markup.
  * The buttons do nothing but say what they would have done.
@@ -73,6 +73,7 @@ export function AskGallery() {
             inputId: 'ak-dev-in',
             panelId: 'ak-dev-panel',
             open: state.open,
+            compact: state.compact,
             text,
             following: !!state.thread,
             streaming: state.streaming,

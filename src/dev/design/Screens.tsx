@@ -15,7 +15,7 @@ import { WeeklyRoom } from '../../weekly/WeeklyRoom';
 import { Dashboard } from '../../views/Dashboard';
 import { GraphView } from '../../views/GraphView';
 import { Onboarding } from '../../views/Onboarding';
-import { DESK_SEED, EMPTY_SEED } from './deskFixtures';
+import { DESK_SEED, EMPTY_SEED, NO_NOTES_SEED } from './deskFixtures';
 import type { ScreenId } from './state';
 import '../../styles/match.css';
 import '../../styles/weekly.css';
@@ -59,10 +59,11 @@ const PREVIOUS: Profile = {
   sources: PROFILE.sources.filter((s) => s.kind !== 'portfolio'),
 };
 
-/** `?desk=empty` is the desk of someone with only the analysis: no previous one, nothing practised, saved or asked. */
+/** `?desk=empty` is the desk of someone with only the analysis: no previous one, nothing practised, saved or asked; `?desk=nonotes` has everything but a note. */
 function DashboardScreen() {
-  const empty = new URLSearchParams(window.location.search).get('desk') === 'empty';
-  return <Dashboard profile={PROFILE} previous={empty ? null : PREVIOUS} seed={empty ? EMPTY_SEED : DESK_SEED} />;
+  const desk = new URLSearchParams(window.location.search).get('desk');
+  const empty = desk === 'empty';
+  return <Dashboard profile={PROFILE} previous={empty ? null : PREVIOUS} seed={empty ? EMPTY_SEED : desk === 'nonotes' ? NO_NOTES_SEED : DESK_SEED} />;
 }
 
 function GraphScreen() {

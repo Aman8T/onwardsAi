@@ -57,7 +57,7 @@ export function useShareSheet(profileId: string): { show: () => void; open: bool
   return { show, open, sheet };
 }
 
-export function ShareButton({ profileId, look = 'header', className, children }: { profileId: string; look?: ShareLook; className?: string; children?: ReactNode }) {
+export function ShareButton({ profileId, look = 'header', className, children, label = 'Share my skill shape' }: { profileId: string; look?: ShareLook; className?: string; children?: ReactNode; /** The button's words (the dashboard's primary button says "Share your skill graph"). */ label?: string }) {
   const { show, open, sheet } = useShareSheet(profileId);
 
   return (
@@ -65,7 +65,7 @@ export function ShareButton({ profileId, look = 'header', className, children }:
       <button
         type="button"
         className={look === 'header' ? 'btn btn-quiet gv-portfolio gv-share' : look === 'primary' ? `btn btn-primary${className ? ` ${className}` : ''}` : (className ?? '')}
-        aria-label={look === 'slip' ? undefined : 'Share my skill shape'}
+        aria-label={look === 'slip' ? undefined : label}
         aria-haspopup="dialog"
         aria-expanded={open}
         title="Share your skill shape as a card for your GitHub README or LinkedIn"
@@ -81,7 +81,7 @@ export function ShareButton({ profileId, look = 'header', className, children }:
             </span>
           </>
         ) : (
-          (children ?? 'Share my skill shape')
+          (children ?? label)
         )}
       </button>
       {sheet}
