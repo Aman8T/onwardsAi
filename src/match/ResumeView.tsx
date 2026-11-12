@@ -205,7 +205,7 @@ export function Decisions({ decisions, variant, facts, saving, onDecide, heading
   const bullets = new Map(allBullets(variant).map((b) => [b.id, b]));
   const n = decisions.length;
   return (
-    <section className="panel mt-panel" aria-labelledby="mt-dec-h">
+    <section className="mt-panel m-plain" aria-labelledby="mt-dec-h">
       <div className="mt-panel-head">
         <h2 id="mt-dec-h" ref={headingRef} tabIndex={-1} className="kicker mt-h2">
           {n > 0 ? (
@@ -364,7 +364,7 @@ export function ResumeView(props: ResumeViewProps) {
   return (
     <>
       <section className="mt-intro mt-intro-split">
-        <div className="mt-intro-text">
+        <div className="mt-intro-text m-field">
           <p className="kicker">
             <RouteLink route={{ screen: 'match', id: matchId }} onNavigate={onNavigate} className="mt-plain">
               ← Match
@@ -386,7 +386,7 @@ export function ResumeView(props: ResumeViewProps) {
             )}
           </p>
         </div>
-        <div className="mt-actions" role="group" aria-label={applyHref ? 'Downloads and applying' : 'Downloads'}>
+        <div className="mt-actions mt-inkblock m-ink" role="group" aria-label={applyHref ? 'Downloads and applying' : 'Downloads'}>
           <RouteLink route={{ screen: 'cover', id: matchId }} onNavigate={onNavigate} className="btn btn-quiet mt-btn">
             Cover note
           </RouteLink>
@@ -435,13 +435,13 @@ export function ResumeView(props: ResumeViewProps) {
           </button>
         </>
       )}
-      {saveSlot}
+      {saveSlot && <div className="mt-slot">{saveSlot}</div>}
       <p className={`mt-status${notice ? ' is-error' : ''}`} role={notice ? 'alert' : 'status'}>
         {notice}
       </p>
 
       <div className="mt-split">
-        <section className="panel mt-panel mt-doc-panel" aria-label="Preview">
+        <section className="mt-panel mt-doc-panel m-plain" aria-label="Preview">
           <h2 className="sr-only">Resume preview</h2>
           <ResumePreview variant={variant} onFact={onFact} />
         </section>
@@ -457,13 +457,13 @@ export function ResumeView(props: ResumeViewProps) {
               headingRef.current = el;
             }}
           />
-          <section className="panel mt-panel" aria-labelledby="mt-chg-h">
+          <section className="mt-panel m-graph" aria-labelledby="mt-chg-h">
             <h2 id="mt-chg-h" className="kicker mt-h2">
               What changed, and why
             </h2>
             <ChangeList changes={variant.changes} facts={facts} />
           </section>
-          <section className="panel mt-panel" aria-labelledby="mt-lint-h">
+          <section className="mt-panel m-graph" aria-labelledby="mt-lint-h">
             <h2 id="mt-lint-h" className="kicker mt-h2">
               Checked before download
             </h2>

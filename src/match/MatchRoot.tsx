@@ -173,7 +173,7 @@ function Screen({ route, apply }: { route: MatchRoute; apply?: ApplyEntry }) {
 
 function StatePanel({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
-    <section className="panel mt-panel mt-state" role="status">
+    <section className="mt-panel mt-state m-quiet" role="status">
       <h1 className="mt-state-title" data-mt-h1 tabIndex={-1}>
         {title}
       </h1>

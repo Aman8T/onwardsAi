@@ -130,6 +130,45 @@ export function sortRows(posting: Posting, coverage: readonly Coverage[]): Row[]
   return rows.map(({ requirement, coverage: c }) => ({ requirement, coverage: c }));
 }
 
+/** A requirement nothing cites: no row, no fact behind it, or a status that says there is none. */
+export function isHole(cov: Coverage | undefined): boolean {
+  return !cov || cov.factIds.length === 0 || cov.status === 'missing_gap' || cov.status === 'unknown';
+}
+
+export type ProofPip = 'on' | 'half' | 'no';
+
+export interface Proof {
+  /** One mark per requirement, held first: filled = covered with a cited fact, half = partly or by another word, dashed = nothing cited. */
+  pips: ProofPip[];
+  on: number;
+  half: number;
+  none: number;
+  total: number;
+  /** The same count in words, for the marks' label and the line beside them. */
+  words: string;
+}
+
+/**
+ * "N of M requirements you can prove", counted in code from the requirement results the match already holds. No weight,
+ * no percentage: a requirement is either held by a cited fact, partly, or has nothing cited yet.
+ */
+export function proofCount(posting: Posting, coverage: readonly Coverage[]): Proof {
+  const byReq = new Map(coverage.map((c) => [c.requirementId, c]));
+  let on = 0;
+  let half = 0;
+  let none = 0;
+  for (const r of posting.requirements) {
+    const c = byReq.get(r.id);
+    if (isHole(c)) none += 1;
+    else if (c!.status === 'covered') on += 1;
+    else half += 1;
+  }
+  const total = on + half + none;
+  const pips: ProofPip[] = [...Array<ProofPip>(on).fill('on'), ...Array<ProofPip>(half).fill('half'), ...Array<ProofPip>(none).fill('no')];
+  const said = [on > 0 ? `${on} covered` : '', half > 0 ? `${half} partly` : '', none > 0 ? `${none} with nothing cited` : ''].filter(Boolean).join(', ');
+  return { pips, on, half, none, total, words: total === 0 ? 'No requirements read' : said };
+}
+
 /** The status chips worth showing: only statuses that occur. */
 export function countChips(counts: StatusCounts): { status: CoverageStatus; n: number }[] {
   return STATUS_ORDER.map((status) => ({ status, n: counts[status] })).filter((c) => c.n > 0);

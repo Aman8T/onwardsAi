@@ -1,6 +1,9 @@
 /*
  * Posting match (src/match): paste, match, resume, cover note. Every class is prefixed "mt-".
- * Tokens only (src/theme/tokens.css): no colour literals, no shadows, hairlines, radii 6 / 10 / 16.
+ * Built from the materials (styles/materials.css, design.md 7b): the match opens as a field of colour (the verdict) with
+ * one ink block (the next step) beside a mosaic of graph paper (what is cited) and dashed holes (what nothing cites);
+ * the paste screen is neutral ground; the resume and the cover note are plain sheets framed by the materials.
+ * Tokens only (src/theme/tokens.css): no colour literals, no shadows, hairlines.
  * Motion is colour and border tone on hover; the screens' entrance is opacity + a small rise (MatchRoot).
  *
  * Statuses are told apart by lightness and outline shape as well as by hue, and every chip carries its label:
@@ -87,11 +90,19 @@
   display: flex;
   flex: 1 0 auto;
   flex-direction: column;
-  gap: var(--s4);
+  gap: 2px;
   width: 100%;
-  max-width: var(--wrap);
-  margin-inline: auto;
-  padding: var(--s5) var(--mt-gutter) var(--s7);
+  padding: 0 0 var(--s7);
+  background: var(--bg);
+}
+
+/* loose lines between the tiles (a hint, a status, the footnote) keep the old gutter */
+.mt-main > :is(.mt-hint, .mt-skip, .mt-status, .mt-footer, .mt-slot) {
+  margin-inline: var(--mt-gutter);
+}
+
+.mt-main > .mt-status:not(:empty) {
+  padding-block: var(--s2);
 }
 
 .mt-intro {
@@ -101,11 +112,10 @@
 }
 
 .mt-intro-split {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--s4);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 2px;
+  background: var(--bg);
 }
 
 .mt-intro-text {
@@ -113,6 +123,7 @@
   flex-direction: column;
   gap: var(--s2);
   min-width: 0;
+  padding: var(--s5) var(--s6);
 }
 
 .mt-title {
@@ -256,19 +267,13 @@
 /* ───────────── panels ───────────── */
 
 .mt-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--s3);
   min-width: 0;
-  padding: var(--s4) var(--s5);
-}
-
-/* quiet look */
-:root[data-look='quiet'] .mt-panel,
-.look-quiet .mt-panel,
-:root[data-look='quiet'] .mt-trio .mt-panel,
-.look-quiet .mt-trio .mt-panel {
-  padding: var(--s4) var(--s5);
+  padding: 16px 18px;
+  color: var(--text);
 }
 
 .mt-panel-head {
@@ -360,6 +365,17 @@
   color: var(--text-muted);
 }
 
+.mt-hero .mt-chip {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.mt-hero .mt-st-unknown {
+  background: transparent;
+  border-color: var(--text);
+}
+
 /* What changed: the same four tones, by kind. */
 .mt-ch-surfaced {
   background: var(--surface);
@@ -429,8 +445,12 @@
   font-family: var(--font-mono);
   font-size: var(--fs-0);
   line-height: var(--lh-snug);
-  color: var(--accent);
+  color: var(--text-muted);
   overflow-wrap: anywhere;
+}
+
+.mt-cite-src {
+  color: var(--text);
 }
 
 .mt-cite-quote {
@@ -444,10 +464,9 @@
 
 /* ───────────── paste ───────────── */
 
-.mt-paste {
-  display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: var(--s5);
+.mt-paste.m-screen {
+  grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+  gap: 2px;
   align-items: start;
 }
 
@@ -455,13 +474,29 @@
 .mt-paste-aside {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
+  gap: 2px;
   min-width: 0;
+}
+
+.mt-paste-main > .mt-intro.m-hero {
+  padding: var(--s6) var(--s6) var(--s4);
+  background: var(--bg);
+}
+
+.mt-nudge {
+  align-self: flex-start;
+  margin-top: var(--s2);
 }
 
 .mt-form {
   gap: var(--s3);
-  padding: var(--s4) var(--s5);
+  padding: var(--s5) var(--s6) 0;
+}
+
+/* the one ink block: the button that starts the match, with what it costs beside it */
+.mt-inkbar {
+  margin: var(--s3) calc(-1 * var(--s6)) 0;
+  padding: var(--s4) var(--s6);
 }
 
 .mt-field {
@@ -496,7 +531,8 @@
 }
 
 .mt-posting-box {
-  min-height: 200px;
+  height: clamp(130px, 18vh, 200px);
+  min-height: 130px;
   font-size: var(--fs-2);
   line-height: 1.5;
   resize: vertical;
@@ -519,6 +555,7 @@
 
 .mt-aside-panel {
   gap: var(--s3);
+  padding: var(--s4) var(--s5);
 }
 
 .mt-steps {
@@ -551,35 +588,11 @@
 
 .mt-recent {
   margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.mt-recent-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s3);
-  min-height: 44px;
-  border-top: var(--hair) solid var(--line);
-  color: var(--text);
-  text-decoration: none;
-}
-
-.mt-recent li:first-child .mt-recent-link {
-  border-top: 0;
-}
-
-@media (hover: hover) {
-  .mt-recent-link:hover span:first-child {
-    text-decoration: underline;
-    text-decoration-color: var(--line-strong);
-    text-underline-offset: 3px;
-  }
 }
 
 .mt-paywall {
-  background: var(--accent-soft);
+  gap: var(--s2);
+  padding: var(--s5) var(--s6);
 }
 
 .mt-paywall-title {
@@ -635,24 +648,69 @@
   overflow-wrap: anywhere;
 }
 
-.mt-summary {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s4) var(--s6);
-  padding: var(--s4) var(--s5);
+/* ───────────── the match: a hero beside a mosaic ───────────── */
+
+.mt-match.m-screen {
+  grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);
+  gap: 2px;
 }
 
-.mt-band {
+.mt-lead {
   display: flex;
   flex-direction: column;
-  gap: var(--s1);
-  min-width: 200px;
-  max-width: 36ch;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mt-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mt-hero {
+  flex: 1 1 auto;
+  gap: var(--s3);
+  padding: var(--s6) var(--s6) var(--s5);
+}
+
+.mt-hero .mt-title {
+  margin: 0;
+  font-size: clamp(var(--fs-6), 2.4vw, var(--fs-7));
+  line-height: 1.1;
+}
+
+.mt-meta {
+  max-width: var(--measure);
+  color: var(--text);
+}
+
+.mt-count {
+  margin-top: var(--s2);
+}
+
+.mt-pips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s2);
+  max-width: 100%;
+}
+
+.mt-pips .m-pips {
+  max-width: 100%;
+  height: auto;
+}
+
+.mt-pips .m-fine,
+.mt-hero .m-fine {
+  color: var(--text);
 }
 
 .mt-band-word {
   align-self: flex-start;
+  margin: var(--s2) 0 0;
   padding: var(--s1) var(--s3);
   font-family: var(--font-sans);
   font-size: var(--fs-4);
@@ -660,10 +718,24 @@
   text-transform: none;
 }
 
+.mt-band-note {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--text);
+}
+
 .mt-band-wait {
+  margin: 0;
   font-size: var(--fs-5);
   font-weight: 500;
   line-height: var(--lh-snug);
+}
+
+.mt-wait-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-top: var(--s4);
 }
 
 .mt-counts {
@@ -679,23 +751,75 @@
   display: flex;
   flex-direction: column;
   gap: var(--s1);
-  min-width: 220px;
-  max-width: 32ch;
+  max-width: 40ch;
+}
+
+.mt-conf .kicker {
+  color: var(--text);
 }
 
 .mt-conf-word {
   font-weight: 500;
 }
 
-.mt-summary-actions {
-  margin-left: auto;
+.mt-counted {
+  margin-top: auto;
+}
+
+/* the ink block: the one thing to press next */
+.mt-ink {
+  gap: var(--s3);
+  padding: var(--s4) var(--s6);
+}
+
+.mt-ink-line {
+  color: var(--surface);
+}
+
+.mt-ink-line b {
+  font-weight: 500;
+}
+
+.mt-ink .mt-actions {
+  gap: var(--s2) var(--s3);
+}
+
+.mt-choice {
+  padding: var(--s4) var(--s5);
+}
+
+.mt-board {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  background: var(--bg);
 }
 
 .mt-pair {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--s4);
-  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  gap: 2px;
+  align-items: stretch;
+}
+
+.mt-reqs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mt-reqs-head {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.mt-reqs-fine {
+  margin: 0;
+  padding: var(--s2) var(--s5);
+  background: var(--surface);
 }
 
 .mt-legend {
@@ -825,30 +949,51 @@
   font-size: var(--fs-2);
 }
 
-/* the requirement table: one set of elements, a table wide and cards narrow */
+/* the requirement list: one set of elements with table roles, laid out as tiles (graph paper where something is cited,
+   a dashed hole where nothing is) and as stacked cards on a phone */
 
 .mt-table {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+}
+
+/* the column heads stay for assistive technology */
+.mt-tr.mt-tr-head {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mt-tbody {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
 }
 
 .mt-tr {
   display: grid;
-  grid-template-columns: minmax(0, 2.2fr) minmax(0, 2fr) 168px minmax(0, 2.6fr);
-  gap: var(--s4);
-  align-items: start;
-  padding: var(--s3) 0;
-  border-top: var(--hair) solid var(--line);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'req status'
+    'post post'
+    'evid evid';
+  align-content: start;
+  gap: var(--s2) var(--s3);
+  min-width: 0;
+  padding: 16px 18px;
+  color: var(--text);
 }
 
-:root[data-look='quiet'] .mt-tr:not(.mt-tr-head),
-.look-quiet .mt-tr:not(.mt-tr-head) {
-  min-height: 44px;
-}
-
-.mt-tr-head {
-  padding: 0 0 var(--s2);
-  border-top: 0;
+.mt-tr[data-tier='must'] {
+  grid-column: 1 / -1;
+  padding: var(--s4) var(--s5);
 }
 
 .mt-td {
@@ -860,14 +1005,50 @@
 }
 
 .mt-td-req {
+  grid-area: req;
   gap: var(--s2);
+}
+
+.mt-tr > .mt-td:nth-child(2) {
+  grid-area: post;
+}
+
+.mt-td-status {
+  grid-area: status;
+}
+
+.mt-tr > .mt-td:nth-child(4) {
+  grid-area: evid;
 }
 
 .mt-cell-label {
   display: none;
 }
 
+.mt-tr[data-tier='must'] .mt-req-text {
+  font-family: var(--font-serif);
+  font-size: var(--fs-5);
+  line-height: 1.2;
+}
+
+.mt-addproof {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 .mt-req-text {
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 
@@ -909,11 +1090,10 @@
   display: flex;
   align-items: center;
   min-height: 44px;
-  padding-top: var(--s2);
-  border-top: var(--hair) solid var(--line);
-  color: var(--accent);
+  padding: var(--s2) var(--s5);
+  background: var(--surface);
+  color: var(--text);
   text-decoration: underline;
-  text-decoration-color: var(--line-strong);
   text-underline-offset: 3px;
 }
 
@@ -951,20 +1131,26 @@
 
 .mt-split {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--s4);
+  grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  gap: 2px;
   align-items: start;
+  background: var(--bg);
 }
 
 .mt-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
+  gap: 2px;
   min-width: 0;
 }
 
+/* the resume is a document: a plain sheet, nothing hand-made on it */
 .mt-doc-panel {
-  padding: var(--s5) var(--s6);
+  padding: var(--s6) var(--s7);
+}
+
+.mt-slot {
+  padding-block: var(--s2);
 }
 
 .mt-doc {
@@ -1178,27 +1364,35 @@ button.mt-sup::after {
 /* ───────────── cover note ───────────── */
 
 .mt-cover {
+  display: flex;
+  flex-direction: column;
   gap: 0;
+  background: var(--bg);
 }
 
 .mt-cover-head,
 .mt-para {
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: var(--s5);
+  gap: 0 2px;
 }
 
 .mt-cover-head {
-  padding-bottom: var(--s3);
+  padding: var(--s3) 0 var(--s2);
+}
+
+.mt-cover-head .kicker {
+  padding-inline: var(--s6) var(--s5);
 }
 
 .mt-para {
-  align-items: start;
-  padding: var(--s4) 0;
-  border-top: var(--hair) solid var(--line);
+  align-items: stretch;
 }
 
 .mt-para-text {
+  margin: 0;
+  padding: var(--s5) var(--s6);
+  background: var(--surface);
   font-size: var(--fs-3);
   line-height: 1.6;
   white-space: pre-line;
@@ -1209,8 +1403,13 @@ button.mt-sup::after {
   flex-direction: column;
   gap: var(--s2);
   min-width: 0;
+  padding: var(--s5);
   font-size: var(--fs-2);
   color: var(--text-muted);
+}
+
+.mt-para + .mt-para > * {
+  border-top: var(--hair) solid var(--line);
 }
 
 .mt-why-line {
@@ -1220,13 +1419,11 @@ button.mt-sup::after {
 .mt-trio {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s4);
-  align-items: start;
+  gap: 2px;
+  margin-top: 2px;
+  align-items: stretch;
 }
 
-.mt-trio .mt-panel {
-  padding: var(--s4) var(--s5);
-}
 
 .mt-leftout {
   margin: 0;
@@ -1256,6 +1453,47 @@ button.mt-sup::after {
   text-wrap: pretty;
 }
 
+/* ───────────── ink blocks: the button that does the next thing ───────────── */
+
+.mt-intro-split .mt-inkblock {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  padding: var(--s5);
+}
+
+.mt-intro-split .mt-inkblock > * {
+  width: 100%;
+}
+
+:is(.mt-ink, .mt-inkblock, .mt-inkbar) .btn {
+  background: transparent;
+  border: var(--hair) solid var(--surface);
+  color: var(--surface);
+}
+
+:is(.mt-ink, .mt-inkblock, .mt-inkbar) .btn.btn-primary {
+  background: var(--surface);
+  color: var(--accent-strong);
+}
+
+@media (hover: hover) {
+  :is(.mt-ink, .mt-inkblock, .mt-inkbar) .btn:hover {
+    background: var(--surface);
+    color: var(--accent-strong);
+    border-color: var(--surface);
+  }
+}
+
+:is(.mt-ink, .mt-inkblock, .mt-inkbar) .btn:focus-visible {
+  outline: 2px solid var(--surface);
+  outline-offset: 2px;
+}
+
+:is(.mt-ink, .mt-inkblock, .mt-inkbar) :is(.ae-why, .ae-muted, .ae-entry) {
+  color: var(--surface);
+}
+
 /* ───────────── narrow screens ───────────── */
 
 @media (max-width: 1100px) {
@@ -1263,17 +1501,25 @@ button.mt-sup::after {
   .mt-trio {
     grid-template-columns: 1fr;
   }
+
+  .mt-match.m-screen,
+  .mt-paste.m-screen {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mt-hero {
+    padding: var(--s5) var(--s5) var(--s4);
+  }
+
+  .mt-ink {
+    padding: var(--s4) var(--s5);
+  }
 }
 
 @media (max-width: 940px) {
-  .mt-paste,
-  .mt-pair,
-  .mt-split {
+  .mt-split,
+  .mt-intro-split {
     grid-template-columns: 1fr;
-  }
-
-  .mt-paste {
-    gap: var(--s6);
   }
 
   .mt-doc-panel {
@@ -1311,18 +1557,55 @@ button.mt-sup::after {
   }
 
   .mt-panel,
-  .mt-form,
-  .mt-summary,
-  .mt-trio .mt-panel {
+  .mt-trio .mt-panel,
+  .mt-intro-text {
     padding: var(--s4) var(--s4);
+  }
+
+  .mt-form {
+    padding: var(--s4) var(--s4) 0;
+  }
+
+  .mt-inkbar {
+    margin-inline: calc(-1 * var(--s4));
+    padding: var(--s4);
+  }
+
+  .mt-paste-main > .mt-intro.m-hero {
+    padding: var(--s5) var(--s4) var(--s3);
+  }
+
+  .mt-hero {
+    padding: var(--s5) var(--s4) var(--s4);
+  }
+
+  .mt-ink,
+  .mt-choice {
+    padding: var(--s4);
   }
 
   .mt-doc-panel {
     padding: var(--s5) var(--s4);
   }
 
-  .mt-summary {
-    gap: var(--s4);
+  .mt-para-text {
+    padding: var(--s4);
+  }
+
+  .mt-why {
+    padding: var(--s4);
+  }
+
+  .mt-tbody {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mt-reqs-fine {
+    padding-inline: var(--s4);
+  }
+
+  .mt-addproof {
+    min-height: 44px;
   }
 
   .mt-summary-actions {
@@ -1370,22 +1653,19 @@ button.mt-sup::after {
   }
 
   /* requirements: cards instead of rows */
-  .mt-tr {
-    grid-template-columns: 1fr;
+  .mt-tr,
+  .mt-tr[data-tier='must'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: none;
     gap: var(--s2);
-    padding: var(--s4) 0;
+    padding: var(--s4);
   }
 
-  .mt-tr-head {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+  .mt-td-req,
+  .mt-tr > .mt-td:nth-child(2),
+  .mt-td-status,
+  .mt-tr > .mt-td:nth-child(4) {
+    grid-area: auto;
   }
 
   .mt-cell-label {
@@ -1418,33 +1698,64 @@ button.mt-sup::after {
 /* ───────────── the invitation on the graph screen ───────────── */
 
 .mt-invite {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s2);
   margin-top: var(--s4);
-  padding: var(--s4);
-  border: var(--hair) solid var(--line-strong);
-  border-radius: var(--r-l);
-  background: var(--accent-soft);
+}
+
+.mt-invite .postit {
+  min-height: 0;
 }
 
 .mt-invite-kicker {
   margin: 0;
-  color: var(--accent-strong);
 }
 
 .mt-invite-title {
   margin: 0;
-  font-family: var(--font-serif);
-  font-size: var(--fs-4);
-  font-weight: 400;
-  line-height: var(--lh-snug);
-  color: var(--text);
+  font-size: 20px;
   text-wrap: balance;
 }
 
 .mt-invite-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   margin-top: var(--s1);
-  background: var(--surface);
+  background: none;
+  cursor: pointer;
+}
+
+/* the verdict and the next step stay in view while the evidence scrolls beside them */
+@media (min-width: 1101px) and (min-height: 700px) {
+  .mt-lead {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow-y: auto;
+  }
+}
+
+/* the recent matches are written on notebook paper: keep the room for its margin */
+.mt-panel.m-paper {
+  padding-left: 52px;
+}
+
+@media (max-width: 760px) {
+  .mt-panel.m-paper {
+    padding-left: 44px;
+  }
+}
+
+@media (max-width: 760px) {
+  .mt-plain {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .mt-main > .mt-hint {
+    margin-top: var(--s2);
+  }
 }

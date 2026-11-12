@@ -10,7 +10,8 @@
 import { useId, useRef } from 'react';
 import type { FormEvent } from 'react';
 import { BAND_LABEL, MAX_POSTING_CHARS, hostOf, isBlockedHost } from './model';
-import { RouteLink } from './parts';
+import { PageLine } from '../components/materials';
+import { matchPath } from './route';
 import type { MatchRoute } from './route';
 import type { MatchSummary } from './types';
 
@@ -83,9 +84,9 @@ export function PasteView(props: PasteViewProps) {
   const source = hasText ? 'Pasted text · unverified source' : host ? `${host} · unverified host` : null;
 
   return (
-    <div className="mt-paste">
+    <div className="mt-paste m-screen">
       <section className="mt-paste-main">
-        <div className="mt-intro">
+        <div className="mt-intro m-hero">
           <p className="kicker">Posting match</p>
           <h1 className="serif mt-title" data-mt-h1 tabIndex={-1}>
             Paste a job posting. See what it asks for, and what you can prove.
@@ -94,10 +95,11 @@ export function PasteView(props: PasteViewProps) {
             We read the posting on its own first, list every requirement and how strongly it's asked, then check each one against your resume and links.
             Nothing gets written onto your resume from the posting.
           </p>
+          <p className="pen m-margin mt-nudge">Paste it as it comes, messy is fine.</p>
         </div>
 
         {paywall && (
-          <section className="panel mt-panel mt-paywall" aria-labelledby="mt-pay-h">
+          <section className="mt-panel mt-paywall m-field" aria-labelledby="mt-pay-h">
             <p className="kicker">Posting match</p>
             <h2 id="mt-pay-h" className="mt-paywall-title">
               You've used your free posting this month.
@@ -118,7 +120,7 @@ export function PasteView(props: PasteViewProps) {
           </section>
         )}
 
-        <form className="panel mt-panel mt-form" onSubmit={submit} noValidate>
+        <form className="mt-panel mt-form m-plain" onSubmit={submit} noValidate>
           <div className="mt-field">
             <label htmlFor={textId} className="mt-label">
               The posting
@@ -181,11 +183,11 @@ export function PasteView(props: PasteViewProps) {
             </p>
           </div>
 
-          <div className="mt-actions">
+          <div className="mt-actions mt-inkbar m-ink">
             <button type="submit" className="btn btn-primary mt-btn" aria-disabled={!ready || busy}>
               {busy ? 'Reading the posting…' : 'Match this posting'}
             </button>
-            <span className="mt-muted">{costLine(noAccount, showFree)}</span>
+            <span className="m-fine">{costLine(noAccount, showFree)}</span>
           </div>
 
           {blocker && (
@@ -206,7 +208,7 @@ export function PasteView(props: PasteViewProps) {
 
       <aside className="mt-paste-aside" aria-label="Before you paste">
         {roles.length > 0 && (
-          <section className="panel mt-panel mt-aside-panel">
+          <section className="mt-panel mt-aside-panel m-quiet">
             <h2 className="kicker mt-h2">No posting yet?</h2>
             <p>Your Next view already lists the roles closest to you and what each one expects. Start from one of those.</p>
             <ul className="mt-chips" aria-label="Your closest next roles">
@@ -221,7 +223,7 @@ export function PasteView(props: PasteViewProps) {
           </section>
         )}
 
-        <section className="panel mt-panel mt-aside-panel">
+        <section className="mt-panel mt-aside-panel m-graph">
           <h2 className="kicker mt-h2">What you get</h2>
           <ol className="mt-steps">
             {STEPS.map(([title, text], i) => (
@@ -239,16 +241,19 @@ export function PasteView(props: PasteViewProps) {
         </section>
 
         {recent.length > 0 && (
-          <section className="panel mt-panel mt-aside-panel">
+          <section className="mt-panel mt-aside-panel m-paper">
             <h2 className="kicker mt-h2">Recent</h2>
-            <ul className="mt-recent">
+            <ul className="m-lines mt-recent">
               {recent.map((m) => (
-                <li key={m.id}>
-                  <RouteLink route={{ screen: 'match', id: m.id }} onNavigate={onNavigate} className="mt-recent-link">
-                    <span>{[m.title, m.company].filter(Boolean).join(' · ')}</span>
-                    <span className="mt-muted">{BAND_LABEL[m.band] ?? ''}</span>
-                  </RouteLink>
-                </li>
+                <PageLine
+                  key={m.id}
+                  tick={false}
+                  wrap
+                  title={[m.title, m.company].filter(Boolean).join(' · ')}
+                  cite={BAND_LABEL[m.band] ?? undefined}
+                  href={matchPath({ screen: 'match', id: m.id })}
+                  onGo={() => onNavigate({ screen: 'match', id: m.id })}
+                />
               ))}
             </ul>
           </section>

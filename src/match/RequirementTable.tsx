@@ -8,7 +8,7 @@
  */
 import { useState } from 'react';
 import type { Coverage, Posting } from '../../shared/match';
-import { sortRows } from './model';
+import { isHole, sortRows } from './model';
 import type { Row } from './model';
 import { Cites, StatusChip, TierChip } from './parts';
 import type { MatchFact } from './types';
@@ -21,9 +21,11 @@ interface Props {
   limit?: number;
   /** The result is final: a row with no coverage is missing from it, not still on its way. */
   settled?: boolean;
+  /** Opens where the person can add proof (the questions). A requirement with nothing cited offers it. */
+  onAddProof?: () => void;
 }
 
-export function RequirementTable({ posting, coverage, facts, limit, settled = false }: Props) {
+export function RequirementTable({ posting, coverage, facts, limit, settled = false, onAddProof }: Props) {
   const [all, setAll] = useState(false);
   const rows = sortRows(posting, coverage);
   const shown = limit !== undefined && !all ? rows.slice(0, limit) : rows;
@@ -39,9 +41,9 @@ export function RequirementTable({ posting, coverage, facts, limit, settled = fa
           <span className="kicker" role="columnheader">Your evidence</span>
         </div>
       </div>
-      <div role="rowgroup">
+      <div className="mt-tbody" role="rowgroup">
         {shown.map((row) => (
-          <TableRow key={row.requirement.id} row={row} facts={facts} settled={settled} />
+          <TableRow key={row.requirement.id} row={row} facts={facts} settled={settled} onAddProof={onAddProof} />
         ))}
       </div>
       {hidden > 0 && (
@@ -53,10 +55,12 @@ export function RequirementTable({ posting, coverage, facts, limit, settled = fa
   );
 }
 
-function TableRow({ row, facts, settled }: { row: Row; facts: readonly MatchFact[]; settled: boolean }) {
+function TableRow({ row, facts, settled, onAddProof }: { row: Row; facts: readonly MatchFact[]; settled: boolean; onAddProof?: () => void }) {
   const { requirement: req, coverage: cov } = row;
+  // nothing cited: a dashed hole, not a tile of evidence
+  const hole = (cov !== undefined || settled) && isHole(cov);
   return (
-    <div className="mt-tr" role="row" data-req={req.id} data-status={cov?.status ?? (settled ? 'missing' : 'pending')}>
+    <div className={`mt-tr ${hole ? 'm-gap' : cov ? 'm-graph' : 'm-quiet'}`} role="row" data-tier={req.tier} data-req={req.id} data-status={cov?.status ?? (settled ? 'missing' : 'pending')}>
       <div className="mt-td mt-td-req" role="cell">
         <TierChip tier={req.tier} />
         <p className="mt-req-text">{req.text}</p>
@@ -75,6 +79,13 @@ function TableRow({ row, facts, settled }: { row: Row; facts: readonly MatchFact
       <div className="mt-td" role="cell">
         <span className="mt-cell-label kicker" aria-hidden="true">Your evidence</span>
         {cov ? <Evidence cov={cov} facts={facts} /> : <p className="mt-note mt-note-faint">{settled ? 'The stored result has no row for this requirement.' : 'Looking for evidence.'}</p>}
+        {hole && onAddProof && (
+          <button type="button" className="mt-addproof" onClick={onAddProof}>
+            Add proof
+            <span className="sr-only"> for {req.text}</span>
+            <span aria-hidden="true"> →</span>
+          </button>
+        )}
       </div>
     </div>
   );

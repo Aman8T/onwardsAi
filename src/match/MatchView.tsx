@@ -19,7 +19,8 @@ import { Radar } from '../components/Radar';
 import type { RadarAxis } from '../components/Radar';
 import { NARROW_QUERY, plural, timeAgo, useMediaQuery } from '../lib/ui';
 import { GateList } from './GateList';
-import { BAND_LABEL, CONFIDENCE_LABEL, WORK_MODE_LABEL, bandNote, countChips } from './model';
+import { Pips } from '../components/materials';
+import { BAND_LABEL, CONFIDENCE_LABEL, WORK_MODE_LABEL, bandNote, countChips, proofCount } from './model';
 import { StatusChip } from './parts';
 import { Questions } from './Questions';
 import type { RecheckState } from './Questions';
@@ -96,189 +97,223 @@ export function MatchView(props: MatchViewProps) {
   const meta = [posting?.location, posting?.workMode ? WORK_MODE_LABEL[posting.workMode] : ''].filter(Boolean).join(', ');
   const asked = createdAt ? Date.parse(createdAt) : NaN;
 
+  const proof = posting && result ? proofCount(posting, finalCoverage) : null;
+
   return (
-    <>
-      <section className="mt-intro">
-        <p className="kicker">
-          Posting match{posting?.company ? ` · ${posting.company}` : ''}
-          {reading ? ' · reading now' : Number.isFinite(asked) ? ` · pasted ${timeAgo(asked)}` : ''}
-        </p>
-        <h1 className="serif mt-title" data-mt-h1 tabIndex={-1}>
-          {posting?.title ?? 'Reading the posting…'}
-        </h1>
-        {posting && (
-          <p className="mt-lede">
-            {meta ? `${meta} · ` : ''}
-            <span className="numeral">{posting.requirements.length}</span> {posting.requirements.length === 1 ? 'requirement' : 'requirements'} read from the posting · the posting was
-            treated as data, not instructions
-            {posting.anomalies.length > 0 ? ' · it held text aimed at an AI, which was ignored' : ''}
-          </p>
-        )}
-        {posting && <PostingDisclosure posting={posting} />}
-      </section>
-
-      <section className="panel mt-panel mt-summary" aria-labelledby="mt-band-h">
-        <div className="mt-band">
-          <span className="kicker">Match</span>
-          {result ? (
-            <>
-              <h2 id="mt-band-h" className={`title mt-band-word stamp${result.band === 'strong' ? ' stamp-ok' : result.band === 'weak' ? ' stamp-quiet' : ''}`} data-band={result.band}>
-                {BAND_LABEL[result.band]}
-              </h2>
-              {posting && <p className="mt-muted">{bandNote(result, posting)}</p>}
-            </>
-          ) : (
-            <>
-              <h2 id="mt-band-h" className="mt-band-wait">
-                {reading ? 'Reading the evidence' : 'No result yet'}
-              </h2>
-              <p className="mt-muted" role="status">
-                {step ?? 'Checking each requirement against what you have shown.'}
+    <div className="mt-match m-screen">
+      <div className="mt-lead">
+        <section className="mt-summary" aria-labelledby="mt-band-h">
+          <div className="mt-hero m-field m-tile">
+            <p className="kicker">
+              Posting match{posting?.company ? ` · ${posting.company}` : ''}
+              {reading ? ' · reading now' : Number.isFinite(asked) ? ` · pasted ${timeAgo(asked)}` : ''}
+            </p>
+            <h1 className="serif mt-title" data-mt-h1 tabIndex={-1}>
+              {posting?.title ?? 'Reading the posting…'}
+            </h1>
+            {posting && (
+              <p className="m-fine mt-meta">
+                {meta ? `${meta} · ` : ''}
+                <span className="numeral">{posting.requirements.length}</span> {posting.requirements.length === 1 ? 'requirement' : 'requirements'} read from the posting · the posting was
+                treated as data, not instructions
+                {posting.anomalies.length > 0 ? ' · it held text aimed at an AI, which was ignored' : ''}
               </p>
-            </>
-          )}
-        </div>
-
-        {result && (
-          <>
-            <ul className="mt-counts" aria-label="Requirements by status">
-              {countChips(result.counts).map(({ status, n }) => (
-                <li key={status}>
-                  <StatusChip status={status} count={n} />
-                </li>
-              ))}
-            </ul>
-            <div className="mt-conf">
-              <span className="kicker">Evidence confidence</span>
-              <span className="mt-conf-word" data-confidence={result.confidence}>
-                {CONFIDENCE_LABEL[result.confidence]}
-              </span>
-              {result.confidenceNote && <p className="mt-muted">{result.confidenceNote}</p>}
-            </div>
-            <div className="mt-actions mt-summary-actions">
-              {questions.length > 0 && (
-                <button type="button" className="btn btn-quiet mt-btn" onClick={goQuestions}>
-                  Close the gaps · <span className="numeral">{questions.length}</span> {questions.length === 1 ? 'question' : 'questions'}
-                </button>
-              )}
-              {apply && apply.apply.kind !== 'own_account' ? (
-                <>
-                  <button type="button" className="btn btn-quiet mt-btn" onClick={onBuildResume}>
-                    Only build the resume
-                  </button>
-                  <ApplyForMeButton
-                    apply={apply.apply}
-                    className="mt-btn"
-                    controls={apply.apply.kind === 'offer' ? choiceId : undefined}
-                    expanded={applyOpen}
-                    signInNext={apply.signInNext}
-                    onApply={() => (applyOpen ? closeChoice() : setApplyOpen(true))}
-                  />
-                </>
-              ) : (
-                <>
-                  <button type="button" className="btn btn-primary mt-btn" onClick={onBuildResume}>
-                    Build my resume for this role
-                  </button>
-                  {/* an ATS that needs the person's own account: the resume stays the action, with why we don't apply */}
-                  {apply && <ApplyForMeButton apply={apply.apply} onApply={() => {}} />}
-                </>
-              )}
-            </div>
-            {apply && apply.apply.kind === 'offer' && applyOpen && (
-              <ApplyForMeChoice
-                id={choiceId}
-                company={posting?.company}
-                savedResume={apply.savedResume}
-                needsLink={apply.needsLink}
-                stretchQuestions={result.band === 'stretch' ? questions.length : 0}
-                onQuestions={goQuestions}
-                firstTime={apply.firstTime}
-                focusOnMount={askedHere}
-                onContinue={apply.onContinue}
-                onCancel={closeChoice}
-              />
             )}
-          </>
-        )}
-      </section>
 
-      <section className="mt-pair" aria-label="The shape of it and the hard requirements">
-        <div className="panel mt-panel">
-          <div className="mt-panel-head">
-            <h2 className="kicker mt-h2">You against what the role expects</h2>
-            <p className="mt-legend" aria-hidden="true">
-              <span>
-                <svg width="22" height="14" viewBox="0 0 22 14" focusable="false">
-                  <rect className="mt-lg-you" x="1" y="1" width="20" height="12" rx="2" />
-                </svg>
-                You
-              </span>
-              <span>
-                <svg width="22" height="14" viewBox="0 0 22 14" focusable="false">
-                  <rect className="mt-lg-role" x="1" y="1" width="20" height="12" rx="2" />
-                </svg>
-                Role expects
-              </span>
-            </p>
+            {result && proof ? (
+              <>
+                <p className="m-count mt-count">
+                  <span className="m-big is-hero numeral">{proof.on}</span>
+                  <span>
+                    of <span className="numeral">{proof.total}</span> {proof.total === 1 ? 'requirement' : 'requirements'}
+                    <br />
+                    you can prove
+                  </span>
+                </p>
+                <div className="mt-pips">
+                  <Pips pips={proof.pips} r={proof.total > 14 ? 6 : 8} gap={proof.total > 14 ? 5 : 10} label={`${proof.total} ${proof.total === 1 ? 'requirement' : 'requirements'}: ${proof.words}`} />
+                  <p className="m-fine">{proof.words}</p>
+                </div>
+                <h2 id="mt-band-h" className={`mt-band-word stamp${result.band === 'strong' ? ' stamp-ok' : result.band === 'weak' ? ' stamp-quiet' : ''}`} data-band={result.band}>
+                  {BAND_LABEL[result.band]}
+                </h2>
+                {posting && <p className="mt-band-note">{bandNote(result, posting)}</p>}
+                <ul className="mt-counts" aria-label="Requirements by status">
+                  {countChips(result.counts).map(({ status, n }) => (
+                    <li key={status}>
+                      <StatusChip status={status} count={n} />
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-conf">
+                  <span className="kicker">Evidence confidence</span>
+                  <span className="mt-conf-word" data-confidence={result.confidence}>
+                    {CONFIDENCE_LABEL[result.confidence]}
+                  </span>
+                  {result.confidenceNote && <p className="m-fine">{result.confidenceNote}</p>}
+                </div>
+                <p className="m-fine mt-counted">Counted from your cited evidence. There is no percentage, on purpose.</p>
+              </>
+            ) : (
+              <div className="mt-wait-hero">
+                <h2 id="mt-band-h" className="mt-band-wait">
+                  {reading ? 'Reading the evidence' : 'No result yet'}
+                </h2>
+                <p className="m-fine" role="status">
+                  {step ?? 'Checking each requirement against what you have shown.'}
+                </p>
+              </div>
+            )}
           </div>
-          {radar ? <RadarPanel radar={radar} requirements={posting?.requirements} reveal={reveal} /> : <p className="mt-muted mt-wait">Drawn once the evidence is checked.</p>}
-        </div>
 
-        <div className="panel mt-panel">
-          <h2 className="kicker mt-h2">Hard requirements, checked first</h2>
-          {posting && gates ? <GateList posting={posting} gates={gates} facts={facts} blocked={blocked} /> : <p className="mt-muted mt-wait">Checked as soon as the posting is read.</p>}
-        </div>
-      </section>
-
-      {posting && (
-        <section className="panel mt-panel" aria-labelledby="mt-all-h">
-          <div className="mt-panel-head">
-            <h2 id="mt-all-h" className="kicker mt-h2">
-              Every requirement, with your evidence
-            </h2>
-            <span className="mt-muted">Sorted by how strongly the posting asks, then unmet first</span>
-          </div>
-          <RequirementTable posting={posting} coverage={finalCoverage} facts={facts} limit={narrow ? PHONE_ROWS : undefined} settled={!!result} />
-          <p className="mt-fine">Every status cites a line, a link or something you told us. Nothing here was written from the posting itself.</p>
-        </section>
-      )}
-
-      {result && (questions.length > 0 || recheck.status === 'done') && (
-        <section id="close" className="panel mt-panel" aria-labelledby="mt-close-h">
-          <div className="mt-panel-head mt-panel-head-col">
-            <h2 id="mt-close-h" className="kicker mt-h2">
-              {questions.length > 0 ? (
-                <>
-                  Close the gaps · <span className="numeral">{questions.length}</span> {questions.length === 1 ? 'question' : 'questions'}
-                </>
-              ) : (
-                'Close the gaps'
-              )}
-            </h2>
-            <p className="mt-lede">Your answers become facts on your profile, marked "from you". They are never rewritten into claims you didn't make.</p>
-          </div>
-          {questions.length > 0 ? (
-            <Questions
-              questions={questions}
-              recheck={recheck}
-              onSubmit={onAnswer}
-              firstRef={(el) => {
-                firstQuestion.current = el;
-              }}
-            />
-          ) : (
-            <p className="mt-status" role="status">
-              {recheck.message ?? 'Every question is answered.'}
-            </p>
+          {result && (
+            <div className="mt-ink m-ink m-tile">
+              <p className="m-fine mt-ink-line">
+                <b>Resume and cover note</b> · built only from the facts cited here
+              </p>
+              <div className="mt-actions mt-summary-actions">
+                {questions.length > 0 && (
+                  <button type="button" className="btn btn-quiet mt-btn" onClick={goQuestions}>
+                    Close the gaps · <span className="numeral">{questions.length}</span> {questions.length === 1 ? 'question' : 'questions'}
+                  </button>
+                )}
+                {apply && apply.apply.kind !== 'own_account' ? (
+                  <>
+                    <button type="button" className="btn btn-quiet mt-btn" onClick={onBuildResume}>
+                      Only build the resume
+                    </button>
+                    <ApplyForMeButton
+                      apply={apply.apply}
+                      className="mt-btn"
+                      controls={apply.apply.kind === 'offer' ? choiceId : undefined}
+                      expanded={applyOpen}
+                      signInNext={apply.signInNext}
+                      onApply={() => (applyOpen ? closeChoice() : setApplyOpen(true))}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <button type="button" className="btn btn-primary mt-btn" onClick={onBuildResume}>
+                      Build my resume for this role
+                    </button>
+                    {/* an ATS that needs the person's own account: the resume stays the action, with why we don't apply */}
+                    {apply && <ApplyForMeButton apply={apply.apply} onApply={() => {}} />}
+                  </>
+                )}
+              </div>
+            </div>
           )}
         </section>
-      )}
 
-      <p className="mt-fine mt-footer">
-        How much the role expects of each area is counted from how strongly the posting asks for each thing; a model only sorts each ask into one of your areas. This service uses the ESCO classification of the European Commission.
-      </p>
-    </>
+        {result && apply && apply.apply.kind === 'offer' && applyOpen && (
+          <div className="mt-choice m-plain m-tile">
+            <ApplyForMeChoice
+              id={choiceId}
+              company={posting?.company}
+              savedResume={apply.savedResume}
+              needsLink={apply.needsLink}
+              stretchQuestions={result.band === 'stretch' ? questions.length : 0}
+              onQuestions={goQuestions}
+              firstTime={apply.firstTime}
+              focusOnMount={askedHere}
+              onContinue={apply.onContinue}
+              onCancel={closeChoice}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="mt-board">
+        <section className="mt-pair" aria-label="The shape of it and the hard requirements">
+          <div className="mt-panel m-graph">
+            <div className="mt-panel-head">
+              <h2 className="kicker mt-h2">You against what the role expects</h2>
+              <p className="mt-legend" aria-hidden="true">
+                <span>
+                  <svg width="22" height="14" viewBox="0 0 22 14" focusable="false">
+                    <rect className="mt-lg-you" x="1" y="1" width="20" height="12" rx="2" />
+                  </svg>
+                  You
+                </span>
+                <span>
+                  <svg width="22" height="14" viewBox="0 0 22 14" focusable="false">
+                    <rect className="mt-lg-role" x="1" y="1" width="20" height="12" rx="2" />
+                  </svg>
+                  Role expects
+                </span>
+              </p>
+            </div>
+            {radar ? <RadarPanel radar={radar} requirements={posting?.requirements} reveal={reveal} /> : <p className="mt-muted mt-wait">Drawn once the evidence is checked.</p>}
+          </div>
+
+          <div className="mt-panel m-graph">
+            <h2 className="kicker mt-h2">Hard requirements, checked first</h2>
+            {posting && gates ? <GateList posting={posting} gates={gates} facts={facts} blocked={blocked} /> : <p className="mt-muted mt-wait">Checked as soon as the posting is read.</p>}
+          </div>
+        </section>
+
+        {posting && (
+          <section className="mt-reqs" aria-labelledby="mt-all-h">
+            <div className="mt-panel m-plain mt-reqs-head">
+              <h2 id="mt-all-h" className="kicker mt-h2">
+                Every requirement, with your evidence
+              </h2>
+              <span className="mt-muted">Sorted by how strongly the posting asks, then unmet first</span>
+            </div>
+            <RequirementTable
+              posting={posting}
+              coverage={finalCoverage}
+              facts={facts}
+              limit={narrow ? PHONE_ROWS : undefined}
+              settled={!!result}
+              onAddProof={result && questions.length > 0 ? goQuestions : undefined}
+            />
+            <p className="mt-fine mt-reqs-fine">Every status cites a line, a link or something you told us. Nothing here was written from the posting itself.</p>
+          </section>
+        )}
+
+        {result && (questions.length > 0 || recheck.status === 'done') && (
+          <section id="close" className="mt-panel m-plain" aria-labelledby="mt-close-h">
+            <div className="mt-panel-head mt-panel-head-col">
+              <h2 id="mt-close-h" className="kicker mt-h2">
+                {questions.length > 0 ? (
+                  <>
+                    Close the gaps · <span className="numeral">{questions.length}</span> {questions.length === 1 ? 'question' : 'questions'}
+                  </>
+                ) : (
+                  'Close the gaps'
+                )}
+              </h2>
+              <p className="mt-lede">Your answers become facts on your profile, marked "from you". They are never rewritten into claims you didn't make.</p>
+            </div>
+            {questions.length > 0 ? (
+              <Questions
+                questions={questions}
+                recheck={recheck}
+                onSubmit={onAnswer}
+                firstRef={(el) => {
+                  firstQuestion.current = el;
+                }}
+              />
+            ) : (
+              <p className="mt-status" role="status">
+                {recheck.message ?? 'Every question is answered.'}
+              </p>
+            )}
+          </section>
+        )}
+
+        {posting && (
+          <div className="mt-panel m-quiet">
+            <PostingDisclosure posting={posting} />
+          </div>
+        )}
+
+        <p className="mt-fine mt-footer">
+          How much the role expects of each area is counted from how strongly the posting asks for each thing; a model only sorts each ask into one of your areas. This service uses the ESCO classification of the European Commission.
+        </p>
+      </div>
+    </div>
   );
 }
 

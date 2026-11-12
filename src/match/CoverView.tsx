@@ -57,7 +57,7 @@ export function CoverView({ posting, facts, coverage, note, matchId, onNavigate,
   return (
     <>
       <section className="mt-intro mt-intro-split">
-        <div className="mt-intro-text">
+        <div className="mt-intro-text m-field">
           <p className="kicker">
             <RouteLink route={{ screen: 'resume', id: matchId }} onNavigate={onNavigate} className="mt-plain">
               ← Resume
@@ -73,7 +73,7 @@ export function CoverView({ posting, facts, coverage, note, matchId, onNavigate,
             <span className="numeral">{note.wordCount}</span> words{noOpeners ? '. No generic openers.' : '.'}
           </p>
         </div>
-        <div className="mt-actions" role="group" aria-label="Cover note">
+        <div className="mt-actions mt-inkblock m-ink" role="group" aria-label="Cover note">
           <button type="button" className="btn mt-btn" onClick={copy}>
             Copy text
           </button>
@@ -96,7 +96,7 @@ export function CoverView({ posting, facts, coverage, note, matchId, onNavigate,
         {notice || copied}
       </p>
 
-      <section className="panel mt-panel mt-cover" aria-label="The note and where each line comes from">
+      <section className="mt-cover" aria-label="The note and where each line comes from">
         <div className="mt-cover-head" aria-hidden="true">
           <span className="kicker">The note</span>
           <span className="kicker">Where each line comes from</span>
@@ -106,7 +106,7 @@ export function CoverView({ posting, facts, coverage, note, matchId, onNavigate,
           return (
             <article key={i} className="mt-para" data-kind={p.kind} data-para={i}>
               <p className="mt-para-text">{p.text}</p>
-              <div className="mt-why">
+              <div className="mt-why m-graph">
                 {(p.requirementIds.length > 0 || fromYou || p.kind === 'logistics') && (
                   <div className="mt-chips">
                     {p.requirementIds.map((id) => {
@@ -141,7 +141,7 @@ export function CoverView({ posting, facts, coverage, note, matchId, onNavigate,
       </section>
 
       <section className="mt-trio" aria-label="How the note was checked">
-        <div className="panel mt-panel">
+        <div className="mt-panel m-gap">
           <h2 className="kicker mt-h2">Left out on purpose</h2>
           {skipped.length === 0 ? (
             <p className="mt-muted">Every requirement the posting lists is mentioned.</p>
@@ -157,7 +157,7 @@ export function CoverView({ posting, facts, coverage, note, matchId, onNavigate,
             </>
           )}
         </div>
-        <div className="panel mt-panel">
+        <div className="mt-panel m-graph">
           <h2 className="kicker mt-h2">Checked</h2>
           {passed.length === 0 && failed.length === 0 ? (
             <p className="mt-muted">The checks run on the finished note and appear here.</p>
@@ -175,7 +175,7 @@ export function CoverView({ posting, facts, coverage, note, matchId, onNavigate,
             </ul>
           )}
         </div>
-        <div className="panel mt-panel">
+        <div className="mt-panel m-quiet">
           <h2 className="kicker mt-h2">If a paragraph has no fact</h2>
           <p className="mt-muted">It isn't written. A posting requirement with nothing behind it gets a plain gap sentence or nothing at all.</p>
         </div>
