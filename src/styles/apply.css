@@ -278,14 +278,12 @@
 
 /* ───────────── Applications: tabs, table, pipeline ───────────── */
 
-.ap-tabs,
 .ap-filters {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s1);
 }
 
-.ap-tab,
 .ap-filter {
   display: inline-flex;
   align-items: center;
@@ -310,13 +308,11 @@
 }
 
 @media (hover: hover) {
-  .ap-tab:hover,
   .ap-filter:hover {
     color: var(--text);
   }
 }
 
-.ap-tab[aria-pressed='true'],
 .ap-filter[aria-pressed='true'] {
   background: var(--surface);
   border-color: var(--line-strong);
@@ -823,5 +819,342 @@
 
   .ap-frow > :last-child {
     grid-area: btn;
+  }
+}
+
+/* ═════════════ the materials (design.md 7b): flat tiles, no cards ═════════════ */
+
+/* every old card is a flat tile on neutral ground: no border, no radius */
+.ap-root .panel {
+  border: 0;
+  border-radius: 0;
+}
+
+.ap-root .panel.ap-panel {
+  padding: var(--s4) var(--s5);
+}
+
+.ap-root :is(.ap-well-box, .ar-long, .ar-shot, .ar-textarea, .ap-opt, .ap-pipe-card, .ap-pipe-col, .ar-notice) {
+  border-radius: 0;
+}
+
+.ap-root .ap-well-box,
+.ap-root .ar-long {
+  border: 0;
+}
+
+.ap-pen {
+  margin: 0;
+  color: var(--text);
+  font-size: 28px;
+}
+
+/* a hairline seam instead of a bordered card between neighbours */
+.ap-split {
+  gap: 2px;
+}
+
+.ap-split > :is(.ap-main, .ap-aside) {
+  background: var(--bg);
+}
+
+.ap-split > .ap-main.ap-stack,
+.ap-split > .ap-aside.ap-stack,
+.ap-split > .ap-aside.ap-stack-s,
+.ap-split > .ap-main.ap-stack-s {
+  gap: 2px;
+}
+
+/* ───────────── Applications: hero and mosaic ───────────── */
+
+.ap-mscreen {
+  align-items: start;
+}
+
+.ap-hero {
+  gap: var(--s4);
+  padding: var(--s3) var(--s5) var(--s4) 0;
+}
+
+.ap-hero .ap-title {
+  font-size: var(--fs-6);
+}
+
+.ap-hero-app {
+  gap: var(--s3);
+  padding: var(--s5) var(--s5) var(--s5);
+}
+
+.ap-hero-role {
+  margin: 0;
+  font-size: var(--fs-6);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.ap-hero-pips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s2) 0;
+}
+
+.ap-hero-where {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s2);
+}
+
+.ap-hero-go {
+  align-self: flex-start;
+  margin-top: var(--s2);
+  min-width: 140px;
+}
+
+.ap-mosaic {
+  grid-auto-rows: auto;
+}
+
+.ap-stages {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.ap-root .ap-tab.m-tile {
+  min-height: 64px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.ap-root .ap-tab.m-tile:not(.m-field) .m-fine {
+  color: var(--text-muted);
+}
+
+.ap-tiles {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ap-tile {
+  gap: var(--s2);
+  padding: var(--s4) var(--s4) var(--s3);
+}
+
+.ap-tile-role {
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.ap-tile-pips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.ap-pipe {
+  gap: 2px;
+}
+
+.ap-pipe-col {
+  background: var(--surface-2);
+  padding: var(--s3) var(--s4);
+}
+
+.ap-pipe-card {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  padding: var(--s2) 0;
+}
+
+.ap-pipe-card:last-child {
+  border-bottom: 0;
+}
+
+.ap-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+/* ───────────── an ink block: everything on it is --surface ───────────── */
+
+.ap-ink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.ap-ink :is(.kicker, .ap-muted, .ap-small, p, li, a:not(.btn), h2, .numeral) {
+  color: var(--surface);
+}
+
+.ap-ink a:not(.btn) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ap-ink .btn,
+.ap-ink .btn-primary {
+  border: 1px solid var(--surface);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.ap-ink .btn-quiet {
+  border-color: transparent;
+  background: none;
+  color: var(--surface);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ap-ink .btn-primary[aria-disabled='true'],
+.ap-ink .btn-primary[disabled] {
+  background: none;
+  border: 1px dashed var(--surface);
+  color: var(--surface);
+  opacity: 0.8;
+}
+
+.ap-inkbar {
+  padding: var(--s4) var(--s5);
+}
+
+.ap-inkbar .btn {
+  border: 1px solid var(--surface);
+}
+
+.ap-inkbar .btn-primary {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.ap-inkbar .btn:not(.btn-primary) {
+  background: none;
+  color: var(--surface);
+}
+
+.ap-inkbar > p {
+  color: var(--surface);
+}
+
+/* ───────────── Your details: a form on neutral ground, seams between its sections ───────────── */
+
+.ap-details {
+  gap: 2px;
+}
+
+.ap-details > .ap-head {
+  padding: var(--s4) 0 var(--s4);
+}
+
+.ap-details .ap-title {
+  font-size: var(--fs-6);
+}
+
+.ap-details > .ap-headrow,
+.ap-details > p {
+  padding: var(--s3) 0;
+}
+
+.ap-details .ap-ghead {
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--line);
+}
+
+.ap-details .panel.ap-panel {
+  padding: var(--s4) var(--s5);
+}
+
+/* ───────────── Apply for me: the checks are measured facts on graph paper ───────────── */
+
+.ap-graph .ap-checkrow {
+  border-top: 1px solid var(--grid);
+}
+
+.ap-mark {
+  border-radius: 0;
+  width: 22px;
+}
+
+.ap-mark-ok {
+  background: var(--accent-strong);
+  color: var(--surface);
+}
+
+.ap-mark-unchecked {
+  background: none;
+  border: 1px dashed var(--line-strong);
+}
+
+.ap-opt {
+  border: 0;
+  background: var(--surface-2);
+}
+
+.ap-opt:has(input:checked) {
+  background: var(--well);
+  outline: 1px solid var(--line-strong);
+  outline-offset: -1px;
+}
+
+.ap-pill {
+  border-radius: 0;
+}
+
+.ap-filter {
+  border-radius: 0;
+}
+
+@media (max-width: 1100px) {
+  .ap-hero {
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .ap-stages {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ap-tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ap-tiles > .ap-tile {
+    grid-column: 1 / -1;
+  }
+
+  .ap-split > :is(.ap-main, .ap-aside) {
+    flex-basis: 100%;
+  }
+
+  .ap-root .panel.ap-panel,
+  .ap-inkbar {
+    padding: var(--s4);
+  }
+
+  .ap-hero-go {
+    width: 100%;
+  }
+}
+
+.ap-stages > .m-tile {
+  grid-column: span 1;
+}
+
+@media (max-width: 760px) {
+  .m-mosaic > .ap-stages > .m-tile,
+  .ap-stages > .m-tile {
+    grid-column: span 1;
   }
 }

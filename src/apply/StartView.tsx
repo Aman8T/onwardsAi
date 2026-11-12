@@ -252,7 +252,7 @@ export function StartView(props: StartViewProps) {
 
       <div className="ap-split">
         <div className="ap-main ap-stack">
-          <section className="panel ap-panel" aria-labelledby={`${titleId}-checks`}>
+          <section className="panel ap-panel m-graph ap-graph" aria-labelledby={`${titleId}-checks`}>
             <h2 id={`${titleId}-checks`} className="kicker">
               Checked before anything starts
             </h2>
@@ -340,7 +340,7 @@ export function StartView(props: StartViewProps) {
         {check.offered && (
           <aside className="ap-aside ap-stack">
             <PricePanel status={props.status} unlimited={props.unlimited} />
-            <section className="panel ap-panel ap-stack-s" aria-labelledby={`${titleId}-next`}>
+            <section className="panel ap-panel ap-stack-s m-ink ap-ink" aria-labelledby={`${titleId}-next`}>
               <h2 id={`${titleId}-next`} className="kicker">
                 What happens next
               </h2>

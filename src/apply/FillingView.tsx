@@ -7,9 +7,9 @@
  * reads `detail.progress`, which the worker writes while the row is filling, and says honestly when there is none yet.
  */
 import { useId } from 'react';
-import type { ReactNode } from 'react';
 import type { ApplicationDetail, ProgressSection, ProgressState } from '../../shared/apply';
-import { IconCheck } from '../discover/roles/icons';
+import { PageLine } from '../components/materials';
+import type { TickState } from '../components/materials';
 import { plural } from '../lib/ui';
 import { STAGE_LABEL } from './api';
 import { LIST_ROUTE, linkTo } from './route';
@@ -23,8 +23,8 @@ export interface FillingViewProps {
   onReady: () => void;
 }
 
-const MARK: Record<ProgressState, ReactNode> = { done: <IconCheck size={14} />, now: '•', todo: '' };
-const MARK_WORD: Record<ProgressState, string> = { done: 'Done', now: 'Now', todo: 'Still to do' };
+/** The hand tick for a section: done is ticked, the one in hand is half, the rest are empty. Marks the worker's own progress; never a button. */
+const TICK: Record<ProgressState, TickState> = { done: 'done', now: 'half', todo: 'todo' };
 
 /** The line under a section: its count, what waits for the person, and the worker's note. */
 export function sectionLine(s: ProgressSection): string {
@@ -65,58 +65,33 @@ export function FillingView({ detail, navigate, onReady }: FillingViewProps) {
         </div>
       </div>
 
-      <div className="ap-split">
-        <section className="panel ap-panel ar-steps-panel" aria-labelledby={`${base}-steps`}>
-          <h2 id={`${base}-steps`} className="kicker">
+      <div className="m-screen ar-fillscreen">
+        <section className="m-tile m-paper ar-steps-panel" aria-labelledby={`${base}-steps`}>
+          <h2 id={`${base}-steps`} className="kicker ar-kick">
             The form, section by section
           </h2>
-          <ol className="ar-steps">
-            <li className="ar-step">
-              <span className={`ar-mark ar-mark-${started ? 'done' : 'now'}`} aria-hidden="true">
-                {started ? MARK.done : MARK.now}
-              </span>
-              <div>
-                <p className="ap-strong">
-                  <span className="sr-only">{started ? MARK_WORD.done : MARK_WORD.now}: </span>
-                  {started ? 'Opened the form' : 'Waiting for a browser'}
-                </p>
-                <p className="ap-src">{detail.domain}</p>
-              </div>
-            </li>
-            {sections.map((s) => (
-              <li key={s.label} className="ar-step">
-                <span className={`ar-mark ar-mark-${s.state}`} aria-hidden="true">
-                  {MARK[s.state]}
-                </span>
-                <div>
-                  <p className="ap-strong">
-                    <span className="sr-only">{MARK_WORD[s.state]}: </span>
-                    {s.label}
-                  </p>
-                  <p className="ap-src numeral">{sectionLine(s)}</p>
-                </div>
-              </li>
+          <ol className="m-lines ar-steps">
+            <PageLine
+              index={0}
+              wrap
+              state={started ? 'done' : 'half'}
+              title={started ? 'Opened the form' : 'Waiting for a browser'}
+              cite={detail.domain}
+            />
+            {sections.map((s, i) => (
+              <PageLine key={s.label} index={i + 1} wrap state={TICK[s.state]} title={s.label} cite={<span className="numeral">{sectionLine(s)}</span>} />
             ))}
-            <li className="ar-step">
-              <span className="ar-mark ar-mark-todo" aria-hidden="true" />
-              <div>
-                <p className="ap-strong">
-                  <span className="sr-only">{MARK_WORD.todo}: </span>
-                  Resume
-                </p>
-                <p className="ap-src">Held back. Attached only when you approve.</p>
-              </div>
-            </li>
+            <PageLine index={sections.length + 1} wrap state="todo" title="Resume" cite="Held back. Attached only when you approve." />
           </ol>
         </section>
 
-        <section className="panel ap-panel ar-filled" aria-labelledby={`${base}-live`}>
+        <section className="m-tile m-graph ar-filled" aria-labelledby={`${base}-live`}>
           <div className="ap-ghead">
             <h2 id={`${base}-live`} className="kicker">
               Filled so far
             </h2>
             {progress && (
-              <span className="ap-src numeral">
+              <span className="m-cite numeral">
                 {progress.filled} of {plural(progress.total, 'field')}
               </span>
             )}
@@ -134,7 +109,7 @@ export function FillingView({ detail, navigate, onReady }: FillingViewProps) {
         </section>
       </div>
 
-      <section className="panel ap-panel ar-guard">
+      <section className={`panel ap-panel ar-guard ${ready ? 'm-ink ap-ink' : 'm-quiet'}`}>
         <div className="ap-measure">
           <p className="ap-strong">The browser we fill in for you cannot send anything.</p>
           <p className="ap-muted ap-small">

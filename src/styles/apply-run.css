@@ -417,3 +417,118 @@ textarea.ar-textarea {
     margin-top: var(--s2);
   }
 }
+
+/* ═════════════ the materials on the run screens ═════════════ */
+
+.ar-notice {
+  border: 0;
+  border-radius: 0;
+}
+
+/* Filling: the steps are a notebook page, what was read or filled is graph paper */
+.ar-fillscreen {
+  grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);
+}
+
+.ar-fillscreen > .m-tile {
+  grid-column: span 1;
+  flex: none;
+  padding-top: var(--s4);
+  padding-bottom: var(--s4);
+}
+
+.ar-fillscreen .m-paper {
+  padding-left: 52px;
+}
+
+.ar-kick {
+  margin-bottom: var(--s2);
+}
+
+.ar-steps {
+  margin: 0;
+}
+
+.m-paper .m-line {
+  border-bottom-color: var(--rule);
+}
+
+.m-paper .m-cite {
+  overflow-wrap: anywhere;
+}
+
+.ar-filled .ar-fld {
+  border-top: 1px solid var(--grid);
+}
+
+.ar-filled .ap-src,
+.ar-filled .ap-q {
+  color: var(--text-muted);
+}
+
+.ar-guard {
+  padding: var(--s4) var(--s5);
+}
+
+/* a question waiting for the person, and where each value came from: flat tiles with a hairline between */
+.ar-need {
+  border: 0;
+}
+
+.ar-need .ar-textarea,
+.ar-need :is(.field, input, select, textarea) {
+  border-radius: 0;
+}
+
+.ar-group.m-graph .ar-row,
+.ar-group.m-graph .ar-cite {
+  border-top-color: var(--grid);
+}
+
+.ar-group.m-graph .ap-ghead {
+  padding-bottom: var(--s2);
+}
+
+.ar-long {
+  background: var(--surface);
+}
+
+
+/* an outcome: a field when it went through, neutral ground otherwise */
+.ar-outcome {
+  padding: var(--s5);
+}
+
+.ar-outcome.m-field .chip {
+  background: none;
+  border: 1px solid var(--text);
+  color: var(--text);
+}
+
+.ar-outcome.m-field .ap-muted,
+.ar-outcome.m-field .ap-src,
+.ar-outcome.m-field .ap-q {
+  color: var(--text-muted);
+}
+
+.ar-outcome.m-field :is(.btn-quiet, .ap-row-btn) {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 1100px) {
+  .ar-fillscreen {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .ar-fillscreen .m-paper {
+    padding-left: 44px;
+  }
+
+  .ar-outcome {
+    padding: var(--s4);
+  }
+}

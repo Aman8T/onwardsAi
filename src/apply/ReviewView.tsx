@@ -295,7 +295,7 @@ export function ReviewView({ detail, navigate, queue = [], match, shot, onApprov
           {tab === 'form' && (
             <>
               {fields.length > 0 && (
-                <div className="panel ar-summary">
+                <div className="panel ar-summary m-quiet">
                   <span className="ap-strong">Where these {plural(fields.length, 'value')} come from:</span>
                   {summary.map((s) => (
                     <span key={s.source} className="chip ap-chip">
@@ -352,7 +352,7 @@ export function ReviewView({ detail, navigate, queue = [], match, shot, onApprov
               )}
 
               {resumeLine && (
-                <section className="panel ap-panel ar-group" aria-label="Resume">
+                <section className="panel ap-panel ar-group m-graph" aria-label="Resume">
                   {resumeLine}
                 </section>
               )}
@@ -449,7 +449,7 @@ export function ReviewView({ detail, navigate, queue = [], match, shot, onApprov
         </div>
 
         <aside className="ap-aside ap-stack-s">
-          <section className="panel ap-panel ap-stack-s" aria-labelledby={`${base}-approve`}>
+          <section className="panel ap-panel ap-stack-s m-ink ap-ink" aria-labelledby={`${base}-approve`}>
             <h2 id={`${base}-approve`} className="kicker">
               Approve and send
             </h2>

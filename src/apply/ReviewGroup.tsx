@@ -298,7 +298,7 @@ export interface ReviewGroupProps {
 export function ReviewGroup({ title, fields, facts = [], resume, onChange, busy }: ReviewGroupProps) {
   const id = useId();
   return (
-    <section className="panel ap-panel ar-group" aria-labelledby={id}>
+    <section className="panel ap-panel ar-group m-graph" aria-labelledby={id}>
       <div className="ap-ghead">
         <h2 id={id} className="ap-h3">
           {title}

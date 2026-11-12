@@ -141,7 +141,7 @@ export function NeedCard({ need, draft, onChange, disabled, company }: NeedCardP
 
   if (isFileNeed(need) && !need.onSite) {
     return (
-      <section className="panel ar-need ar-need-onsite" aria-labelledby={titleId}>
+      <section className="panel ar-need ar-need-onsite m-quiet" aria-labelledby={titleId}>
         <div className="ar-need-head">
           <p id={titleId} className="ar-need-q">
             {need.label}
@@ -160,7 +160,7 @@ export function NeedCard({ need, draft, onChange, disabled, company }: NeedCardP
 
   if (need.onSite) {
     return (
-      <section className="panel ar-need ar-need-onsite" aria-labelledby={titleId}>
+      <section className="panel ar-need ar-need-onsite m-quiet" aria-labelledby={titleId}>
         <div className="ar-need-head">
           <p id={titleId} className="ar-need-q">
             {need.label}
@@ -269,7 +269,7 @@ export function NeedCard({ need, draft, onChange, disabled, company }: NeedCardP
 
   const labelled = !pills && !multi && !(attestation && need.kind === 'checkbox');
   return (
-    <section className="panel ar-need" aria-labelledby={titleId}>
+    <section className="panel ar-need m-plain" aria-labelledby={titleId}>
       <div className="ar-need-head">
         {labelled ? (
           <label id={titleId} htmlFor={inputId} className="ar-need-q">

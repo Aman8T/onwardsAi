@@ -359,7 +359,7 @@ export function OutcomeView({ detail, navigate, confirmation, onResolve, onAppli
       <p className="kicker">
         <a {...linkTo(LIST_ROUTE, navigate)}>Applications</a> · {[detail.title, company].filter(Boolean).join(' · ')}
       </p>
-      <section className="panel ap-panel ap-stack-s ar-outcome" aria-labelledby={`${base}-t`} aria-live={live ? 'polite' : undefined}>
+      <section className={`panel ap-panel ap-stack-s ar-outcome ${tone === 'ok' ? 'm-field' : 'm-quiet'}`} aria-labelledby={`${base}-t`} aria-live={live ? 'polite' : undefined}>
         <span className={`chip ap-chip ap-tone-${tone} ap-self-start`}>{copy.chip}</span>
         <h1 id={`${base}-t`} className="serif ap-title">
           {copy.title}

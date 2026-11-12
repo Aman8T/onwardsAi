@@ -191,7 +191,7 @@ export function DetailsView(props: DetailsViewProps) {
   );
 
   return (
-    <div className="ap-stack">
+    <div className="ap-stack ap-details">
       <div className="ap-head">
         <p className="kicker">
           <a {...linkTo(LIST_ROUTE, navigate)}>Applications</a> · Your details

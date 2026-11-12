@@ -128,7 +128,7 @@ export function QuestionsView({ detail, navigate, onAnswer, onSkip, onFillAgain 
               {error}
             </p>
           )}
-          <div className="ap-actions">
+          <div className="ap-actions ap-inkbar m-ink">
             {questions.length > 0 && (
               <button
                 type="button"
