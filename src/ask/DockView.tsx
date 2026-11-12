@@ -12,12 +12,16 @@ import '../styles/ask.css';
 export const PLACEHOLDER = 'Ask about your graph, your roles, or how anything here works';
 /** The bar's hint once the panel is open (the starters are in the panel then, not in the bar). */
 export const OPEN_PLACEHOLDER = 'Ask anything about your graph or this app';
+/** The small bar's hint: short enough not to truncate in a narrow bar. The input's label stays `PLACEHOLDER`. */
+export const COMPACT_PLACEHOLDER = 'Ask Leafout';
 
 export interface BarProps {
   inputId: string;
   /** The panel's id, for `aria-controls`, while it is open. */
   panelId: string;
   open: boolean;
+  /** The small resting bar: narrow, small text, a short hint and no starters. Visual only; the input is the same. */
+  compact?: boolean;
   text: string;
   /** An answer is on show: the input asks a follow-up. */
   following: boolean;
@@ -34,8 +38,8 @@ export interface BarProps {
   onStop: () => void;
 }
 
-export function DockBar({ inputId, panelId, open, text, following, streaming, chips, inputRef, onText, onSubmit, onFocus, onOpen, onChip, onStop }: BarProps) {
-  const placeholder = following ? 'Ask a follow-up' : open ? OPEN_PLACEHOLDER : PLACEHOLDER;
+export function DockBar({ inputId, panelId, open, compact, text, following, streaming, chips, inputRef, onText, onSubmit, onFocus, onOpen, onChip, onStop }: BarProps) {
+  const placeholder = following ? 'Ask a follow-up' : open ? OPEN_PLACEHOLDER : compact ? COMPACT_PLACEHOLDER : PLACEHOLDER;
   return (
     <form className="ak-bar" onSubmit={onSubmit}>
       <svg className="ak-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
@@ -60,7 +64,7 @@ export function DockBar({ inputId, panelId, open, text, following, streaming, ch
         onFocus={onFocus}
         onClick={onOpen}
       />
-      {!open && chips.length > 0 && (
+      {!open && !compact && chips.length > 0 && (
         <span className="ak-chips">
           {chips.map((s) => (
             <button key={s.q} type="button" className="ak-chip" onClick={() => onChip(s.q)}>
@@ -76,7 +80,7 @@ export function DockBar({ inputId, panelId, open, text, following, streaming, ch
           <span>Stop</span>
         </button>
       ) : (
-        <button type="submit" className="btn btn-primary ak-send" aria-label="Send" disabled={!text.trim()}>
+        <button type="submit" className="btn ak-send" aria-label="Send" disabled={!text.trim()}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
             <path d="M12 19V5m0 0-6 6m6-6 6 6" />
           </svg>
@@ -90,14 +94,17 @@ export interface DockViewProps {
   open: boolean;
   /** In the page's flow instead of sticky to the window: the gallery. */
   flow?: boolean;
+  /** The size transition may run (off until the first reading of where the page is, so nothing animates on load). */
+  settled?: boolean;
   frameRef?: RefObject<HTMLDivElement | null>;
   panel: PanelProps;
   bar: BarProps;
 }
 
-export function DockView({ open, flow, frameRef, panel, bar }: DockViewProps) {
+export function DockView({ open, flow, settled, frameRef, panel, bar }: DockViewProps) {
+  const classes = ['ak-dock', open && 'is-open', flow && 'is-flow', bar.compact && 'is-compact', settled && 'is-settled'];
   return (
-    <div className={`ak-dock${open ? ' is-open' : ''}${flow ? ' is-flow' : ''}`} ref={frameRef}>
+    <div className={classes.filter(Boolean).join(' ')} ref={frameRef}>
       {open && <DockPanel {...panel} />}
       <DockBar {...bar} />
     </div>

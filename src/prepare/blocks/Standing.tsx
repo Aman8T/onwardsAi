@@ -24,7 +24,7 @@ interface StandingProps {
 export function Standing({ plan, evidence, waiting, openGap, onToggleGap, onJustThis }: StandingProps) {
   const many = plan.gaps.length > 1;
   return (
-    <section id="pp-stand" className="panel pp-block" aria-labelledby="pp-stand-h">
+    <section id="pp-stand" className="pp-block m-graph" aria-labelledby="pp-stand-h">
       <div className="pp-head">
         <h2 id="pp-stand-h" className="pp-h">
           Where you stand
@@ -97,7 +97,7 @@ function GapRow({ gap, evidence, waiting, open, many, onToggle, onJustThis }: Ga
   const bodyId = `pp-gap-${gap.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
   const biggest = gap.biggest && many;
   return (
-    <div className="pp-gap">
+    <div className={`pp-gap${biggest ? ' is-biggest' : ''}`}>
       <button
         type="button"
         className="pp-gap-btn"

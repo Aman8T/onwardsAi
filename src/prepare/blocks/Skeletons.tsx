@@ -10,7 +10,7 @@ export function SkeletonLine({ width, tall = false }: { width: string; tall?: bo
 
 export function MoveSkeleton() {
   return (
-    <div className="panel pp-block pp-skel" role="status" aria-label="The move, on its way">
+    <div className="pp-block pp-skel m-gap" role="status" aria-label="The move, on its way">
       <span className="kicker">Choosing the one move…</span>
       <SkeletonLine width="82%" tall />
       <SkeletonLine width="58%" />
@@ -20,7 +20,7 @@ export function MoveSkeleton() {
 
 export function PlanSkeleton() {
   return (
-    <div className="panel pp-block pp-skel" role="status" aria-label="The plan, on its way">
+    <div className="pp-block pp-skel m-gap" role="status" aria-label="The plan, on its way">
       <span className="kicker">Laying out the plan…</span>
       <SkeletonLine width="70%" />
     </div>
@@ -29,7 +29,7 @@ export function PlanSkeleton() {
 
 export function StandingSkeleton() {
   return (
-    <div className="panel pp-block pp-skel" role="status" aria-label="Where you stand, on its way">
+    <div className="pp-block pp-skel m-gap" role="status" aria-label="Where you stand, on its way">
       <span className="kicker">Reading the role on your graph…</span>
       <SkeletonLine width="64%" />
       <SkeletonLine width="78%" />

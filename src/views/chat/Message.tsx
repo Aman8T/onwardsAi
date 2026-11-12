@@ -9,12 +9,12 @@ import { toolText } from './helpers';
 
 /* ───────────── user ───────────── */
 
-/** The person's words: a block on the second surface tone, right-aligned. */
+/** The person's words: a loose sheet of paper, ordinary type, right-aligned. */
 export const UserMessage = memo(function UserMessage({ text, caption }: { text: string; caption?: string }) {
   return (
     <div className="ch-msg ch-msg--user ch-in">
       {caption && <span className="kicker ch-from">{caption}</span>}
-      <div className="ch-bubble">
+      <div className="ch-bubble m-paper is-loose">
         <span className="sr-only">You: </span>
         {text}
       </div>
@@ -71,13 +71,15 @@ interface AnswerProps {
   onEdit?: () => void;
   /** Failed: the question that was asked, offered for copying. Only for the last message. */
   question?: string;
+  /** The action card is the ink block of the screen (the latest one in a chat); otherwise it is quiet. */
+  ink?: boolean;
 }
 
 /**
  * What an answer is made of, shared by the chat view and the Ask dock: tool chips, the status line before the first
  * token, the text, the stopped and failed states, and the action card.
  */
-export function AnswerBody({ message, lines, profile, onRetry, onEdit, question }: AnswerProps) {
+export function AnswerBody({ message, lines, profile, onRetry, onEdit, question, ink = false }: AnswerProps) {
   const streaming = message.status === 'streaming';
   const failed = message.status === 'error';
   const stopped = message.status === 'stopped';
@@ -163,7 +165,7 @@ export function AnswerBody({ message, lines, profile, onRetry, onEdit, question 
 
       {message.rewrite && !streaming && <ChatRewrite message={message} />}
 
-      {message.action && profile && !streaming && <ActionCard action={message.action} profile={profile} />}
+      {message.action && profile && !streaming && <ActionCard action={message.action} profile={profile} ink={ink} />}
     </>
   );
 }

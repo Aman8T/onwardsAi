@@ -47,7 +47,7 @@ export function DockPanel({ id, profile, starters, thread, onAsk, onClose, onFul
   const settled = !!reply && reply.status !== 'streaming';
 
   return (
-    <div id={id} className="ak-panel" role="dialog" aria-label="Ask Leafout">
+    <div id={id} className={`ak-panel${thread ? ' is-answer' : ''}`} role="dialog" aria-label="Ask Leafout">
       <div className="ak-panel-head">
         <span className="ak-panel-title">
           <span className="kicker">Ask Leafout</span>
@@ -97,8 +97,8 @@ export function DockPanel({ id, profile, starters, thread, onAsk, onClose, onFul
               {starters.map((s) => (
                 <li key={s.q}>
                   <button type="button" className="ak-starter" onClick={() => onAsk(s.q)}>
-                    <span className="ak-starter-q">{s.q}</span>
-                    <span className="ak-fine">{s.reason}</span>
+                    <span className="ak-starter-q pen">{s.q}</span>
+                    <span className="m-cite">{s.reason}</span>
                   </button>
                 </li>
               ))}

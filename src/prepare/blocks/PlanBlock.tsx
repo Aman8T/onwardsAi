@@ -12,6 +12,7 @@ import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { FixTask } from '../../../shared/interview';
 import type { PrepareLink, PrepareMove, PreparePhase, PrepareState } from '../../../shared/prepare';
+import { PageLine } from '../../components/materials';
 import { sentenceOf } from '../api';
 import {
   currentWeek,
@@ -55,15 +56,15 @@ export function PlanBlock({ move, state, narrow, phaseIndex, onPhase, onHours, o
   const progress = moveProgress(move, state.done);
   const cur = Math.min(phaseIndex, move.phases.length - 1);
   const weeks = Math.max(totalWeeks(move, h, fixMinutes / 60), spans.at(-1)?.end ?? 1);
-  const summary = `${weeks} weeks · ${totalHours(move)} hours in all${fixMinutes > 0 ? ` + ${fixMinutes} min of practice fixes` : ''} · ${progress.done} of ${progress.all} done`;
+  const summary = `${createdAt ? `Week ${week} of ${weeks} · ` : ''}${weeks} weeks · ${totalHours(move)} hours in all${fixMinutes > 0 ? ` + ${fixMinutes} min of practice fixes` : ''} · ${progress.done} of ${progress.all} done`;
 
   return (
-    <section id="pp-plan" className="panel pp-block pp-plan" aria-labelledby="pp-plan-h">
+    <section id="pp-plan" className={`pp-block pp-plan m-paper${narrow ? ' is-loose' : ''}`} aria-labelledby="pp-plan-h">
       <div className="pp-head pp-plan-head">
-        <h2 id="pp-plan-h" className="title pp-plan-title">
+        <h2 id="pp-plan-h" className="pen pp-plan-title">
           Your plan
         </h2>
-        {narrow && <span className="numeral pp-meta">{summary}</span>}
+        {narrow && <span className="m-cite pp-meta">{summary}</span>}
         <div role="group" aria-label="Hours a week" className={`pp-hours-group${narrow ? ' is-narrow' : ''}`}>
           {!narrow && <span className="kicker">Hours a week</span>}
           {hourChoices(state).map((v) => (
@@ -73,9 +74,9 @@ export function PlanBlock({ move, state, narrow, phaseIndex, onPhase, onHours, o
           ))}
         </div>
       </div>
-      {!narrow && <p className="numeral pp-meta pp-plan-summary">{summary}</p>}
+      {!narrow && <p className="m-cite pp-meta pp-plan-summary">{summary}</p>}
 
-      {practice.length > 0 && <Practice practice={practice} week={week} hours={h} minutes={fixMinutes} onTick={onPracticeTick} onRedrill={onRedrill} />}
+      {practice.length > 0 && <Practice practice={practice} week={week} weeks={weeks} hours={h} minutes={fixMinutes} onTick={onPracticeTick} onRedrill={onRedrill} />}
 
       {narrow ? (
         <div className="pp-phase-list">
@@ -146,6 +147,7 @@ export function PlanBlock({ move, state, narrow, phaseIndex, onPhase, onHours, o
 function Practice({
   practice,
   week,
+  weeks,
   hours,
   minutes,
   onTick,
@@ -153,6 +155,7 @@ function Practice({
 }: {
   practice: readonly FixTask[];
   week: number;
+  weeks: number;
   hours: number;
   minutes: number;
   onTick?: (task: FixTask, done: boolean) => Promise<void>;
@@ -162,7 +165,7 @@ function Practice({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<{ id: string; message: string } | null>(null);
   const tick = async (task: FixTask, done: boolean) => {
-    if (!onTick) return;
+    if (!onTick || busy) return;
     setBusy(task.id);
     setError(null);
     try {
@@ -177,39 +180,45 @@ function Practice({
   return (
     <div className="pp-practice" aria-labelledby={headingId}>
       <div className="pp-head">
-        <h3 className="pp-h3" id={headingId}>
-          This week · week {week}
+        <h3 className="pen pp-h3" id={headingId}>
+          This week · week {week} of {weeks}
         </h3>
-        <span className="numeral pp-meta">{load}</span>
+        <span className="m-cite pp-meta">{load}</span>
       </div>
       <p className="kicker">From your practice</p>
-      <div className="pp-tasks">
-        {practice.map((t) => {
-          const id = `pp-fix-${t.id}`;
+      <ul className="m-lines pp-tasks">
+        {practice.map((t, i) => {
           const done = !!t.doneAt;
           return (
-            <div key={t.id} className="pp-task pp-fix">
-              <input id={id} type="checkbox" className="pp-check" checked={done} disabled={!onTick || busy === t.id} onChange={(e) => void tick(t, e.target.checked)} />
-              <label htmlFor={id} className="pp-fix-body">
-                <span className={`pp-task-label${done ? ' is-done' : ''}`}>{t.text}</span>
-                <span className="pp-meta">
+            <PageLine
+              key={t.id}
+              index={i}
+              wrap
+              title={t.text}
+              state={done ? 'done' : 'todo'}
+              {...(onTick ? { onToggle: (d: boolean) => void tick(t, d) } : {})}
+              cite={
+                <>
                   From practice on {shortDate(new Date(t.addedAt))} · about {t.minutes} min
-                </span>
-              </label>
-              {done && onRedrill && (
-                <button type="button" className="btn btn-quiet pp-link" onClick={onRedrill}>
-                  Re-drill it
-                </button>
-              )}
-              {error?.id === t.id && (
-                <span className="pp-err-line" role="alert">
-                  {error.message}
-                </span>
-              )}
-            </div>
+                  {error?.id === t.id && (
+                    <span className="pp-err-line" role="alert">
+                      {' '}
+                      {error.message}
+                    </span>
+                  )}
+                </>
+              }
+              end={
+                done && onRedrill ? (
+                  <button type="button" className="btn btn-quiet pp-link" onClick={onRedrill}>
+                    Re-drill it
+                  </button>
+                ) : undefined
+              }
+            />
           );
         })}
-      </div>
+      </ul>
       <p className="pp-muted pp-link-note">Ticking a step changes no verdict. It puts its claim first in your next re-drill.</p>
     </div>
   );
@@ -240,21 +249,14 @@ function PhaseDetail({ move, phase, index, weeks, state, narrow, onTask, onLink 
           </span>
         </div>
       )}
-      <div className="pp-tasks">
+      {move.works.length > 0 && <p className="m-cite">Works on {move.works.join(', ')}</p>}
+      <ul className="m-lines pp-tasks">
         {phase.tasks.map((t, j) => {
           const key = taskKey(move.id, index, j);
-          const id = `pp-task-${move.id}-${index}-${j}`;
           const on = done.has(key);
-          return (
-            <div key={key} className="pp-task">
-              <input id={id} type="checkbox" className="pp-check" checked={on} onChange={(e) => onTask(key, e.target.checked)} />
-              <label htmlFor={id} className={`pp-task-label${on ? ' is-done' : ''}`}>
-                {t}
-              </label>
-            </div>
-          );
+          return <PageLine key={key} index={j} wrap title={t} state={on ? 'done' : 'todo'} onToggle={(d) => onTask(key, d)} />;
         })}
-      </div>
+      </ul>
       <p className="pp-deliver">
         <span className="kicker">You'll have</span>
         <span>{phase.deliverable}</span>

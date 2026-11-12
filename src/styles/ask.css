@@ -1,28 +1,56 @@
 /*
  * Ask: the dock at the foot of the dashboard, its panel, and the action card an answer can end with.
  * Ported from the Ask canvases (.dock, .dock-bar, .dock-input, .dock-panel, .ask-q, .act, .bubble, .caret) to tokens.
- * Opaque surfaces, one 1px hairline, no shadow, no transition: a panel simply is there, so reduced motion needs no case.
+ * In the materials (styles/materials.css): the bar is neutral ground (a form), the panel with starters is a page of the
+ * day's notebook (starters as pen lines, each with the reason it is offered in small mono), the panel with an answer is
+ * neutral ground, and the action card is quiet unless it is the ink block of its turn. Square, one 1px hairline, no shadow. The one motion is the bar changing size
+ * (`.is-compact` while the page is not scrolled to its end, wide otherwise): specific properties only, the base
+ * duration, and none at all under reduced motion.
  * The streaming caret is the chat's own (`.ch-caret` in chat.css).
  */
 
 /* ───────────── the dock ───────────── */
 
 .ak-dock {
+  /* the wide bar's height (border, padding, a 44px input): the frame keeps it in either state, so the bar changing size
+     never moves the end of the page that the sentinel (.ak-end) sits at, and the two cannot chase each other */
+  --ak-bar-h: calc(2px + 2 * var(--s2) + 44px);
   position: sticky;
   bottom: var(--s4);
   z-index: 20;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   gap: var(--s2);
   width: 100%;
-  max-width: 920px;
+  /* wide: the whole content column (a length-percentage, so it can animate to and from the compact width) */
+  max-width: 100%;
+  min-height: var(--ak-bar-h);
   margin: var(--s4) auto 0;
+}
+
+/* resting, the frame is as tall as the wide bar and the small bar leaves part of it empty: that part must not catch
+   clicks meant for the page. Open, the frame is the panel and the bar, and catches them as it always did. */
+.ak-dock:not(.is-open) {
+  pointer-events: none;
+}
+
+.ak-dock:not(.is-open) .ak-bar {
+  pointer-events: auto;
 }
 
 /* the gallery: the same dock, in the page's flow */
 .ak-dock.is-flow {
   position: static;
-  margin: 0;
+  margin: 0 auto;
+}
+
+/* the end of the page (AskDock renders it after the dock): 1px, and it takes no room, because the negative margin
+   cancels the page column's gap above it */
+.ak-end {
+  height: 1px;
+  margin-top: calc(-1 * var(--s4) - 1px);
+  pointer-events: none;
 }
 
 .ak-bar {
@@ -32,7 +60,7 @@
   padding: var(--s2) var(--s2) var(--s2) var(--s4);
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  border-radius: var(--r-l);
+  border-radius: 0;
 }
 
 .ak-bar:focus-within {
@@ -90,7 +118,7 @@
   white-space: nowrap;
   background: transparent;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 0;
   cursor: pointer;
 }
 
@@ -111,6 +139,71 @@
   min-height: 44px;
 }
 
+/* ───────────── the small bar: the page is not scrolled to its end, and the bar is not in use ───────────── */
+
+@media (min-width: 761px) {
+  .ak-dock.is-compact {
+    max-width: 360px;
+  }
+
+  .ak-dock.is-compact .ak-bar {
+    padding: var(--s1) var(--s1) var(--s1) var(--s3);
+  }
+
+  .ak-dock.is-compact .ak-input {
+    font-size: var(--fs-2);
+  }
+}
+
+/* a mouse can hit a 36px row; a finger keeps the 44px input and Send above */
+@media (min-width: 761px) and (pointer: fine) {
+  .ak-dock.is-compact .ak-input {
+    min-height: 36px;
+  }
+
+  .ak-dock.is-compact .ak-send {
+    min-width: 36px;
+    min-height: 36px;
+    padding-inline: var(--s2);
+  }
+}
+
+/* the change of size animates, but not the first reading on load (.is-settled comes a frame after it) */
+.ak-dock.is-settled {
+  transition: max-width var(--d-base) var(--ease);
+}
+
+.ak-dock.is-settled .ak-bar {
+  transition: padding var(--d-base) var(--ease);
+}
+
+.ak-dock.is-settled .ak-input {
+  transition:
+    font-size var(--d-base) var(--ease),
+    min-height var(--d-base) var(--ease);
+}
+
+/* Send keeps the button's own colour and press transitions (.btn) and adds its size */
+.ak-dock.is-settled .ak-send {
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease),
+    min-width var(--d-base) var(--ease),
+    min-height var(--d-base) var(--ease),
+    padding var(--d-base) var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ak-dock.is-settled,
+  .ak-dock.is-settled .ak-bar,
+  .ak-dock.is-settled .ak-input,
+  .ak-dock.is-settled .ak-send {
+    transition: none;
+  }
+}
+
 /* ───────────── the panel ───────────── */
 
 .ak-panel {
@@ -120,9 +213,14 @@
   max-height: min(70vh, 560px);
   padding: var(--s4) var(--s5);
   overflow-y: auto;
-  background: var(--surface);
+  background: var(--paper-sheet);
   border: 1px solid var(--line-strong);
-  border-radius: var(--r-l);
+  border-radius: 0;
+}
+
+/* an answer is long reading: neutral ground */
+.ak-panel.is-answer {
+  background: var(--surface);
 }
 
 .ak-panel-head {
@@ -164,8 +262,8 @@
   list-style: none;
 }
 
-.ak-starters li + li {
-  border-top: 1px solid var(--line);
+.ak-starters li {
+  border-bottom: 1px solid var(--rule);
 }
 
 .ak-starter {
@@ -190,8 +288,7 @@
 }
 
 .ak-starter-q {
-  font-size: var(--fs-2);
-  font-weight: 500;
+  font-size: 21px;
 }
 
 .ak-fine {
@@ -206,6 +303,8 @@
 }
 
 .ak-can {
+  padding-top: var(--s3);
+  border-top: 1px solid var(--rule);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s4);
@@ -224,9 +323,8 @@
   margin: 0;
   padding: var(--s3) var(--s4);
   font-size: var(--fs-2);
-  background: var(--well);
-  border: 1px solid var(--line);
-  border-radius: var(--r-l);
+  background: var(--paper-sheet);
+  border-radius: 0;
 }
 
 .ak-answer {
@@ -254,7 +352,43 @@
   gap: var(--s3) var(--s4);
   padding: var(--s3) var(--s4);
   border: 1px solid var(--line-strong);
-  border-radius: var(--r-m);
+  border-radius: 0;
+}
+
+/* the ink block of its turn: only the latest card in a chat; everything on it is --surface */
+.ak-act.is-ink {
+  border-color: transparent;
+  background: var(--accent-strong);
+  color: var(--surface);
+}
+
+.ak-act.is-ink :is(.ak-act-title, .ak-fine) {
+  color: inherit;
+}
+
+.ak-act.is-ink .ak-act-go {
+  border-color: var(--surface);
+  background: transparent;
+  color: var(--surface);
+}
+
+@media (hover: hover) {
+  .ak-act.is-ink .ak-act-go:hover {
+    background: var(--accent);
+    border-color: var(--surface);
+  }
+}
+
+/* a card that is not the latest, or sits in the dashboard panel: ordinary buttons even when Share renders a primary one */
+.ak-act:not(.is-ink) .ak-act-go.btn-primary {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.ak-act.is-ink .ak-act-go.btn-primary {
+  background: transparent;
+  color: var(--surface);
 }
 
 .ak-act-main {
@@ -302,6 +436,7 @@
 /* ───────────── under 760px: the bar is the input and send; the panel is a sheet ───────────── */
 
 @media (max-width: 760px) {
+  /* the phone keeps the full bar: the compact rules above start at 761px, and AskDock never marks it compact here */
   .ak-dock {
     bottom: var(--s2);
     max-width: none;
@@ -313,8 +448,6 @@
 
   .ak-panel {
     padding: var(--s4);
-    border-bottom-left-radius: var(--r-m);
-    border-bottom-right-radius: var(--r-m);
   }
 
   .ak-can {
@@ -361,13 +494,13 @@
   white-space: nowrap;
   background: var(--surface-2);
   border: 0;
-  border-radius: 999px;
+  border-radius: 0;
   cursor: pointer;
 }
 
 .ak-dev-btn[aria-pressed='true'] {
   color: var(--text);
-  background: var(--accent-soft);
+  background: var(--surface);
 }
 
 .ak-dev-stage {

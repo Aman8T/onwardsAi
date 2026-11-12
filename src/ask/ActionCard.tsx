@@ -1,6 +1,9 @@
 /**
  * The button the coach proposed, drawn as a card. It never claims anything was done: the line under the label says
  * nothing has started, and the one button opens a screen. See `dispatch.ts` for what each destination opens.
+ *
+ * It is the ink block of its turn when `ink` is set (the chat passes it for the latest card only); earlier cards, and the
+ * card inside the dashboard's Ask panel, are quiet. The ink block is the one thing to press next on a screen.
  */
 import { useId, useState } from 'react';
 import { CAPABILITIES } from '../../shared/capabilities';
@@ -10,7 +13,7 @@ import type { ChatAction } from '../store';
 import '../styles/ask.css';
 import { DISPATCH } from './dispatch';
 
-export function ActionCard({ action, profile }: { action: ChatAction; profile: Profile }) {
+export function ActionCard({ action, profile, ink = false }: { action: ChatAction; profile: Profile; ink?: boolean }) {
   const handler = DISPATCH[action.destination] as (typeof DISPATCH)[keyof typeof DISPATCH] | undefined;
   const capability = CAPABILITIES.find((c) => c.destination === action.destination);
   const [notice, setNotice] = useState('');
@@ -25,7 +28,7 @@ export function ActionCard({ action, profile }: { action: ChatAction; profile: P
   let button;
   if (handler.kind === 'href') {
     button = (
-      <a className="btn btn-primary ak-act-go" href={handler.href(ctx)}>
+      <a className="btn ak-act-go" href={handler.href(ctx)}>
         {text}
       </a>
     );
@@ -37,7 +40,7 @@ export function ActionCard({ action, profile }: { action: ChatAction; profile: P
     );
   } else if (handler.kind === 'confirm') {
     button = (
-      <button type="button" className="btn btn-primary ak-act-go" aria-expanded={asking} aria-controls={`${id}-ask`} onClick={() => setAsking((a) => !a)}>
+      <button type="button" className="btn ak-act-go" aria-expanded={asking} aria-controls={`${id}-ask`} onClick={() => setAsking((a) => !a)}>
         {text}
       </button>
     );
@@ -45,7 +48,7 @@ export function ActionCard({ action, profile }: { action: ChatAction; profile: P
     button = (
       <button
         type="button"
-        className="btn btn-primary ak-act-go"
+        className="btn ak-act-go"
         onClick={() => {
           setNotice('');
           void Promise.resolve(handler.run(ctx)).then((ok) => {
@@ -59,7 +62,7 @@ export function ActionCard({ action, profile }: { action: ChatAction; profile: P
   }
 
   return (
-    <div className="ak-act" role="group" aria-label={capability.label}>
+    <div className={`ak-act${ink ? ' is-ink' : ''}`} role="group" aria-label={capability.label}>
       <span className="ak-act-main">
         <span className="ak-act-label">{capability.label}</span>
         {action.title && <span className="ak-act-title">{action.title}</span>}
@@ -78,7 +81,7 @@ export function ActionCard({ action, profile }: { action: ChatAction; profile: P
             <button type="button" className="btn btn-sm" onClick={() => setAsking(false)}>
               Keep graph
             </button>
-            <button type="button" className="btn btn-sm btn-primary" onClick={() => handler.run(ctx)}>
+            <button type="button" className="btn btn-sm" onClick={() => handler.run(ctx)}>
               Start over
             </button>
           </span>

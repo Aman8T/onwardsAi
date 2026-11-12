@@ -38,9 +38,9 @@ function prepareQuestion(thread: Thread, profile: Profile): string {
 
 function Suggestions({ items, onPick, hero = false }: { items: string[]; onPick: (t: string) => void; hero?: boolean }) {
   return (
-    <div className={`ch-suggs${hero ? ' ch-suggs--hero' : ''}`} role="group" aria-label="Suggested questions">
+    <div className={`ch-suggs${hero ? ' ch-suggs--hero m-paper' : ''}`} role="group" aria-label="Suggested questions">
       {items.map((t) => (
-        <button key={t} type="button" className="ch-sugg" onClick={() => onPick(t)}>
+        <button key={t} type="button" className="ch-sugg pen" onClick={() => onPick(t)}>
           {t}
         </button>
       ))}
@@ -278,6 +278,8 @@ export function ChatView({ profile }: { profile: Profile }) {
   // a Prepare thread's Next actions stand in for the fixed chips
   const showDockSuggestions = !empty && !streaming && suggestions.length > 0 && !prepare;
   const lastId = messages[messages.length - 1]?.id;
+  // only the latest action card is the ink block; a Prepare thread already has its own (Practice)
+  const lastActionId = prepare ? undefined : [...messages].reverse().find((m) => m.role === 'assistant' && m.action)?.id;
   // "Jump to latest" is for chat answers; reading the blocks from the top is not being away
   const showJump = away && messages.length > 0;
 
@@ -391,6 +393,7 @@ export function ChatView({ profile }: { profile: Profile }) {
                             onRetry={m.id === lastId && (m.status === 'error' || m.status === 'stopped') ? onRetry : undefined}
                             onEdit={m.id === lastId && m.status === 'stopped' ? onEdit : undefined}
                             question={m.id === lastId && m.status === 'error' ? lastUserText : undefined}
+                            ink={m.id === lastActionId}
                           />
                         ),
                       )}

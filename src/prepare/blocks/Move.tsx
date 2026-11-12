@@ -19,7 +19,7 @@ interface MoveProps {
 
 export function MoveBlock({ move, index, count, evidence, planOpen, onTogglePlan, onNext }: MoveProps) {
   return (
-    <section id="pp-move" className="panel pp-block" aria-labelledby="pp-move-h">
+    <section id="pp-move" className="pp-block m-plain" aria-labelledby="pp-move-h">
       <div className="pp-head">
         <span className="pp-h">The one move that closes most of it</span>
         <span className="numeral pp-meta">
@@ -53,7 +53,7 @@ export function MoveBlock({ move, index, count, evidence, planOpen, onTogglePlan
       </div>
 
       <div className="pp-actions pp-move-actions">
-        <button type="button" className="btn btn-primary pp-btn" onClick={onTogglePlan} aria-expanded={planOpen} aria-controls="pp-plan">
+        <button type="button" className="btn pp-btn" onClick={onTogglePlan} aria-expanded={planOpen} aria-controls="pp-plan">
           {planOpen ? 'Hide the plan' : 'Plan it'}
         </button>
         {count > 1 && (

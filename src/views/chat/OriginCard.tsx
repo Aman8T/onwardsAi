@@ -48,7 +48,7 @@ export function OriginCard({ origin, profile, onOpen }: { origin: ChatOrigin; pr
   const sub = origin.kind === 'free' ? origin.caption : `${ORIGIN_WHERE[origin.kind]} · ${origin.caption}`;
   const visual = visualFor(origin, profile);
   return (
-    <button type="button" className={`ch-origin${visual ? '' : ' ch-origin--plain'}`} onClick={onOpen}>
+    <button type="button" className={`ch-origin${visual ? ' m-graph' : ' ch-origin--plain m-quiet'}`} onClick={onOpen}>
       {visual && (
         <span className="ch-origin-vis" aria-hidden="true">
           {visual}

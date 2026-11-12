@@ -82,7 +82,7 @@ export function NextBlock({ plan, move, client, evidence, onPractice, narrow }: 
             <button
               key={t.id}
               type="button"
-              className={`pp-tile${on ? ' is-on' : ''}`}
+              className={`pp-tile ${t.id === 'practice' ? 'm-ink' : 'm-quiet'}${on ? ' is-on' : ''}`}
               aria-pressed={on}
               aria-controls={panelId}
               onClick={() => setAction(on ? null : t.id)}
@@ -134,7 +134,7 @@ function CalendarPanel({ plan, move }: { plan: PreparePlan; move: PrepareMove })
   };
 
   return (
-    <div className="panel pp-panel" aria-label="Put the plan on my calendar">
+    <div className="pp-panel m-plain" aria-label="Put the plan on my calendar">
       <div className="pp-head">
         <h3 className="pp-h3">Put the plan on my calendar</h3>
         <span className="numeral pp-meta">no model call</span>
@@ -173,7 +173,7 @@ function CalendarPanel({ plan, move }: { plan: PreparePlan; move: PrepareMove })
         ))}
       </ul>
       <div className="pp-actions">
-        <button type="button" className="btn btn-primary pp-btn" onClick={download}>
+        <button type="button" className="btn pp-btn" onClick={download}>
           Download the calendar file
         </button>
         <span className="pp-muted pp-small">Works with Google, Apple and Outlook calendars</span>
@@ -215,7 +215,7 @@ function RepoPanel({ plan, client }: { plan: PreparePlan; client: PrepareClient 
   }, [client, plan.id, plan.profileId, attempt]);
 
   return (
-    <div className="panel pp-panel" aria-label="Pick the repo to start from">
+    <div className="pp-panel m-graph" aria-label="Pick the repo to start from">
       <div className="pp-head">
         <h3 className="pp-h3">Pick the repo to start from</h3>
         <span className="numeral pp-meta">from your stored GitHub digest</span>
@@ -331,7 +331,7 @@ function HeadlinePanel({ plan, client, evidence }: { plan: PreparePlan; client: 
   const cites = data ? data.evidenceIds.map((id) => evidence.get(id)).filter((e): e is PrepareEvidence => e !== undefined) : [];
 
   return (
-    <div className="panel pp-panel" aria-label="Rewrite my headline for this">
+    <div className="pp-panel m-plain" aria-label="Rewrite my headline for this">
       <div className="pp-head">
         <h3 className="pp-h3">Rewrite my headline for this</h3>
         <span className="numeral pp-meta">checked against your facts</span>
@@ -378,7 +378,7 @@ function HeadlinePanel({ plan, client, evidence }: { plan: PreparePlan; client: 
           )}
           <div className="pp-actions">
             {data.proposed && (
-              <button type="button" className="btn btn-primary pp-btn" onClick={() => void copy(data.proposed ?? '')}>
+              <button type="button" className="btn pp-btn" onClick={() => void copy(data.proposed ?? '')}>
                 Copy
               </button>
             )}
@@ -410,14 +410,14 @@ function HeadlinePanel({ plan, client, evidence }: { plan: PreparePlan; client: 
 
 function PracticePanel({ onPractice }: { onPractice: () => void }) {
   return (
-    <div className="panel pp-panel pp-panel-row" aria-label="Practice the interview for this role">
+    <div className="pp-panel pp-panel-row m-quiet" aria-label="Practice the interview for this role">
       <span className="pp-stack">
         <span>Practice · This role</span>
         <span className="pp-muted pp-small">
           Built from this role on your graph: your biggest gaps first, then the claims you can defend.
         </span>
       </span>
-      <button type="button" className="btn btn-primary pp-btn" onClick={onPractice}>
+      <button type="button" className="btn pp-btn" onClick={onPractice}>
         Start practising
       </button>
     </div>

@@ -1,5 +1,8 @@
 /*
- * Chat view ("ch-" prefix) — the calm theme, from the CalmChat board.
+ * Chat view ("ch-" prefix) — the calm theme, from the CalmChat board, in the materials (styles/materials.css):
+ *   the person's messages sit on loose paper (ordinary type), the coach's answers are plain with citations in mono, the
+ *   latest action card is the ink block, the thread list is neutral with the current thread on a field, and starters
+ *   are pen lines on a page. Square, no card borders.
  *   rail ............ a quiet list: where the thread started, what Tayyari can see, threads
  *   conversation .... no panel: a 760px column set straight on the field
  *   user ............ a block on the second surface tone
@@ -205,12 +208,10 @@
   gap: var(--s3);
   width: 100%;
   padding: var(--s3) var(--s3);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-m);
+  border: 0;
+  border-radius: 0;
   color: var(--text);
   text-align: left;
-  transition: background-color var(--d-fast) var(--ease);
 }
 
 .ch-origin--plain {
@@ -218,8 +219,9 @@
 }
 
 @media (hover: hover) {
-  .ch-origin:hover {
-    background: var(--surface-2);
+  .ch-origin:hover .ch-origin-title {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 }
 
@@ -289,7 +291,8 @@
 
 .ch-see-sub {
   min-width: 0;
-  font-size: var(--fs-1);
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
   color: var(--text-muted);
   text-align: right;
   overflow-wrap: anywhere;
@@ -324,7 +327,7 @@
   width: calc(100% + 2 * var(--s3));
   margin: 0 calc(-1 * var(--s3));
   padding: var(--s2) var(--s3);
-  border-radius: var(--r-s);
+  border-radius: 0;
   color: var(--text);
   font-size: var(--fs-2);
   line-height: 1.4;
@@ -333,7 +336,11 @@
 }
 
 .ch-thread.on {
-  background: var(--surface-2);
+  background: var(--tile-1);
+}
+
+.ch-thread.on .ch-thread-meta {
+  color: var(--text-muted);
 }
 
 @media (hover: hover) {
@@ -466,9 +473,11 @@
 }
 
 .ch-bubble {
+  position: relative;
   padding: var(--s3) var(--s4);
-  background: var(--surface-2);
-  border-radius: var(--r-m);
+  background: var(--paper-sheet);
+  color: var(--text);
+  border-radius: 0;
   font-size: var(--fs-3);
   line-height: var(--lh-body);
   white-space: pre-wrap;
@@ -578,9 +587,8 @@
   justify-content: space-between;
   gap: var(--s3) var(--s4);
   padding: var(--s3) var(--s4);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-m);
+  background: var(--surface-2);
+  border-radius: 0;
   font-size: var(--fs-2);
   line-height: 1.5;
 }
@@ -617,8 +625,15 @@
   margin-right: var(--s1);
 }
 
+.ch-gchip,
+.ch-tool {
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+}
+
 .ch-gchip {
-  color: var(--text);
+  color: var(--text-muted);
 }
 
 .ch-gchip--more {
@@ -660,20 +675,39 @@
   gap: var(--s2);
 }
 
+/* in an empty chat: a page, one pen line per starter */
 .ch-suggs--hero {
-  justify-content: center;
+  position: relative;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0;
+  width: 100%;
   margin-top: var(--s2);
+  text-align: left;
+}
+
+.ch-suggs--hero .ch-sugg {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 0 7px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--text);
+  font-size: 23px;
+  white-space: normal;
 }
 
 .ch-sugg {
   display: inline-flex;
   align-items: center;
-  padding: var(--s1) var(--s3);
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  min-height: 44px;
+  padding: var(--s1) var(--s2);
+  border: 0;
+  border-bottom: 1px dashed var(--line-strong);
+  border-radius: 0;
   color: var(--text-muted);
-  font-size: var(--fs-1);
-  line-height: 1.4;
+  font-size: 19px;
+  line-height: 1.2;
   text-align: left;
   white-space: nowrap;
   transition:
@@ -699,6 +733,9 @@
 }
 
 .ch-composer {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
   display: flex;
   align-items: flex-end;
   gap: var(--s3);

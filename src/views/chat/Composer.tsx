@@ -42,7 +42,7 @@ export function Composer({ value, onChange, onSubmit, onStop, streaming, textare
 
   return (
     <form
-      className={`ch-composer panel${streaming ? ' is-live' : ''}`}
+      className={`ch-composer${streaming ? ' is-live' : ''}`}
       onSubmit={(e) => {
         e.preventDefault();
         if (canSend) onSubmit();
@@ -68,7 +68,7 @@ export function Composer({ value, onChange, onSubmit, onStop, streaming, textare
           <span>Stop</span>
         </button>
       ) : (
-        <button type="submit" className="btn btn-primary ch-send" disabled={!canSend} aria-label="Send">
+        <button type="submit" className="btn ch-send" disabled={!canSend} aria-label="Send">
           <span>Send</span>
           <svg
             width="14"
