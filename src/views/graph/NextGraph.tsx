@@ -274,7 +274,7 @@ export function NextGraph({ profile, initialRoleId = null }: { profile: Profile;
               <span>
                 aligned
                 <br />
-                <span className="next-muted">· {sel.eta}</span>
+                <span className="next-muted">{sel.eta}</span>
               </span>
             </p>
 

@@ -63,7 +63,7 @@ export function GraphHeader({ profile, current, extra }: { profile: Profile; cur
           {plural(nSources, 'source')} · analysed {Number.isFinite(analysedAt) ? timeAgo(analysedAt, now) : 'recently'}
         </span>
         {extra}
-        <button type="button" className="gv-navbtn" onClick={() => actions.openDiscover({ tab: 'applications' })}>
+        <button type="button" className="gv-navbtn gv-apps" onClick={() => actions.openDiscover({ tab: 'applications' })}>
           Your applications{open > 0 ? ` · ${open}` : ''}
         </button>
         <Atmosphere className="gv-atmo" />

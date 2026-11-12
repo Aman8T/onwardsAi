@@ -880,6 +880,12 @@
   font-size: var(--fs-6);
 }
 
+/* with no applications there is no mosaic beside the hero: keep "Your details" next to the kicker, not adrift mid-page */
+.ap-hero:has(.ap-empty) .ap-headrow {
+  justify-content: flex-start;
+  align-items: center;
+}
+
 .ap-hero-app {
   gap: var(--s3);
   padding: var(--s5) var(--s5) var(--s5);

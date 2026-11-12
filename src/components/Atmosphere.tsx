@@ -147,7 +147,7 @@ export function Atmosphere({ className }: { className?: string }) {
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onButtonKeyDown}
       >
-        Atmosphere <span className="atmo-state">{stateWord(chosen, effective)}</span>
+        <span className="atmo-word">Atmosphere</span> <span className="atmo-state">{stateWord(chosen, effective)}</span>
       </button>
       {open && (
         <div id={menuId} role="menu" aria-label="Atmosphere" className="atmo-menu" onKeyDown={onMenuKeyDown}>

@@ -314,24 +314,56 @@
 
 /* ───────────── responsive ───────────── */
 
-/* Not enough room for the status text next to the controls. */
-@media (max-width: 1200px) {
+/* The dashboard runs edge to edge, so its header does too: the sections and the controls get the whole width. */
+.db-view .gv-header {
+  padding-inline: var(--gv-gutter);
+}
+
+/*
+ * The header carries more than it used to (Resumes, the Weekly, and Pricing with Sign in for a visitor). Under 1500 it
+ * sheds what is said elsewhere, a step at a time, so the sections and the controls never run into each other: the word
+ * "Atmosphere" (the control keeps its name for screen readers), then the dashboard's link to the applications its own
+ * tile already opens, then the status line. Under 1280 the cluster may take two lines.
+ */
+@media (max-width: 1500px) {
+  .gv-header {
+    column-gap: var(--s4);
+  }
+
+  .gv-navbtn {
+    padding-inline: 8px;
+  }
+
+  .gv-atmo .atmo-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 1400px) {
+  .db-view .gv-apps {
+    display: none;
+  }
+}
+
+@media (max-width: 1280px) {
   .gv-status {
     display: none;
+  }
+
+  .gv-actions {
+    flex-wrap: wrap;
+    row-gap: var(--s1);
   }
 }
 
 @media (max-width: 1100px) {
   .gv-view {
     --gv-gutter: 24px;
-  }
-}
-
-/* The right-hand cluster may take two lines before anything overlaps. */
-@media (max-width: 1180px) {
-  .gv-actions {
-    flex-wrap: wrap;
-    row-gap: var(--s1);
   }
 }
 

@@ -138,6 +138,8 @@
 
 /* notebook paper: punched holes down the left, a red margin line, ruled rows (.m-line) */
 .m-paper {
+  /* its holes and margin are absolute: keep them inside when the sheet is not also a .m-tile */
+  position: relative;
   gap: 0;
   padding: 14px 18px 12px 52px;
   background: var(--paper-sheet);

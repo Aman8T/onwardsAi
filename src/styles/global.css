@@ -883,6 +883,15 @@ textarea.field {
   transform: translateY(1px) rotate(-3deg);
 }
 
+/* on a phone a to-do that can be pressed is a full touch target */
+@media (max-width: 760px) {
+  button.ptodo,
+  a.ptodo {
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
 .pnote-field {
   width: 100%;
   min-height: 5.5em;

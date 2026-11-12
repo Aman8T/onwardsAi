@@ -1335,3 +1335,13 @@ summary.rs-group-head {
 .rs-tile .stamp {
   align-self: flex-start;
 }
+
+/* on a phone the small links of the resume screens are full touch targets */
+@media (max-width: 760px) {
+  a.rs-small,
+  button.rs-small {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
