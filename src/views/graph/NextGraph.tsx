@@ -12,6 +12,12 @@ import { AnimatePresence } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Profile, Role, RoleRequirement } from '../../../shared/types';
+import type { PreparePlanSummary } from '../../../shared/prepare';
+import { PageLine } from '../../components/materials';
+import { dayLabel } from '../../discover/prepare/words';
+import { useLoad } from '../../practice/hub/useLoad';
+import { listPlans } from '../../prepare/api';
+import { gapSpots } from './gapLayout';
 import { Popover } from '../../components/Popover';
 import type { PopoverModel } from '../../components/Popover';
 import { Radar, RadarGlyph } from '../../components/Radar';
@@ -73,37 +79,6 @@ export function NextGraph({ profile, initialRoleId = null }: { profile: Profile;
   );
   // Fewer than three requirements cannot make a polygon: a quiet list stands in for the radar.
   const hasRadar = reqs.length >= 3;
-
-  /* ───────── rail list: scroll fades, and the selected row kept in view ───────── */
-
-  const listRef = useRef<HTMLDivElement>(null);
-  const [listFade, setListFade] = useState({ top: false, bottom: false });
-  const measureList = () => {
-    const el = listRef.current;
-    if (!el) return;
-    const top = el.scrollTop > 2;
-    const bottom = el.scrollHeight - el.clientHeight - el.scrollTop > 2;
-    setListFade((f) => (f.top === top && f.bottom === bottom ? f : { top, bottom }));
-  };
-  useEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => measureList());
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [roles.length]);
-  // Keep the selected row visible inside the list (without scrolling the page).
-  const selIdForScroll = sel?.id;
-  useEffect(() => {
-    const list = listRef.current;
-    if (!list || !selIdForScroll) return;
-    const row = [...list.querySelectorAll<HTMLElement>('[data-role-id]')].find((n) => n.dataset.roleId === selIdForScroll);
-    if (!row) return;
-    const top = row.offsetTop; // the list is position: relative, so this is list-relative
-    const bottom = top + row.offsetHeight;
-    if (top < list.scrollTop) list.scrollTo({ top: top - 4, behavior: 'smooth' });
-    else if (bottom > list.scrollTop + list.clientHeight) list.scrollTo({ top: bottom - list.clientHeight + 4, behavior: 'smooth' });
-  }, [selIdForScroll]);
 
   /* ───────── requirement popover: placement, focus, keys ───────── */
 
@@ -238,144 +213,121 @@ export function NextGraph({ profile, initialRoleId = null }: { profile: Profile;
     };
   }
 
+  /* ───────── what the tiles rest on ───────── */
+
+  // The two widest gaps float beside the chart; a gap shows only where the radar has an axis for it.
+  const floaters = useMemo(() => {
+    const open = reqs
+      .map((q, i) => ({ q, key: reqKey(q, i), gap: q.target - q.current }))
+      .filter((x) => !x.q.have && x.gap > 0)
+      .sort((a, b) => b.gap - a.gap)
+      .slice(0, 2);
+    const spots = hasRadar ? gapSpots(axes.map((a) => ({ id: a.id, value: a.value })), open.map((x) => x.key)) : [];
+    return open.flatMap((x) => {
+      const spot = spots.find((s) => s.id === x.key);
+      return spot ? [{ ...x, spot }] : [];
+    });
+  }, [reqs, axes, hasRadar]);
+
+  const sourceLabel = (id: string) => profile.sources.find((x) => x.id === id)?.label ?? id;
+  const gapSkill = biggestGap?.skillId ? profile.skills.find((s) => s.id === biggestGap.skillId) : undefined;
+  const gapEvidence = gapSkill?.evidence ?? [];
+  // what the person can already cite for this role: the evidence behind the requirements they hold, strongest first
+  const cited = useMemo(
+    () =>
+      reqs
+        .filter((q) => q.have)
+        .sort((a, b) => b.current - a.current)
+        .flatMap((q) => {
+          const sk = q.skillId ? profile.skills.find((s) => s.id === q.skillId) : undefined;
+          const ev = sk?.evidence[0];
+          return ev ? [{ name: q.name, current: q.current, text: ev.text, source: profile.sources.find((x) => x.id === ev.sourceId)?.label ?? ev.sourceId }] : [];
+        })
+        .slice(0, 3),
+    [reqs, profile],
+  );
+
+  // the stored plans for this role, from the same list the dashboard reads
+  const { load: planLoad } = useLoad<PreparePlanSummary[]>((signal) => listPlans(profile.id, signal), [profile.id]);
+  const plans = sel && planLoad.status === 'ready' ? planLoad.data.filter((p) => p.roleId === sel.id) : [];
+  const openPlan = (p: PreparePlanSummary) => {
+    if (!sel) return;
+    const req = p.requirement ? sel.requirements.find((r) => r.name === p.requirement) : undefined;
+    const a = req ? requirementAction(req, sel) : roleAction(sel, roleStanding(profile, sel.id));
+    actions.openChat(a.origin, a.question, { roleId: sel.id, ...(req ? { requirement: req.name } : {}) });
+  };
+
   /* ───────── render ───────── */
 
+  const cta = sel ? roleAction(sel, roleStanding(profile, sel.id)).cta : '';
+
   return (
-    <div className="next-row">
-      {/* ───────── rail ───────── */}
-      <aside className="next-rail" aria-label="Next roles">
-        <div className="next-rail-head">
-          <span className="kicker">Next roles</span>
-          <h2 className="serif next-title">{roles.length ? pathsTitle(roles.length) : 'No paths yet'}</h2>
-          <p className="next-sub">
-            {roles.length
-              ? 'Alignment is how much of the role you already cover.'
-              : 'Add another source, a GitHub profile or a project link, and Leafout will map where you could go next.'}
-          </p>
-        </div>
-
-        {roles.length > 0 && (
-          <div
-            ref={listRef}
-            className={`next-roles scroll${listFade.top ? ' fade-top' : ''}${listFade.bottom ? ' fade-bottom' : ''}`}
-            role="group"
-            aria-label="Roles ranked by alignment"
-            onScroll={measureList}
-          >
-            {roles.map((r, i) => {
-              const on = r.id === sel?.id;
-              return (
-                <button
-                  key={r.id}
-                  data-role-id={r.id}
-                  type="button"
-                  className="next-role-row"
-                  aria-pressed={on}
-                  aria-label={`${i + 1}. ${r.title}, ${r.alignment} percent aligned, ${r.eta}`}
-                  onClick={() => selectRole(r.id)}
-                >
-                  <span className="numeral next-rank" aria-hidden="true">
-                    {i + 1}
-                  </span>
-                  <span className="next-role-title">{r.title}</span>
-                  <RadarGlyph className="next-role-glyph" values={orderRequirements(r).map((q) => q.current)} />
-                  <span className="next-role-meta">
-                    <span className="numeral next-role-pct">{r.alignment}%</span>
-                    <span className="kicker next-role-eta">{r.eta}</span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </aside>
-
-      {/* ───────── centre ───────── */}
-      <section ref={mainRef} className="next-main">
+    <div className="m-screen nx-screen">
+      {/* ───────── the hero: the role, its alignment, and the radar of you against it ───────── */}
+      <section ref={mainRef} className="m-hero nx-hero" aria-label={sel ? `${sel.title}: you against what the role expects` : 'Next roles'}>
         {sel ? (
           <>
-            <header className="next-head">
-              <div className="next-head-id">
-                <span className="kicker">{selRank === 0 ? 'Most probable next role' : 'Next role'}</span>
-                <h2 className="title next-role-name">{sel.title}</h2>
-                <p className="next-align">
-                  <span className="numeral">{sel.alignment}% aligned</span> <span className="next-muted">· {sel.eta}</span>
-                </p>
-              </div>
-              <div className="next-head-copy">
-                {sel.why && <p className="next-why">{sel.why}</p>}
-                <div>
-                  <button type="button" className="btn btn-primary next-cta" onClick={openRoleChat}>
-                    {roleAction(sel, roleStanding(profile, sel.id)).cta}
-                  </button>
-                </div>
-              </div>
-            </header>
-
-            {haveChips.length + gapChips.length > 0 ? (
-              <ul className="next-chips" aria-label="What this role asks for">
-                {haveChips.map((h, i) => (
-                  <li key={`h${i}`} className="chip next-chip">
-                    <span className="sr-only">You have </span>
-                    {i === 0 && (
-                      <span className="next-chip-group" aria-hidden="true">
-                        You have ·
-                      </span>
-                    )}
-                    {h.name}
-                  </li>
-                ))}
-                {gapChips.map((g, i) => (
-                  <li key={`g${i}`} className="chip next-chip is-gap">
-                    <span className="sr-only">Gap: </span>
-                    {i === 0 && (
-                      <span className="next-chip-group" aria-hidden="true">
-                        Gap ·
-                      </span>
-                    )}
-                    {g.name}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="next-why">No specific requirements listed yet. Ask, and Leafout will break the role down for you.</p>
-            )}
+            <span className="kicker">{selRank === 0 ? 'Most probable next role' : 'Next role'}</span>
+            <h2 className="title nx-name">{sel.title}</h2>
+            <p className="m-count nx-align">
+              <span className="m-big numeral">{sel.alignment}%</span>
+              <span>
+                aligned
+                <br />
+                <span className="next-muted">· {sel.eta}</span>
+              </span>
+            </p>
 
             {reqs.length > 0 && (
-              <div ref={plotRef} className="next-plot">
+              <div ref={plotRef} className="next-plot nx-plot">
                 {hasRadar ? (
                   <>
-                    <Radar
-                      ref={radarRef}
-                      axes={axes}
-                      axisSetKey={`role:${sel.id}`}
-                      series={{ primary: 'You', secondary: 'Role expects' }}
-                      selectedId={openKey}
-                      axisState="expanded"
-                      hoveredId={hoverKey}
-                      ariaLabel={`${sel.title} requirements radar: you versus what the role expects`}
-                      tableCaption={`${sel.title}: your level today against what the role expects`}
-                      onSelect={(id, geom) => onVertex(id, geom)}
-                      onHover={setHoverKey}
-                      onBackgroundClick={() => setOpenReq(null)}
-                    />
+                    <div className="nx-box">
+                      <Radar
+                        ref={radarRef}
+                        axes={axes}
+                        axisSetKey={`role:${sel.id}`}
+                        series={{ primary: 'You', secondary: 'Role expects' }}
+                        selectedId={openKey}
+                        axisState="expanded"
+                        hoveredId={hoverKey}
+                        ariaLabel={`${sel.title} requirements radar: you versus what the role expects`}
+                        tableCaption={`${sel.title}: your level today against what the role expects`}
+                        onSelect={(id, geom) => onVertex(id, geom)}
+                        onHover={setHoverKey}
+                        onBackgroundClick={() => setOpenReq(null)}
+                      />
+                      <div className="nx-co-layer" aria-hidden="true">
+                        {floaters.map((f) => (
+                          <span key={f.key}>
+                            <span className="nx-ring" style={{ left: `${f.spot.px}%`, top: `${f.spot.py}%` }} />
+                            <span className={`m-co nx-co is-${f.spot.align}`} style={{ left: `${f.spot.left}%`, top: `${f.spot.top}%` }}>
+                              <span className="m-co-n">{f.q.current}</span>
+                              <span className="m-co-l">
+                                {f.q.name} · role asks {f.q.target}
+                              </span>
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                     <p className="next-legend" aria-hidden="true">
                       <span>
                         <svg width="22" height="14" viewBox="0 0 22 14" focusable="false">
-                          <rect className="next-lg-you" x="1" y="1" width="20" height="12" rx="2" />
+                          <rect className="next-lg-you" x="1" y="1" width="20" height="12" />
                         </svg>
                         You
                       </span>
                       <span>
                         <svg width="22" height="14" viewBox="0 0 22 14" focusable="false">
-                          <rect className="next-lg-exp" x="1" y="1" width="20" height="12" rx="2" />
+                          <rect className="next-lg-exp" x="1" y="1" width="20" height="12" />
                         </svg>
                         Role expects
                       </span>
                     </p>
                   </>
                 ) : (
-                  <div className="panel next-req-list" role="group" aria-label={`${sel.title} requirements`}>
+                  <div className="nx-short" role="group" aria-label={`${sel.title} requirements`}>
                     {reqs.map((q, i) => {
                       const k = reqKey(q, i);
                       const on = k === openKey;
@@ -422,9 +374,170 @@ export function NextGraph({ profile, initialRoleId = null }: { profile: Profile;
             )}
           </>
         ) : (
-          <p className="next-empty">Next roles appear here once Leafout has enough evidence.</p>
+          <p className="next-empty pen">Next roles appear here once Leafout has enough evidence.</p>
         )}
       </section>
+
+      {/* ───────── the mosaic ───────── */}
+      <div className="m-mosaic nx-mosaic">
+        {sel && (
+          <>
+            <div className="m-tile m-quiet m-c4 nx-why">
+              <span className="kicker">Why this role</span>
+              {sel.why ? <p className="nx-why-t">{sel.why}</p> : <p className="m-fine">No specific reason listed yet. Ask, and Leafout will explain it.</p>}
+            </div>
+
+            <button type="button" className="m-tile m-ink m-c2 nx-cta" onClick={openRoleChat}>
+              <span className="kicker">Next step</span>
+              <span className="m-strong nx-cta-t">{cta}</span>
+              <span className="m-foot">
+                <span className="m-fine">{sel.title}</span>
+                <span aria-hidden="true">→</span>
+              </span>
+            </button>
+
+            {biggestGap &&
+              (gapEvidence.length > 0 ? (
+                <section className="m-tile m-graph m-c3" aria-label="Widest gap">
+                  <span className="kicker">Widest gap</span>
+                  <span className="m-strong">{biggestGap.name}</span>
+                  <span className="m-cite">
+                    you {biggestGap.current} · role asks {biggestGap.target}
+                  </span>
+                  <ul className="nx-ev">
+                    {gapEvidence.slice(0, 2).map((ev, i) => (
+                      <li key={i}>
+                        <span className="nx-ev-t">{ev.text}</span>
+                        <span className="m-cite">{sourceLabel(ev.sourceId)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : (
+                <section className="m-tile m-gap m-c3" aria-label="Widest gap">
+                  <span className="kicker">Widest gap</span>
+                  <span className="m-strong">{biggestGap.name}</span>
+                  <span className="m-fine">nothing cited yet</span>
+                  <span className="m-foot">
+                    <span className="m-cite">
+                      you {biggestGap.current} · role asks {biggestGap.target}
+                    </span>
+                  </span>
+                </section>
+              ))}
+
+            <section className={`m-tile m-graph ${biggestGap ? 'm-c3' : 'm-c6'}`} aria-label="What you can already cite">
+              <span className="kicker">What you can already cite</span>
+              {cited.length > 0 ? (
+                <ul className="nx-ev">
+                  {cited.map((c) => (
+                    <li key={c.name}>
+                      <span className="nx-ev-t">
+                        <b className="numeral">{c.current}</b> {c.name}
+                      </span>
+                      <span className="m-cite">{c.source}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="m-fine">No evidence is tied to this role&rsquo;s requirements yet.</p>
+              )}
+            </section>
+
+            {haveChips.length + gapChips.length > 0 && (
+              <section className="m-tile m-graph m-c6" aria-label="What this role asks for">
+                <span className="kicker">What this role asks for</span>
+                <ul className="next-chips" aria-label="What this role asks for">
+                  {haveChips.map((h, i) => (
+                    <li key={`h${i}`} className="chip next-chip">
+                      <span className="sr-only">You have </span>
+                      {i === 0 && (
+                        <span className="next-chip-group" aria-hidden="true">
+                          You have ·
+                        </span>
+                      )}
+                      {h.name}
+                    </li>
+                  ))}
+                  {gapChips.map((g, i) => (
+                    <li key={`g${i}`} className="chip next-chip is-gap">
+                      <span className="sr-only">Gap: </span>
+                      {i === 0 && (
+                        <span className="next-chip-group" aria-hidden="true">
+                          Gap ·
+                        </span>
+                      )}
+                      {g.name}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {plans.length > 0 && (
+              <section className="m-tile m-paper m-c6" aria-label="Your plan for this role">
+                <div className="m-page-head">
+                  <span className="pen nx-page-t">Your plan</span>
+                  <span className="m-fine">
+                    {plans.length === 1 ? 'one plan' : `${plans.length} plans`} for {sel.title}
+                  </span>
+                </div>
+                <ul className="m-lines">
+                  {plans.map((p, i) => (
+                    <PageLine
+                      key={p.id}
+                      tick={false}
+                      index={i}
+                      title={p.requirement ? `Close ${p.requirement}` : `Get ready for ${p.roleTitle}`}
+                      cite={`plan made ${dayLabel(p.createdAt.slice(0, 10))}`}
+                      onGo={() => openPlan(p)}
+                    />
+                  ))}
+                </ul>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* ───────── the roles, ranked: measured rows on graph paper, the closest one larger ───────── */}
+        <aside className="m-tile m-graph m-c6 nx-roles" aria-label="Next roles">
+          <span className="kicker">Next roles</span>
+          <h3 className="serif nx-roles-t">{roles.length ? pathsTitle(roles.length) : 'No paths yet'}</h3>
+          <p className="m-fine">
+            {roles.length
+              ? 'Alignment is how much of the role you already cover.'
+              : 'Add another source, a GitHub profile or a project link, and Leafout will map where you could go next.'}
+          </p>
+          {roles.length > 0 && (
+            <div className="next-roles" role="group" aria-label="Roles ranked by alignment">
+              {roles.map((r, i) => {
+                const on = r.id === sel?.id;
+                return (
+                  <button
+                    key={r.id}
+                    data-role-id={r.id}
+                    type="button"
+                    className={`next-role-row${i === 0 ? ' is-top' : ''}`}
+                    aria-pressed={on}
+                    aria-label={`${i + 1}. ${r.title}, ${r.alignment} percent aligned, ${r.eta}`}
+                    onClick={() => selectRole(r.id)}
+                  >
+                    <span className="numeral next-rank" aria-hidden="true">
+                      {i + 1}
+                    </span>
+                    <span className="next-role-title">{r.title}</span>
+                    <RadarGlyph className="next-role-glyph" size={i === 0 ? 32 : 20} values={orderRequirements(r).map((q) => q.current)} />
+                    <span className="next-role-meta">
+                      <span className="numeral next-role-pct">{r.alignment}%</span>
+                      <span className="kicker next-role-eta">{r.eta}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </aside>
+      </div>
 
       {/* Phones: the same popover as a bottom sheet over the page, outside the face's crossfade. */}
       {narrow &&

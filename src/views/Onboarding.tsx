@@ -5,7 +5,7 @@
  * with the one action. The ambient field is mounted once in index.html and the cursor light lives in App.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ClipboardEvent, FormEvent, KeyboardEvent } from 'react';
+import type { ClipboardEvent, CSSProperties, FormEvent, KeyboardEvent } from 'react';
 import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion/react';
 import type { SourceKind } from '../../shared/types';
 import { AccountMenu } from '../auth/AccountMenu';
@@ -456,20 +456,31 @@ export function Onboarding() {
             <AccountMenu />
           </nav>
         </header>
+      </div>
 
-        <main className="ob-main ob-stage">
-          {/* the empty dashboard: where things will go, quiet and inert */}
-          <div className="ob-ghost" aria-hidden="true">
-            {GHOSTS.map((g) => (
-              <div key={g.name} className={`panel ob-ghost-cell is-${g.span}`}>
-                <span className="kicker">{g.name}</span>
-                {g.line && <span className="ob-ghost-line">{g.line}</span>}
+        <main className="m-screen ob-stage">
+          {/* the hero: one line, and what it takes */}
+          <section className="m-hero ob-hero" aria-label="Start here">
+            <span className="kicker">Start here</span>
+            <h1 id="ob-card-title" className="ob-card-title serif ob-h1">
+              Add your resume.
+            </h1>
+            {wanted && !profile && (
+              <p className="ob-card-sub ob-need" role="status">
+                {wanted === 'practice' ? 'Practice' : 'Discover'} uses your skill graph. Build it first, about two minutes.
+              </p>
+            )}
+            <p className="ob-card-sub ob-lede">That is all it takes. Your public links sharpen it. Every score cites a line from what you give us, and nothing else.</p>
+            <div className="stick is-flow m-turn-l ob-nudge" style={{ '--pp': 'var(--paper-yellow)' } as CSSProperties}>
+              <div className="postit">
+                <span className="pen">No resume to hand? A GitHub or portfolio link is enough to begin.</span>
               </div>
-            ))}
-          </div>
+            </div>
+          </section>
 
+          <div className="m-mosaic ob-mosaic">
           <motion.form
-            className="panel ob-form ob-popup"
+            className="m-tile m-plain m-c6 ob-form ob-popup"
             role="dialog"
             aria-labelledby="ob-card-title"
             onSubmit={onSubmit}
@@ -478,19 +489,6 @@ export function Onboarding() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: EASE }}
           >
-            <div className="ob-card-head">
-              <span className="kicker">Start here</span>
-              <h1 id="ob-card-title" className="ob-card-title serif">
-                Add your resume.
-              </h1>
-              {wanted && !profile && (
-                <p className="ob-card-sub ob-need" role="status">
-                  {wanted === 'practice' ? 'Practice' : 'Discover'} uses your skill graph. Build it first, about two minutes.
-                </p>
-              )}
-              <p className="ob-card-sub">That is all it takes. Your public links sharpen it. Every score cites a line from what you give us, and nothing else.</p>
-            </div>
-
             {handoffMessage && (
               <p className="ob-error ob-handoff" role="alert">
                 {handoffMessage}
@@ -572,7 +570,7 @@ export function Onboarding() {
 
             {/* submit */}
             <div className="ob-submit">
-              <button type="submit" className="btn btn-primary ob-cta" aria-disabled={!ready} aria-describedby={ready ? undefined : 'ob-hint'}>
+              <button type="submit" className="btn btn-primary m-ink ob-cta" aria-disabled={!ready} aria-describedby={ready ? undefined : 'ob-hint'}>
                 Build my skill graph
                 <IconArrowRight size={16} strokeWidth={1.75} />
               </button>
@@ -604,8 +602,16 @@ export function Onboarding() {
               {announce}
             </p>
           </motion.form>
+
+          {/* where the dashboard's pieces will go once a graph exists: quiet and inert */}
+          {GHOSTS.map((g) => (
+            <div key={g.name} className={`m-tile m-quiet ob-ghost-cell is-${g.span}`} aria-hidden="true">
+              <span className="kicker">{g.name}</span>
+              {g.line && <span className="m-fine">{g.line}</span>}
+            </div>
+          ))}
+          </div>
         </main>
-      </div>
     </div>
   );
 }

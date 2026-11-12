@@ -395,3 +395,40 @@
     min-height: 44px;
   }
 }
+
+/* ───────────── a next role: the crumb above a hero and a mosaic that run edge to edge ───────────── */
+
+.gv-role-main {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.gv-role-main > .gv-crumb {
+  padding: var(--s3) var(--gv-gutter) 0;
+}
+
+.gv-role-main > .gv-role {
+  display: block;
+  flex: 1 0 auto;
+  gap: 0;
+}
+
+@media (max-width: 760px) {
+  .gv-crumb-back {
+    min-height: 44px;
+  }
+}
+
+/* on a phone the header's own links are full touch targets */
+@media (max-width: 760px) {
+  .gv-navbtn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}

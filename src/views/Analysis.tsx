@@ -11,6 +11,8 @@ import { health } from '../lib/api';
 import { EASE, useTween } from '../lib/ui';
 import { Brand } from '../components/Brand';
 import { Ring } from '../components/Ring';
+import { PageLine, Pips } from '../components/materials';
+import type { Pip } from '../components/materials';
 import { ThinkingLine } from './analysis/ThinkingLine';
 import { MIN_SHOW_MS, thinkingPhase, thinkingValues } from './analysis/thinking';
 import '../styles/analysis.css';
@@ -157,6 +159,13 @@ export function Analysis() {
 
   const rows = a.readers.map((r) => ({ r, status: rowStatus(r) }));
 
+  // the notebook page: only what has really finished (a reader that reached done, a synthesizer step that was passed)
+  const stepsDone = d.state === 'done' ? 3 : d.state === 'build' ? clamp(a.synthStep, 1, 3) - 1 : 0;
+  const finishedLines = [
+    ...a.readers.filter((r) => r.status === 'done').map((r) => ({ key: `r${r.sourceId}`, title: `${r.kindLabel} read`, cite: r.src })),
+    ...STEPS.slice(0, stepsDone).map((label, i) => ({ key: `s${i}`, title: label, cite: `${SYNTH_MODEL} · step ${i + 1} of 3` })),
+  ];
+
   return (
     <main className="an-root" data-state={mode}>
       <div className="sr-only" role="status" aria-live="polite">
@@ -174,8 +183,9 @@ export function Analysis() {
         </nav>
       </header>
 
-      <section className="an-title">
-        <div className="an-title-l">
+      <div className="m-screen an-stage">
+        {/* ───────── the hero: one calm thing, what the readers are doing now ───────── */}
+        <section className="m-hero an-hero" aria-label="Analysis">
           <span className="kicker an-kicker" data-state={mode}>
             {done ? 'Complete' : failed ? 'Stopped' : 'Analysing'} · <span className="numeral">{elapsed}</span>
           </span>
@@ -206,48 +216,61 @@ export function Analysis() {
           ) : (
             <p className="an-sub">{sub}</p>
           )}
-        </div>
 
-        <div className="an-overall">
-          <Ring value={d.overall} size={44} role="progressbar" label="Overall progress" />
-          <div className="an-overall-txt">
-            <span className="numeral an-pct">{overallShown}%</span>
-            <span className="kicker an-overall-note">
-              <span className="an-overall-count">{d.total ? `${d.finished} of ${d.total} source${plural} read` : 'Preparing sources'}</span>
-              {d.failed > 0 && <span className="an-overall-failed"> · {d.failed} failed</span>}
-              <span className="an-overall-phase"> · {phaseLabel}</span>
-            </span>
+          <div className="an-overall">
+            <Ring value={d.overall} size={56} role="progressbar" label="Overall progress" />
+            <div className="an-overall-txt">
+              <span className="m-big numeral an-pct">{overallShown}%</span>
+              <span className="kicker an-overall-note">
+                <span className="an-overall-count">{d.total ? `${d.finished} of ${d.total} source${plural} read` : 'Preparing sources'}</span>
+                {d.failed > 0 && <span className="an-overall-failed"> · {d.failed} failed</span>}
+                <span className="an-overall-phase"> · {phaseLabel}</span>
+              </span>
+            </div>
           </div>
+        </section>
+
+        <div className="m-mosaic an-mosaic">
+          {/* ───────── what has finished, written down only from real events ───────── */}
+          <section className="m-tile m-paper m-c3 an-page" aria-label="Finished so far">
+            <div className="m-page-head">
+              <span className="pen an-page-t">Finished so far</span>
+              <span className="m-fine">
+                <span className="numeral">{finishedLines.length}</span> {finishedLines.length === 1 ? 'step' : 'steps'}
+              </span>
+            </div>
+            {finishedLines.length > 0 ? (
+              <ul className="m-lines">
+                {finishedLines.map((l, i) => (
+                  <PageLine key={l.key} state="done" index={i} wrap title={l.title} cite={l.cite} />
+                ))}
+              </ul>
+            ) : (
+              <p className="pen an-page-empty">Nothing finished yet.</p>
+            )}
+          </section>
+
+          <SynthCard state={d.state} a={a} pending={d.pending} total={d.total} canSample={a.sample || hasSample} onOpen={() => actions.showDashboard()} />
+
+          {/* ───────── the readers: one measured row per source ───────── */}
+          <section className="m-tile m-graph m-c6 an-pipe" aria-label="Analysis pipeline">
+            <div className="an-pipe-main">
+              <div className="an-cols" aria-hidden="true">
+                <span className="kicker">Source</span>
+                <span className="kicker">Reader</span>
+                <span className="kicker an-cols-r">Status</span>
+              </div>
+              <ul className="an-rows" aria-label="Source readers">
+                {rows.length > 0
+                  ? rows.map(({ r, status }, i) => <ReaderRow key={r.sourceId} reader={r} status={status} index={i} reduce={!!reduce} />)
+                  : [0, 1, 2, 3].map((i) => <SkeletonRow key={i} index={i} reduce={!!reduce} />)}
+              </ul>
+            </div>
+          </section>
+
+          <SignalsPanel signals={a.signals} readers={a.readers} />
+          <AgentLog logs={a.logs} ended={done || failed} />
         </div>
-      </section>
-
-      <section className="panel an-pipe" aria-label="Analysis pipeline">
-        <div className="an-pipe-main">
-          <div className="an-cols" aria-hidden="true">
-            <span className="kicker">Source</span>
-            <span className="kicker">Reader</span>
-            <span className="kicker an-cols-r">Status</span>
-          </div>
-          <ul className="an-rows" aria-label="Source readers">
-            {rows.length > 0
-              ? rows.map(({ r, status }, i) => <ReaderRow key={r.sourceId} reader={r} status={status} index={i} reduce={!!reduce} />)
-              : [0, 1, 2, 3].map((i) => <SkeletonRow key={i} index={i} reduce={!!reduce} />)}
-          </ul>
-        </div>
-
-        <SynthCard
-          state={d.state}
-          a={a}
-          pending={d.pending}
-          total={d.total}
-          canSample={a.sample || hasSample}
-          onOpen={() => actions.showDashboard()}
-        />
-      </section>
-
-      <div className="an-bottom">
-        <SignalsPanel signals={a.signals} readers={a.readers} />
-        <AgentLog logs={a.logs} ended={done || failed} />
       </div>
     </main>
   );
@@ -398,80 +421,68 @@ function SynthCard({
           ? `Sonnet synthesizer, waiting on ${pending} reader${pending === 1 ? '' : 's'}`
           : 'Sonnet synthesizer, waiting';
 
+  const pips: Pip[] = [0, 1, 2].map((i) => (stepState(i) === 'done' ? 'on' : stepState(i) === 'active' ? 'half' : 'no'));
+  const stepWords = state === 'done' ? 'All 3 steps done' : state === 'build' ? `Step ${step} of 3: ${STEP_LEGEND[step - 1].toLowerCase()}` : 'Not started';
+
+  if (state === 'error') {
+    return (
+      <div className="m-tile m-plain m-c6 an-synth an-err-tile" data-state="error">
+        <SynthError message={a.error ?? 'The analysis failed.'} canSample={canSample} step={clamp(a.synthStep, 0, 3)} />
+      </div>
+    );
+  }
+
   return (
-    <div className="an-synth hairline" data-state={state}>
-      <AnimatePresence mode="wait" initial={false}>
-        {state === 'error' ? (
-          <motion.div
-            key="error"
-            className="an-err"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: EASE }}
-          >
-            <SynthError message={a.error ?? 'The analysis failed.'} canSample={canSample} step={clamp(a.synthStep, 0, 3)} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="main"
-            className="an-synth-in"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: EASE }}
-          >
-            <SynthRing value={value} frac={`${step}/3`} label={ringLabel} />
+    <>
+      <div className="m-tile m-field m-c3 an-synth" data-state={state}>
+        <div className="an-synth-in">
+          <SynthRing value={value} frac={`${step}/3`} label={ringLabel} />
+          <div className="an-synth-head">
+            <span className="kicker an-synth-model">{SYNTH_MODEL} · synthesizer</span>
+            <h2 className="title an-synth-title">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={state}
+                  className="an-synth-title-in"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2, ease: EASE }}
+                >
+                  {title}
+                </motion.span>
+              </AnimatePresence>
+            </h2>
+          </div>
+        </div>
+        <div className="an-pips">
+          <Pips pips={pips} label={stepWords} r={8} gap={12} {...(state === 'build' ? { now: activeIdx } : {})} />
+          <span className="m-fine an-pips-t">{stepWords}</span>
+        </div>
+        <ol className="an-steps sr-only" aria-label="Synthesizer steps">
+          {STEPS.map((label, i) => {
+            const st = stepState(i);
+            return (
+              <li key={label} className="an-step" data-state={st} aria-current={st === 'active' ? 'step' : undefined}>
+                <span className="an-step-label">{label}</span> <span className="an-step-state">{STEP_STATE_LABEL[st]}</span>
+              </li>
+            );
+          })}
+        </ol>
+        {a.synthChars > 0 && <Chars value={a.synthChars} done={state === 'done'} />}
+      </div>
 
-            <div className="an-synth-mid">
-              <div className="an-synth-head">
-                <span className="kicker an-synth-model">{SYNTH_MODEL} · synthesizer</span>
-                <h2 className="title an-synth-title">
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.span
-                      key={state}
-                      className="an-synth-title-in"
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      transition={{ duration: 0.2, ease: EASE }}
-                    >
-                      {title}
-                    </motion.span>
-                  </AnimatePresence>
-                </h2>
-              </div>
-
-              <ol className="an-steps" aria-label="Synthesizer steps">
-                {STEPS.map((label, i) => {
-                  const st = stepState(i);
-                  return (
-                    <li key={label} className="an-step" data-state={st} aria-current={st === 'active' ? 'step' : undefined}>
-                      <span className="an-dot" aria-hidden="true" />
-                      <span className="an-step-label">{label}</span>
-                      <span className="an-step-state">{STEP_STATE_LABEL[st]}</span>
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-
-            <div className="an-cta-wrap">
-              {a.synthChars > 0 && <Chars value={a.synthChars} done={state === 'done'} />}
-              <button type="button" className="btn btn-primary an-open" data-ready={ready} disabled={!ready} onClick={onOpen}>
-                <span>Open my skill graph</span>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
-                  <path d="M2.5 7h9M7.5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              <span className="kicker an-auto" data-on={ready} aria-hidden="true">
-                Opening automatically
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      <button type="button" className="m-tile m-ink m-c3 an-open" data-ready={ready} disabled={!ready} onClick={onOpen}>
+        <span className="kicker">{ready ? 'Ready' : 'Next step'}</span>
+        <span className="m-strong an-open-t">Open my skill graph</span>
+        <span className="m-foot">
+          <span className="m-fine an-auto" data-on={ready} aria-hidden="true">
+            Opening automatically
+          </span>
+          <span aria-hidden="true">→</span>
+        </span>
+      </button>
+    </>
   );
 }
 
@@ -566,7 +577,7 @@ function SignalsPanel({ signals, readers }: { signals: Signal[]; readers: Reader
   }, [signals]);
 
   return (
-    <section className="an-signals">
+    <section className="m-tile m-graph m-c3 an-signals">
       <h2 className="kicker an-h2">Signals</h2>
       {signals.length === 0 ? (
         <div aria-hidden="true">
@@ -615,7 +626,7 @@ function AgentLog({ logs, ended }: { logs: LogLine[]; ended: boolean }) {
   }, [logs.length]);
 
   return (
-    <section className="an-log">
+    <section className="m-tile m-quiet m-c3 an-log">
       <div className="an-log-head">
         <h2 className="kicker an-h2">Agent log</h2>
         <span className="kicker an-log-count">
