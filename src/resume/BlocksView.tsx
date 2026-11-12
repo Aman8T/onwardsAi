@@ -140,9 +140,9 @@ export function BlocksView({ data, status, error, onRetry, back, onNavigate, mer
       {merge && onCloseMerge && <MergeCard entry={merge} onClose={onCloseMerge} onNavigate={onNavigate} />}
 
       <div className="rs-two">
-          <div className="rs-stack">
+          <div className="rs-stack rs-seam">
             {groups.map((g) => (
-              <section key={g.key} className="panel rs-card rs-blockgroup" aria-labelledby={`rs-bg-${g.key}`}>
+              <section key={g.key} className="m-tile m-plain rs-card rs-blockgroup" aria-labelledby={`rs-bg-${g.key}`}>
                 <div className="rs-card-head">
                   <h2 id={`rs-bg-${g.key}`} className="rs-small rs-strong">
                     {g.title}
@@ -150,11 +150,12 @@ export function BlocksView({ data, status, error, onRetry, back, onNavigate, mer
                   <span className="rs-cite">{g.note}</span>
                 </div>
                 {g.blocks.length > 0 ? (
-                  <ul className="rs-rows rs-rows-in">
+                  <ul className="rs-rows rs-rows-in rs-blockrows">
                     {g.blocks.map((b) => {
                       const source = sourceOf(b.fact);
+                      // the person's own words are loose paper; what a file or GitHub says is measured, on graph paper
                       return (
-                        <li key={b.fact.id} className="rs-row rs-row-top" data-block={b.fact.id}>
+                        <li key={b.fact.id} className={`rs-row rs-row-top ${kindOf(b) === 'user' ? 'm-paper is-loose rs-own' : 'm-graph rs-meas'}`} data-block={b.fact.id}>
                           <span className="rs-row-main">
                             <span className="rs-small">{b.fact.text}</span>
                             <span className="rs-fine">
@@ -180,10 +181,10 @@ export function BlocksView({ data, status, error, onRetry, back, onNavigate, mer
             ))}
           </div>
 
-          <div className="rs-stack">
+          <div className="rs-stack rs-seam">
             {files && <FilesPanel {...files} onNavigate={onNavigate} />}
             {graphSlot}
-            <section className="panel rs-card" aria-labelledby="rs-bl-how">
+            <section className="m-tile m-quiet rs-card" aria-labelledby="rs-bl-how">
               <h2 id="rs-bl-how" className="kicker">
                 What changes, and what never does
               </h2>

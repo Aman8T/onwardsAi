@@ -7,14 +7,14 @@ import { useId, useRef } from 'react';
 import { ACCEPT, ACCEPT_HINT } from './upload';
 import type { UploadFailure } from './types';
 
-export function UploadButton({ onPick, reading, locked }: { onPick: (file: File) => void; reading: boolean; locked: boolean }) {
+export function UploadButton({ onPick, reading, locked, className = 'btn btn-sm rs-btn' }: { onPick: (file: File) => void; reading: boolean; locked: boolean; className?: string }) {
   const input = useRef<HTMLInputElement>(null);
   const hint = useId();
   return (
     <>
       <button
         type="button"
-        className="btn btn-sm rs-btn"
+        className={className}
         disabled={reading || locked}
         aria-busy={reading}
         aria-describedby={hint}

@@ -96,7 +96,7 @@ export function RereadGraph({ profileId, files, ownWords, ownWordsNewest }: Rere
   const disabled = reason !== '';
 
   return (
-    <section className="panel rr-card" aria-labelledby={`${id}-h`}>
+    <section className="m-tile m-ink rr-card" aria-labelledby={`${id}-h`}>
       <span className="kicker">Update my graph</span>
       <h2 id={`${id}-h`} className="rr-title">
         Your graph reads every block

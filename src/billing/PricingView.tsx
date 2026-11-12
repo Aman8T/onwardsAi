@@ -231,7 +231,7 @@ export function PricingView() {
             <div className="bl-notice" role="status" aria-live="polite">
               <p>Payment received. Sign in to see it.</p>
               <div className="bl-notice-actions">
-                <SignInLink className="btn btn-primary btn-sm" path={PRICING_PATH} reason="buy">
+                <SignInLink className="btn btn-sm" path={PRICING_PATH} reason="buy">
                   Sign in
                 </SignInLink>
               </div>

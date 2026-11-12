@@ -881,3 +881,40 @@
     padding: var(--s3) var(--s4);
   }
 }
+
+/* ───────────── on the neutral stage: the paper stays a newspaper, the room around it is neutral ground ───────────── */
+
+/* the panels beside the paper are tiles with a tone step and a 2px seam, not bordered cards */
+.wk-side-col {
+  gap: 2px;
+}
+
+.panel.wk-panel,
+.panel.wk-notice {
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+}
+
+.wk-confirm {
+  border-radius: 0;
+  background: var(--surface-2);
+}
+
+.wk-ed {
+  padding-inline: 0;
+}
+
+.wk-ed:hover,
+.wk-ed[aria-current='page'] {
+  padding-inline: var(--s2);
+}
+
+.wk-new {
+  border-radius: 0;
+}
+
+/* the dev frame and the paper keep their own edges; the sample line is a plain note */
+.wk-dev-frame {
+  border-radius: 0;
+}

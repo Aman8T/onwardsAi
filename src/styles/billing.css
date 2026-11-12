@@ -370,3 +370,46 @@
     display: none;
   }
 }
+
+/* ───────────── materials: seams and tone steps, no cards ───────────── */
+
+/* the plans are three tiles edge to edge with a 2px seam; the suggested plan is a tone step, not an outline */
+.bl-plans,
+.bl-notes {
+  gap: 2px;
+  background: var(--bg);
+}
+
+.panel.bl-plan,
+.panel.bl-note {
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+}
+
+.panel.bl-plan.is-featured {
+  background: var(--surface-2);
+}
+
+.panel.bl-note {
+  background: var(--surface-2);
+}
+
+.bl-seg {
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-2);
+}
+
+.bl-seg-btn {
+  border-radius: 0;
+}
+
+.bl-notice:not(:empty) {
+  border: 0;
+  border-radius: 0;
+}
+
+.bl-notice.is-problem:not(:empty) {
+  background: var(--surface-2);
+}

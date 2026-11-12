@@ -66,7 +66,7 @@ export function StatePanel({
   busy?: boolean;
 }) {
   return (
-    <section className="panel rs-state" role="status" aria-busy={busy}>
+    <section className="m-tile m-plain rs-state" role="status" aria-busy={busy}>
       <h1 className="title rs-state-title" data-rs-h1 tabIndex={-1}>
         {title}
       </h1>

@@ -140,7 +140,7 @@ export function BlockPanel({ line, facts, state, busy, onOp, inline = false, wor
       )}
 
       {sources.length > 0 ? (
-        <ul className="rs-sources" aria-label="Where it comes from">
+        <ul className="rs-sources m-graph" aria-label="Where it comes from">
           {sources.map((s, i) => (
             <li key={i}>
               <SourceLine source={s} />

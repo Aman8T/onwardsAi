@@ -1038,3 +1038,300 @@ summary.rs-group-head {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ───────────── the materials (design.md 7b) ─────────────
+ *
+ * The resume is a plain sheet; its sources are graph paper (cited); what the person wrote is loose paper; the checks are a
+ * notebook page ticked from the read-back; the default resume is a field of colour; the one ink block is the screen's
+ * real next step. No card is left: a surface is neutral ground, a tone step or a 2px seam.
+ */
+
+.rs-view .panel,
+.panel.rs-rewrite {
+  border: 0;
+  border-radius: 0;
+}
+
+.rs-seam {
+  gap: 2px;
+  background: var(--bg);
+}
+
+.m-tile.rs-card {
+  padding: 16px 18px;
+}
+
+/* the rail as a mosaic */
+.rs-mosaic {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bg);
+}
+
+.rs-cell {
+  display: flex;
+  min-width: 0;
+  grid-column: span 1;
+}
+
+.rs-cell.is-hero,
+.rs-mosaic > .rs-cell:not(.is-hero):nth-child(3n + 1) {
+  grid-column: span 2;
+}
+
+.rs-cell > .rs-tile {
+  flex: 1 1 auto;
+}
+
+.rs-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--s2);
+  min-width: 0;
+  min-height: 84px;
+  padding: 14px 16px;
+  color: var(--text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.rs-cell.is-hero > .rs-tile.m-field-1 {
+  min-height: 150px;
+}
+
+.rs-tile.is-on {
+  outline: 1px solid var(--text);
+  outline-offset: -4px;
+}
+
+.rs-tile:focus-visible {
+  outline: 2px solid var(--accent-ui);
+  outline-offset: -4px;
+}
+
+.rs-hero-t {
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
+}
+
+.rs-tile.m-field-1 .rs-fine,
+.rs-tile.m-field-1 .rs-muted {
+  color: var(--text-muted);
+}
+
+.rs-tile.m-gap {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rs-upload {
+  gap: var(--s3);
+  min-height: 120px;
+}
+
+.rs-note {
+  align-self: stretch;
+}
+
+/* the ink block: everything on it is the surface colour, its buttons are outlined and the primary one is solid */
+.rs-view .m-ink .btn {
+  background: transparent;
+  border: var(--hair) solid var(--surface);
+  color: var(--surface);
+}
+
+.rs-view .m-ink .btn-primary {
+  background: var(--surface);
+  color: var(--accent-strong);
+}
+
+.rs-view .m-ink :is(.btn[disabled], .btn[aria-disabled='true']) {
+  background: transparent;
+  border-style: dashed;
+  color: var(--surface);
+  opacity: 0.75;
+}
+
+@media (hover: hover) {
+  .rs-view .m-ink .btn:hover {
+    border-color: var(--surface);
+  }
+
+  .rs-view .m-ink .btn-primary:hover {
+    background: var(--surface);
+  }
+}
+
+.rs-view .m-ink :is(.rs-fine, .rs-list, .rs-muted, .rr-text, .rr-takes, .rr-reason, .rr-confirm-title) {
+  color: inherit;
+}
+
+.rs-view .m-ink :is(a, .stamp) {
+  color: inherit;
+  border-color: var(--surface);
+  background: none;
+}
+
+.rs-view .m-ink a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rr-confirm {
+  padding-inline: 0;
+  border: 0;
+  border-top: var(--hair) solid var(--surface);
+  border-radius: 0;
+}
+
+/* the checks: a notebook page, ticked from what the read-back returned */
+.m-tile.m-paper.rs-checkpage {
+  padding: 14px 18px 12px 52px;
+}
+
+.rs-checkpage .rs-fine {
+  color: var(--text-muted);
+}
+
+.rs-checks .m-line-t {
+  font-family: var(--font-pen);
+  font-size: 20px;
+}
+
+/* the resume: a plain sheet, precise */
+.rs-sheet {
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+}
+
+.rs-line {
+  border-radius: 0;
+}
+
+.rs-key-box,
+.rs-edit-field,
+.rs-chipbtn {
+  border-radius: 0;
+}
+
+.rs-block {
+  background: var(--surface-2);
+}
+
+.rs-sources {
+  padding: var(--s2) var(--s3);
+}
+
+.rs-source .rs-cite {
+  color: var(--text-muted);
+}
+
+/* the coach: a post-it in its own column beside the sheet, in flow, never over a line */
+.rs-coach-wrap {
+  position: sticky;
+  top: var(--s4);
+  align-self: start;
+  min-width: 0;
+}
+
+.stick.is-flow.rs-coach {
+  width: 100%;
+  min-height: 0;
+  padding: 22px 16px 16px;
+}
+
+.postit .rs-ask-q {
+  min-height: 36px;
+  padding: 4px 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  font-size: var(--fs-2);
+  color: var(--paper-ink);
+}
+
+@media (hover: hover) {
+  .postit .rs-ask-q:hover {
+    color: var(--paper-ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.postit .rs-coach-foot {
+  padding-top: var(--s2);
+  border-top: 1px solid var(--line-strong);
+}
+
+/* the blocks: measured ones on graph paper, the person's own words on loose paper */
+.rs-blockgroup .rs-blockrows {
+  gap: 2px;
+  border-bottom: 0;
+  background: var(--bg);
+}
+
+.rs-blockgroup .rs-blockrows > .rs-row {
+  padding: 12px 16px;
+  border-top: 0;
+}
+
+.rs-own .rs-accent,
+.rs-meas .rs-accent {
+  color: var(--text-muted);
+}
+
+.rs-leftout.stack {
+  border-radius: 0;
+}
+
+@media (max-width: 1180px) {
+  .rs-coach-wrap {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .m-tile.m-paper.rs-checkpage {
+    padding-left: 44px;
+  }
+
+  .rs-cell,
+  .rs-cell.is-hero,
+  .rs-mosaic > .rs-cell:not(.is-hero):nth-child(3n + 1) {
+    grid-column: span 2;
+  }
+
+  .rs-tile {
+    min-height: 84px;
+  }
+
+  .postit .rs-ask-q {
+    min-height: 44px;
+  }
+
+  .m-tile.rs-card {
+    padding: 14px 16px;
+  }
+}
+
+/* the rail is a narrow column: its tiles run one under another, sized by their own content, and a stamp keeps its width */
+.rs-mosaic {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.rs-mosaic > .rs-cell,
+.rs-mosaic > .rs-cell:not(.is-hero):nth-child(3n + 1) {
+  grid-column: 1 / -1;
+}
+
+.rs-tile .stamp {
+  align-self: flex-start;
+}

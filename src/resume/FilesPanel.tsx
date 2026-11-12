@@ -25,7 +25,7 @@ export interface FilesPanelProps {
 
 export function FilesPanel({ files, status, busy, noOriginal, merged, onRetry, onNavigate, onOpenMerge, onDownloadOriginal }: FilesPanelProps) {
   return (
-    <section className="panel rs-card" aria-labelledby="rs-files-h">
+    <section className="m-tile m-graph rs-card" aria-labelledby="rs-files-h">
       <h2 id="rs-files-h" className="kicker">
         Your files{files ? <> · <span className="numeral">{files.length}</span></> : null}
       </h2>

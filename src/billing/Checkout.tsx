@@ -291,7 +291,7 @@ export function CheckoutNotice({ state, entitlements, onDismiss, onContinue }: N
       {done && (
         <div className="bl-notice-actions">
           {phase === 'paid' && (
-            <button type="button" className="btn btn-primary btn-sm" onClick={onContinue}>
+            <button type="button" className="btn btn-sm" onClick={onContinue}>
               Match a posting
             </button>
           )}

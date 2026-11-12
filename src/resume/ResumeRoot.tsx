@@ -253,6 +253,7 @@ export function ResumeRoot({ profile }: { profile: Profile }) {
         hrefFor={hrefFor}
         onDownloadOriginal={() => viewId && void r.downloadOriginal(viewId, r.detail?.resume.title ?? 'resume')}
         originalMissing={viewId ? noOriginal.has(viewId) : false}
+        onUpload={canUpload ? addFile : undefined}
         onAsk={ask}
         onRetry={r.reloadDetail}
       />

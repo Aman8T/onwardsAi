@@ -55,7 +55,7 @@ export function MergeCard({ entry, onClose, onNavigate }: { entry: MergeEntry; o
   const titleId = `rs-merge-${report.fileId}`;
 
   return (
-    <section className="panel rs-card rs-merge" aria-labelledby={titleId}>
+    <section className="m-tile m-graph rs-card rs-merge" aria-labelledby={titleId}>
       <div className="rs-card-head">
         <div className="rs-merge-head">
           <h2 id={titleId} className="kicker">

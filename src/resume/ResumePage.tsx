@@ -44,6 +44,8 @@ export interface ResumePageProps {
   onDownloadOriginal?: () => void;
   /** The original of this resume was not kept: the button is not offered for the rest of the visit. */
   originalMissing?: boolean;
+  /** Add a resume file (where a person may). With no uploaded file this is the one ink block of the screen. */
+  onUpload?: (file: File) => void;
   onAsk: (question: string) => void;
   onRetry: () => void;
 }
@@ -52,10 +54,11 @@ export function ResumePage(props: ResumePageProps) {
   const { list, detail, detailStatus, detailError, viewId, busy, onNavigate, onMake, onAsk, onRetry } = props;
   const inView = detail && (!viewId || detail.resume.id === viewId) ? detail : null;
   const firstToMake = list.paths.find((p) => !p.resumeId);
+  const uploadIsInk = !!props.onUpload && !list.resumes.some((r) => r.kind === 'upload');
 
   return (
     <div className="rs-cols">
-      <Rail list={list} viewId={viewId} busy={busy} onNavigate={onNavigate} onMake={onMake} onOpenMatch={props.onOpenMatch} />
+      <Rail list={list} viewId={viewId} busy={busy} onNavigate={onNavigate} onMake={onMake} onOpenMatch={props.onOpenMatch} onUpload={props.onUpload} />
 
       <div className="rs-doc">
         {inView ? (
@@ -77,7 +80,7 @@ export function ResumePage(props: ResumePageProps) {
             hand="Start with the role you want most."
             action={
               firstToMake && (
-                <button type="button" className="btn btn-primary rs-btn" disabled={busy !== null} onClick={() => onMake(firstToMake.roleId)}>
+                <button type="button" className={`btn rs-btn${uploadIsInk ? '' : ' btn-primary'}`} disabled={busy !== null} onClick={() => onMake(firstToMake.roleId)}>
                   {`Make a resume for ${firstToMake.title}`}
                 </button>
               )
@@ -102,7 +105,7 @@ export function ResumePage(props: ResumePageProps) {
   );
 }
 
-function InView({ list, detail, busy, notice, initialSelected, wordings, onOp, onFinalise, onMakeDefault, onDownload, hrefFor, onDownloadOriginal, originalMissing }: ResumePageProps & { detail: ResumeDetail }) {
+function InView({ list, detail, onUpload, busy, notice, initialSelected, wordings, onOp, onFinalise, onMakeDefault, onDownload, hrefFor, onDownloadOriginal, originalMissing }: ResumePageProps & { detail: ResumeDetail }) {
   const narrow = useMediaQuery(NARROW_QUERY);
   const [picked, setPicked] = useState<string | null>(initialSelected ?? null);
   const { resume, variant, marks, facts, leftOut } = detail;
@@ -116,6 +119,8 @@ function InView({ list, detail, busy, notice, initialSelected, wordings, onOp, o
   const draft = resume.state === 'draft';
   const locked = busy !== null;
   const marked = marks.length > 0;
+  // with no uploaded file the upload is the one ink block of the screen, so Finalise is an ordinary button
+  const inkTaken = !!onUpload && !list.resumes.some((r) => r.kind === 'upload');
 
   const putBack = (factId: string) => {
     void onOp({ op: 'put_back', factId }).then((next) => {
@@ -140,7 +145,7 @@ function InView({ list, detail, busy, notice, initialSelected, wordings, onOp, o
           <div className="rs-actions rs-actions-end" role="group" aria-label="What you can do with this resume">
             {draft ? (
               <>
-                <button type="button" className="btn btn-sm btn-primary rs-btn" disabled={locked} onClick={() => onFinalise(false)}>
+                <button type="button" className={`btn btn-sm rs-btn${inkTaken ? '' : ' btn-primary'}`} disabled={locked} onClick={() => onFinalise(false)}>
                   Finalise
                 </button>
                 {!resume.isDefault && (

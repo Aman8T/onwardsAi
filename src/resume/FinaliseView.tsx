@@ -9,6 +9,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { countOf, factIndex, findingNote, sheetLines, shortDate, sourceOf, splitFinding } from './model';
+import { PageLine } from '../components/materials';
 import { FileLinks, ScreenLink, Stamp } from './parts';
 import { Now, Was } from './diff';
 import type { ResumeQuery } from './route';
@@ -219,8 +220,8 @@ export function FinaliseView(props: FinaliseViewProps) {
         </div>
 
         {/* the two buttons, what they unlock, and the read-back */}
-        <div className="rs-stack">
-          <section className="panel rs-card" aria-labelledby="rs-fz-go">
+        <div className="rs-stack rs-seam">
+          <section className="m-tile m-ink rs-card rs-go" aria-labelledby="rs-fz-go">
             {done || already ? (
               <>
                 <div className="rs-card-head">
@@ -289,7 +290,7 @@ export function FinaliseView(props: FinaliseViewProps) {
             )}
           </section>
 
-          <section className="panel rs-card" aria-labelledby="rs-fz-ats">
+          <section className="m-tile m-paper rs-card rs-checkpage" aria-labelledby="rs-fz-ats">
             <div>
               <h2 id="rs-fz-ats" className="kicker">
                 Read back the way an applicant system reads it
@@ -297,15 +298,17 @@ export function FinaliseView(props: FinaliseViewProps) {
               <p className="rs-fine">Leafout exports the file, then extracts its text again and checks what came out. A checklist, never a score.</p>
             </div>
             {lint && lint.items.length > 0 ? (
-              <ul className="rs-checks">
-                {lint.items.map((item) => (
-                  <li key={item.id} className="rs-check" data-ok={item.ok}>
-                    <span className={`rs-check-state${item.ok ? '' : ' is-open'}`}>{item.ok ? 'ok' : 'open'}</span>
-                    <span className="rs-row-main">
-                      <span className="rs-small">{item.label}</span>
-                      {(item.detail || item.location) && <span className="rs-fine">{[item.detail, item.location].filter(Boolean).join(' · ')}</span>}
-                    </span>
-                  </li>
+              <ul className="m-lines rs-checks">
+                {lint.items.map((item, i) => (
+                  <PageLine
+                    key={item.id}
+                    index={i}
+                    wrap
+                    state={item.ok ? 'done' : 'todo'}
+                    title={item.label}
+                    cite={['read back from the exported file', item.detail, item.location].filter(Boolean).join(' · ')}
+                    end={item.ok ? 'ok' : 'open'}
+                  />
                 ))}
               </ul>
             ) : (
@@ -315,7 +318,7 @@ export function FinaliseView(props: FinaliseViewProps) {
             )}
           </section>
 
-          <section className="panel rs-card" aria-labelledby="rs-fz-src">
+          <section className="m-tile m-graph rs-card" aria-labelledby="rs-fz-src">
             <h2 id="rs-fz-src" className="kicker">
               Where each check comes from
             </h2>
