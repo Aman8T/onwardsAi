@@ -98,7 +98,7 @@ export interface SearchBarProps extends CityControlProps {
 
 export function SearchBar({ status, sub, label, blocked, blockedWhy, onSearch, hint, remote, onRemote, ...city }: SearchBarProps) {
   return (
-    <section className="panel dc-bar" aria-label="Search">
+    <section className="panel dc-bar m-plain" aria-label="Search">
       <div className="dc-bar-where">
         <CityControl {...city} />
         <RemoteToggle checked={remote} onChange={onRemote} />

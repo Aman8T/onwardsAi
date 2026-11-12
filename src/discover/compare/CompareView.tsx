@@ -112,7 +112,7 @@ export function CompareView({ jobs: all, onRemove, onClear, onPrepare, onSeeMatc
         <p className="dm-muted dm-small">Up to {MAX_COLUMNS} roles. Go back to the list to add or swap one.</p>
       </div>
 
-      <div className="panel dm-tablewrap" role="region" aria-label={`Comparison of ${jobs.length} roles. Scrolls sideways on a small screen.`} tabIndex={0}>
+      <div className="panel dm-tablewrap m-graph" role="region" aria-label={`Comparison of ${jobs.length} roles. Scrolls sideways on a small screen.`} tabIndex={0}>
         <table className="dm-cmp" style={cssVars({ '--dm-cols': jobs.length })}>
           <caption className="sr-only">{jobs.map(label).join(', ')}, compared row by row</caption>
           <thead>

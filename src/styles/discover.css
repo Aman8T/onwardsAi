@@ -2278,3 +2278,275 @@
     height: 44px;
   }
 }
+
+/* ───────────── the materials (design.md 7b) ─────────────
+ *
+ * Results open as one hero (the first role in the order the search computed: a field for the fit, graph paper for what
+ * was measured, one ink block for Apply for me) and a mosaic of uneven tiles sized by fit, edge to edge with 2px seams.
+ * Measured facts sit on graph paper, a saved role's own note is a post-it stuck to it. The search form, the filters and
+ * the notes stay on neutral ground. No card borders or radii; 1px hairlines stay inside a tile.
+ */
+
+.dc-main .panel,
+.dc-body .panel {
+  border: 0;
+  border-radius: 0;
+}
+
+.dc-main .panel:not([class*='m-']) {
+  background: var(--surface);
+}
+
+.dc-title {
+  font-size: var(--fs-6);
+}
+
+/* the hero */
+.dc-lead {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 2px;
+  background: var(--bg);
+}
+
+.dc-lead-main {
+  grid-row: 1 / span 2;
+  gap: var(--s3);
+  min-height: 380px;
+  padding: var(--s5) var(--s5) var(--s4);
+}
+
+.dc-lead-main .dc-card-sub,
+.dc-lead-main .dc-count,
+.dc-lead-main .dc-lvl,
+.dc-lead-main .kicker {
+  color: var(--text-muted);
+}
+
+.dc-lead-main .dc-notice {
+  color: var(--text);
+}
+
+.dc-lead-title {
+  font-size: clamp(30px, 3vw, 44px);
+  font-weight: 400;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.dc-lead-main .dc-title-btn {
+  font: inherit;
+}
+
+@media (hover: hover) {
+  .dc-lead-main .dc-title-btn:hover {
+    color: var(--text);
+  }
+}
+
+.dc-lead-main .dc-icon-btn,
+.dc-lead-main .btn {
+  background: transparent;
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.dc-lead-main .dc-stick,
+.dc-grid .dc-stick {
+  margin-block: var(--s1);
+}
+
+.dc-lead-main .stick.is-flow {
+  width: min(100%, 260px);
+}
+
+.dc-lead-facts {
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+}
+
+.dc-lead-facts .kicker {
+  color: var(--text-muted);
+}
+
+.dc-lead-apply {
+  gap: var(--s2);
+  padding: var(--s4) var(--s5);
+}
+
+.dc-lead-apply.m-ink :is(.btn, .dc-btn-sm) {
+  background: transparent;
+  border-color: var(--surface);
+  color: var(--surface);
+}
+
+.dc-lead-apply.m-ink :is(.ae-why, .dc-muted, .dc-notice, a) {
+  color: var(--surface);
+}
+
+.dc-lead-apply .btn-quiet {
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* the mosaic of the rest, sized by fit */
+.dc-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: 2px;
+  background: var(--bg);
+}
+
+.dc-grid > .dc-cell {
+  grid-column: span 2;
+}
+
+.dc-grid.is-strong > .dc-cell {
+  grid-column: span 3;
+}
+
+.dc-grid.is-strong > .dc-cell:last-child:nth-child(odd) {
+  grid-column: span 6;
+}
+
+.dc-grid.is-good > .dc-cell:last-child:nth-child(3n + 1),
+.dc-grid.is-stretch > .dc-cell:last-child:nth-child(3n + 1) {
+  grid-column: span 6;
+}
+
+.dc-grid.is-good > .dc-cell:last-child:nth-child(3n + 2),
+.dc-grid.is-stretch > .dc-cell:last-child:nth-child(3n + 2) {
+  grid-column: span 4;
+}
+
+.dc-grid .dc-card.m-graph {
+  padding: 16px 18px;
+  border: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(circle, var(--grid) 1px, transparent 1.3px) 0 0 / 16px 16px,
+    var(--surface-2);
+}
+
+.dc-grid .dc-card.is-compact.m-graph {
+  padding: var(--s3) var(--s4);
+}
+
+.dc-card .btn-primary:not([aria-disabled='true']) {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+}
+
+.m-graph .dc-pair {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.dc-grid .dc-stick .postit {
+  min-height: 0;
+}
+
+.dc-grid .dc-hidden {
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-2);
+  outline: 1px dashed var(--line-strong);
+  outline-offset: -7px;
+}
+
+.dc-grid .dc-skel-card {
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-2);
+}
+
+.dc-section {
+  gap: var(--s2);
+}
+
+.dc-funnel-list li {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  border-left: var(--hair) solid var(--line-strong);
+}
+
+.dc-deck-card {
+  border: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(circle, var(--grid) 1px, transparent 1.3px) 0 0 / 16px 16px,
+    var(--surface-2);
+}
+
+.dc-app-item,
+.dc-banner {
+  border: 0;
+  border-radius: 0;
+}
+
+@media (max-width: 1100px) {
+  .dc-lead {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dc-lead-main {
+    grid-row: auto;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .dc-grid,
+  .dc-grid.is-strong {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dc-grid > .dc-cell,
+  .dc-grid.is-strong > .dc-cell,
+  .dc-grid > .dc-cell:last-child {
+    grid-column: 1 / -1 !important;
+  }
+
+  .dc-lead-main {
+    padding: var(--s4);
+  }
+
+  .dc-lead-apply,
+  .dc-lead-facts {
+    padding: var(--s4);
+  }
+
+  .dc-lead-main .stick.is-flow {
+    width: 100%;
+  }
+}
+
+.dc-lead > .m-tile {
+  grid-column: auto;
+}
+
+.dc-lead-main {
+  grid-column: 1;
+}
+
+.dc-lead-facts,
+.dc-lead-apply {
+  grid-column: 2;
+}
+
+.dc-hero .dc-lede {
+  max-width: 78ch;
+  font-size: var(--fs-2);
+}
+
+@media (max-width: 1100px) {
+  .dc-lead-main,
+  .dc-lead-facts,
+  .dc-lead-apply {
+    grid-column: 1;
+  }
+}

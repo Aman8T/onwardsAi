@@ -9,7 +9,7 @@
 import type { AiFitWord, AiJob } from '../../../shared/jobsearch';
 import { plural } from '../../lib/ui';
 import type { NoReason } from '../jobsearch/avoid';
-import { HiddenRow, JobCard } from './JobCard';
+import { HiddenRow, JobCard, RoleHero } from './JobCard';
 import type { RoleCtl } from './JobCard';
 import { IconDeck } from './icons';
 
@@ -111,20 +111,24 @@ export interface SectionsProps {
 }
 
 export function Sections({ rows, hidden, now, ctlOf, reasonOf, onUnhide, popoverId }: SectionsProps) {
+  // the first role in the order the search computed (strong, then good, then stretch) opens the page as the hero
+  const lead = SECTIONS.flatMap(({ fit }) => rows.filter((j) => j.fit === fit && !hidden.has(j.id)))[0];
   return (
     <>
+      {lead && <RoleHero job={lead} now={now} ctl={ctlOf(lead)} popoverOpen={popoverId === lead.id} />}
       {SECTIONS.map(({ fit, title, sub }) => {
         const inSection = rows.filter((j) => j.fit === fit);
         const shown = inSection.filter((j) => !hidden.has(j.id)).length;
-        if (inSection.length === 0) return null;
+        const tiles = inSection.filter((j) => j !== lead);
+        if (tiles.length === 0) return null;
         return (
           <section key={fit} className="dc-section" aria-label={title}>
             <div className="dc-section-head">
               <h2 className="title dc-section-title">{title}</h2>
               <span className="dc-muted">{sub(shown)}</span>
             </div>
-            <ul className="dc-grid">
-              {inSection.map((job) =>
+            <ul className={`dc-grid is-${fit}`}>
+              {tiles.map((job) =>
                 hidden.has(job.id) ? (
                   <HiddenRow key={job.id} job={job} reason={reasonOf(job.id)} onUndo={() => onUnhide(job)} />
                 ) : (

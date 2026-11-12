@@ -154,7 +154,7 @@ function PrepareBody({ profileId, runId, jobId, job: given, onBack, onSeeMatch, 
             <span className="dm-lvl">{LEVEL_WORD[job.level]}</span>
             <span className="dm-muted">{placeLine(job)}</span>
             {href && (
-              <a className={`btn ${applyLeads ? 'btn-quiet' : 'btn-primary'} btn-sm dm-btn-sm`} href={href} target="_blank" rel="noopener noreferrer" aria-label={`${applyText(job)}, opens in a new tab`}>
+              <a className={`btn ${applyLeads ? 'btn-quiet ' : ''}btn-sm dm-btn-sm`} href={href} target="_blank" rel="noopener noreferrer" aria-label={`${applyText(job)}, opens in a new tab`}>
                 {applyText(job)}
               </a>
             )}
@@ -174,7 +174,7 @@ function PrepareBody({ profileId, runId, jobId, job: given, onBack, onSeeMatch, 
           )}
 
           {load.status === 'error' && (
-            <section className="panel dm-sec dm-error">
+            <section className="panel dm-sec dm-error m-gap">
               <p className="dm-error-text" role="alert">
                 {load.message}
               </p>
@@ -213,7 +213,7 @@ function PrepareBody({ profileId, runId, jobId, job: given, onBack, onSeeMatch, 
         </div>
 
         <aside className="dm-side" aria-label="About this role">
-          <section className="panel dm-summary" aria-label="This role">
+          <section className="panel dm-summary m-field" aria-label="This role">
             <p className="kicker">This role</p>
             {job ? (
               <>
@@ -258,7 +258,7 @@ function PrepareBody({ profileId, runId, jobId, job: given, onBack, onSeeMatch, 
           </section>
 
           {prep && (
-            <nav className="panel dm-toc" aria-label="On this page">
+            <nav className="panel dm-toc m-plain" aria-label="On this page">
               <p className="kicker">On this page</p>
               {(
                 [
@@ -288,7 +288,7 @@ function Skeleton() {
   return (
     <div className="dm-skel" aria-hidden="true">
       {[0, 1, 2].map((i) => (
-        <div className="panel dm-sec" key={i}>
+        <div className="panel dm-sec m-quiet" key={i}>
           <span className="dm-skel-bar dm-skel-bar-title" />
           <span className="dm-skel-bar" />
           <span className="dm-skel-bar dm-skel-bar-short" />

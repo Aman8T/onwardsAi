@@ -221,6 +221,7 @@ export function RolesView(p: RolesViewProps) {
       matchBusy: matching === job.id,
       matchLocked: p.matchLocked || (matching !== null && matching !== job.id),
       notice: notice?.id === job.id ? notice.text : view?.note,
+      ...(tracker.get(job.id)?.note ? { note: tracker.get(job.id)!.note } : {}),
       onOpen: () => setFocusId(job.id),
       onPrepare: () => (runId && !run.running ? p.onQuery({ tab: 'prepare', run: runId, job: job.id }) : say(job, NEEDS_RUN)),
       onSeeMatch: () => void seeMatch(job),
@@ -400,7 +401,6 @@ export function RolesView(p: RolesViewProps) {
           </NothingFitted>
         ) : (
           <>
-            <Funnel funnel={data.funnel} trail={data.trail} note={data.note} />
             <Toolbar
               filter={filter}
               onFilter={setFilter}
@@ -422,6 +422,7 @@ export function RolesView(p: RolesViewProps) {
             ) : (
               <Sections rows={shown} hidden={revealed} now={now} ctlOf={ctlOf} reasonOf={avoid.reasonOf} onUnhide={(job) => avoid.undo(job)} popoverId={p.initial?.popoverId} />
             )}
+            <Funnel funnel={data.funnel} trail={data.trail} note={data.note} />
           </>
         )}
 

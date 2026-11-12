@@ -59,7 +59,7 @@ export function StartView(p: StartViewProps) {
           <p className="dc-start-lede">Claude searches employers' own job sites for roles like yours, reads their boards so every role is open today, and checks each posting against your evidence.</p>
         </div>
 
-        <section className="panel dc-start-panel" aria-label="Search">
+        <section className="panel dc-start-panel m-plain" aria-label="Search">
           <div className="dc-start-where">
             <div className="kicker">Where</div>
             <CityControl name={p.cityName} source={p.citySource} cities={p.cities} picked={p.picked} resumeCity={p.resumeCity} onPick={p.onPick} boxed />
@@ -98,7 +98,7 @@ export function StartView(p: StartViewProps) {
       </section>
 
       {open.length > 0 && (
-        <section className="panel dc-apps" aria-label="Your applications">
+        <section className="panel dc-apps m-quiet" aria-label="Your applications">
           <div className="dc-apps-head">
             <div>
               <h2 className="title dc-apps-title">Your applications · {open.length}</h2>

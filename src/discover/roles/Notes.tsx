@@ -102,7 +102,7 @@ export function SampleBanner({ onAnalyse }: { onAnalyse: () => void }) {
 /** Shown before the first search when the profile has little in it. */
 export function ThinNote({ onAdd }: { onAdd: () => void }) {
   return (
-    <section className="panel dc-note" role="status">
+    <section className="panel dc-note m-gap" role="status">
       <div className="dc-note-text">
         <div>
           <p className="dc-strong">Your profile is short, so the search has little to go on.</p>

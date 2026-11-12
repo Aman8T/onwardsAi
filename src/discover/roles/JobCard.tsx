@@ -12,6 +12,7 @@
  */
 import { motion, useReducedMotion } from 'motion/react';
 import { useId } from 'react';
+import { cssVars } from '../../lib/ui';
 import type { AiJob } from '../../../shared/jobsearch';
 import { EASE } from '../../lib/ui';
 import { NO_REASON_LABEL } from '../jobsearch/avoid';
@@ -41,6 +42,8 @@ export interface RoleCtl extends ApplyCtl {
   matchLocked: boolean;
   /** A sentence about the last attempt ("A match compares a posting with your evidence…"). */
   notice?: string;
+  /** The person's own note on this role, when it is saved in Your applications: it sticks to the card. */
+  note?: string;
   onOpen: () => void;
   onPrepare: () => void;
   onSeeMatch: () => void;
@@ -75,7 +78,7 @@ export function JobCard({ job, now, ctl, compact = false, popoverOpen = false, t
   return (
     <li className="dc-cell">
       <motion.article
-        className={`dc-card${compact ? ' is-compact' : ''}`}
+        className={`dc-card m-graph${compact ? ' is-compact' : ''}`}
         aria-labelledby={titleId}
         data-job={job.id}
         initial={reduced ? false : { opacity: 0, y: 8 }}
@@ -115,6 +118,8 @@ export function JobCard({ job, now, ctl, compact = false, popoverOpen = false, t
           {freshnessLine(job, now)}
         </p>
 
+        {!compact && ctl.note ? <NoteStick note={ctl.note} /> : null}
+
         {!compact && (
           <>
             <div className="dc-grow" />
@@ -126,51 +131,7 @@ export function JobCard({ job, now, ctl, compact = false, popoverOpen = false, t
               buttonClass="dc-btn-sm dc-apply"
               quietClass="btn btn-quiet btn-sm dc-btn-sm dc-apply"
             />
-            <div className="dc-card-row">
-              {ctl.runReady && ctl.prepareHref ? (
-                <a
-                  className="btn btn-sm dc-btn-sm"
-                  href={ctl.prepareHref}
-                  onClick={(e) => {
-                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-                    e.preventDefault();
-                    ctl.onPrepare();
-                  }}
-                >
-                  Prepare
-                </a>
-              ) : (
-                <button type="button" className="btn btn-sm dc-btn-sm" aria-disabled="true" title={NEEDS_RUN} onClick={ctl.onPrepare}>
-                  Prepare
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn btn-sm dc-btn-sm"
-                aria-disabled={ctl.matchBusy || ctl.matchLocked || !ctl.runReady || undefined}
-                title={ctl.runReady ? undefined : NEEDS_RUN}
-                onClick={() => !ctl.matchBusy && ctl.onSeeMatch()}
-              >
-                {ctl.matchBusy ? 'Opening…' : 'See how you fit'}
-              </button>
-              <div className="dc-grow" />
-              <SaveButton ctl={ctl} />
-              <button
-                type="button"
-                className="dc-icon-btn"
-                aria-label="Add to compare"
-                aria-pressed={ctl.comparing}
-                aria-disabled={(ctl.compareFull && !ctl.comparing) || undefined}
-                title={ctl.compareFull && !ctl.comparing ? COMPARE_FULL : undefined}
-                onClick={ctl.onToggleCompare}
-              >
-                <IconCompare />
-              </button>
-              <NotForMe job={job} variant="icon" defaultOpen={popoverOpen} onChoose={ctl.onHide} />
-            </div>
-            <p className="dc-notice" role="status">
-              {ctl.notice}
-            </p>
+            <RoleActions job={job} ctl={ctl} popoverOpen={popoverOpen} />
           </>
         )}
       </motion.article>
@@ -260,5 +221,119 @@ export function SkeletonCard({ reading = false, compact = false, i = 0 }: { read
           ))}
       </div>
     </li>
+  );
+}
+
+/** Prepare, See how you fit, the three small buttons (Save, Compare, Not for me) and the note about the last attempt. */
+export function RoleActions({ job, ctl, popoverOpen = false }: { job: AiJob; ctl: RoleCtl; popoverOpen?: boolean }) {
+  return (
+    <>
+      <div className="dc-card-row">
+        {ctl.runReady && ctl.prepareHref ? (
+          <a
+            className="btn btn-sm dc-btn-sm"
+            href={ctl.prepareHref}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+              e.preventDefault();
+              ctl.onPrepare();
+            }}
+          >
+            Prepare
+          </a>
+        ) : (
+          <button type="button" className="btn btn-sm dc-btn-sm" aria-disabled="true" title={NEEDS_RUN} onClick={ctl.onPrepare}>
+            Prepare
+          </button>
+        )}
+        <button
+          type="button"
+          className="btn btn-sm dc-btn-sm"
+          aria-disabled={ctl.matchBusy || ctl.matchLocked || !ctl.runReady || undefined}
+          title={ctl.runReady ? undefined : NEEDS_RUN}
+          onClick={() => !ctl.matchBusy && ctl.onSeeMatch()}
+        >
+          {ctl.matchBusy ? 'Opening…' : 'See how you fit'}
+        </button>
+        <div className="dc-grow" />
+        <SaveButton ctl={ctl} />
+        <button
+          type="button"
+          className="dc-icon-btn"
+          aria-label="Add to compare"
+          aria-pressed={ctl.comparing}
+          aria-disabled={(ctl.compareFull && !ctl.comparing) || undefined}
+          title={ctl.compareFull && !ctl.comparing ? COMPARE_FULL : undefined}
+          onClick={ctl.onToggleCompare}
+        >
+          <IconCompare />
+        </button>
+        <NotForMe job={job} variant="icon" defaultOpen={popoverOpen} onChoose={ctl.onHide} />
+      </div>
+      <p className="dc-notice" role="status">
+        {ctl.notice}
+      </p>
+    </>
+  );
+}
+
+/** The person's own note on a saved role, stuck to the thing it is about. */
+export function NoteStick({ note }: { note: string }) {
+  return (
+    <div className="stick is-flow dc-stick">
+      <div className="postit" role="note" style={cssVars({ '--pp': 'var(--paper-yellow)' })}>
+        <p className="pen">{note}</p>
+        <span className="pcite pcite-end">your note on this role</span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The role that opens the results: the first one in the order the search computed (strong fits, then good fits, then
+ * stretches). The fit is a field (where the person stands), what was measured is on graph paper (every ask the evidence
+ * meets, with the evidence), and Apply for me is the one ink block on the page. Same controls as a card.
+ */
+export function RoleHero({ job, now, ctl, popoverOpen = false }: { job: AiJob; now: number; ctl: RoleCtl; popoverOpen?: boolean }) {
+  const titleId = useId();
+  const checking = ctl.apply?.kind === 'checking';
+  return (
+    <article className="dc-lead" aria-labelledby={titleId} data-job={job.id}>
+      <div className="m-tile m-field dc-lead-main">
+        <p className="kicker">{job.fit === 'strong' ? 'Strongest fit in this search' : 'Top of your list'}</p>
+        <FitLine job={job} />
+        <h2 className="serif dc-lead-title">
+          <button id={titleId} type="button" className="dc-title-btn" aria-haspopup="dialog" onClick={ctl.onOpen}>
+            {job.title}
+          </button>
+        </h2>
+        <p className="dc-card-sub">{employerLine(job)}</p>
+        <AskLine asks={job.asks} />
+        {ctl.note ? <NoteStick note={ctl.note} /> : null}
+        <div className="dc-grow" />
+        <RoleActions job={job} ctl={ctl} popoverOpen={popoverOpen} />
+      </div>
+      <div className="m-tile m-graph dc-lead-facts">
+        <p className="kicker">What the posting asks, and what you show</p>
+        {job.met.map((m, i) => (
+          <Pair key={i} met={m} />
+        ))}
+        {job.gaps.map((g, i) => (
+          <p key={i} className="dc-gapline">
+            <span className="dc-gaplbl">Not on your resume:</span> “{g}”
+          </p>
+        ))}
+        <p className="dc-prov">
+          {provenanceLine(job)}
+          <br />
+          {freshnessLine(job, now)}
+        </p>
+      </div>
+      {!ctl.applyClosed && (
+        <div className={`m-tile ${checking ? 'm-plain' : 'm-ink'} dc-lead-apply`}>
+          <ApplyFor job={job} ctl={ctl} size="sm" primaryClass="btn btn-primary btn-sm dc-btn-sm dc-apply" buttonClass="dc-btn-sm dc-apply" quietClass="btn btn-quiet btn-sm dc-btn-sm dc-apply" />
+        </div>
+      )}
+    </article>
   );
 }

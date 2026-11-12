@@ -55,7 +55,7 @@ function leadLede(lead: readonly PrepLead[], asks: AskCounts | undefined, hasGap
 
 export function LeadSection({ headingId, lead, hasGaps, job, onSeeMatch }: { headingId: string; lead: readonly PrepLead[]; hasGaps: boolean; job?: AiJob; onSeeMatch?: () => void }) {
   return (
-    <section className="panel dm-sec" aria-labelledby={headingId}>
+    <section className="panel dm-sec m-graph" aria-labelledby={headingId}>
       {sectionHead('Your strongest ground', headingId, 'Lead with these', leadLede(lead, job?.asks, hasGaps))}
       {lead.map((l, i) => (
         <div className="dm-pair" key={i}>
@@ -146,7 +146,7 @@ export function GapSection({ headingId, gaps, slots }: { headingId: string; gaps
       : `${gaps.length === 1 ? 'One ask is' : `${gaps.length} asks are`} not on your resume. Close ${gaps.length === 1 ? 'it' : 'them'} with something real, or explain ${gaps.length === 1 ? 'it' : 'each'} in one plain line.`;
   const hasNearest = gaps.some((g) => g.nearest);
   return (
-    <section className="panel dm-sec" aria-labelledby={headingId}>
+    <section className="panel dm-sec m-gap" aria-labelledby={headingId}>
       {sectionHead('The gap', headingId, 'Close or explain the gap', lede)}
       {gaps.map((g, i) => (
         <GapBlock key={i} gap={g} index={i} slots={slots} />
@@ -225,7 +225,7 @@ export function QuestionsSection({ headingId, questions, gaps, slots }: { headin
       ? 'This posting gave us no likely questions to prepare.'
       : `${questions.length === 1 ? 'One question' : `${questions.length} questions`} this posting is likely to lead to, each tied to something it asks. The questions are our suggestions. Lines with a source are quoted from your profile.`;
   return (
-    <section className="panel dm-sec" aria-labelledby={headingId}>
+    <section className="panel dm-sec m-paper is-loose" aria-labelledby={headingId}>
       {sectionHead('Your stories', headingId, 'Questions they are likely to ask', lede)}
       {questions.length > 0 && (
         <p className="dm-slotkey">
@@ -269,7 +269,7 @@ function Step({ id, checked, disabled, onChange, title, note, children }: { id: 
     <li className="dm-step">
       <input id={id} type="checkbox" className="dm-check" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
       <label htmlFor={id} className="dm-step-label">
-        <span className="dm-step-title">{title}</span>
+        <span className="pen dm-step-title">{title}</span>
         <span className="dm-muted dm-small">{note}</span>
       </label>
       {children}
@@ -292,7 +292,7 @@ export function ChecklistSection({ headingId, job, ticks, onTick, onSeeMatch, ap
         ? `Already in ${stage === 'offer' ? 'Offer' : 'Interviewing'} in Your applications. Change the stage there.`
         : "Moves this role to Applied in Your applications, with today's date.";
   return (
-    <section className="panel dm-sec" aria-labelledby={headingId}>
+    <section className="panel dm-sec m-paper" aria-labelledby={headingId}>
       {sectionHead('Checklist', headingId, 'Before you apply')}
       <ul className="dm-steps">
         <Step id={`${base}-fit`} checked={ticks.fit === true} onChange={(on) => onTick('fit', on)} title="See how you fit" note="Every requirement against your evidence.">
@@ -386,7 +386,7 @@ export function PracticeSection({ headingId, runId, jobId, onPractise }: Practic
     else actions.openPractice({ screen: 'setup', kind: 'role', run, job });
   };
   return (
-    <section className="panel dm-sec dm-sec-quiet" aria-labelledby={headingId}>
+    <section className="panel dm-sec dm-sec-quiet m-quiet" aria-labelledby={headingId}>
       <div className="dm-practice-text">
         <div className="dm-practice-title">
           <h2 className="title dm-h2s" id={headingId} tabIndex={-1}>

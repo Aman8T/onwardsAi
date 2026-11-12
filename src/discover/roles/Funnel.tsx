@@ -38,7 +38,7 @@ export function Funnel({ funnel, trail, note }: { funnel: readonly FunnelStep[];
   const id = useId();
   if (funnel.length === 0 && trail.length === 0) return null;
   return (
-    <section className="panel dc-funnel" aria-labelledby={id}>
+    <section className="panel dc-funnel m-graph" aria-labelledby={id}>
       <div className="dc-funnel-head">
         <span id={id} className="kicker">
           How it narrowed it down
@@ -69,7 +69,7 @@ export function Funnel({ funnel, trail, note }: { funnel: readonly FunnelStep[];
 /** Nothing fitted this time: where the roles dropped out, and what could change that. It is the page's one heading. */
 export function NothingFitted({ funnel, note, trail, children }: { funnel: readonly FunnelStep[]; note?: string; trail: readonly TrailStep[]; children?: ReactNode }) {
   return (
-    <section className="panel dc-nothing" aria-label="Nothing fit this time">
+    <section className="panel dc-nothing m-gap" aria-label="Nothing fit this time">
       <div>
         <h1 className="serif dc-nothing-title" data-dc-h1 tabIndex={-1}>
           Nothing fit this time
