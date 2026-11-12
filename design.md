@@ -18,16 +18,18 @@ These are enforced by `scripts/restraint-check.ts`, not just agreed.
 
 | Rule | Detail |
 |---|---|
-| No shadows, no blur, no glow | `box-shadow`, `text-shadow`, `drop-shadow()`, `backdrop-filter`, `blur()` are forbidden everywhere. |
+| No shadows, no blur, no glow | `box-shadow`, `text-shadow`, `drop-shadow()`, `backdrop-filter`, `blur()` are forbidden everywhere, except the two decisions below. |
 | Hairlines only | No border thicker than 1 px. The 2 px focus ring (`outline`) is the one exception. |
 | Colour lives in one file | Colour literals (`#hex`, `rgb()`, `hsl()`, `color-mix()`, literal `oklch()` in CSS) exist only in `src/theme/tokens.css`. Everything else uses tokens. |
 | Motion is opacity and transform | `@keyframes` may not animate paint or layout (`filter`, `background-position`, `width`, `height`, `left`, `top`, `stroke-dashoffset`…). |
 | Nothing loops | `infinite` animations are allowed only on an explicit allow-list (a typing indicator, a live dot). |
-| Hue properties are never transitioned | A `transition` naming `--h`, `--h2`, `--h3`, `--k`, `--kw`, `--kb` or `all` is an error: it would animate the field on every step. |
+| Hue properties are never transitioned | A `transition` naming `--h`, `--h2`, `--h3`, `--h4`, `--k`, `--kw`, `--kb`, a `--c-*` chroma number or `all` is an error: it would animate the field on every step. |
 | Depth from tone | Surfaces step 2–4 OKLCH lightness points; dividers are 1 px at ~8 % ink alpha; popovers are opaque surfaces with a hairline. |
 | One serif line per screen | A display serif for a single headline (the h1, or the one italic line); every other heading is the sans `.title`. The brand wordmark is the logo, not a line, and does not count. |
 | Zero idle frames | Between background steps the page draws nothing: no `requestAnimationFrame` loops, no CSS animations running at rest. |
-| Exceptions are written down | The two deliberate exceptions (§8, §9) are bounded, documented, and still pass every check above. |
+| Exceptions are written down | The deliberate exceptions (§8, §9 and the two below) are bounded, documented, and still pass every check above. |
+
+**Two exceptions to the shadow rule (2026-11-12, the user's decisions).** (1) *A short shadow on paper pieces only.* A `box-shadow` is allowed when every colour in the declaration is `var(--paper-shade)` or `var(--paper-shade-soft)`; the restraint check accepts nothing else, and the paper colours never follow the hue. (2) *One soft radial light behind the skill graph.* `--stage-light` is a single `radial-gradient` in the hue (closest-side, about 94 % of the graph's box, centred on it), faded to transparent. A gradient only: no blur, no `box-shadow`, no animation of its own; it is as dark or as light as `--c-glow-*` allows and the score at the graph's centre stays plain ink.
 
 ## 3. Colour
 
@@ -212,24 +214,30 @@ When pages must look different for every person *and* must never break, variety 
 
 **An alternate skin costs no content.** "Old Newspaper" re-renders the same spec: paper L .955 (hue 85), ink L .22, a blackletter nameplate and a thick-thin double rule as the two deliberate print exceptions, columns via `column-width`, and the chart as a printed index with a halftone fill and an AREA / SCORE table. Toggling is a 400 ms drain to paper; `?view=press` makes it shareable.
 
-## 7a. The quiet look (default since 2026-11-03)
+## 7a. The quiet look (default since 2026-11-03; a neutral stage since 2026-11-12)
 
 `html[data-look='quiet']` (tokens.css block c1b) is the look the app and the static site ship with; the colour scheme follows the device unless the person picks one (no `data-scheme` means System). Panels are lighter than the field in both schemes: that one rule is the look.
 
-| | Light | Dark (since 2026-11-07) |
+**The neutral stage (2026-11-12, the user's decision).** The stage never follows the hue. The field, panels, wells, ink, hairlines and grid are fixed neutrals (hue 264, chroma .002–.005, collapsing to zero under Off), so every hour has the same quiet ground and the same contrast. The hue feeds only the colour that is doing a job: the accents, the fills and rule, the selection, the dashboard's tile fields (`--tile-1` … `--tile-4`, at `--h`, `--h2`, `--h3`, `--h4`) and one soft light behind the skill graph (§2). There are no dyed lobes, so the ambient layer is a flat fill. The paper pieces (`--paper-*`, `--tape`, ink, pen) keep their own fixed colours in every look and never take the hue.
+
+| | Light | Dark |
 |---|---|---|
-| Field | L .935, C .018, lobes a quarter strength | L .145, C .022 (the sRGB ceiling at that lightness), three lobes at .175–.185 / C .026–.028 |
-| Panel | the field's own colour | L .205, C .024: a step of .06 above the field |
-| Chip, hover | L .955 | L .25, C .028 |
-| Well | L .96 | L .11 |
-| Ink | L .22 / muted .42 / faint .52 | L .96 / muted .80 / faint .67 |
-| Line, strong line | L .90, C .012 / L .84 | L .31, C .026 / L .48, C .03 |
-| Accent (links) | L .46, C .076 | L .78, C .10 |
-| Accent-ui (marks, bars, radar) | L .50, C .082 | L .72, C .108 |
-| Primary fill | L .38, C .063 | L .90, C .045, panel-coloured text |
+| Field | L .955 | L .145 |
+| Panel, chip, well | L .985 / .972 / .94 | L .19 / .225 / .115 |
+| Ink, muted, faint | L .20 / .42 / .52 | L .955 / .76 / .62 |
+| Line, strong line | L .86 / .66 | L .30 / .45 |
+| Accent-ui (marks, bars, radar), fills | L .52, cap .17 | L .74, cap .17 |
+| Accent (links) | L .46, cap .14 | L .82, cap .135 |
+| Primary fill | L .38, cap .09 | L .90, cap .07, panel-coloured text |
+| Selection | L .88, cap .05 | L .36, cap .05 |
+| Tiles | L .87 / .89 / .885 / .90, cap .085 (.08 for tiles 3, 4) | L .34 / .35 / .30 / .34, cap .095 (.09 for tile 3) |
 | Cursor dye | L .80, C .11 at .75 | L .62, C .10 at .30 |
 
-**Why the dark table moved (2026-11-07, canvas "Leafout Dark Mode Explorations", direction D).** The first quiet dark (field L .17 / C .012, panel .215, lines .33 / .40, ink .93, accents .84 / .80) read faint and dull for five measurable reasons: the field had no dye (C .012 is a grey); every non-text tone sat between L .145 and .25, so the field-to-panel step was .045; hairlines were grey on grey; the accents were pastel by force, because at L .84 the sRGB gamut caps chroma near .08 at the blue end; and the ink stopped at .93. Three levers fix it inside the rules. Range: the field drops to .145 and the panel step opens to .06. Dye: the field takes the chroma the gamut allows at its lightness, and three lobes return at about a quarter of the earlier dark's strength, so the slow hue is visible again. Ink: text goes to .96 (still off-white, so no halation), and the accents come down to L .78 / .72 where C .10 / .108 fits, a real blue instead of a pastel. Every text role stays ≥ 8:1 on every surface and lobe; `palette-check` sweeps all 360 hues as before.
+**The chroma rule.** An accent takes `min(cap, 0.94 × the most chroma that hue holds inside sRGB at that lightness)`. A fixed low chroma is what made green and yellow hours olive; this keeps every hour as alive as it can be and still inside the gamut. The numbers are computed once, in `src/theme/hue.js` (`CHROMA_SPEC`, `hueAt`), from the hue each role is drawn at that step (`--h2` and `--h3` breathe), written beside the hues as `--c-*-d` and `--c-*-l` (dark and light, both every step, so the file stays pure), and used in tokens.css as `calc(var(--c-ui-d) * var(--k))`. By day the tiles' cap eases to half within 30° of hue 98, so no tile competes with the post-it yellow. `@property` initial values are hue 250's, so a first paint before the script is sane. `palette-check` imports the same numbers and proves them at all 360 hues and every breath phase.
+
+**The fixed hues (the `today` look and `.pf-scope` are unchanged).** In `today` the tiles use a fixed chroma, held under the sRGB ceiling at their lightness; paper is the same in both looks.
+
+**Why the dark table moved (2026-11-07, canvas "Leafout Dark Mode Explorations", direction D), kept for the reasoning.** The first quiet dark read faint and dull: the field had no dye, every non-text tone sat between L .145 and .25, hairlines were grey on grey, the accents were pastel by force (at L .84 the gamut caps chroma near .08 at the blue end) and the ink stopped at .93. The fixes that remain: the field at .145 with a panel step of .045 or more, ink near .96 (off-white, so no halation), and accents at the lightness where a real blue fits inside sRGB. The neutral stage keeps all of that and takes the dye out of the ground, leaving it in the accents.
 
 In dark, the spotlight (`src/light/Spot.tsx`) is white at 10 % under the wake. Escape hatch: `localStorage tayyari.look = 'today'` or `?look=today` brings back the earlier look; `?look=quiet` pins quiet. `boot.js` writes the attribute before first paint; `setLook` / `useLook` in `theme/ambient.ts` change it at runtime. Compare the two, scheme by scheme and screen by screen, at `/dev/design`.
 
@@ -249,9 +257,35 @@ In dark, the spotlight (`src/light/Spot.tsx`) is white at 10 % under the wake. E
 
 Rules: at most three turned pieces in view; nothing turned holds a field, a table or a long list; no shadow (a slip is lifted by its tone and its turn); under 760px and under reduced motion nothing is turned. The kit handles both, so screens never add their own rotation.
 
+**Materials (2026-11-12, first on the dashboard).** A screen opens as one screen: one hero, then a mosaic of tiles sized by what matters now, edge to edge with a 2px seam of `--bg`, no radius and no border. A tile is a material, and a material means the same thing everywhere:
+
+| Material | Built from | Means |
+| --- | --- | --- |
+| Notebook paper, in pen | `--paper-sheet`, `.ruled` rows on `--rule`, `.pen` (`--font-pen`), `.tick` | what the person does or wrote: to-dos, a plan's week, what to re-drill |
+| A field of colour | `--tile-1..4`, flat or a two-stop radial of two of them | where they stand right now: a stage, a verdict, where they left off |
+| Graph paper | dots of `--grid` over `--surface-2` | what was measured or cited; never turned, never in pen |
+| A post-it | `.postit` on `--paper-yellow`, `--paper-pink` or `--paper-blue`, ink `--paper-ink`, lifted by `--paper-shade` | their own note, stuck to the thing it is about |
+| An ink block | `--accent-strong` behind `--surface` text | the one thing to press next; one a screen |
+
+On the sheet and the calendar page the ink is `--text` and `--text-muted` (the sheet is dark at night); `--paper-ink` is only for coloured paper and the yellow highlighter (`.hl-paper`). A post-it may lap over a neighbouring tile; nothing measured ever does. The app sets a tick only from a dated record; the person may tick by hand.
+
+**The kit for every other screen (2026-11-12).** `src/styles/materials.css` (loaded once from `main.tsx`, prefix `m-`) holds the frame and the materials as classes, and `src/components/materials.tsx` holds the hand-drawn pieces. The dashboard keeps its own `os-` and `t-` classes from before the kit; new work uses the kit.
+
+| Piece | What it is |
+| --- | --- |
+| `.m-screen` (+ `.is-fit`, `.is-wide-hero`, `.is-stack`), `.m-hero`, `.m-mosaic` (+ `.is-rows`, `.is-12`) | the frame: one hero beside a six-column mosaic with 2px seams; `.is-fit` makes it one screen tall (viewport minus `--m-top`); under 1100px the hero stacks above, under 760px every tile is one full row |
+| `.m-tile` (+ `.m-c1`…`.m-c6`, `.m-r2`…`.m-r5`, `.is-row`, `.is-clip`), `.m-foot` | a tile and its span |
+| `.m-paper` (+ `.is-loose`), `.m-field`, `.m-field-1`…`-4`, `.m-graph`, `.m-ink`, `.m-gap`, `.m-plain`, `.m-quiet`, `.m-desk` | the materials and the neutral grounds |
+| `.m-page-head`, `.m-page-title`, `.m-lines`, `.m-line`, `.m-line-t`, `.m-cite`, `PageLine`, `HandTick`, `PenStrike` | a notebook page: ruled lines in pen, each with the fact it rests on; a tick is a button only when the person may tick it, otherwise a mark set from a record |
+| `Pips`, `.m-pips` | a row of circles for a count that is the point (stages reached, requirements covered, questions defended): filled, half, dashed; always with the same count in words |
+| `.m-big`, `.m-count`, `.m-co`, `.m-stage`, `.m-fine`, `.m-strong`, `.m-clip` | one large counted number, a floating number beside a chart, a count per stage, small type |
+| `.stick.is-flow`, `.m-turn-l`, `.m-turn-r`, `.m-margin` | a post-it in the flow of a tile and the only turns; all go straight on a phone and under reduced motion |
+
+Ink on a material: `--text` and `--text-muted` on paper, graph paper, neutral ground and on a field (links on a field are `--text`, underlined, never `--accent`); `--surface` on an ink block; `--paper-ink` on a post-it. One ink block a screen, at most two fields, at most three turned pieces in view. Forms, tables, documents and long reading stay on neutral ground.
+
 **Density.** Gap between page sections `--s4`; card padding `--s4` top and bottom, `--s5` left and right; row padding `--s2`; headers 64px; one hero type size per screen and everything else a step down. Controls stay at least 36px tall on desktop and 44px on touch and under 760px.
 
-**Contrast (quiet look).** Since 2026-11-11 a light card is one step lighter than the field (`--surface` .953 over `--bg` .935), hairlines are `--line` .73 light and .38 dark, and small text is `--text-muted` .38 / .84 and `--text-faint` .47 / .72. Prominence comes from these, never from a shadow.
+**Contrast (quiet look).** Since 2026-11-12 a light card is one step lighter than the field (`--surface` .985 over `--bg` .955), hairlines are `--line` .86 light and .30 dark, and small text is `--text-muted` .42 / .76 and `--text-faint` .52 / .62 (all neutral). Prominence comes from these, never from a shadow.
 
 ## 8. Exception one: the liquid cursor
 
@@ -285,9 +319,9 @@ Two surfaces are newspapers and follow print rather than §2's type rules: the p
 
 | Script | Proves |
 |---|---|
-| `scripts/palette-check.ts` | every token inside sRGB at all 360 hues and lobe extremes, in both schemes; every contrast pair at its floor, alpha tokens composited over each scheme's field; the dark table's two copies agree and cover every role; the cursor's dye, composited at peak alpha over the field and every lobe, under every text role (both schemes); `--fallback <hue>` emits the hex blocks for both schemes |
-| `scripts/restraint-check.ts` | the rules in §2, over every `.css/.ts/.tsx` file and `index.html` |
-| `scripts/build-check.ts` | the built bundle still carries `@property --h`, the OKLCH tokens, the dark table under its media query and attribute, the boot script (hue and scheme) before the first stylesheet, the ambient layer, and no `box-shadow` |
+| `scripts/palette-check.ts` | every token inside sRGB at all 360 hues and every breath phase (the chroma numbers are imported from `src/theme/hue.js`, not re-implemented), in both looks and both schemes; `--text` and `--text-muted` on every tile; `--paper-ink` on every paper colour at 7:1 and `--paper-ink-2` at 4.5:1; `--surface` on `--accent-strong`; accent text on `--surface` and `--bg`; every hue-following chroma multiplied by `--k`, so Off collapses it; every contrast pair at its floor, alpha tokens composited over each scheme's field; the dark table's two copies agree and cover every role; the cursor's dye, composited at peak alpha over the field and every lobe, under every text role (both schemes); `--fallback <hue>` emits the hex blocks for both schemes |
+| `scripts/restraint-check.ts` | the rules in §2, over every `.css/.ts/.tsx` file and `index.html`; a `box-shadow` passes only with `--paper-shade` colours |
+| `scripts/build-check.ts` | the built bundle still carries `@property --h`, the OKLCH tokens, the dark table under its media query and attribute, the `@property` registration of every chroma number, the stage tokens, the boot script (hue, chroma and scheme) before the first stylesheet, the flat ambient layer, and no `box-shadow` but the paper one |
 | `scripts/portfolio-parity.tsx` | rendered chart numbers equal the source in every variant, skin and mode (784 renders) |
 | `scripts/walkthrough.md` | the browser walkthrough: every interaction, every hue, mobile, the idle-paint test (`rafs 0`, `longTasks 0` over 30 s), the cursor light's schedule and fallbacks |
 
