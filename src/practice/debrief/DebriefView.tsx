@@ -1,19 +1,24 @@
 /**
- * The debrief (board 5 of the "Practice the interview" canvas, board 10 on a phone), presentational: the debrief arrives
- * as a prop, everything the person can do goes out as a callback. `DebriefScreen` feeds it from the server; the dev page
- * feeds it from fixtures.
+ * The debrief (board 5 of the "Practice the interview" canvas, board 10 on a phone; the materials sketch "4 · A practice
+ * debrief"), presentational: the debrief arrives as a prop, everything the person can do goes out as a callback.
+ * `DebriefScreen` feeds it from the server; the dev page feeds it from fixtures.
  *
- * Top to bottom: how it went (one square per question, the counts in words, a line about the role's asks, the one thing to
- * work on first), the work sample's checks when it was one, then one card per question with the words its verdict rests
- * on marked inside the person's own answer, and beside them the transcript. On a phone the first thing to work on opens
- * and the other questions fold into rows that open. There is no score: counts, words, and quotes the person can check.
+ * The hero is what held: one large count, "3 of 5 defended, out loud", one circle for each question (a press opens that
+ * question), and, only when a comparison went up, one pen line in the margin. Beside it a mosaic: the person's own words
+ * for a defended question on a field with a "defended" stamp, what wobbled as a notebook page ("To re-drill", each line
+ * citing its question and verdict and opening the re-drill), what was measured on graph paper (claims defended over
+ * sessions, the role's asks), and the one ink block: "Re-drill N", or the screen's own next step when nothing wobbled.
+ * Under it, one tile per question with the words its verdict rests on marked inside the person's own answer, and beside
+ * them the transcript. On a phone the first thing to work on opens and the other questions fold into rows that open.
+ * There is no score: counts, words, and quotes the person can check.
  */
 import { useReducedMotion } from 'motion/react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import type { Debrief, InterviewKind } from '../../../shared/interview';
-import { Pip, countsLine, totalOf } from '../Pips';
+import type { Debrief, InterviewKind, PracticeHistory, SlotResult, Verdict } from '../../../shared/interview';
+import { PageLine, Pips } from '../../components/materials';
+import { countsLine, pipOfVerdict, totalOf } from '../Pips';
 import { KIND_LABEL, KEPT_LINE, VERDICT_LABEL } from '../words';
-import { NOTHING_SHARED, dateOf, sentenceOf } from '../hub/words';
+import { NOTHING_SHARED, clip, dateOf, sentenceOf } from '../hub/words';
 import type { PracticeNav } from '../hub/nav';
 import { FeaturedCard, ResultCard, ResultRow } from './ResultCard';
 import type { CardContext, FixPlacing } from './ResultCard';
@@ -35,6 +40,8 @@ export interface DebriefViewProps {
   onDelete: () => Promise<void>;
   /** Where its Fix steps can go (I2); absent: they are steps to read. */
   fix?: FixPlacing;
+  /** The person's practice so far, when it could be read: it draws "claims defended" over sessions. Absent: no such tile. */
+  history?: PracticeHistory;
 }
 
 const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
@@ -48,6 +55,23 @@ const OTHER_KIND: Record<InterviewKind, InterviewKind> = {
   work: 'resume',
   redrill: 'resume',
 };
+
+const STRENGTH: Record<Verdict, number> = { defended: 3, shaky: 2, couldnt: 1, not_assessed: 0 };
+
+/** How many questions of this debrief ranked above their previous mark; only ever a count that went up. */
+function movedUp(debrief: Debrief): { moved: number; of: number } {
+  if (debrief.redrill) return debrief.redrill;
+  const compared = debrief.results.filter((r) => r.previous);
+  return { moved: compared.filter((r) => r.previous && STRENGTH[r.verdict] > STRENGTH[r.previous.verdict]).length, of: compared.length };
+}
+
+/** Claims defended at their best, after each session the claims were asked in: it can only go up. The last few sessions. */
+export function defendedOverSessions(history: PracticeHistory): { steps: number[]; now: number; of: number } | null {
+  if (history.claims.length === 0) return null;
+  const days = [...new Set(history.claims.flatMap((c) => c.marks.map((m) => m.date)))].sort();
+  const steps = days.map((d) => history.claims.filter((c) => c.marks.some((m) => m.verdict === 'defended' && m.date <= d)).length);
+  return { steps: steps.slice(-5), now: history.claims.filter((c) => c.best === 'defended').length, of: history.claims.length };
+}
 
 /** The summary line, with "add what you said to your profile" linked to the new fact it points at. */
 function SummaryLine({ text, factSlot, jump }: { text: string; factSlot: string | undefined; jump: (id: string) => void }) {
@@ -72,7 +96,7 @@ function SummaryLine({ text, factSlot, jump }: { text: string; factSlot: string 
   );
 }
 
-export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, fix }: DebriefViewProps) {
+export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, fix, history }: DebriefViewProps) {
   const base = useId();
   const reduced = useReducedMotion() ?? false;
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -165,6 +189,15 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
   const firstError = againError?.where === 'first' ? againError.message : undefined;
   const other = OTHER_KIND[debrief.kind];
 
+  // what held, what wobbled, what went up: all counted here from the verdicts
+  const yours = debrief.transcript.filter((t) => t.speaker === 'you');
+  const outLoud = yours.length > 0 && yours.every((t) => t.mode === 'speech');
+  const wobbles = results.flatMap((r, i) => (r.verdict === 'shaky' || r.verdict === 'couldnt' ? [{ r, n: i + 1 }] : []));
+  const strongest = results.findIndex((r) => r.verdict === 'defended' && r.quote?.text);
+  const strong: SlotResult | undefined = strongest >= 0 ? results[strongest] : undefined;
+  const up = movedUp(debrief);
+  const over = useMemo(() => (history ? defendedOverSessions(history) : null), [history]);
+
   const toggle = (slotId: string) =>
     setOpen((prev) => {
       const next = new Set(prev);
@@ -180,11 +213,11 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
   const actions = (
     <div className="pc-actions pc-end">
       {redrill ? (
-        <button type="button" className="btn btn-primary pc-btn" onClick={nav.redrill}>
+        <button type="button" className="btn pc-btn" onClick={nav.redrill}>
           Back to Re-drill
         </button>
       ) : (
-        <button type="button" className="btn btn-primary pc-btn" onClick={() => nav.setup(debrief.kind, debrief.role, debrief.graphRole)}>
+        <button type="button" className="btn pc-btn" onClick={() => nav.setup(debrief.kind, debrief.role, debrief.graphRole)}>
           Practise again
         </button>
       )}
@@ -205,22 +238,23 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
 
   return (
     <div className={`pc-page pc-debrief${narrow ? ' pc-narrow' : ''}`}>
-      <header className="pc-head">
-        <button type="button" className="pc-back" onClick={nav.hub}>
-          <span aria-hidden="true">←</span> Practice
-        </button>
-        <p className="kicker">{['Debrief', KIND_LABEL[debrief.kind], when, minutes].filter(Boolean).join(' · ')}</p>
-        <h1 className="serif pc-title" ref={titleRef} tabIndex={-1}>
-          {debrief.title}
-        </h1>
-      </header>
+      <div className="m-screen pc-screen">
+        <header className="m-hero pc-hero pc-held">
+          <button type="button" className="pc-back" onClick={nav.hub}>
+            <span aria-hidden="true">←</span> Practice
+          </button>
+          <p className="kicker">{['Debrief', KIND_LABEL[debrief.kind], when, minutes].filter(Boolean).join(' · ')}</p>
+          <h1 className="serif pc-title" id={`${base}-sum`} ref={titleRef} tabIndex={-1}>
+            {debrief.title}
+          </h1>
 
-      <section className="panel pc-summary" aria-labelledby={`${base}-sum`}>
-        <div className="pc-summary-main">
-          <div className="kicker" id={`${base}-sum`}>
-            How it went
-          </div>
-          <div className="pc-pipnav" role="group" aria-label="One square per question, in order">
+          <p className="pc-count">
+            <span className="m-big is-hero">{counts.defended}</span>
+            <span className="pc-count-words">
+              of {total} defended{outLoud ? ', out loud' : ''}
+            </span>
+          </p>
+          <div className="pc-pipnav" role="group" aria-label="One circle per question, in order. Press one to open it.">
             {results.map((r, i) => (
               <a
                 key={r.slotId}
@@ -232,61 +266,120 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
                   jump(`q${i + 1}`);
                 }}
               >
-                <Pip verdict={r.verdict} size="lg" />
+                <Pips pips={[pipOfVerdict(r.verdict)]} label={`${VERDICT_LABEL[r.verdict]}`} r={11} gap={0} />
                 <span className="numeral">{i + 1}</span>
               </a>
             ))}
           </div>
-          {debrief.redrill && (
-            <p className="title pc-moved">
-              {debrief.redrill.moved} of {debrief.redrill.of} moved up
-            </p>
-          )}
           <p className="pc-counts">{countsLine(counts)}</p>
-          {debrief.redrill && <p className="pc-muted pc-small">Your best verdicts in Progress are updated. A worse answer today never lowers one.</p>}
-          {debrief.summary && (
-            <p className="pc-summary-line">
-              <SummaryLine text={debrief.summary} factSlot={factSlot} jump={jump} />
+          {up.moved > 0 && (
+            <p className="pen m-margin pc-moved">
+              {up.moved} of {up.of} moved up since last time
             </p>
           )}
-          {counts.notAssessed > 0 && <p className="pc-muted">Not assessed means not asked, skipped or ended early. It never counts against you.</p>}
-          <p className="pc-muted pc-small">No score. Each verdict quotes what you said, so you can check it.</p>
+          {debrief.redrill && <p className="pc-fine">Your best verdicts in Progress are updated. A worse answer today never lowers one.</p>}
+          {counts.notAssessed > 0 && <p className="pc-fine">Not assessed means not asked, skipped or ended early. It never counts against you.</p>}
+          <p className="pc-fine pc-hero-foot">No score. Each verdict quotes what you said, so you can check it. Press a circle to read it.</p>
+        </header>
+
+        <div className="m-mosaic is-12 pc-mosaic">
+          {strong?.quote && (
+            <section className="m-tile m-field pc-s12 pc-yourwords" aria-label={`Question ${strongest + 1}, your words`}>
+              <div className="pc-tile-head">
+                <span className="kicker">Question {strongest + 1} · your words</span>
+                <span className="stamp">defended</span>
+              </div>
+              <p className="pc-quote">“{strong.quote.text}”</p>
+            </section>
+          )}
+
+          {wobbles.length > 0 && (
+            <section className="m-tile m-paper pc-s12 pc-redrill-page" aria-label="To re-drill">
+              <div className="m-page-head">
+                <h2 className="m-page-title pen">To re-drill</h2>
+                <span className="m-fine">each brought back where it wobbled</span>
+              </div>
+              <ul className="m-lines">
+                {wobbles.map(({ r, n }, i) => (
+                  <PageLine key={r.slotId} tick={false} index={i} title={clip(r.topic || r.question, 72)} cite={`question ${n} · ${VERDICT_LABEL[r.verdict].toLowerCase()}`} onGo={nav.redrill} />
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {debrief.firstThing ? (
+            <section className="m-tile m-quiet pc-s12 pc-first" aria-label="Work on this first">
+              <div className="kicker">Work on this first</div>
+              <p className="title pc-first-text">{debrief.firstThing}</p>
+              <div className="pc-actions">
+                {debrief.firstSlotId && (
+                  <button type="button" className="btn pc-btn" disabled={againBusy === debrief.firstSlotId} onClick={() => void again(debrief.firstSlotId as string, 'first')}>
+                    {againBusy === debrief.firstSlotId ? 'Starting…' : 'Ask this one again'}
+                  </button>
+                )}
+                {role && (
+                  <button type="button" className="btn pc-btn" onClick={() => nav.prepare(role)}>
+                    Open Prepare
+                  </button>
+                )}
+              </div>
+              {firstError && (
+                <p className="pc-danger" role="alert">
+                  {firstError}
+                </p>
+              )}
+              <p className="pc-fine">Asking again is free.</p>
+            </section>
+          ) : allDefended ? (
+            <section className="m-tile m-quiet pc-s12 pc-first" aria-label="Work on this first">
+              <div className="kicker">Work on this first</div>
+              <p className="title pc-first-text">You defended everything you were asked.</p>
+              <p className="pc-fine">Ask any question again whenever you like. It is free.</p>
+            </section>
+          ) : null}
+
+          {(debrief.summary || over) && (
+            <section className="m-tile m-graph pc-s8 pc-measured" aria-label="What was measured">
+              {over && (
+                <div className="pc-over">
+                  <p className="pc-over-line">
+                    <span className="pc-strong">Claims defended</span> <span className="numeral">{over.now}</span> of <span className="numeral">{over.of}</span>
+                  </p>
+                  {over.steps.length > 1 && (
+                    <span className="pc-spark" role="img" aria-label={`Claims defended at their best after each of your last ${over.steps.length} sessions: ${over.steps.join(', ')}`}>
+                      {over.steps.map((n, i) => (
+                        <i key={i} className={i === over.steps.length - 1 ? 'is-last' : undefined} style={{ height: `${Math.max(4, Math.round((28 * n) / Math.max(1, ...over.steps)))}px` }} />
+                      ))}
+                    </span>
+                  )}
+                </div>
+              )}
+              {debrief.summary && (
+                <p className="pc-summary-line">
+                  <SummaryLine text={debrief.summary} factSlot={factSlot} jump={jump} />
+                </p>
+              )}
+            </section>
+          )}
+
+          {wobbles.length > 0 ? (
+            <button type="button" className={`m-tile m-ink pc-ink ${debrief.summary || over ? 'pc-s4' : 'pc-s12'}`} onClick={nav.redrill}>
+              Re-drill {wobbles.length} <span aria-hidden="true">→</span>
+            </button>
+          ) : redrill ? (
+            <button type="button" className={`m-tile m-ink pc-ink ${debrief.summary || over ? 'pc-s4' : 'pc-s12'}`} onClick={nav.redrill}>
+              Back to Re-drill <span aria-hidden="true">→</span>
+            </button>
+          ) : (
+            <button type="button" className={`m-tile m-ink pc-ink ${debrief.summary || over ? 'pc-s4' : 'pc-s12'}`} onClick={() => nav.setup(debrief.kind, debrief.role, debrief.graphRole)}>
+              Practise again <span aria-hidden="true">→</span>
+            </button>
+          )}
+
+          {debrief.kind === 'work' && <WorkPanel debrief={debrief} />}
+          {debrief.kind === 'work' && <ChecksPanel debrief={debrief} />}
         </div>
-
-        {debrief.firstThing ? (
-          <div className="pc-first">
-            <div className="kicker">Work on this first</div>
-            <p className="title pc-first-text">{debrief.firstThing}</p>
-            <div className="pc-actions">
-              {debrief.firstSlotId && (
-                <button type="button" className="btn btn-primary pc-btn" disabled={againBusy === debrief.firstSlotId} onClick={() => void again(debrief.firstSlotId as string, 'first')}>
-                  {againBusy === debrief.firstSlotId ? 'Starting…' : 'Ask this one again'}
-                </button>
-              )}
-              {role && (
-                <button type="button" className="btn pc-btn" onClick={() => nav.prepare(role)}>
-                  Open Prepare
-                </button>
-              )}
-            </div>
-            {firstError && (
-              <p className="pc-danger" role="alert">
-                {firstError}
-              </p>
-            )}
-            <p className="pc-muted pc-small">Asking again is free.</p>
-          </div>
-        ) : allDefended ? (
-          <div className="pc-first">
-            <div className="kicker">Work on this first</div>
-            <p className="title pc-first-text">You defended everything you were asked.</p>
-            <p className="pc-muted pc-small">Ask any question again whenever you like. It is free.</p>
-          </div>
-        ) : null}
-      </section>
-
-      {debrief.kind === 'work' && <WorkPanel debrief={debrief} />}
-      {debrief.kind === 'work' && <ChecksPanel debrief={debrief} />}
+      </div>
 
       <div className="pc-cols">
         <div className="pc-main-col">
@@ -294,8 +387,8 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
             <>
               {featured >= 0 && <FeaturedCard result={results[featured]} index={featured} ctx={ctx} />}
               <section className="pc-others" aria-label={featured >= 0 ? 'The other questions' : 'The questions'}>
-                <div className="kicker">{featured >= 0 ? `The other ${results.length - 1}` : `Your ${results.length} questions`}</div>
-                <div className="panel pc-acc-list">
+                <div className="kicker pc-others-head">{featured >= 0 ? `The other ${results.length - 1}` : `Your ${results.length} questions`}</div>
+                <div className="m-plain pc-acc-list">
                   {results.map((r, i) =>
                     i === featured ? null : <ResultRow key={r.slotId} result={r} index={i} open={open.has(r.slotId)} onToggle={() => toggle(r.slotId)} ctx={ctx} />,
                   )}
@@ -304,7 +397,7 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
             </>
           ) : (
             <>
-              <div className="pc-sec-head">
+              <div className="m-tile m-quiet pc-sec-head pc-qhead">
                 <p className="kicker">Your {countWord(results.length)} {results.length === 1 ? 'question' : 'questions'}</p>
                 <h2 className="title pc-h2">Question by question</h2>
                 <p className="pc-slotkey">
@@ -317,7 +410,7 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
               ))}
             </>
           )}
-          {!narrow && actions}
+          {!narrow && <div className="m-tile m-plain pc-endrow">{actions}</div>}
         </div>
 
         <aside className="pc-side" aria-label="Transcript">
@@ -325,7 +418,7 @@ export function DebriefView({ debrief, narrow, nav, onAgain, onFact, onDelete, f
         </aside>
       </div>
 
-      {narrow && actions}
+      {narrow && <div className="m-tile m-plain pc-endrow">{actions}</div>}
 
       <footer className="pc-footer">
         <p>

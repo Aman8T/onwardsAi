@@ -70,7 +70,7 @@ export function TranscriptPanel({ debrief, ids, active, narrow, open, onOpen, on
 
   if (narrow) {
     return (
-      <section className="panel pc-side-panel" aria-label="Transcript">
+      <section className="m-quiet pc-side-panel" aria-label="Transcript">
         <button type="button" className="pc-acc-row pc-transcript-toggle" aria-expanded={open} aria-controls={`${base}-t`} onClick={() => onOpen(!open)}>
           <span className="pc-acc-name">
             Transcript <span className="pc-muted">· {turns.length} {turns.length === 1 ? 'turn' : 'turns'}</span>
@@ -89,7 +89,7 @@ export function TranscriptPanel({ debrief, ids, active, narrow, open, onOpen, on
   }
 
   return (
-    <section className="panel pc-side-panel" aria-labelledby={`${base}-h`}>
+    <section className="m-quiet pc-side-panel" aria-labelledby={`${base}-h`}>
       <header className="pc-sec-head">
         <p className="kicker">The whole interview</p>
         <h2 className="title pc-h2" id={`${base}-h`}>
@@ -138,7 +138,7 @@ function Keeping({ kept, onDelete }: { kept: string; onDelete: () => Promise<voi
             <button type="button" className="btn btn-sm pc-btn-sm" disabled={busy} onClick={() => void remove()}>
               {busy ? 'Deleting…' : 'Delete'}
             </button>
-            <button ref={keep} type="button" className="btn btn-primary btn-sm pc-btn-sm" disabled={busy} onClick={() => setConfirming(false)}>
+            <button ref={keep} type="button" className="btn btn-sm pc-btn-sm" disabled={busy} onClick={() => setConfirming(false)}>
               Keep
             </button>
           </div>

@@ -8,10 +8,14 @@
  *   Facts from you            what the person said in practice and kept, marked "From you", each with its moment
  *   Sessions                  every interview, newest first
  *
- * Counts and words only. Nothing here is shared with an employer.
+ * The hero is the stage reached, on a field: how many claims are defended at their best, one circle each. What was
+ * measured (the claims, the sessions) is graph paper; what the person kept ("From you") is notebook paper; the one ink
+ * block is the next step. Counts and words only. Nothing here is shared with an employer.
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import type { PracticeFact, PracticeHistory, RoleSource, SessionSummary } from '../../../shared/interview';
+import { PageLine, Pips } from '../../components/materials';
+import { pipOfVerdict } from '../Pips';
 import { SessionRows } from '../hub/SessionRows';
 import { ErrorNote } from '../hub/Notice';
 import type { PracticeNav } from '../hub/nav';
@@ -56,30 +60,103 @@ export function ProgressView({ history, onReload, nav, onRemoveFact }: ProgressV
 
   const data = history.status === 'ready' ? history.data : undefined;
   const roles = data ? practisedRoles(data.sessions) : [];
+  const held = data ? data.claims.filter((c) => c.best === 'defended').length : 0;
+  const wobbling = data ? data.claims.filter((c) => c.best === 'shaky' || c.best === 'couldnt').length : 0;
+  const pips = data ? data.claims.slice(0, 30).map((c) => pipOfVerdict(c.best)) : [];
 
   return (
     <div className="pc-page pc-progress">
-      <header className="pc-head">
-        <button type="button" className="pc-back" onClick={nav.hub}>
-          <span aria-hidden="true">←</span> Practice
-        </button>
-        <p className="kicker">Practice</p>
-        <h1 className="serif pc-title" ref={titleRef} tabIndex={-1}>
-          What your practice changes
-        </h1>
-        <p className="pc-lede">Practice feeds the rest of Leafout. {NOTHING_SHARED}</p>
-      </header>
+      <div className={`m-screen pc-screen${data ? '' : ' is-stack'}`}>
+        <header className={`m-hero pc-hero${data ? ' m-field' : ''}`}>
+          <button type="button" className="pc-back" onClick={nav.hub}>
+            <span aria-hidden="true">←</span> Practice
+          </button>
+          <p className="kicker">Practice</p>
+          <h1 className="serif pc-title" ref={titleRef} tabIndex={-1}>
+            What your practice changes
+          </h1>
+          <p className="pc-lede">Practice feeds the rest of Leafout. {NOTHING_SHARED}</p>
+          {data && data.claims.length > 0 && (
+            <>
+              <p className="pc-count">
+                <span className="m-big is-hero">{held}</span>
+                <span className="pc-count-words">of {data.claims.length} claims defended, at their best</span>
+              </p>
+              <Pips pips={pips} label={`${held} of ${data.claims.length} claims defended at their best`} r={9} gap={7} />
+            </>
+          )}
+        </header>
+
+        {data && (
+          <div className="m-mosaic is-12 pc-mosaic">
+            {wobbling > 0 ? (
+              <button type="button" className="m-tile m-ink pc-ink pc-s12" onClick={nav.redrill}>
+                Re-drill {wobbling} <span aria-hidden="true">→</span>
+              </button>
+            ) : (
+              <button type="button" className="m-tile m-ink pc-ink pc-s12" onClick={nav.hub}>
+                Practise something new <span aria-hidden="true">→</span>
+              </button>
+            )}
+
+            <section className="m-tile m-quiet pc-s6 pc-kind-tile" aria-labelledby={graphId}>
+              <p className="kicker">Graph</p>
+              <h2 className="title pc-h3" id={graphId}>
+                In your graph
+              </h2>
+              <p className="m-fine">Your graph shows what your evidence backs. Practice never adds a skill to it: it only records what you backed up out loud.</p>
+              <div className="pc-card-go">
+                <button type="button" className="btn btn-sm pc-btn-sm" onClick={nav.graph}>
+                  Open your graph
+                </button>
+              </div>
+            </section>
+
+            <section className="m-tile m-quiet pc-s6 pc-kind-tile" aria-labelledby={prepareId}>
+              <p className="kicker">Prepare</p>
+              <h2 className="title pc-h3" id={prepareId}>
+                In Prepare
+              </h2>
+              {roles.length > 0 ? (
+                <>
+                  <p className="m-fine">A role's Prepare page holds its gaps and the stories to write down. Open the one you practised.</p>
+                  <ul className="pc-links pc-card-go">
+                    {roles.map((r) => (
+                      <li key={r.role.jobId}>
+                        <button type="button" className="btn btn-sm pc-btn-sm" onClick={() => nav.prepare(r.role)}>
+                          Open Prepare · {r.title}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <p className="m-fine">Practise a role you saved in Discover, and its Prepare page is one click away.</p>
+                  <div className="pc-card-go">
+                    <button type="button" className="btn btn-sm pc-btn-sm" onClick={nav.applications}>
+                      Open Your applications
+                    </button>
+                  </div>
+                </>
+              )}
+            </section>
+
+            <FactsPanel headingId={factsId} facts={data.facts} onRemove={onRemoveFact} />
+          </div>
+        )}
+      </div>
 
       {history.status === 'loading' && (
-        <p className="pc-muted" role="status">
+        <p className="pc-muted pc-gutter" role="status">
           Loading your practice…
         </p>
       )}
       {history.status === 'error' && <ErrorNote message={history.message} onRetry={onReload} onBack={nav.hub} />}
 
       {data && (
-        <>
-          <section className="panel pc-sec" aria-labelledby={claimsId}>
+        <div className="pc-stack">
+          <section className="m-tile m-graph pc-sec" aria-labelledby={claimsId}>
             <header className="pc-sec-head">
               <p className="kicker">Claims</p>
               <h2 className="title pc-h2" id={claimsId}>
@@ -93,58 +170,7 @@ export function ProgressView({ history, onReload, nav, onRemoveFact }: ProgressV
             )}
           </section>
 
-          <div className="pc-pair">
-            <section className="panel pc-sec" aria-labelledby={graphId}>
-              <header className="pc-sec-head">
-                <p className="kicker">Graph</p>
-                <h2 className="title pc-h2" id={graphId}>
-                  In your graph
-                </h2>
-              </header>
-              <p className="pc-muted pc-measure">Your graph shows what your evidence backs. Practice never adds a skill to it: it only records what you backed up out loud.</p>
-              <div>
-                <button type="button" className="btn btn-sm pc-btn-sm" onClick={nav.graph}>
-                  Open your graph
-                </button>
-              </div>
-            </section>
-
-            <section className="panel pc-sec" aria-labelledby={prepareId}>
-              <header className="pc-sec-head">
-                <p className="kicker">Prepare</p>
-                <h2 className="title pc-h2" id={prepareId}>
-                  In Prepare
-                </h2>
-              </header>
-              {roles.length > 0 ? (
-                <>
-                  <p className="pc-muted pc-measure">A role's Prepare page holds its gaps and the stories to write down. Open the one you practised.</p>
-                  <ul className="pc-links">
-                    {roles.map((r) => (
-                      <li key={r.role.jobId}>
-                        <button type="button" className="btn btn-sm pc-btn-sm" onClick={() => nav.prepare(r.role)}>
-                          Open Prepare · {r.title}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <>
-                  <p className="pc-muted pc-measure">Practise a role you saved in Discover, and its Prepare page is one click away.</p>
-                  <div>
-                    <button type="button" className="btn btn-sm pc-btn-sm" onClick={nav.applications}>
-                      Open Your applications
-                    </button>
-                  </div>
-                </>
-              )}
-            </section>
-          </div>
-
-          <FactsPanel headingId={factsId} facts={data.facts} onRemove={onRemoveFact} />
-
-          <section className="panel pc-sec" aria-labelledby={sessionsId}>
+          <section className="m-tile m-graph pc-sec" aria-labelledby={sessionsId}>
             <header className="pc-sec-head">
               <p className="kicker">Past sessions</p>
               <h2 className="title pc-h2" id={sessionsId}>
@@ -153,7 +179,7 @@ export function ProgressView({ history, onReload, nav, onRemoveFact }: ProgressV
             </header>
             {data.sessions.length === 0 ? <p className="pc-muted">Nothing practised yet.</p> : <SessionRows sessions={data.sessions} nav={nav} />}
           </section>
-        </>
+        </div>
       )}
 
       <footer className="pc-footer">
@@ -182,40 +208,51 @@ function FactsPanel({ headingId, facts, onRemove }: { headingId: string; facts: 
     }
   };
 
-  return (
-    <section className="panel pc-sec" aria-labelledby={headingId}>
-      <header className="pc-sec-head">
+  if (facts.length === 0) {
+    return (
+      <section className="m-tile m-gap pc-s12 pc-kind-tile" aria-labelledby={headingId}>
         <p className="kicker">Profile</p>
-        <h2 className="title pc-h2" id={headingId}>
+        <h2 className="title pc-h3" id={headingId}>
           Facts from you
         </h2>
-      </header>
-      {facts.length === 0 ? (
-        <p className="pc-muted pc-measure">Nothing kept yet. When an answer says something your resume doesn't, the debrief offers to keep it here, marked From you.</p>
-      ) : (
-        <ul className="pc-facts">
-          {facts.map((f) => (
-            <li key={keyOf(f)} className="pc-factcard">
-              <span className="chip pc-chip-have">From you</span>
-              <p className="pc-factcard-text">“{f.text}”</p>
-              <p className="pc-muted pc-small">
-                Said in practice on {dateOf(f.date)} · <span className="pc-cite">You · {clock(f.at)}</span>
-              </p>
-              <div className="pc-factcard-foot">
-                <span className="pc-muted">The match and your tailored resume can use it.</span>
-                <button type="button" className="btn btn-quiet btn-sm pc-btn-sm" disabled={busy === keyOf(f)} onClick={() => void remove(f)}>
-                  {busy === keyOf(f) ? 'Removing…' : 'Remove'}
-                </button>
-              </div>
-              {error?.key === keyOf(f) && (
-                <p className="pc-danger" role="alert">
+        <p className="pen">Nothing kept yet.</p>
+        <p className="m-fine">When an answer says something your resume doesn't, the debrief offers to keep it here, marked From you.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="m-tile m-paper pc-s12 pc-facts-page" aria-labelledby={headingId}>
+      <div className="m-page-head">
+        <h2 className="m-page-title pen" id={headingId}>
+          Facts from you
+        </h2>
+        <span className="m-fine">The match and your tailored resume can use them.</span>
+      </div>
+      <ul className="m-lines">
+        {facts.flatMap((f, i) => [
+          <PageLine
+            key={keyOf(f)}
+            tick={false}
+            wrap
+            index={i}
+            title={`“${f.text}”`}
+            cite={`From you · said in practice on ${dateOf(f.date)} · You · ${clock(f.at)}`}
+            end={
+              <button type="button" className="btn btn-quiet btn-sm pc-btn-sm" disabled={busy === keyOf(f)} onClick={() => void remove(f)}>
+                {busy === keyOf(f) ? 'Removing…' : 'Remove'}
+              </button>
+            }
+          />,
+          ...(error?.key === keyOf(f)
+            ? [
+                <li key={`${keyOf(f)}-error`} className="pc-danger" role="alert">
                   {error.message}
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+                </li>,
+              ]
+            : []),
+        ])}
+      </ul>
     </section>
   );
 }

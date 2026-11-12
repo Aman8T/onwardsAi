@@ -178,13 +178,13 @@ function Interviewer({ model, actions, heading }: { model: RoomModel; actions: R
   return (
     <section className="rm-says" aria-label={m.gate ? 'The interviewer, replying' : m.shown.kind === 'question' ? 'The interviewer' : 'The interviewer, follow-up'}>
       {said && (
-        <div className="rm-youbox">
+        <div className="rm-youbox m-paper is-loose">
           <div className="rm-rung">{m.gate ? 'You said' : `You said · ${clock(said.at)}`}</div>
           <p className="rm-muted">{said.text.trim() ? `“${clip(said.text, 320)}”` : ''}</p>
         </div>
       )}
       {m.shown.back && (
-        <div className="rm-youbox rm-back">
+        <div className="rm-youbox rm-back m-paper is-loose">
           <div className="rm-rung">{m.shown.back.line}</div>
           <p className="rm-muted">
             “{clip(m.shown.back.claim, 240)}”{m.shown.back.source ? <span className="rm-small"> · {m.shown.back.source}</span> : null}
@@ -248,7 +248,7 @@ function Transcript({ model, actions, narrow }: { model: RoomModel; actions: Roo
       {editable ? (
         <textarea id={id} className="rm-textarea rm-textarea-said" rows={narrow ? 5 : 4} value={m.draft} onChange={(e) => actions.setDraft(e.target.value)} placeholder={hint} />
       ) : (
-        <div className="rm-said-box" role="group" aria-labelledby={`${id}-l`}>
+        <div className="rm-said-box m-paper is-loose" role="group" aria-labelledby={`${id}-l`}>
           {empty ? (
             <p className="rm-faint">{hint}</p>
           ) : (
@@ -277,7 +277,7 @@ function SpeechPanel({ model, actions, narrow, meterPreview }: { model: RoomMode
 
   if (blocked && m.draft.trim() === '') {
     return (
-      <section className="panel rm-answer" aria-label="Your answer">
+      <section className="m-plain rm-answer" aria-label="Your answer">
         {m.speechNote && <SpeechNote note={m.speechNote} />}
         <MicNotice note={m.micNote === 'network' ? 'network' : 'blocked'} onType={actions.typeInstead} onRetry={actions.tryMicAgain} />
         <QuietRow model={m} actions={actions} sayAgain={!narrow} />
@@ -286,7 +286,7 @@ function SpeechPanel({ model, actions, narrow, meterPreview }: { model: RoomMode
   }
 
   return (
-    <section className="panel rm-answer" aria-label="Your answer" aria-busy={m.sending}>
+    <section className="m-plain rm-answer" aria-label="Your answer" aria-busy={m.sending}>
       {m.speechNote && <SpeechNote note={m.speechNote} />}
       {blocked && <MicNotice note={m.micNote === 'network' ? 'network' : 'blocked'} onType={actions.typeInstead} onRetry={actions.tryMicAgain} />}
 
@@ -399,7 +399,7 @@ function TypePanel({ model, actions, narrow }: { model: RoomModel; actions: Room
     if (!m.sending) box.current?.focus({ preventScroll: true });
   }, [line, m.session.turns.length, m.sending]);
   return (
-    <section className="panel rm-answer" aria-label="Your answer" aria-busy={m.sending}>
+    <section className="m-plain rm-answer" aria-label="Your answer" aria-busy={m.sending}>
       {m.speechNote && <SpeechNote note={m.speechNote} />}
       {m.micNote === 'unsupported' && <NoSpeechNotice />}
       <div className="rm-write">

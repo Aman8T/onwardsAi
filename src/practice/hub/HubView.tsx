@@ -3,23 +3,26 @@
  * props, everything it does goes out through `nav`. `HubScreen` feeds it from the server and the tracker; the dev page
  * feeds it from fixtures.
  *
- * Top to bottom: what practice is and what is left today, any notice (the sample profile, today's limit, paused), "Coming
- * up" (the roles in Interviewing or Applied that have a search to read them from), the four kinds, then "Your practice".
- * Verdicts are words and squares and counts, never a score; nothing here is shared with an employer.
+ * The hero (a field) is the session to pick up, else the next role to practise for, else where to start; the one ink block
+ * under it starts that. The four kinds are tiles sized by what the code already knows (a role the person can practise for,
+ * claims that wobbled, nothing practised yet); what wobbled is a notebook page. "Coming up" and the past sessions are rows
+ * under them, the sessions on graph paper. Verdicts are words and squares and counts, never a score; nothing here is shared
+ * with an employer.
  */
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { ClaimBest, InterviewKind, PracticeHistory, RoleSource, SessionSummary } from '../../../shared/interview';
+import { PageLine } from '../../components/materials';
 import { plural } from '../../lib/ui';
 import type { TrackedJob } from '../../discover/applications/tracker';
 import { STAGE_LABEL } from '../../discover/applications/tracker';
 import { FIT_WORD, dayLabel } from '../../discover/prepare/words';
-import { PipsLine } from '../Pips';
-import { KIND_BLURB, KIND_LABEL, KEPT_LINE, REDRILL_MAX, REDRILL_MINUTES, REDRILL_SHORT } from '../words';
+import { CirclesLine } from '../Pips';
+import { KIND_BLURB, KIND_LABEL, KEPT_LINE, REDRILL_MAX, REDRILL_MINUTES, REDRILL_SHORT, VERDICT_LABEL } from '../words';
 import type { PracticeNav } from './nav';
 import { DAILY_INTERVIEWS, ErrorNote, LimitNotice, PausedNotice, SampleNotice, freeLine } from './Notice';
 import { SessionRows } from './SessionRows';
 import type { Load } from './useLoad';
-import { FIT_PC, NOTHING_SHARED, clip, dateOf } from './words';
+import { FIT_PC, NOTHING_SHARED, clip, dateOf, sessionSubtitle } from './words';
 import '../../styles/practice.css';
 
 export interface HubViewProps {
@@ -77,7 +80,9 @@ export const wobbled = (claims: readonly ClaimBest[]) => claims.filter((c) => c.
 
 /* ───────────────────────── the screen ───────────────────────── */
 
-const CARDS: readonly { kind: InterviewKind; blurb: string; built: readonly string[]; length: string; button: string }[] = [
+type Card = { kind: InterviewKind; blurb: string; built: readonly string[]; length: string; button: string };
+
+const CARDS: readonly Card[] = [
   {
     kind: 'role',
     blurb: 'From a role you saved in Discover: what the posting asks, what you show, and your gaps.',
@@ -123,31 +128,93 @@ export function HubView({ sample, tracked, history, unlimited = false, onReload,
     titleRef.current?.focus();
   }, []);
 
+  // the hero: what to pick up, else the next role to practise for, else where to start
+  const unfinished = sessions.find((s) => s.status === 'active');
+  const next = coming[0];
+  // tile sizes follow what the code knows: a role to practise for, claims that wobbled, nothing practised yet
+  const roleBig = choices.length > 0;
+  const kindSpan = (kind: InterviewKind): string => {
+    if (kind === 'role') return roleBig ? 'pc-s7' : 'pc-s5';
+    if (kind === 'resume') return roleBig ? 'pc-s5' : 'pc-s7';
+    return weak.length > 0 ? 'pc-s4' : 'pc-s6';
+  };
+
   return (
     <div className="pc-page pc-hub">
-      <header className="pc-hero">
-        <p className="kicker">Practice</p>
-        <h1 className="serif pc-title" ref={titleRef} tabIndex={-1}>
-          Practice the interview
-        </h1>
-        <p className="pc-lede">Questions about your own work, asked out loud. Credit only for what you can back up.</p>
-        <p className="pc-muted pc-small">{freeLine(left, unlimited)}</p>
-      </header>
+      {(sample || limited || paused) && (
+        <div className="pc-notices">
+          {sample && <SampleNotice onAnalyse={nav.analyse} />}
+          {limited && <LimitNotice used={DAILY_INTERVIEWS} />}
+          {paused && <PausedNotice />}
+        </div>
+      )}
 
-      {sample && <SampleNotice onAnalyse={nav.analyse} />}
-      {limited && <LimitNotice used={DAILY_INTERVIEWS} />}
-      {paused && <PausedNotice />}
+      <div className="m-screen pc-screen">
+        <div className="pc-lead">
+          <header className="m-hero m-field pc-hero">
+            <p className="kicker">Practice</p>
+            <h1 className="serif pc-title" ref={titleRef} tabIndex={-1}>
+              Practice the interview
+            </h1>
+            <p className="pc-lede">Questions about your own work, asked out loud. Credit only for what you can back up.</p>
+            <div className="pc-pick">
+              {unfinished ? (
+                <>
+                  <p className="kicker">Where you left off</p>
+                  <p className="pc-pick-name">{KIND_LABEL[unfinished.kind]}</p>
+                  <p className="pc-pick-meta">
+                    Started {dateOf(unfinished.createdAt)} · not finished
+                    {unfinished.kind === 'role' || unfinished.kind === 'work' ? ` · ${sessionSubtitle(unfinished)}` : ''}
+                  </p>
+                </>
+              ) : next ? (
+                <>
+                  <p className="kicker">Next up · from Your applications</p>
+                  <p className="pc-pick-name">
+                    {next.item.job.title} at {next.item.job.employer}
+                  </p>
+                  <p className="pc-pick-meta">
+                    {next.item.stage === 'interviewing' ? STAGE_LABEL.interviewing : next.item.appliedAt ? `Applied ${dayLabel(next.item.appliedAt)}` : STAGE_LABEL.applied} ·{' '}
+                    {next.last ? `practised ${dateOf(next.last.createdAt)}` : 'not practised yet'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="kicker">Start here</p>
+                  <p className="pc-pick-name">{KIND_LABEL.resume}</p>
+                  <p className="pc-pick-meta">{KIND_BLURB.resume}</p>
+                </>
+              )}
+            </div>
+            <p className="pc-fine">{freeLine(left, unlimited)}</p>
+          </header>
+          {unfinished ? (
+            <button type="button" className="m-tile m-ink pc-ink" onClick={() => nav.room(unfinished.id)}>
+              Carry on <span aria-hidden="true">→</span>
+            </button>
+          ) : next ? (
+            <button type="button" className="m-tile m-ink pc-ink" disabled={limited} onClick={() => nav.setup('role', next.role)}>
+              {next.last ? 'Practise again for this role' : 'Practise for this role'} <span aria-hidden="true">→</span>
+            </button>
+          ) : (
+            <button type="button" className="m-tile m-ink pc-ink" disabled={limited} onClick={() => nav.setup('resume')}>
+              Defend your resume <span aria-hidden="true">→</span>
+            </button>
+          )}
+        </div>
 
-      {coming.length > 0 && <ComingUp rows={coming} limited={limited} nav={nav} />}
+        <section className="m-mosaic is-12 pc-mosaic" aria-label={weak.length > 0 ? 'Four kinds of practice, and a re-drill' : 'Four kinds of practice'}>
+          {CARDS.map((card) => (
+            <KindTile key={card.kind} card={card} span={kindSpan(card.kind)} choices={choices} limited={limited} nav={nav} />
+          ))}
+          {weak.length > 0 && <RedrillTile weak={weak} limited={limited} nav={nav} />}
+        </section>
+      </div>
 
-      <section className="pc-kinds" aria-label={weak.length > 0 ? 'Four kinds of practice, and a re-drill' : 'Four kinds of practice'}>
-        {CARDS.map((card) => (
-          <KindCard key={card.kind} card={card} choices={choices} limited={limited} nav={nav} />
-        ))}
-        {weak.length > 0 && <RedrillCard weak={weak} limited={limited} nav={nav} />}
-      </section>
-
-      <YourPractice history={history} onReload={onReload} nav={nav} paused={paused} />
+      <div className="pc-stack">
+        {coming.length > 0 && <ComingUp rows={coming} limited={limited} nav={nav} />}
+        <YourPractice history={history} onReload={onReload} nav={nav} paused={paused} />
+      </div>
 
       <footer className="pc-footer">
         <p>{KEPT_LINE}</p>
@@ -162,7 +229,7 @@ export function HubView({ sample, tracked, history, unlimited = false, onReload,
 function ComingUp({ rows, limited, nav }: { rows: readonly PractiseRole[]; limited: boolean; nav: PracticeNav }) {
   const headingId = useId();
   return (
-    <section className="panel pc-sec" aria-labelledby={headingId}>
+    <section className="m-tile m-quiet pc-sec" aria-labelledby={headingId}>
       <header className="pc-sec-head">
         <p className="kicker">From Your applications</p>
         <h2 className="title pc-h2" id={headingId}>
@@ -186,7 +253,7 @@ function ComingUp({ rows, limited, nav }: { rows: readonly PractiseRole[]; limit
                 <div className="pc-row-meta">
                   <span className="pc-muted">{meta}</span>
                   <span className={FIT_PC[job.fit]}>{FIT_WORD[job.fit]}</span>
-                  {last ? <PipsLine verdicts={last.verdicts} counts={last.counts} /> : <span className="pc-muted pc-small">Not practised yet</span>}
+                  {last ? <CirclesLine verdicts={last.verdicts} counts={last.counts} /> : <span className="pc-muted pc-small">Not practised yet</span>}
                 </div>
               </div>
               <div className="pc-row-actions">
@@ -197,7 +264,7 @@ function ComingUp({ rows, limited, nav }: { rows: readonly PractiseRole[]; limit
                 )}
                 <button
                   type="button"
-                  className={`btn pc-btn${last ? '' : ' btn-primary'}`}
+                  className="btn pc-btn"
                   disabled={limited}
                   aria-label={`${last ? 'Practise again' : 'Practise for this role'}, ${job.title} at ${job.employer}`}
                   onClick={() => nav.setup('role', role)}
@@ -215,34 +282,28 @@ function ComingUp({ rows, limited, nav }: { rows: readonly PractiseRole[]; limit
 
 /* ───────────────────────── the four kinds ───────────────────────── */
 
-function KindCard({ card, choices, limited, nav }: { card: (typeof CARDS)[number]; choices: readonly PractiseRole[]; limited: boolean; nav: PracticeNav }) {
+function KindTile({ card, span, choices, limited, nav }: { card: Card; span: string; choices: readonly PractiseRole[]; limited: boolean; nav: PracticeNav }) {
   const ids = useId();
   const [picked, setPicked] = useState<string>('');
   const chosen = choices.find((c) => c.item.job.id === picked) ?? choices[0];
   const isRole = card.kind === 'role';
 
   return (
-    <article className="panel pc-card" aria-labelledby={`${ids}-h`}>
+    <article className={`m-tile m-plain pc-kind-tile ${span}`} aria-labelledby={`${ids}-h`}>
       <h2 className="title pc-h3" id={`${ids}-h`}>
         {KIND_LABEL[card.kind]}
       </h2>
-      <p className="pc-muted pc-card-blurb">{card.blurb}</p>
-      <div className="pc-built">
-        <p className="kicker">Built from</p>
-        <div className="pc-chips">
-          {card.built.map((b) => (
-            <span key={b} className="chip">
-              {b}
-            </span>
-          ))}
-        </div>
-      </div>
-      <p className="numeral pc-muted pc-small">{card.length}</p>
+      <p className="m-fine pc-card-blurb">{card.blurb}</p>
+      <p className="m-cite">
+        Built from {card.built.join(' · ')}
+        <br />
+        {card.length}
+      </p>
 
       <div className="pc-card-go">
         {isRole && choices.length === 0 && (
           <>
-            <p className="pc-muted pc-small">Roles you save from a search in Discover show up here, so you can practise for one.</p>
+            <p className="m-fine">Roles you save from a search in Discover show up here, so you can practise for one.</p>
             <button type="button" className="btn pc-btn" onClick={nav.discover}>
               Find roles in Discover
             </button>
@@ -277,29 +338,28 @@ function KindCard({ card, choices, limited, nav }: { card: (typeof CARDS)[number
   );
 }
 
-/** The fifth card, only when something wobbled: re-drill the claims that were not fully backed up. */
-function RedrillCard({ weak, limited, nav }: { weak: readonly ClaimBest[]; limited: boolean; nav: PracticeNav }) {
+/** Only when something wobbled: a page of the claims to bring back, in pen, each opening the re-drill. */
+function RedrillTile({ weak, limited, nav }: { weak: readonly ClaimBest[]; limited: boolean; nav: PracticeNav }) {
   const ids = useId();
   const n = Math.min(weak.length, REDRILL_SHORT);
   return (
-    <article className="panel pc-card pc-card-redrill" aria-labelledby={`${ids}-h`}>
-      <h2 className="title pc-h3" id={`${ids}-h`}>
-        {KIND_LABEL.redrill}
-      </h2>
-      <p className="pc-muted pc-card-blurb">{KIND_BLURB.redrill}</p>
-      <div className="pc-built">
-        <p className="kicker">Built from</p>
-        <div className="pc-chips">
-          <span className="chip">Your past sessions</span>
-          <span className="chip">Your Fix steps</span>
-        </div>
+    <article className="m-tile m-paper pc-s4 pc-redrill-tile" aria-labelledby={`${ids}-h`}>
+      <div className="m-page-head">
+        <h2 className="m-page-title pen" id={`${ids}-h`}>
+          {KIND_LABEL.redrill}
+        </h2>
       </div>
-      <p className="numeral pc-muted pc-small">
-        {plural(weak.length, 'claim')} wobbled · the top {n} take about {n * REDRILL_MINUTES} min
-        {weak.length > REDRILL_SHORT ? ` · up to ${Math.min(weak.length, REDRILL_MAX)} in one` : ''}
-      </p>
-      <div className="pc-card-go">
-        <button type="button" className="btn btn-primary pc-btn" disabled={limited} onClick={nav.redrill}>
+      <ul className="m-lines">
+        {weak.slice(0, 3).map((c, i) => (
+          <PageLine key={`${c.source}|${c.text}`} tick={false} index={i} title={clip(c.text, 64)} cite={`${c.source} · ${VERDICT_LABEL[c.best]}`} onGo={nav.redrill} />
+        ))}
+      </ul>
+      <div className="m-foot">
+        <p className="m-fine">
+          {plural(weak.length, 'claim')} wobbled · the top {n} take about {n * REDRILL_MINUTES} min
+          {weak.length > REDRILL_SHORT ? ` · up to ${Math.min(weak.length, REDRILL_MAX)} in one` : ''}
+        </p>
+        <button type="button" className="btn pc-btn" disabled={limited} onClick={nav.redrill}>
           Re-drill
         </button>
       </div>
@@ -312,7 +372,7 @@ function RedrillCard({ weak, limited, nav }: { weak: readonly ClaimBest[]; limit
 function YourPractice({ history, onReload, nav, paused }: { history: Load<PracticeHistory>; onReload: () => void; nav: PracticeNav; paused: boolean }) {
   const headingId = useId();
   return (
-    <section className="panel pc-sec" aria-labelledby={headingId} aria-busy={history.status === 'loading'}>
+    <section className="m-tile m-graph pc-sec" aria-labelledby={headingId} aria-busy={history.status === 'loading'}>
       <header className="pc-sec-head pc-sec-head-row">
         <div className="pc-sec-head">
           <p className="kicker">Past sessions</p>
@@ -341,7 +401,7 @@ function YourPractice({ history, onReload, nav, paused }: { history: Load<Practi
       )}
       {history.status === 'ready' && history.data.sessions.length === 0 && (
         <>
-          <p className="hand">Your first one starts the pile.</p>
+          <p className="pen">Your first one starts the pile.</p>
           <p className="pc-muted">Nothing practised yet. Pick a kind above, and your debriefs are kept here for 30 days.</p>
         </>
       )}

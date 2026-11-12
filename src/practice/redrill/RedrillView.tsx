@@ -3,12 +3,14 @@
  * the server's order (code's: a ticked Fix step first, then Couldn't defend, then the oldest), and everything the person
  * does goes out as a callback. `RedrillScreen` feeds it from the server; the dev page feeds it from fixtures.
  *
- * Left, what comes back: one row per claim with its last verdict, how often it was asked, where it would open, and its Fix
- * step (done, or not yet). Short ticks the top 3, All up to 6; the person can untick any. Right, how to answer, the start,
- * the rules of a re-drill in four lines, and the Fix steps kept in Practice (ticked and taken out here). No score, no
- * streak: words and counts only.
+ * A notebook page of what to bring back: one ruled line per claim with a hand-drawn box to pick it (still a checkbox), its
+ * last verdict, how often it was asked, where it would open, and its Fix step (done, or not yet). Short ticks the top 3,
+ * All up to 6; the person can untick any. Beside it, how to answer, the rules of a re-drill in four lines, the Fix steps
+ * kept in Practice (ticked and taken out here), and the one ink block that starts it. No score, no streak: words and counts
+ * only.
  */
 import { useEffect, useId, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 import type { FixTask, RedrillClaim, RedrillView as RedrillData } from '../../../shared/interview';
 import { plural } from '../../lib/ui';
 import { VerdictChip } from '../Pips';
@@ -43,6 +45,25 @@ type Length = 'short' | 'all';
 
 const topKeys = (claims: readonly RedrillClaim[], n: number) => new Set(claims.slice(0, n).map((c) => c.key));
 
+/** A box drawn by hand in front of a line, which is still a real checkbox (the input lies over it, invisible). */
+const BOX = [
+  'M4.2 4.6c5-.7 10.2-.5 15.4-.1.4 5 .3 10-.1 15.1-5 .6-10.1.5-15.2.1C3.9 14.7 3.8 9.6 4.2 4.6z',
+  'M4.5 4.2c5 .3 10-.2 15 .4-.3 5 .2 10.2-.3 15.1-5.1-.2-10 .4-15-.2.5-5-.1-10.2.3-15.3z',
+] as const;
+const CHECK = 'M6.5 12.5c1.8 1.6 3.2 3.4 4.4 5.4 2.2-5.6 5.6-10.4 10.6-14.6';
+
+function BoxCheck({ id, checked, disabled, index, onChange }: { id: string; checked: boolean; disabled: boolean; index: number; onChange: (checked: boolean) => void }) {
+  return (
+    <span className={`tick pc-boxcheck${checked ? ' is-done' : ''}`}>
+      <input id={id} type="checkbox" className="pc-rd-check" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path className="bx" d={BOX[index % 2]} />
+        <path className="ck" d={CHECK} />
+      </svg>
+    </span>
+  );
+}
+
 export function RedrillView(props: RedrillViewProps) {
   const { data, sample, unlimited = false, nav } = props;
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -55,28 +76,29 @@ export function RedrillView(props: RedrillViewProps) {
 
   return (
     <div className="pc-page pc-redrill">
-      <header className="pc-head">
-        <button type="button" className="pc-back" onClick={nav.hub}>
-          <span aria-hidden="true">←</span> Practice
-        </button>
-        <p className="kicker">Practice · Re-drill</p>
-        <h1 className="serif pc-title" ref={titleRef} tabIndex={-1}>
-          Re-drill what wobbled
-        </h1>
-        <p className="pc-lede">The claims you were asked about and didn’t fully back up, from all your sessions. Each one comes back where it wobbled last time.</p>
-      </header>
-
-      {sample && <SampleNotice onAnalyse={nav.analyse} />}
-      {left === 0 && <LimitNotice used={DAILY_INTERVIEWS} />}
-
-      {data.status === 'loading' && (
-        <p className="pc-muted" role="status">
-          Finding what wobbled…
-        </p>
+      {(sample || left === 0) && (
+        <div className="pc-notices">
+          {sample && <SampleNotice onAnalyse={nav.analyse} />}
+          {left === 0 && <LimitNotice used={DAILY_INTERVIEWS} />}
+        </div>
       )}
-      {data.status === 'error' && <ErrorNote message={data.message} onRetry={props.onReload} onBack={nav.hub} />}
-      {data.status === 'ready' && claims.length === 0 && <Nothing kept={data.data.kept} {...props} />}
-      {data.status === 'ready' && claims.length > 0 && <Ready key={claims.map((c) => c.key).join('|')} claims={claims} left={left} {...props} />}
+
+      {data.status === 'ready' && claims.length > 0 ? (
+        <Ready key={claims.map((c) => c.key).join('|')} claims={claims} left={left} titleRef={titleRef} {...props} />
+      ) : (
+        <div className="m-screen is-stack pc-screen">
+          <header className="m-hero pc-hero">
+            <Heading titleRef={titleRef} nav={nav} />
+          </header>
+          {data.status === 'loading' && (
+            <p className="pc-muted pc-gutter" role="status">
+              Finding what wobbled…
+            </p>
+          )}
+          {data.status === 'error' && <ErrorNote message={data.message} onRetry={props.onReload} onBack={nav.hub} />}
+          {data.status === 'ready' && <Nothing kept={data.data.kept} {...props} />}
+        </div>
+      )}
 
       <footer className="pc-footer">
         <p>{NOTHING_SHARED}</p>
@@ -85,29 +107,54 @@ export function RedrillView(props: RedrillViewProps) {
   );
 }
 
+function Heading({ titleRef, nav }: { titleRef: RefObject<HTMLHeadingElement | null>; nav: PracticeNav }) {
+  return (
+    <>
+      <button type="button" className="pc-back" onClick={nav.hub}>
+        <span aria-hidden="true">←</span> Practice
+      </button>
+      <p className="kicker">Practice · Re-drill</p>
+      <h1 className="serif pc-title" ref={titleRef} tabIndex={-1}>
+        Re-drill what wobbled
+      </h1>
+      <p className="pc-lede">The claims you were asked about and didn’t fully back up, from all your sessions. Each one comes back where it wobbled last time.</p>
+    </>
+  );
+}
+
 /* ───────────────────────── nothing wobbled ───────────────────────── */
 
 function Nothing({ kept, nav, ...rest }: RedrillViewProps & { kept: readonly FixTask[] }) {
   return (
     <>
-      <section className="panel pc-notice" aria-label="Nothing to re-drill">
+      <section className="m-tile m-gap pc-notice" aria-label="Nothing to re-drill">
+        <p className="pen">Nothing wobbled.</p>
         <div className="pc-notice-text">
           <p>Every claim you’ve been asked about is Defended. Practise something new to find the next one.</p>
         </div>
-        <div className="pc-actions">
-          <button type="button" className="btn pc-btn" onClick={nav.hub}>
-            Back to Practice
-          </button>
-        </div>
       </section>
       {kept.length > 0 && <Kept kept={kept} nav={nav} {...rest} />}
+      <button type="button" className="m-tile m-ink pc-ink" onClick={nav.hub}>
+        Back to Practice <span aria-hidden="true">→</span>
+      </button>
     </>
   );
 }
 
 /* ───────────────────────── the list and the start ───────────────────────── */
 
-function Ready({ claims, left, answer, starting, startError, onAnswer, onStart, unlimited = false, ...rest }: RedrillViewProps & { claims: readonly RedrillClaim[]; left: number | undefined }) {
+function Ready({
+  claims,
+  left,
+  titleRef,
+  answer,
+  starting,
+  startError,
+  onAnswer,
+  onStart,
+  unlimited = false,
+  ...rest
+}: RedrillViewProps & { claims: readonly RedrillClaim[]; left: number | undefined; titleRef: RefObject<HTMLHeadingElement | null> }) {
   const listId = useId();
   const startId = useId();
   const [length, setLength] = useState<Length>('short');
@@ -137,71 +184,78 @@ function Ready({ claims, left, answer, starting, startError, onAnswer, onStart, 
       : `${plural(chosen.length, 'claim')} · about ${chosen.length * REDRILL_MINUTES} min · ${answer === 'speech' ? 'speaking' : 'typing'}`;
 
   return (
-    <div className="pc-rd-cols">
-      <section className="panel pc-sec pc-rd-list" aria-labelledby={listId}>
-        <header className="pc-sec-head pc-sec-head-row">
-          <div className="pc-sec-head">
-            <p className="kicker">{plural(claims.length, 'claim')}</p>
-            <h2 className="title pc-h2" id={listId}>
+    <div className="m-screen pc-screen">
+      <header className="m-hero pc-hero pc-held">
+        <Heading titleRef={titleRef} nav={rest.nav} />
+        <p className="pc-count">
+          <span className="m-big is-hero">{claims.length}</span>
+          <span className="pc-count-words">{claims.length === 1 ? 'claim to bring back' : 'claims to bring back'}</span>
+        </p>
+        <p className="pc-fine">Fix steps you did come first, then Couldn’t defend, then the oldest.</p>
+      </header>
+
+      <div className="m-mosaic is-12 pc-mosaic">
+        <section className="m-tile m-paper pc-s12 pc-rd-page" aria-labelledby={listId}>
+          <div className="m-page-head">
+            <h2 className="m-page-title pen" id={listId}>
               What comes back
             </h2>
+            <span className="m-fine">{plural(claims.length, 'claim')}</span>
           </div>
-          <p className="pc-muted pc-small pc-rd-order">Fix steps you did come first, then Couldn’t defend, then the oldest.</p>
-        </header>
-        <ul className="pc-rd-claims">
-          {claims.map((c) => (
-            <ClaimRow key={c.key} claim={c} on={picked.has(c.key)} disabled={!picked.has(c.key) && full} onToggle={() => toggle(c.key)} />
-          ))}
-        </ul>
-        {claims.length > REDRILL_MAX && <p className="pc-muted pc-small">A re-drill asks at most {REDRILL_MAX}. The rest wait for the next one.</p>}
-      </section>
+          <ul className="m-lines pc-rd-claims">
+            {claims.map((c, i) => (
+              <ClaimRow key={c.key} claim={c} index={i} on={picked.has(c.key)} disabled={!picked.has(c.key) && full} onToggle={() => toggle(c.key)} />
+            ))}
+          </ul>
+          {claims.length > REDRILL_MAX && <p className="m-fine pc-rd-more">A re-drill asks at most {REDRILL_MAX}. The rest wait for the next one.</p>}
+        </section>
 
-      <aside className="pc-rd-side" aria-label="Start and the rules">
-        <section className="panel pc-sec" aria-labelledby={startId}>
-          <h2 className="title pc-h2" id={startId}>
+        <section className="m-tile m-quiet pc-s12 pc-rd-start" aria-labelledby={startId}>
+          <h2 className="title pc-h3" id={startId}>
             Start
           </h2>
-          <div className="pc-rd-field">
-            <p className="kicker">Length</p>
-            <div className="rm-choices" role="group" aria-label="Length">
-              <button type="button" className="rm-choice" aria-pressed={length === 'short'} onClick={() => pickLength('short')}>
-                Short · top {Math.min(REDRILL_SHORT, claims.length)}
-              </button>
-              {all > REDRILL_SHORT && (
-                <button type="button" className="rm-choice" aria-pressed={length === 'all'} onClick={() => pickLength('all')}>
-                  All {all}
+          <div className="pc-rd-fields">
+            <div className="pc-rd-field">
+              <p className="kicker">Length</p>
+              <div className="rm-choices" role="group" aria-label="Length">
+                <button type="button" className="rm-choice" aria-pressed={length === 'short'} onClick={() => pickLength('short')}>
+                  Short · top {Math.min(REDRILL_SHORT, claims.length)}
                 </button>
-              )}
+                {all > REDRILL_SHORT && (
+                  <button type="button" className="rm-choice" aria-pressed={length === 'all'} onClick={() => pickLength('all')}>
+                    All {all}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="pc-rd-field">
-            <p className="kicker">Answer by</p>
-            <div className="rm-choices" role="group" aria-label="Answer by">
-              <button type="button" className="rm-choice" aria-pressed={answer === 'speech'} onClick={() => onAnswer('speech')}>
-                Speaking
-              </button>
-              <button type="button" className="rm-choice" aria-pressed={answer === 'type'} onClick={() => onAnswer('type')}>
-                Typing
-              </button>
+            <div className="pc-rd-field">
+              <p className="kicker">Answer by</p>
+              <div className="rm-choices" role="group" aria-label="Answer by">
+                <button type="button" className="rm-choice" aria-pressed={answer === 'speech'} onClick={() => onAnswer('speech')}>
+                  Speaking
+                </button>
+                <button type="button" className="rm-choice" aria-pressed={answer === 'type'} onClick={() => onAnswer('type')}>
+                  Typing
+                </button>
+              </div>
             </div>
           </div>
           <p className="numeral pc-muted pc-small" aria-live="polite">
             {summary}
           </p>
-          <div className="pc-actions">
-            <button type="button" className="btn btn-primary pc-btn" disabled={chosen.length === 0 || starting || limited} onClick={() => onStart(chosen)}>
-              {starting ? 'Starting…' : chosen.length === 0 ? 'Pick a claim to start' : 'Start the re-drill'}
-            </button>
-          </div>
-          {startError && (
-            <p className="pc-danger" role="alert">
-              {startError}
-            </p>
-          )}
-          <p className="pc-muted pc-small">{freeLine(left, unlimited)} · A re-drill counts as one.</p>
+          <p className="pc-fine">{freeLine(left, unlimited)} · A re-drill counts as one.</p>
         </section>
 
-        <section className="panel pc-sec" aria-label="How a re-drill differs">
+        <button type="button" className="m-tile m-ink pc-ink pc-s12" disabled={chosen.length === 0 || starting || limited} onClick={() => onStart(chosen)}>
+          {starting ? 'Starting…' : chosen.length === 0 ? 'Pick a claim to start' : 'Start the re-drill'} <span aria-hidden="true">→</span>
+        </button>
+        {startError && (
+          <p className="m-tile m-quiet pc-s12 pc-danger" role="alert">
+            {startError}
+          </p>
+        )}
+
+        <section className="m-tile m-quiet pc-s12 pc-rd-rules-tile" aria-label="How a re-drill differs">
           <h2 className="title pc-h3">How a re-drill differs</h2>
           <dl className="pc-rd-rules">
             {REDRILL_RULES.map((r) => (
@@ -214,22 +268,20 @@ function Ready({ claims, left, answer, starting, startError, onAnswer, onStart, 
         </section>
 
         {kept.length > 0 && <Kept kept={kept} answer={answer} starting={starting} onAnswer={onAnswer} onStart={onStart} {...rest} />}
-      </aside>
+      </div>
     </div>
   );
 }
 
-function ClaimRow({ claim, on, disabled, onToggle }: { claim: RedrillClaim; on: boolean; disabled: boolean; onToggle: () => void }) {
+function ClaimRow({ claim, index, on, disabled, onToggle }: { claim: RedrillClaim; index: number; on: boolean; disabled: boolean; onToggle: () => void }) {
   const id = useId();
   const fix = claim.fix;
   return (
-    <li className={`pc-rd-claim${on ? '' : ' is-off'}`}>
-      <input id={id} type="checkbox" className="pc-rd-check" checked={on} disabled={disabled} onChange={onToggle} />
-      <label htmlFor={id} className="pc-rd-body">
-        <span className="pc-rd-text">
-          <span className="pc-fact">“{claim.text}”</span>
-          {claim.source && <span className="pc-cite">{claim.source}</span>}
-        </span>
+    <li className={`m-line pc-rd-claim${on ? '' : ' is-off'}`}>
+      <BoxCheck id={id} checked={on} disabled={disabled} index={index} onChange={onToggle} />
+      <label htmlFor={id} className="m-line-main pc-rd-body">
+        <span className="pen pc-rd-pen">“{claim.text}”</span>
+        {claim.source && <span className="m-cite">{claim.source}</span>}
         <span className="pc-rd-meta">
           <VerdictChip verdict={claim.last.verdict} />
           <span className="pc-muted">
@@ -265,40 +317,42 @@ function Kept({ kept, onTick, onRemove }: RedrillViewProps & { kept: readonly Fi
     }
   };
   return (
-    <section className="panel pc-sec" aria-labelledby={headingId}>
-      <p className="kicker">Kept in Practice</p>
-      <h2 className="title pc-h3" id={headingId}>
-        Your Fix steps
-      </h2>
-      <ul className="pc-rd-fixes">
-        {kept.map((t) => (
-          <FixRow key={t.id} task={t} busy={busy === t.id} error={error?.id === t.id ? error.message : undefined} onTick={(done) => void run(t, () => onTick(t, done))} onRemove={() => void run(t, () => onRemove(t))} />
+    <section className="m-tile m-paper pc-s12 pc-rd-page" aria-labelledby={headingId}>
+      <div className="m-page-head">
+        <h2 className="m-page-title pen" id={headingId}>
+          Your Fix steps
+        </h2>
+        <span className="m-fine">Kept in Practice</span>
+      </div>
+      <ul className="m-lines pc-rd-fixes">
+        {kept.map((t, i) => (
+          <FixRow key={t.id} task={t} index={i} busy={busy === t.id} error={error?.id === t.id ? error.message : undefined} onTick={(done) => void run(t, () => onTick(t, done))} onRemove={() => void run(t, () => onRemove(t))} />
         ))}
       </ul>
-      <p className="pc-muted pc-small">Ticking a step changes no verdict. It puts its claim first in your next re-drill.</p>
+      <p className="m-fine pc-rd-more">Ticking a step changes no verdict. It puts its claim first in your next re-drill.</p>
     </section>
   );
 }
 
-function FixRow({ task, busy, error, onTick, onRemove }: { task: FixTask; busy: boolean; error?: string; onTick: (done: boolean) => void; onRemove: () => void }) {
+function FixRow({ task, index, busy, error, onTick, onRemove }: { task: FixTask; index: number; busy: boolean; error?: string; onTick: (done: boolean) => void; onRemove: () => void }) {
   const id = useId();
   return (
-    <li className="pc-rd-fix">
-      <input id={id} type="checkbox" className="pc-rd-check" checked={!!task.doneAt} disabled={busy} onChange={(e) => onTick(e.target.checked)} />
-      <label htmlFor={id} className="pc-rd-body">
-        <span className={task.doneAt ? 'pc-muted pc-done' : ''}>{task.text}</span>
-        <span className="pc-muted pc-small">
+    <li className="m-line pc-rd-fix">
+      <BoxCheck id={id} checked={!!task.doneAt} disabled={busy} index={index + 1} onChange={onTick} />
+      <label htmlFor={id} className="m-line-main pc-rd-body">
+        <span className={`pen pc-rd-pen${task.doneAt ? ' pc-done' : ''}`}>{task.text}</span>
+        <span className="m-cite">
           For “{task.claimText}” · about {task.minutes} min
         </span>
+        {error && (
+          <span className="pc-danger pc-small" role="alert">
+            {error}
+          </span>
+        )}
       </label>
       <button type="button" className="btn btn-quiet btn-sm pc-btn-sm" disabled={busy} aria-label={`Take out: ${task.text}`} onClick={onRemove}>
         Take out
       </button>
-      {error && (
-        <p className="pc-danger pc-small" role="alert">
-          {error}
-        </p>
-      )}
     </li>
   );
 }

@@ -8,6 +8,8 @@
  * against the person, so it is a dashed square and a count, never a red one.
  */
 import type { Verdict, VerdictCounts } from '../../shared/interview';
+import { Pips } from '../components/materials';
+import type { Pip as PipKind } from '../components/materials';
 import { VERDICT_LABEL } from './words';
 
 /** More squares than this add nothing a count does not say; the line still gives every number. */
@@ -115,5 +117,22 @@ export function PipsKey() {
         </span>
       ))}
     </div>
+  );
+}
+
+/* ───────────────────────── the circles (design.md 7b) ───────────────────────── */
+
+/** Defended is a filled circle, Shaky half, and anything not held (Couldn't defend, Not assessed) a dashed one. */
+export const pipOfVerdict = (v: Verdict): PipKind => (v === 'defended' ? 'on' : v === 'shaky' ? 'half' : 'no');
+
+/** One circle per question, and the count line beside them in words: what the hub, Progress and a past session show. */
+export function CirclesLine({ verdicts, counts, r = 5, gap = 5 }: { verdicts: readonly Verdict[]; counts?: VerdictCounts; r?: number; gap?: number }) {
+  const c = counts ?? countsOf(verdicts);
+  if (totalOf(c) === 0) return null;
+  return (
+    <span className="pc-pipsline">
+      <Pips pips={verdicts.slice(0, MAX_PIPS).map(pipOfVerdict)} label={countsLabel(c)} r={r} gap={gap} />
+      <span className="pc-pipsline-text">{countsLine(c)}</span>
+    </span>
   );
 }

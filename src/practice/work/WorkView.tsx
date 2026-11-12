@@ -9,6 +9,7 @@
 import { useId } from 'react';
 import type { WorkTask } from '../../../shared/interview';
 import { plural } from '../../lib/ui';
+import '../../styles/practice.css';
 import '../../styles/practice-room.css';
 import { MicIcon } from '../room/icons';
 import { MicMeter } from '../room/MicMeter';
@@ -74,7 +75,7 @@ export function WorkView(p: WorkViewProps) {
         </div>
 
         <div className="rm-work-cols">
-          <section className="panel rm-task" aria-labelledby={`${ids}-task`}>
+          <section className="m-plain rm-task" aria-labelledby={`${ids}-task`}>
             <div className="rm-task-head">
               <div id={`${ids}-task`} className="kicker">
                 The task
@@ -99,7 +100,7 @@ export function WorkView(p: WorkViewProps) {
             </div>
           </section>
 
-          <section className="panel rm-yours" aria-labelledby={`${ids}-work-h`}>
+          <section className="m-plain rm-yours" aria-labelledby={`${ids}-work-h`}>
             <div className="rm-yours-head">
               <div>
                 <div id={`${ids}-work-h`} className="kicker">
@@ -192,17 +193,17 @@ export function WorkView(p: WorkViewProps) {
               </p>
             )}
 
-            <div className="rm-buttons">
-              <button type="button" className="btn btn-primary rm-btn" disabled={!canHand} onClick={p.onHandIn}>
-                {p.handing ? 'Handing in…' : "I'm done, ask me about it"}
-              </button>
-              {!talk.on && (
+            {!talk.on && (
+              <div className="rm-buttons">
                 <button type="button" className="btn rm-btn" onClick={() => p.onTalk(true)} disabled={p.handing}>
                   <MicIcon />
                   Talk it through instead
                 </button>
-              )}
-            </div>
+              </div>
+            )}
+            <button type="button" className="m-tile m-ink pc-ink rm-handin" disabled={!canHand} onClick={p.onHandIn}>
+              {p.handing ? 'Handing in…' : "I'm done, ask me about it"} <span aria-hidden="true">→</span>
+            </button>
             <div role="status" aria-live="polite">
               {p.handing && <p className="rm-muted rm-small">Your work is saved for the questions. The interviewer will ask about your choices next.</p>}
             </div>
@@ -212,7 +213,7 @@ export function WorkView(p: WorkViewProps) {
         </div>
 
         <div className="rm-work-after">
-          <section className="panel rm-after" aria-labelledby={`${ids}-defend`}>
+          <section className="m-quiet rm-after" aria-labelledby={`${ids}-defend`}>
             <div className="kicker">After the task</div>
             <h2 id={`${ids}-defend`} className="rm-h2">
               Then: defend it

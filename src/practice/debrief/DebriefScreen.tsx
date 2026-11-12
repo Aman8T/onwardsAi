@@ -13,7 +13,7 @@ import type { Profile } from '../../../shared/types';
 import type { Debrief, FixTask, SessionView } from '../../../shared/interview';
 import type { PreparePlanSummary } from '../../../shared/prepare';
 import { NARROW_QUERY, useMediaQuery } from '../../lib/ui';
-import { addFix, askAgain, deleteSession, endSession, fetchPlanList, fetchRedrill, fetchSession, removeFix, setFact } from '../api';
+import { addFix, askAgain, deleteSession, endSession, fetchHistory, fetchPlanList, fetchRedrill, fetchSession, removeFix, setFact } from '../api';
 import type { FixPlacing } from './ResultCard';
 import { ErrorNote } from '../hub/Notice';
 import { liveNav } from '../hub/nav';
@@ -26,12 +26,14 @@ export function DebriefScreen({ profile, sessionId }: { profile: Profile; sessio
   const narrow = useMediaQuery(NARROW_QUERY);
   const { load, reload, patch } = useLoad<SessionView>((signal) => fetchSession(sessionId, profile.id, signal), [profile.id, sessionId]);
   const nav = liveNav;
+  // the person's practice so far draws "claims defended" over sessions; a read that fails just leaves that tile out
+  const past = useLoad((signal) => fetchHistory(profile.id, signal), [profile.id]).load;
   const placing = useFixPlacing(profile.id, sessionId, load.status === 'ready' ? load.data.debrief : undefined);
 
   if (load.status === 'loading') {
     return (
       <div className="pc-page" aria-busy="true">
-        <p className="pc-muted" role="status">
+        <p className="pc-muted pc-gutter" role="status">
           Opening your debrief…
         </p>
       </div>
@@ -68,6 +70,7 @@ export function DebriefScreen({ profile, sessionId }: { profile: Profile; sessio
         nav.hub();
       }}
       {...(placing ? { fix: placing } : {})}
+      {...(past.status === 'ready' ? { history: past.data } : {})}
     />
   );
 }
@@ -159,33 +162,33 @@ function NotFinished({ profile, sessionId, done, onDebrief }: { profile: Profile
   };
   return (
     <div className="pc-page">
-      <header className="pc-head">
+      <header className="pc-head pc-gutter">
         <button type="button" className="pc-back" onClick={liveNav.hub}>
           <span aria-hidden="true">←</span> Practice
         </button>
         <p className="kicker">Debrief</p>
         <h1 className="serif pc-title">{done ? 'Your debrief is ready to open' : "This interview isn't finished"}</h1>
       </header>
-      <section className="panel pc-notice">
+      <section className="m-tile m-quiet pc-notice">
         <div className="pc-notice-text">
           <p>{done ? 'Open it to see each answer with the words its verdict rests on.' : 'Carry on where you left off, or end it here. Questions you have not answered are Not assessed, which never counts against you.'}</p>
         </div>
-        <div className="pc-actions">
-          <button type="button" className="btn btn-primary pc-btn" disabled={busy} onClick={() => void end()}>
-            {busy ? 'Opening…' : done ? 'Open the debrief' : 'End and see the debrief'}
-          </button>
-          {!done && (
+        {!done && (
+          <div className="pc-actions">
             <button type="button" className="btn pc-btn" disabled={busy} onClick={() => liveNav.room(sessionId)}>
               Carry on
             </button>
-          )}
-        </div>
+          </div>
+        )}
         {error && (
           <p className="pc-danger" role="alert">
             {error}
           </p>
         )}
       </section>
+      <button type="button" className="m-tile m-ink pc-ink" disabled={busy} onClick={() => void end()}>
+        {busy ? 'Opening…' : done ? 'Open the debrief' : 'End and see the debrief'} <span aria-hidden="true">→</span>
+      </button>
     </div>
   );
 }

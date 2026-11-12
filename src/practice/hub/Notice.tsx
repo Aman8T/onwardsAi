@@ -24,7 +24,7 @@ interface NoticeProps {
 
 export function Notice({ children, actions, lead, alert = false }: NoticeProps) {
   return (
-    <section className="panel pc-notice" role={alert ? 'alert' : 'status'}>
+    <section className="m-tile m-quiet pc-notice" role={alert ? 'alert' : 'status'}>
       {lead}
       <div className="pc-notice-text">{children}</div>
       {actions && <div className="pc-actions">{actions}</div>}
@@ -63,7 +63,7 @@ export function SampleNotice({ onAnalyse }: { onAnalyse: () => void }) {
   return (
     <Notice
       actions={
-        <button type="button" className="btn btn-primary pc-btn" onClick={onAnalyse}>
+        <button type="button" className="btn pc-btn" onClick={onAnalyse}>
           Analyse my resume
         </button>
       }
@@ -78,7 +78,7 @@ export function ThinNote({ note, onAdd }: { note?: string; onAdd: () => void }) 
   return (
     <Notice
       actions={
-        <button type="button" className="btn btn-primary pc-btn" onClick={onAdd}>
+        <button type="button" className="btn pc-btn" onClick={onAdd}>
           Add to my profile
         </button>
       }
@@ -104,7 +104,7 @@ export function NoTemplateNote({ onRole }: { onRole: () => void }) {
   return (
     <Notice
       actions={
-        <button type="button" className="btn btn-primary pc-btn" onClick={onRole}>
+        <button type="button" className="btn pc-btn" onClick={onRole}>
           Practise This role
         </button>
       }
@@ -121,7 +121,7 @@ export function ErrorNote({ message, onRetry, onBack }: { message: string; onRet
       actions={
         <>
           {onRetry && (
-            <button type="button" className="btn btn-primary pc-btn" onClick={onRetry}>
+            <button type="button" className="btn pc-btn" onClick={onRetry}>
               Try again
             </button>
           )}

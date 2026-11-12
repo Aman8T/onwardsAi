@@ -50,7 +50,7 @@ export function AssistantPanel({ state, handlers }: { state: AssistantState; han
   const used = state.left === 0;
   const off = !state.on;
   return (
-    <aside className="panel rm-assist" aria-labelledby={`${ids}-h`}>
+    <aside className="m-quiet rm-assist" aria-labelledby={`${ids}-h`}>
       <div id={`${ids}-h`} className="kicker">
         Assistant
       </div>

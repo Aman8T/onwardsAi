@@ -4,7 +4,7 @@
  * Progress's "Sessions" show the same rows.
  */
 import type { SessionSummary } from '../../../shared/interview';
-import { PipsLine } from '../Pips';
+import { CirclesLine } from '../Pips';
 import { KIND_LABEL } from '../words';
 import type { PracticeNav } from './nav';
 import { dateOf, sessionSubtitle } from './words';
@@ -22,7 +22,7 @@ export function SessionRows({ sessions, nav }: { sessions: readonly SessionSumma
               <span className="pc-strong">{KIND_LABEL[s.kind]}</span>
               <span className="pc-muted pc-row-sub">{sessionSubtitle(s)}</span>
             </div>
-            <div className="pc-row-result">{done ? <PipsLine verdicts={s.verdicts} counts={s.counts} /> : <span className="chip">Not finished</span>}</div>
+            <div className="pc-row-result">{done ? <CirclesLine verdicts={s.verdicts} counts={s.counts} /> : <span className="chip">Not finished</span>}</div>
             {done ? (
               <button type="button" className="btn btn-sm pc-btn-sm" aria-label={`Open debrief, ${KIND_LABEL[s.kind]}, ${when}`} onClick={() => nav.debrief(s.id)}>
                 Open debrief

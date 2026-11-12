@@ -327,7 +327,7 @@ function Cards({ children }: { children: ReactNode }) {
 }
 
 const card = (title: string, body: ReactNode) => (
-  <section key={title} className="panel pc-dev-card" aria-label={title}>
+  <section key={title} className="m-quiet pc-dev-card" aria-label={title}>
     <h2 className="kicker">{title}</h2>
     {body}
   </section>
@@ -341,6 +341,7 @@ function DebriefStage({ initial, narrow, nav, onNote, placing = false }: { initi
     <DebriefView
       {...(placing ? { fix } : {})}
       debrief={debrief}
+      history={HISTORY}
       narrow={narrow}
       nav={nav}
       onAgain={async (slotId) => {

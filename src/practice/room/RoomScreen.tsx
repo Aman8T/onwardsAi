@@ -80,15 +80,15 @@ export function RoomContent({ iv, narrow, onLeave }: { iv: UseInterview; narrow:
         <main className="rm-main">
           <div className="rm-col rm-col-solo">
             {load.status === 'error' ? (
-              <section className="panel rm-answer">
+              <section className="m-plain rm-answer">
                 <p role="alert">{load.message}</p>
                 <div className="rm-buttons">
                   {!load.gone && (
-                    <button type="button" className="btn btn-primary rm-btn" onClick={iv.retryLoad}>
+                    <button type="button" className="btn rm-btn" onClick={iv.retryLoad}>
                       Try again
                     </button>
                   )}
-                  <button type="button" className={`btn rm-btn${load.gone ? ' btn-primary' : ''}`} onClick={onLeave}>
+                  <button type="button" className="btn rm-btn" onClick={onLeave}>
                     Back to Practice
                   </button>
                 </div>

@@ -74,7 +74,7 @@ export function CardTop({ result, index, ctx, exchange }: { result: SlotResult; 
     <div className="pc-card-top">
       <span className="kicker">Question {index + 1}</span>
       <KindChip kind={result.kind} />
-      <VerdictChip verdict={result.verdict} stamped />
+      <VerdictChip verdict={result.verdict} />
       <span className="pc-grow" />
       {yours.length > 0 && (
         <span className="pc-times">
@@ -121,7 +121,7 @@ const citeOf = (s: SlotSource) => (s.origin === 'posting' ? 'Posting' : s.origin
 function About({ kind, sources }: { kind: SlotKind; sources: readonly SlotSource[] }) {
   if (sources.length === 0) return null;
   return (
-    <div className="pc-block">
+    <div className="m-graph pc-block pc-about">
       <div className="kicker">What it was about</div>
       {sources.map((s, i) => (
         <p key={i} className="pc-fact">
@@ -139,7 +139,7 @@ function YouSaid({ result, exchange, ctx }: { result: SlotResult; exchange: read
   if (exchange.length === 0) return null;
   const decisive = turnOfQuote(exchange, result.quote);
   return (
-    <div className="pc-block pc-block-said">
+    <div className="m-paper is-loose pc-block pc-block-said">
       <div className="kicker">You said</div>
       {exchange.map((e) => {
         const id = ctx.ids[e.index];
@@ -354,7 +354,7 @@ function FixPlace({ result, placing }: { result: SlotResult; placing: FixPlacing
         ))}
         <option value={PRACTICE}>Keep it in Practice</option>
       </select>
-      <button type="button" className="btn btn-primary btn-sm pc-btn-sm pc-self-start" disabled={busy} onClick={() => placing.onPlace(result.slotId, dest === PRACTICE ? undefined : dest)}>
+      <button type="button" className="btn btn-sm pc-btn-sm pc-self-start" disabled={busy} onClick={() => placing.onPlace(result.slotId, dest === PRACTICE ? undefined : dest)}>
         {busy ? 'Adding…' : dest === PRACTICE ? 'Keep it' : 'Add to my plan'}
       </button>
       <p className="pc-muted pc-small">{dest === PRACTICE ? 'A short list on the Re-drill screen.' : 'It lands in the week you’re in. Ticking it changes no verdict.'}</p>
@@ -402,7 +402,7 @@ function SayLess({ result }: { result: SlotResult }) {
     <div className="pc-offer pc-sayless">
       <div className="kicker">Or say less</div>
       <p className="pc-offer-text">Twice now this line couldn’t be backed up. If it says more than you did, it’s fine to say less.</p>
-      <div className="pc-offer-fact">
+      <div className="m-paper is-loose pc-offer-fact">
         <p className="pc-fact">{softer.text}</p>
         <p>
           <span className="chip pc-chip-have">From your answer</span>
@@ -436,7 +436,7 @@ function FactOffer({ result, ctx }: { result: SlotResult; ctx: CardContext }) {
         <p>
           Added to your profile as a fact marked <span className="chip pc-chip-have">From you</span>
         </p>
-        <div className="pc-offer-fact">
+        <div className="m-paper is-loose pc-offer-fact">
           <p className="pc-fact">“{result.newFact}”</p>
           {at !== undefined && <p className="pc-cite">You · {clock(at)}</p>}
         </div>
@@ -458,12 +458,12 @@ function FactOffer({ result, ctx }: { result: SlotResult; ctx: CardContext }) {
     <div id={`fact-${result.slotId}`} className="pc-offer" tabIndex={-1}>
       <div className="kicker">A new fact</div>
       <p className="pc-offer-text">This isn't on your resume. Add it to your profile as a fact marked From you?</p>
-      <div className="pc-offer-fact">
+      <div className="m-paper is-loose pc-offer-fact">
         <p className="pc-fact">“{result.newFact}”</p>
         {at !== undefined && <p className="pc-cite">You · {clock(at)}</p>}
       </div>
       <div className="pc-actions">
-        <button type="button" className="btn btn-primary btn-sm pc-btn-sm" disabled={busy} onClick={() => ctx.onFact(result.slotId, true)}>
+        <button type="button" className="btn btn-sm pc-btn-sm" disabled={busy} onClick={() => ctx.onFact(result.slotId, true)}>
           {busy ? 'Adding…' : 'Add as a fact · From you'}
         </button>
         <button type="button" className="btn btn-quiet btn-sm pc-btn-sm" disabled={busy} onClick={() => setLater(true)}>
@@ -525,7 +525,7 @@ export function ResultCard({ result, index, ctx }: { result: SlotResult; index: 
   const titleId = useId();
   const exchange = exchangeFor(ctx.debrief, result);
   return (
-    <article id={`q${index + 1}`} className="panel pc-qcard" aria-labelledby={titleId} tabIndex={-1}>
+    <article id={`q${index + 1}`} className="m-plain pc-qcard" aria-labelledby={titleId} tabIndex={-1}>
       <CardTop result={result} index={index} ctx={ctx} exchange={exchange} />
       <CardBody result={result} ctx={ctx} titleId={titleId} />
     </article>

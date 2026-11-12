@@ -13,7 +13,10 @@ import { useId } from 'react';
 import type { ReactNode } from 'react';
 import type { AiJob } from '../../../shared/jobsearch';
 import type { Role } from '../../../shared/types';
+import '../../styles/practice.css';
 import '../../styles/practice-room.css';
+import { Pips } from '../../components/materials';
+import type { Pip } from '../../components/materials';
 import type { InterviewFocus, InterviewKind, InterviewLength, InterviewPlan, PlanSlot, SlotSource } from '../../../shared/interview';
 import { asksLabel, asksLine, asksTotal, cleanAsks, FIT_WORD, LEVEL_WORD, placeLine } from '../../discover/prepare/words';
 import { MicIcon } from '../room/icons';
@@ -147,7 +150,7 @@ export function SetupView(p: SetupViewProps) {
 
   return (
     <div className="rm-page rm-setup" aria-busy={p.loading}>
-      <header className="rm-head">
+      <header className="rm-head m-hero">
         <button type="button" className="rm-back" onClick={p.onBack}>
           <span aria-hidden="true">←</span> Practice
         </button>
@@ -157,10 +160,10 @@ export function SetupView(p: SetupViewProps) {
       </header>
 
       {p.sample && (
-        <div className="rm-shown rm-notice" role="note">
+        <div className="rm-shown rm-notice m-quiet" role="note">
           <p>This is the sample profile&apos;s interview. Analyse your own resume to practise on your own work.</p>
           <div className="rm-buttons">
-            <button type="button" className="btn btn-primary rm-btn" onClick={p.onAnalyse}>
+            <button type="button" className="btn rm-btn" onClick={p.onAnalyse}>
               Analyse my resume
             </button>
           </div>
@@ -170,7 +173,7 @@ export function SetupView(p: SetupViewProps) {
       <div className="rm-setup-cols">
         <div className="rm-setup-main">
           {/* the plan */}
-          <section className="panel rm-sec" aria-labelledby={`${ids}-plan`}>
+          <section className="m-plain rm-sec" aria-labelledby={`${ids}-plan`}>
             <h2 id={`${ids}-plan`} className="title rm-h2">
               The plan
             </h2>
@@ -180,15 +183,15 @@ export function SetupView(p: SetupViewProps) {
                 <p>{p.problem.message}</p>
                 <div className="rm-buttons">
                   {p.problem.noTemplate ? (
-                    <button type="button" className="btn btn-primary rm-btn" onClick={p.onOtherKind}>
+                    <button type="button" className="btn rm-btn" onClick={p.onOtherKind}>
                       Practise This role
                     </button>
                   ) : p.problem.gone ? (
-                    <button type="button" className="btn btn-primary rm-btn" onClick={p.onBack}>
+                    <button type="button" className="btn rm-btn" onClick={p.onBack}>
                       Back to Practice
                     </button>
                   ) : (
-                    <button type="button" className="btn btn-primary rm-btn" onClick={p.onRetry}>
+                    <button type="button" className="btn rm-btn" onClick={p.onRetry}>
                       Try again
                     </button>
                   )}
@@ -208,7 +211,7 @@ export function SetupView(p: SetupViewProps) {
                     {/* only a short profile can be helped by adding to it; any other note (a posting's text aimed at an AI) is only said */}
                     {/profile is short/i.test(p.plan.note) && (
                       <div className="rm-buttons">
-                        <button type="button" className="btn btn-primary rm-btn" onClick={p.onAddToProfile}>
+                        <button type="button" className="btn rm-btn" onClick={p.onAddToProfile}>
                           Add to my profile
                         </button>
                       </div>
@@ -254,7 +257,7 @@ export function SetupView(p: SetupViewProps) {
 
           {/* spend more time on */}
           {p.kind === 'role' && (
-            <section className="panel rm-sec" aria-labelledby={`${ids}-focus`}>
+            <section className="m-plain rm-sec" aria-labelledby={`${ids}-focus`}>
               <h2 id={`${ids}-focus`} className="title rm-h2 rm-h2-sm">
                 Spend more time on
               </h2>
@@ -270,7 +273,7 @@ export function SetupView(p: SetupViewProps) {
 
           {/* length */}
           {p.kind !== 'work' && (
-            <section className="panel rm-sec" aria-labelledby={`${ids}-length`}>
+            <section className="m-plain rm-sec" aria-labelledby={`${ids}-length`}>
               <h2 id={`${ids}-length`} className="title rm-h2 rm-h2-sm">
                 Length
               </h2>
@@ -292,7 +295,7 @@ export function SetupView(p: SetupViewProps) {
           )}
 
           {/* how you'll answer */}
-          <section className="panel rm-sec" aria-labelledby={`${ids}-answer`}>
+          <section className="m-plain rm-sec" aria-labelledby={`${ids}-answer`}>
             <h2 id={`${ids}-answer`} className="title rm-h2 rm-h2-sm">
               How you&apos;ll answer
             </h2>
@@ -367,7 +370,7 @@ export function SetupView(p: SetupViewProps) {
           </section>
 
           {/* how it works */}
-          <section className="panel rm-sec" aria-labelledby={`${ids}-how`}>
+          <section className="m-plain rm-sec" aria-labelledby={`${ids}-how`}>
             <h2 id={`${ids}-how`} className="title rm-h2 rm-h2-sm">
               How it works
             </h2>
@@ -390,7 +393,7 @@ export function SetupView(p: SetupViewProps) {
         </div>
 
         <aside className="rm-setup-side" aria-label="About this practice">
-          <section className="panel rm-summary" aria-label={p.job || p.graphRole ? 'This role' : 'This practice'}>
+          <section className="m-quiet rm-summary" aria-label={p.job || p.graphRole ? 'This role' : 'This practice'}>
             {p.job ? <RoleSummary job={p.job} /> : p.graphRole ? <GraphRoleSummary role={p.graphRole} /> : <KindSummary kind={p.kind} plan={p.plan} count={kept.length} />}
 
             <div className="rm-summary-foot">
@@ -403,10 +406,12 @@ export function SetupView(p: SetupViewProps) {
                 {p.startError}
               </p>
             )}
-            <div className="rm-side-actions">
-              <button type="button" className="btn btn-primary rm-btn rm-wide" disabled={!canStart} onClick={p.onStart}>
-                {p.starting ? 'Starting…' : 'Start the interview'}
-              </button>
+          </section>
+          <div className="rm-side-actions">
+            <button type="button" className="m-tile m-ink pc-ink rm-wide" disabled={!canStart} onClick={p.onStart}>
+              {p.starting ? 'Starting…' : 'Start the interview'} <span aria-hidden="true">→</span>
+            </button>
+            <div className="m-quiet rm-side-more">
               {p.starting && (
                 <p className="rm-muted rm-small" role="status">
                   Writing your questions. It takes a few seconds.
@@ -416,14 +421,17 @@ export function SetupView(p: SetupViewProps) {
                 Practise a different kind
               </button>
             </div>
-          </section>
+          </div>
         </aside>
       </div>
     </div>
   );
 }
 
-/** One square per ask the search checked, in order: met, partly, not on the resume. More than 30 add nothing a count does not say. */
+/** The kit's circles for the three standings: met is filled, partly is half, not on the resume is dashed. */
+const PIP_KIND: Record<'met' | 'part' | 'gap', Pip> = { met: 'on', part: 'half', gap: 'no' };
+
+/** One circle per ask the search checked, in order: met, partly, not on the resume. More than 30 add nothing a count does not say. */
 function pipKinds(asks: { met: number; partly: number; notShown: number }): Array<'met' | 'part' | 'gap'> {
   const many = (n: number, kind: 'met' | 'part' | 'gap') => Array.from({ length: Math.min(n, 30) }, () => kind);
   return [...many(asks.met, 'met'), ...many(asks.partly, 'part'), ...many(asks.notShown, 'gap')].slice(0, 30);
@@ -445,11 +453,7 @@ function RoleSummary({ job }: { job: AiJob }) {
       </div>
       {total > 0 && (
         <div className="rm-askpips">
-          <span className="rm-pips" role="img" aria-label={asksLabel(asks)}>
-            {pipKinds(asks).map((k, i) => (
-              <span key={i} className={`rm-pip rm-pip-${k}`} aria-hidden="true" />
-            ))}
-          </span>
+          <Pips pips={pipKinds(asks).map((k) => PIP_KIND[k])} label={asksLabel(asks)} r={5} gap={5} />
           <span className="rm-muted rm-small">{asksLine(asks)}</span>
         </div>
       )}
@@ -471,11 +475,7 @@ function GraphRoleSummary({ role }: { role: Role }) {
       <p className="rm-muted rm-small">{GRAPH_ROLE_BLURB}</p>
       {pips.length > 0 && (
         <div className="rm-askpips">
-          <span className="rm-pips" role="img" aria-label={line}>
-            {pips.map((k, i) => (
-              <span key={i} className={`rm-pip rm-pip-${k}`} aria-hidden="true" />
-            ))}
-          </span>
+          <Pips pips={pips.map((k) => PIP_KIND[k])} label={line} r={5} gap={5} />
           <span className="rm-muted rm-small">{line}</span>
         </div>
       )}

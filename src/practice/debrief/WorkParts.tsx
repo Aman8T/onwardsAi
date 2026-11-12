@@ -40,7 +40,7 @@ export function ChecksPanel({ debrief }: { debrief: Debrief }) {
   const checks = debrief.checks ?? [];
   if (checks.length === 0 && !debrief.assistantUse) return null;
   return (
-    <section className="panel pc-sec" aria-labelledby={headingId}>
+    <section className="m-tile m-graph pc-s12 pc-sec" aria-labelledby={headingId}>
       <header className="pc-sec-head">
         <p className="kicker">The checks</p>
         <h2 className="title pc-h2" id={headingId}>
@@ -73,7 +73,7 @@ export function WorkPanel({ debrief }: { debrief: Debrief }) {
   const { task, work } = debrief;
   if (!task && !work) return null;
   return (
-    <section className="panel pc-sec" aria-labelledby={`${base}-h`}>
+    <section className="m-tile m-quiet pc-s12 pc-sec" aria-labelledby={`${base}-h`}>
       <header className="pc-sec-head">
         <p className="kicker">The task</p>
         <h2 className="title pc-h2" id={`${base}-h`}>

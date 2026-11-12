@@ -66,7 +66,7 @@ export function WhyBlock({ slot, open, onToggle }: { slot: PlanSlot; open: boole
         <span className="rm-faint rm-why-hint">{open ? 'Hide' : 'Hidden, as in a real interview · Show'}</span>
       </button>
       {open && (
-        <div id={body} className="panel rm-why-body">
+        <div id={body} className="m-quiet rm-why-body">
           <div className="rm-why-row">
             <span className="kicker">Kind</span>
             <span className={`chip rm-kind rm-kind-${slot.kind}`}>{SLOT_KIND_LABEL[slot.kind]}</span>
@@ -93,7 +93,7 @@ export function PlanRail({ model }: { model: RoomModel }) {
   const askedIds = new Set(session.turns.filter((t) => t.speaker === 'you' && t.slotId).map((t) => t.slotId));
   return (
     <aside className="rm-rail" aria-label="The plan">
-      <section className="panel rm-plan">
+      <section className="m-quiet rm-plan">
         <p className="kicker rm-plan-kicker">The plan</p>
         <ol className="rm-plan-list">
           {session.slots.map((slot, i) => {
@@ -140,7 +140,7 @@ export function MicNotice({ note, onType, onRetry }: { note: Exclude<MicNote, 'u
         </p>
       </div>
       <div className="rm-buttons">
-        <button type="button" className="btn btn-primary rm-btn" onClick={onType}>
+        <button type="button" className="btn rm-btn" onClick={onType}>
           Type instead
         </button>
         <button type="button" className="btn rm-btn" onClick={onRetry}>
@@ -200,12 +200,12 @@ export function ProblemNotice({ problem, actions }: { problem: Problem; actions:
       <p>{problem.message}</p>
       <div className="rm-buttons">
         {problem.kind === 'moved' && (
-          <button type="button" className="btn btn-primary rm-btn" onClick={actions.reload}>
+          <button type="button" className="btn rm-btn" onClick={actions.reload}>
             Reload
           </button>
         )}
         {problem.kind === 'gone' && (
-          <button type="button" className="btn btn-primary rm-btn" onClick={actions.leave}>
+          <button type="button" className="btn rm-btn" onClick={actions.leave}>
             Back to Practice
           </button>
         )}
@@ -219,14 +219,14 @@ export function DroppedPanel({ model, onCarryOn }: { model: RoomModel; onCarryOn
   const answered = Math.min(model.session.slotIndex, model.total);
   const next = Math.min(answered + 1, model.total);
   return (
-    <section className="panel rm-answer rm-dropped" aria-label="Connection dropped">
+    <section className="m-plain rm-answer rm-dropped" aria-label="Connection dropped">
       <div className="rm-shown">
         <Squares total={model.total} answered={answered} now label={`${model.total} questions: ${answered} answered, question ${next} next`} />
         <p role="alert">
           {answered > 0 ? `The connection dropped after question ${answered}. Your answers so far are saved.` : 'The connection dropped. Your answers so far are saved.'}
         </p>
         <div className="rm-buttons">
-          <button type="button" className="btn btn-primary rm-btn" onClick={onCarryOn}>
+          <button type="button" className="btn rm-btn" onClick={onCarryOn}>
             {answered > 0 ? `Carry on from question ${next}` : 'Carry on'}
           </button>
         </div>
@@ -239,10 +239,10 @@ export function DroppedPanel({ model, onCarryOn }: { model: RoomModel; onCarryOn
 export function FinishPanel({ model, actions }: { model: RoomModel; actions: RoomActions }) {
   if (model.finishing === 'failed') {
     return (
-      <section className="panel rm-answer" aria-label="Your debrief">
+      <section className="m-plain rm-answer" aria-label="Your debrief">
         <p role="alert">{model.finishError}</p>
         <div className="rm-buttons">
-          <button type="button" className="btn btn-primary rm-btn" onClick={actions.retryFinish}>
+          <button type="button" className="btn rm-btn" onClick={actions.retryFinish}>
             Try again
           </button>
         </div>
@@ -250,7 +250,7 @@ export function FinishPanel({ model, actions }: { model: RoomModel; actions: Roo
     );
   }
   return (
-    <section className="panel rm-answer" aria-label="Your debrief" aria-busy="true">
+    <section className="m-plain rm-answer" aria-label="Your debrief" aria-busy="true">
       <p className="rm-muted" role="status">
         Writing your debrief. It takes a few seconds.
       </p>
@@ -316,7 +316,7 @@ export function EndDialog({ open, answered, onEnd, onKeep }: { open: boolean; an
       </h2>
       <p className="rm-muted">{answered > 0 ? END_EARLY.body : END_EARLY.bodyEmpty}</p>
       <div className="rm-buttons">
-        <button type="button" className="btn btn-primary rm-btn" onClick={onEnd}>
+        <button type="button" className="btn rm-btn" onClick={onEnd}>
           {END_EARLY.yes}
         </button>
         <button type="button" className="btn rm-btn" onClick={onKeep} data-first>
