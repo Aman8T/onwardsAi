@@ -1,0 +1,632 @@
+/*
+ * The materials (design.md 7b), for every screen after the dashboard. Class prefix m-. Tokens only.
+ *
+ * A screen opens as one hero beside (or above) a mosaic of tiles, edge to edge with a 2px seam of --bg, no radius and
+ * no border. A tile is a material, and a material means the same thing on every screen:
+ *
+ *   .m-paper   notebook paper, written in pen     what the person does or wrote (to-dos, a plan's week, what to re-drill)
+ *   .m-field   a field of colour                  where they stand right now (a stage, a verdict, where they left off)
+ *   .m-graph   graph paper                        what was measured or cited; never turned, never in pen
+ *   .postit    a post-it (kit in global.css)      their own note, stuck to the thing it is about
+ *   .m-ink     an ink block                       the one thing to press next; one a screen
+ *   .m-gap     a dashed hole                      something asked for that nothing cites yet
+ *   .m-plain / .m-quiet / .m-desk                 neutral ground: a panel, a chip tone, a well for post-its
+ *
+ * Ink: on paper, graph paper and neutral ground the text is --text and --text-muted. On a field it is --text and
+ * --text-muted too (proved at 4.5:1 on every tile at every hue); links on a field are --text, underlined, never
+ * --accent. On an ink block everything is --surface. --paper-ink is only for post-its and the yellow highlighter.
+ * Only post-its carry a shadow. Nothing here is turned except through .m-turn-l / .m-turn-r, which go straight on a
+ * phone and under reduced motion; never turn anything measured, a form field, a table or a long list.
+ *
+ * The React pieces (the hand tick, the strike, the pips, a page line) are in src/components/materials.tsx.
+ */
+
+/* ───────────── the frame: a hero and a mosaic ───────────── */
+
+.m-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 43fr) minmax(0, 57fr);
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg);
+}
+
+/* one screen, no page scroll: the viewport minus what sits above it (--m-top, the header) */
+.m-screen.is-fit {
+  height: calc(100vh - var(--m-top, 64px));
+  height: calc(100dvh - var(--m-top, 64px));
+  min-height: 640px;
+}
+
+.m-screen.is-wide-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.m-screen.is-stack {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.m-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s5) var(--s5) var(--s4) var(--s6);
+  color: var(--text);
+}
+
+.m-hero > :is(h1, h2, h3, p) {
+  margin: 0;
+}
+
+.m-mosaic {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-auto-rows: minmax(84px, auto);
+  grid-auto-flow: dense;
+  gap: 2px;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg);
+}
+
+/* inside a fitted screen the rows share the height instead of growing with their content */
+.m-screen.is-fit > .m-mosaic,
+.m-mosaic.is-rows {
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+.m-mosaic.is-12 {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+/* ───────────── a tile ───────────── */
+
+.m-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  grid-column: span 6;
+  gap: var(--s2);
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 18px;
+  color: var(--text);
+  text-align: left;
+  text-decoration: none;
+}
+
+.m-tile > :is(h2, h3, h4, p) {
+  margin: 0;
+}
+
+.m-tile.is-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.m-tile.is-clip {
+  overflow: hidden;
+}
+
+.m-c1 { grid-column: span 1; }
+.m-c2 { grid-column: span 2; }
+.m-c3 { grid-column: span 3; }
+.m-c4 { grid-column: span 4; }
+.m-c5 { grid-column: span 5; }
+.m-c6 { grid-column: span 6; }
+.m-r2 { grid-row: span 2; }
+.m-r3 { grid-row: span 3; }
+.m-r4 { grid-row: span 4; }
+.m-r5 { grid-row: span 5; }
+
+.m-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s1) var(--s3);
+  margin-top: auto;
+}
+
+/* ───────────── the materials ───────────── */
+
+/* notebook paper: punched holes down the left, a red margin line, ruled rows (.m-line) */
+.m-paper {
+  gap: 0;
+  padding: 14px 18px 12px 52px;
+  background: var(--paper-sheet);
+}
+
+.m-paper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 13px;
+  width: 12px;
+  background: radial-gradient(circle at 6px 6px, var(--bg) 5px, transparent 5.6px) 0 12px / 12px 34px repeat-y;
+}
+
+.m-paper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 39px;
+  width: 1px;
+  background: var(--danger);
+  opacity: 0.35;
+}
+
+/* a loose sheet: the same paper without the holes and the margin */
+.m-paper.is-loose {
+  padding-left: 18px;
+}
+
+.m-paper.is-loose::before,
+.m-paper.is-loose::after {
+  content: none;
+}
+
+.m-field {
+  background:
+    radial-gradient(120% 95% at 92% 0%, var(--tile-2) 0%, transparent 62%),
+    radial-gradient(90% 90% at 0% 100%, var(--tile-4) 0%, transparent 66%),
+    var(--tile-1);
+}
+
+.m-field-1 { background: var(--tile-1); }
+.m-field-2 { background: var(--tile-2); }
+.m-field-3 { background: var(--tile-3); }
+.m-field-4 { background: var(--tile-4); }
+
+:is(.m-field, .m-field-1, .m-field-2, .m-field-3, .m-field-4) a:not(.btn) {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+:is(.m-field, .m-field-1, .m-field-2, .m-field-3, .m-field-4) .stamp {
+  border-color: var(--text);
+  background: none;
+  color: var(--text);
+}
+
+.m-graph {
+  background:
+    radial-gradient(circle, var(--grid) 1px, transparent 1.3px) 0 0 / 16px 16px,
+    var(--surface-2);
+}
+
+.m-plain {
+  background: var(--surface);
+}
+
+.m-quiet {
+  background: var(--surface-2);
+}
+
+/* a patch of desk for post-its: they may lap over a neighbour, so it sits above and does not clip */
+.m-desk {
+  z-index: 2;
+  overflow: visible;
+  background: var(--well);
+}
+
+.m-gap {
+  background: var(--surface-2);
+  outline: 1px dashed var(--line-strong);
+  outline-offset: -7px;
+}
+
+.m-ink {
+  background: var(--accent-strong);
+  color: var(--surface);
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.m-ink :is(.kicker, .m-fine, .m-cite, a, button) {
+  color: inherit;
+}
+
+@media (hover: hover) {
+  :is(a, button).m-ink:hover {
+    background: var(--accent);
+  }
+}
+
+:is(a, button).m-tile {
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+:is(a, button).m-tile:focus-visible {
+  outline: 2px solid var(--accent-ui);
+  outline-offset: -4px;
+}
+
+/* ───────────── type inside a tile ───────────── */
+
+.m-fine {
+  margin: 0;
+  font-size: var(--fs-1);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.m-cite {
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.m-strong {
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* one large number, counted by code, with a plain unit beside it */
+.m-big {
+  font-size: 44px;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.m-big.is-hero {
+  font-size: clamp(56px, 5vw, 72px);
+}
+
+.m-count {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  margin: 0;
+}
+
+.m-count > :last-child {
+  font-size: var(--fs-2);
+  line-height: 1.25;
+}
+
+.m-clip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ───────────── a page of the notebook ───────────── */
+
+.m-page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--s3);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.m-page-title {
+  margin: 0;
+  font-size: 30px;
+}
+
+.m-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m-line {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 8px 0 7px;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* a line with no tick box in front of it */
+.m-line.is-bare {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.m-line-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+/* the written line. One line, cut with an ellipsis, so the strike can cross it. */
+.m-line-t {
+  position: relative;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: none;
+  border: 0;
+  color: var(--text);
+  text-align: left;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* a longer written line that may wrap; it is never struck */
+.m-line-t.is-wrap {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (hover: hover) {
+  :is(a, button).m-line-t:hover {
+    color: var(--accent);
+  }
+}
+
+.m-line-end {
+  padding-top: 5px;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.m-strike {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  overflow: visible;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.m-line.is-done .m-strike {
+  display: block;
+}
+
+.m-line.is-done .m-line-t {
+  color: var(--text-muted);
+}
+
+/* the hand tick when it is only a mark and not a button (the button form, aria-pressed, is in global.css) */
+.tick.is-done .ck,
+.tick.is-half .hf {
+  display: block;
+}
+
+/* ───────────── pips: a row of circles, one per stage, requirement or question ───────────── */
+
+.m-pips {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+
+.m-pips line {
+  stroke: var(--text);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.m-pips .on {
+  fill: var(--accent-strong);
+  stroke: var(--accent-strong);
+}
+
+.m-pips .hf {
+  fill: var(--accent-strong);
+}
+
+.m-pips .of {
+  fill: none;
+  stroke: var(--accent-strong);
+  stroke-width: 1.25;
+}
+
+.m-pips .no {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 3;
+}
+
+/* with a line through the row, the open circles are filled with the ground so the line does not cross them */
+.m-pips.has-line :is(.of, .no) {
+  fill: var(--m-ground, var(--bg));
+}
+
+.m-pips .halo {
+  fill: none;
+  stroke: var(--accent-ui);
+  stroke-width: 1;
+  opacity: 0.45;
+}
+
+/* ───────────── a floating number beside a chart ───────────── */
+
+.m-co {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.m-co-n {
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.m-co-l {
+  font-size: var(--fs-0);
+  font-weight: 500;
+}
+
+/* ───────────── a count per stage: small tiles in a row ───────────── */
+
+.m-stage {
+  justify-content: center;
+  gap: 0;
+  padding: 8px 14px;
+}
+
+.m-stage b {
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ───────────── a post-it in the flow of a tile, and the two turns ───────────── */
+
+.stick.is-flow {
+  position: relative;
+  align-self: flex-start;
+  width: min(100%, 200px);
+}
+
+.m-turn-l {
+  transform: rotate(-2.5deg);
+}
+
+.m-turn-r {
+  transform: rotate(3deg);
+}
+
+/* the person's own line in pen beside a measured thing, in the accent, turned a little */
+.m-margin {
+  margin: 0;
+  color: var(--accent);
+  transform: rotate(-2deg);
+  transform-origin: left center;
+}
+
+/* ───────────── narrower: the hero above the mosaic, then one straight column ───────────── */
+
+@media (max-width: 1100px) {
+  .m-screen,
+  .m-screen.is-wide-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .m-screen.is-fit {
+    height: auto;
+    min-height: 0;
+  }
+
+  .m-screen.is-fit > .m-mosaic,
+  .m-mosaic.is-rows {
+    grid-template-rows: none;
+    grid-auto-rows: minmax(84px, auto);
+  }
+
+  .m-hero {
+    padding: var(--s5) var(--s4) var(--s4);
+  }
+}
+
+@media (max-width: 760px) {
+  .m-mosaic,
+  .m-mosaic.is-12 {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: auto;
+  }
+
+  .m-mosaic > .m-tile {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .m-paper {
+    padding-left: 44px;
+  }
+
+  .m-paper::before {
+    left: 8px;
+  }
+
+  .m-paper::after {
+    left: 32px;
+  }
+
+  .m-line {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .m-line .tick {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    place-items: center;
+  }
+
+  :is(a, button):is(.m-line-t, .m-tile.is-row) {
+    min-height: 44px;
+  }
+
+  :is(a, button).m-line-t {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .m-line-t,
+  .m-line-t.is-wrap {
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .m-line.is-done .m-strike {
+    display: none;
+  }
+
+  .m-line.is-done .m-line-t {
+    text-decoration: line-through;
+    text-decoration-color: var(--accent);
+  }
+
+  .m-turn-l,
+  .m-turn-r,
+  .m-margin {
+    transform: none;
+  }
+
+  .stick.is-flow {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-turn-l,
+  .m-turn-r,
+  .m-margin {
+    transform: none;
+  }
+
+  .m-ink {
+    transition: none;
+  }
+}
