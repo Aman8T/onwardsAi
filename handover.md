@@ -12,7 +12,7 @@ Read in this order: this file, `project-soul.md`, `CLAUDE.md`, then the section 
 | The marketing site leafout.in | `github.com/Aman8T/tayyari-career-intelligence`, `main` @ `4046f57` | Built in Lovable; pushing `main` syncs to Lovable, the owner publishes there |
 | Design canvases | claude.ai artifacts, private to the owner's account (section 6) | Source copies of the recent ones are in the private handover archive |
 | Unmerged work | feature branches on GitHub (section 3) | All pushed 2026-11-16 |
-| Private handover archive | not on GitHub: this repo is public. A git bundle the owner carries over (section 2, step 9) | Canvas sources, Claude memory notes, the sessions' hand-over notes |
+| Private handover archive | `github.com/Aman8T/private-leafout` (private), branch `main` | Sources of all 42 Leafout design canvases and pages, a map of every session, the sessions' hand-over notes, Claude memory notes (section 2, step 9) |
 
 ## 2. Setting up the new computer
 
@@ -30,7 +30,7 @@ Read in this order: this file, `project-soul.md`, `CLAUDE.md`, then the section 
 6. **Run it.** `npm run dev` (API on 8787, web on 5173), then `npm run check:all`. The first Vite start after a fresh install can take two to three minutes before it serves a module; it is not hung.
 7. **FastAPI Cloud.** Log in again with `fastapi login` (the old laptop's token had expired by 2026-11-16, so no deploy could be confirmed from it). Deploy only when the owner asks: `npm run deploy -- --app-id 599a983d-3900-4d21-8261-180cef4d1eca`. On Windows set `PYTHONUTF8=1`.
 8. **This repo is public; the site repo is private.** `Aman8T/onwardsAi` is world-readable on every branch, while `tayyari-career-intelligence` (and CrackIt's `topper-tribe-ai`) are private. Anything pushed to onwardsAi can be read by anyone: no resumes, personal portfolios, employer details, machine paths or memory notes. Personal material goes in a private repo or stays local.
-9. **The private handover archive.** It travels as one file, `leafout-handover-archive-2026-11-16.bundle` (made on the old laptop next to the `Main App` folder). On the new machine, inside a clone of this repo: `git fetch <path-to-bundle> archive/local-machine-2026-11-16:archive/local-machine-2026-11-16`, then check out that branch. Its `handover-archive/README.md` explains the three folders: `canvases/` (sources of the starred canvases in section 6), `claude-memory/` (notes earlier Claude Code sessions kept; several describe the old laptop only, so read before restoring), and `side-session-notes/` (the briefs and findings sessions left for each other, by session id). To keep it on GitHub, push the branch to a **private** repository, never to this one.
+9. **The private handover archive** is the private repo `Aman8T/private-leafout`: clone it next to this one. Everything is under `handover-archive/`, and its `README.md` explains the parts: `sessions.md` (every session on the old laptop and its open threads), `artifacts/` (sources of all 42 Leafout canvases and pages, indexed by `artifacts/INDEX.md`), `side-session-notes/` (the briefs and findings sessions left for each other, by session id) and `claude-memory/` (notes earlier Claude Code sessions kept; several describe the old laptop only, so read before restoring). Its history starts from this repo's, so it is large; a shallow clone is enough. Keep that repo private.
 
 ## 3. Branches
 
@@ -85,7 +85,7 @@ Read in this order: this file, `project-soul.md`, `CLAUDE.md`, then the section 
 
 ## 6. Design canvases
 
-All are claude.ai artifacts in the owner's account; they open from any computer signed in to it. Sources for the starred ones are in the private handover archive under `handover-archive/canvases/` (section 2, step 9).
+All are claude.ai artifacts in the owner's account; they open from any computer signed in to it. The sources of every one are in the private archive under `handover-archive/artifacts/` (section 2, step 9).
 
 | Canvas | Link | What it settled |
 |---|---|---|
@@ -134,7 +134,7 @@ One line each; the full notes the sessions left for each other are in the privat
 - **`.env`** with the two API keys: secrets never go to git (section 2, step 5).
 - **The local SQLite database** (`%LOCALAPPDATA%\tayyari\tayyari.sqlite3`): dev data, including the owner's own analysis used for the Neon Coast canvas. Re-run the analysis on the new machine from the resume.
 - **The owner's own resume** and any other personal files: copy them by hand.
-- **The private handover archive**: deliberately not in this public repo (section 2, step 9).
+- **The private handover archive**: in the private repo `Aman8T/private-leafout`, deliberately not in this public one.
 - **`experiments/auto_apply/data/`** in the old main checkout: a test resume and two guard zips, gitignored by design; `exp/auto-apply-test` explains how to regenerate them.
 - **Scratchpad leftovers**: screenshots, task logs, CSS backups and a partial patch from build waves since committed. Nothing in them is needed.
 
