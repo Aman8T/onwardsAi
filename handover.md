@@ -10,9 +10,9 @@ Read in this order: this file, `project-soul.md`, `CLAUDE.md`, then the section 
 |---|---|---|
 | The app (code name Tayyari, product name Leafout) | `github.com/Aman8T/onwardsAi`, branch `main` @ `7af4e73` | Live at https://app.leafout.in (FastAPI Cloud app `599a983d-3900-4d21-8261-180cef4d1eca`, last deploy `52aa77d4`, 2026-11-12) |
 | The marketing site leafout.in | `github.com/Aman8T/tayyari-career-intelligence`, `main` @ `4046f57` | Built in Lovable; pushing `main` syncs to Lovable, the owner publishes there |
-| Design canvases | claude.ai artifacts, private to the owner's account (section 6) | Source copies of the recent ones on branch `archive/local-machine-2026-11-16` |
-| Unmerged work | six feature branches on GitHub (section 3) | All pushed 2026-11-16 |
-| Old-laptop-only notes | branch `archive/local-machine-2026-11-16`, folder `handover-archive/` | Claude memory notes, side-session notes, canvas sources |
+| Design canvases | claude.ai artifacts, private to the owner's account (section 6) | Source copies of the recent ones are in the private handover archive |
+| Unmerged work | feature branches on GitHub (section 3) | All pushed 2026-11-16 |
+| Private handover archive | not on GitHub: this repo is public. A git bundle the owner carries over (section 2, step 9) | Canvas sources, Claude memory notes, the sessions' hand-over notes |
 
 ## 2. Setting up the new computer
 
@@ -24,12 +24,13 @@ Read in this order: this file, `project-soul.md`, `CLAUDE.md`, then the section 
    ```bash
    git clone git@github.com:Aman8T/tayyari-career-intelligence.git
    ```
-3. **Commit identity, per repo, never global.** Use the personal identity `Aman8T` with the personal email the earlier commits carry (`git log -1 --format='%an <%ae>'` shows it). The old laptop was a work machine whose default identity was the work email; keep that out of these repos.
+3. **Commit identity, per repo, never global.** Use the personal identity `Aman8T` with the email the earlier commits carry (`git log -1 --format='%an <%ae>'` shows it). Check `git var GIT_AUTHOR_IDENT` before the first commit on a new machine.
 4. **Tools.** Node 22+ with npm, Python 3.13, and `uv`. Then `npm ci` at the repo root and `uv sync` in `backend/`. On the old laptop Node came from `uv tool install nodejs-wheel`; a normal Node install is fine on a new machine.
 5. **Secrets.** Create `.env` at the root of the onwardsAi checkout (gitignored). The old one held two names: `ANTHROPIC_API_KEY` and `BROWSER_USE_API_KEY`. Copy the values over by hand or issue new keys. Every other variable is documented in `backend/.env.example`. Without a database setting the app uses local SQLite.
 6. **Run it.** `npm run dev` (API on 8787, web on 5173), then `npm run check:all`. The first Vite start after a fresh install can take two to three minutes before it serves a module; it is not hung.
 7. **FastAPI Cloud.** Log in again with `fastapi login` (the old laptop's token had expired by 2026-11-16, so no deploy could be confirmed from it). Deploy only when the owner asks: `npm run deploy -- --app-id 599a983d-3900-4d21-8261-180cef4d1eca`. On Windows set `PYTHONUTF8=1`.
-8. **Claude memory (optional).** `handover-archive/claude-memory/` on the archive branch has the notes earlier Claude Code sessions kept. Read `handover-archive/README.md` before restoring them; several describe the old laptop only (its office proxy, its Node path).
+8. **This repo is public; the site repo is private.** `Aman8T/onwardsAi` is world-readable on every branch, while `tayyari-career-intelligence` (and CrackIt's `topper-tribe-ai`) are private. Anything pushed to onwardsAi can be read by anyone: no resumes, personal portfolios, employer details, machine paths or memory notes. Personal material goes in a private repo or stays local.
+9. **The private handover archive.** It travels as one file, `leafout-handover-archive-2026-11-16.bundle` (made on the old laptop next to the `Main App` folder). On the new machine, inside a clone of this repo: `git fetch <path-to-bundle> archive/local-machine-2026-11-16:archive/local-machine-2026-11-16`, then check out that branch. Its `handover-archive/README.md` explains the three folders: `canvases/` (sources of the starred canvases in section 6), `claude-memory/` (notes earlier Claude Code sessions kept; several describe the old laptop only, so read before restoring), and `side-session-notes/` (the briefs and findings sessions left for each other, by session id). To keep it on GitHub, push the branch to a **private** repository, never to this one.
 
 ## 3. Branches
 
@@ -39,13 +40,13 @@ Read in this order: this file, `project-soul.md`, `CLAUDE.md`, then the section 
 |---|---|---|---|
 | `main` | — | Everything live: dashboard, materials kit on every screen, /resume v1–3, Ask dock, auto-apply A1, neutral stage | — |
 | `portfolio/neon-coast` | 4 commits | A third portfolio skin, "Neon Coast" (GTA 6 poster mood, no Rockstar assets). `src/portfolio/coast/`, `src/styles/coast.css`, `SkinPicker.tsx`, `?view=coast`; `design.md` §9a | Owner: confirm the name, merge or not, and whether the editor's choice sets the published default. Not checked in Safari, Firefox, `/p/<id>`, print, reduced motion |
-| `fix/auto-apply-e2e` | 1 commit (`9f468af`) | Why no live auto-apply run finished: Lever's hidden hCaptcha was treated as a wall, Greenhouse's S3 upload host was blocked. `check:all` passed | Merge into main, deploy, then one real submit. Expect conflicts in `apply/engine.py` with `feat/inbound-email` |
-| `feat/inbound-email` | 2 commits (`c904d8e`, `8577231`) | A2: a per-user application inbox on Resend Receiving (`apply.leafout.in`), migration `0018_inbound_email`, research `docs/research/inbound-email-tracking.md`; plus the end-to-end auto-apply design draft `docs/auto-apply-e2e-design.md` with decisions D1–D14 open | Owner decisions D1–D14 (section 5), then Resend and DNS setup. Check the migration number: main also has a 0018 (`resumes`) |
-| `docs/career-ops-2026-11` | 1 commit (`55717ea`) | career-ops added to `docs/research/open-source-resume-tools.md` | Open the PR: https://github.com/Aman8T/onwardsAi/pull/new/docs/career-ops-2026-11 |
-| `archive/local-machine-2026-11-16` | 2 commits | Not code: `handover-archive/` (canvas sources, memory notes, side-session notes) | Keep as a reference; never merge |
+| `fix/auto-apply-e2e` | 1 commit (`9f468af`), 29 behind | Why no live auto-apply run finished: Lever's hidden hCaptcha was treated as a wall, Greenhouse's S3 upload host was blocked. `check:all` passed | Merges into main cleanly. Merge, deploy, then one real submit |
+| `feat/inbound-email` | 2 commits (`c904d8e`, `8577231`), 29 behind | A2: a per-user application inbox on Resend Receiving (`apply.leafout.in`), research `docs/research/inbound-email-tracking.md`; plus the end-to-end auto-apply design draft `docs/auto-apply-e2e-design.md` with decisions D1–D14 open | Owner decisions D1–D14 (section 5) first. The merge conflicts in 11 files (`api/routes/__init__.py`, `container.py`, `storage/ports.py`, `storage/repos/__init__.py`, `storage/tables.py`, `tests/fakes/repos.py`, `tests/unit/test_layering.py`, `docs/auto-apply.md`, `docs/backend.md`, `docs/roadmap.md`, `package.json`). Its migration `0018_inbound_email` collides with main's `0018_resumes`: renumber it 0022 with `down_revision` 0021. Then Resend and DNS setup |
+| `docs/career-ops-2026-11` | 1 commit (`55717ea`) | career-ops added to `docs/research/open-source-resume-tools.md` | Fast-forwards. Open the PR: https://github.com/Aman8T/onwardsAi/pull/new/docs/career-ops-2026-11 |
 | `exp/auto-apply-test` | — (old base) | The auto-apply experiment that chose Claude + Browser Use (`experiments/auto_apply/`) | Reference only |
 | `design/audit-pass`, `feat/auto-apply-build`, `feat/auto-apply-v2` | 0 | Already in main; pushed only so nothing exists on one machine | Can be deleted |
-| `feat/auto-apply`, `claude/hopeful-thompson-x6arb8`, `claude/charming-ride-ojz4kd` | — | Older: the first auto-apply attempt (superseded by A1) and two earlier hand-over notes from 2026-11-05. `docs/handover.md` on `claude/hopeful-thompson-x6arb8` has the repo map, gate results and the ONW-nn open points of that date | Reference only; check its open points against today's main before acting on one |
+| `feat/auto-apply`, `claude/hopeful-thompson-x6arb8` | — | Older: the first auto-apply attempt (fully in main) and a hand-over note from 2026-11-05. `docs/handover.md` on `claude/hopeful-thompson-x6arb8` has the repo map, gate results and the ONW-nn open points of that date | Reference only; check its open points against today's main before acting on one |
+| `claude/charming-ride-ojz4kd` | — | A work log of 2026-11-05 plus launch-audit fixes (`8e15cea`: no model names on screen, dated match checks, no board fetches, honest Weekly news, Indian amounts, postings retention, match API contract) that are **not in main** | Decide whether each fix still applies; merging conflicts in 8 files |
 
 ### tayyari-career-intelligence
 
@@ -56,7 +57,7 @@ Read in this order: this file, `project-soul.md`, `CLAUDE.md`, then the section 
 - **Live on app.leafout.in since 2026-11-12 (deploy `52aa77d4`)**: everything on `main`. Auto-apply is switched on in production (`AUTO_APPLY_ENABLED=true`) but no live run has finished yet; `fix/auto-apply-e2e` is the fix and is not deployed.
 - **Set on FastAPI Cloud** (names only): `BROWSER_USE_API_KEY`, `AUTO_APPLY_ENABLED`, `DATABASE_URL` (Neon Postgres), plus the earlier ones in `backend/.env.example`. `apply_credit_cost` is not set and there is no auto-apply price.
 - **Off until the owner sets secrets**: Leafout sign-in (L1), the Weekly, Razorpay live sales, Resend inbound email.
-- **The office proxy on the old laptop blocked app.leafout.in**, so the 2026-11-12 deploy was never looked at in a browser from that machine. Check https://app.leafout.in/dashboard from the new one.
+- **The old laptop's network blocked app.leafout.in**, so the 2026-11-12 deploy was never looked at in a browser. Check https://app.leafout.in/dashboard from the new machine.
 
 ## 5. Waiting on the owner
 
@@ -84,7 +85,7 @@ Read in this order: this file, `project-soul.md`, `CLAUDE.md`, then the section 
 
 ## 6. Design canvases
 
-All are claude.ai artifacts in the owner's account; they open from any computer signed in to it. Sources for the starred ones are on `archive/local-machine-2026-11-16` under `handover-archive/canvases/`.
+All are claude.ai artifacts in the owner's account; they open from any computer signed in to it. Sources for the starred ones are in the private handover archive under `handover-archive/canvases/` (section 2, step 9).
 
 | Canvas | Link | What it settled |
 |---|---|---|
@@ -105,12 +106,12 @@ Earlier explorations in the same account: Leafout mark options, logo and mascot,
 
 ## 7. Sessions on the old laptop
 
-One line each; the full notes the sessions left for each other are in `handover-archive/side-session-notes/<session id>/`.
+One line each; the full notes the sessions left for each other are in the private archive under `handover-archive/side-session-notes/<session id>/`.
 
 | Session | Did | Ends in |
 |---|---|---|
 | "/ screen" (main design thread) | Dashboard and every screen redesigned canvas-first; desk, read, /resume v2–3, neutral stage, materials kit; deployed 2026-11-12 | `main`; notes `local_493a75b9…/` (theme, landing, payments, resume briefs) |
-| Unified screen design (this one) | All Screens canvas; this handover; pushed every branch | `archive/local-machine-2026-11-16`, this file |
+| Unified screen design (this one) | All Screens canvas; this handover; pushed every branch | this file, the private archive |
 | Dark mode theme improvements | Dark direction D; nine-point design audit on app and landing; auto-apply screen audit; deploy fix (Python 3.13, `--app-id`) | `main`, landing `main`; notes `local_d3eba6a5…/og-default-redraw.md` |
 | SSH setup and repo clone | SSH and landing clone; reviews of old auto-apply, Cloudflare Browser Run (not a drop-in), Browser Use `liveUrl` as a hand-off; career-ops survey | `docs/career-ops-2026-11` |
 | SSH setup and repo clone (fork) | Auto-apply A1 end to end: experiment, spec, build, deploy; inbound email; e2e design draft | `main`, `exp/auto-apply-test`, `feat/inbound-email` |
@@ -132,10 +133,10 @@ One line each; the full notes the sessions left for each other are in `handover-
 
 - **`.env`** with the two API keys: secrets never go to git (section 2, step 5).
 - **The local SQLite database** (`%LOCALAPPDATA%\tayyari\tayyari.sqlite3`): dev data, including the owner's own analysis used for the Neon Coast canvas. Re-run the analysis on the new machine from the resume.
-- **The owner's resume PDF** (in the old Downloads folder) and any other personal files.
+- **The owner's own resume** and any other personal files: copy them by hand.
+- **The private handover archive**: deliberately not in this public repo (section 2, step 9).
 - **`experiments/auto_apply/data/`** in the old main checkout: a test resume and two guard zips, gitignored by design; `exp/auto-apply-test` explains how to regenerate them.
 - **Scratchpad leftovers**: screenshots, task logs, CSS backups and a partial patch from build waves since committed. Nothing in them is needed.
-- **The HAckathon/RR project** on the old laptop is not Leafout and is not a git repository; it is not covered here.
 
 ## 9. How the owner works
 
