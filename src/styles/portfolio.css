@@ -178,7 +178,7 @@
 }
 
 /* The page's style control (SkinPicker): one pill per skin, the current one filled. */
-.pf-skins {
+.pf-header .pf-skins {
   display: inline-flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -186,7 +186,7 @@
   margin-left: 8px;
 }
 
-.pf-skin {
+.pf-header .pf-skin {
   min-height: 44px;
   padding: 0 14px;
   border: 1px solid var(--line);
@@ -200,12 +200,12 @@
     color var(--d-fast) var(--ease);
 }
 
-.pf-skin:hover {
+.pf-header .pf-skin:hover {
   border-color: var(--line-strong);
   color: var(--text);
 }
 
-.pf-skin[aria-pressed='true'] {
+.pf-header .pf-skin[aria-pressed='true'] {
   border-color: var(--line-strong);
   background: var(--surface);
   color: var(--text);
@@ -1476,11 +1476,11 @@
     display: flex;
   }
 
-  .pf-skins {
+  .pf-header .pf-skins {
     margin-left: 0;
   }
 
-  .pf-skin {
+  .pf-header .pf-skin {
     padding: 0 10px;
     font-size: 12px;
   }
