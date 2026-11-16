@@ -374,3 +374,12 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`), except the
 role's, which Prepare changed on purpose (no percentage).
+24. **Portfolio styles** (no model call once a portfolio exists). Open the portfolio from the dashboard: the editor's
+    header has a Style group of three (Modern, Old Newspaper, Neon Coast), and the preview carries the same control
+    in each skin's own chrome. Choose Neon Coast: the title sits over a sunset with a sun, a skyline and palms, and
+    the page below is a stack of flat panels cut at shallow angles; every block the Modern page shows is there with
+    the same wording and the same Skill Graph numbers. "Preview public view" keeps the skin. At 390 px the panels go
+    straight, nothing scrolls sideways and every control is 44 px tall. With reduced motion on, the title and the
+    sun do not move. `/dev/portfolios` shows every sample in all three skins at 1280 and 390;
+    `/dev/portfolios?profile=<profile id>&skin=coast` shows one portfolio the local API holds, full page. On a
+    published page, `/p/<id>?view=coast` opens it in Neon Coast and the control rewrites the address.
