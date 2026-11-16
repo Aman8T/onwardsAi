@@ -2,6 +2,8 @@
 
 Date: 2026-10-09. Method: four Haiku discovery sweeps (web search, GitHub pages and a small GitHub API budget), then eight Sonnet deep reads covering 20 repositories. Every repository was cloned shallowly into the session scratchpad and read; nothing from any of them was installed or executed. Star counts are from the GitHub API on the day unless marked "~" (page or badge estimate).
 
+Updated 2026-11-16: career-ops re-read (§1 row 2, "Update, 2026-11-16" in §3.2, §5).
+
 The two repositories the brief named: HackerRank's `interviewstreet/hiring-agent` and `todddong/hackerrank-resume-ats`. The second is a Flask UI around a June-2026 vendored copy of the first, not a separate rubric; it has no licence file.
 
 ## 1. The ranked list
@@ -13,7 +15,7 @@ Ranked by stars, with company-backed repos marked. "Verdict" is what Tayyari tak
 | # | Repository | Stars | Owner | Licence | Last push | What it is | Verdict |
 |---|---|---|---|---|---|---|---|
 | 1 | anuraghazra/github-readme-stats | ~79.8k | individual | MIT | unmaintained | SVG stats cards embedded in GitHub profile READMEs | The viral-widget reference for our shareable radar card (read; see §3.12) |
-| 2 | career-ops-hq/career-ops | 73,898 | individual (santifer) | MIT, trademark policy | 2026-10 | Claude Code / Codex job-search agent: scores postings 1 to 5, tailors CV, created April 2026 | Read. JD-first two-pass matching, provenance tiers, regex fact gate, distribution playbook |
+| 2 | career-ops-hq/career-ops | 82,868 (2026-11-16; 73,898 on 2026-10-09) | individual (santifer) | MIT, trademark policy; employer registry CC BY 4.0 | 2026-11 | Claude Code / Codex job-search agent: scores postings 1 to 5, tailors CV, created April 2026 | Read. JD-first two-pass matching, provenance tiers, regex fact gate, distribution playbook; re-read 2026-11-16 (§3.2) |
 | 3 | resume/resume.github.com | 62,899 | org | none | 2023 (dormant) | Resume generated from a GitHub profile; star the repo to opt in | The "zero-input profile from public evidence" precedent; no licence, ideas only |
 | 4 | MadsLorentzen/ai-job-search | 45,380 | individual | MIT | 2026-10 | Claude Code job-application framework, LaTeX CV, created March 2026 | Read. Four-status coverage table, ATS text-layer checks, fork-as-install growth |
 | 5 | reactive-resume/reactive-resume | 44,042 | org | MIT | 2026-10 | Privacy-first resume builder; v6 adds Career → Knowledge facts and a Fit table | Read. Closest existing implementation of our evidence-first design |
@@ -122,6 +124,31 @@ Avoid.
 - 93 KB evaluation prompt; marketing figures that drift ("10 dimensions" vs 5; "740 offers" vs listings).
 - Playwright page navigation and the LinkedIn guard: a hosted product should accept pasted text, a user URL or an official API only.
 - Trademark: never "powered by career-ops" or a "career-ops Pro"; "based on" is fine.
+
+#### Update, 2026-11-16
+
+Re-read at v1.40.0 (released 2026-11-10, last push 2026-11-16): 82,868 stars, 15,198 forks, MIT. Cloned shallowly into the session scratchpad and read with file tools; nothing was installed or run. What changed since 2026-10-09:
+
+- **Hosts and a local web UI.** The README's quick start names Claude Code, Codex, Qwen, OpenCode, Antigravity and Grok, with entry files for more. `web/` is an alpha Next.js app that binds loopback and reads the same files as the CLI; its Apply page prefills and never submits. A hosted web version exists only as a waitlist (career-ops.org/waitlist).
+- **Sources.** 144 provider modules in `providers/` (119 in October), among them Workday, iCIMS, Taleo, SuccessFactors, SmartRecruiters, Workable, a generic employer sitemap reader, and the Indian ATSs Keka, Darwinbox, TurboHire and Zoho Recruit.
+- **Employer registry (`employers/`).** 588 employer → ATS → board pointers (259 Ashby, 224 Greenhouse, 82 Lever, 17 Workday, 3 Workable, 2 SmartRecruiters, 1 Recruitee), no postings, CC BY 4.0, with a removal-on-request process. No row is tagged `IN` yet. Discover's own list (`backend/tayyari/discover/data/employers.json`) has 51 (38 Greenhouse, 13 Lever).
+- **An India layer.** `modes/in/` (English) adds CTC wording, PF and ESI rules verified at run time from official sites, fresher and experienced eligibility, scam signals and Indian application conventions, applied by the hiring entity rather than the posting's language. `modes/hi/` is a Hindi mode set, `naukri.md` among its files.
+- **Before and after the application.** Repost detection (`detect-reposts.mjs`) and close dates (`closing-soon.mjs`); a follow-up cadence (`followup-cadence.mjs`) and employer reply classification (`modes/reply-watch.md`); rejection patterns and per-ATS-channel advance rates (`analyze-patterns.mjs`); contact discovery with outreach drafts of at most 300 characters (`modes/contacto.md`); company research (`modes/deep.md`); an offer stage with a contract clause walk and a desired, advertised and actual salary-gap analyser (`modes/offer-prep.md`, `salary-gap.mjs`); a STAR story bank with a provenance check (`story-provenance-check.mjs`).
+- **GitHub evidence** (`github-evidence.mjs`, through the user's own `gh`): only PRs and commits the user authored count; commit counts are kept apart from PR counts and weigh less; a fork is never evidence; a private repo counts only when allowlisted; the repos `cv.md` names are checked against what GitHub records.
+- **Fact gate.** It now also blocks bullets whose verb drifted from the source bullet, and the PDF has an opt-in `--strict-fact-check`. The README still says it "cannot judge every rewording yet". The holistic 1 to 5 score stays, with an optional `positioning_band` beside it; its formula was not re-read.
+- **Stance.** The manifesto (v1.0, 2026-07-14) says nothing is ever auto-submitted and job seekers never pay; `prepare-application.mjs` never POSTs. A1 submits after the person approves a digest (`docs/auto-apply.md`) and is paid, so that community will read "Apply for me" as auto-apply unless our copy says otherwise.
+
+Take.
+- The registry as a seed for Discover's employer list, with CC BY 4.0 attribution. Its Ashby rows wait for the permission `docs/research/job-discovery.md` asks for, and India coverage has to come from elsewhere.
+- The India rules as posting-match inputs: CTC wording, fresher eligibility and scam signals become gate questions or anomalies. Statutory figures are read from the official source at run time, never hard-coded.
+- Repost and close-date signals beside Discover's own first-seen freshness.
+- The outcome loop: follow-up reminders and reply classification feeding A1's tracker (the email reader exists); per-channel advance rates only once a channel has five outcomes, as their calibration rule says.
+- The GitHub evidence rules, for our GitHub digest.
+- Copy that leads with fit first and per-application approval (`docs/auto-apply.md` §1, rules 1 and 4), so A1 is not read as spray-and-pray.
+
+Leave.
+- Files as the store and the local-first install: Tayyari is hosted, which is what lets evidence and outcomes compound across people.
+- Their Naukri mode as a pattern: for us Naukri stays manual-only (non-negotiable 4).
 
 ### 3.3 MadsLorentzen/ai-job-search
 
@@ -410,6 +437,7 @@ JSON Resume in and out (`to_jsonresume` strips evidence and keeps an `x_tayyari`
 |---|---|---|
 | hiring-agent | MIT (HackerRank 2025); `pymupdf_rag.py` is AGPL | Prompts, `role.json`, Python with the notice; not the PyMuPDF4LLM file; never describe anything as "HackerRank's rubric" |
 | career-ops | MIT plus a trademark policy | Code and prompts with the notice; "based on career-ops" allowed; no "powered by" or "career-ops Pro" |
+| career-ops employer registry (`employers/`) | CC BY 4.0, database rights included | The board pointers with attribution; not the contribution manifests, which name people |
 | ai-job-search | MIT | Re-derive the rules; keep the notice if any prompt text is quoted; bundled fonts' licences unverified |
 | Resume-Matcher | Apache-2.0 | Code with the licence text and marked changes; the name is not licensed |
 | Reactive Resume, RenderCV, JSON Resume, cvtailor, JadeAI (Apache-2.0), ResumeSkills, ai-recruiter-claude, interview-my-project, Proof-Of-Synergy, gitresume, ats-screener, SkillNER, esco-skill-extractor, starmap, github-readme-stats | MIT or Apache-2.0 | Reuse with attribution; prefer reimplementing in our own words; cvtailor's `resume-quantifier.md` is the one file to leave out |
