@@ -1,17 +1,22 @@
 /**
- * Dev gallery (`/dev/portfolios`, development builds only): every sample portfolio in both skins at desktop
+ * Dev gallery (`/dev/portfolios`, development builds only): every sample portfolio in every skin at desktop
  * (1280) and phone (390) width, side by side, for visual review against the design canvas.
  *
  * The entries are RIYA's three looks plus every `backend/tests/data/portfolio/rendered/*.portfolio.json` the
  * backend has produced (the folder may be empty). Each frame is an iframe onto this same route in "solo" mode
  * (`?solo=<id>&skin=…`), so the page really is 1280 or 390 px wide and its media queries behave as on a phone.
+ *
+ * `?profile=<profile id>&skin=…` shows one portfolio the local API holds (your own, say), full page, in any skin.
+ * It is fetched when the page opens and never written anywhere: no personal page becomes a sample or a fixture.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { Portfolio, PortfolioSkin } from '../../../shared/portfolio';
+import { getPortfolio } from '../../lib/api';
 import { graphVariant } from '../model';
 import type { ViewMode } from '../model';
 import { PortfolioPage } from '../PublicView';
+import { SKINS, skinOf } from '../SkinPicker';
 import { RIYA } from './samples';
 
 interface Entry {
@@ -50,10 +55,6 @@ const WIDTHS = [
   { label: '1280', width: 1280, height: 860 },
   { label: '390', width: 390, height: 780 },
 ] as const;
-const SKINS: { skin: PortfolioSkin; label: string }[] = [
-  { skin: 'standard', label: 'Standard' },
-  { skin: 'press', label: 'Newspaper' },
-];
 
 /* ───────────────────────── solo: one portfolio, full page ───────────────────────── */
 
@@ -67,9 +68,27 @@ function Solo({ entry, initialSkin, mode }: { entry: Entry; initialSkin: Portfol
       graph={graph}
       mode={mode}
       skin={skin}
-      onToggleSkin={() => setSkin((s) => (s === 'press' ? 'standard' : 'press'))}
+      onPickSkin={setSkin}
     />
   );
+}
+
+/** One portfolio from the local API, by profile id (dev only; nothing is stored). */
+function Live({ profileId, initialSkin, mode }: { profileId: string; initialSkin: PortfolioSkin; mode: ViewMode }) {
+  const [skin, setSkin] = useState<PortfolioSkin>(initialSkin);
+  const [doc, setDoc] = useState<Portfolio | null>(null);
+  const [note, setNote] = useState('Loading the portfolio from the local API…');
+  useEffect(() => {
+    const ctrl = new AbortController();
+    getPortfolio(profileId, ctrl.signal)
+      .then((p) => (p ? setDoc(p) : setNote('The local API has no portfolio for this profile id.')))
+      .catch((err: unknown) => {
+        if (!ctrl.signal.aborted) setNote(err instanceof Error ? err.message : String(err));
+      });
+    return () => ctrl.abort();
+  }, [profileId]);
+  if (!doc) return <p style={{ padding: 'var(--s6)' }}>{note}</p>;
+  return <PortfolioPage spec={doc.spec} content={doc.content} graph={doc.graph} mode={mode} skin={skin} onPickSkin={setSkin} />;
 }
 
 /* ───────────────────────── the gallery ───────────────────────── */
@@ -86,8 +105,12 @@ export function Gallery() {
   const soloEntry = solo ? ALL.find((e) => e.id === solo) : undefined;
   const [mode, setMode] = useState<ViewMode>(params.get('mode') === 'owner' ? 'owner' : 'public');
 
+  const live = params.get('profile');
+  if (live) {
+    return <Live profileId={live} initialSkin={skinOf(params.get('skin')) ?? 'standard'} mode={params.get('mode') === 'owner' ? 'owner' : 'public'} />;
+  }
   if (soloEntry) {
-    return <Solo entry={soloEntry} initialSkin={params.get('skin') === 'press' ? 'press' : 'standard'} mode={params.get('mode') === 'owner' ? 'owner' : 'public'} />;
+    return <Solo entry={soloEntry} initialSkin={skinOf(params.get('skin')) ?? 'standard'} mode={params.get('mode') === 'owner' ? 'owner' : 'public'} />;
   }
 
   const src = (e: Entry, skin: PortfolioSkin) =>
