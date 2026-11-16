@@ -1,11 +1,11 @@
 /**
  * On-demand web fonts for the portfolio kit. Studio's faces (Instrument Serif, Geist, Geist Mono) are
- * already loaded by index.html, and Technical needs nothing extra, so only Editorial, Warm and the
- * Old Newspaper skin append a Google Fonts stylesheet, once each. Safe to call on the server (no-op).
+ * already loaded by index.html, and Technical needs nothing extra, so only Editorial, Warm, the Old Newspaper
+ * skin and the Neon Coast skin append a Google Fonts stylesheet, once each. Safe to call on the server (no-op).
  */
 import type { TypePairing } from '../../../shared/portfolio';
 
-export type FontSet = TypePairing | 'press';
+export type FontSet = TypePairing | 'press' | 'coast';
 
 const GOOGLE = 'https://fonts.googleapis.com/css2';
 
@@ -16,6 +16,8 @@ const SHEETS: { [K in FontSet]: string | null } = {
   technical: null,
   warm: `${GOOGLE}?family=Bricolage+Grotesque:opsz,wght@12..96,500..600&display=swap`,
   press: `${GOOGLE}?family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap`,
+  // Neon Coast: Anton for the poster titles, Barlow Condensed for the small lines; body text stays Geist.
+  coast: `${GOOGLE}?family=Anton&family=Barlow+Condensed:wght@500;600&display=swap`,
 };
 
 const requested = new Set<FontSet>();

@@ -3,8 +3,10 @@
  *
  * Scans src/**\/*.{css,ts,tsx} and index.html. Zero dependencies.
  * Run with `npx tsx scripts/restraint-check.ts`; exits 1 and lists file:line on:
- *   - box-shadow, text-shadow, drop-shadow(), backdrop-filter, blur(<length>); the one exception (2026-11-12, the
- *     user's decision) is a box-shadow declaration whose every colour is var(--paper-shade) or var(--paper-shade-soft)
+ *   - box-shadow, text-shadow, drop-shadow(), backdrop-filter, blur(<length>); the exceptions are a box-shadow
+ *     declaration whose every colour is var(--paper-shade) or var(--paper-shade-soft) (2026-11-12, the user's decision),
+ *     and, in the Neon Coast portfolio skin's own stylesheet only (src/styles/coast.css, design.md §9a), a text-shadow
+ *     whose every colour is var(--coast-glow-pink), var(--coast-glow-aqua) or var(--coast-pink), at most four of them
  *   - any border (or side / width longhand) thicker than 1px — outline is allowed
  *   - colour literals (#hex, rgb/rgba/hsl/hsla, color-mix; in stylesheets also literal
  *     oklch/oklab/lab/lch/hwb/color) outside src/theme/tokens.css and the favicon line of index.html
@@ -22,6 +24,10 @@ import { join, relative, resolve } from 'node:path';
 const ROOT = process.cwd();
 const SCAN_EXTS = new Set(['.css', '.ts', '.tsx']);
 const TOKENS_FILE = 'src/theme/tokens.css';
+/** The Neon Coast skin: the one stylesheet that may use a text-shadow, the colours it may use, and how many times. */
+const COAST_FILE = 'src/styles/coast.css';
+const COAST_SHADOW_COLOUR = /^var\(\s*--coast-(?:glow-pink|glow-aqua|pink)\s*\)$/;
+const COAST_SHADOW_MAX = 4;
 const INFINITE_ALLOWLIST = ['.ch-typing', '.ch-caret', '.ch-live', '.ch-tool.is-busy', '.radar-leaf', '.radar-heart'];
 const DELETED_FILES = [
   'src/styles/keycap.css',
@@ -135,10 +141,36 @@ function paperShadowAt(text: string, index: number, word: string): number {
   return residue === '' ? head[0].length + (quoted ? quoted[0].length : value.length) : 0;
 }
 
-const effects: Rule = (text, _file, report) => {
+/**
+ * The Neon Coast skin's text-shadow (design.md §9a): the print offset under its two titles and the glow of its lit
+ * sign. A `text-shadow` declaration passes only in coast.css, only when every colour in it is one of the three coast
+ * tokens above and nothing else is in the value but lengths; a transition that names it, `none`, a literal or any
+ * other colour is still forbidden.
+ */
+function coastShadowAt(text: string, index: number): boolean {
+  const head = /^\s*:\s*/.exec(text.slice(index + 'text-shadow'.length));
+  if (!head) return false;
+  const value = /^[^;}]*/.exec(text.slice(index + 'text-shadow'.length + head[0].length))?.[0] ?? '';
+  const colours = value.match(/var\(\s*--[\w-]+\s*\)/g) ?? [];
+  if (!colours.length || !colours.every((c) => COAST_SHADOW_COLOUR.test(c))) return false;
+  const residue = value
+    .replace(/var\(\s*--[\w-]+\s*\)/g, '')
+    .replace(/[,\s]/g, '')
+    .replace(/-?\d*\.?\d+(?:px|r?em)?/g, '');
+  return residue === '';
+}
+
+const effects: Rule = (text, file, report) => {
   const re = /\b(?:box-shadow|text-shadow|backdrop-filter|boxShadow|textShadow|backdropFilter)\b|drop-shadow\(|blur\(\s*[\d.]/g;
+  let coastShadows = 0;
   for (const m of text.matchAll(re)) {
     if ((m[0] === 'box-shadow' || m[0] === 'boxShadow') && paperShadowAt(text, m.index, m[0])) continue;
+    if (m[0] === 'text-shadow' && file === COAST_FILE) {
+      if (coastShadowAt(text, m.index)) {
+        if (++coastShadows > COAST_SHADOW_MAX) report(m.index, `more than ${COAST_SHADOW_MAX} text-shadows in the Neon Coast skin`);
+        continue;
+      }
+    }
     report(m.index, `forbidden effect: ${m[0].replace(/\(.*$/, '(')}`);
   }
 };

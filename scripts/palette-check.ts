@@ -133,8 +133,8 @@ const QUIET_DARK_FORCED_RE =
 const sameToken = (a: Token, b: Token): boolean =>
   a.L === b.L && a.C === b.C && a.cvar === b.cvar && a.hue === b.hue && a.kw === b.kw && a.kb === b.kb && a.alpha === b.alpha;
 
-/** Tokens that hold their value in both schemes: the Old Newspaper skin's fixed paper and ink. */
-const schemeFree = (name: string): boolean => name.startsWith('press-');
+/** Tokens that hold their value in both schemes: the Old Newspaper skin's fixed paper and ink, and the Neon Coast skin's sunset. */
+const schemeFree = (name: string): boolean => name.startsWith('press-') || name.startsWith('coast-');
 
 /** Dark tokens that are not an oklch literal in the dark table: --paper-sheet is var(--surface-2) there (tokens.css c1c). */
 const DARK_DERIVED = new Set(['paper-sheet']);
@@ -400,6 +400,25 @@ const PAIRS: Pair[] = [
   // The portfolio's Old Newspaper skin (fixed hue): body ink and secondary ink on paper.
   { fg: 'press-ink', bg: 'press-paper', min: 7 },
   { fg: 'press-ink-2', bg: 'press-paper', min: 4.5 },
+  // The portfolio's Neon Coast skin (fixed colours, design.md §9a). Dark panels and the sky behind the title, whose
+  // gradient runs only between night, plum and magenta: cream text at 7:1, the second line and the accents at 4.5:1.
+  ...['coast-night', 'coast-plum', 'coast-teal', 'coast-magenta'].flatMap((p) => [
+    { fg: 'coast-cream', bg: p, min: 7 },
+    { fg: 'coast-cream-2', bg: p, min: 4.5 },
+    { fg: 'coast-gold', bg: p, min: 4.5 },
+  ]),
+  // the lit sign and the links on the night panels, the graph's top score in pink (34 px, large text)
+  { fg: 'coast-aqua', bg: 'coast-night', min: 4.5 },
+  { fg: 'coast-pink', bg: 'coast-night', min: 4.5 },
+  // the page (sand) and the light and hot panels: ink at 7:1 on sand, mint, gold and orange, 4.5:1 on pink; the second
+  // ink never sits on pink
+  ...['coast-sand', 'coast-mint', 'coast-gold', 'coast-orange'].flatMap((p) => [
+    { fg: 'coast-ink', bg: p, min: 7 },
+    { fg: 'coast-ink-2', bg: p, min: 4.5 },
+  ]),
+  { fg: 'coast-ink', bg: 'coast-pink', min: 4.5 },
+  // mint panels mark their small labels in magenta
+  { fg: 'coast-magenta', bg: 'coast-mint', min: 4.5 },
 ];
 
 interface PairResult extends Pair {

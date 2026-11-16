@@ -1,6 +1,6 @@
 /**
  * Prop contracts between the portfolio's parts (frozen at W0): `PortfolioView` (standard skin + blocks),
- * `SkillGraph` (graph variants), `PressView` (Old Newspaper skin) and `EditorView`. Data only flows in
+ * `SkillGraph` (graph variants), `PressView` (Old Newspaper skin), `CoastView` (Neon Coast skin) and `EditorView`. Data only flows in
  * through props; nothing here talks to the store or the network.
  */
 import type { ReactNode } from 'react';
@@ -39,13 +39,19 @@ export interface PressIndexArgs {
   graph: GraphSnapshot;
 }
 
+/** Called with the skin the viewer picked in the page's own style control (absent: the control is not shown). */
+export type PickSkin = (skin: PortfolioSkin) => void;
+
 export interface PressRenderArgs {
   spec: PortfolioSpec;
   content: PortfolioContent;
   graph: GraphSnapshot;
   mode: ViewMode;
-  onToggleSkin?: () => void;
+  onPickSkin?: PickSkin;
 }
+
+/** What the Neon Coast skin is handed: the same data as the newspaper, nothing more. */
+export type CoastRenderArgs = PressRenderArgs;
 
 export interface PortfolioViewProps {
   spec: PortfolioSpec;
@@ -53,8 +59,9 @@ export interface PortfolioViewProps {
   graph: GraphSnapshot;
   mode: ViewMode;
   skin: PortfolioSkin;
-  onToggleSkin?: () => void;
+  onPickSkin?: PickSkin;
   editing?: EditHooks;
   renderGraph: (args: GraphRenderArgs) => ReactNode;
   renderPress: (args: PressRenderArgs) => ReactNode;
+  renderCoast: (args: CoastRenderArgs) => ReactNode;
 }

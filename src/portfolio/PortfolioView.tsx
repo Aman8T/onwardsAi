@@ -2,7 +2,8 @@
  * PortfolioView: the standard skin. One scoped wrapper (`.pf-scope`) carries the person's gradient family,
  * field shape, type pairing, corners and density; inside it the header, the blocks in spec order (the graph
  * band is the hero and graph side by side when the hero is `split`), and the provenance footer.
- * With `skin === 'press'` it hands over to the Old Newspaper renderer. Data flows in through props only.
+ * With `skin === 'press'` it hands over to the Old Newspaper renderer, with `skin === 'coast'` to the Neon Coast
+ * one. Data flows in through props only.
  */
 import { useEffect, useId, useState } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
@@ -27,6 +28,7 @@ import { scopeClass } from './kit/fields';
 import { ensureFonts } from './kit/fonts';
 import { typeVars } from './kit/type';
 import { graphInHero, graphVariant, shownBlocks, shownDomains, styleVars } from './model';
+import { SkinPicker } from './SkinPicker';
 import type { PortfolioViewProps } from './types';
 
 /* ───────────────────────── graph block ───────────────────────── */
@@ -95,30 +97,9 @@ function SectionNav({ items, uid, pills, onPick }: NavProps) {
   );
 }
 
-function NewspaperIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M4 5h13v14H6a2 2 0 0 1-2-2V5z" />
-      <path d="M17 9h3v8a2 2 0 0 1-2 2" />
-      <path d="M7 9h7M7 12.5h7M7 16h4" />
-    </svg>
-  );
-}
-
 /* ───────────────────────── the standard skin ───────────────────────── */
 
-function StandardSkin({ spec, content, graph, mode, onToggleSkin, editing, renderGraph }: PortfolioViewProps) {
+function StandardSkin({ spec, content, graph, mode, onPickSkin, editing, renderGraph }: PortfolioViewProps) {
   // No entrance when motion is reduced, or when the page loads in a hidden tab (a link opened in the background, a
   // headless capture): frame-driven animations do not run there, and the sections would sit at opacity 0.
   const [hiddenAtLoad] = useState(() => typeof document !== 'undefined' && document.visibilityState === 'hidden');
@@ -237,12 +218,7 @@ function StandardSkin({ spec, content, graph, mode, onToggleSkin, editing, rende
             </a>
             <div className="pf-header-end">
               <SectionNav items={navItems} uid={uid} onPick={pick} />
-              {onToggleSkin ? (
-                <button type="button" className="pf-pill pf-glass" onClick={onToggleSkin}>
-                  <NewspaperIcon />
-                  Try Old Newspaper Style
-                </button>
-              ) : null}
+              {onPickSkin ? <SkinPicker skin="standard" onPick={onPickSkin} /> : null}
             </div>
           </header>
           <main id={`${uid}-top`} className="pf-main">
@@ -258,13 +234,13 @@ function StandardSkin({ spec, content, graph, mode, onToggleSkin, editing, rende
 /* ───────────────────────── entry point ───────────────────────── */
 
 export function PortfolioView(props: PortfolioViewProps) {
-  const { skin, spec, content, graph, mode, onToggleSkin, renderPress } = props;
-  const press = skin === 'press';
-  const fonts = press ? 'press' : spec.style.type;
+  const { skin, spec, content, graph, mode, onPickSkin, renderPress, renderCoast } = props;
+  const fonts = skin === 'standard' ? spec.style.type : skin;
   useEffect(() => {
     ensureFonts(fonts);
   }, [fonts]);
 
-  if (press) return <>{renderPress({ spec, content, graph, mode, onToggleSkin })}</>;
+  if (skin === 'press') return <>{renderPress({ spec, content, graph, mode, onPickSkin })}</>;
+  if (skin === 'coast') return <>{renderCoast({ spec, content, graph, mode, onPickSkin })}</>;
   return <StandardSkin {...props} />;
 }

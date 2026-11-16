@@ -177,23 +177,38 @@
   color: var(--text);
 }
 
-.pf-pill {
-  --pf-glass: 0.6;
+/* The page's style control (SkinPicker): one pill per skin, the current one filled. */
+.pf-skins {
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
   margin-left: 8px;
-  padding: 0 16px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-size: 13px;
-  color: var(--text);
-  transition: border-color var(--d-fast) var(--ease);
 }
 
-.pf-pill:hover {
+.pf-skin {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+
+.pf-skin:hover {
   border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.pf-skin[aria-pressed='true'] {
+  border-color: var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
 }
 
 /* ───────────── blocks: rhythm ───────────── */
@@ -1461,8 +1476,13 @@
     display: flex;
   }
 
-  .pf-pill {
+  .pf-skins {
     margin-left: 0;
+  }
+
+  .pf-skin {
+    padding: 0 10px;
+    font-size: 12px;
   }
 }
 

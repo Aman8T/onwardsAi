@@ -1,0 +1,1355 @@
+/*
+ * Neon Coast skin (src/portfolio/coast/CoastView.tsx): a portfolio set as a sunset poster.
+ *
+ * Everything lives under `.pf-scope.nc` and is coloured only by the fixed --coast-* tokens in tokens.css, so the
+ * skin looks the same in every look and scheme and nothing leaks into the app. Its stated exceptions to the calm
+ * rules (design.md §9a), all of them inside this file:
+ *   - strong multi-stop gradients: the sky behind the title, the horizon under it, the score bars and the dusk rule;
+ *   - a heavy condensed display face in capitals (Anton) for the name and every panel title;
+ *   - panels cut at shallow angles with clip-path (no borders are involved; phones get straight edges);
+ *   - a shadow on text in two places only: the print offset under the name and "Say hello." (--coast-pink, no
+ *     blur), and the neon glow on `.nc-neon` (--coast-glow-pink / --coast-glow-aqua). restraint-check allows it
+ *     in this file, with those colours, four declarations at most, and nowhere else.
+ * Still true: no shadow on a box, no blur filter, no border over 1px, colour only from tokens, motion is opacity
+ * and transform, runs once on load, and is off under reduced motion.
+ *
+ * Text: on night, plum and teal panels it is --coast-cream (second line --coast-cream-2); on the sand page and on
+ * mint, gold and orange panels it is --coast-ink (second line --coast-ink-2); on pink it is --coast-ink only. No text sits on the horizon, and
+ * the sky behind the title runs only between colours cream holds 4.5:1 on. palette-check proves each pair.
+ */
+
+/* ───────────── scope ───────────── */
+
+.pf-scope.nc {
+  --nc-disp: 'Anton', 'Haettenschweiler', 'Impact', 'Arial Narrow Bold', sans-serif;
+  --nc-cond: 'Barlow Condensed', 'Arial Narrow', var(--font-sans);
+  --nc-gap: 10px;
+  --nc-cut: 26px;
+  --nc-lean: 56px;
+  --nc-pad: clamp(24px, 4.4cqw, 56px);
+  color: var(--coast-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  background: var(--coast-sand);
+}
+
+.nc,
+.nc *,
+.nc *::before,
+.nc *::after {
+  box-sizing: border-box;
+}
+
+:where(.nc) :is(h1, h2, h3, p, ul, ol, dl, dt, dd, figure, blockquote) {
+  margin: 0;
+  padding: 0;
+}
+
+:where(.nc) :is(ul, ol) {
+  list-style: none;
+}
+
+.nc :focus-visible {
+  outline: 2px solid var(--nc-focus, var(--coast-ink));
+  outline-offset: 3px;
+}
+
+.nc .nc-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.nc .nc-page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 clamp(10px, 1.8vw, 24px);
+  container-type: inline-size;
+}
+
+/* ───────────── the strip above the poster ───────────── */
+
+.nc .nc-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  min-height: 68px;
+  padding: 8px 2px;
+}
+
+.pf-scope.nc a.nc-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 44px;
+  margin-right: auto;
+  color: var(--coast-ink);
+  text-decoration: none;
+}
+
+.nc .nc-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  background: var(--coast-night);
+  color: var(--coast-cream);
+  font-family: var(--nc-disp);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nc .nc-brand-name {
+  font-family: var(--nc-cond);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.nc .nc-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pf-scope.nc .nc-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  font-family: var(--nc-cond);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--coast-ink-2);
+}
+
+.pf-scope.nc .nc-nav a:hover {
+  color: var(--coast-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+/* The style control, in this skin's own chrome. */
+.nc .pf-skins {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--coast-ink);
+}
+
+.nc .pf-skin {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--nc-cond);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--coast-ink-2);
+  cursor: pointer;
+}
+
+.nc .pf-skin:hover {
+  color: var(--coast-ink);
+}
+
+.nc .pf-skin[aria-pressed='true'] {
+  background: var(--coast-night);
+  color: var(--coast-cream);
+}
+
+/* ───────────── bands: the poster's panels and the cuts between them ───────────── */
+
+/*
+ * A band's top edge runs from (0, t0) to (100%, t1) and its foot from (0, 100% - b0) to (100%, 100% - b1). Two
+ * neighbours share a seam: the upper one's foot and the lower one's top lean the same way, and the lower band is
+ * pulled up by the cut, so the gap between them is the same width all the way across.
+ */
+.nc .nc-band {
+  --t0: 0px;
+  --t1: 0px;
+  --b0: 0px;
+  --b1: 0px;
+  position: relative;
+  clip-path: polygon(0 var(--t0), 100% var(--t1), 100% calc(100% - var(--b1)), 0 calc(100% - var(--b0)));
+}
+
+.nc .nc-band + .nc-band {
+  margin-top: calc(var(--nc-gap) - var(--nc-cut));
+}
+
+.nc .nc-band[data-top='rise'] {
+  --t0: var(--nc-cut);
+}
+
+.nc .nc-band[data-top='fall'] {
+  --t1: var(--nc-cut);
+}
+
+.nc .nc-band[data-bottom='rise'] {
+  --b1: var(--nc-cut);
+}
+
+.nc .nc-band[data-bottom='fall'] {
+  --b0: var(--nc-cut);
+}
+
+.nc .nc-panel {
+  --nc-fg: var(--coast-cream);
+  --nc-fg2: var(--coast-cream-2);
+  --nc-hot: var(--coast-gold);
+  --nc-rule: var(--coast-line);
+  --nc-focus: var(--coast-aqua);
+  min-width: 0;
+  padding: calc(var(--nc-pad) + var(--nc-cut) * 0.7) var(--nc-pad);
+  color: var(--nc-fg);
+  background: var(--coast-night);
+}
+
+.nc .nc-panel--plum {
+  background: var(--coast-plum);
+}
+
+.nc .nc-panel--teal {
+  background: var(--coast-teal);
+}
+
+.nc .nc-panel--mint,
+.nc .nc-panel--gold,
+.nc .nc-panel--orange,
+.nc .nc-panel--pink {
+  --nc-fg: var(--coast-ink);
+  --nc-fg2: var(--coast-ink-2);
+  --nc-hot: var(--coast-ink);
+  --nc-rule: var(--coast-line-ink);
+  --nc-focus: var(--coast-ink);
+  background: var(--coast-mint);
+}
+
+.nc .nc-panel--mint {
+  --nc-hot: var(--coast-magenta);
+}
+
+.nc .nc-panel--gold {
+  background: var(--coast-gold);
+}
+
+.nc .nc-panel--orange {
+  background: var(--coast-orange);
+}
+
+/* The second ink does not hold 4.5:1 on pink, so everything on it is the first ink. */
+.nc .nc-panel--pink {
+  --nc-fg2: var(--coast-ink);
+  background: var(--coast-pink);
+}
+
+/* Two panels in one band, parted by a leaning cut (the same idea as the seams, turned upright). */
+.nc .nc-duo {
+  display: grid;
+  gap: var(--nc-gap);
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+}
+
+.nc .nc-duo--back {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.nc .nc-duo > .nc-panel:first-child {
+  padding-right: calc(var(--nc-lean) + var(--nc-pad) * 0.5);
+}
+
+.nc .nc-duo > .nc-panel:last-child {
+  margin-left: calc(var(--nc-lean) * -1);
+  padding-left: calc(var(--nc-lean) + var(--nc-pad) * 0.7);
+}
+
+.nc .nc-duo--fwd > .nc-panel:first-child {
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--nc-lean)) 100%, 0 100%);
+}
+
+.nc .nc-duo--fwd > .nc-panel:last-child {
+  clip-path: polygon(var(--nc-lean) 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.nc .nc-duo--back > .nc-panel:first-child {
+  clip-path: polygon(0 0, calc(100% - var(--nc-lean)) 0, 100% 100%, 0 100%);
+}
+
+.nc .nc-duo--back > .nc-panel:last-child {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, var(--nc-lean) 100%);
+}
+
+/* ───────────── type ───────────── */
+
+.nc .nc-h {
+  font-family: var(--nc-disp);
+  font-size: clamp(40px, 6.4cqw, 84px);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  color: var(--nc-fg);
+}
+
+.nc .nc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 32px;
+}
+
+.nc .nc-meta,
+.nc .nc-when {
+  font-family: var(--nc-cond);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nc .nc-meta {
+  color: var(--nc-fg2);
+}
+
+.nc .nc-when {
+  color: var(--nc-hot);
+}
+
+.nc .nc-title {
+  font-family: var(--nc-disp);
+  font-size: clamp(24px, 2.6cqw, 32px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-org {
+  margin-top: 4px;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.nc .nc-sub {
+  margin-top: 2px;
+  font-size: 15px;
+  color: var(--nc-fg2);
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-body {
+  max-width: 62ch;
+  overflow-wrap: anywhere;
+}
+
+.pf-scope.nc a.nc-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 500;
+  color: var(--nc-fg);
+  text-decoration: underline;
+  text-decoration-color: var(--nc-hot);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  overflow-wrap: anywhere;
+}
+
+.pf-scope.nc a.nc-link:hover {
+  color: var(--nc-hot);
+}
+
+.nc .nc-more {
+  min-height: 44px;
+  margin-top: 20px;
+  padding: 0 18px;
+  border: 1px solid var(--nc-fg);
+  background: transparent;
+  font-family: var(--nc-cond);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nc-fg);
+  cursor: pointer;
+}
+
+/* The lit sign: the skin's one glow. */
+.nc .nc-neon {
+  color: var(--coast-pink);
+  text-shadow:
+    0 0 0.45em var(--coast-glow-pink),
+    0 0 1.3em var(--coast-glow-pink);
+}
+
+.nc .nc-neon--aqua {
+  color: var(--coast-aqua);
+  text-shadow:
+    0 0 0.45em var(--coast-glow-aqua),
+    0 0 1.3em var(--coast-glow-aqua);
+}
+
+/* ───────────── the title over the horizon ───────────── */
+
+.nc .nc-sky {
+  --nc-focus: var(--coast-aqua);
+  padding: clamp(40px, 6cqw, 84px) var(--nc-pad) clamp(28px, 4cqw, 52px);
+  color: var(--coast-cream);
+  background: linear-gradient(to bottom, var(--coast-night) 0%, var(--coast-plum) 58%, var(--coast-magenta) 100%);
+}
+
+.nc .nc-hero-copy {
+  container-type: inline-size;
+}
+
+.nc .nc-eyebrow {
+  font-family: var(--nc-cond);
+  font-size: clamp(18px, 2cqw, 24px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--coast-gold);
+}
+
+/* Sized so the longest word of the name always fits the line: about half an em per capital in this face. */
+.nc .nc-name {
+  margin-top: 6px;
+  font-family: var(--nc-disp);
+  font-size: min(clamp(56px, 16cqw, 190px), calc(92cqw / (var(--nc-longest, 8) * 0.52)));
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--coast-cream);
+  text-shadow: 0.035em 0.04em 0 var(--coast-pink);
+}
+
+.nc .nc-name--plain {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: 1.12;
+  text-transform: none;
+}
+
+.nc .nc-tagline {
+  max-width: 44ch;
+  margin-top: clamp(14px, 2cqw, 24px);
+  font-size: clamp(18px, 2.1cqw, 24px);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 28px;
+  margin-top: 18px;
+  font-family: var(--nc-cond);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--coast-cream-2);
+}
+
+.nc .nc-facts li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-facts li::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  background: var(--coast-gold);
+  translate: 0 -2px;
+}
+
+.nc .nc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: clamp(22px, 3cqw, 34px);
+}
+
+.pf-scope.nc a.nc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 1px solid var(--coast-gold);
+  background: var(--coast-gold);
+  font-family: var(--nc-cond);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-align: center;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--coast-ink);
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out;
+}
+
+.pf-scope.nc a.nc-btn:hover {
+  border-color: var(--coast-cream);
+  background: var(--coast-cream);
+  color: var(--coast-ink);
+}
+
+.pf-scope.nc a.nc-btn--ghost {
+  border-color: var(--coast-cream);
+  background: transparent;
+  color: var(--coast-cream);
+}
+
+.pf-scope.nc a.nc-btn--ghost:hover {
+  background: var(--coast-cream);
+  color: var(--coast-ink);
+}
+
+/* The horizon: sky to sea, drawn in Horizon.tsx. No text ever sits on it. */
+.nc .nc-horizon {
+  height: clamp(170px, 25cqw, 310px);
+  /* one pixel under the sky, so no seam shows between the two gradients */
+  margin-top: -1px;
+  background: linear-gradient(
+    to bottom,
+    var(--coast-magenta) 0%,
+    var(--coast-pink) 32%,
+    var(--coast-orange) 56%,
+    var(--coast-gold) 72%
+  );
+  forced-color-adjust: none;
+}
+
+.nc .nc-horizon-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.nc .nc-sun-top {
+  stop-color: var(--coast-cream);
+}
+
+.nc .nc-sun-low {
+  stop-color: var(--coast-gold);
+}
+
+.nc .nc-cloud {
+  fill: var(--coast-plum);
+  opacity: 0.34;
+}
+
+.nc .nc-skyline {
+  fill: var(--coast-plum);
+}
+
+.nc .nc-sea {
+  fill: var(--coast-night);
+}
+
+.nc .nc-glint {
+  fill: var(--coast-gold);
+  opacity: 0.85;
+}
+
+.nc .nc-glint--hot {
+  fill: var(--coast-pink);
+}
+
+.nc .nc-shore,
+.nc .nc-palm {
+  fill: var(--coast-night);
+}
+
+/* ───────────── public numbers ───────────── */
+
+.nc .nc-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 24px 32px;
+}
+
+.nc .nc-duo .nc-stats {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  height: 100%;
+}
+
+.nc .nc-stat {
+  display: grid;
+  gap: 2px;
+}
+
+.nc .nc-stat-v {
+  font-family: var(--nc-disp);
+  font-size: clamp(44px, 6cqw, 76px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-stat-l {
+  font-family: var(--nc-cond);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--nc-fg2);
+}
+
+/* ───────────── the skill graph ───────────── */
+
+.nc .nc-graph-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 32px;
+}
+
+.nc .nc-graph-head .nc-meta {
+  text-align: right;
+}
+
+.nc .nc-graph-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 32px clamp(32px, 5cqw, 72px);
+  margin-top: clamp(24px, 3cqw, 40px);
+}
+
+.nc .nc-radar-fig {
+  flex: 1.15 1 440px;
+  min-width: 0;
+  padding: 26px clamp(44px, 5.4cqw, 70px);
+}
+
+.nc .nc-radar {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+}
+
+.nc .nc-radar-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.nc .nc-ring,
+.nc .nc-spoke {
+  fill: none;
+  stroke: var(--coast-line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.nc .nc-shape {
+  fill: var(--coast-pink);
+  fill-opacity: 0.26;
+  stroke: var(--coast-pink);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The lit edge without a blur: the same outline twice more, wider and fainter. */
+.nc .nc-shape-halo {
+  fill: none;
+  stroke: var(--coast-pink);
+  stroke-opacity: 0.3;
+  stroke-width: 8;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.nc .nc-shape-halo--wide {
+  stroke-opacity: 0.13;
+  stroke-width: 16;
+}
+
+.nc .nc-dot {
+  fill: var(--coast-cream);
+}
+
+.nc .nc-dot--peak {
+  fill: var(--coast-gold);
+}
+
+.nc .nc-axis {
+  position: absolute;
+  width: max-content;
+  max-width: clamp(64px, 9cqw, 112px);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
+.nc .nc-axis[data-side='n'] {
+  translate: -50% -100%;
+  text-align: center;
+}
+
+.nc .nc-axis[data-side='s'] {
+  translate: -50% 0;
+  text-align: center;
+}
+
+.nc .nc-axis[data-side='e'] {
+  translate: 0 -50%;
+  text-align: left;
+}
+
+.nc .nc-axis[data-side='w'] {
+  translate: -100% -50%;
+  text-align: right;
+}
+
+.nc .nc-axis-name {
+  display: block;
+  font-family: var(--nc-cond);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--coast-cream-2);
+}
+
+.nc .nc-axis[data-emph] .nc-axis-name {
+  color: var(--coast-cream);
+}
+
+.nc .nc-axis-score {
+  display: block;
+  font-family: var(--nc-disp);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  color: var(--coast-gold);
+}
+
+.nc .nc-graph-cap {
+  margin-top: 30px;
+  font-family: var(--nc-cond);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-align: center;
+  color: var(--coast-cream);
+}
+
+.nc .nc-graph-cap--list {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.nc .nc-scores {
+  flex: 1 1 340px;
+  min-width: 0;
+}
+
+.nc .nc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.nc .nc-row > th,
+.nc .nc-row > td {
+  padding: 14px 0;
+  border-top: 1px solid var(--coast-line);
+  vertical-align: top;
+}
+
+.nc .nc-row:first-child > th,
+.nc .nc-row:first-child > td {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.nc .nc-row > th {
+  padding-right: 20px;
+  font-weight: 400;
+  text-align: left;
+}
+
+.nc .nc-row-name {
+  display: block;
+  font-family: var(--nc-disp);
+  font-size: 22px;
+  line-height: 1.12;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-row-skills {
+  display: block;
+  margin-top: 3px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--coast-cream-2);
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-bar {
+  position: relative;
+  display: block;
+  height: 5px;
+  margin-top: 10px;
+  background: var(--coast-line);
+}
+
+.nc .nc-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--nc-pct, 0%);
+  background: linear-gradient(to right, var(--coast-pink), var(--coast-orange), var(--coast-gold));
+}
+
+.nc .nc-row-score {
+  width: 1%;
+  font-family: var(--nc-disp);
+  font-size: 34px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--coast-gold);
+}
+
+.nc .nc-row--high .nc-row-score {
+  color: var(--coast-pink);
+}
+
+.nc .nc-graph-src {
+  margin-top: 18px;
+  font-size: 15px;
+}
+
+/* ───────────── about ───────────── */
+
+.nc .nc-lede {
+  max-width: 30ch;
+  margin-top: 22px;
+  font-size: clamp(21px, 2.3cqw, 28px);
+  font-weight: 500;
+  line-height: 1.3;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-p-about .nc-body {
+  margin-top: 16px;
+  color: var(--nc-fg2);
+}
+
+.nc .nc-dl {
+  display: grid;
+  gap: 0;
+  margin-top: 26px;
+}
+
+/* About alone in its band: the prose on the left, its facts on the right. */
+.nc .nc-solo .nc-about {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 24px clamp(32px, 6cqw, 88px);
+}
+
+.nc .nc-solo .nc-lede {
+  max-width: 34ch;
+}
+
+.nc .nc-solo .nc-dl {
+  margin-top: 0;
+}
+
+.nc .nc-dl > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.4fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--nc-rule);
+}
+
+.nc .nc-dl dt {
+  font-family: var(--nc-cond);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nc-hot);
+}
+
+.nc .nc-dl dd {
+  overflow-wrap: anywhere;
+}
+
+/* ───────────── in their own words ───────────── */
+
+.nc .nc-quote {
+  display: grid;
+  gap: 16px;
+}
+
+.nc .nc-quote-text {
+  max-width: 34ch;
+  font-size: clamp(22px, 2.6cqw, 30px);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-quote-text.nc-neon {
+  max-width: 40ch;
+  font-family: var(--nc-cond);
+  font-size: clamp(30px, 4.6cqw, 58px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: 0.01em;
+}
+
+/* ───────────── experience ───────────── */
+
+.nc .nc-roles {
+  margin-top: clamp(20px, 3cqw, 36px);
+}
+
+.nc .nc-role {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.26fr) minmax(0, 1fr);
+  gap: 6px 40px;
+  padding: 26px 0;
+  border-top: 1px solid var(--nc-rule);
+}
+
+.nc .nc-role .nc-when {
+  padding-top: 5px;
+}
+
+.nc .nc-lines {
+  display: grid;
+  gap: 8px;
+  max-width: 70ch;
+  margin-top: 14px;
+}
+
+.nc .nc-lines li {
+  position: relative;
+  padding-left: 20px;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-lines li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 7px;
+  height: 7px;
+  background: var(--nc-hot);
+}
+
+/* ───────────── projects ───────────── */
+
+.nc .nc-projects {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 clamp(32px, 5cqw, 64px);
+  margin-top: clamp(20px, 3cqw, 36px);
+}
+
+.nc .nc-projects--one {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.nc .nc-project {
+  padding: 24px 0;
+  border-top: 1px solid var(--nc-rule);
+}
+
+.nc .nc-project .nc-body {
+  margin-top: 10px;
+}
+
+.nc .nc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.nc .nc-tags li {
+  padding: 2px 10px;
+  border: 1px solid var(--nc-rule);
+  font-family: var(--nc-cond);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nc-fg);
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-project .nc-link {
+  margin-top: 6px;
+}
+
+/* ───────────── achievements and education ───────────── */
+
+.nc .nc-honours,
+.nc .nc-schools {
+  margin-top: clamp(18px, 2.4cqw, 28px);
+}
+
+.nc .nc-honour,
+.nc .nc-school {
+  display: grid;
+  gap: 2px;
+  padding: 18px 0;
+  border-top: 1px solid var(--nc-rule);
+}
+
+.nc .nc-figure {
+  font-family: var(--nc-disp);
+  font-size: clamp(40px, 5cqw, 62px);
+  line-height: 1.02;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-honour-line {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-honour-meta {
+  font-family: var(--nc-cond);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.nc .nc-school .nc-title {
+  margin-top: 2px;
+  font-size: clamp(22px, 2.3cqw, 28px);
+}
+
+/* ───────────── clips ───────────── */
+
+.nc .nc-clips {
+  margin-top: clamp(18px, 2.4cqw, 28px);
+}
+
+.nc .nc-clip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 32px;
+  padding: 16px 0;
+  border-top: 1px solid var(--nc-rule);
+}
+
+.nc .nc-clip-main {
+  min-width: 0;
+}
+
+.nc .nc-clip .nc-link {
+  flex: none;
+}
+
+/* ───────────── the sign-off ───────────── */
+
+.nc .nc-p-sign {
+  padding-bottom: calc(var(--nc-pad) + 28px);
+}
+
+.nc .nc-open {
+  display: grid;
+  gap: 4px;
+  margin-bottom: clamp(28px, 4cqw, 48px);
+}
+
+.nc .nc-open-k {
+  font-family: var(--nc-cond);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--coast-cream-2);
+}
+
+.nc .nc-open-v {
+  font-family: var(--nc-disp);
+  font-size: clamp(28px, 4.4cqw, 52px);
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-h--sign {
+  font-size: clamp(60px, 13cqw, 168px);
+  line-height: 0.96;
+  text-shadow: 0.035em 0.04em 0 var(--coast-pink);
+}
+
+.nc .nc-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 36px;
+  margin-top: clamp(18px, 2.6cqw, 30px);
+  font-size: 18px;
+}
+
+.nc .nc-p-sign .nc-link {
+  --nc-hot: var(--coast-aqua);
+}
+
+.nc .nc-contact-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  overflow-wrap: anywhere;
+}
+
+.nc .nc-contact-k {
+  font-family: var(--nc-cond);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--coast-cream-2);
+}
+
+/* The last of the light, along the poster's foot. */
+.nc .nc-dusk {
+  position: absolute;
+  inset: auto 0 0;
+  height: 10px;
+  background: linear-gradient(to right, var(--coast-magenta), var(--coast-pink), var(--coast-orange), var(--coast-gold));
+  forced-color-adjust: none;
+}
+
+.nc .nc-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 24px;
+  padding: 18px 2px 28px;
+  font-size: 13px;
+  color: var(--coast-ink-2);
+}
+
+/* ───────────── motion: the title arrives once, with the sun ───────────── */
+
+@keyframes ncRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ncSun {
+  from {
+    transform: translateY(34px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.nc .nc-rise {
+  animation: ncRise 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+.nc .nc-sun {
+  animation: ncSun 1400ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Loaded in a hidden tab: nothing waits on an animation that is not running. */
+.nc--still .nc-rise,
+.nc--still .nc-sun {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nc .nc-rise,
+  .nc .nc-sun {
+    animation: none;
+  }
+
+  .pf-scope.nc a.nc-btn {
+    transition: none;
+  }
+}
+
+/* ───────────── narrower pages ───────────── */
+
+@container (max-width: 980px) {
+  .nc .nc-projects {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Phones: one straight column. No cuts, no leaning panels, every control 44px. */
+@media (max-width: 760px) {
+  .pf-scope.nc {
+    --nc-cut: 0px;
+    --nc-lean: 0px;
+    --nc-gap: 8px;
+  }
+
+  .nc .nc-panel {
+    padding: 32px 20px;
+  }
+
+  .nc .nc-duo,
+  .nc .nc-duo--back {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nc .nc-duo > .nc-panel:first-child,
+  .nc .nc-duo > .nc-panel:last-child {
+    padding: 32px 20px;
+  }
+
+  .nc .nc-duo .nc-stats {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    height: auto;
+  }
+
+  .nc .nc-solo .nc-about {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nc .nc-solo .nc-dl {
+    margin-top: 8px;
+  }
+
+  .nc .nc-strip {
+    padding: 8px 0 10px;
+  }
+
+  .nc .nc-brand-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nc .nc-nav {
+    order: 3;
+    width: 100%;
+  }
+
+  .pf-scope.nc .nc-nav a:first-child {
+    padding-left: 0;
+  }
+
+  .nc .pf-skins {
+    order: 4;
+    width: 100%;
+  }
+
+  .nc .pf-skin {
+    flex: 1 1 0;
+    padding: 0 6px;
+  }
+
+  .nc .nc-sky {
+    padding: 36px 20px 28px;
+  }
+
+  .pf-scope.nc a.nc-btn {
+    flex: 1 1 150px;
+    padding: 0 14px;
+  }
+
+  .nc .nc-graph-head .nc-meta {
+    text-align: left;
+  }
+
+  .nc .nc-radar-fig {
+    flex-basis: 100%;
+    padding: 30px 62px 6px;
+  }
+
+  .nc .nc-axis {
+    max-width: 62px;
+  }
+
+  .nc .nc-axis-name {
+    font-size: 13px;
+  }
+
+  .nc .nc-axis-score {
+    font-size: 17px;
+  }
+
+  .nc .nc-scores {
+    flex-basis: 100%;
+  }
+
+  .nc .nc-role {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 22px 0;
+  }
+
+  .nc .nc-role .nc-when {
+    padding-top: 0;
+  }
+
+  .nc .nc-dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .nc .nc-clip {
+    flex-wrap: wrap;
+  }
+
+  .nc .nc-contact {
+    display: grid;
+    gap: 0;
+  }
+}

@@ -1,11 +1,11 @@
 /**
  * The public page (`/p/:publicId`): a read-only portfolio for anyone with the link. It fetches the filtered
  * public DTO (never the profile id, private blocks or opt-in details) and renders `PortfolioView` in `public`
- * mode. The skin comes from `?view=press` (or `?view=standard`), else the owner's default view; the
- * "Try Old Newspaper Style" pill toggles it and keeps the address bar in sync with `history.replaceState`,
- * so the current look is always a shareable link. An unknown or unpublished id gets a calm page, not an error.
+ * mode. The skin comes from `?view=press`, `?view=coast` or `?view=standard`, else the owner's default view; the
+ * page's style control (Modern, Old Newspaper, Neon Coast) changes it and keeps the address bar in sync with
+ * `history.replaceState`, so the current look is always a shareable link. An unknown or unpublished id gets a calm page, not an error.
  *
- * This file also hosts the pieces every portfolio screen shares (graph / newspaper renderers wired to the
+ * This file also hosts the pieces every portfolio screen shares (graph / newspaper / Neon Coast renderers wired to the
  * real components, and the calm full-page message), so the owner screen and the dev gallery import them
  * from here and the public bundle never pulls in the editor.
  */
@@ -15,19 +15,22 @@ import type { PortfolioSkin, PublicPortfolio } from '../../shared/portfolio';
 import { getPublicPortfolio } from '../lib/api';
 import { SkillGraph } from './graph/SkillGraph';
 import { PressSkillsIndex } from './graph/PressSkillsIndex';
+import { CoastView } from './coast/CoastView';
 import { PressView } from './press/PressView';
 import { PortfolioView } from './PortfolioView';
-import type { GraphRenderArgs, PortfolioViewProps, PressIndexArgs, PressRenderArgs } from './types';
+import { skinOf } from './SkinPicker';
+import type { CoastRenderArgs, GraphRenderArgs, PortfolioViewProps, PressIndexArgs, PressRenderArgs } from './types';
 
 /* ───────────────────────── shared wiring ───────────────────────── */
 
 export const renderGraph = (args: GraphRenderArgs): ReactNode => <SkillGraph {...args} />;
 const renderIndex = (args: PressIndexArgs): ReactNode => <PressSkillsIndex {...args} />;
 export const renderPress = (args: PressRenderArgs): ReactNode => <PressView {...args} renderIndex={renderIndex} />;
+export const renderCoast = (args: CoastRenderArgs): ReactNode => <CoastView {...args} />;
 
-/** `PortfolioView` with the real graph and newspaper renderers plugged in. */
-export function PortfolioPage(props: Omit<PortfolioViewProps, 'renderGraph' | 'renderPress'>) {
-  return <PortfolioView {...props} renderGraph={renderGraph} renderPress={renderPress} />;
+/** `PortfolioView` with the real graph, newspaper and Neon Coast renderers plugged in. */
+export function PortfolioPage(props: Omit<PortfolioViewProps, 'renderGraph' | 'renderPress' | 'renderCoast'>) {
+  return <PortfolioView {...props} renderGraph={renderGraph} renderPress={renderPress} renderCoast={renderCoast} />;
 }
 
 const pageStyle: CSSProperties = {
@@ -92,8 +95,7 @@ function publicIdFromPath(): string {
 
 /** The skin the link asks for, if any. */
 function skinFromQuery(): PortfolioSkin | null {
-  const view = new URLSearchParams(window.location.search).get('view');
-  return view === 'press' || view === 'standard' ? view : null;
+  return skinOf(new URLSearchParams(window.location.search).get('view'));
 }
 
 /** Keep the address bar on the look being shown: `?view=` only when it differs from the owner's default. */
@@ -141,15 +143,17 @@ export function PublicView() {
   }, [name, load.kind]);
 
   const skin: PortfolioSkin = picked ?? ready?.defaultView ?? 'standard';
-  const toggleSkin = useCallback(() => {
-    if (!ready) return;
-    const next: PortfolioSkin = skin === 'press' ? 'standard' : 'press';
-    setPicked(next);
-    syncUrl(next, ready.defaultView);
-  }, [ready, skin]);
+  const pickSkin = useCallback(
+    (next: PortfolioSkin) => {
+      if (!ready) return;
+      setPicked(next);
+      syncUrl(next, ready.defaultView);
+    },
+    [ready],
+  );
 
   if (ready) {
-    return <PortfolioPage spec={ready.spec} content={ready.content} graph={ready.graph} mode="public" skin={skin} onToggleSkin={toggleSkin} />;
+    return <PortfolioPage spec={ready.spec} content={ready.content} graph={ready.graph} mode="public" skin={skin} onPickSkin={pickSkin} />;
   }
   if (load.kind === 'missing') {
     return (

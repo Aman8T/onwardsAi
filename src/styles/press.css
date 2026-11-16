@@ -91,7 +91,14 @@
   min-height: 44px;
 }
 
-.pv-back {
+/* The page's style control (SkinPicker), set as a line of small caps: the current edition plain, the others underlined. */
+.pv .pf-skins {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 24px;
+}
+
+.pv .pf-skin {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -109,8 +116,14 @@
   cursor: pointer;
 }
 
-.pv-back:hover {
+.pv .pf-skin:hover {
   color: var(--press-ink);
+}
+
+.pv .pf-skin[aria-pressed='true'] {
+  font-weight: 700;
+  color: var(--press-ink);
+  text-decoration: none;
 }
 
 /* Thick-thin rule: 3px bar, 3px gap, 1px bar (reversed under the nameplate). */

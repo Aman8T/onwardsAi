@@ -1,6 +1,6 @@
 /**
  * The owner's portfolio editor (the approved Editor board). A top bar (back, title, draft status, the
- * Edit | Preview public view switch, the Old Newspaper switch, an inert Share), a left panel (looks, family,
+ * Edit | Preview public view switch, the Style choice of three skins, an inert Share), a left panel (looks, family,
  * type, corners, density, the Sections list, personal details) and the live preview on the right, where the
  * selected block's copy slots turn into in-place editors.
  *
@@ -27,6 +27,7 @@ import { IconCheck, IconRefresh } from '../../components/Icons';
 import { cssVars, useElementSize, useMediaQuery } from '../../lib/ui';
 import { asOfLabel, slot, styleVars } from '../model';
 import type { ViewMode } from '../model';
+import { SKINS, skinLabel } from '../SkinPicker';
 import type { EditHooks } from '../types';
 import { IconBack } from './icons';
 import { capitalise, CORNER_OPTIONS, DENSITY_OPTIONS, TYPE_OPTIONS } from './labels';
@@ -44,7 +45,7 @@ export interface EditorPreviewArgs {
   mode: ViewMode;
   skin: PortfolioSkin;
   editing: EditHooks;
-  onToggleSkin(): void;
+  onPickSkin(skin: PortfolioSkin): void;
 }
 
 export interface EditorViewProps {
@@ -103,7 +104,6 @@ export function EditorView({ portfolio, busy, onPatch, onRewrite, onBack, onRege
     setPicked(id);
     setMode('edit');
   }, []);
-  const toggleSkin = useCallback(() => setSkin((s) => (s === 'press' ? 'standard' : 'press')), []);
 
   const setStyle = (change: Partial<PortfolioStyle>) => draft.update((s) => ({ style: { ...s.style, ...change } }));
   const setPrivacy = (key: keyof PortfolioPrivacy, on: boolean) => draft.update((s) => ({ privacy: { ...s.privacy, [key]: on } }));
@@ -162,12 +162,13 @@ export function EditorView({ portfolio, busy, onPatch, onRewrite, onBack, onRege
             Preview public view
           </button>
         </div>
-        <button type="button" role="switch" className="pe-switch" aria-checked={skin === 'press'} onClick={toggleSkin}>
-          <span>Try Old Newspaper Style</span>
-          <span className="pe-sw-track" aria-hidden="true">
-            <span className="pe-sw-knob" />
-          </span>
-        </button>
+        <div className="pe-seg" role="group" aria-label="Style">
+          {SKINS.map((s) => (
+            <button key={s.skin} type="button" aria-pressed={skin === s.skin} onClick={() => setSkin(s.skin)}>
+              {s.label}
+            </button>
+          ))}
+        </div>
         <button type="button" className="pe-outline" disabled aria-disabled="true">
           Share · coming soon
         </button>
@@ -388,7 +389,7 @@ export function EditorView({ portfolio, busy, onPatch, onRewrite, onBack, onRege
                   {busy}
                 </p>
               )}
-              <span className="pe-chip">{skin === 'press' ? 'Old Newspaper Style' : `Look: ${lookName} · ${capitalise(spec.style.family)}`}</span>
+              <span className="pe-chip">{skin === 'standard' ? `Look: ${lookName} · ${capitalise(spec.style.family)}` : `${skinLabel(skin)} style`}</span>
             </div>
           </div>
 
@@ -402,7 +403,7 @@ export function EditorView({ portfolio, busy, onPatch, onRewrite, onBack, onRege
                   mode: editMode ? 'owner' : 'public',
                   skin,
                   editing,
-                  onToggleSkin: toggleSkin,
+                  onPickSkin: setSkin,
                 })}
               </div>
             </div>

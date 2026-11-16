@@ -2,7 +2,7 @@
  * Portfolio parity check: verifies that rendered PortfolioView components
  * correctly display domain names and scores matching the graph snapshot.
  *
- * Renders RIYA + all test fixtures in both skins and modes, with graph
+ * Renders RIYA + all test fixtures in every skin (standard, press, coast) and both modes, with graph
  * variants and hidden domains. Parses data-pf-domain/data-pf-score attributes
  * and asserts correctness.
  *
@@ -24,6 +24,7 @@ async function main() {
   const { SkillGraph } = await import('../src/portfolio/graph/SkillGraph');
   const { PressSkillsIndex } = await import('../src/portfolio/graph/PressSkillsIndex');
   const { PressView } = await import('../src/portfolio/press/PressView');
+  const { CoastView } = await import('../src/portfolio/coast/CoastView');
   const { RIYA } = await import('../src/portfolio/dev/samples');
 
   // Shims for motion/react under Node
@@ -82,7 +83,7 @@ async function main() {
   type GraphSnapshot = any;
   type Portfolio = any;
   type PortfolioContent = any;
-  type PortfolioSkin = 'standard' | 'press';
+  type PortfolioSkin = 'standard' | 'press' | 'coast';
   type PortfolioSpec = any;
   type ViewMode = 'owner' | 'public';
 
@@ -180,6 +181,7 @@ async function main() {
           renderIndex: (indexArgs: any) =>
             React.default.createElement(PressSkillsIndex, indexArgs),
         });
+      const renderCoast = (args: any) => React.default.createElement(CoastView, args);
 
       const element = React.default.createElement(PortfolioView, {
         spec: modifiedSpec,
@@ -189,6 +191,7 @@ async function main() {
         skin,
         renderGraph,
         renderPress,
+        renderCoast,
       });
 
       html = renderToStaticMarkup(element);
@@ -298,7 +301,7 @@ async function main() {
     const domainToHide = graph.domains[0];
 
     for (const variant of graphVariants) {
-      for (const skin of ['standard', 'press'] as const) {
+      for (const skin of ['standard', 'press', 'coast'] as const) {
         for (const mode of ['owner', 'public'] as const) {
           const testCase: RenderTestCase = {
             portfolioId,

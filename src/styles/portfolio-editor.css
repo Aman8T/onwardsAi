@@ -221,59 +221,6 @@
   font-weight: 500;
 }
 
-/* Switch. */
-.pe-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s2);
-  height: 36px;
-  padding: 0 var(--s1) 0 var(--s3);
-  border: 0;
-  border-radius: var(--r-s);
-  background: transparent;
-  font-size: var(--fs-1);
-  color: var(--text);
-  white-space: nowrap;
-}
-
-@media (hover: hover) {
-  .pe-switch:hover {
-    background: var(--surface-2);
-  }
-}
-
-.pe-sw-track {
-  position: relative;
-  display: block;
-  width: 36px;
-  height: 20px;
-  border: var(--hair) solid var(--text-muted);
-  border-radius: 999px;
-  background: var(--surface-2);
-}
-
-.pe-sw-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  display: block;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  transition: transform var(--d-fast) var(--ease);
-}
-
-.pe-switch[aria-checked='true'] .pe-sw-track {
-  border-color: var(--accent-ui);
-  background: var(--accent-ui);
-}
-
-.pe-switch[aria-checked='true'] .pe-sw-knob {
-  background: var(--surface);
-  transform: translateX(16px);
-}
-
 /* Icon button (eye, public). */
 .pe-ib {
   display: inline-grid;
@@ -1041,7 +988,6 @@
   .pe-solid,
   .pe-quiet,
   .pe-seg button,
-  .pe-switch,
   .pe-sel,
   .pe-check {
     min-height: 44px;
@@ -1085,7 +1031,6 @@
   .pe-solid,
   .pe-quiet,
   .pe-seg button,
-  .pe-switch,
   .pe-sel,
   .pe-check {
     min-height: 44px;
@@ -1099,7 +1044,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pe-sw-knob,
   .pe-look,
   .pe-seg button,
   .pe-ghost,

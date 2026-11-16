@@ -84,7 +84,7 @@ function PublicPreview({ args, profileId, stamp }: { args: EditorPreviewArgs; pr
 
   if (data) {
     return (
-      <PortfolioPage spec={data.spec} content={data.content} graph={data.graph} mode="public" skin={args.skin} onToggleSkin={args.onToggleSkin} />
+      <PortfolioPage spec={data.spec} content={data.content} graph={data.graph} mode="public" skin={args.skin} onPickSkin={args.onPickSkin} />
     );
   }
   return (
@@ -126,7 +126,7 @@ export function PortfolioScreen({ profile }: { profile: Profile }) {
           graph={args.graph}
           mode={args.mode}
           skin={args.skin}
-          onToggleSkin={args.onToggleSkin}
+          onPickSkin={args.onPickSkin}
           editing={args.editing}
         />
       ),

@@ -13,12 +13,13 @@ import { graphVariant, needsFallbackFaces, shownDomains } from '../model';
 import { buildPress } from './derive';
 import type { PressAd, PressHonour, PressNumber, PressPage, PressSchool, PressStory } from './derive';
 import { ensurePressFonts } from './fonts';
+import { SkinPicker } from '../SkinPicker';
 import '../../styles/press.css';
 
 type Rise = () => CSSProperties;
 
 export function PressView(props: PressRenderArgs & { renderIndex: (a: PressIndexArgs) => ReactNode }) {
-  const { spec, content, graph, mode, onToggleSkin, renderIndex } = props;
+  const { spec, content, graph, mode, onPickSkin, renderIndex } = props;
   const uid = useId();
   const page = useMemo(() => buildPress(spec, content, graph, mode), [spec, content, graph, mode]);
   useEffect(() => ensurePressFonts(), []);
@@ -89,11 +90,9 @@ export function PressView(props: PressRenderArgs & { renderIndex: (a: PressIndex
   return (
     <div className={`pv${page.sparse ? ' pv--sparse' : ''}`}>
       <div className="pv-page">
-        {onToggleSkin && (
+        {onPickSkin && (
           <div className="pv-strip">
-            <button type="button" className="pv-back" onClick={onToggleSkin}>
-              <span aria-hidden="true">←&nbsp;</span>Back to the modern view
-            </button>
+            <SkinPicker skin="press" onPick={onPickSkin} />
           </div>
         )}
 

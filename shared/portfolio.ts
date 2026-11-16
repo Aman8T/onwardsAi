@@ -6,8 +6,9 @@
  * `x?:` optionals, `T[]`, inline objects. No `Record`, `null`, tuples or `typeof` in types.
  *
  * Shape: a `Portfolio` is presentation (`spec`: composition, style, ordered blocks) + content (`content`:
- * facts extracted from the resume, copy slots, proof stats) + a frozen `graph` snapshot. Both skins
- * (standard and the Old Newspaper "press") render the same spec + content + graph.
+ * facts extracted from the resume, copy slots, proof stats) + a frozen `graph` snapshot. Every skin
+ * (standard, the Old Newspaper "press" and the sunset poster "coast", shown as Neon Coast) renders the same
+ * spec + content + graph.
  */
 
 /* ───────────────────────── catalog (the closed kit) ───────────────────────── */
@@ -32,7 +33,7 @@ export type TypePairing = 'studio' | 'editorial' | 'technical' | 'warm';
 export type Corners = 'square' | 'soft' | 'round';
 export type Density = 'airy' | 'compact';
 export type GraphVariant = 'peaks' | 'halo' | 'ledger' | 'stellar' | 'atlas' | 'spotlight' | 'focus';
-export type PortfolioSkin = 'standard' | 'press';
+export type PortfolioSkin = 'standard' | 'press' | 'coast';
 export type SlotOrigin = 'model' | 'resume' | 'user';
 export type FactKind = 'experience' | 'project' | 'education' | 'achievement' | 'clip' | 'link' | 'contact' | 'quote';
 export type PublishState = 'draft' | 'published';

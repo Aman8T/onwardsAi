@@ -766,6 +766,54 @@
   }
 }
 
+/* (c3) The portfolio's Neon Coast skin: a fixed sunset palette, the same in every look and scheme (design.md §9a).
+ * Text on a dark panel is --coast-cream (second line --coast-cream-2); text on a light or hot panel is --coast-ink
+ * (second line --coast-ink-2, never on --coast-pink). --coast-sand is the page the poster lies on, not a panel. palette-check proves each pair. The two glows and the pink are the
+ * only colours a shadow on text may use, and only in coast.css (restraint-check). */
+:root {
+  --coast-night: #190a2c;
+  --coast-ink: #190a2c;
+  --coast-plum: #4e0d44;
+  --coast-magenta: #8e0d59;
+  --coast-pink: #f9508e;
+  --coast-orange: #fb9344;
+  --coast-gold: #f8cf68;
+  --coast-teal: #03464c;
+  --coast-aqua: #65e1e1;
+  --coast-sand: #f9efdb;
+  --coast-mint: #bff0ec;
+  --coast-cream: #fbf4e8;
+  --coast-cream-2: #e3cdda;
+  --coast-ink-2: #4b355b;
+  --coast-line: rgba(251, 244, 232, 0.24);
+  --coast-line-ink: rgba(25, 10, 44, 0.24);
+  --coast-glow-pink: rgba(249, 80, 142, 0.6);
+  --coast-glow-aqua: rgba(101, 225, 225, 0.5);
+}
+
+@supports (color: oklch(0 0 0)) {
+  :root {
+    --coast-night: oklch(0.19 0.065 300);
+    --coast-ink: oklch(0.19 0.065 300);
+    --coast-plum: oklch(0.3 0.115 335);
+    --coast-magenta: oklch(0.43 0.17 352);
+    --coast-pink: oklch(0.68 0.21 2);
+    --coast-orange: oklch(0.76 0.155 55);
+    --coast-gold: oklch(0.87 0.13 88);
+    --coast-teal: oklch(0.36 0.06 205);
+    --coast-aqua: oklch(0.84 0.11 195);
+    --coast-sand: oklch(0.955 0.028 85);
+    --coast-mint: oklch(0.92 0.05 190);
+    --coast-cream: oklch(0.97 0.018 85);
+    --coast-cream-2: oklch(0.87 0.03 340);
+    --coast-ink-2: oklch(0.37 0.07 310);
+    --coast-line: oklch(0.97 0.018 85 / 0.24);
+    --coast-line-ink: oklch(0.19 0.065 300 / 0.24);
+    --coast-glow-pink: oklch(0.68 0.21 2 / 0.6);
+    --coast-glow-aqua: oklch(0.84 0.11 195 / 0.5);
+  }
+}
+
 /* A portfolio is always a light page: its own palette, and light native controls inside it. */
 .pf-scope {
   --k: 1;
@@ -996,6 +1044,24 @@ body {
     --press-ink-2: CanvasText;
     --press-rule: CanvasText;
     --press-grain: transparent;
+    --coast-night: Canvas;
+    --coast-ink: CanvasText;
+    --coast-plum: Canvas;
+    --coast-magenta: Canvas;
+    --coast-pink: Canvas;
+    --coast-orange: Canvas;
+    --coast-gold: Canvas;
+    --coast-teal: Canvas;
+    --coast-aqua: CanvasText;
+    --coast-sand: Canvas;
+    --coast-mint: Canvas;
+    --coast-cream: CanvasText;
+    --coast-cream-2: CanvasText;
+    --coast-ink-2: CanvasText;
+    --coast-line: CanvasText;
+    --coast-line-ink: CanvasText;
+    --coast-glow-pink: transparent;
+    --coast-glow-aqua: transparent;
   }
 }
 
