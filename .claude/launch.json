@@ -31,6 +31,13 @@
       "port": 8787
     },
     {
+      "name": "tayyari-api-local-signin",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "--directory", "backend", "python", "-m", "tayyari.cli", "dev"],
+      "env": { "TAYYARI_AUTH__OWN_SIGN_IN": "true" },
+      "port": 8787
+    },
+    {
       "name": "tayyari-web",
       "runtimeExecutable": "npx",
       "runtimeArgs": [

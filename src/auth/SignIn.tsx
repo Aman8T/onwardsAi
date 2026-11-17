@@ -99,7 +99,7 @@ export function SignIn() {
         google={!providers.leafout && providers.google}
         magic={!providers.leafout && providers.magic}
         loaded={loaded}
-        next={NEXT[ui.reason]}
+        next={ui.next ?? NEXT[ui.reason]}
         leafoutHref={providers.leafout ? leafoutHref : null}
         leafout={providers.leafout}
       />
