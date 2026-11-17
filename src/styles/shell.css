@@ -464,3 +464,62 @@
     min-height: 44px;
   }
 }
+
+/*
+ * Phone: three tidy rows instead of a stack of wrapped buttons with the wordmark floating in the middle.
+ *   1  the wordmark, then Ask, New analysis and the account on the right
+ *   2  the sections, one line you can swipe
+ *   3  the secondary controls (the Weekly, the look, sharing), one line down to 360 px
+ * The right-hand cluster dissolves into the header (display: contents) so each control can take its row by `order`.
+ */
+@media (max-width: 760px) {
+  .gv-header {
+    align-items: center;
+    row-gap: var(--s1);
+    padding-block: var(--s2);
+  }
+
+  .gv-actions {
+    display: contents;
+  }
+
+  .gv-header .gv-nav {
+    order: 3;
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .gv-header .gv-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gv-header .gv-actions > * {
+    order: 4;
+  }
+
+  .gv-header .gv-actions > :is(.btn, .gv-navbtn),
+  .gv-header .atmo-btn {
+    padding-inline: 8px;
+  }
+
+  .gv-header .gv-actions > .gv-ask {
+    order: 1;
+    margin-left: auto;
+  }
+
+  .gv-header .gv-actions > .gv-confirm-anchor {
+    order: 1;
+  }
+
+  .gv-header .gv-actions:not(:has(> .gv-ask)) > .gv-confirm-anchor {
+    margin-left: auto;
+  }
+
+  .gv-header .gv-actions > .auth-account,
+  .gv-header .gv-actions > .auth-signin,
+  .gv-header .gv-actions > .bl-header-link {
+    order: 2;
+  }
+}
