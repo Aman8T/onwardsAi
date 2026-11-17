@@ -663,8 +663,10 @@ textarea.field {
 /* a highlighter swipe behind a phrase */
 .hl {
   padding: 0 0.2em;
-  background: linear-gradient(-2deg, transparent 12%, var(--accent-soft) 12%, var(--accent-soft) 88%, transparent 88%);
-  border-radius: 2px;
+  background: linear-gradient(180deg, transparent 12%, var(--accent-soft) 12%, var(--accent-soft) 88%, transparent 88%);
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* a ring or an underline drawn by hand: an inline SVG behind one number or word */
@@ -761,15 +763,19 @@ textarea.field {
   letter-spacing: 0;
 }
 
-/* the highlighter on a loud field: paper yellow behind a phrase, ink on top */
+/* the highlighter on a loud field: paper yellow behind a phrase, ink on top. A level band with softly rounded ends: a
+   tilted band renders jagged edges on large type. Each wrapped line gets its own band. */
 .hl-paper {
   padding: 0 0.2em;
-  background: linear-gradient(-2deg, transparent 14%, var(--paper-yellow) 14%, var(--paper-yellow) 86%, transparent 86%);
+  background: linear-gradient(180deg, transparent 10%, var(--paper-yellow) 10%, var(--paper-yellow) 92%, transparent 92%);
   color: var(--paper-ink);
-  border-radius: 0;
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
-/* a post-it: its own colour (--pp), a lighter curl at the foot, a short shadow under the lifted corner */
+/* a post-it: its own colour (--pp), a faint band where it is stuck at the top, and one short, even shadow under the
+   whole sheet. Square corners and no curl: the lifted-corner strip and the bent foot read as a bump on every screen. */
 .stick {
   position: absolute;
   isolation: isolate;
@@ -784,20 +790,11 @@ textarea.field {
   padding: 20px 14px 12px;
   color: var(--paper-ink);
   background: linear-gradient(180deg, var(--paper-shade-soft) 0, transparent 24px), var(--pp);
-  border-bottom-right-radius: 46px 6px;
+  border-radius: 2px;
+  box-shadow:
+    0 1px 2px var(--paper-shade-soft),
+    0 6px 12px -8px var(--paper-shade);
   text-align: left;
-}
-
-.postit::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  right: 5px;
-  bottom: 9px;
-  width: 62%;
-  height: 18px;
-  box-shadow: 0 12px 10px var(--paper-shade);
-  transform: rotate(3deg);
 }
 
 /* a pile: another sheet shows behind the top one */
