@@ -310,6 +310,14 @@
   gap: var(--s4);
 }
 
+/* what Ask cannot do: one short line each, not one comma-joined sentence */
+.ak-cannot {
+  margin: var(--s1) 0 0;
+  padding-left: var(--s4);
+  display: grid;
+  gap: 2px;
+}
+
 /* the answer, in place */
 .ak-convo {
   display: flex;

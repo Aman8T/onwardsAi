@@ -33,10 +33,9 @@ export interface PanelProps {
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
-/** The one noun each button's text uses, once each, in the capability list's order. */
+/** The screens Ask can open, named once each in the capability list's order (for screen readers; the line stays short). */
 const CAN_NOUNS = [...new Set(CAPABILITIES.map((c) => DISPATCH[c.destination].noun))];
-const CAN_LINE = `answer from what it can see, and hand you a button that opens ${CAN_NOUNS.slice(0, -1).join(', ')} or ${CAN_NOUNS[CAN_NOUNS.length - 1]}. A button only opens a screen; it does not do anything for you.`;
-const CANNOT_LINE = `${CANNOT.map(lower).join(', ')}.`;
+const CAN_LINE = 'answer from what it can see, and give you a button that opens the right screen. A button only opens it; it never acts for you.';
 
 export function DockPanel({ id, profile, starters, thread, onAsk, onClose, onFull, onRetry, onEdit, closeRef }: PanelProps) {
   const messages = thread?.messages ?? [];
@@ -107,10 +106,16 @@ export function DockPanel({ id, profile, starters, thread, onAsk, onClose, onFul
           <div className="ak-can">
             <p className="ak-fine">
               <b>It can</b> {CAN_LINE}
+              <span className="sr-only"> Screens it can open: {CAN_NOUNS.join(', ')}.</span>
             </p>
-            <p className="ak-fine">
-              <b>It cannot</b> {CANNOT_LINE}
-            </p>
+            <div className="ak-fine">
+              <b>It cannot</b>
+              <ul className="ak-cannot">
+                {CANNOT.map((c) => (
+                  <li key={c}>{lower(c)}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         </>
       )}
