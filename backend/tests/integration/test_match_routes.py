@@ -157,7 +157,7 @@ def start(build_settings: MakeSettings):  # type: ignore[no-untyped-def]
 
     Anonymous matching is off unless a test says otherwise (``match={"allow_anonymous": "auto"}``): the tests here are
     about accounts, and with no sign-in method configured the default would let visitors in. `test_match_anonymous`
-    covers the other way."""
+    covers the other way. One posting match a month is free here (the default is now three, roadmap B2)."""
 
     @asynccontextmanager
     async def run(
@@ -169,7 +169,13 @@ def start(build_settings: MakeSettings):  # type: ignore[no-untyped-def]
         persona = meera()
         model = claude or scripted(persona, phrase=phrase)
         match = {"allow_anonymous": "false", **overrides.pop("match", {})}
-        values: dict[str, Any] = {"auth": {"public_url": "https://tayyari.example"}, "match": match}
+        values: dict[str, Any] = {
+            "auth": {"public_url": "https://tayyari.example"},
+            "match": match,
+            "billing": {
+                "free_matches_per_month": 1
+            },  # one free posting a month, as these tests were written for
+        }
         values.update(overrides)
         async with running(build_settings(**values), claude=model) as env:
             yield Rig(env, model, persona)
@@ -479,7 +485,12 @@ async def test_the_first_match_is_free_then_a_402_until_something_is_bought_and_
     async with start() as rig:
         ana = await rig.account()
         await rig.match(ana)
-        assert (await rig.entitlements(ana)) == {"credits": 0, "freeMatchAvailable": False}
+        assert (await rig.entitlements(ana)) == {
+            "credits": 0,
+            "freeMatchAvailable": False,
+            "plan": "just_looking",
+            "matchesLeft": 0,
+        }
         calls_before = len(rig.claude.structured_calls)
 
         refused = await rig.post_match(ana)
@@ -682,14 +693,25 @@ async def test_a_listed_account_is_past_the_free_match_with_no_402_and_nothing_i
         ]  # the free match was never used, and there are no credits
         assert len(set(ids)) == 3 and len(await rig.rows(MatchRow, MatchRow.user_id == tester.user.id)) == 3
         assert await rig.ledger(tester) == []  # no free_monthly, no match, no refund: the ledger is untouched
-        assert await rig.entitlements(tester) == {"credits": 0, "freeMatchAvailable": True, "unlimited": True}
+        assert await rig.entitlements(tester) == {
+            "credits": 0,
+            "freeMatchAvailable": True,
+            "unlimited": True,
+            "plan": "just_looking",
+            "matchesLeft": 1,
+        }
 
         # the same setup for an ordinary account: the free match once, then a 402 and nothing else
         await rig.match(bob)
         refused = await rig.post_match(bob)
         assert refused.status_code == 402
         assert refused.json() == {"error": "payment_required", "reason": "no_credits"}
-        assert await rig.entitlements(bob) == {"credits": 0, "freeMatchAvailable": False}
+        assert await rig.entitlements(bob) == {
+            "credits": 0,
+            "freeMatchAvailable": False,
+            "plan": "just_looking",
+            "matchesLeft": 0,
+        }
         assert await rig.ledger(tester) == []
 
         # what the listed account made is its own: only it can open it

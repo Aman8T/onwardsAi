@@ -28,8 +28,8 @@ export const jobSearch: ContentPage = {
       a: 'Employers publish those boards openly for candidates. Other sources are added only where their terms allow it.',
     },
     {
-      q: 'Does a search use my posting credits?',
-      a: 'No, a search is not charged. Opening a full match for a role uses the same credits as any pasted posting.',
+      q: 'Is a search free?',
+      a: 'Just Looking, the free plan, includes a few searches with AI each month, and Day One does not count them. Opening a full match for a role counts as a posting match, like any pasted posting.',
     },
   ],
   Body: () => (

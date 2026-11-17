@@ -68,6 +68,7 @@ function SetupBody({ profile, kind, role, graphRole: asked }: SetupScreenProps) 
   const [left, setLeft] = useState<number | undefined>();
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | undefined>();
+  const [ranOut, setRanOut] = useState<{ limit?: number; resetsAt?: string } | undefined>();
   const [testing, setTesting] = useState(false);
   const [heard, setHeard] = useState(false);
   const [micProblem, setMicProblem] = useState<MeterTrouble | undefined>();
@@ -165,6 +166,7 @@ function SetupBody({ profile, kind, role, graphRole: asked }: SetupScreenProps) 
     primeVoice();
     setStarting(true);
     setStartError(undefined);
+    setRanOut(undefined);
     setTesting(false);
     try {
       const session = await realApi.startSession({
@@ -178,7 +180,9 @@ function SetupBody({ profile, kind, role, graphRole: asked }: SetupScreenProps) 
       });
       open({ screen: 'room', session: session.id });
     } catch (err) {
-      setStartError(sentenceOf(err));
+      // the month's count of practice sessions ran out: the plan panel says so, not an error line
+      if (err instanceof PracticeApiError && err.ranOut) setRanOut(err.ranOut);
+      else setStartError(sentenceOf(err));
       setStarting(false);
     }
   };
@@ -210,6 +214,7 @@ function SetupBody({ profile, kind, role, graphRole: asked }: SetupScreenProps) 
       unlimited={unlimited}
       starting={starting}
       {...(startError ? { startError } : {})}
+      {...(ranOut ? { ranOut, onDismissRanOut: () => setRanOut(undefined) } : {})}
       onBack={() => open({ screen: 'hub' })}
       onSkip={(id) =>
         setSkipped((prev) => {

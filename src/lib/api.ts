@@ -1,5 +1,6 @@
 import type { ClaimRequest, MagicLinkRequest, MagicLinkResponse, MePatch, MeResponse } from '../../shared/auth';
-import type { CheckoutRequest, CheckoutResponse, EntitlementsResponse, VerifyRequest, VerifyResponse } from '../../shared/billing';
+import type { CheckoutRequest, CheckoutResponse, EntitlementsResponse, Feature, NotifyRequest, NotifyResponse, OrdersResponse, VerifyRequest, VerifyResponse } from '../../shared/billing';
+import { limitSentence } from '../billing/format';
 import type { HandoffPayload } from '../../shared/handoff';
 import type {
   Portfolio,
@@ -24,32 +25,40 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
 /** A failed API call: the server's `{ error }` message (or a generic one) and the HTTP status. */
 export class ApiError extends Error {
   readonly status: number;
-  /** Why a 402 `payment_required` was refused (`no_credits`); absent for every other failure. */
+  /** Why a 402 `payment_required` was refused (`no_credits` or `limit_reached`); absent for every other failure. */
   readonly reason?: string;
   /** The `Retry-After` header of the failed response, in whole seconds (a 429 says how long to wait); absent when not sent. */
   readonly retryAfter?: number;
-  constructor(message: string, status: number, reason?: string, retryAfter?: number) {
+  /** Which count ran out, how many Just Looking allows and when it comes back, from a 402 `limit_reached`; absent otherwise. */
+  readonly limit?: { feature: Feature; limit: number; resetsAt?: string };
+  constructor(message: string, status: number, reason?: string, retryAfter?: number, limit?: { feature: Feature; limit: number; resetsAt?: string }) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.reason = reason;
     this.retryAfter = retryAfter;
+    this.limit = limit;
     if (status === 401) onUnauthorized?.();
   }
 }
 
 /** A 402's body is `{ error: 'payment_required', reason }`: a code, not a sentence, so say it in words. */
-const PAYMENT_REQUIRED = "You've used this month's free posting. Choose a plan to continue.";
+const PAYMENT_REQUIRED = "You've used what Just Looking includes this month. See the plans to carry on.";
 
 /** The server's `{ error }` text for a failed response, else "Request failed (status)". */
 async function failure(res: Response): Promise<ApiError> {
   let message = `Request failed (${res.status})`;
   let reason: string | undefined;
+  let limit: { feature: Feature; limit: number; resetsAt?: string } | undefined;
   try {
     const body = await res.json();
     if (body?.error === 'payment_required') {
       message = PAYMENT_REQUIRED;
       if (typeof body.reason === 'string') reason = body.reason;
+      if (reason === 'limit_reached' && typeof body.feature === 'string' && typeof body.limit === 'number') {
+        limit = { feature: body.feature as Feature, limit: body.limit, resetsAt: typeof body.resetsAt === 'string' ? body.resetsAt : undefined };
+        message = limitSentence(limit.feature, limit.limit, limit.resetsAt);
+      }
     } else if (body?.error) message = body.error;
   } catch {
     /* not JSON */
@@ -57,7 +66,7 @@ async function failure(res: Response): Promise<ApiError> {
   // Retry-After is delta-seconds; an HTTP date is not used by this server and reads as absent
   const header = Number(res.headers.get('Retry-After'));
   const retryAfter = Number.isFinite(header) && header > 0 ? Math.ceil(header) : undefined;
-  return new ApiError(message, res.status, reason, retryAfter);
+  return new ApiError(message, res.status, reason, retryAfter, limit);
 }
 
 /** Read a newline-delimited JSON response body as it streams in. */
@@ -275,6 +284,20 @@ export async function createCheckout(req: CheckoutRequest, signal?: AbortSignal)
 /** Checkout.js's hand-off after a payment: the server checks the signature and settles the order. */
 export async function verifyPayment(req: VerifyRequest, signal?: AbortSignal): Promise<VerifyResponse> {
   const res = await fetch('/api/billing/verify', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(req), signal });
+  if (!res.ok) throw await failure(res);
+  return res.json();
+}
+
+/** This account's paid orders, newest first (the bill's receipt, "Your plan"). Signed in only. */
+export async function getBillingOrders(signal?: AbortSignal): Promise<OrdersResponse> {
+  const res = await fetch('/api/billing/orders', { signal });
+  if (!res.ok) throw await failure(res);
+  return res.json();
+}
+
+/** Ask to be told (or not) when a closed plan opens. Signed in only; the answer is the full list of wishes. */
+export async function putBillingNotify(req: NotifyRequest, signal?: AbortSignal): Promise<NotifyResponse> {
+  const res = await fetch('/api/billing/notify', { method: 'PUT', headers: JSON_HEADERS, body: JSON.stringify(req), signal });
   if (!res.ok) throw await failure(res);
   return res.json();
 }

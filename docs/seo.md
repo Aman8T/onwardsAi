@@ -86,6 +86,17 @@ API (`backend/tayyari/card/page.py`), not by this build. It links `/site/site.cs
 are cards to judge by). It is not in the sitemap, and `robots.txt` does not disallow `/u/`, so a crawler can read the
 `noindex`. The site's own pages carry the same share picture as everything else (`/og-default.png`).
 
+## Shared reports (`/next/<slug>`)
+
+"Where can I go next" (N1, `docs/backend.md` "Where can I go next") gets a page at `/next/<slug>`, rendered by the API
+(`backend/tayyari/report/page.py`), not by this build. It links `/site/site.css`, whose `next-*` rules are its layout,
+because the page allows no inline style.
+
+- **Share tags:** `og:title` is "Where can {name} go next?", `og:image` the versioned 1200 x 630 PNG
+  (`/og/next/<slug>-<version>.png`), and `twitter:card summary_large_image`.
+- **Not indexed:** `noindex` in a meta tag and `X-Robots-Tag`, the same decision as the radar card. It is not in the
+  sitemap, and `robots.txt` does not disallow it.
+
 ## Not done yet
 
 - **Per-profile or per-role pages.** Nothing about a person is public except a published portfolio (`/p/*`, `noindex` by design). Pages for roles or skills would need a source of honest text; none exists yet.

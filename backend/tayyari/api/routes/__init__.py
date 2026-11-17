@@ -28,6 +28,8 @@
               GET, POST /api/weekly/unsubscribe?token= (The Leafout Weekly, a personal newspaper)
     card      GET, PUT /api/card; POST /api/card/new-link (the radar card's share sheet); public, no account:
               GET /r/{slug}.svg, /og/{slug}-{version}.png, /u/{slug} (registered here, so before the web app's catch-all)
+    report    GET, PUT /api/report; POST /api/report/new-link (Where can I go next, the owner's sheet); public, no account:
+              GET /next/{slug}, /og/next/{slug}-{version}.png (registered here, so before the web app's catch-all)
     apply     GET /api/apply/status; POST /api/apply/consent, /api/apply/check (read-only start checks); POST, GET
               /api/apply/applications; GET, DELETE .../{id}; GET .../screenshot?kind=review|confirmation; POST
               .../answers, .../approve, .../cancel, .../resolve, .../applied-there, .../stage, .../retry; GET
@@ -65,6 +67,7 @@ from tayyari.api.routes import (
     portfolio,
     prepare,
     profile,
+    report,
     resume,
     sample,
     speech,
@@ -91,6 +94,7 @@ for _module in (
     handoff,
     weekly,
     card,
+    report,
     apply,
     resume,
     notes,

@@ -513,6 +513,17 @@ class StoredEntitlements:
     credits: int
     pass_until: datetime | None
     free_used: int
+    apply_free_used: int = 0
+    """The free auto-apply applications in use over the account's lifetime (live ``apply_free`` rows)."""
+
+
+@dataclass(frozen=True, slots=True)
+class FeatureUseOutcome:
+    """One counted use of a plan feature (`BillingRepo.use_feature`). ``used`` is how many uses of the feature are
+    recorded since the period began, this one included; ``replayed`` is True when ``ref`` was already counted."""
+
+    used: int
+    replayed: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -592,14 +603,22 @@ class BillingRepo(Protocol):
         ...
 
     async def hold(
-        self, user_id: str, ref: str, *, now: datetime, free_allowance: int, cost: int | None
+        self,
+        user_id: str,
+        ref: str,
+        *,
+        now: datetime,
+        free_allowance: int,
+        cost: int | None,
+        zero_hold: bool = True,
     ) -> ConsumeOutcome | None:
         """Take an auto-apply credit hold for ``ref`` (``apply:<application id>``): a free application while fewer
         than ``free_allowance`` are in use over the account's lifetime (``apply_free``, delta 0), else ``cost``
         credits (``apply_hold``, delta ``-cost``); None when the credits do not cover ``cost``. ``cost=None`` (no
         price set) holds nothing: an ``apply_hold`` row with delta 0, so capture and release still work. Idempotent on
         ``(user_id, ref)``: a live hold (captured or not) is returned as ``replayed``; after a release a new hold is
-        taken."""
+        taken. ``zero_hold=False`` refuses (None) where a hold of nothing would be taken after the free applications:
+        a Just Looking account while no price is set (roadmap B2)."""
         ...
 
     async def capture(self, user_id: str, ref: str, *, now: datetime) -> bool:
@@ -610,6 +629,37 @@ class BillingRepo(Protocol):
 
     async def hold_state(self, user_id: str, ref: str) -> HoldState | None:
         """Where the latest hold for ``ref`` stands, from the ledger; None when no hold was ever taken."""
+        ...
+
+    # plans (roadmap B2): counted uses, "tell me when it opens", receipts
+
+    async def use_feature(
+        self, user_id: str, feature: str, ref: str, *, now: datetime, since: datetime, limit: int | None
+    ) -> FeatureUseOutcome | None:
+        """Count one use of ``feature`` keyed by ``ref``, under the account's lock. None (and nothing recorded) when
+        ``limit`` is not None and the uses recorded since ``since`` have reached it; ``limit=None`` records with no
+        limit. Idempotent on ``(user_id, feature, ref)``: a ``ref`` already counted is returned as ``replayed``."""
+        ...
+
+    async def release_feature(self, user_id: str, feature: str, ref: str, *, now: datetime) -> bool:
+        """Give back the use of ``feature`` keyed by ``ref`` (the run failed before it produced anything). True when
+        a use was given back; False when there was none."""
+        ...
+
+    async def feature_counts(self, user_id: str, *, since: datetime) -> dict[str, int]:
+        """The uses recorded since ``since``, by feature (a feature with none has no key)."""
+        ...
+
+    async def set_interest(self, user_id: str, plan: str, *, on: bool, now: datetime) -> None:
+        """Ask to be told when the closed ``plan`` opens (``on``), or stop asking. Idempotent."""
+        ...
+
+    async def interests(self, user_id: str) -> list[str]:
+        """The closed plans this account asked to be told about, in name order."""
+        ...
+
+    async def paid_orders(self, user_id: str) -> list[StoredOrder]:
+        """This account's paid orders, newest first (by when they were paid)."""
         ...
 
 
@@ -1368,6 +1418,44 @@ class CardRepo(Protocol):
         ...
 
 
+# ───────────────────────────── the report (N1) ─────────────────────────────
+
+
+@dataclass(frozen=True, slots=True)
+class StoredReportSnapshot:
+    """One account's "Where can I go next" report (`ReportSnapshotRow`). ``choices`` is `ReportChoices` JSON and ``content``
+    the public `ReportContent` JSON, already redacted: storage keeps both opaque, the report service validates them.
+    ``slug`` is None while not shared; ``version`` is the first 8 hex characters of the sha256 of ``content``, and
+    ``updated_at`` is when that last changed."""
+
+    user_id: str
+    profile_id: str
+    slug: str | None
+    shared: bool
+    choices: dict[str, Any]
+    content: dict[str, Any]
+    version: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ReportRepo(Protocol):
+    """Reports, one per account. The slug is the only public key: `get_by_slug` finds a report only while it is shared."""
+
+    async def get(self, user_id: str) -> StoredReportSnapshot | None:
+        """The account's report, or None when it never had one."""
+        ...
+
+    async def get_by_slug(self, slug: str) -> StoredReportSnapshot | None:
+        """The shared report with this slug, or None (an unknown slug, or a report no longer shared)."""
+        ...
+
+    async def save(self, item: StoredReportSnapshot) -> None:
+        """Insert the report or replace the account's (every column but ``user_id`` and ``created_at``). A slug another
+        report already holds raises (the fake a ValueError, SQL an IntegrityError)."""
+        ...
+
+
 # ───────────────────────────── resumes (R2) ─────────────────────────────
 
 ResumeKind = Literal["upload", "path", "posting"]
@@ -1961,6 +2049,7 @@ __all__ = [
     "DiscoverRepo",
     "DiscoverRun",
     "EmailTaken",
+    "FeatureUseOutcome",
     "HandoffRepo",
     "HoldState",
     "InterviewRepo",
@@ -1984,6 +2073,7 @@ __all__ = [
     "ProfileNotClaimable",
     "ProfileOwnedByAnother",
     "ProfileRepo",
+    "ReportRepo",
     "ResumeFileOrigin",
     "ResumeFileRepo",
     "ResumeKind",
@@ -2011,6 +2101,7 @@ __all__ = [
     "StoredPlan",
     "StoredPlaybook",
     "StoredPortfolio",
+    "StoredReportSnapshot",
     "StoredResume",
     "StoredResumeFile",
     "StoredRunMetric",

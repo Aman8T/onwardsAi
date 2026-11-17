@@ -1,20 +1,17 @@
 /*
- * Payments: the pricing page (PricingView.tsx), its notices and the entitlement chip.
- * Every class is prefixed "bl-". Tokens only (src/theme/tokens.css); depth comes from tone and a 1px hairline, never a
- * shadow; the one serif line on the page is the title (the prices reuse the serif at a smaller size, as the board does).
- * Three columns on wide screens, one under 760px (the same breakpoint every sheet in the app follows).
+ * Payments: the plan screen (PlanScreen.tsx), the bill (Bill.tsx) and the plan chip.
+ * Every class is prefixed "bl-". Built from the materials kit (materials.css, design.md 7b): a hero beside a stage or a
+ * mosaic, 2px seams, no cards. Tokens only (src/theme/tokens.css); no shadow, blur, glow or border over 1px. Prices,
+ * dates and counts are straight (sans or mono, never the pen face, never turned). Under 1100px the hero stacks above
+ * the stage; under 760px it is one straight column with every control 44px tall.
  */
 
-/* ───────────── page ───────────── */
+/* ───────────── frame ───────────── */
 
 .bl-root {
+  --m-top: 64px;
   min-height: 100vh;
   min-height: 100dvh;
-}
-
-.bl-wrap {
-  max-width: 980px;
-  padding-bottom: var(--s8);
 }
 
 .bl-header {
@@ -23,6 +20,7 @@
   justify-content: space-between;
   gap: var(--s4);
   min-height: 64px;
+  padding-inline: var(--s5);
 }
 
 .bl-header-end {
@@ -34,27 +32,16 @@
 }
 
 .bl-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s4);
-  padding-top: var(--s4);
+  display: block;
 }
 
-/* ───────────── title and currency switch ───────────── */
-
-.bl-intro {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--s4);
+.bl-hero {
+  gap: var(--s3);
 }
 
-.bl-intro-copy {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-  max-width: 640px;
+.bl-hero.bl-bare {
+  max-width: 720px;
+  min-height: 40vh;
 }
 
 .bl-title {
@@ -68,256 +55,618 @@
 }
 
 .bl-lede {
-  max-width: var(--measure);
+  max-width: 34em;
+  margin: 0;
   color: var(--text-muted);
   text-wrap: pretty;
 }
 
-/* A pill with two options; the chosen one is a soft fill. */
-.bl-seg {
-  display: inline-flex;
-  gap: 2px;
-  padding: var(--s1);
-  border: var(--hair) solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
+.bl-screen > .m-mosaic {
+  align-content: start;
 }
 
-.bl-seg-btn {
-  min-height: 44px;
-  padding: 0 var(--s4);
-  border-radius: 999px;
-  font-size: var(--fs-2);
-  font-weight: 500;
-  color: var(--text-muted);
-  transition:
-    color var(--d-fast) var(--ease),
-    background-color var(--d-fast) var(--ease);
-}
-
-@media (hover: hover) {
-  .bl-seg-btn:hover {
-    color: var(--text);
-  }
-}
-
-.bl-seg-btn[aria-pressed='true'] {
-  background: var(--accent-soft);
-  color: var(--text);
-}
-
-/* ───────────── the three plans ───────────── */
-
-.bl-plans {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s4);
-  align-items: stretch;
-}
-
-.bl-plan {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s4);
-  padding: var(--s4) var(--s5);
-}
-
-/* The suggested plan carries the accent hairline; nothing else about it is louder. */
-.bl-plan.is-featured {
-  border-color: var(--accent-ui);
-}
-
-.bl-plan-head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s1);
-}
-
-.bl-price {
-  margin: 0;
-  font-size: var(--fs-7);
-}
-
-.bl-price.is-soon {
-  color: var(--text-muted);
-}
-
-.bl-unit {
-  font-family: var(--font-sans);
-  font-size: var(--fs-3);
-  letter-spacing: normal;
-  color: var(--text-muted);
-}
-
-.bl-sub {
-  margin: 0;
-  font-size: var(--fs-1);
-  color: var(--text-muted);
-  text-wrap: pretty;
-}
-
-.bl-alt {
-  margin: 0;
-  font-size: var(--fs-1);
-  color: var(--text-muted);
-}
+/* ───────────── the price list (board L) ───────────── */
 
 .bl-list {
   display: flex;
   flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: 2px;
+  margin-top: var(--s2);
+  background: var(--bg);
 }
 
-.bl-list li {
+.bl-item {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr);
-  gap: var(--s2);
-  align-items: start;
-  padding: var(--s1) 0;
-  font-size: var(--fs-2);
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
 }
 
-.bl-tick {
-  color: var(--accent-ui);
+button.bl-item {
+  cursor: pointer;
 }
 
-/* What is planned but not built yet says so, quietly. */
-.bl-soon {
-  margin-left: var(--s2);
-  font-size: var(--fs-0);
-  letter-spacing: var(--track-open);
-  text-transform: uppercase;
+button.bl-item.is-on {
+  background: var(--surface-2);
+  outline: 1px solid var(--line-strong);
+  outline-offset: -1px;
+}
+
+button.bl-item:focus-visible {
+  outline: 2px solid var(--accent-ui);
+  outline-offset: -4px;
+}
+
+.bl-item.is-closed {
+  background: var(--surface-2);
   color: var(--text-muted);
+}
+
+.bl-item-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bl-item-main > :first-child {
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.bl-item-price {
+  font-size: var(--fs-4);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  color: var(--text);
 }
 
-.bl-plan-foot {
-  display: flex;
-  flex-direction: column;
-  margin-top: auto;
+.bl-item-price small {
+  letter-spacing: normal;
 }
 
-.bl-plan-foot .btn {
-  justify-content: center;
+/* the hand tick in front of a plan you can choose; the pen mark shows on the chosen one */
+.bl-tick {
+  width: 24px;
+  height: 24px;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bl-tick .bx {
+  stroke: var(--text-muted);
+  stroke-width: 1.2;
+}
+
+.bl-tick .ck {
+  display: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+}
+
+.bl-item.is-on .bl-tick .ck {
+  display: block;
+}
+
+/* a plan that cannot be chosen yet: a dashed ring instead of a box */
+.bl-lock {
+  width: 24px;
+  height: 24px;
+  border: 1px dashed var(--text-muted);
+  border-radius: 50%;
+}
+
+.bl-tell {
+  align-self: flex-start;
   min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-1);
+  color: var(--text);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-strong);
+  cursor: pointer;
 }
 
-/* ───────────── notes ───────────── */
-
-.bl-notes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--s4);
-}
-
-.bl-note {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s1);
-  padding: var(--s4) var(--s4);
-  font-size: var(--fs-2);
+.bl-tell:disabled {
+  cursor: wait;
   color: var(--text-muted);
 }
 
-.bl-note p {
-  margin: 0;
-  text-wrap: pretty;
+.bl-tell:focus-visible {
+  outline: 2px solid var(--accent-ui);
+  outline-offset: 2px;
 }
 
-/* Terms, Privacy, Refunds and Contact: plain links under the plans, 44px tall to touch. */
-.bl-legal {
+.bl-told {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  column-gap: var(--s4);
+  column-gap: var(--s3);
+}
+
+.bl-say:empty {
+  display: none;
+}
+
+.bl-plain-say {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0;
+  border-top: var(--hair) solid var(--line);
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.bl-plain-say.is-bare {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.bl-plain-say span {
   font-size: var(--fs-2);
+}
+
+.bl-terms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px var(--s3);
+  font-size: var(--fs-1);
   color: var(--text-muted);
 }
 
-.bl-legal p {
-  margin: 0;
-}
-
-.bl-legal ul {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.bl-legal a {
+.bl-terms a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding: 0 var(--s2);
   color: var(--text-muted);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 @media (hover: hover) {
-  .bl-legal a:hover {
+  .bl-terms a:hover {
     color: var(--text);
   }
 }
 
-.bl-legal a:focus-visible {
-  outline: 2px solid var(--accent-ui);
-  outline-offset: 2px;
+/* ───────────── the stage ───────────── */
+
+/* the stage is the screen's second column itself, not a tile inside a mosaic: undo the tile's six-column span */
+.bl-screen > .bl-stage {
+  grid-column: auto;
 }
 
-/* ───────────── where the payment is ───────────── */
+.bl-stage {
+  isolation: isolate;
+  gap: var(--s4);
+  min-height: 640px;
+  padding: 28px 40px 28px 36px;
+}
 
-/* An empty live region stays in the page so a message that appears is announced. */
-.bl-notice {
+.bl-stage-title {
+  margin: 0;
+  font-size: var(--fs-7);
+  text-wrap: balance;
+}
+
+.bl-say-big {
+  max-width: 44em;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.m-graph .bl-say-big {
+  color: var(--text-muted);
+}
+
+.bl-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--s5) var(--s6);
+}
+
+.bl-col-end {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+}
+
+.bl-limits {
+  max-width: 560px;
+}
+
+/* a counted limit, one line each: the hairline is a pseudo-element so it can take any ink */
+.bl-lim {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: 8px 0;
+  font-size: var(--fs-2);
+  line-height: 1.35;
+}
+
+.bl-lim + .bl-lim::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.22;
+}
+
+.bl-lim-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* the three-month sum: bars sized from the numbers */
+.bl-sum {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.bl-sum > p {
   margin: 0;
 }
 
-.bl-notice:empty {
+.bl-c3 {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 7px 10px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.bl-bar {
+  display: block;
+  height: 10px;
+}
+
+.bl-bar i {
+  display: block;
+  height: 10px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.bl-bar i.is-day {
+  opacity: 1;
+}
+
+.bl-coffee {
+  min-height: 0;
+  max-width: 300px;
+  align-self: flex-start;
+}
+
+/* the one press on the Day One stage: a paper-coloured strip on the ink */
+.bl-stage a.bl-go,
+.bl-stage button.bl-go {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  min-height: 64px;
+  margin-top: auto;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-3);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.bl-stage button.bl-go:disabled {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.bl-stage a.bl-go:focus-visible,
+.bl-stage button.bl-lift:focus-visible {
+  outline: 2px solid var(--accent-ui);
+  outline-offset: -4px;
+}
+
+.bl-carry {
+  align-self: flex-start;
+  min-height: 44px;
+}
+
+/* on graph paper the way to Day One is the one ink strip */
+.bl-stage button.bl-lift {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  width: 100%;
+  min-height: 64px;
+  margin-top: auto;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 0;
+  background: var(--accent-strong);
+  color: var(--surface);
+  font: inherit;
+  font-size: var(--fs-3);
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .bl-stage button.bl-lift:hover {
+    background: var(--accent);
+  }
+}
+
+/* ───────────── the bill ───────────── */
+
+.bl-who {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-top: var(--s3);
+  padding-bottom: var(--s3);
+  border-bottom: var(--hair) solid var(--line);
+}
+
+.bl-who-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bl-avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: var(--hair) solid var(--line);
+  border-radius: 50%;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+/* where the payment is: one live region; empty, it takes no room */
+.bl-status {
+  margin: 0;
+}
+
+.bl-status:empty {
   display: none;
 }
 
-.bl-notice:not(:empty) {
+.bl-status:not(:empty) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s3);
-  padding: var(--s3) var(--s4);
-  border: var(--hair) solid var(--line);
-  border-radius: var(--r-m);
-  background: var(--accent-soft);
+  gap: var(--s2) var(--s3);
+  padding: 12px 14px;
+  background: var(--surface-2);
   font-size: var(--fs-2);
   color: var(--text);
 }
 
-.bl-notice p {
+.bl-status p {
   margin: 0;
   min-width: 0;
   text-wrap: pretty;
 }
 
-.bl-notice.is-problem {
-  background: var(--surface);
+.bl-status.is-problem:not(:empty) {
   color: var(--danger);
 }
 
-.bl-notice-actions {
+.bl-status-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--s1);
+  gap: var(--s2);
 }
 
-/* ───────────── the entitlement chip ───────────── */
+.bl-slipwrap {
+  align-items: center;
+  padding: 28px 18px 40px;
+}
+
+/* a till slip: straight, in mono, torn at the foot */
+.bl-slip {
+  position: relative;
+  width: min(100%, 420px);
+  padding: 22px 22px 26px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  line-height: 1.5;
+}
+
+.bl-slip::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 6px;
+  background:
+    linear-gradient(135deg, var(--surface) 25%, transparent 25%) -6px 0 / 12px 12px repeat-x,
+    linear-gradient(225deg, var(--surface) 25%, transparent 25%) -6px 0 / 12px 12px repeat-x;
+}
+
+.bl-slip-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.bl-slip-top > :first-child {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.bl-stamp {
+  border-color: var(--text);
+  background: none;
+  color: var(--text);
+  font-size: var(--fs-1);
+}
+
+.bl-slip p {
+  margin: 0;
+}
+
+.bl-slip-head {
+  color: var(--text-muted);
+}
+
+.bl-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: baseline;
+  padding: 2px 0;
+}
+
+.bl-row > :last-child {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.bl-row.is-strong > :last-child,
+.bl-row.is-total > :last-child {
+  font-weight: 500;
+}
+
+.bl-row.is-total {
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.bl-sub {
+  padding: 0 0 2px 14px;
+  font-size: var(--fs-0);
+  color: var(--text-muted);
+}
+
+.bl-sub.is-flush {
+  padding-left: 0;
+}
+
+.bl-cut {
+  height: 1px;
+  margin: 10px 0;
+  background: repeating-linear-gradient(90deg, var(--line-strong) 0 6px, transparent 6px 10px);
+}
+
+.bl-slip .bl-say {
+  font-size: var(--fs-0);
+  color: var(--text-muted);
+}
+
+.bl-slip .bl-say + .bl-say {
+  margin-top: var(--s2);
+}
+
+.bl-coffee-tile {
+  justify-content: center;
+  padding: 22px 18px;
+}
+
+.bl-print {
+  align-self: flex-start;
+  min-height: 44px;
+}
+
+/* the press on the bill: the one ink block of the screen */
+.bl-press {
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 72px;
+  font-size: var(--fs-3);
+  text-align: left;
+}
+
+button.bl-press {
+  cursor: pointer;
+}
+
+button.bl-press:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.bl-press b {
+  font-weight: 500;
+}
+
+.bl-press.is-off {
+  color: var(--text-muted);
+}
+
+/* the payment provider's own window and the wait: theirs, so it is not drawn */
+.bl-theirs {
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  outline: 1px dashed var(--line-strong);
+  outline-offset: -1px;
+  text-align: center;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.bl-theirs p {
+  margin: 0;
+}
+
+/* ───────────── the plan chip and the account menu line ───────────── */
 
 .bl-chip {
   white-space: nowrap;
 }
 
-/* The account menu's "Pricing" line and the signed-out header link (AccountMenu.tsx). */
+/* The account menu's "Your plan" line and the signed-out header link (AccountMenu.tsx). */
 .bl-menu-pricing {
   display: flex;
   flex-direction: column;
@@ -332,84 +681,183 @@
   white-space: nowrap;
 }
 
-/* ───────────── narrow screens ───────────── */
+/* ───────────── narrower ───────────── */
+
+@media (max-width: 1100px) {
+  .bl-screen {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bl-stage {
+    min-height: 0;
+  }
+}
 
 @media (max-width: 760px) {
-  .bl-plans,
-  .bl-notes {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--s4);
-  }
-
   .bl-header {
-    min-height: 64px;
+    padding-inline: var(--s4);
   }
 
-  .bl-seg {
-    width: 100%;
-  }
-
-  .bl-seg-btn {
-    flex: 1 1 0;
-    padding: 0 var(--s3);
-  }
-
-  /* touch targets: the small buttons in the notices and the header reach 44px */
-  .bl-notice .btn,
-  .bl-header-end > .btn {
-    min-height: 44px;
-  }
-
-  /* Atmosphere made this header wrap to two or three rows; the control stays on the other screens */
-  .bl-atmo {
-    display: none;
-  }
-
-  /* the signed-out header link makes room for the account control */
   .bl-header-link {
     display: none;
   }
+
+  .bl-hero {
+    padding: 20px 16px 22px;
+  }
+
+  .bl-stage {
+    padding: 22px 16px;
+  }
+
+  .bl-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bl-mosaic {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bl-mosaic > * {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .bl-slipwrap {
+    padding: 18px 12px 30px;
+  }
+
+  .bl-slip {
+    padding: 18px 16px 22px;
+  }
+
+  .bl-screen .btn,
+  .bl-header-end > .btn,
+  .bl-status .btn {
+    min-height: 44px;
+  }
+
+  .bl-stamp {
+    transform: none;
+  }
 }
 
-/* ───────────── materials: seams and tone steps, no cards ───────────── */
+/* ───────────── print: only the slip ───────────── */
 
-/* the plans are three tiles edge to edge with a 2px seam; the suggested plan is a tone step, not an outline */
-.bl-plans,
-.bl-notes {
-  gap: 2px;
-  background: var(--bg);
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .bl-slip,
+  .bl-slip * {
+    visibility: visible;
+  }
+
+  .bl-slip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color-scheme: light;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .bl-slip::after {
+    display: none;
+  }
+
+  .bl-slip :is(.bl-slip-head, .bl-sub, .bl-say) {
+    color: GrayText;
+  }
+
+  .bl-stamp {
+    border-color: CanvasText;
+    color: CanvasText;
+    transform: none;
+  }
 }
 
-.panel.bl-plan,
-.panel.bl-note {
-  border: 0;
-  border-radius: 0;
-  background: var(--surface);
+/* ───────────── /dev/pricing (development builds only) ───────────── */
+
+.bl-dev-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s2);
+  padding: var(--s4) var(--s5);
 }
 
-.panel.bl-plan.is-featured {
-  background: var(--surface-2);
+.bl-dev-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
 }
 
-.panel.bl-note {
-  background: var(--surface-2);
+/* ───────────── a count ran out (LimitNote) ───────────── */
+
+.bl-limit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s5) var(--s6);
 }
 
-.bl-seg {
-  border: 0;
-  border-radius: 0;
-  background: var(--surface-2);
+.bl-limit-title {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  text-wrap: balance;
 }
 
-.bl-seg-btn {
-  border-radius: 0;
+.bl-limit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s3);
+  align-items: center;
+  align-self: stretch;
+  max-width: 560px;
+  padding: 8px 0;
+  font-size: var(--fs-2);
+  line-height: 1.35;
 }
 
-.bl-notice:not(:empty) {
-  border: 0;
-  border-radius: 0;
+.bl-limit-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.bl-notice.is-problem:not(:empty) {
-  background: var(--surface-2);
+.bl-limit-fine {
+  margin: 0;
+  max-width: 560px;
+  text-wrap: pretty;
+}
+
+.bl-limit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.bl-limit-actions .btn {
+  min-height: 44px;
+}
+
+@media (max-width: 759px) {
+  .bl-limit {
+    padding: var(--s4);
+  }
+
+  .bl-limit-actions {
+    flex-direction: column;
+    align-self: stretch;
+  }
 }

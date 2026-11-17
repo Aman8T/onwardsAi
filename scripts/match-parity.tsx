@@ -650,16 +650,15 @@ async function main(): Promise<number> {
   for (const bad of ['/', '/matches', '/match/a/b/c', '/match/a b', '/match/x/pdf']) if (parseMatchPath(bad) !== null) routeFailures.push(`${bad} should not parse`);
   log('routes', routeFailures);
 
-  const now = Date.parse('2026-10-11T00:00:00Z');
   const chip: [Parameters<typeof entitlementText>[0], string][] = [
-    [{ credits: 0, freeMatchAvailable: true }, '1 free this month'],
-    [{ credits: 3, freeMatchAvailable: false }, '3 postings left'],
-    [{ credits: 1, freeMatchAvailable: false }, '1 posting left'],
-    [{ credits: 0, freeMatchAvailable: false }, 'No postings left'],
-    [{ credits: 0, freeMatchAvailable: false, passUntil: '2026-11-12T00:00:00Z' }, 'Pass until 12 Nov'],
-    [{ credits: 2, freeMatchAvailable: true, passUntil: '2026-09-01T00:00:00Z' }, '1 free this month · 2 postings left'],
+    [{ credits: 0, freeMatchAvailable: true, plan: 'day_one' }, 'Day One'],
+    [{ credits: 0, freeMatchAvailable: false, unlimited: true }, 'Unlimited'],
+    [{ credits: 0, freeMatchAvailable: true, plan: 'just_looking', matchesLeft: 3 }, 'Just Looking · 3 matches left'],
+    [{ credits: 0, freeMatchAvailable: true, plan: 'just_looking', matchesLeft: 1 }, 'Just Looking · 1 match left'],
+    [{ credits: 0, freeMatchAvailable: false, plan: 'just_looking', matchesLeft: 0 }, 'Just Looking'],
+    [{ credits: 0, freeMatchAvailable: false }, 'Just Looking'],
   ];
-  log('entitlement chip', chip.flatMap(([e, want]) => (entitlementText(e, now) === want ? [] : [`${JSON.stringify(e)} says "${entitlementText(e, now)}", expected "${want}"`])));
+  log('entitlement chip', chip.flatMap(([e, want]) => (entitlementText(e) === want ? [] : [`${JSON.stringify(e)} says "${entitlementText(e)}", expected "${want}"`])));
 
   if (failures.length > 0) {
     console.log('');

@@ -53,8 +53,8 @@ export function HomeSeed() {
       </p>
       <h2>What it costs</h2>
       <p>
-        With a free Leafout account, the skill graph and your next roles are free, and so is one posting match each calendar month. After that you can pay per posting or for 30 days,
-        once, with no renewals. See <a href="/pricing">pricing</a>.
+        Just Looking is free for as long as you like: your skill graph and next roles are never counted, and each month brings a small allowance of posting
+        matches, searches, practice sessions and questions. Day One is one payment with no limits and no renewals. See <a href="/pricing">pricing</a>.
       </p>
       <section aria-labelledby="faq-title">
         <h2 id="faq-title">Questions</h2>

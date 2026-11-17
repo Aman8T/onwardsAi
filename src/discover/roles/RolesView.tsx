@@ -109,7 +109,7 @@ export function RolesView(p: RolesViewProps) {
   }, [failure]);
   const limited = failure?.status === 429 && failure.retryAfter !== undefined && !waited;
   const blocked = isBlocked(failure) || limited;
-  const blockedWhy = limited ? 'The limit has been reached for now' : failure?.status === 404 ? 'Your profile is not on this server' : 'Search with AI is not available right now';
+  const blockedWhy = failure?.ranOut ? 'Your searches with AI for this month are used' : limited ? 'The limit has been reached for now' : failure?.status === 404 ? 'Your profile is not on this server' : 'Search with AI is not available right now';
 
   const search = () => {
     setNotice(null);

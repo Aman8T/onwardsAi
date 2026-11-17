@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import type { Profile, SourceSummary } from '../../../shared/types';
 import type { ChatMessage } from '../../store';
 import { ActionCard } from '../../ask/ActionCard';
+import { LimitNote } from '../../billing/LimitNote';
 import { ChatRewrite } from '../../resume/RewriteCard';
 import { IconRefresh } from '../../components/Icons';
 import { Markdown } from './MarkdownLazy';
@@ -139,7 +140,18 @@ export function AnswerBody({ message, lines, profile, onRetry, onEdit, question,
         </div>
       )}
 
-      {failed && (
+      {failed && message.failure === 'limit' && (
+        // the month's count of questions ran out: the plan panel; "Wait" puts the question back in the box
+        <LimitNote
+          feature="coach"
+          limit={message.ranOut?.limit}
+          resetsAt={message.ranOut?.resetsAt}
+          safe="Nothing was charged. Choosing to wait puts your question back in the box, so you can send it later."
+          onWait={onEdit}
+        />
+      )}
+
+      {failed && message.failure !== 'limit' && (
         <div className="ch-error" role="alert">
           <div className="ch-error-text">
             <strong>The answer did not arrive</strong>

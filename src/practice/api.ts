@@ -32,6 +32,7 @@ import type {
   WorkSubmit,
 } from '../../shared/interview';
 import type { PreparePlanSummary } from '../../shared/prepare';
+import { limitHeadline, limitSentence } from '../billing/format';
 import { ApiError } from '../lib/api';
 import {
   isObj,
@@ -54,10 +55,13 @@ export const OFFLINE = "We couldn't reach Leafout. Check your connection and try
 export class PracticeApiError extends ApiError {
   /** Seconds the server asks the person to wait (a 429's `Retry-After`), when it gave a number. */
   readonly retryAfter?: number;
-  constructor(message: string, status: number, retryAfter?: number) {
+  /** Set for a 402: the Just Looking count of practice sessions ran out (the limit and the day it comes back, when sent). */
+  readonly ranOut?: { limit?: number; resetsAt?: string };
+  constructor(message: string, status: number, retryAfter?: number, ranOut?: { limit?: number; resetsAt?: string }) {
     super(message, status);
     this.name = 'PracticeApiError';
     this.retryAfter = retryAfter;
+    this.ranOut = ranOut;
   }
 }
 
@@ -79,6 +83,11 @@ export async function failure(res: Response): Promise<PracticeApiError> {
     body = await res.json();
   } catch {
     /* not JSON */
+  }
+  if (res.status === 402 && isObj(body)) {
+    const limit = typeof body.limit === 'number' && Number.isFinite(body.limit) ? body.limit : undefined;
+    const resetsAt = typeof body.resetsAt === 'string' ? body.resetsAt : undefined;
+    return new PracticeApiError(limit !== undefined ? limitSentence('practice', limit, resetsAt) : limitHeadline('practice'), 402, undefined, { limit, resetsAt });
   }
   const sentence = isObj(body) && typeof body.error === 'string' ? body.error.trim() : '';
   const message = sentence && !looksLikeCode(sentence) ? sentence : (FALLBACK[res.status] ?? TROUBLE);

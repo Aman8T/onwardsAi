@@ -33,6 +33,10 @@ from tests.unit.wiring.support import FakeAnalysis, FakeChat
 MakeSettings = Callable[..., Settings]
 
 
+NO_DAY_ONE = {"dayone_inr": 0, "dayone_after_inr": 0}
+"""Day One unpriced, so a test about the two older products sees only them (roadmap B2)."""
+
+
 async def build(settings: Settings, **overrides: Any) -> Container:
     values: dict[str, Any] = {"analysis": FakeAnalysis(), "chat": FakeChat(), **overrides}
     return await Container.build(settings, overrides=ContainerOverrides(**values))
@@ -130,7 +134,9 @@ async def test_the_container_uses_the_injected_sessions_for_the_two_providers(
 
 async def test_the_key_pair_alone_sells_through_the_container(make_settings: MakeSettings) -> None:
     rzp = FakeRazorpay()
-    container = await build(make_settings(billing=dict(PRICES), **RAZORPAY_KEYS), razorpay_session=rzp)
+    container = await build(
+        make_settings(billing=dict(PRICES), plans=NO_DAY_ONE, **RAZORPAY_KEYS), razorpay_session=rzp
+    )
     try:
         user = await container.repos.users.sign_in_email(email="ana@example.com", now=container.clock.now())
         answer = await container.billing.checkout(user, "pack3", "INR")
@@ -160,7 +166,7 @@ async def test_posting_match_can_call_the_entitlement_api_on_the_container(
 ) -> None:
     """What wave M2 relies on: ``container.entitlements.consume(user_id, ref)`` and the matching grant."""
     fakes = FakeRepositories()
-    container = await build(make_settings(), repos=fakes.bundle)
+    container = await build(make_settings(billing={"free_matches_per_month": 1}), repos=fakes.bundle)
     try:
         used = await container.entitlements.consume("user-1", "match-1")
         assert (used.source, used.credits, used.replayed) == ("free_monthly", 0, False)
@@ -238,7 +244,7 @@ async def test_the_container_warns_about_each_price_under_a_providers_minimum(
     make_settings: MakeSettings, captured_logs: list[dict[str, Any]]
 ) -> None:
     prices = {**PRICES, "pack3_inr": 99, "pass30_usd": 49}
-    container = await build(make_settings(billing=prices, **ALL_SECRETS))
+    container = await build(make_settings(billing=prices, plans=NO_DAY_ONE, **ALL_SECRETS))
     try:
         warned = events(captured_logs, "price_below_provider_minimum")
         assert {(e["product"], e["currency"], e["price_minor"], e["minimum_minor"]) for e in warned} == {
@@ -298,3 +304,19 @@ async def test_the_billing_routes_are_registered_before_the_web_apps_catch_all(
         assert ordered.index(entry) < min(
             catch_all, api_catch_all
         )  # or the 404 / SPA fallback would answer first
+
+
+async def test_the_container_builds_the_plan_service_and_takes_one_handed_in(
+    make_settings: MakeSettings,
+) -> None:
+    container = await build(make_settings())
+    try:
+        assert container.billing.plans is container.plans
+        assert await container.plans.plan_of("nobody") == "just_looking"
+        own = await build(make_settings(), plans=container.plans)
+        try:
+            assert own.plans is container.plans and own.billing.plans is container.plans
+        finally:
+            await own.aclose()
+    finally:
+        await container.aclose()

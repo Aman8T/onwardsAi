@@ -165,7 +165,13 @@ async def test_me_and_the_entitlements_say_who_is_unlimited(build_settings: Make
     async with running(build_settings(guard=guard())) as env:
         listed, other = await sign_in(env, LISTED), await sign_in(env, OTHER)
         mine = entitlements_of(await env.client.get("/api/me", headers=listed))
-        assert mine == {"credits": 0, "freeMatchAvailable": True, "unlimited": True}
+        assert mine == {
+            "credits": 0,
+            "freeMatchAvailable": True,
+            "unlimited": True,
+            "plan": "just_looking",
+            "matchesLeft": 3,
+        }
         assert (await env.client.get("/api/billing/entitlements", headers=listed)).json()["unlimited"] is True
         for headers in (other, {}):
             theirs = entitlements_of(await env.client.get("/api/me", headers=headers))

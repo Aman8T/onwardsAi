@@ -1,0 +1,827 @@
+/*
+ * "Where can I go next", the shareable report's owner sheet (src/report/) and its dev page. Every class is prefixed
+ * "rp-". Tokens and the materials kit only (src/theme/tokens.css, materials.css): depth comes from tone and a 1px
+ * hairline, never a shadow (the post-it's own short shadow is the paper exception, from global.css); motion is a colour
+ * or a short slide on a transform. Wide screens get a centred dialog, narrow ones (<= 760px) a bottom sheet.
+ */
+
+/* ───────────── the graph header's button (the same size as the card's) ───────────── */
+
+.rp-button {
+  gap: var(--s1);
+}
+
+.rp-button-icon {
+  flex: none;
+}
+
+.rp-button-short {
+  display: none;
+}
+
+/* The header is full: the button shortens with the card's, before it pushes the rest around. */
+@media (max-width: 1560px) {
+  .rp-button-long {
+    display: none;
+  }
+
+  .rp-button-short {
+    display: inline;
+  }
+}
+
+@media (max-width: 760px) {
+  .rp-button {
+    min-height: 44px;
+  }
+}
+
+/* ───────────── the dialog (Sheet.tsx puts this class on its panel) ───────────── */
+
+.auth-sheet.rp-sheet {
+  width: min(1040px, 100%);
+  max-height: min(92vh, 960px);
+  max-height: min(92dvh, 960px);
+  padding: var(--s5);
+}
+
+/* ───────────── the body ───────────── */
+
+.rp-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+}
+
+.rp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.rp-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+}
+
+.rp-title {
+  font-size: var(--fs-7);
+  text-wrap: balance;
+}
+
+.rp-close-btn {
+  flex: none;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+
+.rp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+}
+
+.rp-note {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.rp-fine {
+  font-size: var(--fs-1);
+  color: var(--text-faint);
+  text-wrap: pretty;
+}
+
+.rp-muted {
+  color: var(--text-muted);
+}
+
+.rp-hint {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.rp-error {
+  font-size: var(--fs-2);
+  color: var(--danger);
+  text-wrap: pretty;
+}
+
+.rp-skeleton {
+  height: 320px;
+  border-radius: var(--r-m);
+  background: var(--well);
+}
+
+.rp-blocked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s4);
+  border-radius: var(--r-m);
+  background: var(--well);
+  text-wrap: pretty;
+}
+
+.rp-action {
+  justify-content: center;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.rp-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+/* ───────────── two columns: the choices, and what a visitor sees ───────────── */
+
+.rp-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    'choose view'
+    'more view';
+  gap: var(--s5) var(--s6);
+  align-items: start;
+}
+
+.rp-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+  grid-area: choose;
+}
+
+.rp-side-end {
+  grid-area: more;
+  gap: var(--s5);
+}
+
+.rp-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+  padding: var(--s4);
+  grid-area: view;
+}
+
+/* ───────────── sharing status ───────────── */
+
+.rp-status {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) var(--s3);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+}
+
+.rp-status-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rp-status-line {
+  font-weight: 500;
+}
+
+.rp-saving {
+  flex: none;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.rp-saving:empty {
+  display: none;
+}
+
+/* no employer name known: a plain note on the well, not a post-it (it is the measurement talking) */
+.rp-warn {
+  padding: var(--s3) var(--s4);
+  border: var(--hair) solid var(--line-strong);
+  border-radius: var(--r-m);
+  background: var(--well);
+  font-size: var(--fs-2);
+  text-wrap: pretty;
+}
+
+.rp-warn a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ───────────── the choices ───────────── */
+
+.rp-choices {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rp-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  min-height: 44px;
+  padding: var(--s3) var(--s1);
+  border-bottom: var(--hair) solid var(--line);
+  cursor: pointer;
+}
+
+.rp-choice:last-child {
+  border-bottom: 0;
+}
+
+.rp-choice input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--accent-strong);
+}
+
+.rp-choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rp-choice-label {
+  font-weight: 500;
+}
+
+/* ───────────── sections: the quoted lines, the near misses ───────────── */
+
+.rp-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding-top: var(--s4);
+  border-top: var(--hair) solid var(--line);
+}
+
+.rp-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rp-section-title {
+  font-size: var(--fs-3);
+}
+
+.rp-qgroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.rp-qrole {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.rp-qlist {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rp-qrow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s2);
+  padding: var(--s1) 0;
+}
+
+.rp-qtext {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: var(--s2);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.rp-qrow[data-hidden='true'] .rp-qtext > span:first-child {
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--line-strong);
+}
+
+/* a quote's switch: 44px to press, a small track inside */
+.rp-switch {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 44px;
+  padding: 0;
+}
+
+.rp-switch[disabled] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.rp-track {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border: var(--hair) solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  transition:
+    background-color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.rp-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border: var(--hair) solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  transition:
+    transform var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.rp-switch[aria-checked='true'] .rp-track {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.rp-switch[aria-checked='true'] .rp-knob {
+  transform: translateX(16px);
+  border-color: var(--surface);
+}
+
+.rp-misses {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rp-miss {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--s3) var(--s4);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+}
+
+.rp-miss-title {
+  font-weight: 500;
+}
+
+/* a link-looking button: it opens Prepare inside the app, so it is a button */
+.rp-textbtn {
+  min-height: 44px;
+  padding: 0;
+  color: var(--accent);
+  font-size: var(--fs-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .rp-textbtn:hover {
+    color: var(--text);
+  }
+}
+
+/* ───────────── the link and its actions ───────────── */
+
+.rp-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding-top: var(--s4);
+  border-top: var(--hair) solid var(--line);
+}
+
+.rp-linkrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.rp-input {
+  flex: 1 1 240px;
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--s2) var(--s3);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+}
+
+.rp-input:focus {
+  outline: none;
+  border-color: var(--accent-ui);
+}
+
+.rp-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+/* ───────────── the canvas's sticky note ───────────── */
+
+.rp-stick.stick.is-flow {
+  width: min(100%, 280px);
+  margin-top: var(--s2);
+}
+
+.rp-postit.postit {
+  min-height: 0;
+  padding: var(--s3) var(--s4);
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
+}
+
+/* ───────────── the preview: the page, small ───────────── */
+
+.rp-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+  padding: var(--s4);
+  border: var(--hair) solid var(--line);
+  background: var(--surface);
+}
+
+.rp-page-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.rp-page-title {
+  font-size: var(--fs-5);
+}
+
+.rp-page-line {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.rp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s1);
+  margin: var(--s1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rp-chips .chip {
+  font-size: var(--fs-0);
+}
+
+.rp-open {
+  transform: none;
+}
+
+.rp-roles {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rp-role {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s3) 0;
+  border-top: var(--hair) solid var(--line);
+}
+
+.rp-role-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s1) var(--s3);
+}
+
+.rp-role-title {
+  font-size: var(--fs-2);
+  font-weight: 600;
+}
+
+.rp-role-head .rp-muted {
+  font-size: var(--fs-1);
+}
+
+.rp-count {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--fs-1);
+}
+
+.rp-quotes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.rp-quote {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: var(--s2) var(--s3);
+  background: var(--surface-2);
+  font-size: var(--fs-1);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.rp-quote cite {
+  font-style: normal;
+}
+
+.rp-missing {
+  font-size: var(--fs-1);
+}
+
+.rp-offer {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  color: var(--accent);
+  font-size: var(--fs-1);
+}
+
+.rp-close {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s3);
+}
+
+.rp-close-title {
+  font-size: var(--fs-2);
+  font-weight: 600;
+}
+
+.rp-close-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rp-close-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s2) var(--s3);
+  border: var(--hair) solid var(--line);
+  background: var(--surface);
+  font-size: var(--fs-1);
+}
+
+/* ───────────── narrow: one column, a bottom sheet ───────────── */
+
+@media (max-width: 960px) {
+  .rp-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas:
+      'choose'
+      'view'
+      'more';
+  }
+}
+
+@media (max-width: 760px) {
+  .auth-sheet.rp-sheet {
+    width: 100%;
+    max-height: 90vh;
+    max-height: 90dvh;
+    padding: var(--s3) var(--s4) calc(var(--s5) + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* the grabber: decoration, so it is not in the accessibility tree */
+  .auth-sheet.rp-sheet::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto var(--s3);
+    border-radius: 4px;
+    background: var(--line);
+  }
+
+  .rp-title {
+    font-size: var(--fs-6);
+  }
+
+  .rp-view {
+    padding: var(--s3);
+  }
+
+  /* 16px keeps iOS from zooming the page when a field is focused */
+  .rp-input {
+    font-size: 16px;
+  }
+
+  .rp-hint,
+  .rp-fine,
+  .rp-page-line,
+  .rp-quote,
+  .rp-missing {
+    font-size: 13.5px;
+  }
+
+  .rp-offer {
+    min-height: 44px;
+  }
+}
+
+/* The dev page keeps the narrow layout inside a 390px frame whatever the window is. */
+.rp-body[data-narrow='true'] .rp-grid {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+  grid-template-areas:
+    'choose'
+    'view'
+    'more';
+}
+
+.rp-body[data-narrow='true'] .rp-title {
+  font-size: var(--fs-6);
+}
+
+.rp-body[data-narrow='true'] .rp-view {
+  padding: var(--s3);
+}
+
+.rp-body[data-narrow='true'] .rp-input {
+  font-size: 16px;
+}
+
+.rp-body[data-narrow='true'] .m-turn-l {
+  transform: none;
+}
+
+.rp-page[data-narrow='true'] .rp-offer {
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rp-track,
+  .rp-knob {
+    transition: none;
+  }
+}
+
+/* ───────────── the dev page (/dev/report) ───────────── */
+
+.rp-dev {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.rp-dev-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  padding: var(--s4) var(--s5);
+}
+
+.rp-dev-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.rp-dev-navbtn {
+  min-height: 36px;
+  padding: 0 var(--s3);
+  border: var(--hair) solid transparent;
+  border-radius: 999px;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+@media (hover: hover) {
+  .rp-dev-navbtn:hover {
+    color: var(--text);
+  }
+}
+
+.rp-dev-navbtn.is-current {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+@media (pointer: coarse) {
+  .rp-dev-navbtn {
+    min-height: 44px;
+  }
+}
+
+.rp-dev-note {
+  flex: 1 1 100%;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.rp-dev-note:empty {
+  display: none;
+}
+
+.rp-dev-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s5);
+  padding: var(--s3) var(--s5) var(--s7);
+}
+
+.rp-dev-sheet {
+  flex: 1 1 auto;
+  width: min(1040px, 100%);
+  max-width: 1040px;
+  padding: var(--s5);
+}
+
+.rp-dev-frame {
+  width: 390px;
+  max-width: 100%;
+  padding: var(--s3) var(--s4) var(--s5);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--r-l) var(--r-l) 0 0;
+  background: var(--surface);
+}
+
+@media (max-width: 760px) {
+  .rp-dev-header,
+  .rp-dev-main {
+    padding-inline: var(--s4);
+  }
+
+  .rp-dev-frame {
+    width: 100%;
+  }
+}

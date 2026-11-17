@@ -1,18 +1,17 @@
 /**
- * What the pricing page knows: the visitor's balance, the prices that are on sale and the currency to show.
+ * What the plan screen and the bill know: the plan, the Just Looking counts and when they come back, the offer (every
+ * price, the early window, the refund days) and what the account asked to be told about.
  *
  * `useEntitlements()` loads `GET /api/billing/entitlements` (open to anonymous visitors) and loads it again when the
- * signed-in account changes, because the balance belongs to the account. The state lives in this module, like
- * `useMe`, so the page and the chip read the same answer. Prices are minor units; a product that is absent from
- * `prices[currency]` is not on sale and the page says "Coming soon".
+ * signed-in account changes, because the counts belong to the account. The state lives in this module, like `useMe`,
+ * so the screens and the chip read the same answer. Every number comes from here (a server setting or a count); no
+ * screen types one. Amounts are INR paise: Day One is sold in rupees only for now.
  *
- * The currency starts as the server's guess (the saved choice, else INR for an Indian locale or time zone, else USD).
- * While nothing is on sale in USD, everyone is shown INR and the page hides the currency switch (`usdOffered`).
- * `setCurrency` changes what the page shows at once and, for a signed-in account, saves the choice
- * (`PATCH /api/me`), so the next visit starts there.
+ * `offer.dayOne` is present only while Day One can be bought here; without it the screens still print the price the
+ * server would charge (`dayOnePrice`) and say "Coming soon".
  */
-import { useCallback, useEffect, useSyncExternalStore } from 'react';
-import type { Currency, EntitlementsResponse, PriceBook, ProductPrices } from '../../shared/billing';
+import { useEffect, useSyncExternalStore } from 'react';
+import type { EntitlementsResponse, PlanId, PlanOffer, PlanUsage } from '../../shared/billing';
 import { useMe } from '../auth/useMe';
 import * as api from '../lib/api';
 import { isUnlimited } from './format';
@@ -22,11 +21,9 @@ export type EntitlementsStatus = 'idle' | 'loading' | 'ready' | 'error';
 interface State {
   status: EntitlementsStatus;
   data: EntitlementsResponse | null;
-  /** The currency the person picked on this page, if they did; otherwise the server's guess is used. */
-  chosen: Currency | null;
 }
 
-let state: State = { status: 'idle', data: null, chosen: null };
+let state: State = { status: 'idle', data: null };
 const listeners = new Set<() => void>();
 
 function set(next: Partial<State>) {
@@ -64,73 +61,50 @@ export function refreshEntitlements(): Promise<void> {
   return inflight;
 }
 
-const NO_PRICES: ProductPrices = {};
-const BARE: PriceBook = { INR: NO_PRICES, USD: NO_PRICES };
+/** What Day One costs on the screens: the price on sale now, else the one the offer would charge today. */
+export function dayOnePrice(offer: PlanOffer): number {
+  return offer.dayOne ?? (offer.early ? offer.dayOneEarly : offer.dayOneAfter);
+}
 
 export interface EntitlementsView {
   status: EntitlementsStatus;
   /** True once the server has answered. */
   loaded: boolean;
-  credits: number;
-  passUntil: string | undefined;
-  freeMatchAvailable: boolean;
-  /** The account has no limits and is never charged (`GET /api/billing/entitlements` said so); false otherwise. */
+  /** The plan the account is on; `just_looking` for a visitor and before the server has answered. */
+  plan: PlanId;
+  /** The Just Looking limits and what the account has used; undefined until the server has answered. */
+  usage: PlanUsage | undefined;
+  /** ISO timestamp: when the monthly counts start again. */
+  resetsAt: string | undefined;
+  /** Every price and date on the screens; undefined until the server has answered. */
+  offer: PlanOffer | undefined;
+  /** The account is on the server's unlimited list: no limits, nothing charged. */
   unlimited: boolean;
-  /** The currency the page shows: the person's choice, else the server's guess, else USD. */
-  currency: Currency;
-  prices: PriceBook;
-  /** What is on sale in the currency being shown. */
-  priced: ProductPrices;
-  /** True when at least one plan can be bought in INR (Checkout.js is only worth loading then). */
+  /** Checkout.js is only worth loading when Day One can be bought (Razorpay is configured). */
   razorpayOffered: boolean;
-  /** True when at least one plan can be bought in USD; false means INR is the only currency shown. */
-  usdOffered: boolean;
-  setCurrency: (currency: Currency) => void;
   refresh: () => Promise<void>;
 }
 
 export function useEntitlements(): EntitlementsView {
   const snap = useSyncExternalStore(subscribe, () => state);
-  const { user, refresh: refreshMe } = useMe();
+  const { user } = useMe();
   const userId = user?.id;
 
-  // the balance belongs to the account: load on first use, and again whenever someone signs in or out
+  // the counts belong to the account: load on first use, and again whenever someone signs in or out
   useEffect(() => {
     void refreshEntitlements();
   }, [userId]);
 
-  const setCurrency = useCallback(
-    (currency: Currency) => {
-      set({ chosen: currency });
-      if (userId) {
-        api
-          .patchMe({ currency })
-          .then(() => refreshMe())
-          .catch(() => {
-            /* the choice still holds on this page; it is saved the next time */
-          });
-      }
-    },
-    [userId, refreshMe],
-  );
-
-  const { data, status, chosen } = snap;
-  const prices = data?.prices ?? BARE;
-  const usdOffered = prices.USD.pack3 !== undefined || prices.USD.pass30 !== undefined;
-  const currency: Currency = usdOffered ? (chosen ?? data?.currency ?? 'USD') : 'INR';
+  const { data, status } = snap;
   return {
     status,
     loaded: status === 'ready',
-    credits: data?.credits ?? 0,
-    passUntil: data?.passUntil,
-    freeMatchAvailable: data?.freeMatchAvailable ?? false,
+    plan: data?.plan ?? 'just_looking',
+    usage: data?.usage,
+    resetsAt: data?.resetsAt,
+    offer: data?.offer,
     unlimited: isUnlimited(data),
-    currency,
-    prices,
-    priced: prices[currency],
-    razorpayOffered: prices.INR.pack3 !== undefined || prices.INR.pass30 !== undefined,
-    usdOffered,
-    setCurrency,
+    razorpayOffered: data?.offer.dayOne !== undefined,
     refresh: refreshEntitlements,
   };
 }

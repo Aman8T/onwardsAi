@@ -41,10 +41,14 @@ def entitlements(
 @pytest.fixture
 def make_billing_settings(make_settings: Callable[..., Settings]) -> Callable[..., Settings]:
     """``make_billing_settings(secrets=False, pack3_inr=0, auth={...})``: prices and secrets on; a price name changes
-    that price (0 = unset), ``secrets`` is False for none or a dict of the ones to set, anything else is a setting."""
+    that price (0 = unset), ``secrets`` is False for none or a dict of the ones to set, anything else is a setting.
+
+    Day One is priced at 0 here (not on sale), as it was before the plans, so the older tests see the two older
+    products only; a test about Day One passes ``plans={...}``."""
 
     def build(*, secrets: bool | dict[str, Any] = True, **fields: Any) -> Settings:
         prices = {name: fields.pop(name) for name in list(fields) if name in PRICES}
+        fields.setdefault("plans", {"dayone_inr": 0, "dayone_after_inr": 0})
         values: dict[str, Any] = {"billing": {**PRICES, **prices}, **fields}
         if secrets is True:
             values.update(ALL_SECRETS)

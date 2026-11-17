@@ -21,12 +21,13 @@ import json
 import os
 import re
 import tempfile
+from datetime import datetime, timedelta, timezone
 from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import Annotated, Any, Final, Literal, Protocol
 
 import platformdirs
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr, field_validator
+from pydantic import AliasChoices, AwareDatetime, BaseModel, ConfigDict, Field, SecretStr, field_validator
 from pydantic_core import PydanticUseDefault
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
@@ -447,9 +448,9 @@ class BillingSettings(BaseModel):
     """Three posting matches, no expiry, in cents (900 = $9)."""
     pass30_usd: int = Field(default=0, ge=0)
     """Unlimited postings for 30 days from purchase, in cents."""
-    free_matches_per_month: int = Field(default=1, ge=0)
-    """Posting matches every account gets free each calendar month (UTC)."""
-    free_applications: int = Field(default=10, ge=0)
+    free_matches_per_month: int = Field(default=3, ge=0)
+    """Posting matches every account gets free each calendar month (UTC): Just Looking's posting matches (roadmap B2)."""
+    free_applications: int = Field(default=5, ge=0)
     """Auto-apply applications every account gets free, over its lifetime (counted on the credit ledger's
     ``apply_free`` rows). 0 turns the free applications off."""
     apply_credit_cost: int | None = Field(default=None, ge=0)
@@ -463,6 +464,64 @@ class BillingSettings(BaseModel):
         if isinstance(v, str) and not v.strip():
             raise PydanticUseDefault()
         return v
+
+
+_IST = timezone(timedelta(hours=5, minutes=30))
+
+
+class PlansSettings(BaseModel):
+    """The plans (roadmap B2): `TAYYARI_PLANS__*`. Just Looking (free, with monthly limits), Lowkey and Locked In
+    (monthly, shown with their prices and closed), and Day One (one payment, everything with no plan limits).
+
+    Amounts are integers in the currency's minor unit (paise, cents); 0 means unset. Day One costs ``dayone_inr`` until
+    ``dayone_ends_at`` and ``dayone_after_inr`` from then on; `dayone_price` is the one place that picks. The posting
+    match and auto-apply limits stay in `BillingSettings` (``free_matches_per_month``, ``free_applications``), which the
+    credit ledger reads.
+    """
+
+    lowkey_inr: int = Field(default=39_900, ge=0)
+    """Lowkey's monthly price in paise: printed on the pricing page, never sold yet."""
+    locked_in_inr: int = Field(default=129_900, ge=0)
+    """Locked In's monthly price in paise: printed, never sold yet."""
+    dayone_inr: int = Field(default=99_900, ge=0)
+    """Day One's early price in paise, until ``dayone_ends_at``."""
+    dayone_after_inr: int = Field(default=999_900, ge=0)
+    """Day One's price in paise from ``dayone_ends_at`` on."""
+    dayone_usd: int = Field(default=0, ge=0)
+    """Day One's early price in cents. 0: Day One is not sold in dollars."""
+    dayone_after_usd: int = Field(default=0, ge=0)
+    """Day One's price in cents from ``dayone_ends_at`` on. 0: not sold in dollars."""
+    dayone_ends_at: AwareDatetime = datetime(2026, 12, 15, 23, 59, tzinfo=_IST)
+    """The end of Day One's early price, with its time zone (a value without one is refused)."""
+    refund_days: int = Field(default=7, ge=0)
+    """Days after paying within which Day One is refunded in full, for any reason (printed; honoured by hand)."""
+    free_analyses: int = Field(default=2, ge=0)
+    """Just Looking: new analyses (a re-run of the graph) each calendar month (UTC)."""
+    free_searches: int = Field(default=5, ge=0)
+    """Just Looking: searches with AI each calendar month (UTC)."""
+    free_practice: int = Field(default=3, ge=0)
+    """Just Looking: practice interview sessions each calendar month (UTC)."""
+    free_coach: int = Field(default=30, ge=0)
+    """Just Looking: coach and Ask questions each calendar month (UTC)."""
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def _blank_keeps_the_default(cls, v: object) -> object:
+        """A blank value counts as unset, like every other variable."""
+        if isinstance(v, str) and not v.strip():
+            raise PydanticUseDefault()
+        return v
+
+    def dayone_early(self, now: datetime) -> bool:
+        """True while ``now`` is before the end of the early price."""
+        return now < self.dayone_ends_at
+
+    def dayone_price(self, now: datetime, currency: str) -> int:
+        """What Day One costs at ``now`` in ``currency`` (``INR`` or ``USD``), in minor units; 0 when unset."""
+        early = self.dayone_early(now)
+        if currency.upper() == "INR":
+            return self.dayone_inr if early else self.dayone_after_inr
+        return self.dayone_usd if early else self.dayone_after_usd
 
 
 class MatchSettings(BaseModel):
@@ -731,6 +790,14 @@ _SECRET_FIELDS = (
     "stripe_webhook_secret",
     "browser_use_api_key",
 )
+
+
+class ReportSettings(BaseModel):
+    """ "Where can I go next", the shareable report (N1): ``TAYYARI_REPORT__*``. No secrets."""
+
+    offer_url: str = ""
+    """The paid step's link on a report ("Eight openings for this role"): a Razorpay Payment Page or a page of the owner's.
+    The role's title is added as ``?role=``. Empty (the default): the paid step is not shown and the report is free only."""
 
 
 class CardSettings(BaseModel):
@@ -1078,6 +1145,7 @@ class Settings(BaseSettings):
     retention: RetentionSettings = Field(default_factory=RetentionSettings)
     auth: AuthSettings = Field(default_factory=AuthSettings)
     billing: BillingSettings = Field(default_factory=BillingSettings)
+    plans: PlansSettings = Field(default_factory=PlansSettings)
     match: MatchSettings = Field(default_factory=MatchSettings)
     discover: DiscoverSettings = Field(default_factory=DiscoverSettings)
     jobsearch: JobSearchSettings = Field(default_factory=JobSearchSettings)
@@ -1086,6 +1154,7 @@ class Settings(BaseSettings):
     handoff: HandoffSettings = Field(default_factory=HandoffSettings)
     weekly: WeeklySettings = Field(default_factory=WeeklySettings)
     card: CardSettings = Field(default_factory=CardSettings)
+    report: ReportSettings = Field(default_factory=ReportSettings)
     apply: ApplySettings = Field(default_factory=ApplySettings)
 
     auto_apply_enabled: bool = Field(
@@ -1221,6 +1290,7 @@ __all__ = [
     "MatchSettings",
     "ModelNames",
     "OwnProviders",
+    "PlansSettings",
     "RetentionSettings",
     "Settings",
     "SynthCache",

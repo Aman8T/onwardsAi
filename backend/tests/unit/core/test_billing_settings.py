@@ -20,10 +20,15 @@ def build(**kwargs: object) -> Settings:
     return Settings(_env_file=None, **kwargs)  # type: ignore[arg-type]
 
 
-def test_nothing_is_priced_and_one_posting_a_month_is_free_by_default() -> None:
+def test_nothing_is_priced_and_three_postings_a_month_are_free_by_default() -> None:
     s = build()
     assert s.billing == BillingSettings(
-        pack3_inr=0, pass30_inr=0, pack3_usd=0, pass30_usd=0, free_matches_per_month=1
+        pack3_inr=0,
+        pass30_inr=0,
+        pack3_usd=0,
+        pass30_usd=0,
+        free_matches_per_month=3,
+        free_applications=5,
     )
     assert [getattr(s, name.lower()) for name in SECRET_NAMES] == [None] * 5
     assert (s.razorpay_enabled, s.razorpay_webhooks_enabled, s.stripe_enabled) == (False, False, False)

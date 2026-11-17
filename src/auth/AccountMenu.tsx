@@ -9,7 +9,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { MeEntitlements, MeProfile, MeUser } from '../../shared/auth';
-import { entitlementText } from '../billing/format';
+import { entitlementText, fullDate } from '../billing/format';
+import { useOrders } from '../billing/useOrders';
 import { NARROW_QUERY, initials, timeAgo, useMediaQuery } from '../lib/ui';
 import { actions, useApp } from '../store';
 import { offersSignIn } from './links';
@@ -66,6 +67,11 @@ function Account({ user, profiles, entitlements, signOut, viaLeafout, className 
   const nameId = useId();
 
   const name = user.name?.trim() || user.email?.split('@')[0] || 'Your account';
+
+  // "Your plan": Day One says when it was paid (read from the orders; asked only for a Day One account)
+  const onDayOne = entitlements.plan === 'day_one';
+  const orders = useOrders(onDayOne, user.id);
+  const planSub = onDayOne ? (orders.receipt ? `Day One · paid ${fullDate(orders.receipt.paidAt)} · receipt` : 'Day One') : entitlementText(entitlements);
 
   // A pointer anywhere outside the control closes the dropdown (the sheet has its own scrim).
   useEffect(() => {
@@ -169,7 +175,7 @@ function Account({ user, profiles, entitlements, signOut, viaLeafout, className 
           </div>
         )}
 
-        <div role={asMenu ? 'group' : undefined} aria-label="Plans" className="bl-menu-pricing">
+        <div role={asMenu ? 'group' : undefined} aria-label="Your plan" className="bl-menu-pricing">
           <button
             type="button"
             role={role}
@@ -177,11 +183,11 @@ function Account({ user, profiles, entitlements, signOut, viaLeafout, className 
             className="auth-item"
             onClick={() => {
               close(false);
-              actions.openPricing();
+              actions.openPricing(onDayOne ? 'bill' : 'plans');
             }}
           >
-            <span className="auth-item-label">Pricing</span>
-            <span className="auth-item-sub">{entitlementText(entitlements)}</span>
+            <span className="auth-item-label">Your plan</span>
+            <span className="auth-item-sub numeral">{planSub}</span>
           </button>
         </div>
 

@@ -155,8 +155,8 @@ export function standing(a: ApplicationSummary): { chip: string; line?: string }
 }
 
 function refundLine(a: ApplicationSummary): string | undefined {
-  if (a.creditState === 'released') return 'Refunded';
-  if (a.creditState === 'held') return 'The hold is being released';
+  if (a.creditState === 'released') return 'Not counted';
+  if (a.creditState === 'held') return 'Being given back';
   return undefined;
 }
 

@@ -121,7 +121,7 @@ function validateContent(): void {
   // the price placeholders belong to the Pricing shell alone: the server replaces them only there
   if (renderToStaticMarkup(createElement(HomeSeed)).includes('{{')) fail('the Home seed holds a {{placeholder}}');
   const pricing = renderToStaticMarkup(createElement(PricingSeed));
-  for (const key of ['pack3', 'pass30']) if (!pricing.includes(`{{price:${key}}}`)) fail(`the Pricing seed has no {{price:${key}}} placeholder`);
+  for (const key of ['price:dayone', 'price:dayoneafter', 'price:lowkey', 'price:lockedin', 'date:dayone']) if (!pricing.includes(`{{${key}}}`)) fail(`the Pricing seed has no {{${key}}} placeholder`);
   for (const page of CONTENT_PAGES) {
     const text = renderToStaticMarkup(createElement(page.Body)) + JSON.stringify(page.faq);
     if (text.includes('{{')) fail(`${page.path}: a {{placeholder}} in a content page`);
@@ -390,7 +390,7 @@ function robots(): string {
 function llmsTxt(): string {
   const blurbs: Record<string, string> = {
     '/': HOME_HEAD.description,
-    '/pricing': 'What is free, what the pack of three postings and the 30-day pass include, and how payment, renewal and refunds work.',
+    '/pricing': 'The four plans, what Just Looking counts each month, what Day One includes, and how payment, renewal and refunds work.',
   };
   for (const page of CONTENT_PAGES) blurbs[page.path] = page.blurb;
   const pages = SITE_PAGES.map((p) => `- [${p.label}](${absoluteUrl(SITE_URL, p.path)}): ${blurbs[p.path] ?? ''}`.trimEnd());
@@ -407,7 +407,7 @@ function llmsTxt(): string {
     '',
     `> ${SITE_LINE} It checks job postings against that evidence and builds a resume and cover note only from facts you can cite. It gives no ATS score and never scrapes LinkedIn or Naukri.`,
     '',
-    'Leafout is for students in India and working professionals of every profession, in India and elsewhere. You need a free Leafout account to use the app (the information pages are open to read without one). The skill graph, next roles and one posting match each month are free; paid plans are one-time payments (a pack of three postings, a 30-day pass), and nothing renews. This is the app; the company site is ' +
+    'Leafout is for students in India and working professionals of every profession, in India and elsewhere. You need a free Leafout account to use the app (the information pages are open to read without one). The skill graph and next roles are never counted, and a small monthly allowance of posting matches, searches, practice and questions is free (Just Looking); Day One is one payment with no limits, and nothing renews. This is the app; the company site is ' +
       `${COMPANY_URL}.`,
     '',
     '## Pages',

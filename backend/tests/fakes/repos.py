@@ -61,6 +61,7 @@ from tayyari.storage.ports import (
     ConsumeOutcome,
     ConsumeSource,
     EmailTaken,
+    FeatureUseOutcome,
     HoldState,
     MatchListing,
     OpenProfile,
@@ -95,6 +96,7 @@ from tests.fakes.handoff import FakeHandoffRepo
 from tests.fakes.interview import FakeInterviewRepo
 from tests.fakes.jobsearch import FakeJobSearchRepo
 from tests.fakes.prepare import FakePrepareRepo
+from tests.fakes.report import FakeReportRepo
 from tests.fakes.resume_files import FakeResumeFileRepo
 from tests.fakes.resumes import FakeResumeRepo
 from tests.fakes.weekly import FakeWeeklyRepo
@@ -1191,6 +1193,14 @@ class _Balance:
 
 
 @dataclass(frozen=True)
+class _UsageRow:
+    user_id: str
+    feature: str
+    ref: str
+    created_at: datetime
+
+
+@dataclass(frozen=True)
 class _LedgerRow:
     id: str
     user_id: str
@@ -1205,6 +1215,8 @@ class FakeBillingRepo:
         self.orders: dict[str, StoredOrder] = {}
         self.balances: dict[str, _Balance] = {}
         self.ledger: list[_LedgerRow] = []
+        self.usage: list[_UsageRow] = []
+        self.interest: dict[str, dict[str, datetime]] = {}
 
     # inspection helpers (not part of the port)
     def ledger_of(self, user_id: str) -> list[_LedgerRow]:
@@ -1291,7 +1303,8 @@ class FakeBillingRepo:
         await _yield()
         balance = self.balances.get(user_id, _Balance())
         used = self._live_uses(user_id, reasons=("free_monthly",), since=month_start)
-        return StoredEntitlements(user_id, balance.credits, balance.pass_until, len(used))
+        apply_free = self._live_uses(user_id, reasons=("apply_free",))
+        return StoredEntitlements(user_id, balance.credits, balance.pass_until, len(used), len(apply_free))
 
     def _grant(self, user_id: str, *, credits: int, pass_days: int, ref: str, now: datetime) -> bool:
         balance = self.balances.setdefault(user_id, _Balance())
@@ -1350,7 +1363,14 @@ class FakeBillingRepo:
         )
 
     async def hold(
-        self, user_id: str, ref: str, *, now: datetime, free_allowance: int, cost: int | None
+        self,
+        user_id: str,
+        ref: str,
+        *,
+        now: datetime,
+        free_allowance: int,
+        cost: int | None,
+        zero_hold: bool = True,
     ) -> ConsumeOutcome | None:
         await _yield()
         balance = self.balances.setdefault(user_id, _Balance())
@@ -1362,6 +1382,8 @@ class FakeBillingRepo:
             return ConsumeOutcome("free_apply", balance.credits, balance.pass_until)
         price = 0 if cost is None else max(cost, 0)
         if price == 0:
+            if not zero_hold:
+                return None
             self._add(user_id, 0, "apply_hold", ref, now)
             return ConsumeOutcome("hold", balance.credits, balance.pass_until)
         if balance.credits < price:
@@ -1387,6 +1409,59 @@ class FakeBillingRepo:
         if not live:
             return "released"
         return "charged" if self._captured(user_id, live[0].id) else "held"
+
+    # plans: counted uses, interest, receipts
+    def _feature_uses(self, user_id: str, feature: str, since: datetime) -> list[_UsageRow]:
+        return [
+            row
+            for row in self.usage
+            if row.user_id == user_id and row.feature == feature and row.created_at >= _utc(since)
+        ]
+
+    async def use_feature(
+        self, user_id: str, feature: str, ref: str, *, now: datetime, since: datetime, limit: int | None
+    ) -> FeatureUseOutcome | None:
+        await _yield()
+        used = len(self._feature_uses(user_id, feature, since))
+        if any(r.user_id == user_id and r.feature == feature and r.ref == ref for r in self.usage):
+            return FeatureUseOutcome(used=used, replayed=True)
+        if limit is not None and used >= limit:
+            return None
+        self.usage.append(_UsageRow(user_id, feature, ref, _utc(now)))
+        return FeatureUseOutcome(used=used + 1)
+
+    async def release_feature(self, user_id: str, feature: str, ref: str, *, now: datetime) -> bool:
+        await _yield()
+        before = len(self.usage)
+        self.usage = [
+            r for r in self.usage if not (r.user_id == user_id and r.feature == feature and r.ref == ref)
+        ]
+        return len(self.usage) < before
+
+    async def feature_counts(self, user_id: str, *, since: datetime) -> dict[str, int]:
+        await _yield()
+        counts: dict[str, int] = {}
+        for row in self.usage:
+            if row.user_id == user_id and row.created_at >= _utc(since):
+                counts[row.feature] = counts.get(row.feature, 0) + 1
+        return counts
+
+    async def set_interest(self, user_id: str, plan: str, *, on: bool, now: datetime) -> None:
+        await _yield()
+        wishes = self.interest.setdefault(user_id, {})
+        if on:
+            wishes.setdefault(plan, _utc(now))
+        else:
+            wishes.pop(plan, None)
+
+    async def interests(self, user_id: str) -> list[str]:
+        await _yield()
+        return sorted(self.interest.get(user_id, {}))
+
+    async def paid_orders(self, user_id: str) -> list[StoredOrder]:
+        await _yield()
+        paid = [o for o in self.orders.values() if o.user_id == user_id and o.status == "paid"]
+        return sorted(paid, key=lambda o: o.paid_at or o.created_at, reverse=True)
 
 
 _MATCH_REASONS = ("match", "free_monthly")
@@ -1429,6 +1504,7 @@ class FakeRepositories:
         self.handoff = FakeHandoffRepo()
         self.weekly = FakeWeeklyRepo()
         self.card = FakeCardRepo()
+        self.report = FakeReportRepo()
         self.apply = FakeApplyRepo()
         self.resumes = FakeResumeRepo()
         self.resume_files = FakeResumeFileRepo()
@@ -1456,6 +1532,7 @@ class FakeRepositories:
             handoff=self.handoff,
             weekly=self.weekly,
             card=self.card,
+            report=self.report,
             apply=self.apply,
             resumes=self.resumes,
             resume_files=self.resume_files,

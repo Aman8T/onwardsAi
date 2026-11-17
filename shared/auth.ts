@@ -42,6 +42,10 @@ export interface MeEntitlements {
   freeMatchAvailable: boolean;
   /** True for an account on the server's unlimited list (`TAYYARI_GUARD__UNLIMITED_EMAILS`): no limits, nothing charged. */
   unlimited?: boolean;
+  /** `day_one` once Day One is bought, else `just_looking` (roadmap B2); absent from an older server. */
+  plan?: 'just_looking' | 'day_one';
+  /** Posting matches left this month on Just Looking; absent on Day One and from an older server. */
+  matchesLeft?: number;
 }
 
 /** Which ways of signing in this server offers; the sign-in sheet hides the others. */

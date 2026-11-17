@@ -28,7 +28,8 @@ hexadecimal characters. Every answer is ``Cache-Control: no-store``: it holds wh
 
 Starting an interview, in this order, all answered as JSON: ``shed`` (in-memory, before the body is read) -> switched off
 (503) -> body (415 / 413 / 408 / 400) -> profile (404) -> the client's counters, and the account's when signed in (429
-with ``Retry-After``) -> the spend reservation (503) -> the service (400 / 404 for a plan that cannot be made). Answering,
+with ``Retry-After``) -> the month's count of practice interviews, for a signed-in account (402
+``limit_reached``) -> the spend reservation (503) -> the service (400 / 404 for a plan that cannot be made). Answering,
 ending and the assistant shed in the ``chat`` bucket and reserve a small spend (one small Haiku call each); handing in
 work, a repeat and adding a fact call no model. "Ask this one again" has a daily window of its own. Nothing is charged to
 an account: practice is free while it is tested, and the windows are the only meter.
@@ -50,6 +51,7 @@ changes what a route answers: no Sarvam, a used-up budget or any failure means n
 from __future__ import annotations
 
 import re
+import secrets
 from typing import Final, Literal
 
 from fastapi import APIRouter, Request
@@ -60,6 +62,7 @@ from starlette.responses import Response
 
 from tayyari.api.deps import get_current_user, get_request_context, require_profile_access, unlimited
 from tayyari.api.lifespan import get_container
+from tayyari.api.plan_use import PlanUse
 from tayyari.api.routes._body import read_model
 from tayyari.api.routes._voice import prefetch_voice, voice_after
 from tayyari.api.security import subnet_hash
@@ -204,9 +207,19 @@ async def start_interview(request: Request) -> JSONResponse:
     body = await read_model(request, container, StartRequest, max_bytes=PLAN_BODY_MAX_BYTES)
     profile = await _profile(request, container, body.profileId)
     await _count(request, container, rc, "interview")
-    async with container.spend_guard.reserve(container.settings.guard.est_interview_usd):
-        session = await service.start(profile, body, _ctx(rc, profile.id, "interview.phrase"))
     free = await unlimited(request, container)
+    user = None if free else await get_current_user(request)
+    # One of the month's practice interviews (Just Looking), taken before the spend is reserved; given back if the
+    # service cannot start it. Not counted: "ask this one again", the plan, an answer.
+    use = PlanUse(container, None if user is None else user.id, "practice", secrets.token_hex(16))
+    await use.take()
+    try:
+        async with container.spend_guard.reserve(container.settings.guard.est_interview_usd):
+            session = await service.start(profile, body, _ctx(rc, profile.id, "interview.phrase"))
+    except BaseException:
+        await use.give_back()
+        raise
+    use.keep()
     return _json(session.to_dict(), voice_after(container, profile, session.id, unlimited=free))
 
 

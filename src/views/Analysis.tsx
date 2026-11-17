@@ -9,6 +9,7 @@ import type { ReaderState, ReaderStatus, SourceKind } from '../../shared/types';
 import { actions, useApp, type AnalysisState, type LogLine, type Signal } from '../store';
 import { health } from '../lib/api';
 import { EASE, useTween } from '../lib/ui';
+import { LimitNote } from '../billing/LimitNote';
 import { Brand } from '../components/Brand';
 import { Ring } from '../components/Ring';
 import { PageLine, Pips } from '../components/materials';
@@ -423,6 +424,21 @@ function SynthCard({
 
   const pips: Pip[] = [0, 1, 2].map((i) => (stepState(i) === 'done' ? 'on' : stepState(i) === 'active' ? 'half' : 'no'));
   const stepWords = state === 'done' ? 'All 3 steps done' : state === 'build' ? `Step ${step} of 3: ${STEP_LEGEND[step - 1].toLowerCase()}` : 'Not started';
+
+  if (state === 'error' && a.ranOut) {
+    // the month's count of analyses ran out: the plan panel, and "Wait" goes back where the person came from
+    return (
+      <div className="m-tile m-plain m-c6 an-synth an-err-tile" data-state="error">
+        <LimitNote
+          feature="analyses"
+          limit={a.ranOut.limit}
+          resetsAt={a.ranOut.resetsAt}
+          safe="Nothing was read and nothing was charged. Your current graph, if you have one, is unchanged."
+          onWait={() => actions.cancelAnalysis()}
+        />
+      </div>
+    );
+  }
 
   if (state === 'error') {
     return (

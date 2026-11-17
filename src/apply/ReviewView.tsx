@@ -37,7 +37,7 @@ export interface ReviewMatch {
 }
 
 /**
- * The person said an unclear send did not go through ("It didn't: refund me"): the review it was sent from is never
+ * The person said an unclear send did not go through ("It didn't go through"): the review it was sent from is never
  * approved again (a fresh fill and approval, never a resend).
  */
 export function afterUnclearSend(detail: { events?: ApplicationDetail['events'] }): boolean {
@@ -489,7 +489,7 @@ export function ReviewView({ detail, navigate, queue = [], match, shot, onApprov
             </a>
             {confirmCancel ? (
               <div className="ap-stack-s">
-                <p className="ap-small">Skip this application? Nothing is sent, and the hold on your credit is released.</p>
+                <p className="ap-small">Skip this application? Nothing is sent, and it is not counted against your applications.</p>
                 <div className="ap-actions">
                   <button type="button" className="btn" aria-disabled={busy ? 'true' : undefined} onClick={() => void run('cancel', onCancel, 'Could not skip it. Try again.')}>
                     {busy === 'cancel' ? 'Skipping' : "Yes, don't apply"}

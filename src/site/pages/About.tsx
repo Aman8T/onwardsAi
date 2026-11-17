@@ -29,7 +29,7 @@ export const about: ContentPage = {
     },
     {
       q: 'Is Leafout finished?',
-      a: 'No. It is an early product. Some parts, such as interview practice, are free while in testing. A portfolio on your own domain is planned and not built yet.',
+      a: 'No. It is an early product. Some parts, such as interview practice, are still being tested. A portfolio on your own domain is planned and not built yet.',
     },
   ],
   Body: () => (
@@ -105,8 +105,8 @@ export const about: ContentPage = {
               <strong>No personality screening.</strong> Culture fit and coachability cannot be read from documents.
             </li>
             <li>
-              <strong>No annual lock-in and no dark patterns.</strong> You pay per posting or by the month. Seeing a gap is free, and so is answering a
-              question about yourself.
+              <strong>No annual lock-in and no dark patterns.</strong> Day One is one payment, nothing renews, and there is no annual plan. Seeing a gap is
+              free, and so is answering a question about yourself.
             </li>
           </ul>
         </div>

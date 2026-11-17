@@ -1,9 +1,17 @@
 """`BillingService`: the one object the billing routes talk to.
 
-    entitlements_view   what the pricing page needs: the visitor's balance, the currency to show first, the prices
-    checkout            create the order at the provider for the visitor's currency and store ours
-    verify_razorpay     the browser hand-off after Checkout.js: signature checked, order settled, balance returned
+    entitlements_view   what the pricing page needs: the visitor's balance, the currency to show first, the prices,
+                        the plan, Just Looking's counts and the plans' offer (roadmap B2)
+    checkout            create the order at the provider for the visitor's currency and store ours (Day One at
+                        `PlansSettings.dayone_price` for this moment; 409 ``already_yours`` on a Day One account)
+    verify_razorpay     the browser hand-off after Checkout.js: signature checked, order settled, balance, plan and
+                        receipt returned
+    orders              this account's paid orders as receipts
+    notify              "Tell me when it opens" for a closed plan (stored; no email is sent by this build)
     webhook             a provider's webhook: signature checked first, then settled (or marked failed)
+
+A receipt's number is ``LF-<yymmdd of the day paid, UTC>-<first six characters of the order id, upper case>``
+(`receipt_number`): computed from the order, nothing new is stored.
 
 Both providers end in `_settle`, which is idempotent on the provider's order id: the webhook, its retries and the
 browser hand-off can arrive in any order and any number of times, and the order is paid (and granted) exactly once. For
@@ -18,15 +26,21 @@ from __future__ import annotations
 
 import secrets
 from collections.abc import Mapping
+from datetime import UTC
 from typing import Protocol
 
 from tayyari.contract.billing import (
     CheckoutResponse,
+    ClosedPlan,
     Currency,
     EntitlementsResponse,
+    NotifyResponse,
+    OrdersResponse,
+    PlanOffer,
     PriceBook,
     Product,
     Provider,
+    Receipt,
     VerifyResponse,
 )
 from tayyari.core.clock import Clock
@@ -37,13 +51,16 @@ from tayyari.storage.ports import BillingRepo, SettleStatus, StoredOrder, Stored
 
 from .entitlements import ZERO, EntitlementService, EntitlementSummary
 from .gateway import InvalidSignature, PaymentEvent, PaymentProviderError
-from .products import PRODUCTS, default_currency, on_sale, price_book, product_def
+from .plans import PlanService
+from .products import PRODUCTS, default_currency, on_sale, price_book, product_def, saved_currency
 from .razorpay import RazorpayOrder
 from .stripe_gw import StripeSession
 
 log = get_logger(__name__)
 
 NOT_OFFERED = "That plan is not on sale yet."
+ALREADY_YOURS = "Day One is already yours."
+CLOSED_PLANS: tuple[ClosedPlan, ...] = ("lowkey", "locked_in")
 UNAVAILABLE = "Payments are unavailable right now. Please try again in a moment."
 SIGNATURE_REFUSED = "That payment could not be verified."
 BRAND = "Leafout"
@@ -88,7 +105,32 @@ def _summary_fields(summary: EntitlementSummary) -> dict[str, object]:
         "credits": summary.credits,
         "passUntil": None if summary.pass_until is None else summary.pass_until.isoformat(),
         "freeMatchAvailable": summary.free_match_available,
+        "plan": summary.plan,
     }
+
+
+def receipt_number(order: StoredOrder) -> str:
+    """``LF-<yymmdd of the day paid, UTC>-<first six characters of the order id, upper case>``."""
+    paid = (order.paid_at or order.created_at).astimezone(UTC)
+    return f"LF-{paid.strftime('%y%m%d')}-{order.id[:6].upper()}"
+
+
+def receipt_of(order: StoredOrder) -> Receipt | None:
+    """The receipt of a paid order; None for an order that is not paid or names a product or currency we do not know."""
+    spec = product_def(order.product)
+    currency = saved_currency(order.currency)
+    if order.status != "paid" or order.paid_at is None or spec is None or currency is None:
+        return None
+    paid = (order.raw or {}).get("paid")
+    payment_id = paid.get("payment_id") if isinstance(paid, dict) else None
+    return Receipt(
+        number=receipt_number(order),
+        product=spec.id,
+        amount=order.amount_minor,
+        currency=currency,
+        paidAt=order.paid_at.isoformat(),
+        paymentId=payment_id if isinstance(payment_id, str) and payment_id else None,
+    )
 
 
 class BillingService:
@@ -101,6 +143,7 @@ class BillingService:
         clock: Clock,
         razorpay: RazorpayPort | None = None,
         stripe: StripePort | None = None,
+        plans: PlanService | None = None,
     ) -> None:
         self._settings = settings
         self._repo = repo
@@ -108,12 +151,30 @@ class BillingService:
         self._clock = clock
         self._razorpay = razorpay
         self._stripe = stripe
+        self.plans = plans or PlanService(repo, settings, clock)
 
     # ───────────────────────── what the page shows ─────────────────────────
 
     def prices(self) -> PriceBook:
-        """The products on sale, by currency."""
-        return price_book(self._settings)
+        """The products on sale now, by currency."""
+        return price_book(self._settings, now=self._clock.now())
+
+    async def offer(self, user: StoredUser | None) -> PlanOffer:
+        """What the pricing page prints about the plans; ``notify`` is empty for a visitor."""
+        now = self._clock.now()
+        plans = self._settings.plans
+        wanted = [] if user is None else await self._repo.interests(user.id)
+        return PlanOffer(
+            lowkey=plans.lowkey_inr,
+            lockedIn=plans.locked_in_inr,
+            dayOne=on_sale(self._settings, "dayone", "INR", now=now),
+            dayOneEarly=plans.dayone_inr,
+            dayOneAfter=plans.dayone_after_inr,
+            dayOneEndsAt=plans.dayone_ends_at.isoformat(),
+            early=plans.dayone_early(now),
+            refundDays=plans.refund_days,
+            notify=[plan for plan in CLOSED_PLANS if plan in wanted],
+        )
 
     def currency_for(
         self, user: StoredUser | None, *, accept_language: str | None, timezone: str | None
@@ -133,16 +194,33 @@ class BillingService:
                 "unlimited": True if unlimited else None,
                 "currency": self.currency_for(user, accept_language=accept_language, timezone=timezone),
                 "prices": self.prices().model_dump(exclude_none=True),
+                "usage": (await self.plans.usage(None if user is None else user.id)).model_dump(),
+                "resetsAt": self.plans.resets_at().isoformat(),
+                "offer": (await self.offer(user)).model_dump(exclude_none=True),
             }
         )
+
+    async def orders(self, user: StoredUser) -> OrdersResponse:
+        """This account's paid orders as receipts, newest first."""
+        found = (receipt_of(order) for order in await self._repo.paid_orders(user.id))
+        return OrdersResponse(orders=[receipt for receipt in found if receipt is not None])
+
+    async def notify(self, user: StoredUser, plan: ClosedPlan, *, on: bool) -> NotifyResponse:
+        """Ask to be told (``on``) or stop asking when ``plan`` opens; answers with the closed plans asked about now."""
+        await self._repo.set_interest(user.id, plan, on=on, now=self._clock.now())
+        log.info("plan_interest_set", plan=plan, on=on)
+        wanted = await self._repo.interests(user.id)
+        return NotifyResponse(notify=[closed for closed in CLOSED_PLANS if closed in wanted])
 
     # ───────────────────────── checkout ─────────────────────────
 
     async def checkout(self, user: StoredUser, product: Product, currency: Currency) -> CheckoutResponse:
         """Create the order at the provider for ``currency`` and store ours. 409 when the plan is not on sale there."""
-        price = on_sale(self._settings, product, currency)
+        price = on_sale(self._settings, product, currency, now=self._clock.now())
         if price is None:
             raise Conflict(NOT_OFFERED, code="not_offered", detail=f"{product} {currency}")
+        if product == "dayone" and await self.plans.plan_of(user.id) == "day_one":
+            raise Conflict(ALREADY_YOURS, code="already_yours")
         spec = PRODUCTS[product]
         order_id = secrets.token_hex(16)
         notes = {"order": order_id, "user": user.id, "product": product}
@@ -226,8 +304,15 @@ class BillingService:
             raise NotFound("Order not found")
         status = await self._settle("razorpay", order_id, payment_id=payment_id, event="checkout.handoff")
         summary = await self.entitlements.summary(user.id)
+        ok = status in ("granted", "already_paid")
+        settled = await self._repo.get_order_by_provider_id(order_id) if ok else None
+        receipt = None if settled is None else receipt_of(settled)
         return VerifyResponse.model_validate(
-            {"ok": status in ("granted", "already_paid"), **_summary_fields(summary)}
+            {
+                "ok": ok,
+                **_summary_fields(summary),
+                "receipt": None if receipt is None else receipt.model_dump(exclude_none=True),
+            }
         )
 
     async def webhook(self, provider: Provider, raw: bytes, signature: str | None) -> str:
@@ -303,4 +388,13 @@ class BillingService:
         return result.status
 
 
-__all__ = ["BillingService", "PaymentEvent", "RazorpayPort", "StripePort"]
+__all__ = [
+    "ALREADY_YOURS",
+    "CLOSED_PLANS",
+    "BillingService",
+    "PaymentEvent",
+    "RazorpayPort",
+    "StripePort",
+    "receipt_number",
+    "receipt_of",
+]

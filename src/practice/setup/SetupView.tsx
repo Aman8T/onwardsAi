@@ -15,6 +15,7 @@ import type { AiJob } from '../../../shared/jobsearch';
 import type { Role } from '../../../shared/types';
 import '../../styles/practice.css';
 import '../../styles/practice-room.css';
+import { LimitNote } from '../../billing/LimitNote';
 import { Pips } from '../../components/materials';
 import type { Pip } from '../../components/materials';
 import type { InterviewFocus, InterviewKind, InterviewLength, InterviewPlan, PlanSlot, SlotSource } from '../../../shared/interview';
@@ -88,6 +89,9 @@ export interface SetupViewProps {
   unlimited?: boolean;
   starting: boolean;
   startError?: string;
+  /** The month's count of practice sessions ran out when starting: shows the plan panel (`LimitNote`). */
+  ranOut?: { limit?: number; resetsAt?: string };
+  onDismissRanOut?: () => void;
   onBack(): void;
   onSkip(id: string): void;
   onFocus(focus: InterviewFocus | undefined): void;
@@ -407,6 +411,15 @@ export function SetupView(p: SetupViewProps) {
               </p>
             )}
           </section>
+          {p.ranOut && (
+            <LimitNote
+              feature="practice"
+              limit={p.ranOut.limit}
+              resetsAt={p.ranOut.resetsAt}
+              safe="Your plan is as you left it. Nothing was started and nothing was charged."
+              onWait={p.onDismissRanOut}
+            />
+          )}
           <div className="rm-side-actions">
             <button type="button" className="m-tile m-ink pc-ink rm-wide" disabled={!canStart} onClick={p.onStart}>
               {p.starting ? 'Starting…' : 'Start the interview'} <span aria-hidden="true">→</span>

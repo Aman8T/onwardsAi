@@ -390,6 +390,48 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
       signing in the hand-off is taken and the analysis starts.
     - **Phone (390×844 and 360 wide).** The "Sign in" button is the full width, 44 px high, and nothing scrolls sideways.
 
+25. **Plans and the bill** (roadmap B2; the plan screen is board L of the payments canvas). Day One can be bought only
+    where Razorpay's key pair is set; without a server, `/dev/pricing?state=<id>` shows every state on fixtures
+    (`plans`, `free`, `free-visitor`, `told`, `late`, `not-on-sale`, `mine`, `bill`, `paying`, `paid`, `cancelled`,
+    `failed`, `limit-searches` and the rest listed on that page).
+    - **The plan screen.** Open `/pricing`: four priced lines in price order (Just Looking, Lowkey, Day One, Locked In)
+      and a stage beside them. Day One is chosen: the ink block with the end of the early price and the days left, the
+      six "no limit" lines, the three-month sum, the coffee note and "Continue to your bill". Lowkey and Locked In
+      cannot be chosen; each shows its price and "opening soon · tell me when".
+    - **Just Looking.** Choose it: the stage turns to graph paper with what is left of the month ("1 of 3 left", pips
+      up to five) and the day the counts come back; signed out it shows the limits alone. The strip at the foot
+      switches back to Day One.
+    - **Tell me when.** Signed in, press it on a closed plan: "we will email you when it opens", with Undo. Signed out it
+      opens the sign-in sheet.
+    - **The bill.** "Continue to your bill" opens `/pricing?bill=day-one`: the slip lists every line Day One changes
+      with the Just Looking limit under it, the total, "Renews: never", the price after the early window and the
+      refund sentence; no GST line. "Pay" sits under who is paying. Signed out, Pay opens "Sign in to buy".
+    - **Paying** (signed in, Razorpay in test mode). Pay: "Finish the payment in the checkout window". Close the
+      window: "Checkout closed. Nothing was charged." Pay with a test method: the slip becomes the receipt with the
+      stamp, a number like `LF-261117-3FA9C1`, the day and the payment id; "Print receipt" prints only the slip; the
+      header stub reads "Day One". Reload: the receipt is still there. `/pricing` now says Day One is yours.
+    - **A count runs out** (a Just Looking account at a limit). Start a sixth search with AI in a month, a fourth
+      practice interview or posting match, a third analysis, or a thirty-first coach question: the screen shows
+      "You've used your 5 searches with AI this month", the count, the day it comes back, and "Day One: no counting".
+      Nothing was started or charged. A Day One account never sees it.
+    - **Phone (390×844 and 360 wide).** One straight column, nothing turned, every control 44 px, nothing scrolls
+      sideways on either screen.
+
+26. **Where can I go next** (roadmap N1, the report beta). The owner side needs a signed-in account that owns a graph.
+    Without a server, `/dev/report?state=<id>` shows every state on fixtures.
+    - **The sheet.** On the graph, press "Share where I can go": "Choose what the link shows." The choices are name on,
+      employers off, lines on, "Open to work" off and near misses off. Every quote has a hide switch. The preview on the
+      right is exactly what a visitor sees: up to three roles with dots ("5 of 6 asks shown"), "Ready now" or a time,
+      the quotes and "Not shown yet".
+    - **Employers.** With a /resume draft, the quotes read "their employer". With no draft yet, the sheet warns that no
+      lines are shared and the preview has no quotes. Turning employer names on brings the lines back as written.
+    - **Sharing.** "Make a link": open it in a private window. `/next/<slug>` shows the same as the preview, with no
+      script; the link preview image (`/og/next/...png`) is 1200 x 630. "Make a new link": the old link is a 404 page.
+      "Stop sharing": the link is a 404 page.
+    - **Paid step.** With `TAYYARI_REPORT__OFFER_URL=/pricing?bill=day-one`, each role links "Get Day One for this role"
+      to the bill. Without it there is no paid step.
+    - **Phone (390x844).** The sheet is a bottom sheet; the public page is one column and nothing scrolls sideways.
+
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`), except the
 role's, which Prepare changed on purpose (no percentage).

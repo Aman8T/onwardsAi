@@ -1,11 +1,13 @@
 """What can be bought, what it costs, and which currency a visitor is shown first.
 
-Two one-time products, no subscription and no auto-renew (a renewal is a new purchase):
+One-time products, no subscription and no auto-renew:
 
-    pack3   three posting matches, no expiry
-    pass30  unlimited postings for 30 days from purchase
+    dayone  the Day One plan (roadmap B2): a pass of `LIFETIME_DAYS`, so everything with no plan limits, for good
+    pack3   three posting matches, no expiry (dormant: never priced, kept so an old order still settles)
+    pass30  unlimited postings for 30 days from purchase (dormant, as pack3)
 
-Prices are settings in minor units (`core.settings.BillingSettings`); 0 means unset. A product is *on sale* in a
+Prices are settings in minor units; 0 means unset. Day One's come from `core.settings.PlansSettings.dayone_price`, which
+picks the early or the after price by the moment asked about; the dormant two from `core.settings.BillingSettings`. A product is *on sale* in a
 currency only when its price is set, is at least the provider's minimum (`MIN_MINOR`) and the payment provider for
 that currency (INR: Razorpay, USD: Stripe) is configured. Everything that offers or sells a product asks `on_sale`, so
 the web app, the checkout route and the entitlements endpoint can never disagree.
@@ -15,10 +17,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from typing import Final, get_args
 
 from tayyari.contract.billing import Currency, PriceBook, Product, ProductPrices, Provider
-from tayyari.core.settings import BillingSettings, Settings
+from tayyari.core.settings import Settings
 
 PASS_DAYS: Final = 30
 """How long `pass30` lasts from the moment it is bought (or from the end of the pass already running)."""
@@ -35,9 +38,15 @@ class ProductDef:
     """Shown on the payment page and the receipt."""
 
 
+LIFETIME_DAYS: Final = 36_500
+"""How long Day One's pass runs: a hundred years, so for good."""
+LIFETIME_MIN_DAYS: Final = 7_300
+"""A pass that runs more than this many days past now is Day One's (no 30-day pass can stack this far)."""
+
 PRODUCTS: Final[Mapping[Product, ProductDef]] = {
     "pack3": ProductDef("pack3", credits=3, pass_days=0, title="Leafout: three postings"),
     "pass30": ProductDef("pass30", credits=0, pass_days=PASS_DAYS, title="Leafout: 30-day pass"),
+    "dayone": ProductDef("dayone", credits=0, pass_days=LIFETIME_DAYS, title="Leafout: Day One"),
 }
 CURRENCIES: Final[tuple[Currency, ...]] = get_args(Currency)
 PROVIDER_FOR: Final[Mapping[Currency, Provider]] = {"INR": "razorpay", "USD": "stripe"}
@@ -52,13 +61,39 @@ def product_def(name: str) -> ProductDef | None:
     return next((spec for key, spec in PRODUCTS.items() if key == name), None)
 
 
+def is_lifetime(pass_until: datetime | None, now: datetime) -> bool:
+    """True when a pass runs more than `LIFETIME_MIN_DAYS` past ``now``: the account is on Day One."""
+    return pass_until is not None and pass_until > now + timedelta(days=LIFETIME_MIN_DAYS)
+
+
 # ───────────────────────── prices ─────────────────────────
 
 
-def price_minor(billing: BillingSettings, product: Product, currency: Currency) -> int:
-    """The configured price in minor units; 0 when it is not set."""
-    value: int = getattr(billing, f"{product}_{currency.lower()}")
+def _now(now: datetime | None) -> datetime:
+    return datetime.now(UTC) if now is None else now
+
+
+def price_minor(
+    settings: Settings, product: Product, currency: Currency, *, now: datetime | None = None
+) -> int:
+    """The configured price in minor units at ``now`` (default: this moment); 0 when it is not set. Day One asks
+    `PlansSettings.dayone_price`, so the early price ends exactly where the settings say."""
+    if product == "dayone":
+        return settings.plans.dayone_price(_now(now), currency)
+    value: int = getattr(settings.billing, f"{product}_{currency.lower()}")
     return value
+
+
+def _configured(settings: Settings, product: Product, currency: Currency) -> tuple[int, ...]:
+    """Every price set for ``product`` in ``currency``: Day One has two (early and after), the others one."""
+    if product == "dayone":
+        plans = settings.plans
+        return (
+            (plans.dayone_inr, plans.dayone_after_inr)
+            if currency == "INR"
+            else (plans.dayone_usd, plans.dayone_after_usd)
+        )
+    return (price_minor(settings, product, currency),)
 
 
 def provider_ready(settings: Settings, currency: Currency) -> bool:
@@ -66,12 +101,15 @@ def provider_ready(settings: Settings, currency: Currency) -> bool:
     return settings.razorpay_enabled if PROVIDER_FOR[currency] == "razorpay" else settings.stripe_enabled
 
 
-def on_sale(settings: Settings, product: Product, currency: Currency) -> int | None:
-    """The price in minor units when ``product`` can be bought in ``currency`` now, else None.
+def on_sale(
+    settings: Settings, product: Product, currency: Currency, *, now: datetime | None = None
+) -> int | None:
+    """The price in minor units when ``product`` can be bought in ``currency`` at ``now`` (default: this moment), else
+    None.
 
     Not on sale: no price set, a price under the provider's minimum (`MIN_MINOR`), or a provider without its secrets.
     """
-    price = price_minor(settings.billing, product, currency)
+    price = price_minor(settings, product, currency, now=now)
     return price if price >= MIN_MINOR[currency] and provider_ready(settings, currency) else None
 
 
@@ -90,18 +128,21 @@ def below_floor(settings: Settings) -> list[PriceBelowFloor]:
     found: list[PriceBelowFloor] = []
     for product in PRODUCTS:
         for currency in CURRENCIES:
-            price = price_minor(settings.billing, product, currency)
-            if 0 < price < MIN_MINOR[currency]:
-                found.append(PriceBelowFloor(product, currency, price, MIN_MINOR[currency]))
+            for price in _configured(settings, product, currency):
+                if 0 < price < MIN_MINOR[currency]:
+                    found.append(PriceBelowFloor(product, currency, price, MIN_MINOR[currency]))
     return found
 
 
-def price_book(settings: Settings) -> PriceBook:
-    """Every product that is on sale, by currency (a product that is not on sale has no key)."""
+def price_book(settings: Settings, *, now: datetime | None = None) -> PriceBook:
+    """Every product that is on sale at ``now``, by currency (a product that is not on sale has no key)."""
+    moment = _now(now)
 
     def prices(currency: Currency) -> ProductPrices:
         return ProductPrices(
-            pack3=on_sale(settings, "pack3", currency), pass30=on_sale(settings, "pass30", currency)
+            pack3=on_sale(settings, "pack3", currency, now=moment),
+            pass30=on_sale(settings, "pass30", currency, now=moment),
+            dayone=on_sale(settings, "dayone", currency, now=moment),
         )
 
     return PriceBook(INR=prices("INR"), USD=prices("USD"))
@@ -186,6 +227,8 @@ def default_currency(*, saved: str | None, accept_language: str | None, timezone
 
 __all__ = [
     "CURRENCIES",
+    "LIFETIME_DAYS",
+    "LIFETIME_MIN_DAYS",
     "MIN_MINOR",
     "PASS_DAYS",
     "PRODUCTS",
@@ -197,6 +240,7 @@ __all__ = [
     "format_price",
     "is_indian_locale",
     "is_indian_timezone",
+    "is_lifetime",
     "on_sale",
     "price_book",
     "price_minor",

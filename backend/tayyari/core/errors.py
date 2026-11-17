@@ -8,6 +8,7 @@ person using the product and is safe to show; `detail` is for logs only and is n
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 
 
 class AppError(Exception):
@@ -39,7 +40,7 @@ class AppError(Exception):
         self.detail = detail
         super().__init__(self.user_message)
 
-    def to_body(self) -> dict[str, str]:
+    def to_body(self) -> Mapping[str, object]:
         """The JSON error body the frontend reads (``{"error": message}``)."""
         return {"error": self.user_message}
 
@@ -78,18 +79,40 @@ class PaymentRequired(AppError):
 
     The JSON body is ``{"error": "payment_required", "reason": ...}`` (the web app reads ``error`` as a code and
     sends the person to the pricing page); ``user_message`` is the sentence a stream's ``error`` event shows.
+
+    A Just Looking count that has run out (``reason="limit_reached"``, roadmap B2) adds ``feature``, ``limit`` and
+    ``resetsAt`` (an ISO timestamp), each only when it is given; ``resetsAt`` is left out for ``applications``, which
+    is counted once. A ``no_credits`` body has no more keys.
     """
 
     status = 402
     code = "payment_required"
     user_message = "You have used this month's free posting. Choose a plan to continue."
 
-    def __init__(self, reason: str = "no_credits", **kwargs: object) -> None:
+    def __init__(
+        self,
+        reason: str = "no_credits",
+        *,
+        feature: str | None = None,
+        limit: int | None = None,
+        resets_at: str | None = None,
+        **kwargs: object,
+    ) -> None:
         super().__init__(**kwargs)  # type: ignore[arg-type]
         self.reason = reason
+        self.feature = feature
+        self.limit = limit
+        self.resets_at = resets_at
 
-    def to_body(self) -> dict[str, str]:
-        return {"error": self.code, "reason": self.reason}
+    def to_body(self) -> dict[str, str | int]:
+        body: dict[str, str | int] = {"error": self.code, "reason": self.reason}
+        if self.feature is not None:
+            body["feature"] = self.feature
+        if self.limit is not None:
+            body["limit"] = self.limit
+        if self.resets_at is not None:
+            body["resetsAt"] = self.resets_at
+        return body
 
 
 class Conflict(AppError):

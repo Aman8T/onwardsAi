@@ -2,34 +2,41 @@ import { OPERATOR_LINE, SUPPORT_EMAIL } from '../links';
 import type { Faq } from '../types';
 
 /**
- * The prices are settings of the server, so they are not written here. These two placeholders stay in the file; the server
- * replaces each with the formatted rupee price of that plan, or with "Coming soon" when no price is set
- * (backend/tayyari/api/static.py). A sentence that holds one must read well either way.
+ * The prices and the date are settings of the server, so they are not written here. These placeholders stay in the file;
+ * the server replaces each on every request (backend/tayyari/api/static.py `fill_prices`): a price with its formatted
+ * rupee amount, or "Coming soon" when none is set or the plan cannot be bought here; the date with the end of Day One's
+ * early price, like "15 Dec 2026". A sentence that holds one must read well either way, so each is the last words of a
+ * short labelled fragment ("Price now: ...") and never sits in the middle of a clause.
  */
-export const PRICE_PACK3 = '{{price:pack3}}';
-export const PRICE_PASS30 = '{{price:pass30}}';
+export const PRICE_DAYONE = '{{price:dayone}}';
+export const PRICE_DAYONE_AFTER = '{{price:dayoneafter}}';
+export const PRICE_LOWKEY = '{{price:lowkey}}';
+export const PRICE_LOCKEDIN = '{{price:lockedin}}';
+export const DATE_DAYONE = '{{date:dayone}}';
+/** The days within which Day One is refunded in full (`TAYYARI_PLANS__REFUND_DAYS`), as a plain number. */
+export const REFUND_DAYS = '{{days:refund}}';
 
 /** The questions of the Pricing shell. Plain text: shown in the no-script body and put in the FAQPage data word for word. */
 export const PRICING_FAQ: readonly Faq[] = [
   {
     q: 'Is Leafout free?',
-    a: 'With a free Leafout account, the skill graph, your next roles and one posting match each calendar month are free, for as long as you like. Practice interviews are free while they are in testing. Paying is for more postings.',
+    a: 'Yes, to start. Just Looking is free for as long as you like. Your skill graph, next roles, portfolio, radar card and resumes are never counted. Each month you also get a small allowance of posting matches, searches with AI, interview practice sessions, coach and Ask questions and new analyses, and a few Apply for me applications, counted once. The monthly allowance comes back on the first of the month.',
   },
   {
     q: 'What does it cost?',
-    a: `A pack of three postings: ${PRICE_PACK3}, with no expiry. A 30-day pass with unlimited postings: ${PRICE_PASS30}. Both are one-time payments, and one posting match each month stays free.`,
+    a: `Day One is one payment with no plan limits. Price now: ${PRICE_DAYONE}. The early price ends on: ${DATE_DAYONE}. Price after that: ${PRICE_DAYONE_AFTER}. Lowkey is a monthly plan that is opening soon. Its price: ${PRICE_LOWKEY}. Locked In is a monthly plan that is opening soon. Its price: ${PRICE_LOCKEDIN}.`,
   },
   {
     q: 'Does it renew by itself?',
-    a: 'No. Nothing auto-renews: the pack and the 30-day pass are one-time payments. There is no subscription to cancel and no annual plan.',
+    a: 'No. Nothing auto-renews. Day One is a single payment, so there is nothing to cancel, and there is no annual plan. Lowkey and Locked In are not on sale yet, and nothing is charged for them.',
   },
   {
     q: 'What do I pay in, and how?',
-    a: 'Prices are in rupees, paid through Razorpay by UPI, card or net banking. A price in dollars, paid by card through Stripe, is not on sale yet. Leafout never sees your card details.',
+    a: 'Prices are in rupees, paid through Razorpay by UPI, card or net banking. Leafout never sees your card details.',
   },
   {
     q: 'Can I get a refund?',
-    a: 'Yes. You get a full refund within 7 days of purchase if no paid posting from it was used. A posting that could not be read gives its credit back automatically. Write to aman@leafout.in, and the refund policy is on leafout.in/refunds.',
+    a: `Yes. Day One is refunded in full within ${REFUND_DAYS} days of paying, for any reason. Write to aman@leafout.in, and the refund policy is on leafout.in/refunds.`,
   },
 ];
 
@@ -37,37 +44,38 @@ export const PRICING_FAQ: readonly Faq[] = [
 export function PricingSeed() {
   return (
     <>
-      <h1>Leafout pricing: free to start, then per posting or for 30 days</h1>
+      <h1>Leafout pricing: free to start, then Day One, once</h1>
       <p>
-        Pay per posting, or by the month. Never by the year. Students pay the same prices as everyone else, and nobody has to buy a year up front to find out
-        whether it helps.
+        Four plans, priced side by side. Start free with Just Looking, or pay once for Day One and stop counting. Nothing renews by itself, there is no annual
+        plan, and students pay the same prices as everyone else.
       </p>
-      <h2>Free</h2>
+      <h2>Just Looking: free</h2>
+      <p>For as long as you like, with a small monthly allowance of each counted feature.</p>
       <ul>
         <li>A Leafout account, which the app needs for everything below.</li>
-        <li>Your skill graph and your next roles.</li>
-        <li>One posting match each calendar month, with the list of gaps.</li>
-        <li>A portfolio page built from your resume, with every line cited.</li>
-        <li>The radar card of your skills, as a picture for GitHub or LinkedIn.</li>
-        <li>Practice interviews, free while they are in testing.</li>
+        <li>Your skill graph, your next roles, a portfolio page built from your resume, resumes for each role and the radar card of your skills, never counted.</li>
+        <li>Each month: posting matches, searches with AI, interview practice sessions, coach and Ask questions and new analyses. The allowance comes back on the first of the month.</li>
+        <li>Apply for me: a few applications, counted once.</li>
       </ul>
-      <h2>A pack of three postings: {PRICE_PACK3}</h2>
+      <h2>Lowkey: opening soon</h2>
+      <p>A monthly plan with more room than Just Looking. Price: {PRICE_LOWKEY}. It is not on sale yet, and you can ask to be told the day it opens.</p>
+      <h2>Day One: one payment</h2>
       <p>
-        Three posting matches, with no expiry. Each one gives you a resume and a cover note built for that posting, as PDF and DOCX checked before download.
-        Re-checking after you close a gap is free.
+        Everything, with no plan limits and no counting: every posting match, search with AI, practice session, coach question, new analysis and application.
+        One payment, never renewed. Price now: {PRICE_DAYONE}. The early price ends on: {DATE_DAYONE}. Price after that: {PRICE_DAYONE_AFTER}.
       </p>
-      <h2>A 30-day pass: {PRICE_PASS30}</h2>
-      <p>Unlimited postings for 30 days from purchase. It does not renew by itself, and there is no annual plan.</p>
+      <h2>Locked In: opening soon</h2>
+      <p>A monthly plan for people searching hard. Price: {PRICE_LOCKEDIN}. It is not on sale yet, and you can ask to be told the day it opens.</p>
       <h2>What never costs</h2>
       <p>Seeing a gap. Answering a question about yourself. Re-checking after you did.</p>
       <h2>Paying, refunds and delivery</h2>
       <p>
-        The pack and the 30-day pass are one-time payments, and nothing auto-renews. Prices are in rupees, paid through Razorpay by UPI, card or net banking; a price in dollars, by card through Stripe, is not on sale yet. Leafout never sees your card details.
+        Day One is a single payment, and nothing auto-renews. Prices are in rupees, paid through Razorpay by UPI, card or net banking. Leafout never sees your
+        card details.
       </p>
       <p>
-        Delivery is digital: what you buy is in your account as soon as the payment settles, and nothing is shipped. You get a full refund within 7 days of
-        purchase if no paid posting from it was used, and a posting that could not be read gives its credit back automatically. {OPERATOR_LINE} Write to{' '}
-        {SUPPORT_EMAIL}.
+        Delivery is digital: what you buy is in your account as soon as the payment settles, and nothing is shipped. Day One is refunded in full within {REFUND_DAYS}
+        days of paying, for any reason. {OPERATOR_LINE} Write to {SUPPORT_EMAIL}.
       </p>
       <section aria-labelledby="faq-title">
         <h2 id="faq-title">Questions</h2>

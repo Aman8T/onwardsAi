@@ -2,11 +2,17 @@
 
     GET  /api/billing/entitlements[?timezone=Asia/Kolkata]
                                     `EntitlementsResponse` for anyone: the balance (zeros when anonymous), the
-                                    currency to show first and the prices that are on sale
+                                    currency to show first, the prices that are on sale, the plan, Just Looking's
+                                    counts and the plans' offer
     POST /api/billing/checkout      {"product", "currency"?, "timezone"?} -> `CheckoutResponse`; needs a sign-in.
-                                    409 ``not_offered`` when the plan has no price or its provider has no secrets
+                                    409 ``not_offered`` when the plan has no price or its provider has no secrets,
+                                    409 ``already_yours`` for Day One on an account that has it
     POST /api/billing/verify        {"razorpay_order_id", "razorpay_payment_id", "razorpay_signature"} ->
-                                    `VerifyResponse`; needs a sign-in; the signature must be Razorpay's
+                                    `VerifyResponse` (with the plan and the receipt); needs a sign-in; the signature
+                                    must be Razorpay's
+    GET  /api/billing/orders        `OrdersResponse`: this account's paid orders as receipts; needs a sign-in
+    PUT  /api/billing/notify        {"plan", "on"} -> `NotifyResponse`: "Tell me when it opens" for a closed plan;
+                                    needs a sign-in (stored only; no email is sent)
     POST /api/billing/webhooks/razorpay    the raw body, ``X-Razorpay-Signature``
     POST /api/billing/webhooks/stripe      the raw body, ``Stripe-Signature``
 
@@ -34,7 +40,7 @@ from tayyari.api.security import subnet_hash
 from tayyari.api.uploads import body_deadline, check_content_length
 from tayyari.billing.razorpay import SIGNATURE_HEADER as RAZORPAY_SIGNATURE
 from tayyari.container import Container
-from tayyari.contract.billing import TIMEZONE_MAX_CHARS, CheckoutRequest, VerifyRequest
+from tayyari.contract.billing import TIMEZONE_MAX_CHARS, CheckoutRequest, NotifyRequest, VerifyRequest
 from tayyari.core.errors import PayloadTooLarge
 from tayyari.core.logging import get_logger
 
@@ -119,6 +125,27 @@ async def verify(request: Request) -> JSONResponse:
         payment_id=body.razorpay_payment_id,
         signature=body.razorpay_signature,
     )
+    return JSONResponse(answer.to_dict(), headers=NO_STORE)
+
+
+@router.get("/api/billing/orders")
+async def orders(request: Request) -> JSONResponse:
+    container = get_container(request)
+    rc = await get_request_context(request)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
+    user = await require_user(request)
+    answer = await container.billing.orders(user)
+    return JSONResponse(answer.to_dict(), headers=NO_STORE)
+
+
+@router.put("/api/billing/notify")
+async def notify(request: Request) -> JSONResponse:
+    container = get_container(request)
+    rc = await get_request_context(request)
+    await _shed(request, container, rc.ip_hash, rc.client_ip)
+    user = await require_user(request)
+    body = await read_model(request, container, NotifyRequest)
+    answer = await container.billing.notify(user, body.plan, on=body.on)
     return JSONResponse(answer.to_dict(), headers=NO_STORE)
 
 

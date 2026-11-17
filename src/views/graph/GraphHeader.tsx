@@ -12,6 +12,7 @@ import type { Profile } from '../../../shared/types';
 import { AccountMenu } from '../../auth/AccountMenu';
 import { Atmosphere } from '../../components/Atmosphere';
 import { ShareButton } from '../../card/ShareButton';
+import { ReportButton } from '../../report/ReportButton';
 import { Brand } from '../../components/Brand';
 import { useTracker } from '../../discover/applications/tracker';
 import { EASE, plural, timeAgo, useNow } from '../../lib/ui';
@@ -68,6 +69,7 @@ export function GraphHeader({ profile, current, extra }: { profile: Profile; cur
         </button>
         <Atmosphere className="gv-atmo" />
         <ShareButton profileId={profile.id} />
+        <ReportButton profileId={profile.id} />
         <button type="button" className="btn btn-quiet gv-ask" aria-label="Ask Leafout" onClick={() => actions.openChat(freeAction().origin, '')}>
           Ask
         </button>

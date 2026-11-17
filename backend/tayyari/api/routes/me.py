@@ -105,6 +105,8 @@ async def me_response(
             passUntil=None if summary.pass_until is None else summary.pass_until.isoformat(),
             freeMatchAvailable=summary.free_match_available,
             unlimited=True if is_unlimited else None,
+            plan=summary.plan,
+            matchesLeft=summary.matches_left,
         ),
         providers=MeProviders(
             google=providers.google,
@@ -164,6 +166,11 @@ async def claim_profile(request: Request) -> JSONResponse:
         await container.card.refresh(user.id)
     except Exception:
         log.warning("card_refresh_after_claim_failed", exc_info=True)
+    try:
+        # ...and so does its "Where can I go next" report.
+        await container.report.refresh(user.id)
+    except Exception:
+        log.warning("report_refresh_after_claim_failed", exc_info=True)
     return _json(await me_response(container, user))
 
 

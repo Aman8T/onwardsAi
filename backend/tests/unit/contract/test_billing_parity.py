@@ -36,6 +36,14 @@ INTERFACE_MODELS: dict[str, type[BaseModel]] = {
     "CheckoutResponse": billing.CheckoutResponse,
     "VerifyRequest": billing.VerifyRequest,
     "VerifyResponse": billing.VerifyResponse,
+    "FeatureUse": billing.FeatureUse,
+    "PlanUsage": billing.PlanUsage,
+    "PlanOffer": billing.PlanOffer,
+    "Receipt": billing.Receipt,
+    "OrdersResponse": billing.OrdersResponse,
+    "NotifyRequest": billing.NotifyRequest,
+    "NotifyResponse": billing.NotifyResponse,
+    "LimitReached": billing.LimitReached,
 }
 
 
@@ -54,6 +62,9 @@ def test_the_unions_match() -> None:
     assert ts.shape("Product") == ("lit", frozenset(get_args(billing.Product)))
     assert ts.shape("Provider") == ("lit", frozenset(get_args(billing.Provider)))
     assert ts.shape("Currency") == ("lit", frozenset(get_args(billing.Currency)))
+    assert ts.shape("PlanId") == ("lit", frozenset(get_args(billing.PlanId)))
+    assert ts.shape("ClosedPlan") == ("lit", frozenset(get_args(billing.ClosedPlan)))
+    assert ts.shape("Feature") == ("lit", frozenset(get_args(billing.Feature)))
 
 
 def test_the_timezone_limit_matches() -> None:
@@ -62,18 +73,37 @@ def test_the_timezone_limit_matches() -> None:
 
 
 def test_an_empty_price_stays_an_empty_object_on_the_wire() -> None:
+    nothing = billing.FeatureUse(limit=0, used=0)
+    usage = billing.PlanUsage(
+        analyses=nothing,
+        matches=nothing,
+        searches=nothing,
+        practice=nothing,
+        coach=nothing,
+        applications=nothing,
+    )
+    offer = billing.PlanOffer(
+        lowkey=1,
+        lockedIn=2,
+        dayOneEarly=3,
+        dayOneAfter=4,
+        dayOneEndsAt="2026-12-15T23:59:00+05:30",
+        early=True,
+        refundDays=7,
+        notify=[],
+    )
     body = billing.EntitlementsResponse(
         credits=0,
         freeMatchAvailable=False,
         currency="USD",
         prices=billing.PriceBook(INR=billing.ProductPrices(), USD=billing.ProductPrices(pack3=900)),
+        plan="just_looking",
+        usage=usage,
+        resetsAt="2026-12-01T00:00:00+00:00",
+        offer=offer,
     ).to_dict()
-    assert body == {
-        "credits": 0,
-        "freeMatchAvailable": False,
-        "currency": "USD",
-        "prices": {"INR": {}, "USD": {"pack3": 900}},
-    }
+    assert body["prices"] == {"INR": {}, "USD": {"pack3": 900}}
+    assert "dayOne" not in body["offer"] and "passUntil" not in body
 
 
 # ───────────────────────── request models ─────────────────────────
@@ -113,3 +143,11 @@ def test_a_verify_request_needs_all_three_razorpay_values() -> None:
     for bad in ({**ok, "razorpay_signature": ""}, {**ok, "razorpay_order_id": "x" * 129}):
         with pytest.raises(ValidationError):
             billing.VerifyRequest.model_validate(bad)
+
+
+def test_a_notify_request_names_a_closed_plan_and_a_switch() -> None:
+    assert billing.NotifyRequest.model_validate({"plan": "locked_in", "on": False}).plan == "locked_in"
+    for bad in ({"plan": "day_one", "on": True}, {"plan": "lowkey"}, {"on": True}):
+        with pytest.raises(ValidationError):
+            billing.NotifyRequest.model_validate(bad)
+    assert billing.CheckoutRequest(product="dayone").product == "dayone"

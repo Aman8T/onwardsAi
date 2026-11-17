@@ -99,7 +99,7 @@ check('failed offers fill again', out.outcomeActions('failed', fx.RUN_FAILED).in
 
 const checkText = textOf(render(h(out.OutcomeView, outcomeProps(fx.RUN_CHECK))));
 check('check this one: It went through', checkText.includes('It went through'));
-check("check this one: It didn't: refund me", checkText.includes('It didn’t: refund me'));
+check("check this one: It didn't go through", checkText.includes('It didn’t go through'));
 check('check this one: time in mono', /Sent at <span class="numeral">/.test(render(h(out.OutcomeView, outcomeProps(fx.RUN_CHECK)))));
 check('check this one: danger chip', render(h(out.OutcomeView, outcomeProps(fx.RUN_CHECK))).includes('ap-tone-bad'));
 
@@ -110,8 +110,8 @@ for (const w of ['Finish on the employer’s page', 'Copy my answers', 'I applie
 check('challenge: never passes a check', chText.includes('never try to pass it'));
 
 const failText = textOf(render(h(out.OutcomeView, outcomeProps(fx.RUN_FAILED))));
-check('failed: refunded chip', failText.includes('Didn’t go · refunded'));
-check('failed: hold released', failText.includes('hold on your credit was released'));
+check('failed: refunded chip', failText.includes('Didn’t go · not counted'));
+check('failed: not counted', failText.includes('not counted against your applications'));
 const guardText = textOf(render(h(out.OutcomeView, outcomeProps(fx.RUN_FAILED_GUARD))));
 check('guard probe: says nothing was filled', guardText.includes('nothing was filled'));
 
@@ -272,7 +272,7 @@ for (const id of ['run-queued', 'run-filling', 'run-questions', 'run-review', 'r
   st = scr.runStateOn(st, 'queued');
   check('sequence: answers going in are watched again', st.watched === true && st.opened === false);
 
-  // "It didn't: refund me" left the old review: it is never approved again
+  // "It didn't go through" left the old review: it is never approved again
   const resolved = { ...fx.RUN_REVIEW, events: [...fx.RUN_REVIEW.events, { at: '2026-11-08T10:00:00Z', kind: 'stage', source: 'user', fromStage: 'check_this_one', toStage: 'waiting_for_you' }] };
   check('not_sent: Approve is blocked', rev.afterUnclearSend(resolved) && rev.approveBlock(resolved) !== null);
   check('not_sent: a plain review is not', !rev.afterUnclearSend(fx.RUN_REVIEW));

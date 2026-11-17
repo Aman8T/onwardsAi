@@ -10,6 +10,10 @@ The ledger is append-only. A use that is given back (`release`) is not deleted o
 ``ref`` is ``refund:<id of the use>`` reverses it, and a use with such a row no longer counts, not for the idempotency
 check and not for the month's free allowance.
 
+The plans' counted uses (``plan_usage``, roadmap B2) and the "tell me when it opens" wishes (``plan_interest``) are
+written under the same lock, so two requests for an account's last search of the month can never both be counted in.
+A use that is given back is deleted: it never cost anything, and the month's count is simply the rows that remain.
+
 An auto-apply credit hold is two-phase on the same ledger. `hold` writes ``apply_free`` (one of the account's free
 applications, delta 0) or ``apply_hold`` (minus the price, or 0 while no price is set) with ``ref``
 ``apply:<application id>``. `capture` charges it with an ``apply_capture`` row (delta 0, ``ref`` ``capture:<id of the
@@ -23,14 +27,22 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Any, Final
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tayyari.core.clock import Clock, SystemClock
 
 from ..db import Database, dialect_insert, rowcount
-from ..ports import ConsumeOutcome, ConsumeSource, HoldState, SettleResult, StoredEntitlements, StoredOrder
-from ..tables import CreditLedgerRow, EntitlementRow, OrderRow
+from ..ports import (
+    ConsumeOutcome,
+    ConsumeSource,
+    FeatureUseOutcome,
+    HoldState,
+    SettleResult,
+    StoredEntitlements,
+    StoredOrder,
+)
+from ..tables import CreditLedgerRow, EntitlementRow, OrderRow, PlanInterestRow, PlanUsageRow
 
 MATCH_REASONS: Final = ("match", "free_monthly")
 """Ledger reasons of a paid posting match (`consume`)."""
@@ -190,9 +202,14 @@ class SqlBillingRepo:
                 )
             ).one_or_none()
             used = await _live_uses(s, user_id, reasons=("free_monthly",), since=month_start)
+            apply_free = await _live_uses(s, user_id, reasons=("apply_free",))
         credits, pass_until = (0, None) if row is None else (row.credits, row.pass_until)
         return StoredEntitlements(
-            user_id=user_id, credits=credits, pass_until=pass_until, free_used=len(used)
+            user_id=user_id,
+            credits=credits,
+            pass_until=pass_until,
+            free_used=len(used),
+            apply_free_used=len(apply_free),
         )
 
     async def grant(self, user_id: str, *, credits: int, pass_days: int, ref: str, now: datetime) -> bool:
@@ -246,7 +263,14 @@ class SqlBillingRepo:
     # ───────────────────────── auto-apply credit hold ─────────────────────────
 
     async def hold(
-        self, user_id: str, ref: str, *, now: datetime, free_allowance: int, cost: int | None
+        self,
+        user_id: str,
+        ref: str,
+        *,
+        now: datetime,
+        free_allowance: int,
+        cost: int | None,
+        zero_hold: bool = True,
     ) -> ConsumeOutcome | None:
         async with self._db.session() as s:
             credits, pass_until = await self._lock(s, user_id, now)
@@ -260,6 +284,8 @@ class SqlBillingRepo:
                 return ConsumeOutcome("free_apply", credits, pass_until)
             price = 0 if cost is None else max(cost, 0)
             if price == 0:
+                if not zero_hold:
+                    return None
                 _ledger(s, user_id, 0, "apply_hold", ref, now)
                 return ConsumeOutcome("hold", credits, pass_until)
             if credits < price:
@@ -300,6 +326,86 @@ class SqlBillingRepo:
             if not live:
                 return "released"
             return "charged" if await _captured(s, user_id, live[0].id) else "held"
+
+    # ───────────────────────── plans: counted uses, interest, receipts ─────────────────────────
+
+    async def use_feature(
+        self, user_id: str, feature: str, ref: str, *, now: datetime, since: datetime, limit: int | None
+    ) -> FeatureUseOutcome | None:
+        async with self._db.session() as s:
+            await self._lock(s, user_id, now)
+            used = await _feature_count(s, user_id, feature, since)
+            earlier = (
+                await s.execute(
+                    select(PlanUsageRow.id).where(
+                        PlanUsageRow.user_id == user_id,
+                        PlanUsageRow.feature == feature,
+                        PlanUsageRow.ref == ref,
+                    )
+                )
+            ).first()
+            if earlier is not None:
+                return FeatureUseOutcome(used=used, replayed=True)
+            if limit is not None and used >= limit:
+                return None
+            s.add(PlanUsageRow(id=_new_id(), user_id=user_id, feature=feature, ref=ref, created_at=now))
+            return FeatureUseOutcome(used=used + 1)
+
+    async def release_feature(self, user_id: str, feature: str, ref: str, *, now: datetime) -> bool:
+        async with self._db.session() as s:
+            await self._lock(s, user_id, now)
+            gone = await s.execute(
+                delete(PlanUsageRow).where(
+                    PlanUsageRow.user_id == user_id,
+                    PlanUsageRow.feature == feature,
+                    PlanUsageRow.ref == ref,
+                )
+            )
+            return rowcount(gone) > 0
+
+    async def feature_counts(self, user_id: str, *, since: datetime) -> dict[str, int]:
+        stmt = (
+            select(PlanUsageRow.feature, func.count())
+            .where(PlanUsageRow.user_id == user_id, PlanUsageRow.created_at >= since)
+            .group_by(PlanUsageRow.feature)
+        )
+        async with self._db.session() as s:
+            rows = (await s.execute(stmt)).all()
+        return {str(feature): int(count) for feature, count in rows}
+
+    async def set_interest(self, user_id: str, plan: str, *, on: bool, now: datetime) -> None:
+        async with self._db.session() as s:
+            await self._lock(s, user_id, now)
+            if on:
+                await s.execute(
+                    dialect_insert(self._db.dialect, PlanInterestRow)
+                    .values(user_id=user_id, plan=plan, created_at=now)
+                    .on_conflict_do_nothing(index_elements=[PlanInterestRow.user_id, PlanInterestRow.plan])
+                )
+            else:
+                await s.execute(
+                    delete(PlanInterestRow).where(
+                        PlanInterestRow.user_id == user_id, PlanInterestRow.plan == plan
+                    )
+                )
+
+    async def interests(self, user_id: str) -> list[str]:
+        stmt = (
+            select(PlanInterestRow.plan)
+            .where(PlanInterestRow.user_id == user_id)
+            .order_by(PlanInterestRow.plan)
+        )
+        async with self._db.session() as s:
+            return [str(plan) for plan in (await s.execute(stmt)).scalars()]
+
+    async def paid_orders(self, user_id: str) -> list[StoredOrder]:
+        stmt = (
+            select(*_ORDER_COLUMNS)
+            .where(OrderRow.user_id == user_id, OrderRow.status == "paid")
+            .order_by(OrderRow.paid_at.desc(), OrderRow.id)
+        )
+        async with self._db.session() as s:
+            return [_order(row) for row in (await s.execute(stmt)).all()]
 
     # ───────────────────────── inside a transaction ─────────────────────────
 
@@ -345,6 +451,14 @@ class SqlBillingRepo:
             await s.execute(update(EntitlementRow).where(EntitlementRow.user_id == user_id).values(**values))
         _ledger(s, user_id, credits, "purchase", ref, now)
         return True
+
+
+async def _feature_count(s: AsyncSession, user_id: str, feature: str, since: datetime) -> int:
+    """The uses of ``feature`` recorded since ``since``."""
+    stmt = select(func.count()).where(
+        PlanUsageRow.user_id == user_id, PlanUsageRow.feature == feature, PlanUsageRow.created_at >= since
+    )
+    return int((await s.execute(stmt)).scalar_one())
 
 
 def _ledger(s: AsyncSession, user_id: str, delta: int, reason: str, ref: str | None, now: datetime) -> None:

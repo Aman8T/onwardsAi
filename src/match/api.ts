@@ -25,7 +25,7 @@ import type {
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
-export const PAYMENT_MESSAGE = "You've used your free posting this month.";
+export const PAYMENT_MESSAGE = "You've used your posting matches for this month.";
 const RATE_MESSAGE = 'Too many postings right now. Please wait a moment and try again.';
 const TROUBLE_MESSAGE = 'Leafout is having trouble right now. Please try again in a moment.';
 

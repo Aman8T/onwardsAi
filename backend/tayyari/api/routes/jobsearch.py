@@ -19,7 +19,8 @@ run it labels.
 The search, in this order, all answered as JSON before the stream starts: ``shed`` (in-memory, before the body is read)
 -> switched off (503) -> body (415 / 413 / 408 / 400) -> profile (404) -> city (400) -> the client's counters, and the
 account's when signed in, or the client's daily allowance without an account (429 with ``Retry-After``) -> the spend
-reservation (503). Nothing is charged to an account: a run costs about $0.10 to $0.15 (mostly the $0.01 web searches).
+reservation (503). A signed-in account's monthly count of searches (Just Looking) is taken just before the
+reservation (402 ``limit_reached``) and given back when the run fails before any role. Nothing else is charged: a run costs about $0.10 to $0.15 (mostly the $0.01 web searches).
 Every request here also starts a background refresh of Discover's store when it is old (never waited for). An account on
 the unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``) skips every ``shed`` and counter; the spend reservation still applies.
 
@@ -30,6 +31,7 @@ reserve a small spend, because writing one calls a model (a kept one does not).
 from __future__ import annotations
 
 import re
+import secrets
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack
 from typing import Final
@@ -41,6 +43,7 @@ from starlette.responses import Response
 
 from tayyari.api.deps import get_current_user, get_request_context, require_profile_access, unlimited
 from tayyari.api.lifespan import get_container
+from tayyari.api.plan_use import PlanUse
 from tayyari.api.routes._body import read_model
 from tayyari.api.routes.analyze import HeldResponse
 from tayyari.api.security import subnet_hash
@@ -146,8 +149,11 @@ async def start_jobsearch(request: Request) -> Response:
     else:
         await limiter.check("jobsearch_anon", rc.ip_hash, ip_hash_48=ip48, memory=False)
 
+    use = PlanUse(container, None if user is None or free else user.id, "searches", secrets.token_hex(16))
     held = AsyncExitStack()
     try:
+        await use.take()  # one of the month's searches (402 limit_reached), given back if no role is found
+        held.push_async_callback(use.give_back)
         await held.enter_async_context(
             container.spend_guard.reserve(container.settings.guard.est_jobsearch_usd)
         )
@@ -158,7 +164,8 @@ async def start_jobsearch(request: Request) -> Response:
             remote=body.remote is not False,
             avoid=body.avoid,
         )
-        return HeldResponse(request, events, TAG, held)
+        watched = use.watch(events, lambda event: event.type in ("job", "done"))
+        return HeldResponse(request, watched, TAG, held)
     except BaseException:
         await held.aclose()
         raise

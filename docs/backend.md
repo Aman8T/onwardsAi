@@ -150,6 +150,18 @@ Tests: `tests/unit/api/test_gate.py` (the allowlist), `tests/unit/core/test_auth
 
 ### Payments (`/api/billing/*`)
 
+**Plans (roadmap B2, built 2026-11-17).** What is sold is a plan, not postings. An account is on `just_looking` (free, every feature with a count) or `day_one` (one payment, no plan limits). Lowkey and Locked In are printed with a price and cannot be bought.
+- **Settings.** Every price, the end of the early price, the refund days and four of the six free limits are `TAYYARI_PLANS__*` (`core/settings.py` `PlansSettings`); the two limits the ledger already read keep their names (`TAYYARI_BILLING__FREE_MATCHES_PER_MONTH`, now 3, and `TAYYARI_BILLING__FREE_APPLICATIONS`, now 5). `PlansSettings.dayone_price(now, currency)` picks the early or the after price; `billing.products.price_minor` asks it, so `on_sale`, checkout and the static pricing page agree.
+- **Day One on an account.** `PRODUCTS["dayone"]` grants `LIFETIME_DAYS` (36,500) of pass. `products.is_lifetime(pass_until, now)` (more than `LIFETIME_MIN_DAYS` left) is what makes an account `day_one`; nothing new is stored on `entitlements`, and the ledger's "pass first" rule leaves its matches uncounted.
+- **Counting** (`billing/plans.py`, `PlanService`, `container.plans`). `use(user_id, feature, ref)` records one use of `analyses`, `searches`, `practice` or `coach` in `plan_usage` (migration 0023) if fewer than the limit are recorded since the month began (UTC), else raises `PaymentRequired("limit_reached", ...)`. A Day One account is recorded with no limit. `release` deletes the use. `usage(user_id)` returns all six counts (`matches` and `applications` from the ledger). The routes take the count once, before the spend reservation, through `api/plan_use.py` `PlanUse` (`take`, `keep`, `give_back`, `watch`): `POST /api/analyze`, `POST /api/jobsearch`, `POST /api/interview/sessions`, `POST /api/chat`. Accounts on the unlimited list and requests with no account are not counted.
+- **The 402 body** for a count: `{"error": "payment_required", "reason": "limit_reached", "feature", "limit", "resetsAt"?}`. A posting match that runs out still answers `reason: "no_credits"`.
+- **Auto-apply.** `EntitlementService.hold` gives the free applications first; after them a Day One account gets the zero-cost hold and a Just Looking account is refused with `limit_reached` for `applications` (unless `apply_credit_cost` is set and covered). `BillingRepo.hold` has `zero_hold` for this.
+- **Routes.** `GET /api/billing/entitlements` also returns `plan`, `usage`, `resetsAt` and `offer` (the four prices, the end of the early price, `early`, `refundDays`, and the closed plans this account asked about). `POST /api/billing/checkout {product: "dayone"}` charges `dayone_price(now)` and answers 409 `already_yours` for a Day One account. `POST /api/billing/verify` also returns `plan` and the `receipt`. `GET /api/billing/orders` lists the account's paid orders as receipts. `PUT /api/billing/notify {plan, on}` stores the wish to hear when a closed plan opens (`plan_interest`); no email is sent yet. A receipt number is `LF-<yymmdd paid, UTC>-<first six of the order id>`, computed, never stored. `/api/me` entitlements gain `plan` and `matchesLeft`.
+- **Screens.** `/pricing` is the plan screen and `/pricing?bill=day-one` the bill; Checkout.js loads only while the bill is mounted. `/dev/pricing?state=...` shows every state on fixtures.
+- **The static pricing page** (`api/static.py` `fill_prices`): `{{price:dayone}}`, `{{price:dayoneafter}}`, `{{price:lowkey}}`, `{{price:lockedin}}`, `{{date:dayone}}`, `{{days:refund}}`.
+
+The paragraphs below describe the machinery under it, which is unchanged. `pack3` and `pass30` are dormant: still understood for an order that names one, never priced in production, offered by no screen.
+
 **Products and prices** (`billing/products.py`). `pack3` is three posting matches with no expiry. `pass30` is unlimited postings for 30 days from purchase; a purchase made while a pass runs extends it from the end of that pass. Nothing renews by itself. Prices are integers in minor units: `TAYYARI_BILLING__PACK3_INR` and `PASS30_INR` in paise, `PACK3_USD` and `PASS30_USD` in cents; 0 means not set. A product is on sale in a currency only when its price is set, at or above the provider's minimum (100 paise, 50 cents), and that currency's provider has its secrets: INR goes to Razorpay (key id and key secret), USD to Stripe (secret key and webhook secret). A lower price counts as not on sale and is logged at start (`price_below_provider_minimum`).
 
 **Currency.** The account's saved currency wins. Otherwise INR for an Indian time zone (`Asia/Kolkata` or `Asia/Calcutta`) or an Indian locale in `Accept-Language` (any `-IN` region, or Hindi), and USD for everyone else. `GET /api/billing/entitlements` is open to everyone (zeros when anonymous) and returns the balance, the currency to show first and the prices on sale; a product that is not on sale has no key.
@@ -168,7 +180,7 @@ A paid event moves the order from `created` (or `failed`) to `paid` in one condi
 **Consume order** (`billing/entitlements.py`; the balance is in `entitlements`, its history in `credit_ledger`). Every change starts by locking the account's entitlement row (a row lock on Postgres, the write lock on SQLite), so two requests cannot spend the same credit. Starting a posting match takes one use, in this order:
 1. A use already recorded for the same match id: the same answer, nothing more taken.
 2. A pass still running: a `match` row with delta 0.
-3. This UTC calendar month's free posting (`TAYYARI_BILLING__FREE_MATCHES_PER_MONTH`, default 1), if not yet used: a `free_monthly` row with delta 0.
+3. One of this UTC calendar month's free matches (`TAYYARI_BILLING__FREE_MATCHES_PER_MONTH`, default 3), while any is left: a `free_monthly` row with delta 0.
 4. A credit: `credits` down by one, a `match` row with delta -1.
 5. Otherwise `PaymentRequired`: 402 `{"error": "payment_required", "reason": "no_credits"}`.
 
@@ -822,6 +834,40 @@ A personal newspaper, built per reader once a week and stored as one `weekly_edi
 - **CLI**: `python -m tayyari.cli weekly run` (one pass now) and `weekly preview <email>` (build and store this week's edition for that
   account, print the local HTML path).
 
+### Where can I go next, the report (`/api/report`, `/next`, `/og/next`; N1, beta)
+
+A shareable page of the roles a person can credibly move to, each backed by lines of their own resume. It is the recruiting
+door for the concierge five (roadmap N1). Code only: no model is called, and a report costs nothing to make or serve.
+
+- **Composer** (`report/compose.py`, pure functions over a `Profile`, the owner's `ReportChoices` and the person's employer
+  names):
+  - A role is **credible** at half its asks evidenced (rounded up) plus one cited line behind them. At most three are
+    listed: most evidenced first, then `alignment`.
+  - The count is "N of M asks shown". "Ready now" means at most one ask is missing; otherwise the role shows `Role.eta`.
+  - Each role gets up to two quotes: strongest skill first, never repeated on a page, never a line about a layoff.
+  - Near misses are roles *below* the bar, at most two.
+- **Redaction.** While `showOrgs` is off (the default), every `org` found in the person's /resume drafts, finals and fact
+  books, with and without company words ("Pvt Ltd", "Systems"), becomes "their employer". When no employer is known (no
+  /resume draft yet), the public page carries **no quotes at all**. `ReportView.orgsFound` lets the sheet say which case
+  applies.
+- **Service** (`report/service.py`, `container.report`): ownership as for the radar card. The sample and anonymous graphs
+  are `blocked`, and another account's profile is a 404. It keeps one `report_snapshots` row per account (migration 0022).
+  The row stores the **public** content only, already redacted, and a version (sha256 prefix) that changes only with it.
+  The link is a random 12-character slug; "Make a new link" stops the old one. The report refreshes on the owner's open
+  and after a claim (`api/routes/me.py`).
+- **Routes** (`api/routes/report.py`): `GET`/`PUT /api/report` and `POST /api/report/new-link`, JSON with `no-store`; they
+  shed in the `chat` bucket. The public addresses sit outside `/api`, so the sign-in gate does not apply, and are counted
+  in the card's `card` window:
+  - `GET /next/{slug}`: server-rendered HTML with no script and no inline style, the card page's CSP, `noindex`, and share
+    tags. An unknown, stopped or malformed link gets a plain 404 page.
+  - `GET /og/next/{slug}-{version}.png`: the 1200 x 630 preview, drawn by the card's resvg renderer with the bundled
+    Geist (`report/svg.py`, `report/png.py`). An old version gets a 301; an unknown link gets a 404 with a neutral picture.
+- **Paid step:** `TAYYARI_REPORT__OFFER_URL` (empty means none). Set it to `/pricing?bill=day-one`, the B2 Day One bill.
+  Each role then links "Get Day One for this role" with `role=`. The page prints no price, GST or refund line.
+- `report` may import `card` (its geometry, palettes, text measuring and PNG renderer) as well as core, contract and the
+  storage ports. Tests: `tests/unit/report/` (known-bad fixtures: an employer name in evidence never reaches public
+  content) and `tests/integration/test_report_routes.py`.
+
 ## Jev decisions framework
 
 ### Decision specifications
@@ -1065,7 +1111,8 @@ Accounts, payments and the posting match (names only; the values are never writt
 - **Sign-in secrets:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (Google sign-in shows only when both are set), `RESEND_API_KEY` (email links). `RESEND_FROM` is the sender and is not a secret.
 - **Payment secrets:** `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` (both for INR), `RAZORPAY_WEBHOOK_SECRET` (optional; enables the webhook), `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (both for USD).
 - **`TAYYARI_AUTH__*`:** `SESSION_DAYS` (30), `MAGIC_LINK_MINUTES` (15), `MAGIC_PER_EMAIL` and `MAGIC_PER_IP` (3), `COOKIE_NAME` (`tayyari_session`), `PUBLIC_URL` (default `FASTAPI_PUBLIC_URL`, else `http://localhost:5173`), `REQUIRE_SIGN_IN` (unset: on in production, off elsewhere; `true` | `false` overrides; the sign-in gate, see "The sign-in gate").
-- **`TAYYARI_BILLING__*`:** `PACK3_INR`, `PASS30_INR`, `PACK3_USD`, `PASS30_USD` in minor units (paise, cents); 0 or unset means not on sale, and so does a price below the provider's minimum (100 paise, 50 cents). `FREE_MATCHES_PER_MONTH` (1).
+- **`TAYYARI_BILLING__*`:** `PACK3_INR`, `PASS30_INR`, `PACK3_USD`, `PASS30_USD` in minor units (paise, cents); 0 or unset means not on sale, and so does a price below the provider's minimum (100 paise, 50 cents); both products are dormant since the plans (B2) and stay unset in production. `FREE_MATCHES_PER_MONTH` (3) and `FREE_APPLICATIONS` (5) are Just Looking's limits for posting matches and auto-applications.
+- **`TAYYARI_PLANS__*`** (the plans, roadmap B2; amounts in paise): `LOWKEY_INR` (39900) and `LOCKED_IN_INR` (129900), printed and never sold; `DAYONE_INR` (99900) until `DAYONE_ENDS_AT` (`2026-12-15T23:59:00+05:30`, must carry a time zone), `DAYONE_AFTER_INR` (999900) from then on; `DAYONE_USD` and `DAYONE_AFTER_USD` (0: not sold in dollars); `REFUND_DAYS` (7); `FREE_ANALYSES` (2), `FREE_SEARCHES` (5), `FREE_PRACTICE` (3), `FREE_COACH` (30) a calendar month. Day One is on sale only while Razorpay's key pair is set.
 - **`TAYYARI_MATCH__*`:** `MODEL` (unset: the reader model), `WRITER_MODEL` (unset: the same as `MODEL`), `MAX_POSTING_CHARS` (20000), `CALL_TIMEOUT_S` (90), `ALLOW_ANONYMOUS` (`auto`, `true` or `false`; `auto` allows a posting match without a sign-in exactly when the server offers no way to sign in).
 - **Unlimited accounts:** `TAYYARI_GUARD__UNLIMITED_EMAILS` (empty: none; `a@x.com,b@y.com` or `["a@x.com","b@y.com"]`): sign-in emails with no rate limits and no charges (see Cost guard); the spend ceiling, sign-in link limits, capacity guards and Sarvam's daily budget still apply. Set it in `backend/.env` locally and in the cloud with `fastapi cloud env set TAYYARI_GUARD__UNLIMITED_EMAILS` (the owner runs that; real addresses stay out of the repo).
 - **Posting-match guard:** `TAYYARI_GUARD__MATCH_PER_MINUTE` (0), `MATCH_PER_HOUR` (10), `MATCH_PER_DAY` (30), `MATCH_GLOBAL_PER_HOUR` (120), `EST_MATCH_USD` (0.06), `ANON_MATCH_PER_DAY` (3: matches per client address per day without a sign-in, 0 = off).
@@ -1075,6 +1122,8 @@ Accounts, payments and the posting match (names only; the values are never writt
 - **`SARVAM_API_KEY`** (secret, optional) and **`TAYYARI_SPEECH__*`**: `ENABLED` (true), `STT_MODEL` (saaras:v4), `STT_LANGUAGE` (en-IN), `TTS_MODEL` (bulbul:v4-flash), `TTS_SPEAKER` (simran_en_customer), `TTS_LANGUAGE` (en-IN), `TTS_CODEC` (mp3), `TTS_SAMPLE_RATE` (22050), `MAX_SEGMENT_SECONDS` (30), `MAX_SEGMENT_BYTES` (1,500,000), `STT_DAILY_SECONDS` (1800), `TTS_DAILY_CHARS` (6000), `STT_SESSION_SECONDS` (600), `TTS_SESSION_CHARS` (3000), `REQUEST_TIMEOUT_S` (20), `TTS_CACHE_ITEMS` (256), `TTS_PREFETCH` (true: make the interviewer's next lines in the background; needs the cache), `TTS_PREFETCH_FOLLOWUPS` (true: include the current question's follow-up and easier question), `TTS_PREFETCH_CONCURRENCY` (2, 1 to 8: lines made at once across the process). Guard: `SPEECH_PER_MINUTE` 40. Without the key, practice uses the browser's speech.
 - **`TAYYARI_DISCOVER__*`** (no secrets; the boards are public): `ENABLED` (true; false answers 503 `discover_disabled` and fetches nothing), `REFRESH_HOURS` (6, how old the last good run may get before a request starts one), `FETCH_CONCURRENCY` (4), `REQUEST_TIMEOUT_S` (15), `MAX_LISTINGS_PER_EMPLOYER` (300: India listings kept per employer, known cities first, then remote, then the rest, newest first within each), `REGISTRY_PATH` (unset: the registry shipped in `discover/data/employers.json`).
 
+- **`TAYYARI_REPORT__*`** (no secrets): `OFFER_URL` (empty), the report's paid link; set it to `/pricing?bill=day-one`
+  once Day One is on sale.
 - **`TAYYARI_CARD__*`** (no secrets): `REPORT_EMAIL` (aman@leafout.in, where "Report this card" writes to), `PNG_CACHE_SIZE` (256 LinkedIn pictures kept drawn in memory; 0 draws each time). Its limits are guard settings: `CARD_PER_MINUTE` 120 and `CARD_PER_DAY` 2000 per address, `CARD_GLOBAL_PER_HOUR` 0 (off). The images are cached for an hour by every proxy in front of them, but GitHub's image proxy fetches from a few addresses, so watch the `card` window once many cards are shared.
 
 - **Auto-apply:** `AUTO_APPLY_ENABLED` (false), `BROWSER_USE_API_KEY` (secret; without it the worker does not start) and `ANTHROPIC_API_KEY` (the field-list loop, cited answers, the email reader). **`TAYYARI_APPLY__*`**: `WORKER_IN_APP` (true: the lifespan runs the worker; false: `npm run apply-worker`), `WORKER_POLL_SECONDS` (3), `WORKER_IDLE_MAX_SECONDS` (120: the wait doubles up to it while the queue is empty), `WORKER_LEASE_SECONDS` (600), `WORKER_BACKOFF_S` (60), `REQUEUE_CAP` (3), `MAX_PER_DAY` (10), `MAX_PER_DOMAIN_PER_HOUR` (6), `DOMAIN_GAP_SECONDS` (20), `MANUAL_ONLY_DOMAINS`, `BROWSER_USE_BASE_URL`, `FILL_BROWSER_MINUTES` (7), `SUBMIT_BROWSER_MINUTES` (4), `EST_BROWSER_USD` (0.01), `EST_FILL_CALL_USD` (0.02), `EST_ANSWER_USD` (0.005), `FILL_MODEL` (claude-haiku-5-5), `FILL_FALLBACK_MODEL` (claude-sonnet-5-5), `FILL_MAX_ROUNDS` (4), `FILL_DEADLINE_S` (300), `ANSWER_MODEL` and `EMAIL_MODEL` (the reader model), `SCREENSHOT_DAYS` (30), `ADMIN_EMAILS` (who may open the metrics). `HEADLESS`, `CHROMIUM_PATH`, `VIEWPORT_WIDTH`, `VIEWPORT_HEIGHT` and `NAVIGATION_TIMEOUT_S` apply only to the local test browser (`TAYYARI_TEST_BROWSER=1`). Guard: `TAYYARI_GUARD__EST_APPLY_EMAIL_USD` (0.005).

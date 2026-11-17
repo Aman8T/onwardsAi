@@ -20,8 +20,9 @@
                         the dev galleries) send ``X-Robots-Tag: noindex`` and their shell has no canonical link, no
                         structured data and no ``og:url`` (`private_shell`), so none of them points search engines at Home;
                         "/", "/pricing" and the content pages do not. The built ``pricing/index.html`` may hold the
-                        placeholders ``{{price:pack3}}`` and ``{{price:pass30}}``, which `fill_prices` replaces with the
-                        configured rupee price (or "Coming soon") on every request.
+                        placeholders ``{{price:dayone}}``, ``{{price:dayoneafter}}``, ``{{price:lowkey}}``,
+                        ``{{price:lockedin}}``, ``{{date:dayone}}`` (and the older ``{{price:pack3}}``,
+                        ``{{price:pass30}}``), which `fill_prices` replaces on every request (see there).
 
 With ``TAYYARI_AUTH__REDIRECT_OTHER_HOSTS`` on, a GET or HEAD for any of these on a host other than the public URL's is a 308 to the
 same path and query on the public URL (the old address keeps working as a pointer; ``/api/*`` is never redirected, so scripts
@@ -41,6 +42,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import quote, urlsplit
@@ -298,23 +300,56 @@ def private_shell(html: str) -> str:
 
 
 PRICE_PLACEHOLDER = re.compile(r"\{\{price:([a-z0-9]+)\}\}")
+DATE_PLACEHOLDER = re.compile(r"\{\{date:([a-z0-9]+)\}\}")
+DAYS_PLACEHOLDER = "{{days:refund}}"
 COMING_SOON = "Coming soon"
 
 
-def fill_prices(html: str, settings: Settings) -> str:
-    """Replace ``{{price:pack3}}`` and ``{{price:pass30}}`` with the rupee price on sale, or "Coming soon".
+def _printed(amount_minor: int) -> str:
+    """A configured rupee amount as printed ("₹1,299"), or "Coming soon" while it is unset."""
+    return format_price(amount_minor, "INR") if amount_minor > 0 else COMING_SOON
 
-    The same rule as the pricing screen: a product that is not on sale (no price, under the provider's minimum, or Razorpay
-    without its secrets) has no price to print. Any other ``{{price:...}}`` name also reads "Coming soon", so no raw
-    placeholder ever reaches a visitor.
+
+def fill_prices(html: str, settings: Settings, *, now: datetime | None = None) -> str:
+    """Replace the pricing page's placeholders with what the settings say at ``now`` (default: this moment).
+
+        {{price:dayone}}        Day One's rupee price on sale now (early until the end date, after it from then), or
+                                "Coming soon" when it cannot be bought here (no price, or Razorpay without its secrets)
+        {{price:dayoneafter}}   Day One's price after the early window, as configured
+        {{price:lowkey}}        Lowkey's and Locked In's monthly prices, as configured: printed, never sold yet
+        {{price:lockedin}}
+        {{days:refund}}         the days a refund can be asked for (``plans.refund_days``), as a plain number
+        {{date:dayone}}         the end of Day One's early price, as "15 Dec 2026" (in its own time zone)
+        {{price:pack3}}         the older products: the price on sale, which is "Coming soon" unless one is set
+        {{price:pass30}}
+
+    A configured amount that is unset prints "Coming soon". Any other ``{{price:...}}`` name also reads "Coming soon",
+    and any other ``{{date:...}}`` name is removed, so no raw placeholder ever reaches a visitor.
     """
+    moment = datetime.now(UTC) if now is None else now
+    plans = settings.plans
+    fixed = {
+        "dayoneafter": plans.dayone_after_inr,
+        "lowkey": plans.lowkey_inr,
+        "lockedin": plans.locked_in_inr,
+    }
 
-    def one(found: re.Match[str]) -> str:
-        product = next((key for key in PRODUCTS if key == found.group(1)), None)
-        price = on_sale(settings, product, "INR") if product is not None else None
-        return format_price(price, "INR") if price is not None else COMING_SOON
+    def price(found: re.Match[str]) -> str:
+        name = found.group(1)
+        if name in fixed:
+            return _printed(fixed[name])
+        product = next((key for key in PRODUCTS if key == name), None)
+        on = on_sale(settings, product, "INR", now=moment) if product is not None else None
+        return format_price(on, "INR") if on is not None else COMING_SOON
 
-    return PRICE_PLACEHOLDER.sub(one, html)
+    def date(found: re.Match[str]) -> str:
+        if found.group(1) != "dayone":
+            return ""
+        ends = plans.dayone_ends_at
+        return f"{ends.day} {ends.strftime('%b')} {ends.year}"
+
+    filled = DATE_PLACEHOLDER.sub(date, PRICE_PLACEHOLDER.sub(price, html))
+    return filled.replace(DAYS_PLACEHOLDER, str(plans.refund_days))
 
 
 def _is_pricing_page(path: str, file: Path) -> bool:

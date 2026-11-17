@@ -29,7 +29,7 @@ export const jobMatch: ContentPage = {
     },
     {
       q: 'What does it cost?',
-      a: 'The first posting match each calendar month is free. After that you pay per posting or by the month, and there is no annual plan. The pricing page has the current plans.',
+      a: 'Just Looking, the free plan, includes a few posting matches each calendar month. Day One is one payment, with no limit on matches, and there is no annual plan. The pricing page has the current plans.',
     },
   ],
   Body: () => (
@@ -132,7 +132,7 @@ export const jobMatch: ContentPage = {
           </li>
         </ul>
         <p>
-          What a match costs is on the <a href="/pricing">pricing page</a>.
+          How many matches each plan includes is on the <a href="/pricing">pricing page</a>.
         </p>
       </section>
     </>

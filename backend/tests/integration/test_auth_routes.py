@@ -174,7 +174,12 @@ async def test_an_anonymous_visitor_gets_the_shape_without_a_user(start: Any) ->
     assert response.headers["cache-control"] == "no-store"
     assert response.json() == {
         "profiles": [],
-        "entitlements": {"credits": 0, "freeMatchAvailable": False},
+        "entitlements": {
+            "credits": 0,
+            "freeMatchAvailable": False,
+            "plan": "just_looking",
+            "matchesLeft": 0,
+        },
         "providers": {"google": True, "magic": True, "leafout": False},
         "anonymousMatch": False,  # a way to sign in exists, so a posting match asks for one
         "signInRequired": False,  # the gate is off in the test environment
@@ -269,7 +274,12 @@ async def test_a_link_signs_you_in_and_me_says_who_you_are(start: Any) -> None:
         me = (await rig.client.get("/api/me", headers=as_user(token))).json()
         assert me["user"] == {"id": me["user"]["id"], "email": EMAIL} and len(me["user"]["id"]) == 32
         # a new account has no credits, but this month's free posting is still unused (wave F2)
-        assert me["profiles"] == [] and me["entitlements"] == {"credits": 0, "freeMatchAvailable": True}
+        assert me["profiles"] == [] and me["entitlements"] == {
+            "credits": 0,
+            "freeMatchAvailable": True,
+            "plan": "just_looking",
+            "matchesLeft": 3,
+        }
         assert len(await user_rows(rig.env)) == 1
 
 

@@ -18,11 +18,11 @@ Auto-apply pays in two steps, on the same append-only ledger (no table of its ow
 ``apply:<application id>``, so no column is needed and every call is idempotent:
 
     hold(user_id, ref)      at the start. One of the account's lifetime free applications (``apply_free``, delta 0,
-                            while fewer than ``free_applications`` are in use), else ``apply_credit_cost`` credits
-                            (``apply_hold``), else `PaymentRequired` (402). While no price is set
-                            (``apply_credit_cost`` is None, decision 2) the ``apply_hold`` row takes nothing, so hold,
-                            capture and release all work and nothing is sold. Asking again for a ``ref`` that holds
-                            takes nothing more.
+                            while fewer than ``free_applications`` are in use), first, on every plan. After them
+                            (roadmap B2): a Day One account gets a hold of nothing (``apply_hold``, delta 0); a Just
+                            Looking account pays ``apply_credit_cost`` credits when that price is set and its credits
+                            cover it, and is otherwise refused with `PaymentRequired` (402, ``limit_reached`` for
+                            ``applications``). Asking again for a ``ref`` that holds takes nothing more.
     capture(user_id, ref)   charge the hold once the application is sent (an ``apply_capture`` row, delta 0). After
                             that it is never given back by ``release``.
     release(user_id, ref)   give the hold back: the credit returns, a free application counts as unused again.
@@ -42,16 +42,17 @@ boundary and the error.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 
-from tayyari.contract.billing import Product
+from tayyari.contract.billing import PlanId, Product
 from tayyari.core.clock import Clock
 from tayyari.core.errors import PaymentRequired
 from tayyari.core.logging import get_logger
 from tayyari.core.settings import BillingSettings
 from tayyari.storage.ports import BillingRepo, ConsumeSource
 
-from .products import PRODUCTS
+from .plans import limit_reached, month_start
+from .products import PRODUCTS, is_lifetime
 
 log = get_logger(__name__)
 
@@ -95,16 +96,14 @@ class EntitlementSummary:
     pass_until: datetime | None
     """Only while the pass is still running; None otherwise."""
     free_match_available: bool
+    plan: PlanId = "just_looking"
+    """``day_one`` while the pass is a lifetime one (`products.is_lifetime`)."""
+    matches_left: int | None = None
+    """Free posting matches left this month on Just Looking; None on Day One."""
 
 
-ZERO = EntitlementSummary(credits=0, pass_until=None, free_match_available=False)
+ZERO = EntitlementSummary(credits=0, pass_until=None, free_match_available=False, matches_left=0)
 """What an anonymous visitor has: nothing, and no free posting (there is no account to spend it on)."""
-
-
-def month_start(now: datetime) -> datetime:
-    """00:00 UTC on the first day of ``now``'s month: the free allowance renews here."""
-    utc = now.astimezone(UTC)
-    return datetime(utc.year, utc.month, 1, tzinfo=UTC)
 
 
 class EntitlementService:
@@ -146,16 +145,21 @@ class EntitlementService:
         Returns nothing, as `apply.seams.ApplyCredits` asks: the caller only needs to know the hold was taken. What
         paid for it (``free_apply``, ``credit`` or ``hold``) is on the ledger and in the log."""
         _check_apply_ref(ref)
+        now = self._clock.now()
+        balance = await self._repo.entitlements(user_id, month_start=month_start(now))
+        day_one = is_lifetime(balance.pass_until, now)
+        cost = None if day_one else self._settings.apply_credit_cost
         outcome = await self._repo.hold(
             user_id,
             ref,
-            now=self._clock.now(),
+            now=now,
             free_allowance=self._settings.free_applications,
-            cost=self._settings.apply_credit_cost,
+            cost=cost,
+            zero_hold=day_one or cost is not None,
         )
         if outcome is None:
             log.info("apply_hold_refused")
-            raise PaymentRequired(NO_CREDITS, user_message=NO_APPLY_CREDITS_MESSAGE)
+            raise limit_reached("applications", self._settings.free_applications, None)
         if outcome.replayed:
             log.info("apply_hold_repeated", source=outcome.source)
         else:
@@ -196,10 +200,14 @@ class EntitlementService:
         now = self._clock.now()
         balance = await self._repo.entitlements(user_id, month_start=month_start(now))
         running = balance.pass_until is not None and balance.pass_until > now
+        day_one = is_lifetime(balance.pass_until, now)
+        allowance = self._settings.free_matches_per_month
         return EntitlementSummary(
             credits=balance.credits,
             pass_until=balance.pass_until if running else None,
-            free_match_available=balance.free_used < self._settings.free_matches_per_month,
+            free_match_available=balance.free_used < allowance,
+            plan="day_one" if day_one else "just_looking",
+            matches_left=None if day_one else max(allowance - balance.free_used, 0),
         )
 
 

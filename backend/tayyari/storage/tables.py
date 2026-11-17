@@ -493,6 +493,45 @@ class CreditLedgerRow(Base):
     __table_args__ = (Index("ix_credit_ledger_user_id_created_at", "user_id", "created_at"),)
 
 
+PLAN_FEATURE_LEN = 16
+"""``analyses`` / ``searches`` / ``practice`` / ``coach`` (and room to grow)."""
+PLAN_USAGE_REF_LEN = 64
+"""What one counted use is keyed by: a run, session or question id."""
+CLOSED_PLAN_LEN = 16
+"""``lowkey`` / ``locked_in``."""
+
+
+class PlanUsageRow(Base):
+    """One counted use of a plan feature (roadmap B2): a new analysis, a search with AI, a practice session or a coach
+    question. Just Looking counts the rows since the month began against its limit; Day One's uses are recorded with no
+    limit. A use that is given back is deleted (it never cost anything). ``ref`` makes a use idempotent."""
+
+    __tablename__ = "plan_usage"
+
+    id: Mapped[str] = mapped_column(String(ID_LEN), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"))
+    feature: Mapped[str] = mapped_column(String(PLAN_FEATURE_LEN))
+    ref: Mapped[str] = mapped_column(String(PLAN_USAGE_REF_LEN))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "feature", "ref", name="uq_plan_usage_user_id_feature_ref"),
+        Index("ix_plan_usage_user_id_feature_created_at", "user_id", "feature", "created_at"),
+    )
+
+
+class PlanInterestRow(Base):
+    """A closed plan this account asked to be told about when it opens ("Tell me when it opens")."""
+
+    __tablename__ = "plan_interest"
+
+    user_id: Mapped[str] = mapped_column(
+        String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    plan: Mapped[str] = mapped_column(String(CLOSED_PLAN_LEN), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+
 # ───────────────────────────── posting match ─────────────────────────────
 
 BAND_LEN = 16
@@ -1259,6 +1298,37 @@ class DeskNoteRow(Base):
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
 
 
+# ───────────────────────────── the report (N1) ─────────────────────────────
+
+REPORT_SLUG_LEN = 12
+"""A report's public link: 12 characters of ``[a-z0-9]`` (``secrets.choice``), as the radar card's."""
+REPORT_VERSION_LEN = 8
+"""The first 8 hex characters of the sha256 of the public content; it names the link-preview image."""
+
+
+class ReportSnapshotRow(Base):
+    """One account's "Where can I go next" report (N1): the owner's choices and the public content, redacted by them and
+    drawn from the account's newest profile. ``content`` is exactly what the shared page shows (`ReportContent`): nothing
+    hidden, no profile or account id. ``slug`` is NULL while the report is not shared; ``version`` changes only with the
+    content. The row goes with its account and with the profile it was drawn from (ON DELETE CASCADE)."""
+
+    __tablename__ = "report_snapshots"
+
+    user_id: Mapped[str] = mapped_column(
+        String(ID_LEN), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    profile_id: Mapped[str] = mapped_column(String(ID_LEN), ForeignKey("profiles.id", ondelete="CASCADE"))
+    slug: Mapped[str | None] = mapped_column(String(REPORT_SLUG_LEN))
+    shared: Mapped[bool] = mapped_column(Boolean)
+    choices: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    content: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    version: Mapped[str] = mapped_column(String(REPORT_VERSION_LEN))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+    __table_args__ = (UniqueConstraint("slug", name="uq_report_snapshots_slug"),)
+
+
 __all__ = [
     "APPLY_ATS_LEN",
     "APPLY_DIGEST_LEN",
@@ -1281,13 +1351,16 @@ __all__ = [
     "CLAIM_QUOTE_LEN",
     "CLAIM_SOURCE_LEN",
     "CLAIM_TEXT_LEN",
+    "CLOSED_PLAN_LEN",
     "EMAIL_LEN",
     "FIX_TEXT_LEN",
     "HANDOFF_ID_LEN",
     "HASH_LEN",
     "ID_LEN",
     "NAMING_CONVENTION",
+    "PLAN_FEATURE_LEN",
     "PLAN_ID_LEN",
+    "PLAN_USAGE_REF_LEN",
     "PROVIDER_ID_LEN",
     "RESUME_KIND_LEN",
     "RESUME_ROLE_KEY_LEN",
@@ -1324,6 +1397,8 @@ __all__ = [
     "MagicLinkRow",
     "MatchRow",
     "OrderRow",
+    "PlanInterestRow",
+    "PlanUsageRow",
     "PortfolioRow",
     "PostingRow",
     "PreparePlanRow",
@@ -1331,6 +1406,7 @@ __all__ = [
     "ProfileFactsRow",
     "ProfileRow",
     "RateLimitHitRow",
+    "ReportSnapshotRow",
     "ResumeRow",
     "RunMetricRow",
     "SpendDailyRow",

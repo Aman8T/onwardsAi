@@ -156,3 +156,13 @@ def test_a_claim_needs_a_profile_id() -> None:
     for bad in ({}, {"profileId": ""}, {"profileId": "x" * 97}):
         with pytest.raises(ValidationError):
             auth.ClaimRequest.model_validate(bad)
+
+
+def test_the_plan_and_matches_left_are_left_out_until_set() -> None:
+    plain = auth.MeEntitlements(credits=0, freeMatchAvailable=True).to_dict()
+    assert "plan" not in plain and "matchesLeft" not in plain
+    day_one = auth.MeEntitlements(credits=0, freeMatchAvailable=True, plan="day_one").to_dict()
+    assert day_one["plan"] == "day_one" and "matchesLeft" not in day_one
+    assert (
+        auth.MeEntitlements(credits=0, freeMatchAvailable=True, matchesLeft=0).to_dict()["matchesLeft"] == 0
+    )

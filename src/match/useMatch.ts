@@ -14,7 +14,7 @@
  *         server has a sign-in to offer. When it matches without an account (`anonymousMatch` on `/api/me`) nobody is
  *         ever asked to sign in: a 401 that still arrives is a sentence ("This server needs an account…"). Where it
  *         has no way to sign in at all, the sheet is not reachable from here either (see `MatchAccess`).
- *   402 → `paywall`: the calm "you've used your free posting" panel with a link to /pricing
+ *   402 → `paywall`: the calm "you've used your posting matches" panel (`LimitNote`) with a link to the plans
  *   422 → the paste screen with the server's sentence ("We couldn't find any requirements…")
  *   409 on a download → the open decisions are re-read from the server and shown
  *   anything else → a sentence on the screen that asked.
@@ -72,7 +72,7 @@ export interface MatchState {
   step?: string;
   /** A sentence for the paste screen after a failed or refused request. */
   notice?: string;
-  /** The "used your free posting" panel. */
+  /** The "used your posting matches" panel. */
   paywall: boolean;
   /** Set while `GET /api/match/{id}` is in flight, and when it failed. */
   loadingId?: string;
@@ -326,7 +326,7 @@ async function finish(done: Extract<MatchEvent, { type: 'done' }>): Promise<void
       createdAt: detail.createdAt ?? new Date().toISOString(),
     });
   }
-  void refreshMe(); // the posting used the free allowance or a credit: the chip in the header should say so
+  void refreshMe(); // the posting used one of the month's matches: the chip in the header should say so
   if (getState().view === 'match' && getState().matchRoute.screen === 'paste') actions.openMatch({ screen: 'match', id: done.matchId }, { replace: true });
 }
 

@@ -8,19 +8,18 @@
  *           error (phase `failed`); a network failure or a 5xx waits for the webhook (phase `pending`). A failed
  *           attempt inside the window (`payment.failed`) is shown under the paying line while the window stays open.
  *   USD  -> Stripe: the server creates a Checkout Session and the browser goes to its hosted page; Stripe sends the
- *           person back to `/pricing?checkout=success|cancelled` (see `route.ts`) and the webhook grants.
+ *           person back to `/pricing?checkout=success|cancelled` and the webhook grants. Day One is rupees only, so no
+ *           screen sends anyone there or reads that return today; the branch stays for when it is sold in dollars.
  *
- * Checkout.js is third-party script. `useCheckoutScript` inserts its tag when the pricing page mounts and removes it
- * when the page unmounts, and only when INR is on sale at all; no other screen ever loads it (the CSP allows its
- * host on every page, which is why the tag's life is kept this short).
+ * Checkout.js is third-party script. `useCheckoutScript` inserts its tag when the bill mounts and removes it when the
+ * bill unmounts, and only when INR is on sale at all; no other screen ever loads it (the CSP allows its host on every
+ * page, which is why the tag's life is kept this short). The bill (`BillView.tsx`) says where the payment is.
  *
  * Nothing here knows a price: the amount comes back from the server with the order, never from this code.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { MeEntitlements } from '../../shared/auth';
-import type { Currency, Product } from '../../shared/billing';
+import type { Currency, Product, Receipt } from '../../shared/billing';
 import * as api from '../lib/api';
-import { purchaseSummary } from './format';
 
 const CHECKOUT_JS = 'https://checkout.razorpay.com/v1/checkout.js';
 const POLL_EVERY_MS = 3000;
@@ -67,7 +66,7 @@ declare global {
 
 export type ScriptState = 'off' | 'loading' | 'ready' | 'failed';
 
-/** Insert Checkout.js while the calling page is mounted (and only when `enabled`); take it out again afterwards. */
+/** Insert Checkout.js while the calling screen is mounted (and only when `enabled`); take it out again afterwards. */
 export function useCheckoutScript(enabled: boolean): ScriptState {
   const [state, setState] = useState<ScriptState>('off');
   useEffect(() => {
@@ -99,6 +98,8 @@ export interface CheckoutState {
   phase: CheckoutPhase;
   product?: Product;
   message?: string;
+  /** The paid order, once `verify` has settled it (phase `paid`). */
+  receipt?: Receipt;
 }
 
 /** True while a purchase is in progress and the buttons should wait. */
@@ -180,7 +181,7 @@ export function useCheckout({ onSettled, onSignInNeeded }: UseCheckout) {
                 razorpay_signature: response.razorpay_signature,
               })
               // ok false: the order is not settled (unknown or inconsistent), but the webhook may still settle it
-              .then((res) => setState({ phase: res.ok ? 'paid' : 'pending', product }))
+              .then((res) => setState({ phase: res.ok ? 'paid' : 'pending', product, receipt: res.ok ? res.receipt : undefined }))
               .catch((err: unknown) => {
                 // the server refused the hand-off (bad signature, not this account's order, ...): say so
                 if (err instanceof api.ApiError && err.status >= 400 && err.status < 500) {
@@ -221,7 +222,9 @@ export function useCheckout({ onSettled, onSignInNeeded }: UseCheckout) {
         }
         const message =
           err instanceof api.ApiError && err.status === 409
-            ? 'That plan is not on sale yet.'
+            ? err.message === 'already_yours'
+              ? 'Day One is already on your account.'
+              : 'That plan is not on sale yet.'
             : err instanceof Error
               ? err.message
               : 'Something went wrong. Please try again.';
@@ -248,58 +251,4 @@ export function useCheckout({ onSettled, onSignInNeeded }: UseCheckout) {
   }, [state.phase]);
 
   return { state, start, restore, dismiss };
-}
-
-interface NoticeProps {
-  state: CheckoutState;
-  entitlements: MeEntitlements;
-  onDismiss: () => void;
-  /** What to do after a paid order: go and use it. */
-  onContinue: () => void;
-}
-
-/** One calm line about where the payment is. A live region, so a screen reader hears each change. */
-export function CheckoutNotice({ state, entitlements, onDismiss, onContinue }: NoticeProps) {
-  const { phase, product, message } = state;
-  if (phase === 'idle') return <p className="bl-notice" role="status" aria-live="polite" />;
-
-  if (phase === 'failed') {
-    return (
-      <div className="bl-notice is-problem" role="alert">
-        <p>{message ?? 'The payment could not be started. Please try again.'}</p>
-        <button type="button" className="btn btn-quiet btn-sm" onClick={onDismiss}>
-          Dismiss
-        </button>
-      </div>
-    );
-  }
-
-  const text: Record<Exclude<CheckoutPhase, 'idle' | 'failed'>, string> = {
-    starting: 'Opening checkout…',
-    // a failed attempt keeps the window open: say what happened, then what to do
-    paying: message ? `${message} Try again in the checkout window, or close it.` : 'Finish the payment in the checkout window.',
-    verifying: 'Confirming your payment…',
-    redirecting: 'Taking you to Stripe…',
-    pending: 'Thank you. The payment is confirmed in the background, and your plan appears on this page as soon as it arrives.',
-    paid: `Payment received. ${product ? purchaseSummary(product, entitlements) : ''}`.trim(),
-    cancelled: 'Checkout closed. Nothing was charged.',
-  };
-  const done = phase === 'paid' || phase === 'pending' || phase === 'cancelled';
-  return (
-    <div className="bl-notice" role="status" aria-live="polite">
-      <p>{text[phase]}</p>
-      {done && (
-        <div className="bl-notice-actions">
-          {phase === 'paid' && (
-            <button type="button" className="btn btn-sm" onClick={onContinue}>
-              Match a posting
-            </button>
-          )}
-          <button type="button" className="btn btn-quiet btn-sm" onClick={onDismiss}>
-            Dismiss
-          </button>
-        </div>
-      )}
-    </div>
-  );
 }

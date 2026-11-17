@@ -20,8 +20,16 @@ from pydantic import Field
 from tayyari.contract.auth import Currency
 from tayyari.contract.models import _Model
 
-Product = Literal["pack3", "pass30"]
+Product = Literal["pack3", "pass30", "dayone"]
+"""``dayone``: the Day One plan, one payment, everything with no plan limits (roadmap B2). ``pack3`` and ``pass30`` are the
+earlier products: still understood for an order that names one, never on sale (no price is set)."""
 Provider = Literal["razorpay", "stripe"]
+PlanId = Literal["just_looking", "day_one"]
+"""The plan an account is on. Lowkey and Locked In are not sold yet, so no account is on them."""
+ClosedPlan = Literal["lowkey", "locked_in"]
+"""The two monthly plans the pricing page shows with a price and "Opening soon"."""
+Feature = Literal["analyses", "matches", "searches", "practice", "coach", "applications"]
+"""What Just Looking counts: each per calendar month (UTC), except ``applications``, counted once."""
 
 TIMEZONE_MAX_CHARS: Final = 64
 """The longest IANA time zone name a client may send (``America/Argentina/ComodRivadavia`` is 32)."""
@@ -32,6 +40,7 @@ class ProductPrices(_Model):
 
     pack3: int | None = None
     pass30: int | None = None
+    dayone: int | None = None
 
 
 class PriceBook(_Model):
@@ -39,6 +48,77 @@ class PriceBook(_Model):
 
     INR: ProductPrices
     USD: ProductPrices
+
+
+class FeatureUse(_Model):
+    """One counted feature: the Just Looking limit and how many this account has used in the current period."""
+
+    limit: int
+    used: int
+
+
+class PlanUsage(_Model):
+    analyses: FeatureUse
+    matches: FeatureUse
+    searches: FeatureUse
+    practice: FeatureUse
+    coach: FeatureUse
+    applications: FeatureUse
+
+
+class PlanOffer(_Model):
+    """What the pricing page prints; every amount is INR paise from `core.settings.PlansSettings`.
+
+    ``dayOne`` is what Day One costs right now, present only while it can be bought here (Razorpay configured).
+    ``early`` says which side of ``dayOneEndsAt`` the server is on."""
+
+    lowkey: int
+    lockedIn: int
+    dayOne: int | None = None
+    dayOneEarly: int
+    dayOneAfter: int
+    dayOneEndsAt: str
+    early: bool
+    refundDays: int
+    notify: list[ClosedPlan]
+
+
+class Receipt(_Model):
+    """A paid order, as the bill and "Your plan" print it. ``number`` is made from the day it was paid and the order id."""
+
+    number: str
+    product: Product
+    amount: int
+    currency: Currency
+    paidAt: str
+    paymentId: str | None = None
+
+
+class OrdersResponse(_Model):
+    """``GET /api/billing/orders``: this account's paid orders, newest first."""
+
+    orders: list[Receipt]
+
+
+class NotifyRequest(_Model):
+    """``PUT /api/billing/notify``: ask to be told (or not) when a closed plan opens."""
+
+    plan: ClosedPlan
+    on: bool
+
+
+class NotifyResponse(_Model):
+    notify: list[ClosedPlan]
+
+
+class LimitReached(_Model):
+    """The body of a 402 when a Just Looking count has run out (`core.errors.PaymentRequired.to_body`)."""
+
+    error: str
+    reason: str
+    feature: Feature | None = None
+    limit: int | None = None
+    resetsAt: str | None = None
 
 
 class EntitlementsResponse(_Model):
@@ -56,6 +136,13 @@ class EntitlementsResponse(_Model):
     Left out of the JSON for everyone else (the field is ``unlimited?`` in the TypeScript contract)."""
     currency: Currency
     prices: PriceBook
+    plan: PlanId
+    """``just_looking`` for a visitor and for every account that has not bought Day One."""
+    usage: PlanUsage
+    """The Just Looking limits and what this account has used; a visitor has used nothing."""
+    resetsAt: str
+    """When the monthly counts start again (00:00 UTC on the first of next month)."""
+    offer: PlanOffer
 
 
 class CheckoutRequest(_Model):
@@ -100,18 +187,32 @@ class VerifyResponse(_Model):
     credits: int
     passUntil: str | None = None
     freeMatchAvailable: bool
+    plan: PlanId
+    receipt: Receipt | None = None
+    """The paid order, once it is settled (``ok``)."""
 
 
 __all__ = [
     "TIMEZONE_MAX_CHARS",
     "CheckoutRequest",
     "CheckoutResponse",
+    "ClosedPlan",
     "Currency",
     "EntitlementsResponse",
+    "Feature",
+    "FeatureUse",
+    "LimitReached",
+    "NotifyRequest",
+    "NotifyResponse",
+    "OrdersResponse",
+    "PlanId",
+    "PlanOffer",
+    "PlanUsage",
     "PriceBook",
     "Product",
     "ProductPrices",
     "Provider",
+    "Receipt",
     "VerifyRequest",
     "VerifyResponse",
 ]

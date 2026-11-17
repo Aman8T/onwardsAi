@@ -46,6 +46,12 @@ if (pathname.startsWith('/p/')) {
 } else if (import.meta.env.DEV && pathname === '/dev/card') {
   // every state of the radar card's share sheet on stored fixtures: no server, no account
   Root = lazy(() => import('./card/dev/CardGallery').then((m) => ({ default: m.CardGallery })));
+} else if (import.meta.env.DEV && pathname === '/dev/report') {
+  // every state of the report's owner sheet ("Share where I can go") on stored fixtures: no server, no account
+  Root = lazy(() => import('./report/dev/ReportGallery').then((m) => ({ default: m.ReportGallery })));
+} else if (import.meta.env.DEV && pathname === '/dev/pricing') {
+  // the plan screen and the bill in every state (`?screen=`, `?state=`) on fixtures: no server, no account
+  Root = lazy(() => import('./billing/dev/PricingGallery').then((m) => ({ default: m.PricingGallery })));
 } else if (import.meta.env.DEV && pathname === '/dev/weekly') {
   // every state of The Leafout Weekly on stored fixtures: no server, no account
   Root = lazy(() => import('./weekly/dev/WeeklyGallery').then((m) => ({ default: m.WeeklyGallery })));

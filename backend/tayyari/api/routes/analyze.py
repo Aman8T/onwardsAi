@@ -9,6 +9,8 @@ The order of the guards is part of the contract (everything before the stream is
    one upload being read per client (429) and a process-wide budget of buffered upload bytes (503).
 3. a quick look at the per-process slots, so a busy server does not charge the caller's rate-limit windows.
 4. ``rate_limiter.check(memory=False)``: the shared per-IP and global counters (429).
+4b. ``PlanUse.take``: one of Just Looking's monthly analyses (402 ``limit_reached``; skipped for the unlimited list and
+   with no account). Given back when the run ends without a profile or is cancelled before one.
 5. ``spend_guard.reserve``: the daily spend ceiling (503 with ``Retry-After`` until UTC midnight). Unlike a
    one-off check, the estimate stays reserved against the ceiling until the stream is over, so analyses that
    start together cannot all be admitted by the same stale ledger reading.
@@ -21,6 +23,7 @@ a generator that never started cannot run its ``finally``.
 
 from __future__ import annotations
 
+import secrets
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack
 
@@ -28,9 +31,10 @@ from fastapi import APIRouter, Request
 from starlette.responses import Response
 from starlette.types import Receive, Scope, Send
 
-from tayyari.api.deps import get_request_context, unlimited
+from tayyari.api.deps import get_current_user, get_request_context, unlimited
 from tayyari.api.lifespan import get_container
 from tayyari.api.ndjson import NdjsonResponse, StreamEvent
+from tayyari.api.plan_use import PlanUse
 from tayyari.api.reread import resolve_reread
 from tayyari.api.security import subnet_hash
 from tayyari.api.uploads import parse_analyze_form, upload_gate
@@ -91,15 +95,22 @@ async def analyze(request: Request) -> Response:
         raise _busy()
     await limiter.check("analyze", rc.ip_hash, ip_hash_48=ip48, memory=False, exempt=free)
 
+    # One of the month's analyses (Just Looking), taken before anything is reserved; never for the unlimited list or
+    # with no account. It is given back when the run ends without a profile.
+    user = None if free else await get_current_user(request)
+    use = PlanUse(container, None if user is None else user.id, "analyses", secrets.token_hex(16))
     held = AsyncExitStack()
     try:
+        await use.take()
+        held.push_async_callback(use.give_back)
         await held.enter_async_context(container.spend_guard.reserve(guard.est_analyze_usd))
         # No await between this check and the acquire, so the slot is ours (the semaphore is never waited on).
         if slots.locked():
             raise _busy()
         await slots.acquire()
         held.callback(slots.release)
-        return HeldResponse(request, container.analysis.run(req, rc), TAG, held)
+        events = use.watch(container.analysis.run(req, rc), lambda event: event.type == "done")
+        return HeldResponse(request, events, TAG, held)
     except BaseException:
         await held.aclose()
         raise

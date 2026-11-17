@@ -1,9 +1,9 @@
 /**
- * Words and numbers for money and entitlements. Pure functions, so the pricing page, the account menu and the chip
- * all say the same thing the same way.
+ * Words and numbers for money, dates and the plan. Pure functions, so the plan screen, the bill, the account menu and
+ * the chip all say the same thing the same way.
  */
 import type { MeEntitlements } from '../../shared/auth';
-import type { Currency, Product } from '../../shared/billing';
+import type { Currency, Feature } from '../../shared/billing';
 import { plural } from '../lib/ui';
 
 /** `49900` paise -> "₹499"; `900` cents -> "$9"; `1999` -> "$19.99". Amounts are minor units, always integers. */
@@ -32,42 +32,78 @@ export function isUnlimited(e: { unlimited?: boolean } | null | undefined): bool
 }
 
 /**
- * What the next posting will use, in the words of the chip: "Unlimited" for an account with no limits, else a pass
- * first, then the month's free posting and the credits ("1 free this month · 2 postings left"), or "No postings left".
+ * The chip's words: "Day One" on Day One, "Unlimited" for an account with no limits, else "Just Looking · 2 matches
+ * left" from the matches left this month ("Just Looking" when none are left or the server did not say).
  */
-export function entitlementText(e: MeEntitlements, now: number = Date.now()): string {
+export function entitlementText(e: MeEntitlements): string {
   if (isUnlimited(e)) return 'Unlimited';
-  const until = e.passUntil ? Date.parse(e.passUntil) : NaN;
-  if (e.passUntil && Number.isFinite(until) && until > now) return `Pass until ${shortDate(e.passUntil)}`;
-  const parts: string[] = [];
-  if (e.freeMatchAvailable) parts.push('1 free this month');
-  if (e.credits > 0) parts.push(`${plural(e.credits, 'posting')} left`);
-  return parts.length > 0 ? parts.join(' · ') : 'No postings left';
+  if (e.plan === 'day_one') return 'Day One';
+  const left = e.matchesLeft;
+  return left !== undefined && left > 0 ? `Just Looking · ${plural(left, 'match', 'matches')} left` : 'Just Looking';
 }
 
-/** What the person has after a purchase, as one sentence. */
-export function purchaseSummary(product: Product, e: MeEntitlements): string {
-  if (product === 'pass30' && e.passUntil) return `Your pass runs until ${shortDate(e.passUntil)}.`;
-  if (product === 'pack3') return `${plural(e.credits, 'posting')} left on your account.`;
-  return 'It is on your account now.';
+const DAY_MONTH: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+
+/** "15 Dec" in India (the early price ends at 23:59 IST, so the day must not move with the reader's zone). */
+export function istDay(iso: string): string {
+  const at = Date.parse(iso);
+  return Number.isFinite(at) ? new Date(at).toLocaleDateString('en-GB', { ...DAY_MONTH, timeZone: 'Asia/Kolkata' }) : '';
 }
 
-/** Postings a pack holds (`PRODUCTS.pack3` on the server). */
-const PACK_POSTINGS = 3;
-
-/** What one posting costs inside a pack, rounded to a whole major unit ("₹50"), as minor units. */
-export function perPostingMinor(packMinor: number): number {
-  return Math.max(1, Math.round(packMinor / PACK_POSTINGS / 100)) * 100;
+/** "23:59" in India. */
+export function istTime(iso: string): string {
+  const at = Date.parse(iso);
+  return Number.isFinite(at) ? new Date(at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' }) : '';
 }
 
-/**
- * The fewest postings in 30 days for which the pass costs less than buying packs, or undefined when it never does
- * within a reasonable number (or a price is missing). Computed from the live prices, never typed.
- */
-export function passBreakEven(packMinor: number | undefined, passMinor: number | undefined): number | undefined {
-  if (!packMinor || !passMinor || packMinor <= 0 || passMinor <= 0) return undefined;
-  for (let n = 1; n <= 60; n++) {
-    if (Math.ceil(n / PACK_POSTINGS) * packMinor > passMinor) return n > PACK_POSTINGS ? n : undefined;
-  }
-  return undefined;
+/** "1 Dec" for the moment the monthly counts start again (00:00 UTC, so the day is read in UTC). */
+export function utcDay(iso: string): string {
+  const at = Date.parse(iso);
+  return Number.isFinite(at) ? new Date(at).toLocaleDateString('en-GB', { ...DAY_MONTH, timeZone: 'UTC' }) : '';
+}
+
+/** "17 Nov 2026", the day in the person's own time zone. */
+export function fullDate(iso: string): string {
+  const at = Date.parse(iso);
+  return Number.isFinite(at) ? new Date(at).toLocaleDateString('en-GB', { ...DAY_MONTH, year: 'numeric' }) : '';
+}
+
+/** What each count is, singular and plural, as it reads after "your 3 ...". */
+const FEATURE_NOUN: Record<Feature, readonly [string, string]> = {
+  analyses: ['analysis', 'analyses'],
+  matches: ['posting match', 'posting matches'],
+  searches: ['search with AI', 'searches with AI'],
+  practice: ['practice session', 'practice sessions'],
+  coach: ['coach or Ask question', 'coach and Ask questions'],
+  applications: ['application', 'applications'],
+};
+
+/** The kicker's subject: the feature's name, where a count ran out. */
+export const FEATURE_KICKER: Record<Feature, string> = {
+  analyses: 'New analysis',
+  matches: 'Posting match',
+  searches: 'Search with AI',
+  practice: 'Interview practice',
+  coach: 'Coach and Ask',
+  applications: 'Apply for me',
+};
+
+/** "You've used your 5 searches with AI this month." (without a number when the server did not say one). */
+export function limitHeadline(feature: Feature, limit?: number): string {
+  const [one, many] = FEATURE_NOUN[feature];
+  const when = feature === 'applications' ? '' : ' this month';
+  if (limit === undefined) return `You've used all your ${many}${when}.`;
+  return `You've used your ${limit} ${limit === 1 ? one : many}${when}.`;
+}
+
+/** "They come back on 1 Dec." for a monthly count; empty for `applications` (counted once) or when no date is known. */
+export function limitReturns(feature: Feature, limit: number | undefined, resetsAt?: string): string {
+  if (feature === 'applications' || !resetsAt) return '';
+  return `${limit === 1 ? 'It comes' : 'They come'} back on ${utcDay(resetsAt)}.`;
+}
+
+/** The sentence for a count that ran out (a 402 `limit_reached`), in the plain voice. */
+export function limitSentence(feature: Feature, limit: number, resetsAt?: string): string {
+  const back = limitReturns(feature, limit, resetsAt);
+  return back ? `${limitHeadline(feature, limit)} ${back}` : limitHeadline(feature, limit);
 }

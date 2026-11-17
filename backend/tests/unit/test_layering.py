@@ -86,6 +86,9 @@ RULES: dict[str, tuple[str, ...]] = {
     "handoff": ("core", "contract", "storage.ports"),
     # the radar card: a self-contained service like the hand-off (no model); it reaches storage only through its Protocols.
     "card": ("core", "contract", "storage.ports"),
+    # Where can I go next (N1): a self-contained service like the radar card (no model); storage only through its Protocols;
+    # it reuses the card's radar geometry, palettes, text measuring and resvg renderer (no fork).
+    "report": ("core", "contract", "storage.ports", "card"),
     # The Leafout Weekly sits with the model-calling services: it reuses the job search's narrowing, judge prompt and checks
     # and Discover's quick fit (no fork), and the email message type of auth (a sender is handed in; it imports no other part of
     # auth). Nothing imports weekly except api and the container; the spend guard is handed in as a callable, not imported.
@@ -118,6 +121,7 @@ RULES: dict[str, tuple[str, ...]] = {
         "handoff",
         "weekly",
         "card",
+        "report",
         "apply",
         "resume",
         "guard",

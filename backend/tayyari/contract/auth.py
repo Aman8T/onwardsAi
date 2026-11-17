@@ -72,6 +72,10 @@ class MeEntitlements(_Model):
     unlimited: bool | None = None
     """True for an account on the server's unlimited list (``TAYYARI_GUARD__UNLIMITED_EMAILS``): no limits, nothing charged.
     Left out of the JSON for everyone else (the field is ``unlimited?`` in the TypeScript contract)."""
+    plan: Literal["just_looking", "day_one"] | None = None
+    """``day_one`` once Day One is bought, else ``just_looking`` (roadmap B2)."""
+    matchesLeft: int | None = None
+    """Posting matches left this month on Just Looking; absent on Day One."""
 
 
 class MeProviders(_Model):

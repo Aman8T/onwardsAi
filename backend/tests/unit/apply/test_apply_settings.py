@@ -45,7 +45,7 @@ def test_the_a1_defaults() -> None:
     assert apply.browser_use_base_url.startswith("https://")
     assert min(apply.est_browser_usd, apply.est_fill_call_usd, apply.est_answer_usd) > 0
     billing = BillingSettings()
-    assert billing.free_applications == 10 and billing.apply_credit_cost is None
+    assert billing.free_applications == 5 and billing.apply_credit_cost is None
     assert GuardSettings().est_apply_email_usd > 0
     # the computer-use fallback is gone, and its settings with it
     gone = {"agent_order", "agent_max_steps", "gemini_model", "gemini_endpoint", "claude_agent_model", "est_run_usd",

@@ -4,7 +4,7 @@ export const mockInterview: ContentPage = {
   path: '/mock-interview',
   title: 'Mock interview practice on your own work',
   description:
-    'Practise interviews about your actual work: speak or type, get verdicts that quote your own words and a short list of what to fix. Free while in testing.',
+    'Practise interviews about your actual work: speak or type, get verdicts that quote your own words and a short list of what to fix. Some sessions are free.',
   h1: 'Practise interviews that ask about your actual work',
   lede: 'A list of generic questions does not prepare you for the ones you will really get, which are about your resume and the role. Leafout’s practice interview asks about the things you have written down, listens to your answer and tells you which parts held up.',
   blurb: 'Four kinds of practice, spoken or typed, with verdicts that quote you.',
@@ -17,7 +17,7 @@ export const mockInterview: ContentPage = {
     },
     {
       q: 'Is practice free?',
-      a: 'Practice is free while it is in testing.',
+      a: 'Just Looking, the free plan, includes a few practice sessions each month. Day One has no limit on them.',
     },
     {
       q: 'Is my voice recording stored?',

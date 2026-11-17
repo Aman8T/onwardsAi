@@ -11,6 +11,7 @@
     AuthService                                   (sign-in, sessions and emailed links; its own small HTTP client)
     EntitlementService, BillingService            (what an account may use, and how it pays: Razorpay for INR on
                                                    its key pair, Stripe for USD on its two secrets)
+    PlanService                                   (the plans: which one an account is on, Just Looking's monthly counts)
     MatchService                                  (the posting match: the guarded, recording Claude client, the
                                                    match models, and the stored postings and extracted facts)
     DiscoverService                               (job discovery over employers' own public boards; no model, its own
@@ -34,6 +35,8 @@
                                                    read, the spend guard around them, the mail provider when a key is set)
     CardService                                   (the radar card: the owner's settings and link, the snapshot drawn from the
                                                    newest profile; no model)
+    ReportService                                 (Where can I go next: the owner's choices and link, the public report drawn
+                                                   from the newest profile; no model)
     ResumeService                                 (/resume: a profile's resumes over the match's facts, export and lint;
                                                    the guarded Claude client for one relevance call per path resume)
     match_anonymous                               (may a visitor with no sign-in match a posting: the setting
@@ -104,6 +107,7 @@ if TYPE_CHECKING:
     from tayyari.auth.email import EmailSender
     from tayyari.auth.service import AuthService
     from tayyari.billing.entitlements import EntitlementService
+    from tayyari.billing.plans import PlanService
     from tayyari.billing.service import BillingService
     from tayyari.card.png import CardPictures
     from tayyari.card.service import CardService
@@ -115,6 +119,8 @@ if TYPE_CHECKING:
     from tayyari.match.service import MatchService
     from tayyari.portfolio.service import PortfolioService
     from tayyari.prepare.service import PrepareService
+    from tayyari.report.png import ReportPictures
+    from tayyari.report.service import ReportService
     from tayyari.resume.service import ResumeService
     from tayyari.speech.engine import SpeechEngine
     from tayyari.speech.service import SpeechService
@@ -148,12 +154,14 @@ class ContainerOverrides:
     - ``auth_transport``: an ``httpx2`` transport for every outgoing sign-in call (Google's token endpoint and keys,
       the email provider); tests hand in an ``httpx2.MockTransport`` so the flow runs without a network.
     - ``entitlements``, ``billing``, ``match``, ``discover``: the services themselves.
+    - ``plans``: the plan service itself (the plans and Just Looking's counts).
     - ``discover_transport``: an ``httpx2`` transport for Discover's reads of employers' boards (and the job search's);
       tests hand in an ``httpx2.MockTransport`` so a refresh runs without a network.
     - ``jobsearch``, ``interview``, ``prepare``: the job search, practice interview and prepare services themselves.
     - ``handoff``: the marketing-site hand-off service itself.
     - ``weekly``: The Leafout Weekly service itself (``mailer`` also stands in for its mail provider).
     - ``card``: the radar card service itself.
+    - ``report``: the "Where can I go next" report service itself.
     - ``resume``: the resume service itself.
     - ``speech``: the speech service itself. ``speech_engine``: just its engine (the service is still built here, over the
       real ``kv`` budget); giving one switches Sarvam speech on without a ``SARVAM_API_KEY`` (the
@@ -182,6 +190,7 @@ class ContainerOverrides:
     auth_transport: httpx2.AsyncBaseTransport | None = None
     entitlements: EntitlementService | None = None
     billing: BillingService | None = None
+    plans: PlanService | None = None
     match: MatchService | None = None
     discover: DiscoverService | None = None
     discover_transport: httpx2.AsyncBaseTransport | None = None
@@ -193,6 +202,7 @@ class ContainerOverrides:
     handoff: HandoffService | None = None
     weekly: WeeklyService | None = None
     card: CardService | None = None
+    report: ReportService | None = None
     resume: ResumeService | None = None
     razorpay_session: requests.Session | None = None
     stripe_http: stripe.HTTPClient | None = None
@@ -261,6 +271,8 @@ class Container:
     entitlements: EntitlementService
     """What an account may use. The posting-match routes call ``entitlements.consume(user_id, match_id)``."""
     billing: BillingService
+    plans: PlanService
+    """The plans and Just Looking's counts. Counted routes call ``plans.use(user_id, feature, ref)`` before they spend."""
     match: MatchService
     """The posting match pipeline. Routes pay for a match with ``entitlements.consume`` before they run it."""
     match_anonymous: bool
@@ -289,6 +301,10 @@ class Container:
     """The radar card's owner side. No model is called; the public routes count in the ``card`` window."""
     card_pictures: CardPictures
     """The radar card's LinkedIn pictures, drawn by resvg off the event loop and kept in memory by link and version."""
+    report: ReportService
+    """The "Where can I go next" report's owner side. No model is called."""
+    report_pictures: ReportPictures
+    """The report's link previews, drawn by resvg off the event loop and kept in memory by link and version."""
     resume: ResumeService
     """/resume: a profile's resumes. The routes reserve spend before the uploaded resume or a path resume is made (the
     sources may be read, and a path resume asks the model once); every Claude call goes through the guarded client."""
@@ -332,6 +348,7 @@ class Container:
         from tayyari.auth.google import STATE_KEY_NAME
         from tayyari.auth.service import AUTH_HTTP_HEADERS, AuthService
         from tayyari.billing.entitlements import EntitlementService
+        from tayyari.billing.plans import PlanService
         from tayyari.billing.products import below_floor
         from tayyari.billing.razorpay import RazorpayGateway
         from tayyari.billing.service import BillingService
@@ -348,6 +365,8 @@ class Container:
         from tayyari.match.service import MatchService
         from tayyari.portfolio.service import PortfolioService
         from tayyari.prepare.service import PrepareService
+        from tayyari.report.png import ReportPictures
+        from tayyari.report.service import ReportService
         from tayyari.resume.service import ResumeService
         from tayyari.speech.service import SpeechService
         from tayyari.weekly.compose import EditionComposer
@@ -515,6 +534,7 @@ class Container:
                 entitlements = ov.entitlements
             else:
                 entitlements = EntitlementService(repos.billing, settings.billing, clock)
+            plans = ov.plans if ov.plans is not None else PlanService(repos.billing, settings, clock)
             billing: BillingService
             if ov.billing is not None:
                 billing = ov.billing
@@ -547,6 +567,7 @@ class Container:
                     clock=clock,
                     razorpay=razorpay,
                     stripe=stripe_gateway,
+                    plans=plans,
                 )
                 for item in below_floor(settings):
                     log.warning(
@@ -752,6 +773,21 @@ class Container:
                 )
             )
 
+            report = (
+                ov.report
+                if ov.report is not None
+                else ReportService(
+                    profiles=repos.profiles,
+                    users=repos.users,
+                    reports=repos.report,
+                    resumes=repos.resumes,
+                    user_facts=repos.user_facts,
+                    clock=clock,
+                    public_url=settings.auth.public_url,
+                    offer_url=settings.report.offer_url,
+                )
+            )
+
             resume = (
                 ov.resume
                 if ov.resume is not None
@@ -816,6 +852,7 @@ class Container:
             auth=auth,
             entitlements=entitlements,
             billing=billing,
+            plans=plans,
             match=match,
             match_anonymous=match_anonymous,
             discover=discover,
@@ -827,6 +864,8 @@ class Container:
             weekly=weekly,
             card=card,
             card_pictures=CardPictures(settings.card.png_cache_size),
+            report=report,
+            report_pictures=ReportPictures(settings.card.png_cache_size),
             resume=resume,
             rate_limiter=rate_limiter,
             spend_guard=spend_guard,

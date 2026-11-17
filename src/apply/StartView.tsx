@@ -20,6 +20,7 @@ import { getMatch } from '../match/api';
 import { BAND_LABEL, WORK_MODE_LABEL } from '../match/model';
 import { ATS_LABEL, ApplyError, applyApi, errorText } from './api';
 import { Consent } from './Consent';
+import { LimitNote } from '../billing/LimitNote';
 import { FirstCheck } from './FirstCheck';
 import { DefaultStamp, ResumeLink, defaultLine } from './ResumeNamed';
 import { DETAILS_ROUTE, LIST_ROUTE, applyPath, linkTo } from './route';
@@ -48,7 +49,7 @@ export interface CheckRow {
   state: CheckState;
 }
 
-/** Which check row a block reason belongs to; `signed_out` and `no_credit` are not rows of their own. */
+/** Which check row a block reason belongs to; `signed_out` and `no_credit` (the applications count ran out) are not rows of their own. */
 const ROW_OF: Partial<Record<ApplyBlockReason, CheckRowId>> = {
   manual_only: 'fillable',
   own_account_ats: 'fillable',
@@ -115,11 +116,11 @@ export const FAILURE: Record<ApplyBlockReason, { chip: string; row: string; text
     label: 'Sign in',
   },
   no_credit: {
-    row: 'Every check passed; there is no credit to hold.',
-    chip: 'No credits left',
-    text: 'Starting holds one credit, charged only when the form is sent. Nothing was charged.',
+    row: 'Every check passed; your applications on Just Looking are used.',
+    chip: 'Applications used',
+    text: 'Just Looking counts a few applications, once. Nothing was sent and nothing was charged.',
     action: 'pricing',
-    label: 'See plans',
+    label: 'See the plans',
   },
   closed: {
     row: "The employer's page says the role is closed.",
@@ -400,6 +401,8 @@ function FailurePanel(props: StartViewProps) {
   const reason = check.reason ?? 'unknown_liveness';
   const f = FAILURE[reason];
   const titleId = useId();
+  // the applications count ran out: the plan panel every counted screen shows
+  if (reason === 'no_credit') return <LimitNote feature="applications" safe="Nothing was sent and nothing was charged." />;
   let action: ReactNode = null;
   switch (f.action) {
     case 'signin':
@@ -471,24 +474,19 @@ function FailurePanel(props: StartViewProps) {
 function PricePanel({ status, unlimited }: { status: ApplyStatus; unlimited?: boolean }) {
   return (
     <section className="panel ap-panel ap-stack-s" aria-label="Price">
-      <h2 className="kicker">Price</h2>
+      <h2 className="kicker">What it costs</h2>
       {unlimited ? (
         <p>This account has no limits: nothing is charged.</p>
-      ) : status.price !== undefined ? (
-        <p>
-          <span className="numeral ap-price">{status.price}</span> {status.price === 1 ? 'credit' : 'credits'}{' '}
-          <span className="ap-muted">if it's sent</span>
-        </p>
       ) : (
-        <p>No price is set yet, so nothing is charged.</p>
+        <p>Nothing is charged for an application. Just Looking counts a few, once; Day One does not count them.</p>
       )}
       <p className="ap-muted ap-small">
-        Nothing if it isn't sent. A form we can't finish is refunded; a send we can't confirm waits for your word before anything
-        is charged.
+        Nothing is counted if it isn't sent. A form we can't finish is given back; a send we can't confirm waits for your word
+        before it is counted.
       </p>
       {!unlimited && status.freeLeft !== undefined && (
         <p className="ap-small">
-          Free applications left: <span className="numeral">{status.freeLeft}</span>
+          Applications left on Just Looking: <span className="numeral">{status.freeLeft}</span>
         </p>
       )}
     </section>

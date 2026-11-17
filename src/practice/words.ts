@@ -61,10 +61,10 @@ export const privacyLine = (by: SpeechBy): string => (by === 'sarvam' ? PRIVACY_
 /** The one line on who does the speech, shown where speech is set up. */
 export const engineNote = (by: SpeechBy): string => (by === 'sarvam' ? SARVAM_NOTE : CHROME_NOTE);
 
-export const FREE_LINE = 'Free while we test it · 3 a day';
+export const FREE_LINE = 'Up to 3 a day';
 
 /** The same line for an account with no limits: the count of 3 a day is not true for it, so it is left out. */
-export const FREE_LINE_UNLIMITED = 'Free while we test it';
+export const FREE_LINE_UNLIMITED = 'No daily count on this account';
 
 /** Where the line also says how many are left today, an account with no limits reads this instead. */
 export const UNLIMITED_LINE = 'Unlimited for this account';
@@ -224,7 +224,7 @@ export const HOW_IT_ENDS = 'At the end: each answer Defended, Shaky, Couldn\'t d
 export const VERDICT_ORDER: readonly Verdict[] = ['defended', 'shaky', 'couldnt', 'not_assessed'];
 
 /** The sentence under a day's limit that is used up: the server's own sentence wins when it sends one. */
-export const LIMIT_USED = "You've used today's practice interviews. They're free while we test them. More tomorrow. Your debriefs stay here.";
+export const LIMIT_USED = "You've used today's practice interviews. More tomorrow. Your debriefs stay here.";
 
 /* ───────────────────────── re-drill (I2) ───────────────────────── */
 

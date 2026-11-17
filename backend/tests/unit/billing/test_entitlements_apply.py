@@ -1,25 +1,24 @@
 """`EntitlementService` hold, capture and release for auto-apply, over the fake repository: the lifetime free
-applications first, a hold of nothing while no price is set, a 402 when a set price is not covered, idempotency on the
+applications first, a hold of nothing while no price is set (on Day One, since the plans: Just Looking is refused then,
+see test_plans.py), a 402 when a set price is not covered, idempotency on the
 ``apply:<application id>`` ref, a charge that is never given back and a give-back that is never charged, and that the
 service is the `apply.seams.ApplyCredits` the apply engine is handed."""
 
 from __future__ import annotations
 
 import inspect
+from datetime import timedelta
 
 import pytest
 
 from tayyari.apply.seams import ApplyCredits
-from tayyari.billing.entitlements import (
-    NO_APPLY_CREDITS_MESSAGE,
-    NO_CREDITS,
-    EntitlementService,
-    apply_ref,
-)
+from tayyari.billing.entitlements import EntitlementService, apply_ref
+from tayyari.billing.plans import LIMIT_REACHED
+from tayyari.billing.products import LIFETIME_DAYS
 from tayyari.core.errors import PaymentRequired
 from tayyari.core.settings import BillingSettings
 from tests.fakes.clock import FakeClock
-from tests.fakes.repos import FakeRepositories
+from tests.fakes.repos import FakeRepositories, _Balance
 
 Row = tuple[str, int, str | None]
 """``(reason, delta, ref)`` of one ledger row."""
@@ -28,17 +27,26 @@ Row = tuple[str, int, str | None]
 class World:
     """The service over the fake repository, with the ledger to read what each call wrote."""
 
-    def __init__(self, *, free: int = 10, cost: int | None = None) -> None:
+    def __init__(self, *, free: int = 10, cost: int | None = None, day_one: bool | None = None) -> None:
         self.clock = FakeClock()
         self.fakes = FakeRepositories(self.clock)
         settings = BillingSettings(free_applications=free, apply_credit_cost=cost)
         self.service = EntitlementService(self.fakes.billing, settings, self.clock)
+        self.day_one = cost is None if day_one is None else day_one
+        """With no price set, only a Day One account gets the hold of nothing (roadmap B2), so these worlds are Day One
+        accounts. The lifetime pass is set on the balance directly, so the ledger holds only what the holds wrote."""
+
+    def _plan(self, user_id: str) -> None:
+        if self.day_one:
+            balance = self.fakes.billing.balances.setdefault(user_id, _Balance())
+            balance.pass_until = self.clock.now() + timedelta(days=LIFETIME_DAYS)
 
     def ledger(self, user_id: str = "ana") -> list[Row]:
         return [(r.reason, r.delta, r.ref) for r in self.fakes.billing.ledger_of(user_id)]
 
     async def hold(self, ref: str, user_id: str = "ana") -> Row:
         """Hold ``ref`` and return the hold row it stands on (the one this call wrote, or the earlier one)."""
+        self._plan(user_id)
         await self.service.hold(user_id, ref)
         rows = [r for r in self.ledger(user_id) if r[2] == ref and r[0] in ("apply_free", "apply_hold")]
         return rows[-1]
@@ -60,9 +68,9 @@ def test_the_ref_of_a_hold_is_apply_and_the_application_id() -> None:
 # ───────────────────────── with the price unset (the default) ─────────────────────────
 
 
-def test_the_defaults_are_ten_free_applications_and_no_price() -> None:
+def test_the_defaults_are_five_free_applications_and_no_price() -> None:
     settings = BillingSettings()
-    assert settings.free_applications == 10
+    assert settings.free_applications == 5
     assert settings.apply_credit_cost is None
 
 
@@ -113,9 +121,13 @@ async def test_with_a_price_and_no_credits_the_hold_is_a_402() -> None:
     with pytest.raises(PaymentRequired) as refused:
         await world.service.hold("ana", apply_ref("a1"))
     assert refused.value.status == 402
-    assert refused.value.reason == NO_CREDITS
-    assert refused.value.to_body() == {"error": "payment_required", "reason": "no_credits"}
-    assert refused.value.user_message == NO_APPLY_CREDITS_MESSAGE
+    assert refused.value.reason == LIMIT_REACHED
+    assert refused.value.to_body() == {
+        "error": "payment_required",
+        "reason": "limit_reached",
+        "feature": "applications",
+        "limit": 0,
+    }
     assert world.ledger() == []  # nothing was written
 
 

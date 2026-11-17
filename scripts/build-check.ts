@@ -82,6 +82,9 @@ const MIN_SEED_WORDS = 150;
 const APP_PATHS = ['/match', '/practice', '/discover'];
 
 /** Wording that says a feature is not built, for features that are (the radar card and the portfolio preview exist). */
+/** The placeholders the server fills on the Pricing shell (api/static.py `fill_prices`): all must be in its text. */
+const PRICING_PLACEHOLDERS = ['{{price:dayone}}', '{{price:dayoneafter}}', '{{price:lowkey}}', '{{price:lockedin}}', '{{date:dayone}}', '{{days:refund}}'];
+
 const NOT_BUILT = /(?:radar card|shareable radar)[^.]{0,80}(?:not built|planned)|(?:not built|planned)[^.]{0,80}(?:radar card|shareable radar)/i;
 
 const decode = (text: string): string =>
@@ -281,12 +284,13 @@ function shellChecks(label: string, file: string, path: string, head: AppHead): 
       detail: NOT_BUILT.exec(seedText)?.[0],
     },
     {
-      name: `${label}: {{price:...}} placeholders ${path === '/pricing' ? 'for both plans in the text and the FAQ data, never in a head tag' : 'nowhere'}`,
+      name: `${label}: {{price:...}} and {{date:...}} placeholders ${path === '/pricing' ? 'for the four plans in the text and the FAQ data, never in a head tag' : 'nowhere'}`,
       ok:
         path === '/pricing'
-          ? seed.includes('{{price:pack3}}') &&
-            seed.includes('{{price:pass30}}') &&
-            JSON.stringify(nodes ?? []).includes('{{price:pack3}}') &&
+          ? PRICING_PLACEHOLDERS.every((p) => seed.includes(p)) &&
+            JSON.stringify(nodes ?? []).includes('{{price:dayone}}') &&
+            JSON.stringify(nodes ?? []).includes('{{price:dayoneafter}}') &&
+            JSON.stringify(nodes ?? []).includes('{{date:dayone}}') &&
             !/<meta[^>]*\{\{/.test(html) &&
             !/<title>[^<]*\{\{/.test(html)
           : !html.includes('{{'),
@@ -305,7 +309,7 @@ function pricingFaqCheck(): Check {
   return group('Pricing shell: FAQ', [
     { name: 'FAQPage data with 3 or more questions', ok: questions.length >= 3, detail: `${questions.length} questions` },
     { name: 'every question and answer is in the no-script body', ok: questions.every((q) => seed.includes(q.name) && seed.includes(q.acceptedAnswer.text)) },
-    { name: 'says nothing renews, names the 7-day refund and delivery', ok: /nothing auto-renews/i.test(seed) && /within 7 days/.test(seed) && /nothing is shipped/.test(seed) },
+    { name: 'says nothing renews, names the refund and delivery', ok: /nothing auto-renews/i.test(seed) && /within \{\{days:refund\}\} days/.test(seed) && /nothing is shipped/.test(seed) },
   ]);
 }
 

@@ -356,6 +356,156 @@
   margin-top: 0;
 }
 
+/* A shared report, "Where can I go next" (/next/<slug>, drawn by backend/tayyari/report/page.py). No script and no
+   inline style on that page, so its layout lives here; every colour is a token. */
+.next-column {
+  max-width: 960px;
+}
+
+.next-shape figcaption,
+.next-foot,
+.next-label,
+.next-count-words,
+.next-eta,
+.next-quote cite {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.next-open {
+  display: inline-block;
+  margin-top: var(--s3);
+  padding: var(--s1) var(--s3);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: var(--fs-2);
+}
+
+.next-roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--s4);
+  margin-top: var(--s6);
+}
+
+.next-role {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+}
+
+.next-role-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.next-role h2 {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: 600;
+}
+
+.next-stamp {
+  padding: 1px var(--s2);
+  border: 1px solid var(--accent-ui);
+  border-radius: 6px;
+  color: var(--accent-ui);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--fs-0);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.next-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.next-pip {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-ui);
+}
+
+.next-pip.is-open {
+  background: transparent;
+  border: 1px dashed var(--text-muted);
+}
+
+.next-count-words {
+  margin-left: var(--s2);
+}
+
+.next-label {
+  margin: 0 0 var(--s1);
+}
+
+.next-quote {
+  margin: 0 0 var(--s2);
+  padding: var(--s2) var(--s3);
+  background: var(--surface-2);
+  border-radius: 6px;
+}
+
+.next-quote p {
+  margin: 0;
+  font-size: var(--fs-2);
+}
+
+.next-quote cite {
+  display: block;
+  margin-top: var(--s1);
+  font-style: normal;
+}
+
+.next-gap p {
+  margin: 0;
+  font-size: var(--fs-2);
+}
+
+.next-offer {
+  margin: auto 0 0;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-2);
+}
+
+.next-near {
+  margin-top: var(--s6);
+}
+
+.next-near ul {
+  list-style: none;
+  padding: 0;
+}
+
+.next-near li {
+  display: grid;
+  gap: var(--s1);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.next-near li span {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+}
+
+.next-cta {
+  margin-top: var(--s6);
+}
+
+.next-foot {
+  margin-top: var(--s5);
+}
+
 /* Footer */
 .site-footer {
   border-top: 1px solid var(--line);

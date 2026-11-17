@@ -4,12 +4,13 @@
  * person's recent matches.
  *
  * A refused request lands back here, with the posting still in the box: a 422 shows the server's sentence, a 402 the
- * calm "you've used your free posting" panel with a link to /pricing, a 401 opens the sign-in sheet (see useMatch) or,
+ * calm "you've used your posting matches" panel (`LimitNote`) with a link to the plans, a 401 opens the sign-in sheet (see useMatch) or,
  * on a server that matches without an account, says that it needs one.
  */
 import { useId, useRef } from 'react';
 import type { FormEvent } from 'react';
 import { BAND_LABEL, MAX_POSTING_CHARS, hostOf, isBlockedHost } from './model';
+import { LimitNote } from '../billing/LimitNote';
 import { PageLine } from '../components/materials';
 import { matchPath } from './route';
 import type { MatchRoute } from './route';
@@ -23,7 +24,7 @@ export interface PasteViewProps {
   busy: boolean;
   /** The server's sentence after a refusal (422, 429, a failed stream). */
   notice?: string;
-  /** Show the "you've used your free posting" panel (never for an account with no limits: the caller leaves it off). */
+  /** Show the "you've used your posting matches" panel (never for an account with no limits: the caller leaves it off). */
   paywall: boolean;
   onDismissPaywall: () => void;
   /** Why matching is not possible yet, as a sentence (no profile, a sample profile); empty when it is. */
@@ -99,25 +100,12 @@ export function PasteView(props: PasteViewProps) {
         </div>
 
         {paywall && (
-          <section className="mt-panel mt-paywall m-field" aria-labelledby="mt-pay-h">
-            <p className="kicker">Posting match</p>
-            <h2 id="mt-pay-h" className="mt-paywall-title">
-              You've used your free posting this month.
-            </h2>
-            <p className="mt-lede">
-              Seeing a gap, answering a question about yourself and re-checking stay free. Matching another posting takes a pack of three or a 30-day
-              pass. No subscription, nothing to cancel.
-            </p>
-            <div className="mt-actions">
-              <a className="btn btn-primary mt-btn" href="/pricing">
-                See plans
-              </a>
-              <button type="button" className="btn btn-quiet mt-btn" onClick={onDismissPaywall}>
-                Not now
-              </button>
-            </div>
-            <p className="mt-fine">Your posting is still in the box below.</p>
-          </section>
+          <LimitNote
+            feature="matches"
+            className="mt-paywall"
+            safe="Your posting is still in the box below. Nothing was read and nothing was charged."
+            onWait={onDismissPaywall}
+          />
         )}
 
         <form className="mt-panel mt-form m-plain" onSubmit={submit} noValidate>

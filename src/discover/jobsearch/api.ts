@@ -33,6 +33,7 @@ import type {
   TrailStage,
   TrailStep,
 } from '../../../shared/jobsearch';
+import { limitHeadline, limitSentence } from '../../billing/format';
 import { ApiError, readNdjson } from '../../lib/api';
 import { hostOf, safeHref } from '../util';
 
@@ -45,13 +46,22 @@ const DROPPED = 'The connection dropped before the search finished. You can sear
 /** How the stream is started. The dev gallery swaps in a scripted one so the screen runs with no server. */
 export type JobSearchStream = (req: JobSearchRequest, onEvent: (e: JobSearchEvent) => void, signal?: AbortSignal) => Promise<void>;
 
+/** The count that ran out, from a 402 (`limit_reached`): the panel (`LimitNote`) is drawn from it. */
+export interface RanOut {
+  limit?: number;
+  resetsAt?: string;
+}
+
 export class JobSearchApiError extends ApiError {
   /** Seconds the server asks the person to wait (a 429's `Retry-After`), when it gave a number. */
   readonly retryAfter?: number;
-  constructor(message: string, status: number, retryAfter?: number) {
+  /** Set for a 402: the Just Looking count of searches has run out. */
+  readonly ranOut?: RanOut;
+  constructor(message: string, status: number, retryAfter?: number, ranOut?: RanOut) {
     super(message, status);
     this.name = 'JobSearchApiError';
     this.retryAfter = retryAfter;
+    this.ranOut = ranOut;
   }
 }
 
@@ -60,13 +70,15 @@ export interface JobSearchFailure {
   message: string;
   status?: number;
   retryAfter?: number;
+  /** Set when the count of searches ran out (a 402): the screen shows the plan panel instead of a failure. */
+  ranOut?: RanOut;
 }
 
 /** Whether asking again could help: not for a request the server refused outright (400, 404, 503) or a sign-in (401). */
 export const canRetry = (f: JobSearchFailure): boolean => f.status === undefined || f.status === 429 || (f.status >= 500 && f.status !== 503);
 
 export function failureOf(err: unknown): JobSearchFailure {
-  if (err instanceof JobSearchApiError) return { message: err.message, status: err.status, retryAfter: err.retryAfter };
+  if (err instanceof JobSearchApiError) return { message: err.message, status: err.status, retryAfter: err.retryAfter, ...(err.ranOut ? { ranOut: err.ranOut } : {}) };
   return { message: DROPPED };
 }
 
@@ -82,6 +94,14 @@ const FALLBACK: Record<number, string> = {
   503: 'Search with AI is not available right now.',
 };
 
+/** The 402 of a count that ran out, from the body (or a stream `error` event): the limit and the day it comes back, when sent. */
+function ranOutError(o: Record<string, unknown>): JobSearchApiError {
+  const limit = typeof o.limit === 'number' && Number.isFinite(o.limit) ? o.limit : undefined;
+  const resetsAt = typeof o.resetsAt === 'string' ? o.resetsAt : undefined;
+  const message = limit !== undefined ? limitSentence('searches', limit, resetsAt) : limitHeadline('searches');
+  return new JobSearchApiError(message, 402, undefined, { limit, resetsAt });
+}
+
 /** The error for a non-2xx response, with the server's sentence as given. */
 export async function failure(res: Response): Promise<JobSearchApiError> {
   let body: unknown;
@@ -90,6 +110,7 @@ export async function failure(res: Response): Promise<JobSearchApiError> {
   } catch {
     /* not JSON */
   }
+  if (res.status === 402) return ranOutError(isObj(body) ? body : {});
   const sentence = isObj(body) && typeof body.error === 'string' ? body.error.trim() : '';
   const message = sentence && !looksLikeCode(sentence) ? sentence : (FALLBACK[res.status] ?? TROUBLE);
   // `Retry-After` may also be a date; only a number of seconds is used
@@ -298,6 +319,8 @@ export const streamJobSearch: JobSearchStream = async (req, onEvent, signal) => 
   const res = await fetch('/api/jobsearch', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(req), signal });
   if (!res.ok) throw await failure(res);
   await readNdjson<unknown>(res, (raw) => {
+    // the same refusal can arrive as a stream `error` event with the code `payment_required`
+    if (isObj(raw) && raw.type === 'error' && raw.code === 'payment_required') throw ranOutError(raw);
     const e = readJobSearchEvent(raw);
     if (e) onEvent(e);
   });

@@ -165,7 +165,7 @@ export function QuestionsView({ detail, navigate, onAnswer, onSkip, onFillAgain 
               {blocked}
             </p>
           )}
-          {confirmSkip && <p className="ap-muted ap-small">Nothing is sent, and the hold on your credit is released.</p>}
+          {confirmSkip && <p className="ap-muted ap-small">Nothing is sent, and it is not counted against your applications.</p>}
         </div>
 
         <aside className="ap-aside ap-stack-s">

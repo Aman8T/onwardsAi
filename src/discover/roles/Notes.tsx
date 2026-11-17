@@ -7,9 +7,11 @@
  * a 503 (paused for today, or switched off) and a 404 (the profile is not on this server) cannot be fixed by asking
  * again, so they offer no retry.
  */
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { offersSignIn } from '../../auth/links';
 import { signInSheet, useMe } from '../../auth/useMe';
+import { LimitNote } from '../../billing/LimitNote';
 import { plural } from '../../lib/ui';
 import { canRetry } from '../jobsearch/api';
 import type { JobSearchFailure } from '../jobsearch/api';
@@ -27,9 +29,29 @@ export interface FailureNoteProps {
 }
 
 /** True when asking again right now is pointless: the service says no, or the profile is missing. */
-export const isBlocked = (f: JobSearchFailure | undefined): boolean => f?.status === 503 || f?.status === 404;
+export const isBlocked = (f: JobSearchFailure | undefined): boolean => f?.status === 503 || f?.status === 404 || f?.ranOut !== undefined;
 
-export function FailureNote({ failure, hasResults, found, onRetry, onAnalyse }: FailureNoteProps) {
+export function FailureNote(props: FailureNoteProps) {
+  // the Just Looking count of searches ran out: the plan panel, not a failure
+  if (props.failure.ranOut) return <SearchesRanOut failure={props.failure} hasResults={props.hasResults} />;
+  return <FailureLine {...props} />;
+}
+
+function SearchesRanOut({ failure, hasResults }: { failure: JobSearchFailure; hasResults: boolean }) {
+  const [gone, setGone] = useState(false);
+  if (gone) return null;
+  return (
+    <LimitNote
+      feature="searches"
+      limit={failure.ranOut?.limit}
+      resetsAt={failure.ranOut?.resetsAt}
+      safe={hasResults ? 'No search ran and nothing was charged. Your last results stay here.' : 'No search ran and nothing was charged.'}
+      onWait={() => setGone(true)}
+    />
+  );
+}
+
+function FailureLine({ failure, hasResults, found, onRetry, onAnalyse }: FailureNoteProps) {
   const { status } = failure;
   const quiet = status === 429 || status === 503;
   // a sentence that already says how long to wait is not told twice

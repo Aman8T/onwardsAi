@@ -52,7 +52,7 @@ export function signInRequired(me: MeResponse | null | undefined): boolean {
 }
 
 const NO_PROVIDERS: MeProviders = { google: false, magic: false, leafout: false };
-const NO_ENTITLEMENTS: MeEntitlements = { credits: 0, freeMatchAvailable: false };
+const NO_ENTITLEMENTS: MeEntitlements = { credits: 0, freeMatchAvailable: false, plan: 'just_looking' };
 
 let inflight: Promise<void> | null = null;
 

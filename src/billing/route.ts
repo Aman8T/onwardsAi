@@ -1,47 +1,60 @@
 /**
- * The pricing page's address. Like the match section it is a real URL, because payment providers send the person back
- * to it (Stripe's success and cancel pages) and the paywall in the match screens links to it.
+ * The pricing screens' addresses. They are real URLs, because the report's paid link and the sign-in return point at
+ * the bill, and because Back should work.
  *
- *   /pricing                       the plans
- *   /pricing?checkout=success      back from Stripe after paying (the webhook is what grants; the page waits for it)
- *   /pricing?checkout=cancelled    back from Stripe without paying
- *   /pricing?product=pack3&currency=INR   what a signed-out visitor chose before signing in: preselected, never bought
+ *   /pricing                  the plan screen: four plans and a stage
+ *   /pricing?bill=day-one     the bill for Day One: the slip, the wait, the receipt
  *
- * Pure functions only (the store imports this file), so nothing here may touch the store or the DOM.
+ * `navigate` moves between the two without a reload and tells whoever is listening (`useAddress`), because the store's
+ * view stays `pricing` for both. Pure apart from that: nothing here touches the store.
  */
+import { useSyncExternalStore } from 'react';
 
 export const PRICING_PATH = '/pricing';
-
-export type CheckoutReturn = 'success' | 'cancelled';
+export const BILL_PATH = '/pricing?bill=day-one';
 
 /** True for `/pricing` (a trailing slash is fine). */
 export function isPricingPath(pathname: string): boolean {
   return pathname.replace(/\/+$/, '') === PRICING_PATH;
 }
 
-/** What the provider's return URL says happened, or null when the page was opened normally. */
-export function parseCheckoutReturn(search: string): CheckoutReturn | null {
-  const value = new URLSearchParams(search).get('checkout');
-  return value === 'success' || value === 'cancelled' ? value : null;
+/** True when the address asks for the Day One bill (`?bill=day-one`). */
+export function parseBill(search: string): boolean {
+  return new URLSearchParams(search).get('bill') === 'day-one';
 }
 
-export interface Preselect {
-  product?: 'pack3' | 'pass30';
-  currency?: 'INR' | 'USD';
+const listeners = new Set<() => void>();
+
+/** Tell every `useAddress` that the address changed (the store calls this after it pushes one). */
+export function notifyAddress() {
+  listeners.forEach((l) => l());
 }
 
-/** What the visitor chose before signing in (`?product=&currency=`). Only known values count; checkout never starts from it. */
-export function parsePreselect(search: string): Preselect {
-  const q = new URLSearchParams(search);
-  const product = q.get('product');
-  const currency = q.get('currency');
-  return {
-    product: product === 'pack3' || product === 'pass30' ? product : undefined,
-    currency: currency === 'INR' || currency === 'USD' ? currency : undefined,
+/** Push `path` (when it is not the address already) and tell the listeners. */
+export function navigate(path: string) {
+  try {
+    if (window.location.pathname + window.location.search !== path) window.history.pushState(null, '', path);
+  } catch {
+    /* no address bar to update */
+  }
+  notifyAddress();
+}
+
+function subscribe(cb: () => void) {
+  listeners.add(cb);
+  window.addEventListener('popstate', cb);
+  return () => {
+    listeners.delete(cb);
+    window.removeEventListener('popstate', cb);
   };
 }
 
-/** The address a signed-out Buy returns to after sign-in. */
-export function preselectPath(product: string, currency: string): string {
-  return `${PRICING_PATH}?product=${encodeURIComponent(product)}&currency=${encodeURIComponent(currency)}`;
+/** Which of the two screens the address names. */
+export function useAddress(): 'plans' | 'bill' {
+  const bill = useSyncExternalStore(
+    subscribe,
+    () => parseBill(window.location.search),
+    () => false,
+  );
+  return bill ? 'bill' : 'plans';
 }

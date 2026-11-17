@@ -26,6 +26,7 @@ import type {
   StopReason,
   YourDetails,
 } from '../../shared/apply';
+import { limitSentence } from '../billing/format';
 
 export class ApplyError extends Error {
   constructor(
@@ -50,7 +51,7 @@ export function errorText(err: unknown, fallback = 'The server did not answer. T
 }
 
 /** A 402 carries only the code `payment_required` (and a reason), never a sentence: this is the sentence (`billing.entitlements.NO_APPLY_CREDITS_MESSAGE`). */
-export const NO_APPLICATIONS_LEFT = 'You have used your free applications. Choose a plan to continue.';
+export const NO_APPLICATIONS_LEFT = "You've used all your applications on Just Looking. See the plans to carry on.";
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, { credentials: 'same-origin', ...init });
@@ -61,7 +62,10 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
       const raw: unknown = await res.json();
       if (raw && typeof raw === 'object') body = raw as Record<string, unknown>;
       const text = body.error ?? body.detail;
-      if (res.status === 402 || text === 'payment_required') message = NO_APPLICATIONS_LEFT;
+      if (res.status === 402 || text === 'payment_required') {
+        // `limit_reached` for `applications` carries the count; the older `no_credits` carries nothing
+        message = body.reason === 'limit_reached' && typeof body.limit === 'number' ? limitSentence('applications', body.limit) : NO_APPLICATIONS_LEFT;
+      }
       else if (typeof text === 'string' && text) message = text;
     } catch {
       /* not JSON */
@@ -83,7 +87,7 @@ export const applyApi = {
   status: () => call<ApplyStatus>('/api/apply/status'),
   /** The cheap pre-check behind "Apply for me": read-only, charges nothing. */
   check: (body: ApplyCheckRequest) => call<ApplyCheck>('/api/apply/check', json('POST', body)),
-  /** Start: the row is created `queued` with a credit hold, never charged here. */
+  /** Start: the row is created `queued` and counted against the applications (Just Looking), never charged here. */
   start: (body: StartApplicationRequest) => call<ApplicationDetail>('/api/apply/applications', json('POST', body)),
   list: () => call<ApplicationList>('/api/apply/applications'),
   get: (id: string) => call<ApplicationDetail>(app(id)),
@@ -91,7 +95,7 @@ export const applyApi = {
   answer: (id: string, body: AnswerRequest) => call<AnswerResult>(app(id, '/answers'), json('POST', body)),
   /** The digest must be the review's: the person approves exactly what they saw. */
   approve: (id: string, digest: string) => call<ApplicationDetail>(app(id, '/approve'), json('POST', { digest })),
-  /** Any state before submitting -> cancelled; the hold is released. */
+  /** Any state before submitting -> cancelled; the application is not counted. */
   cancel: (id: string) => call<ApplicationDetail>(app(id, '/cancel'), { method: 'POST' }),
   /** Check this one: the person says whether it went through. */
   resolve: (id: string, outcome: ResolveOutcome) => call<ApplicationDetail>(app(id, '/resolve'), json('POST', { outcome })),

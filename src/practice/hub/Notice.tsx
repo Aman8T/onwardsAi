@@ -45,7 +45,7 @@ export function LimitNotice({ used = DAILY_INTERVIEWS }: { used?: number }) {
       }
     >
       <p>
-        You've used today's {used} practice interviews. They're free while we test them. More tomorrow. Your debriefs stay here.
+        You've used today's {used} practice interviews. More tomorrow. Your debriefs stay here.
       </p>
     </Notice>
   );
@@ -139,7 +139,7 @@ export function ErrorNote({ message, onRetry, onBack }: { message: string; onRet
 }
 
 /**
- * "Free while we test it · 3 a day · 2 left today": what practice costs now, and what is left of today. An account with
+ * "Up to 3 a day · 2 left today": the daily ceiling every account shares, and what is left of today (the monthly count of Just Looking is the plan's, shown when it runs out). An account with
  * no limits has no count to give, so it reads "Unlimited for this account".
  */
 export function freeLine(leftToday: number | undefined, unlimited = false): string {

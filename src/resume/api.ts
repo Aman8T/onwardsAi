@@ -48,7 +48,7 @@ const JSON_HEADERS = { 'Content-Type': 'application/json' };
 export const NOT_FINALISED_MESSAGE = 'Finalise this resume first. Only a finalised resume is downloaded or made the default.';
 const SIGN_IN_MESSAGE = 'Sign in to open your resumes.';
 const NOT_FOUND_MESSAGE = "That resume isn't here. It may belong to another profile, or it was removed.";
-const SPEND_MESSAGE = 'Making a resume for a role uses a model call, and there is nothing left to spend on one right now.';
+const SPEND_MESSAGE = 'Making a resume for a role uses a model call, and Leafout cannot make one right now. Nothing was charged.';
 const RATE_MESSAGE = 'Too many requests right now. Please wait a moment and try again.';
 const TROUBLE_MESSAGE = 'Leafout is having trouble right now. Please try again in a moment.';
 

@@ -10,7 +10,7 @@ import * as api from './lib/api';
 import { applicationsKey, parseTracked } from './discover/applications/tracker';
 import { PASTE_ROUTE, matchPath, parseMatchPath } from './match/route';
 import type { MatchRoute } from './match/route';
-import { PRICING_PATH, isPricingPath } from './billing/route';
+import { BILL_PATH, PRICING_PATH, isPricingPath, navigate as navigatePricing, parseBill } from './billing/route';
 import { DEFAULT_QUERY, discoverPath, isDiscoverPath, mergeQuery, parseDiscoverUrl } from './discover/route';
 import type { DiscoverQuery } from './discover/route';
 import { DEFAULT_PRACTICE, isPracticePath, mergePractice, parsePracticeUrl, practicePath } from './practice/route';
@@ -58,6 +58,8 @@ export interface AnalysisState {
   synthChars: number;
   startedAt: number;
   error?: string;
+  /** Set when the run was refused because the month's count of analyses ran out (a 402): the limit and the day it comes back, when sent. */
+  ranOut?: { limit?: number; resetsAt?: string };
   /** True when this run uses the bundled sample persona. */
   sample: boolean;
   /** A re-read of the graph that finished: false when the resumes, own-words lines and notes could not be moved to the new profile. */
@@ -79,7 +81,7 @@ export type ChatRewrite = Omit<Extract<ChatEvent, { type: 'rewrite' }>, 'type'>;
 export type RewriteState = 'accepted' | 'dismissed';
 
 /** Why an answer did not arrive: a failed stream, too many questions in a short time, or the day's spend ceiling. */
-export type ChatFailure = 'failed' | 'rate' | 'ceiling';
+export type ChatFailure = 'failed' | 'rate' | 'ceiling' | 'limit';
 
 /**
  * `stopped` is a message the person stopped: its text is kept. Threads saved before it existed marked a stopped message
@@ -97,6 +99,8 @@ export interface ChatMessage {
   failure?: ChatFailure;
   /** For `rate`: seconds to wait, from the server's Retry-After header, when it sent one. */
   retryAfter?: number;
+  /** For `limit`: the Just Looking count of coach and Ask questions ran out; the limit and the day it comes back, when sent. */
+  ranOut?: { limit?: number; resetsAt?: string };
   action?: ChatAction;
   /** The coach's proposed wording for a line (`/resume` threads only). */
   rewrite?: ChatRewrite;
@@ -427,8 +431,12 @@ function applyAnalysisEvent(e: AnalysisEvent) {
           portfolio: emptyPortfolio(),
           analysis: { ...a, phase: 'done', phaseLabel: 'Your graph is ready', synthStep: 3, ...(e.carried === undefined ? {} : { carried: e.carried }) },
         };
-      case 'error':
-        return { analysis: { ...a, phase: 'error', error: e.message, phaseLabel: 'Analysis failed' } };
+      case 'error': {
+        // the same refusal as a stream event: `{ type: 'error', code: 'payment_required', limit?, resetsAt? }`
+        const raw = e as { code?: unknown; limit?: unknown; resetsAt?: unknown };
+        const ranOut = raw.code === 'payment_required' ? { ...(typeof raw.limit === 'number' ? { limit: raw.limit } : {}), ...(typeof raw.resetsAt === 'string' ? { resetsAt: raw.resetsAt } : {}) } : undefined;
+        return { analysis: { ...a, phase: 'error', error: e.message, phaseLabel: 'Analysis failed', ...(ranOut ? { ranOut } : {}) } };
+      }
     }
   });
 }
@@ -571,12 +579,13 @@ export function deskFor(profileId: string): ChatDeskTracked[] {
   }
 }
 
-/** What a failed chat call tells the person: 429 is too many questions (with the wait), 503 is the day's ceiling. */
-function chatFailure(err: unknown): Pick<ChatMessage, 'error' | 'failure' | 'retryAfter'> {
+/** What a failed chat call tells the person: 429 is too many questions (with the wait), 503 is the day's ceiling, 402 is the month's count of questions. */
+function chatFailure(err: unknown): Pick<ChatMessage, 'error' | 'failure' | 'retryAfter' | 'ranOut'> {
   const error = err instanceof Error ? err.message : String(err);
   if (err instanceof api.ApiError) {
     if (err.status === 429) return { error, failure: 'rate', ...(err.retryAfter ? { retryAfter: err.retryAfter } : {}) };
     if (err.status === 503) return { error, failure: 'ceiling' };
+    if (err.status === 402) return { error, failure: 'limit', ranOut: err.limit ? { limit: err.limit.limit, resetsAt: err.limit.resetsAt } : {} };
   }
   return { error, failure: 'failed' };
 }
@@ -603,7 +612,12 @@ export const actions = {
       }
     } catch (err) {
       if (ctrl.signal.aborted) return;
-      applyAnalysisEvent({ type: 'error', message: err instanceof Error ? err.message : String(err) });
+      applyAnalysisEvent({
+        type: 'error',
+        message: err instanceof Error ? err.message : String(err),
+        // a 402 is the month's count of analyses running out (`limit_reached`), not a failure
+        ...(err instanceof api.ApiError && err.status === 402 ? { code: 'payment_required', ...(err.limit ? { limit: err.limit.limit, resetsAt: err.limit.resetsAt } : {}) } : {}),
+      } as AnalysisEvent);
     }
   },
 
@@ -718,10 +732,14 @@ export const actions = {
     set({ view: 'resume', resumeRoute: route });
   },
 
-  /** Open the pricing page (anyone may read it) and move the address to /pricing so Back returns to where they were. */
-  openPricing() {
+  /**
+   * Open the pricing screens (anyone may read the plans) and move the address to /pricing, or to the bill's address for
+   * `'bill'`, so Back returns to where they were.
+   */
+  openPricing(to: 'plans' | 'bill' = 'plans') {
     try {
-      if (!isPricingPath(window.location.pathname)) window.history.pushState(null, '', PRICING_PATH);
+      if (to === 'bill') navigatePricing(BILL_PATH);
+      else if (!isPricingPath(window.location.pathname) || parseBill(window.location.search)) navigatePricing(PRICING_PATH);
     } catch {
       /* no address bar to update */
     }
@@ -899,7 +917,14 @@ export const actions = {
             const { type: _type, ...rewrite } = e;
             patch((m) => ({ ...m, rewrite }));
           } else if (e.type === 'done') patch((m) => ({ ...m, status: 'done' }), e.sessionId);
-          else if (e.type === 'error') patch((m) => ({ ...m, status: 'error', failure: 'failed', error: e.message }));
+          else if (e.type === 'error') {
+            // the same refusal as a stream event: `{ type: 'error', code: 'payment_required', limit?, resetsAt? }`
+            const raw = e as { code?: unknown; limit?: unknown; resetsAt?: unknown };
+            if (raw.code === 'payment_required') {
+              const ranOut = { ...(typeof raw.limit === 'number' ? { limit: raw.limit } : {}), ...(typeof raw.resetsAt === 'string' ? { resetsAt: raw.resetsAt } : {}) };
+              patch((m) => ({ ...m, status: 'error', failure: 'limit', error: e.message, ranOut }));
+            } else patch((m) => ({ ...m, status: 'error', failure: 'failed', error: e.message }));
+          }
         },
         ctrl.signal,
       );

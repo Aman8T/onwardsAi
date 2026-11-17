@@ -6,7 +6,8 @@ a CORS preflight, JSON it cannot), the body read with its size cap and a deadlin
 (400 with the legacy text), the profile's owner (404: a profile an account has claimed is chatted about only by that
 account's session, and anyone else gets the sentence an unknown id gets, see `api.deps.require_profile_access`), a
 stream slot (429: a few conversations per client and per process at a time, a chat answer streams for many seconds),
-the shared per-IP counters (429) and the daily spend ceiling (503). An account on the unlimited list
+the shared per-IP counters (429) the month's count of coach questions for a signed-in account (402 ``limit_reached``)
+and the daily spend ceiling (503). An account on the unlimited list
 (``TAYYARI_GUARD__UNLIMITED_EMAILS``) skips ``shed`` and the counters; the slot and the ceiling still apply.
 
 A body that names a resume (``resume: {id}``, the one open beside the coach) gets it shown to the coach only when the caller
@@ -18,14 +19,16 @@ turn runs) are held until the response is over, however it ends.
 
 from __future__ import annotations
 
+import secrets
 from contextlib import AsyncExitStack
 
 from fastapi import APIRouter, Request
 from pydantic import ValidationError
 from starlette.responses import Response
 
-from tayyari.api.deps import get_request_context, require_profile_access, unlimited
+from tayyari.api.deps import get_current_user, get_request_context, require_profile_access, unlimited
 from tayyari.api.lifespan import get_container
+from tayyari.api.plan_use import PlanUse
 from tayyari.api.routes.analyze import HeldResponse
 from tayyari.api.routes.resume import resume_in_view
 from tayyari.api.security import subnet_hash
@@ -85,11 +88,15 @@ async def chat(request: Request) -> Response:
         raise BadRequest(describe_chat_error(err)) from None
     await require_profile_access(request, body.profileId, not_found=PROFILE_NOT_FOUND_MESSAGE)
 
+    user = None if free else await get_current_user(request)
+    use = PlanUse(container, None if user is None else user.id, "coach", secrets.token_hex(16))
     held = AsyncExitStack()
     try:
         # The slot first: a refused conversation costs nothing, and does not use up the caller's rate-limit windows.
         await held.enter_async_context(get_chat_slots(request, container).acquire(rc.ip_hash))
         await limiter.check("chat", rc.ip_hash, ip_hash_48=ip48, memory=False, exempt=free)
+        # one of the month's coach questions (Just Looking): 402 limit_reached, before any spend
+        await use.take()
         await held.enter_async_context(container.spend_guard.reserve(guard.est_chat_usd))
         view = (
             await resume_in_view(request, container, body.resume.id, body.profileId)
@@ -101,8 +108,10 @@ async def chat(request: Request) -> Response:
             if view is None
             else container.chat.stream_turn(body, rc, resume=view)
         )
+        use.keep()  # the stream starts: the question is counted
         return HeldResponse(request, stream, TAG, held)
     except BaseException:
+        await use.give_back()  # the route failed before the stream started
         await held.aclose()
         raise
 

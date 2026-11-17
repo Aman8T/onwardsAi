@@ -76,15 +76,22 @@ class Rig:
 
 @pytest.fixture
 def start(build_settings: MakeSettings):  # type: ignore[no-untyped-def]
-    """``async with start(secrets=True, **settings) as rig``: the app with prices set, fake providers behind it."""
+    """``async with start(secrets=True, **settings) as rig``: the app with prices set, fake providers behind it.
+
+    Day One is priced at 0 (not on sale) and one posting match a month is free, as before the plans (roadmap B2), so
+    these tests see the two older products; test_plans_routes.py passes ``plans`` and ``billing`` of its own."""
 
     @asynccontextmanager
     async def run(
         *, secrets: bool | dict[str, str] = True, prices: bool = True, **overrides: Any
     ) -> AsyncIterator[Rig]:
-        values: dict[str, Any] = {"auth": {"public_url": PUBLIC}}
+        values: dict[str, Any] = {
+            "auth": {"public_url": PUBLIC},
+            "plans": {"dayone_inr": 0, "dayone_after_inr": 0},
+            "billing": {"free_matches_per_month": 1},
+        }
         if prices:
-            values["billing"] = dict(PRICES)
+            values["billing"] = {**PRICES, "free_matches_per_month": 1}
         if secrets is True:
             values.update(ALL_SECRETS)
         elif isinstance(secrets, dict):
@@ -104,7 +111,8 @@ async def test_anyone_can_read_the_prices_and_nothing_is_cached(start: Any) -> N
     async with start() as rig:
         response = await rig.client.get("/api/billing/entitlements")
     assert response.status_code == 200 and response.headers["cache-control"] == "no-store"
-    assert response.json() == {
+    body = response.json()
+    assert {key: body[key] for key in ("credits", "freeMatchAvailable", "currency", "prices", "plan")} == {
         "credits": 0,
         "freeMatchAvailable": False,
         "currency": "USD",
@@ -112,7 +120,12 @@ async def test_anyone_can_read_the_prices_and_nothing_is_cached(start: Any) -> N
             "INR": {"pack3": 49_900, "pass30": 99_900},
             "USD": {"pack3": 900, "pass30": 1_900},
         },
+        "plan": "just_looking",
     }
+    assert "passUntil" not in body and "unlimited" not in body
+    assert set(body) == {
+        "credits", "freeMatchAvailable", "currency", "prices", "plan", "usage", "resetsAt", "offer"
+    }  # fmt: skip
 
 
 async def test_prices_that_are_not_set_or_cannot_be_taken_are_left_out(start: Any) -> None:
@@ -199,11 +212,21 @@ async def test_a_saved_currency_beats_every_guess_and_is_saved_by_the_account_ro
 async def test_me_reports_the_entitlements_from_the_ledger(start: Any) -> None:
     async with start() as rig:
         user, headers = await rig.user()
-        assert await rig.me(headers) == {"credits": 0, "freeMatchAvailable": True}  # no passUntil key at all
+        assert await rig.me(headers) == {  # no passUntil key at all
+            "credits": 0,
+            "freeMatchAvailable": True,
+            "plan": "just_looking",
+            "matchesLeft": 1,
+        }
 
         used = await rig.env.container.entitlements.consume(user.id, "match-1")
         assert used.source == "free_monthly"
-        assert await rig.me(headers) == {"credits": 0, "freeMatchAvailable": False}
+        assert await rig.me(headers) == {
+            "credits": 0,
+            "freeMatchAvailable": False,
+            "plan": "just_looking",
+            "matchesLeft": 0,
+        }
 
         await rig.env.container.entitlements.grant(user.id, "pack3", "order-a")
         await rig.env.container.entitlements.grant(user.id, "pass30", "order-b")
@@ -215,7 +238,12 @@ async def test_me_reports_the_entitlements_from_the_ledger(start: Any) -> None:
 async def test_an_anonymous_visitor_has_no_entitlements_to_report(start: Any) -> None:
     async with start() as rig:
         body = (await rig.client.get("/api/me")).json()
-    assert body["entitlements"] == {"credits": 0, "freeMatchAvailable": False}
+    assert body["entitlements"] == {
+        "credits": 0,
+        "freeMatchAvailable": False,
+        "plan": "just_looking",
+        "matchesLeft": 0,
+    }
 
 
 async def test_a_use_with_nothing_left_is_a_402_whose_body_names_the_reason(start: Any) -> None:
@@ -431,7 +459,7 @@ async def test_a_signed_razorpay_webhook_pays_the_order_and_replays_change_nothi
         ledger = await rig.rows(CreditLedgerRow, CreditLedgerRow.user_id == user.id)
 
     assert [(a.status_code, a.json()) for a in answers] == [(200, {"ok": True})] * 3
-    assert mine == {"credits": 3, "freeMatchAvailable": True}
+    assert mine == {"credits": 3, "freeMatchAvailable": True, "plan": "just_looking", "matchesLeft": 1}
     (order,) = orders
     assert (order.status, order.paid_at is not None, order.raw["paid"]) == (
         "paid",
@@ -608,7 +636,14 @@ async def test_the_handoff_grants_at_once_and_the_webhook_afterwards_changes_not
         webhook = await post_razorpay(rig, raw, signature)
         mine = await rig.me(headers)
     assert handoff.status_code == 200 and handoff.headers["cache-control"] == "no-store"
-    assert handoff.json() == {"ok": True, "credits": 3, "freeMatchAvailable": True}
+    paid = handoff.json()
+    assert {k: paid[k] for k in ("ok", "credits", "freeMatchAvailable", "plan")} == {
+        "ok": True,
+        "credits": 3,
+        "freeMatchAvailable": True,
+        "plan": "just_looking",
+    }
+    assert paid["receipt"]["product"] == "pack3" and "passUntil" not in paid
     assert webhook.status_code == 200 and mine["credits"] == 3
 
 
@@ -624,11 +659,15 @@ async def test_the_handoff_grants_at_once_on_the_key_pair_alone(start: Any) -> N
         mine = await rig.me(headers)
         (order,) = await rig.rows(OrderRow)
         ledger = await rig.rows(CreditLedgerRow, CreditLedgerRow.user_id == user.id)
-    assert handoff.status_code == 200 and handoff.json() == {
+    paid = handoff.json()
+    assert handoff.status_code == 200
+    assert {k: paid[k] for k in ("ok", "credits", "freeMatchAvailable", "plan")} == {
         "ok": True,
         "credits": 3,
         "freeMatchAvailable": True,
+        "plan": "just_looking",
     }
+    assert paid["receipt"]["amount"] == 49_900
     assert again.status_code == 200 and again.json()["credits"] == 3  # a reload does not pay twice
     assert mine["credits"] == 3
     assert (order.status, order.raw["paid"]) == ("paid", {"payment_id": "pay_9", "event": "checkout.handoff"})

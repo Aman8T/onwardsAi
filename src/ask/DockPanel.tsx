@@ -80,8 +80,8 @@ export function DockPanel({ id, profile, starters, thread, onAsk, onClose, onFul
                 message={reply}
                 lines={statusLines(profile)}
                 profile={profile}
-                onRetry={settled && (reply.status === 'error' || reply.status === 'stopped') ? onRetry : undefined}
-                onEdit={settled && reply.status === 'stopped' ? onEdit : undefined}
+                onRetry={settled && ((reply.status === 'error' && reply.failure !== 'limit') || reply.status === 'stopped') ? onRetry : undefined}
+                onEdit={settled && (reply.status === 'stopped' || reply.failure === 'limit') ? onEdit : undefined}
                 question={settled && reply.status === 'error' ? lastUser?.text : undefined}
               />
             )}

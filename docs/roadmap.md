@@ -25,6 +25,7 @@ Research behind the specs: `docs/research/open-source-resume-tools.md` (§4 is t
 | X1 | ESCO + O*NET skill table, canonical skill ids | M2 | later | not started |
 | D1 | Discover: personal, location-aware jobs with direct apply links | M2 | Opus + Sonnet | v1 built 2026-10-16 (employers' own boards, no map); rest in docs/discover-later.md |
 | L1 | Sign in to the app with the Leafout account (the site's Supabase login) | F1, app.leafout.in live | Opus + Sonnet | built 2026-10-19, committed, not yet deployed |
+| N1 | Where can I go next: the shareable report (beta), the recruiting door for the concierge five | R1, the graph's roles, R2's resume blocks | Opus + Sonnet | designed and approved 2026-11-17 (canvas https://claude.ai/artifact/WLF5fKswLqtgrWzRRW9Sq5); N1a (contract, `report_snapshots` migration 0022, composer, service), N1b (owner routes, `/next/{slug}` page, `/og/next/` preview; `report` may import `card`'s drawing) and N1c (owner sheet `src/report/`, `/dev/report`) built 2026-11-17, uncommitted; T (docs) not started |
 | A1 | Auto-apply: fill the employer's ATS form from cited facts, the person approves every submit | F1, M2, D3 | Opus + Sonnet | allowed 2026-11-06 (CLAUDE.md rule 9); spec `docs/auto-apply.md`, canvas https://claude.ai/artifact/CsN9PPninRZ3Z1j5vx6Nh5 (screens agreed 2026-11-07); built 2026-11-08 on `feat/auto-apply-build` (W1 to W5: signed-in only, start checks and credit hold, the worker inside the app on Browser Use browsers over REST + CDP with no local browser, playbooks then the field-list loop, the approved one-click submit, the answer bank, the screens on match and Discover; `docs/backend.md` "Auto-apply"); tested on fakes only, not deployed; next: the fill-only live test (spec A1.6) and a price |
 
 Shared files are edited by one wave at a time, in this order: F1 → M2 → F2 for `storage/tables.py`, `storage/ports.py`, `core/settings.py`, `container.py`, `api/routes/__init__.py`, `api/security.py`, `backend/.env.example`. M1 touches none of them. Dependencies were added by the orchestrator (`authlib`, `reportlab`, `stripe`, `razorpay`; `pypdf` and `python-docx` were already present): no wave edits `pyproject.toml`.
@@ -1263,6 +1264,298 @@ Specs: `docs/resume.md` (Versions 2 and 3, "The graph reads every block") and `d
 
 Open: resolving a disagreement between two files; contact lines in the merge; "How it merged" for files added in an
 earlier visit (no route returns an old merge report); the frozen copy of an unedited upload as its original bytes.
+
+## N1 · Where can I go next: the shareable report (beta)
+
+**Designed 2026-11-17; the user approved the canvas the same day.** Canvas https://claude.ai/artifact/WLF5fKswLqtgrWzRRW9Sq5 has five boards:
+- the report as a page;
+- the report on a phone;
+- the link preview (1200 × 630);
+- "Before sharing: what shows", the owner's choices;
+- "When the resume backs only one role", the thin result.
+
+**Why now.** The 2026-11-17 office hours moved the first user to the mid-career professional (Indian IT services first) who is laid off or fears it. It also froze new features until five such people have used Leafout on watched calls. This report is the one exception the user made. It is the recruiting door for those five: free and shareable, so it travels in layoff groups, and the people who reply become the calls. The plan is the design doc kept outside the repo, because this repo is public.
+
+**What it is.** One page made from the person's newest owned graph:
+- the roles they can credibly move to, up to three;
+- for each role, the resume lines that back it and the asks not shown yet;
+- their skill shape;
+- the paid step for one role.
+
+The owner chooses what the link shows, and the link works only while it is shared.
+
+**No model call.** Selection, counts, the "Ready now" stamp and redaction are all code over `Profile.roles`, `Profile.skills` and the resume blocks. Cost per report: zero.
+
+### What the report shows, computed in code
+
+- **A credible role.** A role in `Profile.roles` qualifies when two things hold:
+  - at least half of its requirements have `have: true`, rounded up;
+  - at least one of those requirements maps (by `skillId`, then by skill name) to a skill with at least one `Evidence`.
+
+  At most three roles are listed, ordered by evidenced requirements, then by `alignment`, then by the graph's order. A resume that backs none gets the thin page with no roles listed: "Your resume doesn't back a move yet", plus the near misses.
+- **The count** "N of M asks shown" is the number of requirements with `have: true` out of all of them, drawn as dots (`Pips`, `design.md` 7b). It is never a percentage.
+- **The "Ready now" stamp.** It appears when at most one requirement is not evidenced. Otherwise the role shows `Role.eta` as written.
+- **The quotes ("Why them").** Up to two per role, taken from the evidence of the evidenced requirements' skills, highest skill score first, never the same line twice on the page. Each is the `Evidence.text` verbatim after redaction. Its citation is the source's `SourceSummary.label` ("Resume", "GitHub"). *Deviation from the canvas:* the canvas showed "Project 3, line 2", but `Evidence` has no line locator. The label alone ships, and a locator is a later change to the analysis.
+- **"Not shown yet"** lists the names of the requirements with `have: false`, at most three.
+- **The near misses ("Close, not yet").** These are up to two roles *below* the bar, each with its missing requirements. A role that passes the bar but is fourth is left out, never called "close". They are hidden on the public page by default; see the owner's choices.
+- **Never quoted.** A line that speaks of losing a job ("laid off", "let go", "retrenched", "terminated") is never chosen. Quotes keep their own numbers ("cut build time by 30%"), because those are the person's facts; the "no %" rule is about the page's own words.
+- **The shape.** It uses `Profile.domains` in their fixed order with the app's radar geometry (`card/geometry.py`), and the same shape rules as R1.
+- **The person line** is `Person.currentRole · {yearsExperience} years · {location}`. Any part that is absent is dropped. No employer appears in it.
+
+### The owner's choices ("Before sharing: what shows")
+
+| Choice | Default | Effect |
+|---|---|---|
+| First name and initial | on | Off: "This person". The name is the first word of `Person.name` plus the first letter of the last word |
+| Employer and client names | **off** | Off: every org name in the person's own resume records (`org` anywhere in their /resume drafts and fact books), with and without company words ("Pvt Ltd", "Systems"), becomes "their employer" in the quotes. The owner previews every quote, because a client named inside a sentence is not in that list. When no employer name is known (the person never opened /resume, so no blocks exist), nothing can be redacted, so the public page carries no quotes until they open /resume once or turn names on after reading every line. `orgsFound` tells the sheet which case it is |
+| The resume lines behind each role | on | Off: no quotes, only titles, counts and gaps |
+| "Open to work" | **off** | On: one line, "Open to work". Nothing ever says why they are looking |
+| Near misses | **off** | On: the "Close, not yet" section is public too. The owner always sees it |
+| Each quote | on | The owner can hide any single quote. Hiding never edits its text |
+
+The canvas's sticky note is the page's stance: "Laid off is nobody's business. Your work is the story." Nothing on the page says laid off.
+
+### Never on the report or its preview
+
+- a percentage, rank, percentile, "Top X%" or match score;
+- a skill, claim or number that is not in the person's evidence (`CLAUDE.md` rule 1);
+- an org name while that choice is off;
+- the person's email, profile id or account id;
+- text from a role that isn't listed.
+
+### Contract
+
+`shared/report.ts` ⇄ `backend/tayyari/contract/report.py`, with a parity test.
+
+- `ReportQuote { id, text, source, hidden }`.
+- `ReportRole { id, title, have, total, ready: boolean, eta, quotes: ReportQuote[], missing: string[] }`.
+- `ReportNearMiss { id, title, missing: string[] }`.
+- `ReportArea { name, short, score }`.
+- `ReportChoices { showName, showOrgs, showQuotes, openToWork, showNearMisses, hiddenQuotes: string[] }`.
+- `ReportBlocked 'sample' | 'anonymous'`.
+- `ReportPerson { name?, line }` and `ReportContent { person, areas, roles, nearMisses, openToWork }`.
+- `ReportView` is the owner's view: `{ choices, offered: ReportContent, public: ReportContent, orgsFound, blocked?, offerUrl? }`, plus `slug, pageUrl, ogUrl, updatedAt` while shared. `public` is exactly what the page shows, so the preview is exact. `offered` is everything to choose from: hidden quotes are flagged and near misses are always present.
+- `ReportUpdate { profileId, shared, choices }`.
+- `ReportNewLink { profileId }`.
+
+### Storage
+
+**Table `report_snapshots`.** Migration `0022_report_snapshots.py`, additive. Add a `ReportSnapshotRow`, a `ReportRepo` port, `storage/repos/report.py` and a fake.
+
+| Column | Type | Note |
+|---|---|---|
+| `user_id` | str, PK, FK `users.id` cascade | one report per account |
+| `profile_id` | str, FK `profiles.id` cascade | the profile it was drawn from |
+| `slug` | str 12, unique, nullable | NULL while not shared; random `[a-z0-9]`, as R1 |
+| `shared` | bool | |
+| `choices` | JSON | `ReportChoices` |
+| `content` | JSON | the redacted public content only (person line, areas, roles, near misses if public); no profile id, nothing hidden |
+| `version` | str 8 | sha256 prefix of the content; it names the PNG |
+| `created_at`, `updated_at` | timestamps | |
+
+*Collision to note:* branch `feat/inbound-email` also has a migration it planned to renumber to 0022. If that branch merges after this one, it becomes 0023 with `down_revision` 0022.
+
+Refresh rules are R1's: on a setting change, on a claim, and when the owner opens it with a newer profile. There is no maintenance step in the beta. A stopped slug is NULL.
+
+### Routes
+
+**The owner's routes** (`api/routes/report.py`, JSON, `no-store`, the account must own the profile, as R1). They call no model and shed in the `chat` bucket.
+- `GET /api/report?profileId=` returns a `ReportView`.
+- `PUT /api/report` takes a `ReportUpdate` and returns a `ReportView`. A hidden quote id must be one the view holds.
+- `POST /api/report/new-link` takes a `ReportNewLink` and returns a `ReportView` with a new slug.
+
+**The public routes** are answered before the SPA in `api/static.py`, outside `/api`, so the sign-in gate does not apply. None is an `APP_ROUTE`.
+- `GET /next/{slug}` is server-rendered HTML with no scripts, `noindex`, and OG tags.
+  - The OG title is "Where can {name or 'this person'} go next?".
+  - `og:image` is the versioned PNG, with `twitter:card summary_large_image`.
+  - An unknown, stopped or malformed slug gets a plain 404 page.
+- `GET /og/next/{slug}-{version}.png` is 1200 × 630, drawn with resvg and the bundled Geist, as R1. A wrong version gets a 301; an unknown slug gets a neutral image.
+- Headers and CSP are as R1's `/u` and PNG routes. The guard reuses R1's per-address `card` window, so no guard limits change.
+
+**The paid step.** Each role's "Get Day One for this role" link renders only when `TAYYARI_REPORT__OFFER_URL` is set. That is a plain setting, not a secret. The role's title is added as `role=` (with `&` when the address already has a query). Until it is set, the paid step is absent and the page is free only. Once the B2 bill ships, the setting is `/pricing?bill=day-one`, the Day One bill (B2 ignores `role` for now). The page prints no price, GST line or refund terms: the bill does.
+
+**Report this page** is a `mailto:` to `TAYYARI_CARD__REPORT_EMAIL` with the slug, as R1.
+
+### Frontend
+
+- `src/report/`: the owner sheet, opened from the next-roles view's header with a "Share where I can go" button beside R1's card button. It is a bottom sheet under 760 px.
+  - The sheet has the choices, the redacted preview (every quote with a hide switch), "Make a link" / "Make a new link", "Preview as a visitor", and the near misses with "What would show it", which links to Prepare for that gap.
+  - The sample and anonymous profiles get a sentence and "Analyse my resume" or "Sign in", as R1.
+- `/dev/report`: every state on fixtures. That covers off, on, three roles, one role, none, every choice off, sample, anonymous and error.
+- The public page uses `site/site.css` and the quiet tokens' hex values in its own small stylesheet, the same exception R1's SVG uses (the restraint check scans `src/` only). The canvas's phone layout is that page under 760 px.
+
+### Checks and tests (known-bad fixtures first)
+
+- **Org redaction.** A profile whose experience `org` is "Zentrix Systems" and whose evidence lines mention it never shows "Zentrix" on `/next`, in the OG image text or in `content` while `showOrgs` is off. On, it does.
+- **Markers.** Unique markers in a near miss's text or a hidden quote appear nowhere public while those are hidden.
+- **Banned text.** No `%`, "rank", "top", "percentile" or "laid off" in the page's own words (titles, counts, the person line, labels). Quotes are the person's facts and keep their numbers, and a quote about a layoff is never chosen.
+- **No employer known.** With `showOrgs` off and no org on record, the public page has no quotes at all.
+- **The credibility rule.** A role with 2 of 6 evidenced asks is not listed; 3 of 6 with one evidenced skill is. "Ready now" appears at 5 of 6 and not at 4 of 6.
+- **Escaping.** Escaping holds for a role title or quote holding `<script>`, and the page holds no `<script>`.
+- **Sample and anonymous** are refused, as is another account's profile. A slug turned off is a 404 at once. A new link stops the old one.
+- **The version** changes only with content. The PNG is 1200 × 630, with a 301 from an old version.
+- **The offer link** is absent while `TAYYARI_REPORT__OFFER_URL` is empty.
+
+### Waves and files
+
+The contract, ports, routes and names freeze at the end of N1a; then N1b and N1c run in parallel.
+
+- **N1a · contract, storage, composer** (Opus for the composer, Sonnet for the rest):
+  - `contract/report.py`, `shared/report.ts`;
+  - migration `0022`, `storage/repos/report.py`, its fake;
+  - `report/compose.py` (selection, counts, stamp, redaction: pure functions over a `Profile` and the resume blocks), `report/service.py`;
+  - tests and fixtures.
+  - Shared files, edited by this wave alone: `storage/tables.py`, `storage/ports.py`, the repository bundles, `container.py`, `core/settings.py` (a `report` group with `offer_url`), `backend/.env.example`, the layering test (`report` sits with `card`: core, contract and the storage ports only).
+- **N1b · routes, public page, PNG** (Sonnet):
+  - `api/routes/report.py`, registered in `api/routes/__init__.py`;
+  - the public routes in `api/static.py`;
+  - `report/page.py` and `report/png.py`, reusing `card/png.py` and its font;
+  - the claim hook in `api/routes/me.py`;
+  - integration tests. No new dependency.
+- **N1c · the owner sheet** (Sonnet):
+  - `src/report/`;
+  - the button in the next-roles header (`views/graph/`);
+  - `/dev/report`.
+  - It builds against the frozen contract and fixtures.
+- **T · docs** (Haiku):
+  - `docs/backend.md` (a "The report" section);
+  - `docs/seo.md` (`/next` pages are `noindex`);
+  - `scripts/walkthrough.md` (a step);
+  - `CLAUDE.md` Status.
+
+Each wave ends with `npm run check:all` green and a report of what was verified and what was not. No commit, deploy or secret until the user says.
+
+**Decided with the user (2026-11-17):**
+- the canvas as drawn;
+- the report is free and needs an account to make, while the shared page is public;
+- the paid step was first ₹1,499 for eight openings for one role; since the B2 plans (2026-11-17) it is the Day One offer (₹999 once), and the bill states the price and terms.
+
+**Open, for the user:**
+- the public path `/next/{slug}` (alternatives: `/go/`, `/where/`);
+- whether near misses should be public by default (proposed: off);
+- the credibility bar (proposed: half the asks evidenced, plus one cited line).
+
+## B2 · Plans: Just Looking, Lowkey, Locked In, Day One (decided 2026-11-17)
+
+**Why.** Pricing by posting packs (`pack3`, `pass30`, one free match a month) confused people. Competitors also give postings away, or sell many for little. Plans now follow the person's mode:
+- **Lowkey:** still employed, not switching yet; a few hours a month.
+- **Locked In:** actively looking; everything, every day.
+
+For now only the free plan and a one-time early plan are sold. The monthly plans are shown but closed. Until we know which features people will pay for, early users get everything and help decide what we build. The founder's words: "we first want to get people to see what we are trying and build with them without getting them to commit monthly."
+
+| Plan | Price (configurable) | State | What it includes |
+|---|---|---|---|
+| **Just Looking** | ₹0 | open | Every feature, with monthly limits sized for exploring (below) |
+| **Lowkey** | ₹399 a month | shown, closed: "Opening soon" with "Tell me when it opens" | to be decided from what Day One users actually use |
+| **Locked In** | ₹1,299 a month | shown, closed, as Lowkey | to be decided, the "everything" plan |
+| **Day One** | ₹999 once, until the early window ends; afterwards shown as ₹9,999 | open until **15 Dec 2026, 23:59 IST** | **Everything, no plan limits, no fair-use cap**, including everything built later; "In Bengaluru? First coffee's on us. Come tell us what to build." |
+
+**Rules that stay true:**
+- Prices include GST.
+- The 10x price and the end date are real: after the date the ₹999 offer is gone and the page shows ₹9,999.
+- The closed plans' prices are the prices they launch at.
+- "No limits" means no plan limits. The service-wide daily model budget (`TAYYARI_GUARD__DAILY_CEILING_USD`) and the anti-abuse rate windows (`TAYYARI_GUARD__*_PER_MINUTE` / `_PER_DAY`) apply to every account, because they protect everyone. If Day One use presses on the daily budget, raise it.
+- The Bengaluru coffee goes to Day One buyers who give a Bengaluru address or PIN, at the founder's discretion.
+
+**Just Looking limits** are calendar month (UTC), per account and configurable. They are sized so someone can explore every part and feel it work.
+
+| Feature | Free each month | Note |
+|---|---|---|
+| Skill graph, next roles, the report, radar card, portfolio, Prepare plans, /resume editing, the Weekly | unlimited | the core, and the parts that spread the word |
+| A new analysis (re-run the graph) | 2 | |
+| Posting match (match, tailored resume, cover note) | 3 | today 1 (`free_matches_per_month`) |
+| Search with AI (Discover) | 5 searches | each costs web searches |
+| Practice the interview, voice included | 3 sessions | |
+| Coach chat and Ask | 30 questions | |
+| Auto-apply | 5 applications, once | today 10 lifetime (`free_applications`) |
+
+**Configurable:** every price, the Day One end date, the after-price and each free limit live in settings (a `plans` group, `TAYYARI_PLANS__*`). Nothing is a literal in code or copy.
+
+**What it replaces:**
+- `pack3` and `pass30` go: kept in the database for any past purchase, no longer sold.
+- The report's paid step (N1, `TAYYARI_REPORT__OFFER_URL`) becomes the Day One offer.
+- The concierge-five price test becomes a single offer: Day One at ₹999.
+
+**Owner:** the payments session designs the pricing and payment pages (canvas first) and builds the plan, entitlement and Razorpay one-time-payment changes, starting only on the founder's word.
+
+### B2 build (started 2026-11-17)
+
+**Status:** all four waves built 2026-11-17, `npm run check:all` green on the whole checkout, not deployed. Seen in the browser: the plan screen and the bill against a local server (signed out), and every state on fixtures at `/dev/pricing`. Not verified: a payment with a signed-in account through the real Razorpay window (no sign-in provider locally; the checkout, verify, receipt and orders paths are tested against the faked Razorpay edge), a count running out against a real server in the browser (covered by route tests), Postgres (the storage tests ran on SQLite), and print output. Not built: an emailed receipt, the "tell me when it opens" email, a PDF invoice. Open for the founder: the practice daily ceiling (`TAYYARI_GUARD__INTERVIEW_PER_DAY`, 3) also applies to Day One accounts; the local `.env` still sets the dormant `pack3`/`pass30` prices, which must stay unset on the cloud.
+
+**Design, approved 2026-11-17:** canvas https://claude.ai/artifact/E53zzSqgikQ3BLku9SnSaB, page "Round 3 · the four plans". The plan screen is board **L** (`PlanStage`): four priced lines in price order on the left (Just Looking, Lowkey, Day One, Locked In; the two monthly plans locked, with "Tell me when it opens"), and a stage on the right that is entirely the chosen plan (graph paper with the month's counts for Just Looking, the ink block for Day One). Day One is chosen when the page opens. The page after it is **the bill** (`Pay`): one slip listing every line Day One changes, the total, "Renews: never" and the price after the early window; the same slip is the wait and the receipt. `PlanMoments` has the states around it.
+
+**Decided by the founder for the build:**
+- Refund: full refund within 7 days of paying, for any reason (`refund_days`, printed on the bill and the receipt).
+- GST: Leafout is not registered yet, so no page prints a GST line or "includes GST". (This replaces "Prices include GST" above until a GSTIN exists.)
+- Day One stays on sale after the early window, at the after-price.
+- A receipt number is `LF-<yymmdd of the day paid, UTC>-<first six characters of the order id, upper case>`. It is computed from the order; nothing new is stored.
+
+**What stays as it was, on purpose:**
+- `pack3` and `pass30` stay in `billing.products.PRODUCTS` as dormant products, so an order that names one still settles. They have no price set, so `on_sale` never offers them, and no screen names them.
+- A posting match is still paid for on the credit ledger (`EntitlementService.consume`: pass, then the month's free matches, then a credit). The two limits the ledger already reads keep their names and change their defaults: `TAYYARI_BILLING__FREE_MATCHES_PER_MONTH` 1 → 3, `TAYYARI_BILLING__FREE_APPLICATIONS` 10 → 5. Every other number below is `TAYYARI_PLANS__*`.
+
+**Settings (`core/settings.py`, group `plans`, `TAYYARI_PLANS__*`; documented in `backend/.env.example`):**
+
+| Field | Default | Meaning |
+|---|---|---|
+| `lowkey_inr`, `locked_in_inr` | 39900, 129900 | the closed monthly plans' prices in paise; printed, never sold |
+| `dayone_inr` | 99900 | Day One until `dayone_ends_at` |
+| `dayone_after_inr` | 999900 | Day One from then on |
+| `dayone_usd`, `dayone_after_usd` | 0 | unset: Day One is not sold in dollars yet |
+| `dayone_ends_at` | `2026-12-15T23:59:00+05:30` | the end of the early price (an aware datetime) |
+| `refund_days` | 7 | printed, and what the founder honours by hand in Razorpay |
+| `free_analyses`, `free_searches`, `free_practice`, `free_coach` | 2, 5, 3, 30 | Just Looking, each calendar month (UTC) |
+
+`PlansSettings.dayone_price(now, currency)` is the one place that picks the early or the after price. `billing.products.price_minor` asks it for `dayone`, so `on_sale`, the price book, checkout and the static pricing page agree.
+
+**Day One on an account.** `PRODUCTS["dayone"]` grants `pass_days = LIFETIME_DAYS` (36,500). An account whose pass runs more than `LIFETIME_MIN_DAYS` (7,300) past now is on `day_one` (`billing.products.is_lifetime`); every other account is on `just_looking`. Nothing is added to `entitlements`, and the ledger's "pass first" rule already makes its matches uncounted.
+
+**Counting (`billing/plans.py`, `PlanService`, built in the container as `container.plans`):**
+- `use(user_id, feature, ref)`: for `analyses`, `searches`, `practice`, `coach`. On Just Looking it records one use if fewer than the limit are recorded since the month began, else raises `PaymentRequired("limit_reached", feature=..., limit=..., resets_at=...)`. On Day One it records the use with no limit (so we can see what Day One people use). Idempotent on `ref`.
+- `release(user_id, feature, ref)`: gives a use back (the run failed before it produced anything).
+- `usage(user_id | None)`: all six `FeatureUse` values. `matches` comes from the ledger (`free_used` against `free_matches_per_month`), `applications` from the ledger's live `apply_free` rows against `free_applications`, the other four from `plan_usage`.
+- `plan_of(user_id)`.
+- Accounts on the unlimited list (`TAYYARI_GUARD__UNLIMITED_EMAILS`) and requests with no account (possible only where the sign-in gate is off) are never counted: the routes skip the call, as the match route does today.
+- Auto-apply: `EntitlementService.hold` keeps the free applications first. After them, a Day One account gets the zero-cost hold; a Just Looking account is refused with `limit_reached` for `applications` unless `apply_credit_cost` is set and its credits cover it.
+
+**Where each count is taken (one place per feature, before the spend reservation):**
+
+| Feature | Route | `ref` | Given back when |
+|---|---|---|---|
+| `analyses` | `POST /api/analyze` (new upload and `fromProfile`) | a new id per run | the run ends without a profile |
+| `searches` | `POST /api/jobsearch` | a new id per run | the run fails before any result |
+| `practice` | `POST /api/interview/sessions` (every kind; not `/again`, not `/plan`) | the session id, else a new id | `service.start` raises |
+| `coach` | `POST /api/chat` (the chat view and the Ask dock) | a new id per question | the route raises before the stream starts |
+| `matches` | `POST /api/match` | the match id (unchanged) | unchanged |
+| `applications` | `ApplyService.create` and `retry` (unchanged call sites) | `apply:<id>` (unchanged) | unchanged |
+
+**The 402 body** gains keys only for a limit: `{"error": "payment_required", "reason": "limit_reached", "feature": "searches", "limit": 5, "resetsAt": "2026-12-01T00:00:00+00:00"}` (`resetsAt` absent for `applications`). `reason: "no_credits"` is unchanged. The sentence a stream shows is built in `billing/plans.py` from the same numbers.
+
+**Storage (migration `0023_plans`, additive):**
+- `plan_usage`: `id`, `user_id` (FK users, cascade), `feature` String(16), `ref` String(64), `created_at`; unique `(user_id, feature, ref)`; index `(user_id, feature, created_at)`.
+- `plan_interest`: `user_id` (FK users, cascade), `plan` String(16), `created_at`; primary key `(user_id, plan)`.
+- Both are read and written through `BillingRepo` (new methods `use_feature`, `release_feature`, `feature_counts`, `set_interest`, `interests`, `paid_orders`), under the same per-account lock as the ledger. `StoredEntitlements` gains `apply_free_used`.
+
+**Contract (`shared/billing.ts`, mirrored by `contract/billing.py`; `shared/auth.ts` `MeEntitlements` gains `plan?` and `matchesLeft?`):** `Product` adds `dayone`; new `PlanId`, `ClosedPlan`, `Feature`, `FeatureUse`, `PlanUsage`, `PlanOffer`, `Receipt`, `OrdersResponse`, `NotifyRequest`, `NotifyResponse`, `LimitReached`; `EntitlementsResponse` gains `plan`, `usage`, `resetsAt`, `offer`; `VerifyResponse` gains `plan` and `receipt?`; `ProductPrices` gains `dayone?`.
+
+**Routes (`api/routes/billing.py`):**
+- `GET /api/billing/entitlements`: as before, plus the new fields. Still public (the allowlist is unchanged).
+- `POST /api/billing/checkout` `{product: "dayone"}`: the amount is `dayone_price(now)`. 409 `not_offered` as before. 409 `already_yours` when the account is already on Day One.
+- `POST /api/billing/verify`: as before, plus `plan` and `receipt`.
+- `GET /api/billing/orders`: `OrdersResponse`, signed-in.
+- `PUT /api/billing/notify`: `NotifyRequest` → `NotifyResponse`, signed-in. Stores the wish; no email is sent by this build.
+- The Day One bill's address is `/pricing?bill=day-one`. `/pricing` is the plan screen. The report's paid link (`TAYYARI_REPORT__OFFER_URL`) points at the bill.
+
+**The static pricing page** (`src/site/seeds/PricingSeed.tsx`, `api/static.py` `fill_prices`): the placeholders become `{{price:dayone}}` (on sale now, else "Coming soon"), `{{price:dayoneafter}}`, `{{price:lowkey}}`, `{{price:lockedin}}` and `{{date:dayone}}` (the end of the early price, as "15 Dec 2026"); the seed's copy describes the four plans.
+
+**Screens:** `src/billing/PricingView.tsx` (board L), `src/billing/BillView.tsx` (the bill, the wait, the receipt, not paid), `Checkout.tsx` (product `dayone`, the receipt from `verify`), `EntitlementChip` ("Just Looking · 1 match left", "Day One"), the account menu's "Your plan" line, and `src/billing/LimitNote.tsx`: the one panel every counted screen shows on a `limit_reached` 402 ("You've used your 5 searches this month. They come back on 1 Dec.", with Day One as the way out). Razorpay's script still loads only while the bill is on screen.
+
+**Waves and owners (parallel agents never share a file):**
+- **B2a · backend foundation:** `core/settings.py` (the `plans` group, the two defaults), `core/errors.py` (`PaymentRequired` extras), `contract/billing.py`, `contract/auth.py`, `storage/tables.py`, `storage/ports.py`, `storage/repos/billing.py`, migration 0023, `tests/fakes/repos.py` (`FakeBillingRepo`), `billing/*`, `api/routes/billing.py`, `api/routes/me.py` (the two new fields only), `api/static.py`, `container.py` (`plans`), `backend/.env.example`, and their tests.
+- **B2b · the four new counts** (after B2a): `api/plan_use.py` (new), `api/routes/analyze.py`, `jobsearch.py`, `interview.py`, `chat.py`, and their tests.
+- **B2c · the plan screen and the bill** (with B2a): `src/billing/*`, `src/styles/billing.css`, `src/lib/api.ts`, `src/auth/AccountMenu.tsx`, `src/auth/useMe.ts` (the two new fields), `scripts/match-parity.tsx` (the chip cases).
+- **B2d · count-runs-out moments and the public page** (after B2c): `src/billing/LimitNote.tsx`, its mounts in `src/match`, `src/discover`, `src/practice`, `src/ask`, `src/views/ChatView.tsx`, `src/views/Onboarding.tsx` / `Analysis.tsx`, `src/apply`, `src/store.ts` (`chatFailure`), `src/site/seeds/PricingSeed.tsx`, `scripts/build-pages.tsx`, `scripts/build-check.ts`.
+- Each wave ends with its gate green (`npm run test:py`, `lint:py`, `typecheck:py` for backend waves; `npm run check` for frontend waves) and a report of what was and was not verified. `docs/backend.md` and `scripts/walkthrough.md` are updated last, by the orchestrator.
 
 ## Follow-ups
 

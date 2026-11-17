@@ -390,8 +390,8 @@ export function ChatView({ profile }: { profile: Profile }) {
                             sources={okSources}
                             lines={lines}
                             profile={profile}
-                            onRetry={m.id === lastId && (m.status === 'error' || m.status === 'stopped') ? onRetry : undefined}
-                            onEdit={m.id === lastId && m.status === 'stopped' ? onEdit : undefined}
+                            onRetry={m.id === lastId && ((m.status === 'error' && m.failure !== 'limit') || m.status === 'stopped') ? onRetry : undefined}
+                            onEdit={m.id === lastId && (m.status === 'stopped' || m.failure === 'limit') ? onEdit : undefined}
                             question={m.id === lastId && m.status === 'error' ? lastUserText : undefined}
                             ink={m.id === lastActionId}
                           />

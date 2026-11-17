@@ -201,21 +201,21 @@ function copyFor(kind: OutcomeKind, detail: ApplicationDetail): Copy {
       };
     case 'failed':
       return {
-        chip: released ? 'Didn’t go · refunded' : 'Didn’t go',
+        chip: released ? 'Didn’t go · not counted' : 'Didn’t go',
         title: 'We couldn’t finish this form',
-        body: `${why ? `${why}. ` : ''}Nothing reached the employer${released ? ', and the hold on your credit was released' : ''}.`,
+        body: `${why ? `${why}. ` : ''}Nothing reached the employer${released ? ', and it was not counted against your applications' : ''}.`,
       };
     case 'closed':
       return {
         chip: 'Posting closed',
         title: 'This posting has closed',
-        body: `${company}'s page says it no longer takes applications. Nothing was sent${released ? ', and the hold on your credit was released' : ''}.`,
+        body: `${company}'s page says it no longer takes applications. Nothing was sent${released ? ', and it was not counted against your applications' : ''}.`,
       };
     case 'cancelled':
       return {
         chip: 'Skipped',
         title: 'You skipped this one',
-        body: `Nothing was sent${released ? ', and the hold on your credit was released' : ''}.`,
+        body: `Nothing was sent${released ? ', and it was not counted against your applications' : ''}.`,
       };
     case 'sent':
       return {
@@ -312,7 +312,7 @@ export function OutcomeView({ detail, navigate, confirmation, onResolve, onAppli
       case 'refund':
         return (
           <button key={a} type="button" className={cls} aria-disabled={dis} onClick={() => void run(a, () => onResolve('not_sent'), 'Could not save that. Try again.')}>
-            {busy === a ? 'Saving' : 'It didn’t: refund me'}
+            {busy === a ? 'Saving' : 'It didn’t go through'}
           </button>
         );
       case 'fill_again':
@@ -441,7 +441,7 @@ export function OutcomeView({ detail, navigate, confirmation, onResolve, onAppli
         )}
         {kind === 'check' && (
           <p className="ap-muted ap-small">
-            {detail.creditState === 'held' ? 'Your credit stays on hold until you tell us. ' : ''}If it didn't go through, we release the hold and you can apply on the employer's site.
+            {detail.creditState === 'held' ? 'It stays counted until you tell us. ' : ''}If it didn't go through, we give the count back and you can apply on the employer's site.
           </p>
         )}
       </section>

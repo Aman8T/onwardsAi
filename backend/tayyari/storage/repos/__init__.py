@@ -28,6 +28,7 @@ from ..ports import (
     ProfileCarryRepo,
     ProfileFactsRepo,
     ProfileRepo,
+    ReportRepo,
     ResumeFileRepo,
     ResumeRepo,
     SessionRepo,
@@ -53,6 +54,7 @@ from .match import SqlMatchRepo, SqlPostingRepo, SqlProfileFactsRepo, SqlUserFac
 from .portfolios import SqlPortfolioRepo
 from .prepare import SqlPrepareRepo
 from .profiles import SqlProfileRepo
+from .report import SqlReportRepo
 from .resume_files import SqlResumeFileRepo
 from .resumes import SqlResumeRepo
 from .sessions import SqlSessionRepo
@@ -85,6 +87,7 @@ class Repositories:
     handoff: HandoffRepo
     weekly: WeeklyRepo
     card: CardRepo
+    report: ReportRepo
     apply: ApplyRepo
     resumes: ResumeRepo
     resume_files: ResumeFileRepo
@@ -116,6 +119,7 @@ def build_repositories(db: Database, clock: Clock | None = None) -> Repositories
         handoff=SqlHandoffRepo(db),
         weekly=SqlWeeklyRepo(db),
         card=SqlCardRepo(db),
+        report=SqlReportRepo(db),
         apply=SqlApplyRepo(db),
         resumes=SqlResumeRepo(db),
         resume_files=SqlResumeFileRepo(db),

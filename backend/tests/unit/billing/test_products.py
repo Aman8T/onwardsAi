@@ -35,7 +35,11 @@ def test_the_products_are_what_the_spec_says() -> None:
 
 def test_every_price_is_unset_by_default(make_settings: MakeBilling) -> None:
     settings = make_settings()
-    assert [price_minor(settings.billing, p, c) for p in PRODUCTS for c in ("INR", "USD")] == [0, 0, 0, 0]
+    older = ("pack3", "pass30")
+    assert [price_minor(settings, p, c) for p in older for c in ("INR", "USD")] == [0, 0, 0, 0]
+    assert (
+        price_minor(settings, "dayone", "USD") == 0
+    )  # Day One has a rupee price by default, and no Razorpay here
     assert price_book(settings).model_dump(exclude_none=True) == {"INR": {}, "USD": {}}
 
 

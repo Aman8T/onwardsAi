@@ -39,7 +39,7 @@ const COPY: Record<SignInReason, { title: string; text: string }> = {
   },
   buy: {
     title: 'Sign in to buy',
-    text: 'Postings are kept on your account, so they follow you to any device. Prices and plans stay open to everyone.',
+    text: 'Your plan is kept on your account, so it follows you to any device. The plans and their prices stay open to everyone.',
   },
 };
 
