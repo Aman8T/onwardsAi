@@ -28,6 +28,7 @@ dependencies = [
     # Auto-apply (A1) drives remote Browser Use browsers over CDP with connect_over_cdp, so the
     # deployed app needs the client library but no local browser binaries. Imported lazily.
     "playwright==1.63.0",
+    "fastapi-cloud-cli>=0.28.0",
 ]
 
 # Deliberately no [build-system]: FastAPI Cloud installs the locked dependencies from uv.lock and
