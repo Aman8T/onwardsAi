@@ -114,8 +114,7 @@ export function MatchView(props: MatchViewProps) {
             {posting && (
               <p className="m-fine mt-meta">
                 {meta ? `${meta} · ` : ''}
-                <span className="numeral">{posting.requirements.length}</span> {posting.requirements.length === 1 ? 'requirement' : 'requirements'} read from the posting · the posting was
-                treated as data, not instructions
+                <span className="numeral">{posting.requirements.length}</span> {posting.requirements.length === 1 ? 'requirement' : 'requirements'} read from the posting
                 {posting.anomalies.length > 0 ? ' · it held text aimed at an AI, which was ignored' : ''}
               </p>
             )}
