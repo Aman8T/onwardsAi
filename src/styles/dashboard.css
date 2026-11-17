@@ -1,28 +1,22 @@
 /*
- * The dashboard, "Home", one screen (board "Home · one screen"). Class prefix os- for the frame and the hero, t- for the
- * tiles of the mosaic. It shares the graph shell's sticky header (shell.css). Tokens only; the pieces that are the person's
- * own (pen, post-its, tick box, highlighter) come from the kit at the end of global.css, and only paper pieces carry a
- * shadow (the post-its there, the calendar page here).
+ * The dashboard, "Home" (canvas "Leafout Dashboard, calmer", direction B). Class prefix os- for the frame and the hero,
+ * t- for the tiles of the column. It shares the graph shell's sticky header (shell.css). Tokens only; the pieces that are
+ * the person's own (pen, post-its, tick box, highlighter) come from the kit at the end of global.css, and only paper
+ * pieces carry a shadow (the post-its there, the calendar page here).
  *
- * At 1280 x 800 and larger nothing scrolls: the body is the viewport minus the header, a hero (46 %) beside a mosaic
- * (54 %). Below 800 px of height the page has a minimum height and scrolls. Between 760 and 1100 px wide the hero stacks
- * above the mosaic. Under 760 px it is one straight column and nothing is turned.
+ * The page scrolls. On a wide and tall enough screen the hero (46 %) holds still under the header while one column (54 %)
+ * scrolls beside it. Under 1100 px wide, or under 700 px tall, nothing holds still and the hero sits above the column.
+ * Under 760 px it is one straight column and nothing is turned. One field of colour on the page (pick up where you left
+ * off) and one primary button (its action); the small tiles sit on neutral ground.
  */
 
 /* ───────────── the frame ───────────── */
 
-.db-view {
-  height: 100vh;
-  height: 100dvh;
-  min-height: 800px;
-  overflow: hidden;
-}
-
 .os-body {
   display: grid;
   grid-template-columns: minmax(0, 46fr) minmax(0, 54fr);
-  flex: 1 1 0;
-  min-height: 0;
+  align-items: start;
+  flex: 1 1 auto;
 }
 
 .db-view :is(.small, .fine, .mono) {
@@ -82,13 +76,18 @@
   margin-left: 6px;
 }
 
-/* ───────────── the hero: the greeting, the skill graph, the month and the ask ───────────── */
+/* ───────────── the hero: the greeting, the skill graph and the ask; it holds still while the column scrolls ───────────── */
 
 .os-hero {
-  position: relative;
+  /* --db-head is the app header's height, written by Dashboard.tsx (the header wraps on narrower screens) */
+  position: sticky;
+  top: var(--db-head, 64px);
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: var(--s3);
+  height: calc(100vh - var(--db-head, 64px));
+  height: calc(100dvh - var(--db-head, 64px));
   min-width: 0;
   min-height: 0;
   padding: 20px 28px 18px 32px;
@@ -102,10 +101,9 @@
 }
 
 .os-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--s2) var(--s4);
-  align-items: end;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
   flex: none;
 }
 
@@ -120,14 +118,16 @@
 
 .os-h1 {
   margin: 0;
-  font-size: 52px;
+  font-size: clamp(34px, 3.4vw, 48px);
 }
 
-.os-top-end {
+/* sharing and the wins sit under the graph they are about */
+.os-acts {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--s2);
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s4);
 }
 
 .os-shelf {
@@ -147,17 +147,16 @@
   margin-left: var(--s1);
 }
 
-/* the line: its theme in small print, the sentence, who said it; it changes every few seconds and on "Another" */
+/* the line: its theme in small print, the sentence, who said it, then its quiet controls; it changes every few seconds
+   and on "Another" */
 .os-line {
   position: relative;
-  grid-column: 1 / -1;
   display: flex;
-  align-items: baseline;
-  gap: var(--s1) var(--s3);
-  min-height: 50px;
-  padding: var(--s2) 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s1);
+  /* room for the theme, two lines and the controls, so the graph under it does not move when the line changes */
+  min-height: 112px;
 }
 
 .os-line-k {
@@ -175,7 +174,7 @@
   overflow: hidden;
   background: none;
   border: 0;
-  font-size: 20px;
+  font-size: var(--fs-5);
   line-height: 1.2;
   color: var(--text);
   text-align: left;
@@ -215,7 +214,8 @@ button.os-line-t.is-open {
   display: inline-flex;
   flex: none;
   gap: var(--s1);
-  margin-left: auto;
+  /* the first control is a quiet button: its words line up with the sentence above */
+  margin-left: calc(var(--s2) * -1);
 }
 
 @keyframes os-line-in {
@@ -411,6 +411,11 @@ button.os-line-t.is-open {
   border-style: dashed;
 }
 
+/* the level chip stays only at the two ends, Expert and Gap: in between, the number says it */
+.co .chip:not(.is-on):not(.is-gap) {
+  display: none;
+}
+
 .co-mid {
   position: absolute;
   top: 50%;
@@ -440,25 +445,10 @@ button.os-line-t.is-open {
   z-index: 2;
 }
 
-/* ───────────── the bottom band: the month, the run of weeks, the ask ───────────── */
-
-.os-band {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--s5);
-  align-items: end;
-  flex: none;
-}
-
-.os-band-r {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-  min-width: 0;
-}
+/* ───────────── the ask, at the foot of the hero ───────────── */
 
 .os-ask {
-  margin-top: var(--s1);
+  flex: none;
 }
 
 /* the Ask bar in place: the full bar where it is put, and its panel laid over the hero, above the bar */
@@ -466,7 +456,7 @@ button.os-line-t.is-open {
   margin: 0;
 }
 
-/* beside the calendar the bar is narrow: the starters wait in the panel that opens above it */
+/* the hero has no room to spare: the starters wait in the panel that opens above the bar */
 .os-ask .ak-chips {
   display: none;
 }
@@ -480,9 +470,21 @@ button.os-line-t.is-open {
   max-height: min(60vh, 440px);
 }
 
+/* ───────────── the month and the run of weeks, in the column ───────────── */
+
+.os-month {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s5) var(--s6);
+  min-width: 0;
+  margin-top: var(--s5);
+}
+
 /* the month: a sheet torn off a calendar and taped down; the lines and the crosses are drawn by hand, in code */
 .cal {
   position: relative;
+  flex: none;
   padding: 14px 14px 12px;
   background: var(--paper-sheet);
   color: var(--text);
@@ -589,8 +591,10 @@ button.os-line-t.is-open {
 /* the run of weeks, in the person's pen */
 .run {
   display: flex;
+  flex: 1 1 180px;
   flex-direction: column;
   gap: var(--s2);
+  min-width: 0;
 }
 
 .run p {
@@ -638,17 +642,15 @@ button.os-line-t.is-open {
   font-size: 20px;
 }
 
-/* ───────────── the mosaic: tiles of different sizes and materials, edge to edge ───────────── */
+/* ───────────── the column: one piece under another, each at its own height ───────────── */
 
-.os-mosaic {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-template-rows: repeat(12, minmax(0, 1fr));
-  gap: 2px;
+.os-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
   min-width: 0;
-  min-height: 0;
-  border-left: 1px solid var(--bg);
+  padding: var(--s5) var(--s6) var(--s9) var(--s5);
+  border-left: 1px solid var(--line);
 }
 
 .t {
@@ -658,7 +660,7 @@ button.os-line-t.is-open {
   gap: var(--s2);
   min-width: 0;
   min-height: 0;
-  padding: 16px 18px;
+  padding: 20px 22px;
   overflow: hidden;
   color: var(--text);
 }
@@ -666,48 +668,6 @@ button.os-line-t.is-open {
 .t h2,
 .t h3 {
   margin: 0;
-}
-
-.t-todo {
-  grid-column: 1 / 7;
-  grid-row: 1 / 8;
-}
-
-.t-pick {
-  grid-column: 7 / 13;
-  grid-row: 1 / 5;
-}
-
-.t-next {
-  grid-column: 7 / 13;
-  grid-row: 5 / 9;
-}
-
-.t-notes {
-  grid-column: 1 / 7;
-  grid-row: 8 / 13;
-  z-index: 2;
-  overflow: visible;
-}
-
-.t-apps {
-  grid-column: 7 / 11;
-  grid-row: 9 / 11;
-}
-
-.t-disc {
-  grid-column: 11 / 13;
-  grid-row: 9 / 11;
-}
-
-.t-prac {
-  grid-column: 7 / 10;
-  grid-row: 11 / 13;
-}
-
-.t-mtch {
-  grid-column: 10 / 13;
-  grid-row: 11 / 13;
 }
 
 .t-ink {
@@ -755,7 +715,7 @@ button.os-line-t.is-open {
 /* to do today: a page from a spiral notebook, written in pen */
 .t-todo {
   gap: 0;
-  padding: 14px 18px 12px 52px;
+  padding: 18px 22px 16px 56px;
   background: var(--paper-sheet);
   color: var(--text);
 }
@@ -770,7 +730,7 @@ button.os-line-t.is-open {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 13px;
+  left: 14px;
   width: 12px;
   background: radial-gradient(circle at 6px 6px, var(--bg) 5px, transparent 5.6px) 0 12px / 12px 34px repeat-y;
 }
@@ -780,7 +740,7 @@ button.os-line-t.is-open {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 39px;
+  left: 41px;
   width: 1px;
   background: var(--danger);
   opacity: 0.35;
@@ -811,9 +771,9 @@ button.os-line-t.is-open {
 .todo {
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr) auto;
-  gap: 10px;
+  gap: var(--s3);
   align-items: start;
-  padding: 8px 0 7px;
+  padding: 11px 0 10px;
   border-bottom: 1px solid var(--rule);
 }
 
@@ -912,8 +872,9 @@ a.todo-t:hover {
   font-size: var(--fs-1);
 }
 
-/* pick up where you left off: the loudest field of colour */
+/* pick up where you left off: the page's one field of colour */
 .t-pick {
+  gap: var(--s3);
   background:
     radial-gradient(120% 95% at 92% 0%, var(--tile-2) 0%, transparent 62%),
     radial-gradient(90% 90% at 0% 100%, var(--tile-4) 0%, transparent 66%),
@@ -982,7 +943,7 @@ a.todo-t:hover {
   display: grid;
   grid-template-columns: 128px minmax(0, 1fr);
   flex: 1 1 auto;
-  gap: var(--s4);
+  gap: var(--s5);
   min-height: 0;
 }
 
@@ -1040,9 +1001,9 @@ a.todo-t:hover {
 .nrow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 2px var(--s2);
+  gap: 2px var(--s3);
   align-items: baseline;
-  padding: 5px 0;
+  padding: var(--s2) 0;
   background: none;
   border: 0;
   border-top: 1px solid var(--line);
@@ -1063,34 +1024,38 @@ a.todo-t:hover {
 
 .next-prep {
   align-self: flex-start;
-  margin-top: auto;
+  margin-top: var(--s4);
 }
 
-/* your notes: a patch of the desk with two real post-its on it; they lap over the tiles around them */
+/* your notes: a patch of the desk with two real post-its on it, side by side; they lap over nothing */
 .t-notes {
+  gap: var(--s4);
+  margin-top: var(--s5);
+  padding: 18px 22px 26px;
+  overflow: visible;
   background: var(--well);
 }
 
-.notes-count {
+.notes-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  align-self: flex-end;
-  gap: 2px;
-  margin: 0;
-  text-align: right;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s5) var(--s6);
+  padding: 0 var(--s2);
 }
 
-.stick-a {
-  top: -16px;
-  left: 18px;
-  width: clamp(160px, 15vw, 192px);
+.t-notes .stick {
+  position: relative;
+  flex: 0 1 208px;
+  min-width: 0;
 }
 
-.stick-b {
-  bottom: 12px;
-  left: 52%;
-  width: clamp(160px, 15vw, 192px);
+.note-add {
+  padding: 0;
+  background: none;
+  border: 0;
+  font-size: 20px;
+  color: var(--text-muted);
 }
 
 /* a post-it holds a few lines; a long note or a long quote is cut, never spilled out of the screen */
@@ -1108,47 +1073,21 @@ a.todo-t:hover {
   -webkit-line-clamp: 2;
 }
 
-.t-notes .ghost {
-  top: 64%;
-  left: 8%;
-  width: clamp(84px, 8vw, 112px);
-  height: clamp(84px, 8vw, 112px);
+/* the four small tiles: one number each, all on the same neutral ground with a 2px seam between them */
+.os-stand {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
 }
 
-/* the small tiles: one number each */
-.t-apps {
-  gap: 4px;
-  padding: 12px 14px;
-  background:
-    radial-gradient(110% 120% at 100% 100%, var(--tile-1) 0%, transparent 70%),
-    var(--tile-4);
-}
-
-.t-disc {
-  gap: 4px;
-  padding: 12px 14px;
-  background: var(--accent-strong);
-  color: var(--surface);
-}
-
-.t-disc .kicker,
-.t-disc .fine {
-  color: inherit;
-  opacity: 0.82;
-}
-
-.t-prac {
-  gap: 4px;
-  padding: 12px 14px;
-  background: var(--surface-2);
-}
-
+.t-apps,
+.t-disc,
+.t-prac,
 .t-mtch {
-  gap: 4px;
-  padding: 12px 14px;
-  background:
-    radial-gradient(120% 110% at 0% 0%, var(--tile-3) 0%, transparent 70%),
-    var(--tile-2);
+  gap: 6px;
+  min-height: 132px;
+  padding: var(--s4) 18px;
+  background: var(--surface);
 }
 
 .stages {
@@ -1208,28 +1147,61 @@ a.todo-t:hover {
   background: var(--accent-ui);
 }
 
-/* ───────────── between 760 and 1100 wide: the hero above the mosaic ───────────── */
+/* ───────────── the quote of the day: a still place at the foot of the column ───────────── */
+
+.os-quote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s3);
+  margin: var(--s5) 0 0;
+  padding: var(--s6) var(--s5) 0;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.os-quote > * {
+  margin: 0;
+}
+
+.os-quote-t {
+  max-width: 22em;
+  font-size: var(--fs-6);
+  font-style: italic;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+/* ───────────── under 1100 wide, or on a short screen: nothing holds still, the hero sits above the column ───────────── */
 
 @media (max-width: 1100px) {
-  .db-view {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-  }
-
   .os-body {
     grid-template-columns: minmax(0, 1fr);
-    flex: 1 1 auto;
+  }
+
+  .os-hero {
+    position: static;
+    height: auto;
   }
 
   .rz-wrap {
     min-height: 400px;
   }
 
-  .os-mosaic {
-    min-height: 760px;
+  .os-col {
+    padding: var(--s5) var(--gv-gutter, 24px) var(--s9);
     border-left: 0;
-    border-top: 1px solid var(--bg);
+  }
+}
+
+@media (min-width: 1101px) and (max-height: 699px) {
+  .os-hero {
+    position: static;
+    height: auto;
+  }
+
+  .rz-wrap {
+    min-height: 380px;
   }
 }
 
@@ -1240,27 +1212,13 @@ a.todo-t:hover {
     padding: var(--s4) var(--gv-gutter, 16px);
   }
 
-  .os-h1 {
-    font-size: 40px;
-  }
-
-  .os-top {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .os-top-end {
-    flex-direction: row;
-    align-items: center;
+  .os-acts {
     flex-wrap: wrap;
     justify-content: space-between;
   }
 
-  .os-line {
-    flex-wrap: wrap;
-  }
-
-  .os-line-acts {
-    margin-left: 0;
+  .os-col {
+    padding: var(--s4) var(--gv-gutter, 16px) var(--s8);
   }
 
   .db-drawer {
@@ -1323,14 +1281,8 @@ a.todo-t:hover {
     display: none;
   }
 
-  .os-band {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--s5);
-  }
-
   .cal {
     transform: none;
-    justify-self: start;
   }
 
   .cal .tape {
@@ -1342,31 +1294,16 @@ a.todo-t:hover {
     left: var(--gv-gutter, 16px);
   }
 
-  .os-mosaic {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: none;
-    min-height: 0;
-  }
-
-  .t-todo,
-  .t-pick,
-  .t-next,
-  .t-notes {
-    grid-column: 1 / -1;
-    grid-row: auto;
-  }
-
-  .t-apps,
-  .t-disc,
-  .t-prac,
-  .t-mtch {
-    grid-column: auto;
-    grid-row: auto;
-    min-height: 132px;
-  }
-
   .t-todo {
-    padding-left: 44px;
+    padding-left: 48px;
+  }
+
+  .t-todo::before {
+    left: 10px;
+  }
+
+  .t-todo::after {
+    left: 34px;
   }
 
   .next-body {
@@ -1374,30 +1311,8 @@ a.todo-t:hover {
   }
 
   /* the notes: the two post-its one above the other, straight */
-  .t-notes {
-    gap: var(--s4);
-    overflow: visible;
-  }
-
-  .stick-a,
-  .stick-b,
-  .t-notes .ghost {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    left: auto;
-    width: min(100%, 260px);
-  }
-
-  .t-notes .ghost {
-    height: 88px;
-    transform: none;
-  }
-
-  .notes-count {
-    align-self: flex-start;
-    align-items: flex-start;
-    text-align: left;
+  .t-notes .stick {
+    flex-basis: 100%;
   }
 }
 
@@ -1408,40 +1323,9 @@ a.todo-t:hover {
   }
 }
 
-/* the hero's primary button shares the graph, so the header's quiet one steps aside on this screen (it keeps the room for the Weekly) */
+/* the hero has its own button to share the graph, so the header's quiet one steps aside on this screen (it keeps the room for the Weekly) */
 .db-view .gv-header .gv-share {
   display: none;
-}
-
-/* ───────────── fitting 1280 x 800: the greeting scales with the screen, the small tiles stay small ───────────── */
-
-.os-h1 {
-  font-size: clamp(32px, 3.1vw, 52px);
-}
-
-.t-pick {
-  gap: 6px;
-  padding: 14px 18px 12px;
-}
-
-.t-pick .t-title {
-  font-size: 26px;
-}
-
-.t-pick .t-count .big {
-  font-size: 34px;
-}
-
-:is(.t-apps, .t-disc, .t-prac, .t-mtch) {
-  padding: 10px 12px;
-}
-
-:is(.t-apps, .t-disc, .t-prac) .big {
-  font-size: 36px;
-}
-
-.t-disc .t-go {
-  white-space: normal;
 }
 
 .t-match-title {
@@ -1449,33 +1333,6 @@ a.todo-t:hover {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-}
-
-/* review pass (2026-11-12), from a 1280 x 800 screen: the pink note keeps to its own patch, and the small tiles hold one line each */
-@media (min-width: 1101px) {
-  .stick-b {
-    right: -6px;
-    left: auto;
-  }
-
-  .t-disc {
-    gap: 2px;
-  }
-
-  .t-disc .fine,
-  .t-match-title {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
-@media (min-width: 1101px) and (max-height: 860px) {
-  .t-pick {
-    gap: 4px;
-    padding-bottom: 10px;
-  }
 }
 
 /* review pass (2026-11-12): on a phone every control is at least 44 px tall */
@@ -1497,7 +1354,7 @@ a.todo-t:hover {
     min-height: 44px;
   }
 
-  :is(.todo-t, .todo-add-btn, .os-shelf-btn, .pbtn, .plink, .t-go, .t-link) {
+  :is(.todo-t, .todo-add-btn, .os-shelf-btn, .pbtn, .plink, .t-go, .t-link, .note-add) {
     display: inline-flex;
     align-items: center;
     min-height: 44px;

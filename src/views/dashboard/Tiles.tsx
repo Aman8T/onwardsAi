@@ -246,7 +246,7 @@ export function NextTile({ profile }: { profile: Profile }) {
                 </span>
               </button>
             ))}
-            <button type="button" className="btn btn-primary btn-sm next-prep" onClick={prepareTop}>
+            <button type="button" className="btn btn-sm next-prep" onClick={prepareTop}>
               How do I prepare?
             </button>
           </div>

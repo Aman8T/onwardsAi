@@ -1,20 +1,21 @@
 /**
- * The dashboard, "Home": where the app opens once a graph exists, and the person's own space. At 1280 x 800 and larger it is
- * ONE screen with no page scroll: the app header, then a body that fills the rest of the viewport, split into a hero
- * (about 46 %) and a mosaic (about 54 %).
+ * The dashboard, "Home": where the app opens once a graph exists, and the person's own space. The page scrolls. On a wide
+ * screen the hero (about 46 %) holds still under the header while one column (about 54 %) scrolls beside it.
  *
- *   hero     the greeting and the changing line (views/dashboard/Read.tsx, lines.ts), the primary "Share your skill graph"
- *            and "Worth saying out loud"; the skill graph as the biggest thing, a floating callout per domain
- *            (dashboard/HeroRadar.tsx); the month as a torn calendar page with the weeks in a row, and the Ask bar in place
- *   mosaic   Today (the features as things to do, dashboard/todos.ts), pick up where you left off, next roles, your notes
- *            (two post-its), then four small tiles with one number each: applications, Discover, practice, posting matches
+ *   hero     the greeting and the changing line (views/dashboard/Read.tsx, lines.ts); the skill graph as the biggest
+ *            thing, a floating callout per domain (dashboard/HeroRadar.tsx); under it "Share your skill graph" and "Your
+ *            wins"; the Ask bar in place
+ *   column   in the order a person uses it: pick up where you left off (the one field of colour and the one primary
+ *            button), Today (the features as things to do, dashboard/todos.ts), next roles, four small tiles with one
+ *            number each (applications, Discover, practice, posting matches), the month as a torn calendar page with the
+ *            weeks in a row, your notes (two post-its), and the quote of the day
  *
- * Below 800 px of height the page scrolls; between 760 and 1100 px wide the hero stacks above the mosaic; under 760 px it is
- * one straight column and nothing is turned. Nothing here shows a score going down. Every number is counted in code from
- * what the features already store; the read's lines are the one thing a model phrased, and they are stored on the profile.
+ * Under 1100 px wide, or on a short screen, nothing holds still and the hero sits above the column; under 760 px it is one
+ * straight column and nothing is turned. Nothing here shows a score going down. Every number is counted in code from what
+ * the features already store; the read's lines are the one thing a model phrased, and they are stored on the profile.
  * The Weekly and "New analysis" live in the header (graph/GraphHeader.tsx).
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Profile } from '../../shared/types';
 import type { PracticeHistory } from '../../shared/interview';
 import type { PreparePlanSummary } from '../../shared/prepare';
@@ -43,7 +44,7 @@ import { monthPage } from './dashboard/calendar';
 import { PickTile, ShelfLink } from './dashboard/Desk';
 import { HeroRadar } from './dashboard/HeroRadar';
 import { MonthPage, RunNotes } from './dashboard/Month';
-import { Hello, usePreviousProfile } from './dashboard/Read';
+import { Hello, QuoteCard, usePreviousProfile } from './dashboard/Read';
 import { NotesTile } from './dashboard/Slips';
 import { AppsTile, DiscoverTile, MatchTile, NextTile, PracticeTile, TodayTile } from './dashboard/Tiles';
 import { activeDays, askStarters, bestWeekday, dayKey, pickUps, practiceTrend, weekStreak } from './dashboard/deskModel';
@@ -144,46 +145,50 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
   const rows = useMemo(() => withMarks(todos, marks.marks), [todos, marks.marks]);
   const lastRun = run ? { createdAt: run.createdAt, found: run.jobs.length, good: run.jobs.filter((j) => j.fit === 'strong' || j.fit === 'good').length } : null;
 
+  // the hero holds still under the app header, so it has to know how tall the header is (it wraps on narrower screens)
+  const view = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = view.current;
+    const head = el?.querySelector<HTMLElement>('.gv-header');
+    if (!el || !head) return;
+    const set = () => el.style.setProperty('--db-head', `${head.offsetHeight}px`);
+    set();
+    const seen = new ResizeObserver(set);
+    seen.observe(head);
+    return () => seen.disconnect();
+  }, []);
+
   return (
-    <div className="gv-view db-view">
+    <div className="gv-view db-view" ref={view}>
       <GraphHeader profile={profile} current="dashboard" extra={<WeeklyLink />} />
       <SaveInvite profile={profile} />
 
       <main className="os-body">
-        {/* ───────── the hero: the greeting, the skill graph, the month and the ask ───────── */}
+        {/* ───────── the hero: the greeting, the skill graph and the ask; it holds still while the column scrolls ───────── */}
         <section className="os-hero" aria-label="Your skill graph">
           {carried === false && (
             <p className="fine os-carry" role="status">
               Your graph was updated, but your resumes and notes did not move with it. They are still saved with your earlier analysis.
             </p>
           )}
-          <Hello
-            profile={profile}
-            shelf={shelf}
-            history={history}
-            end={
-              <>
-                <ShareButton profileId={profile.id} look="primary" label="Share your skill graph" />
-                <ShelfLink items={shelf} />
-              </>
-            }
-          />
+          <Hello profile={profile} shelf={shelf} history={history} />
 
           <HeroRadar profile={profile} />
 
-          <div className="os-band">
-            <MonthPage page={desk.page} />
-            <div className="os-band-r">
-              <RunNotes streak={desk.streak} weekday={desk.weekday} anyDay={desk.days.size > 0} />
-              <div className="os-ask">
-                <AskDock profile={profile} starters={starters} inPlace />
-              </div>
-            </div>
+          {/* sharing and the wins sit with the graph they are about; neither is the page's primary button */}
+          <div className="os-acts">
+            <ShareButton profileId={profile.id} look="slip" className="btn" label="Share your skill graph" />
+            <ShelfLink items={shelf} />
+          </div>
+
+          <div className="os-ask">
+            <AskDock profile={profile} starters={starters} inPlace />
           </div>
         </section>
 
-        {/* ───────── the mosaic: everything else, sized by how much it matters today ───────── */}
-        <div className="os-mosaic">
+        {/* ───────── the column: everything else, in the order a person uses it ───────── */}
+        <div className="os-col">
+          <PickTile profile={profile} items={desk.picks} loading={reading} weak={weak} now={now} onOpenPlan={(p) => openPlan(profile, p)} />
           <TodayTile
             rows={rows}
             onTick={marks.tick}
@@ -194,13 +199,19 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
               if (plan) openPlan(profile, plan);
             }}
           />
-          <PickTile profile={profile} items={desk.picks} loading={reading} weak={weak} now={now} onOpenPlan={(p) => openPlan(profile, p)} />
           <NextTile profile={profile} />
+          <div className="os-stand">
+            <AppsTile items={tracked} />
+            <DiscoverTile run={lastRun} loading={data.run.status === 'loading'} now={now} />
+            <PracticeTile trend={desk.trend} loading={data.history.status === 'loading'} hasSession={!!history && history.sessions.length > 0} />
+            <MatchTile matches={data.matches} now={now} />
+          </div>
+          <section className="os-month" aria-label="The days you showed up this month">
+            <MonthPage page={desk.page} />
+            <RunNotes streak={desk.streak} weekday={desk.weekday} anyDay={desk.days.size > 0} />
+          </section>
           <NotesTile profile={profile} tracked={tracked} />
-          <AppsTile items={tracked} />
-          <DiscoverTile run={lastRun} loading={data.run.status === 'loading'} now={now} />
-          <PracticeTile trend={desk.trend} loading={data.history.status === 'loading'} hasSession={!!history && history.sessions.length > 0} />
-          <MatchTile matches={data.matches} now={now} />
+          <QuoteCard profile={profile} />
         </div>
       </main>
     </div>

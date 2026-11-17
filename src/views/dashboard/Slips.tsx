@@ -1,12 +1,12 @@
 /**
- * "Your notes": a neutral patch of the desk with two real post-its on it that lap over the tiles around them.
+ * "Your notes": a neutral patch of the desk with two real post-its on it, side by side, lapping over nothing.
  *
  *   NotePile     the yellow one: the person's notes as a pile, the newest on top (a note written on a tracked role, a note
  *                written to themselves here, a line pinned from under the greeting). "Next" turns the pile, "edit" and
  *                "remove" are the person's, writing straightens the note. With no notes it is never empty: "Worth a note:"
  *                and three pen prompts, each of which starts a note.
  *   ResumeSlip   the pink one: what the resume leaves out (skills the other sources proved), and the way to /resume
- *   a dashed ghost square, "+ a note"
+ *   "+ a note"   a pen link in the patch's head
  *
  * The words on a note are the person's, shown as written, in the pen face. Sharing is the primary button of the hero now,
  * so there is no share slip. Under 760 px nothing is turned (the kit in global.css).
@@ -44,7 +44,7 @@ function useSheets(tracked: readonly TrackedJob[], desk: DeskNotes): Sheet[] {
   }, [tracked, desk.notes]);
 }
 
-/** The two post-its, the ghost square and the tile's counts, in one patch. */
+/** The two post-its and the way to write a new one, in one patch. */
 export function NotesTile({ profile, tracked }: { profile: Profile; tracked: readonly TrackedJob[] }) {
   const desk = useDeskNotes(profile.id);
   const sheets = useSheets(tracked, desk);
@@ -75,114 +75,113 @@ export function NotesTile({ profile, tracked }: { profile: Profile; tracked: rea
     desk.remove(id);
     setAt(0);
   };
-  const nudges = found ? 1 : 0;
 
   return (
     <section className="t t-notes" aria-label="Your notes and your resume">
-      <p className="notes-count">
-        <span className="kicker t-ink">Pinned by you</span>
-        <span className="fine t-ink">
-          <span className="numeral">{sheets.length}</span> {sheets.length === 1 ? 'note' : 'notes'} · <span className="numeral">{nudges}</span> {nudges === 1 ? 'nudge' : 'nudges'}
-        </span>
-      </p>
+      <div className="card-head">
+        <h2 className="kicker t-ink">Pinned by you</h2>
+        {writing === null && (
+          <button type="button" className="pen note-add" onClick={() => start()}>
+            + a note
+          </button>
+        )}
+      </div>
 
-      {writing !== null ? (
-        <div className="stick stick-a">
-          <form className="postit" style={{ '--pp': 'var(--paper-yellow)' } as CSSProperties} onSubmit={submit} aria-label="Write a note to yourself">
-            <label className="pcite" htmlFor="db-note-field">
-              Note to self
-            </label>
-            <textarea
-              id="db-note-field"
-              ref={field}
-              className="pen pnote-field"
-              rows={4}
-              maxLength={NOTE_MAX_CHARS}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') setWriting(null);
-              }}
-              placeholder="Something to remember, in your own words…"
-            />
-            <span className="pfoot">
-              <button type="submit" className="pbtn">
-                Pin it
-              </button>
-              <button type="button" className="plink" onClick={() => setWriting(null)}>
-                Cancel
-              </button>
-            </span>
-          </form>
-        </div>
-      ) : top ? (
-        <div className={`stick stick-a tilt-l${sheets.length > 1 ? ' pile' : ''}`}>
-          <div className="postit" role="note" style={{ '--pp': 'var(--paper-yellow)' } as CSSProperties}>
-            {top.kind === 'tracked' ? (
-              <>
-                <p className="pen">{top.job.note}</p>
-                <span className="pcite">
-                  your note · {top.job.job.employer} · {STAGE_LABEL[top.job.stage].toLowerCase()}
-                </span>
-                <span className="pfoot pfoot-start">
-                  {sheets.length > 1 && (
-                    <button type="button" className="plink" onClick={() => setAt((i) => (i + 1) % sheets.length)} aria-label={`Next note, ${(at % sheets.length) + 1} of ${sheets.length} showing`}>
-                      <span className="numeral">
-                        {(at % sheets.length) + 1} of {sheets.length}
-                      </span>{' '}
-                      · next →
-                    </button>
-                  )}
-                  <button type="button" className="plink" onClick={() => actions.openDiscover({ tab: 'applications' })}>
-                    open →
-                  </button>
-                </span>
-              </>
-            ) : (
-              <>
-                <p className="pen">{top.note.text}</p>
-                <span className="pcite">{top.note.kind === 'pinned' ? `pinned · ${top.note.label ?? 'a line'}${top.note.by ? ` · ${top.note.by}` : ''}` : `note to self · ${shortDay(top.note.at)}`}</span>
-                <span className="pfoot pfoot-start">
-                  {sheets.length > 1 && (
-                    <button type="button" className="plink" onClick={() => setAt((i) => (i + 1) % sheets.length)} aria-label={`Next note, ${(at % sheets.length) + 1} of ${sheets.length} showing`}>
-                      <span className="numeral">
-                        {(at % sheets.length) + 1} of {sheets.length}
-                      </span>{' '}
-                      · next →
-                    </button>
-                  )}
-                  {top.note.kind === 'own' && (
-                    <button type="button" className="plink" onClick={() => start(top.note)}>
-                      edit
-                    </button>
-                  )}
-                  <button type="button" className="plink" onClick={() => drop(top.note.id)}>
-                    {top.note.kind === 'pinned' ? 'unpin' : 'remove'}
-                  </button>
-                </span>
-              </>
-            )}
+      <div className="notes-row">
+        {writing !== null ? (
+          <div className="stick stick-a">
+            <form className="postit" style={{ '--pp': 'var(--paper-yellow)' } as CSSProperties} onSubmit={submit} aria-label="Write a note to yourself">
+              <label className="pcite" htmlFor="db-note-field">
+                Note to self
+              </label>
+              <textarea
+                id="db-note-field"
+                ref={field}
+                className="pen pnote-field"
+                rows={4}
+                maxLength={NOTE_MAX_CHARS}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setWriting(null);
+                }}
+                placeholder="Something to remember, in your own words…"
+              />
+              <span className="pfoot">
+                <button type="submit" className="pbtn">
+                  Pin it
+                </button>
+                <button type="button" className="plink" onClick={() => setWriting(null)}>
+                  Cancel
+                </button>
+              </span>
+            </form>
           </div>
-        </div>
-      ) : (
-        <div className="stick stick-a tilt-l">
-          <div className="postit" role="note" style={{ '--pp': 'var(--paper-yellow)' } as CSSProperties}>
-            <p className="pen pen-under">Worth a note:</p>
-            {NOTE_PROMPTS.map((p) => (
-              <button key={p} type="button" className="pen ptodo" onClick={() => start(undefined, `${p.charAt(0).toUpperCase()}${p.slice(1)}: `)}>
-                {p}
-              </button>
-            ))}
-            <span className="pcite pcite-end">press one to start writing</span>
+        ) : top ? (
+          <div className={`stick stick-a tilt-l${sheets.length > 1 ? ' pile' : ''}`}>
+            <div className="postit" role="note" style={{ '--pp': 'var(--paper-yellow)' } as CSSProperties}>
+              {top.kind === 'tracked' ? (
+                <>
+                  <p className="pen">{top.job.note}</p>
+                  <span className="pcite">
+                    your note · {top.job.job.employer} · {STAGE_LABEL[top.job.stage].toLowerCase()}
+                  </span>
+                  <span className="pfoot pfoot-start">
+                    {sheets.length > 1 && (
+                      <button type="button" className="plink" onClick={() => setAt((i) => (i + 1) % sheets.length)} aria-label={`Next note, ${(at % sheets.length) + 1} of ${sheets.length} showing`}>
+                        <span className="numeral">
+                          {(at % sheets.length) + 1} of {sheets.length}
+                        </span>{' '}
+                        · next →
+                      </button>
+                    )}
+                    <button type="button" className="plink" onClick={() => actions.openDiscover({ tab: 'applications' })}>
+                      open →
+                    </button>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <p className="pen">{top.note.text}</p>
+                  <span className="pcite">{top.note.kind === 'pinned' ? `pinned · ${top.note.label ?? 'a line'}${top.note.by ? ` · ${top.note.by}` : ''}` : `note to self · ${shortDay(top.note.at)}`}</span>
+                  <span className="pfoot pfoot-start">
+                    {sheets.length > 1 && (
+                      <button type="button" className="plink" onClick={() => setAt((i) => (i + 1) % sheets.length)} aria-label={`Next note, ${(at % sheets.length) + 1} of ${sheets.length} showing`}>
+                        <span className="numeral">
+                          {(at % sheets.length) + 1} of {sheets.length}
+                        </span>{' '}
+                        · next →
+                      </button>
+                    )}
+                    {top.note.kind === 'own' && (
+                      <button type="button" className="plink" onClick={() => start(top.note)}>
+                        edit
+                      </button>
+                    )}
+                    <button type="button" className="plink" onClick={() => drop(top.note.id)}>
+                      {top.note.kind === 'pinned' ? 'unpin' : 'remove'}
+                    </button>
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="stick stick-a tilt-l">
+            <div className="postit" role="note" style={{ '--pp': 'var(--paper-yellow)' } as CSSProperties}>
+              <p className="pen pen-under">Worth a note:</p>
+              {NOTE_PROMPTS.map((p) => (
+                <button key={p} type="button" className="pen ptodo" onClick={() => start(undefined, `${p.charAt(0).toUpperCase()}${p.slice(1)}: `)}>
+                  {p}
+                </button>
+              ))}
+              <span className="pcite pcite-end">press one to start writing</span>
+            </div>
+          </div>
+        )}
 
-      <ResumeSlip found={found} />
-
-      <button type="button" className="ghost pen" onClick={() => start()}>
-        + a note
-      </button>
+        <ResumeSlip found={found} />
+      </div>
     </section>
   );
 }

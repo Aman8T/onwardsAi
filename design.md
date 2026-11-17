@@ -269,6 +269,8 @@ Rules: at most three turned pieces in view; nothing turned holds a field, a tabl
 
 On the sheet and the calendar page the ink is `--text` and `--text-muted` (the sheet is dark at night); `--paper-ink` is only for coloured paper and the yellow highlighter (`.hl-paper`). A post-it may lap over a neighbouring tile; nothing measured ever does. The app sets a tick only from a dated record; the person may tick by hand.
 
+**The dashboard scrolls (2026-11-17, the user's decision).** The one-screen, no-scroll Home felt cluttered, so the dashboard keeps the materials and drops the mosaic: the hero (the greeting, the line, the skill graph, the Ask bar) holds still under the header while one column scrolls beside it, each piece at its own height with air between pieces instead of a seam. It uses fewer materials at once: one field of colour (where they left off), one primary button (its action) and no ink block; the four small numbers share one neutral ground; the post-its lie side by side and lap over nothing. The meanings in the table above are unchanged. Canvas: https://claude.ai/artifact/RV6zNw5RAfmQukoyfYuadx (direction B).
+
 **The kit for every other screen (2026-11-12).** `src/styles/materials.css` (loaded once from `main.tsx`, prefix `m-`) holds the frame and the materials as classes, and `src/components/materials.tsx` holds the hand-drawn pieces. The dashboard keeps its own `os-` and `t-` classes from before the kit; new work uses the kit.
 
 | Piece | What it is |

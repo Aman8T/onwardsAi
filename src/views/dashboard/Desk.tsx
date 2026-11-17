@@ -1,10 +1,10 @@
 /**
- * Two pieces of the one-screen Home that read what the person has been doing here:
+ * Two pieces of the dashboard that read what the person has been doing here:
  *
- *   PickTile      "Pick up where you left off": the last thing touched, large, on the loudest field of colour, with its one
- *                 primary action and up to two more things in progress as "Also open" links
- *   ShelfLink     "Worth saying out loud": a link with a "N new" stamp that opens the achievements list in the app's
- *                 Popover (a bottom sheet under 760 px)
+ *   PickTile      "Pick up where you left off": the last thing touched, large, on the page's one field of colour, with the
+ *                 page's one primary action and up to two more things in progress as "Also open" links
+ *   ShelfLink     "Your wins": a link with a "N new" stamp that opens the achievements list in the app's Popover, above
+ *                 the link (a bottom sheet under 760 px)
  *
  * Nothing here compares the person with an earlier, better number: a score that went down is not shown anywhere, and one
  * that went up is an achievement. Every number is counted in code (deskModel.ts, model.ts). The title's highlighter and the
@@ -276,10 +276,10 @@ export function ShelfLink({ items }: { items: readonly Achievement[] }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
-  // under the link, its right edge on the link's right edge
-  const place = () => {
+  // above the link (it sits at the foot of the hero, so there is no room under it), its right edge on the link's right edge
+  const place = (height: number) => {
     const w = wrap.current;
-    return { left: Math.round((w?.offsetWidth ?? POP_W) - POP_W), top: Math.round((w?.offsetHeight ?? 24) + 8) };
+    return { left: Math.round((w?.offsetWidth ?? POP_W) - POP_W), top: -Math.round(height + 8) };
   };
   const popover = (sheet: boolean) =>
     open && <Popover key="shelf" model={model} sheet={sheet} place={sheet ? undefined : place} autoFocus="dialog" onClose={close} onAct={act} />;

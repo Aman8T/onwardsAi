@@ -432,6 +432,17 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
       to the bill. Without it there is no paid step.
     - **Phone (390x844).** The sheet is a bottom sheet; the public page is one column and nothing scrolls sideways.
 
+27. **The dashboard scrolls** (2026-11-17; no server needed for the layout: `/dev/design?screen=dashboard`, and
+    `&desk=empty` for a new account; the playground's pane scrolls on its own, so check "holds still" on `/dashboard`).
+    - **1280 x 800.** The page scrolls. The greeting, the line, the skill graph and the Ask bar hold still under the
+      header; the right column scrolls: Pick up where you left off, Today, Next roles, the four numbers, the month, your
+      notes, the quote of the day. One primary button on the page (Pick up's action); one field of colour.
+    - **The line.** It changes every nine seconds and on "Another"; the graph under it does not move when it does.
+    - **Your wins.** The popover opens above the link and Escape gives focus back. "Pin it" under the quote adds the
+      quote to the yellow note; pressing it again takes it off.
+    - **1280 x 660 and 1000 x 800.** Nothing holds still; the hero sits above the column.
+    - **Phone (375 x 812).** One column, nothing turned, nothing scrolls sideways, every control 44 px.
+
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`), except the
 role's, which Prepare changed on purpose (no percentage).

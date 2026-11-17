@@ -1,7 +1,7 @@
 /**
  * "Share my skill shape". It opens the share sheet, which is loaded the first time it is asked for: nobody who never
- * shares pays for it. Three looks, one behaviour: the graph header's quiet button, a primary button on the dashboard's
- * profile card, and a whole slip (the caller's children are the slip's contents). The sheet's two actions for a graph
+ * shares pays for it. Three looks, one behaviour: the graph header's quiet button, a primary button, and the caller's own
+ * (`slip`: the caller's class and children; the dashboard uses it for an ordinary button under the skill graph). The sheet's two actions for a graph
  * that cannot share live here, because they leave the sheet: "Analyse my resume" starts over from Home, "Sign in"
  * opens the sign-in sheet.
  */
@@ -57,7 +57,7 @@ export function useShareSheet(profileId: string): { show: () => void; open: bool
   return { show, open, sheet };
 }
 
-export function ShareButton({ profileId, look = 'header', className, children, label = 'Share my skill shape' }: { profileId: string; look?: ShareLook; className?: string; children?: ReactNode; /** The button's words (the dashboard's primary button says "Share your skill graph"). */ label?: string }) {
+export function ShareButton({ profileId, look = 'header', className, children, label = 'Share my skill shape' }: { profileId: string; look?: ShareLook; className?: string; children?: ReactNode; /** The button's words (the dashboard's button says "Share your skill graph"). */ label?: string }) {
   const { show, open, sheet } = useShareSheet(profileId);
 
   return (

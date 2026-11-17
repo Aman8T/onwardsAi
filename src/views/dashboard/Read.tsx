@@ -5,14 +5,14 @@
  *                        roast, a next move, a did-you-know, the tip of the day, a quote; lines.ts builds them),
  *                        changing every few seconds and on "Another"; a line that rests on a skill opens that skill's
  *                        evidence in a drawer under it (the quote, its source, "This is wrong")
+ *   QuoteCard            the quote of the day, still, at the foot of the page, with a way to pin it as a note
  *   usePreviousProfile   the analysis before this one, for what moved since
  *
  * The read's lines are written once, at analysis time, and stored on the profile; the rest of the lines are counted
- * from the records or come from the quotes and tips in lines.ts. It is the top of the one-screen Home: the greeting and the
- * line on the left, the share button and "Worth saying out loud" (`end`) on the right.
+ * from the records or come from the quotes and tips in lines.ts. It is the top of the hero: the greeting, then the line
+ * with its quiet controls under it.
  */
 import { useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
 import type { PracticeHistory } from '../../../shared/interview';
 import type { Profile } from '../../../shared/types';
 import { useMe } from '../../auth/useMe';
@@ -20,7 +20,7 @@ import { fetchProfile } from '../../lib/api';
 import { skillAction } from '../../lib/prompts';
 import { useMediaQuery } from '../../lib/ui';
 import { actions, useApp } from '../../store';
-import { THEME_LABEL, deskLines, localDay } from './lines';
+import { THEME_LABEL, deskLines, localDay, quotesOfDay } from './lines';
 import type { Achievement } from './model';
 import { useDeskNotes } from './notes';
 
@@ -35,7 +35,7 @@ function greeting(now: Date, name: string): string {
   return first ? `${word}, ${first}.` : `${word}.`;
 }
 
-export function Hello({ profile, shelf, history, end }: { profile: Profile; shelf: readonly Achievement[]; history: PracticeHistory | null; end?: ReactNode }) {
+export function Hello({ profile, shelf, history }: { profile: Profile; shelf: readonly Achievement[]; history: PracticeHistory | null }) {
   const skills = useMemo(() => new Map(profile.skills.map((s) => [s.id, s])), [profile.skills]);
   const sources = useMemo(() => new Map(profile.sources.map((s) => [s.id, s])), [profile.sources]);
   const domains = useMemo(() => new Map(profile.domains.map((d) => [d.id, d])), [profile.domains]);
@@ -95,7 +95,6 @@ export function Hello({ profile, shelf, history, end }: { profile: Profile; shel
         </p>
         <h1 className="serif os-h1">{greeting(today, profile.person.name)}</h1>
       </div>
-      {end && <div className="os-top-end">{end}</div>}
 
       {/* one line at a time: its theme in small print, the sentence, who said it */}
       <div className="os-line" aria-live="polite">
@@ -183,6 +182,26 @@ export function Hello({ profile, shelf, history, end }: { profile: Profile; shel
   );
 }
 
+/* ───────────────────────── the quote of the day ───────────────────────── */
+
+/** The day's first quote, still, at the foot of the dashboard: the words, who said them, and a way to pin it as a note. */
+export function QuoteCard({ profile }: { profile: Profile }) {
+  const quote = useMemo(() => quotesOfDay(localDay(Date.now()))[0], []);
+  const desk = useDeskNotes(profile.id);
+  if (!quote) return null;
+  const text = `“${quote.text}”`;
+  const pinned = desk.isPinned(text);
+  return (
+    <figure className="os-quote">
+      <figcaption className="kicker">Quote of the day</figcaption>
+      <blockquote className="serif os-quote-t">{text}</blockquote>
+      <p className="fine">{quote.by}</p>
+      <button type="button" className="btn btn-sm btn-quiet" aria-pressed={pinned} onClick={() => desk.togglePin({ text, label: THEME_LABEL.quote, by: quote.by })}>
+        {pinned ? 'Pinned ✓' : 'Pin it'}
+      </button>
+    </figure>
+  );
+}
 
 /* ───────────────────────── the analysis before this one ───────────────────────── */
 
