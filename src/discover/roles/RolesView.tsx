@@ -369,7 +369,7 @@ export function RolesView(p: RolesViewProps) {
   const title = n === 0 ? undefined : `${plural(n, 'role')} you might not have found`;
   const lede = data.partial
     ? 'This search was stopped before it finished, so these are the roles found so far. Search again to finish it.'
-    : "Claude searched employers' own job sites, read their boards, and checked each posting against your evidence. Every role here was listed on its employer's board when the search ran.";
+    : "We searched employers' own job sites, read their boards, and checked each posting against your evidence. Every role here was listed on its employer's board when the search ran.";
   const dim = !!focusJob && !narrow;
 
   return (

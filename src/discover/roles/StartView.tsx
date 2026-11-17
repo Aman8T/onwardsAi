@@ -13,7 +13,7 @@ import { CityControl, RemoteToggle } from './SearchBar';
 import { IconSearch } from './icons';
 
 const STEPS = [
-  { title: "Search employers' sites", body: "Claude plans a few searches from your resume and your next roles, then runs them on employers' own job sites." },
+  { title: "Search employers' sites", body: "We plan a few searches from your resume and your next roles, then run them on employers' own job sites." },
   { title: 'Read their boards, so every role is open today', body: "It reads each employer's own board, so a role the employer has taken down is left out." },
   { title: 'Check each posting against your evidence', body: 'Each ask in a posting is set against a line from your resume or your projects, and the ones you do not show are named.' },
 ];
@@ -56,7 +56,7 @@ export function StartView(p: StartViewProps) {
           <h1 className="serif dc-start-title" data-dc-h1 tabIndex={-1}>
             Roles you would not find on your own
           </h1>
-          <p className="dc-start-lede">Claude searches employers' own job sites for roles like yours, reads their boards so every role is open today, and checks each posting against your evidence.</p>
+          <p className="dc-start-lede">We search employers' own job sites for roles like yours, read their boards so every role is open today, and check each posting against your evidence.</p>
         </div>
 
         <section className="panel dc-start-panel m-plain" aria-label="Search">
