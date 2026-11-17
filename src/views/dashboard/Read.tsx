@@ -5,7 +5,6 @@
  *                        roast, a next move, a did-you-know, the tip of the day, a quote; lines.ts builds them),
  *                        changing every few seconds and on "Another"; a line that rests on a skill opens that skill's
  *                        evidence in a drawer under it (the quote, its source, "This is wrong")
- *   QuoteCard            the quote of the day, still, at the foot of the page, with a way to pin it as a note
  *   usePreviousProfile   the analysis before this one, for what moved since
  *
  * The read's lines are written once, at analysis time, and stored on the profile; the rest of the lines are counted
@@ -20,7 +19,7 @@ import { fetchProfile } from '../../lib/api';
 import { skillAction } from '../../lib/prompts';
 import { useMediaQuery } from '../../lib/ui';
 import { actions, useApp } from '../../store';
-import { THEME_LABEL, deskLines, localDay, quotesOfDay } from './lines';
+import { THEME_LABEL, deskLines, localDay } from './lines';
 import type { Achievement } from './model';
 import { useDeskNotes } from './notes';
 
@@ -179,27 +178,6 @@ export function Hello({ profile, shelf, history }: { profile: Profile; shelf: re
         )}
       </div>
     </header>
-  );
-}
-
-/* ───────────────────────── the quote of the day ───────────────────────── */
-
-/** The day's first quote, still, at the foot of the dashboard: the words, who said them, and a way to pin it as a note. */
-export function QuoteCard({ profile }: { profile: Profile }) {
-  const quote = useMemo(() => quotesOfDay(localDay(Date.now()))[0], []);
-  const desk = useDeskNotes(profile.id);
-  if (!quote) return null;
-  const text = `“${quote.text}”`;
-  const pinned = desk.isPinned(text);
-  return (
-    <figure className="os-quote">
-      <figcaption className="kicker">Quote of the day</figcaption>
-      <blockquote className="serif os-quote-t">{text}</blockquote>
-      <p className="fine">{quote.by}</p>
-      <button type="button" className="btn btn-sm btn-quiet" aria-pressed={pinned} onClick={() => desk.togglePin({ text, label: THEME_LABEL.quote, by: quote.by })}>
-        {pinned ? 'Pinned ✓' : 'Pin it'}
-      </button>
-    </figure>
   );
 }
 

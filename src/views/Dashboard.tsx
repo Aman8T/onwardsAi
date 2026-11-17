@@ -8,7 +8,7 @@
  *   column   in the order a person uses it: pick up where you left off (the one field of colour and the one primary
  *            button), Today (the features as things to do, dashboard/todos.ts), next roles, four small tiles with one
  *            number each (applications, Discover, practice, posting matches), the month as a torn calendar page with the
- *            weeks in a row, your notes (two post-its), and the quote of the day
+ *            weeks in a row, and your notes (two post-its)
  *
  * Under 1100 px wide, or on a short screen, nothing holds still and the hero sits above the column; under 760 px it is one
  * straight column and nothing is turned. Nothing here shows a score going down. Every number is counted in code from what
@@ -44,7 +44,7 @@ import { monthPage } from './dashboard/calendar';
 import { PickTile, ShelfLink } from './dashboard/Desk';
 import { HeroRadar } from './dashboard/HeroRadar';
 import { MonthPage, RunNotes } from './dashboard/Month';
-import { Hello, QuoteCard, usePreviousProfile } from './dashboard/Read';
+import { Hello, usePreviousProfile } from './dashboard/Read';
 import { NotesTile } from './dashboard/Slips';
 import { AppsTile, DiscoverTile, MatchTile, NextTile, PracticeTile, TodayTile } from './dashboard/Tiles';
 import { activeDays, askStarters, bestWeekday, dayKey, pickUps, practiceTrend, weekStreak } from './dashboard/deskModel';
@@ -211,7 +211,6 @@ export function Dashboard({ profile, previous: forcedPrevious, seed }: { profile
             <RunNotes streak={desk.streak} weekday={desk.weekday} anyDay={desk.days.size > 0} />
           </section>
           <NotesTile profile={profile} tracked={tracked} />
-          <QuoteCard profile={profile} />
         </div>
       </main>
     </div>

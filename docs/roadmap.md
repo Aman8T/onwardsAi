@@ -1254,8 +1254,8 @@ The dock's states have a gallery at `/dev/ask`. Not done: the walkthrough's step
 The owner found the one-screen Home cluttered and kept trying to scroll it. Canvas https://claude.ai/artifact/RV6zNw5RAfmQukoyfYuadx
 holds three directions; the owner chose **B, the graph stays**. Built the same day, frontend only, nothing new scored:
 the hero (greeting, line, skill graph, Ask bar) holds still while one column scrolls; one primary button and one field of
-colour on the page; the four small tiles on neutral ground; the month and the notes in the column; the quote of the day
-as a still card at the foot. Files: `src/views/Dashboard.tsx`, `src/styles/dashboard.css`, `src/views/dashboard/`
+colour on the page; the four small tiles on neutral ground; the month and the notes in the column. A quote card
+at the foot was tried and taken out the same day: the line under the greeting is the one place for a quote, set larger. Files: `src/views/Dashboard.tsx`, `src/styles/dashboard.css`, `src/views/dashboard/`
 (`Read.tsx`, `lines.ts`, `Slips.tsx`, `Desk.tsx`, `Tiles.tsx`). Checked in `/dev/design` at 1280 x 800, 1280 x 660,
 1000 x 800 and 375 x 812, light and dark; not yet on `/dashboard` with a real account.
 

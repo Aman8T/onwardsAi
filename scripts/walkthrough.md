@@ -436,10 +436,11 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     `&desk=empty` for a new account; the playground's pane scrolls on its own, so check "holds still" on `/dashboard`).
     - **1280 x 800.** The page scrolls. The greeting, the line, the skill graph and the Ask bar hold still under the
       header; the right column scrolls: Pick up where you left off, Today, Next roles, the four numbers, the month, your
-      notes, the quote of the day. One primary button on the page (Pick up's action); one field of colour.
-    - **The line.** It changes every nine seconds and on "Another"; the graph under it does not move when it does.
-    - **Your wins.** The popover opens above the link and Escape gives focus back. "Pin it" under the quote adds the
-      quote to the yellow note; pressing it again takes it off.
+      notes. One primary button on the page (Pick up's action); one field of colour.
+    - **The line.** Set large (28 px). It changes every nine seconds and on "Another", quotes among the themes; the
+      graph under it does not move for a line of one or two rows.
+    - **Your wins.** The popover opens above the link and Escape gives focus back. "Pin it" under the line adds the
+      line to the yellow note; pressing it again takes it off.
     - **1280 x 660 and 1000 x 800.** Nothing holds still; the hero sits above the column.
     - **Phone (375 x 812).** One column, nothing turned, nothing scrolls sideways, every control 44 px.
 

@@ -155,8 +155,8 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--s1);
-  /* room for the theme, two lines and the controls, so the graph under it does not move when the line changes */
-  min-height: 112px;
+  /* room for the theme, two lines and the controls, so the graph under it rarely moves when the line changes */
+  min-height: 128px;
 }
 
 .os-line-k {
@@ -167,14 +167,15 @@
 .os-line-t {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   min-width: 0;
   margin: 0;
   padding: 0;
   overflow: hidden;
   background: none;
   border: 0;
-  font-size: var(--fs-5);
+  /* the largest type on the page after the greeting: the line is the page's one voice, quotes included */
+  font-size: var(--fs-6);
   line-height: 1.2;
   color: var(--text);
   text-align: left;
@@ -1147,31 +1148,6 @@ a.todo-t:hover {
   background: var(--accent-ui);
 }
 
-/* ───────────── the quote of the day: a still place at the foot of the column ───────────── */
-
-.os-quote {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--s3);
-  margin: var(--s5) 0 0;
-  padding: var(--s6) var(--s5) 0;
-  border-top: 1px solid var(--line);
-  text-align: center;
-}
-
-.os-quote > * {
-  margin: 0;
-}
-
-.os-quote-t {
-  max-width: 22em;
-  font-size: var(--fs-6);
-  font-style: italic;
-  line-height: 1.15;
-  text-wrap: balance;
-}
-
 /* ───────────── under 1100 wide, or on a short screen: nothing holds still, the hero sits above the column ───────────── */
 
 @media (max-width: 1100px) {
@@ -1215,6 +1191,12 @@ a.todo-t:hover {
   .os-acts {
     flex-wrap: wrap;
     justify-content: space-between;
+  }
+
+  /* a phone's column is narrow: a step down, and room for a longer line */
+  .os-line-t {
+    font-size: var(--fs-5);
+    -webkit-line-clamp: 4;
   }
 
   .os-col {

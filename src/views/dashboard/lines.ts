@@ -9,8 +9,7 @@
  *   Did you know?    facts counted from the graph (cited lines, the most-proved skill, the closest role), the read's
  *                    quirky lines, and what is true of the product
  *   Tip of the day   one a day from TIPS
- *   Quote            two a day from QUOTES, each with who said it: the first has a still place at the foot of the
- *                    dashboard (quotesOfDay, Read.tsx's QuoteCard), the second takes its turn here
+ *   Quote            two a day from QUOTES, each with who said it
  *
  * QUOTES and TIPS are the only hand-written text; edit them here. Everything about the person is either a stored line
  * of the read or counted from stored data. No statistics about other people, no number that is not in the graph.
@@ -188,7 +187,7 @@ function countedKnows(profile: Profile): DeskLine[] {
 
 /**
  * The lines of today, the themes taking turns so two of a kind never follow each other while another kind is left.
- * Never empty: the quote, the tip and the product's own fact need no data.
+ * Never empty: the quotes, the tip and the product's own fact need no data.
  */
 export function deskLines(input: LinesInput): DeskLine[] {
   const { profile, shelf, history, day } = input;
@@ -228,10 +227,10 @@ export function deskLines(input: LinesInput): DeskLine[] {
 
   const n = Math.max(0, Math.floor(day));
   byTheme.tip.push({ id: `tip:${n % TIPS.length}`, theme: 'tip', origin: 'written', text: TIPS[n % TIPS.length] });
-  // the day's first quote has its own card at the foot of the page; the rest take their turn here
-  quotesOfDay(n)
-    .slice(1)
-    .forEach((q, i) => byTheme.quote.push({ id: `quote:${q.by}:${i + 1}`, theme: 'quote', origin: 'written', text: `“${q.text}”`, note: q.by }));
+  for (let i = 0; i < Math.min(QUOTES_A_DAY, QUOTES.length); i += 1) {
+    const q = QUOTES[(n * QUOTES_A_DAY + i) % QUOTES.length];
+    byTheme.quote.push({ id: `quote:${q.by}:${i}`, theme: 'quote', origin: 'written', text: `“${q.text}”`, note: q.by });
+  }
 
   const rows: DeskLine[][] = [
     byTheme.win.slice(0, WINS_MAX),
@@ -246,12 +245,6 @@ export function deskLines(input: LinesInput): DeskLine[] {
     for (const row of rows) if (row[turn]) out.push(row[turn]);
   }
   return out;
-}
-
-/** The quotes of a day, in order: the same all day, the next ones tomorrow. */
-export function quotesOfDay(day: number): ReadonlyArray<{ text: string; by: string }> {
-  const n = Math.max(0, Math.floor(day));
-  return Array.from({ length: Math.min(QUOTES_A_DAY, QUOTES.length) }, (_, i) => QUOTES[(n * QUOTES_A_DAY + i) % QUOTES.length]);
 }
 
 /** The local day as a whole number: the same all day, one more tomorrow. */
