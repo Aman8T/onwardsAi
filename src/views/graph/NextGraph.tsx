@@ -25,6 +25,7 @@ import type { RadarAxis, RadarHandle, VertexGeom } from '../../components/Radar'
 import { ValueLine } from '../../components/ValueLine';
 import { TIER_LABEL, orderRequirements, placePopover, rankRoles, reqKey, roleStanding, tier } from '../../lib/layout';
 import { requirementAction, roleAction } from '../../lib/prompts';
+import { asksShort, coversText } from '../../lib/roles';
 import { NARROW_QUERY, useMediaQuery } from '../../lib/ui';
 import { actions, useApp } from '../../store';
 import '../../styles/next.css';
@@ -272,7 +273,7 @@ export function NextGraph({ profile, initialRoleId = null }: { profile: Profile;
             <p className="m-count nx-align">
               <span className="m-big numeral">{sel.alignment}%</span>
               <span>
-                aligned
+                aligned{coversText(sel) ? `, ${coversText(sel)}` : ''}
                 <br />
                 <span className="next-muted">{sel.eta}</span>
               </span>
@@ -519,7 +520,7 @@ export function NextGraph({ profile, initialRoleId = null }: { profile: Profile;
                     type="button"
                     className={`next-role-row${i === 0 ? ' is-top' : ''}`}
                     aria-pressed={on}
-                    aria-label={`${i + 1}. ${r.title}, ${r.alignment} percent aligned, ${r.eta}`}
+                    aria-label={`${i + 1}. ${r.title}, ${r.alignment} percent aligned, ${coversText(r)}, ${r.eta}`}
                     onClick={() => selectRole(r.id)}
                   >
                     <span className="numeral next-rank" aria-hidden="true">
@@ -529,6 +530,7 @@ export function NextGraph({ profile, initialRoleId = null }: { profile: Profile;
                     <RadarGlyph className="next-role-glyph" size={i === 0 ? 32 : 20} values={orderRequirements(r).map((q) => q.current)} />
                     <span className="next-role-meta">
                       <span className="numeral next-role-pct">{r.alignment}%</span>
+                      {asksShort(r) && <span className="next-role-asks">{asksShort(r)}</span>}
                       <span className="kicker next-role-eta">{r.eta}</span>
                     </span>
                   </button>

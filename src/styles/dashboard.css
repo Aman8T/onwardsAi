@@ -1503,3 +1503,9 @@ a.todo-t:hover {
     min-height: 44px;
   }
 }
+
+/* the count beside a next role's percentage: how many of its asks the evidence covers */
+.nrow-asks {
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+}

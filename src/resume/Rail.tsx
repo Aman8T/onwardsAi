@@ -5,6 +5,8 @@
  * that holds the page together: every resume is the same blocks in another arrangement.
  */
 import { matchPath } from '../match/route';
+import { asksShort } from '../lib/roles';
+import { useApp } from '../store';
 import { statusOf } from './model';
 import { ScreenLink, Stamp } from './parts';
 import type { ResumeQuery } from './route';
@@ -55,6 +57,8 @@ function PostingRow({ resume, viewId, onNavigate, onOpenMatch }: { resume: Resum
 }
 
 function ResumeRow({ resume, slot, viewId, onNavigate }: { resume: ResumeSummary; slot?: PathSlot; viewId?: string; onNavigate: (to: ResumeQuery) => void }) {
+  const role = useApp((s) => (slot ? s.profile?.roles.find((r) => r.id === slot.roleId) : undefined));
+  const asks = role ? asksShort(role) : '';
   const on = resume.id === viewId;
   const hero = resume.isDefault;
   return (
@@ -69,6 +73,7 @@ function ResumeRow({ resume, slot, viewId, onNavigate }: { resume: ResumeSummary
         ) : slot ? (
           <span className="numeral rs-small rs-muted">
             {Math.round(slot.alignment)}%<span className="sr-only"> aligned</span>
+            {asks && <span className="rs-asks"> · {asks}</span>}
           </span>
         ) : null}
       </ScreenLink>

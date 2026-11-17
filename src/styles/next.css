@@ -431,3 +431,10 @@
     min-height: 44px;
   }
 }
+
+/* the count beside a next role's percentage in the list: how many of its asks the evidence covers */
+.next-role-asks {
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+  white-space: nowrap;
+}

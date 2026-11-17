@@ -1345,3 +1345,8 @@ summary.rs-group-head {
     min-height: 44px;
   }
 }
+
+/* the count beside a path resume's percentage: how many of the role's asks the evidence covers */
+.rs-asks {
+  white-space: nowrap;
+}

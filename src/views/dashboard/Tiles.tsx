@@ -24,6 +24,7 @@ import { discoverPath } from '../../discover/route';
 import type { DiscoverTab } from '../../discover/route';
 import { roleAction } from '../../lib/prompts';
 import { rankRoles, roleStanding } from '../../lib/layout';
+import { asksShort, coversText } from '../../lib/roles';
 import { plural, timeAgo } from '../../lib/ui';
 import { matchPath } from '../../match/route';
 import { BAND_LABEL } from '../../match/model';
@@ -224,20 +225,25 @@ export function NextTile({ profile }: { profile: Profile }) {
               <path className="oth" d={arcs.others} />
               <path className="top" d={arcs.top} />
             </svg>
-            <button type="button" className="next-open" onClick={() => actions.openRole(top.id)} aria-label={`Open ${top.title}: ${top.alignment}% aligned, ${top.eta}`}>
+            <button type="button" className="next-open" onClick={() => actions.openRole(top.id)} aria-label={`Open ${top.title}: ${top.alignment}% aligned, ${coversText(top)}, ${top.eta}`}>
               <span className="big numeral">
                 {top.alignment}
                 <span className="big-unit">%</span>
               </span>
               <span className="small next-name">{top.title}</span>
             </button>
-            <span className="fine">{eta} to close</span>
+            <span className="fine">
+              {coversText(top) ? `${coversText(top)} · ` : ''}
+              {eta} to close
+            </span>
           </div>
           <div className="next-rows">
             {roles.slice(1).map((r) => (
-              <button key={r.id} type="button" className="nrow" onClick={() => actions.openRole(r.id)} aria-label={`Open ${r.title}: ${r.alignment}% aligned, ${r.eta}`}>
+              <button key={r.id} type="button" className="nrow" onClick={() => actions.openRole(r.id)} aria-label={`Open ${r.title}: ${r.alignment}% aligned, ${coversText(r)}, ${r.eta}`}>
                 <span>{r.title}</span>
-                <span className="numeral">{r.alignment}%</span>
+                <span className="numeral">
+                  {r.alignment}%{asksShort(r) && <span className="nrow-asks"> · {asksShort(r)}</span>}
+                </span>
               </button>
             ))}
             <button type="button" className="btn btn-primary btn-sm next-prep" onClick={prepareTop}>
