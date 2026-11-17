@@ -371,6 +371,25 @@ Run in the in-app browser at 1440×900 and 390×844 using the two launch configs
     - **Without a server,** `/dev/design?screen=dashboard` shows the dock resting and open (starters, can and cannot);
       an answer cannot stream there.
 
+24. **Signed out** (the sign-in gate: on wherever `GET /api/me` says `signInRequired: true`, which is production by
+    default; locally set `TAYYARI_AUTH__REQUIRE_SIGN_IN=true` and clear cookies). Steps 1 to 23 assume you are signed in
+    on such a server.
+    - **Home.** Open `/` signed out: no upload form and no sample button, only the headline, one line on what Leafout
+      does, a primary "Sign in" button, and "How it works" and "Pricing" links. "Sign in" goes to
+      `https://leafout.in/signin?next=<this page's address>` (a button that opens the sign-in sheet on a server with
+      Google or the emailed link instead). Nothing flashes before it: while `/api/me` is loading the page is empty.
+    - **Every feature.** Open `/match`, `/discover`, `/practice` and `/weekly` signed out: each shows the same welcome with
+      one more line, for example "Posting match needs a free Leafout account.", and `next` is that address. With a graph
+      left in this browser from before, `/` and the graph are gated the same way.
+    - **Open pages.** `/pricing` reads signed out (the plan buttons open "Sign in to buy"); `/how-it-works` and the other
+      information pages read; a shared card (`/u/<slug>`, `/r/<slug>.svg`) and a published portfolio (`/p/<id>`) open.
+    - **A session that ends mid-use.** Signed in with a graph open, delete the session cookie in the browser tools and
+      start any action (a chat question, a posting match): the request fails with 401 and the page becomes the sign-in
+      welcome, not a broken screen. Signing in again returns to the same address.
+    - **A hand-off.** Open `/?handoff=<id>` signed out: the address keeps `handoff` and the page shows the welcome; after
+      signing in the hand-off is taken and the analysis starts.
+    - **Phone (390×844 and 360 wide).** The "Sign in" button is the full width, 44 px high, and nothing scrolls sideways.
+
 Acceptance: all `npm run check` scripts green, the walkthrough clean at both sizes, and
 every chat seed question and caption byte-identical to today (same `prompts.ts`), except the
 role's, which Prepare changed on purpose (no percentage).

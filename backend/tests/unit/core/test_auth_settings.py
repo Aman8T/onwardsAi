@@ -105,3 +105,42 @@ def test_no_secret_is_printed_by_repr_str_or_the_startup_summary() -> None:
         assert secret not in text
     assert s.summary()["google_oauth"] is True and s.summary()["resend_key"] is True
     assert build().summary()["google_oauth"] is False and build().summary()["resend_key"] is False
+
+
+# ───────────────────────── the sign-in gate setting ─────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("env", "explicit", "expected"),
+    [
+        ("prod", None, True),
+        ("local", None, False),
+        ("test", None, False),
+        ("prod", True, True),
+        ("prod", False, False),
+        ("local", True, True),
+        ("test", True, True),
+        ("local", False, False),
+    ],
+)
+def test_the_sign_in_gate_is_on_in_production_unless_set(
+    env: str, explicit: bool | None, expected: bool
+) -> None:
+    s = build(env=env, auth={"require_sign_in": explicit})
+    assert s.auth.sign_in_required(s.env) is expected
+    assert s.sign_in_required is expected
+
+
+def test_the_sign_in_gate_reads_its_environment_variable(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TAYYARI_AUTH__REQUIRE_SIGN_IN", "true")
+    assert build(env="local").sign_in_required is True
+    monkeypatch.setenv("TAYYARI_AUTH__REQUIRE_SIGN_IN", "false")
+    assert build(env="prod").sign_in_required is False
+    monkeypatch.setenv("TAYYARI_AUTH__REQUIRE_SIGN_IN", "  ")  # blank is unset: production decides
+    assert build(env="prod").sign_in_required is True
+    assert build(env="local").sign_in_required is False
+
+
+def test_the_sign_in_gate_shows_in_the_startup_summary() -> None:
+    assert build(env="prod").summary()["sign_in_required"] is True
+    assert build(env="test").summary()["sign_in_required"] is False

@@ -10,6 +10,17 @@ import type {
 } from '../../shared/portfolio';
 import type { AnalysisEvent, ChatEvent, ChatRequest, Profile } from '../../shared/types';
 
+/**
+ * What runs when any request is refused with 401 (the session ended, or there never was one). The accounts module
+ * registers it: it asks `/api/me` again, and when the server then says nobody is signed in the app shows its sign-in
+ * screen instead of a broken one. Every client of the API throws an `ApiError` (or a subclass), so the constructor
+ * is the one place that sees all of them.
+ */
+let onUnauthorized: (() => void) | null = null;
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler;
+}
+
 /** A failed API call: the server's `{ error }` message (or a generic one) and the HTTP status. */
 export class ApiError extends Error {
   readonly status: number;
@@ -23,6 +34,7 @@ export class ApiError extends Error {
     this.status = status;
     this.reason = reason;
     this.retryAfter = retryAfter;
+    if (status === 401) onUnauthorized?.();
   }
 }
 
@@ -199,7 +211,7 @@ export async function takeHandoff(id: string): Promise<HandoffPayload> {
 
 /* ───────────────────────── accounts ───────────────────────── */
 
-/** Who is signed in (absent `user` = an anonymous visitor), their profiles, entitlements, and the sign-in methods on offer. */
+/** Who is signed in (absent `user` = nobody), their profiles, entitlements, the sign-in methods on offer, and whether signing in is required. */
 export async function getMe(signal?: AbortSignal): Promise<MeResponse> {
   const res = await fetch('/api/me', { signal });
   if (!res.ok) throw await failure(res);

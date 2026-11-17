@@ -4,8 +4,9 @@
  * soft card with one primary action that fades in once, after the radar has drawn. No loop, no glow.
  *
  * It never shows for a signed-in person, for the sample persona (nobody owns it), when the server offers no way to
- * sign in, or after "Not now" (remembered per profile on this device). While `/api/me` is still loading it renders
- * nothing, so a signed-in person never sees it flash.
+ * sign in, where the server requires a sign-in for every feature (no one reaches a graph without one), or after
+ * "Not now" (remembered per profile on this device). While `/api/me` is still loading it renders nothing, so a
+ * signed-in person never sees it flash.
  */
 import { motion, useReducedMotion } from 'motion/react';
 import { useState } from 'react';
@@ -39,11 +40,12 @@ function writeDismissed(ids: string[]) {
 
 export function SaveInvite({ profile }: { profile: Profile }) {
   const reduced = useReducedMotion() ?? false;
-  const { user, providers, loaded } = useMe();
+  const { user, providers, loaded, signInRequired } = useMe();
   const [dismissedIds, setDismissedIds] = useState(readDismissed);
 
   if (!loaded || user || dismissedIds.includes(profile.id) || isSampleProfile(profile.id)) return null;
-  if (!offersSignIn(providers)) return null;
+  // where a sign-in is required nobody reaches a graph without one, so there is nothing to invite them to save
+  if (signInRequired || !offersSignIn(providers)) return null;
 
   const dismiss = () => {
     const next = [...dismissedIds, profile.id];

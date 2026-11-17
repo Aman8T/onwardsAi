@@ -9,7 +9,8 @@
  * the start so the screens can render it; until payments exist every value is the empty one.
  * `anonymousMatch` is true when a visitor with no sign-in may match a posting on this server (always for everyone,
  * signed in or not): the setting `TAYYARI_MATCH__ALLOW_ANONYMOUS`, which by default is on exactly when the app's own
- * providers (google, magic) are both off. Leafout sign-in does not count.
+ * providers (google, magic) are both off. Leafout sign-in does not count, and it is never true while `signInRequired` is.
+ * `signInRequired` is true when the API's sign-in gate is on (`TAYYARI_AUTH__REQUIRE_SIGN_IN`, on in production by default).
  */
 
 export type Currency = 'INR' | 'USD';
@@ -61,6 +62,8 @@ export interface MeResponse {
   providers: MeProviders;
   /** May a visitor with no sign-in use `/api/match*`? True by default only when the app's own providers (google, magic) are both off. */
   anonymousMatch: boolean;
+  /** The API refuses every request with no signed-in user (production by default): the web app shows sign-in before anything else. The public info pages and links shared on purpose stay open. Always false for a local server. */
+  signInRequired: boolean;
   /** True when the app just ended a Leafout-bridged session because the site sign-in must be refreshed: send the browser through the site's sign-in with `next` set to this page. */
   reauth?: boolean;
   /** A bridge was refused: the verified email belongs to an app account already linked to another Leafout sign-in. */

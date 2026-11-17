@@ -63,12 +63,14 @@ def test_an_anonymous_me_has_no_user_key_at_all() -> None:
         entitlements=auth.MeEntitlements(credits=0, freeMatchAvailable=False),
         providers=auth.MeProviders(google=True, magic=False, leafout=False),
         anonymousMatch=False,
+        signInRequired=False,
     ).to_dict()
     assert body == {
         "profiles": [],
         "entitlements": {"credits": 0, "freeMatchAvailable": False},
         "providers": {"google": True, "magic": False, "leafout": False},
         "anonymousMatch": False,
+        "signInRequired": False,
     }
 
 
@@ -87,6 +89,14 @@ def test_anonymous_match_is_a_required_boolean_on_both_sides() -> None:
                 "providers": {"google": False, "magic": False},
             }
         )
+
+
+def test_sign_in_required_is_a_required_boolean_on_both_sides() -> None:
+    """``signInRequired: boolean`` (not optional): the web app decides whether to show sign-in first from it."""
+    _, fields = _ts().interface("MeResponse")
+    assert fields["signInRequired"] == (False, ("bool",))
+    assert auth.MeResponse.model_fields["signInRequired"].is_required()
+    assert auth.MeResponse.model_fields["signInRequired"].annotation is bool
 
 
 # ───────────────────────── request models ─────────────────────────

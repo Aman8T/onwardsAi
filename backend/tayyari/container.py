@@ -767,11 +767,15 @@ class Container:
                 )
             )
 
-            match_anonymous = settings.match.anonymous_allowed(auth.providers)
+            # Behind the sign-in gate (`api.gate`) nobody reaches a match route without an account, so nothing is anonymous.
+            match_anonymous = (
+                False if settings.sign_in_required else settings.match.anonymous_allowed(auth.providers)
+            )
             log.info(
                 "match_anonymous",
                 allowed=match_anonymous,
                 setting=settings.match.allow_anonymous,
+                sign_in_required=settings.sign_in_required,
                 google=auth.providers.google,
                 magic=auth.providers.magic,
                 leafout=auth.providers.leafout,

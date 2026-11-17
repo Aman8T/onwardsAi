@@ -13,7 +13,7 @@ export const PRICE_PASS30 = '{{price:pass30}}';
 export const PRICING_FAQ: readonly Faq[] = [
   {
     q: 'Is Leafout free?',
-    a: 'The skill graph, your next roles and one posting match each calendar month are free, for as long as you like. Practice interviews are free while they are in testing. Paying is for more postings.',
+    a: 'With a free Leafout account, the skill graph, your next roles and one posting match each calendar month are free, for as long as you like. Practice interviews are free while they are in testing. Paying is for more postings.',
   },
   {
     q: 'What does it cost?',
@@ -44,6 +44,7 @@ export function PricingSeed() {
       </p>
       <h2>Free</h2>
       <ul>
+        <li>A Leafout account, which the app needs for everything below.</li>
         <li>Your skill graph and your next roles.</li>
         <li>One posting match each calendar month, with the list of gaps.</li>
         <li>A portfolio page built from your resume, with every line cited.</li>

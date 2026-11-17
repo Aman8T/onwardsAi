@@ -8,8 +8,7 @@ export const howItWorks: ContentPage = {
   h1: 'How Leafout works',
   lede: 'Leafout reads what you have actually done and shows it as a skill graph in which every skill cites the line it came from. That graph then drives everything else: the roles you are close to, a check of any job posting, a preparation plan and interview practice.',
   blurb: 'From your sources to a cited skill graph, and what you can do with it.',
-  // Home has no address that opens the sample by itself, so the link says what it does: it opens the app, where the sample is one button away.
-  cta: { label: 'Open Leafout', href: '/' },
+  cta: { label: 'Sign in to start', href: '/' },
   software: true,
   related: ['/skill-graph', '/job-match', '/mock-interview'],
   faq: [
@@ -23,7 +22,7 @@ export const howItWorks: ContentPage = {
     },
     {
       q: 'Can I try it without uploading my own resume?',
-      a: 'Yes. The sample profile is a fictional person, so you can see the whole flow before you share anything of your own.',
+      a: 'Yes. Once you are signed in, you can open the sample profile, a fictional person, and see the whole flow before you share anything of your own.',
     },
     {
       q: 'Does it only work for software jobs?',
@@ -65,7 +64,11 @@ export const howItWorks: ContentPage = {
 
       <section>
         <h2>Step 1: what you connect</h2>
-        <p>You start with a resume, as a PDF or a Word file. That is enough on its own. Everything else adds evidence and sharpens the graph:</p>
+        <p>
+          You need a free Leafout account to use the app, and you sign in first. The information pages, including this one and the pricing page, can be
+          read by anyone without an account.
+        </p>
+        <p>Then you start with a resume, as a PDF or a Word file. That is enough on its own. Everything else adds evidence and sharpens the graph:</p>
         <ul>
           <li>a GitHub profile, where Leafout reads your repositories, their READMEs and their tests;</li>
           <li>apps you have deployed, including apps built with Lovable, which it reads from the public page;</li>

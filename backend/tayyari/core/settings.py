@@ -372,6 +372,11 @@ class AuthSettings(BaseModel):
     """Offer the app's own Google and emailed-link sign-in. Off by default: the site's sign-in is the app's sign-in."""
     redirect_other_hosts: bool = False
     """308 page requests (not ``/api/*``) on any host other than the public URL's to the same path on the public URL."""
+    require_sign_in: bool | None = None
+    """Nothing in the API works without a sign-in (``TAYYARI_AUTH__REQUIRE_SIGN_IN``): every ``/api/*`` request with no signed-in
+    user is a 401, except the small public allowlist in `api.gate`. Unset: on in production (``env == "prod"``), off elsewhere,
+    so local development and the tests keep working without an account. Set it to ``true`` or ``false`` to override either way;
+    `sign_in_required` resolves it. Blank counts as unset."""
 
     @field_validator("public_url", mode="before")
     @classmethod
@@ -397,6 +402,19 @@ class AuthSettings(BaseModel):
             cleaned = v.strip()
             return cleaned.rstrip("/") if cleaned else None
         return v
+
+    @field_validator("require_sign_in", mode="before")
+    @classmethod
+    def _blank_require_sign_in_is_unset(cls, v: object) -> object:
+        """Blank is unset (so production decides); a padded ``true`` / ``false`` is read as the boolean it spells."""
+        if isinstance(v, str):
+            return v.strip().lower() or None
+        return v
+
+    def sign_in_required(self, env: Env) -> bool:
+        """Whether the API refuses every request with no signed-in user (see `require_sign_in`): the explicit setting when
+        there is one, else True exactly when ``env`` is ``"prod"``."""
+        return self.require_sign_in if self.require_sign_in is not None else env == "prod"
 
     @field_validator("supabase_cookie", "supabase_verify", mode="before")
     @classmethod
@@ -1122,6 +1140,11 @@ class Settings(BaseSettings):
         return self.env == "prod"
 
     @property
+    def sign_in_required(self) -> bool:
+        """The sign-in gate is on for this process (`AuthSettings.sign_in_required` for this ``env``)."""
+        return self.auth.sign_in_required(self.env)
+
+    @property
     def google_enabled(self) -> bool:
         """True when both halves of the Google OAuth client are set (the sign-in button shows only then)."""
         return self.google_client_id is not None and self.google_client_secret is not None
@@ -1161,6 +1184,7 @@ class Settings(BaseSettings):
             "github_token": self.github_token is not None,
             "google_oauth": self.google_enabled,
             "leafout_sign_in": self.auth.leafout_enabled,
+            "sign_in_required": self.sign_in_required,
             "resend_key": self.resend_api_key is not None,
             "razorpay": self.razorpay_enabled,
             "razorpay_webhooks": self.razorpay_webhooks_enabled,

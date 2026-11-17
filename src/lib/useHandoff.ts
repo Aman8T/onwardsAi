@@ -3,10 +3,12 @@
  * there) or `/?handoff_error=<code>`. This hook reads and clears both from the address, once, then either starts
  * the analysis exactly as Home's submit does or leaves a short message for Home to show (`useHandoffMessage`).
  *
- * App calls `useHandoff()`; Home reads the message. The message lives in a module-level variable with a subscribe
+ * Where the server requires a sign-in, nothing is taken before the person is signed in: the address keeps its
+ * `?handoff=` meanwhile, so the sign-in's `next` brings it back. App calls `useHandoff()`; Home reads the message. The message lives in a module-level variable with a subscribe
  * function so Home needs no prop and the store stays out of it.
  */
 import { useEffect, useSyncExternalStore } from 'react';
+import { useMe } from '../auth/useMe';
 import * as api from './api';
 import { actions } from '../store';
 
@@ -53,8 +55,9 @@ async function run(id: string | null, errorCode: string | null): Promise<void> {
 
 /** Call once from App. Returns the message to show, or null. */
 export function useHandoff(): string | null {
+  const { gate } = useMe();
   useEffect(() => {
-    if (started) return;
+    if (started || gate !== 'open') return;
     started = true;
     let id: string | null = null;
     let errorCode: string | null = null;
@@ -71,7 +74,7 @@ export function useHandoff(): string | null {
       return;
     }
     void run(id, errorCode);
-  }, []);
+  }, [gate]);
   return useSyncExternalStore(subscribe, () => message, () => null);
 }
 

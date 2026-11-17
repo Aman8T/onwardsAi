@@ -5,7 +5,9 @@
 Order matters in `create_app`: the error handlers and the middlewares first, then the API routes, and
 `mount_spa` last because its catch-all routes would shadow anything registered after them. The middlewares,
 outermost first: the request id, the security headers (so a refusal below carries them too), the
-cross-site guard, and the session cookie (which adds ``Set-Cookie`` when a request signed someone in or out). The docs pages are off: this is a private API for the bundled web app.
+cross-site guard, the session cookie (which adds ``Set-Cookie`` when a request signed someone in or out) and, innermost, the
+sign-in gate (`api.gate`: with ``TAYYARI_AUTH__REQUIRE_SIGN_IN`` on, which production is by default, a 401 for every ``/api/*``
+request with no signed-in user but a short public list). The docs pages are off: this is a private API for the bundled web app.
 
 FastAPI's own OpenTelemetry (`TELEMETRY`) records request traces and metrics; on FastAPI Cloud the metrics reach
 its Metrics dashboard with no setup, and elsewhere nothing is exported until `FASTAPI_OTEL_AUTO_CONFIGURE=true`
@@ -23,6 +25,7 @@ from fastapi.telemetry import TelemetryConfig
 import tayyari
 from tayyari.api.deps import RequestIdMiddleware
 from tayyari.api.errors import install_error_handlers
+from tayyari.api.gate import SignInGate
 from tayyari.api.lifespan import build_lifespan
 from tayyari.api.routes import api_router
 from tayyari.api.security import CrossSiteGuard, SecurityHeadersMiddleware
@@ -77,7 +80,9 @@ def create_app(settings: Settings | None = None, *, overrides: ContainerOverride
     )
     app.state.settings = resolved
     install_error_handlers(app)
-    # Starlette makes the last middleware added the outermost one.
+    # Starlette makes the last middleware added the outermost one. The gate is innermost, so the session cookie (a session the
+    # gate's own lookup just made or ended), the cross-site guard, the security headers and the request id all wrap its 401.
+    app.add_middleware(SignInGate, enabled=resolved.sign_in_required)
     app.add_middleware(SessionCookieMiddleware)
     app.add_middleware(CrossSiteGuard)
     app.add_middleware(SecurityHeadersMiddleware, index_html=STATIC_DIR / "index.html")

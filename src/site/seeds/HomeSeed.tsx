@@ -34,7 +34,7 @@ export function HomeSeed() {
       </p>
       <h2>How it works</h2>
       <ol>
-        <li>Add a resume, and any links you have. Or open the sample profile, a fictional person, to see the whole flow first.</li>
+        <li>Sign in with a free Leafout account, then add a resume and any links you have. Or open the sample profile, a fictional person, to see the whole flow first.</li>
         <li>
           See your <a href="/skill-graph">skill graph</a>: the skills with their evidence, and the roles you are closest to.
         </li>
@@ -53,7 +53,7 @@ export function HomeSeed() {
       </p>
       <h2>What it costs</h2>
       <p>
-        The skill graph and your next roles are free, and so is one posting match each calendar month. After that you can pay per posting or for 30 days,
+        With a free Leafout account, the skill graph and your next roles are free, and so is one posting match each calendar month. After that you can pay per posting or for 30 days,
         once, with no renewals. See <a href="/pricing">pricing</a>.
       </p>
       <section aria-labelledby="faq-title">

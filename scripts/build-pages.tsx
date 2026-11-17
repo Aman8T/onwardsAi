@@ -407,7 +407,7 @@ function llmsTxt(): string {
     '',
     `> ${SITE_LINE} It checks job postings against that evidence and builds a resume and cover note only from facts you can cite. It gives no ATS score and never scrapes LinkedIn or Naukri.`,
     '',
-    'Leafout is for students in India and working professionals of every profession, in India and elsewhere. The skill graph, next roles and one posting match each month are free; paid plans are one-time payments (a pack of three postings, a 30-day pass), and nothing renews. This is the app; the company site is ' +
+    'Leafout is for students in India and working professionals of every profession, in India and elsewhere. You need a free Leafout account to use the app (the information pages are open to read without one). The skill graph, next roles and one posting match each month are free; paid plans are one-time payments (a pack of three postings, a 30-day pass), and nothing renews. This is the app; the company site is ' +
       `${COMPANY_URL}.`,
     '',
     '## Pages',

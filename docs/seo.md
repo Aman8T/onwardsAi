@@ -66,6 +66,16 @@ The CSP hashes every inline `<script>` of `static/index.html`, computed from the
 
 **To do in `static.py`** (not part of the build): replace `{{price:pack3}}` and `{{price:pass30}}` in `pricing/index.html` as it is served; answer the private routes with `app-shell.html`; send `X-Robots-Tag: noindex` on `/r/*.svg` and `/og/*.png`.
 
+## The sign-in gate and these pages (2026-11-04)
+
+Where the server requires a sign-in (`signInRequired` on `/api/me`, production by default) nothing in the app works without
+one: a signed-out visitor to `/`, `/match`, `/discover`, `/practice` or `/weekly` gets the sign-in welcome (`src/auth/SignInGate.tsx`).
+What stays open to read is exactly what this document generates (the information pages and `/pricing`), the radar card
+links and a published portfolio. So the text of every page here, the Home and Pricing seeds, the share descriptions and `llms.txt`
+say that a free Leafout account is needed to use the app, and none may claim that anything works without one (no "no account",
+"without signing up" or "try it first" wording). A page's call to action still links into the app, where the visitor meets
+the welcome and its "Sign in" button.
+
 ## Shared radar cards (`/u/<slug>`)
 
 A person who shares their radar card (R1, `docs/backend.md` "The radar card") gets a page at `/u/<slug>`, rendered by the
@@ -84,5 +94,5 @@ are cards to judge by). It is not in the sitemap, and `robots.txt` does not disa
 - **`hreflang`** (the site is one language, English; content pages say `en-IN`).
 - **Offer data for Pricing.** The prices are server settings, so the static data states none; add `Offer` only when the visible text and the data can come from the same source.
 - **Search Console and Bing Webmaster verification**, and a check of production headers with a real crawl (`SEO/SeoP1.md` marks this unverified).
-- **Content for the app's own routes** (`/match`, `/practice`, `/discover` need a sign-in or a profile, so they stay out of the sitemap).
+- **Content for the app's own routes** (`/match`, `/practice`, `/discover` need a sign-in, so they stay out of the sitemap).
 - **Hue boot script on the static pages.** They hold the tokens' default hue and follow the device's light or dark setting; the Atmosphere choices the app stores in the browser are not read there, because an extra inline script would need a CSP hash on every page.

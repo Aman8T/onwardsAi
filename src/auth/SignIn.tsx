@@ -35,12 +35,18 @@ const COPY: Record<SignInReason, { title: string; text: string }> = {
   },
   account: {
     title: 'Sign in to Leafout',
-    text: 'Your graph and portfolio stay with your account. Reading your sources stays open to everyone.',
+    text: 'Your graph and portfolio stay with your account, and open again from any device.',
   },
   buy: {
     title: 'Sign in to buy',
     text: 'Postings are kept on your account, so they follow you to any device. Prices and plans stay open to everyone.',
   },
+};
+
+/** Where the server requires a sign-in for every feature, the sheet says so instead of offering to "keep" something. */
+const REQUIRED_COPY: { title: string; text: string } = {
+  title: 'Sign in to Leafout',
+  text: 'Leafout needs a free account to build your graph, check postings and practise. Your work stays with your account.',
 };
 
 /** Where a Google sign-in lands afterwards: back on the page that asked for it when that page is the pricing page. */
@@ -62,7 +68,7 @@ function takeAuthNotice(): string | undefined {
 
 export function SignIn() {
   const ui = useSignInSheet();
-  const { me, providers, user, loaded, stuck, issue } = useMe();
+  const { me, providers, user, loaded, stuck, issue, signInRequired } = useMe();
   const titleId = useId();
 
   // Back from a sign-in that did not complete: open the sheet with the reason.
@@ -76,7 +82,7 @@ export function SignIn() {
     if (user && ui.open) signInSheet.close();
   }, [user, ui.open]);
 
-  const copy = COPY[ui.reason];
+  const copy = signInRequired && ui.reason !== 'buy' ? REQUIRED_COPY : COPY[ui.reason];
   // the Leafout link brings the person back to the page they were on (or the one the opener named)
   const leafoutHref = ui.open ? signInHref(me, ui.next ?? currentPath()) : null;
   return (

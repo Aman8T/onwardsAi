@@ -2,7 +2,8 @@
 
     GET    /api/me             JSON `MeResponse`: the user (absent when anonymous), the profiles it owns, its
                                entitlements (`billing.EntitlementService.summary`; empty for an anonymous visitor)
-                               which sign-in methods work here, and whether a visitor with no sign-in may match a posting (`anonymousMatch`)
+                               which sign-in methods work here, whether a visitor with no sign-in may match a posting (`anonymousMatch`), and whether the API
+                               refuses everything without a sign-in (`signInRequired`, see `api.gate`)
     POST   /api/me/claim       {"profileId"} -> `MeResponse`; attaches an unowned profile (and its page, and the
                                posting matches and answers made on it without an account) to the account
     PATCH  /api/me             {"currency"?, "name"?} -> `MeResponse`
@@ -113,6 +114,7 @@ async def me_response(
             leafoutSignOutUrl=auth_settings.supabase_sign_out_url if providers.leafout else None,
         ),
         anonymousMatch=container.match_anonymous,
+        signInRequired=container.settings.sign_in_required,
         reauth=True if reauth else None,
         signInIssue="email_taken" if sign_in_issue == "email_taken" else None,
     )

@@ -463,3 +463,45 @@
 a.auth-item {
   text-decoration: none;
 }
+
+/* ───────────── the signed-out welcome (SignInGate.tsx) ───────────── */
+
+.gate-main {
+  display: grid;
+  gap: var(--s4);
+  max-width: 40rem;
+  padding-block: var(--s6) var(--s7);
+}
+
+.gate-wanted {
+  margin: 0;
+}
+
+.gate-lead {
+  margin: 0;
+  max-width: 34rem;
+  color: var(--text-muted);
+}
+
+.gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.gate-actions .btn {
+  min-height: 44px;
+  justify-content: center;
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .gate-main {
+    padding-block: var(--s4) var(--s6);
+  }
+
+  .gate-cta {
+    flex: 1 1 100%;
+  }
+}

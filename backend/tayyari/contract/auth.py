@@ -8,7 +8,8 @@ the JSON (``to_dict``), so an anonymous visitor's ``/api/me`` has no ``user`` ke
 ``entitlements`` is part of the shape from the start so the web app can render it; until payments exist
 (wave F2) every value is the empty one. ``anonymousMatch`` says whether a visitor with no sign-in may match a posting
 on this server (`MatchSettings.anonymous_allowed`; true by default only when the app's own providers, Google and the emailed link, are both
-off: the Leafout account does not count), so the web app knows whether to ask for an account first.
+off: the Leafout account does not count, and never while the sign-in gate is on), so the web app knows whether to ask for an account first.
+``signInRequired`` says the gate is on: every feature needs an account (the public info pages, shared card and portfolio links stay open).
 """
 
 # ruff: noqa: N815  (the field names are camelCase on purpose: they are the JSON keys of shared/auth.ts)
@@ -97,6 +98,9 @@ class MeResponse(_Model):
     entitlements: MeEntitlements
     providers: MeProviders
     anonymousMatch: bool
+    signInRequired: bool
+    """The API refuses every request with no signed-in user (the gate in `api.gate`; `AuthSettings.require_sign_in`, on in
+    production by default), so the web app shows sign-in before anything else. Always false for a local server."""
     reauth: bool | None = None
     """True when the app just ended a Leafout-bridged session because the site sign-in must be refreshed. The web app then
     sends the browser through the site's sign-in with ``next`` set to the current page."""

@@ -177,6 +177,7 @@ async def test_an_anonymous_visitor_gets_the_shape_without_a_user(start: Any) ->
         "entitlements": {"credits": 0, "freeMatchAvailable": False},
         "providers": {"google": True, "magic": True, "leafout": False},
         "anonymousMatch": False,  # a way to sign in exists, so a posting match asks for one
+        "signInRequired": False,  # the gate is off in the test environment
     }
     assert "set-cookie" not in response.headers
 

@@ -32,7 +32,7 @@ export const HOME_HEAD: AppHead = {
 export const PRICING_HEAD: AppHead = {
   title: 'Pricing: pay per posting or by the month · Leafout',
   description:
-    'Your skill graph and next roles are free, with one posting match a month. Pay per posting or for 30 days, once. Nothing renews, and there is no annual plan.',
+    'With a free Leafout account, your skill graph and next roles are free, with one posting match a month. Pay per posting or for 30 days, once. Nothing renews.',
 };
 
 /** The share picture: drawn once, served from the app's own files (`public/og-default.png`), the same for every page. */

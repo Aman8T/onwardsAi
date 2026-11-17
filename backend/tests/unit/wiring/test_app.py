@@ -16,6 +16,7 @@ import tayyari
 from tayyari.api import app as app_module
 from tayyari.api.app import create_app
 from tayyari.api.deps import RequestIdMiddleware
+from tayyari.api.gate import SignInGate
 from tayyari.api.security import CrossSiteGuard, SecurityHeadersMiddleware
 from tayyari.api.session_cookie import SessionCookieMiddleware
 from tayyari.container import ContainerOverrides
@@ -65,14 +66,28 @@ def test_settings_default_to_the_process_wide_ones(
 
 def test_the_middlewares_are_stacked_in_the_agreed_order(make_settings: MakeSettings) -> None:
     """Outermost first: the request id, then the security headers (so a refusal carries them), then the guard, then the
-    session cookie (innermost: it only touches the response start of requests the guard let through)."""
+    session cookie, and the sign-in gate innermost (so its 401 carries the request id and the security headers, and a session its
+    lookup just made or ended still reaches the cookie)."""
     app = create_app(make_settings())
     assert [m.cls for m in app.user_middleware] == [
         RequestIdMiddleware,
         SecurityHeadersMiddleware,
         CrossSiteGuard,
         SessionCookieMiddleware,
+        SignInGate,
     ]
+
+
+@pytest.mark.parametrize(
+    ("env", "explicit", "enabled"),
+    [("test", None, False), ("prod", None, True), ("local", True, True), ("prod", False, False)],
+)
+def test_the_sign_in_gate_follows_the_setting(
+    make_settings: MakeSettings, env: str, explicit: bool | None, enabled: bool
+) -> None:
+    app = create_app(make_settings(env=env, auth={"require_sign_in": explicit}))
+    gate = next(m for m in app.user_middleware if m.cls is SignInGate)
+    assert gate.kwargs == {"enabled": enabled}
 
 
 def test_the_security_headers_read_the_web_builds_index_page(

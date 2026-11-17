@@ -9,8 +9,13 @@
  * as there is both: after a sign-in, and after every analysis a signed-in person runs. A sign-in that goes through
  * Google leaves the page and comes back, which is why the claim runs from here and not from the sheet.
  *
- * `/api/me` answers anonymous visitors too (no `user`), so "not signed in" is an answer, not an error. If the
- * request itself fails the app simply behaves as anonymous.
+ * `/api/me` answers signed-out visitors too (no `user`), so "not signed in" is an answer, not an error. When the
+ * server says `signInRequired` (production), a signed-out visitor gets the sign-in screen instead of any feature
+ * (`gate`, read by App); a server that says nothing is read as "not required" (local development). If the request
+ * itself fails the app simply behaves as it did before the answer.
+ *
+ * A request refused with 401 anywhere in the app asks `/api/me` again (`setUnauthorizedHandler`), so a session that
+ * ended mid-use lands on the same sign-in screen.
  */
 import { useEffect, useSyncExternalStore } from 'react';
 import type { MeEntitlements, MeProfile, MeProviders, MeResponse, MeUser } from '../../shared/auth';
@@ -39,6 +44,11 @@ function set(next: Partial<MeState>) {
 function subscribe(cb: () => void) {
   listeners.add(cb);
   return () => listeners.delete(cb);
+}
+
+/** Does this server make every feature wait for a sign-in? Read from `/api/me`; a missing field (an older server) is false. */
+export function signInRequired(me: MeResponse | null | undefined): boolean {
+  return me?.signInRequired === true;
 }
 
 const NO_PROVIDERS: MeProviders = { google: false, magic: false, leafout: false };
@@ -75,6 +85,11 @@ function sendThroughSiteSignIn(me: MeResponse) {
   if (takeBounce()) window.location.replace(href);
   else if (!state.stuck) set({ stuck: true });
 }
+
+// Any 401 from the API: look at who the server thinks is signed in, so a session that ended shows the sign-in screen.
+api.setUnauthorizedHandler(() => {
+  if (state.status !== 'idle') void refresh();
+});
 
 // A sign-in or sign-out in another tab: look again when this one comes back into view.
 let watching = false;
@@ -115,6 +130,20 @@ function accessOf(s: MeState): MatchAccess {
 /** The same answer for code that is not a component (the match store). */
 export const matchAccess = (): MatchAccess => accessOf(state);
 
+/**
+ * What the screens do with the person right now:
+ *   pending  `/api/me` has not answered yet: show nothing of the app rather than flash a screen that may be taken away
+ *   blocked  the server requires a sign-in and nobody is signed in: show the sign-in screen (`SignInGate`)
+ *   open     show the feature (signed in, the gate is off on this server, or `/api/me` could not be reached)
+ */
+export type Gate = 'pending' | 'blocked' | 'open';
+
+function gateOf(s: MeState): Gate {
+  if (s.status === 'error') return 'open';
+  if (!s.me) return 'pending';
+  return !s.me.user && signInRequired(s.me) ? 'blocked' : 'open';
+}
+
 /** Sample runs belong to nobody: they are never saved to an account. */
 export const isSampleProfile = (id: string) => id.startsWith('sample-');
 
@@ -147,6 +176,10 @@ export interface MeView {
   anonymousMatch: boolean;
   /** What the match flow does for this person: see `MatchAccess`. */
   matchAccess: MatchAccess;
+  /** Whether a feature may show: see `Gate`. */
+  gate: Gate;
+  /** This server requires a sign-in for every feature (whether or not the person has one yet). */
+  signInRequired: boolean;
   /** The sign-in must be refreshed and the loop guard stopped the redirect: show "We couldn't confirm your sign-in". */
   stuck: boolean;
   /** A sentence for a refused bridge (`signInIssue`), when there is one. */
@@ -174,6 +207,8 @@ export function useMe(): MeView {
     providers: me?.providers ?? NO_PROVIDERS,
     anonymousMatch: me?.anonymousMatch === true,
     matchAccess: accessOf(snap),
+    gate: gateOf(snap),
+    signInRequired: signInRequired(me),
     stuck: snap.stuck,
     issue: me?.signInIssue ? SIGN_IN_ISSUES[me.signInIssue] : undefined,
     loaded: status === 'ready',
