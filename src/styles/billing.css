@@ -223,6 +223,39 @@ button.bl-item:focus-visible {
   font-size: var(--fs-2);
 }
 
+/* "lifetime" beside Day One's name: a quiet chip, so the plan reads as pay once, keep it for good. */
+.bl-life {
+  display: inline-block;
+  margin-left: var(--s1);
+  padding: 0 var(--s2);
+  border: var(--hair) solid var(--line-strong);
+  border-radius: 999px;
+  font-size: var(--fs-0);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  vertical-align: 1px;
+}
+
+/* Three true promises under the price list, in place of testimonials we do not have yet. */
+.bl-promises {
+  display: grid;
+  gap: var(--s2);
+  margin: var(--s3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bl-promises li {
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  color: var(--text-muted);
+}
+
+.bl-promises strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .bl-terms {
   display: flex;
   flex-wrap: wrap;

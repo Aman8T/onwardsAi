@@ -59,10 +59,11 @@ export function PricingSeed() {
       </ul>
       <h2>Lowkey: opening soon</h2>
       <p>A monthly plan with more room than Just Looking. Price: {PRICE_LOWKEY}. It is not on sale yet, and you can ask to be told the day it opens.</p>
-      <h2>Day One: one payment</h2>
+      <h2>Day One: one payment, yours for life</h2>
       <p>
         Everything, with no plan limits and no counting: every posting match, search with AI, practice session, coach question, new analysis and application.
-        One payment, never renewed. Price now: {PRICE_DAYONE}. The early price ends on: {DATE_DAYONE}. Price after that: {PRICE_DAYONE_AFTER}.
+        Pay once and you never pay again: Day One is yours for life, including everything Leafout builds later. Price now: {PRICE_DAYONE}. The early price
+        ends on: {DATE_DAYONE}. Price after that: {PRICE_DAYONE_AFTER}.
       </p>
       <h2>Locked In: opening soon</h2>
       <p>A monthly plan for people searching hard. Price: {PRICE_LOCKEDIN}. It is not on sale yet, and you can ask to be told the day it opens.</p>

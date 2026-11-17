@@ -224,6 +224,10 @@ export function Bill(p: BillProps) {
               <span>{formatPrice(paid && p.receipt ? p.receipt.amount : price, 'INR')}</span>
             </div>
             <div className="bl-row">
+              <span>Yours for</span>
+              <span>life</span>
+            </div>
+            <div className="bl-row">
               <span>Renews</span>
               <span>never</span>
             </div>
@@ -269,7 +273,7 @@ export function Bill(p: BillProps) {
         {early && (
           <section className="m-tile m-field m-c2" aria-label="How long this price lasts">
             <p className="kicker numeral">
-              Until {win.endDay}, {win.endTime} IST
+              Early price until {win.endDay}, {win.endTime} IST · yours for life once bought
             </p>
             <p className="m-count">
               <span className="m-big">{win.daysLeft}</span>

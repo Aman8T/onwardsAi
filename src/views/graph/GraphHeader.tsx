@@ -57,6 +57,9 @@ export function GraphHeader({ profile, current, extra }: { profile: Profile; cur
         <button type="button" className="gv-navbtn" onClick={() => actions.openResume()}>
           Resumes
         </button>
+        <button type="button" className="gv-navbtn" onClick={() => actions.openPricing()}>
+          Plans
+        </button>
       </nav>
 
       <div className="gv-actions">

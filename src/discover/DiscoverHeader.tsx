@@ -49,6 +49,9 @@ export function DiscoverHeader({ profileId, tab, onTab }: DiscoverHeaderProps) {
         <button type="button" className="dc-navbtn" onClick={() => actions.openPractice({ screen: 'hub' })}>
           Practice
         </button>
+        <button type="button" className="dc-navbtn" onClick={() => actions.openPricing()}>
+          Plans
+        </button>
       </nav>
       <div className="dc-header-end">
         {who && <span className="dc-who">{who}</span>}

@@ -95,13 +95,19 @@ export function PlanScreen(p: PlanScreenProps) {
           <button type="button" className={`bl-item${p.pick === 'day' ? ' is-on' : ''}`} aria-pressed={p.pick === 'day'} onClick={() => p.onPick('day')}>
             <Tick index={1} />
             <span className="bl-item-main">
-              <span>Day One</span>
+              <span>
+                Day One <span className="bl-life">lifetime</span>
+              </span>
               <span className="m-fine numeral">
-                {onDayOne ? 'yours · everything, no plan limits' : offer.early ? `everything · open until ${win.endDay}, ${days(win.daysLeft)} left` : 'everything · no plan limits'}
+                {onDayOne
+                  ? 'yours for life · everything, no plan limits'
+                  : offer.early
+                    ? `everything, for life · early price until ${win.endDay}, ${days(win.daysLeft)} left`
+                    : 'everything, for life · no plan limits'}
               </span>
             </span>
             <span className="bl-item-price numeral">
-              {formatPrice(price, 'INR')} <small className="m-fine">once</small>
+              {formatPrice(price, 'INR')} <small className="m-fine">once, for life</small>
             </span>
           </button>
 
@@ -114,8 +120,18 @@ export function PlanScreen(p: PlanScreenProps) {
 
         <div className="bl-plain-say">
           <span>Nothing renews by itself.</span>
-          <span>The list is in order of price: Day One, once, sits between the two monthly plans.</span>
         </div>
+        <ul className="bl-promises" aria-label="What Leafout promises">
+          <li>
+            <strong>Every skill cites its line.</strong> Your graph points to the resume line or project that proves each skill.
+          </li>
+          <li>
+            <strong>Nothing invented.</strong> No fake scores, no made-up numbers, and never a skill you haven't shown.
+          </li>
+          <li>
+            <strong>Built with the people who use it.</strong> Day One members tell us what to build next, and we build it.
+          </li>
+        </ul>
         <nav className="bl-terms" aria-label="Terms and policies">
           {LEGAL_LINKS.map((l) => (
             <a key={l.href} href={l.href}>
@@ -173,13 +189,17 @@ function DayOneStage(p: PlanScreenProps & { price: number }) {
   return (
     <section className="m-tile m-ink bl-stage" aria-label="Day One">
       <p className="kicker numeral">
-        {mine ? 'Day One · yours' : offer.early ? `Day One · open until ${win.endDay}, ${win.endTime} IST · ${days(win.daysLeft)} left` : 'Day One · once'}
+        {mine
+          ? 'Day One · yours for life'
+          : offer.early
+            ? `Day One · lifetime · early price until ${win.endDay}, ${win.endTime} IST · ${days(win.daysLeft)} left`
+            : 'Day One · lifetime'}
       </p>
-      <h2 className="serif bl-stage-title">{mine ? 'You are in from day one.' : 'In from day one. Everything, for good.'}</h2>
+      <h2 className="serif bl-stage-title">{mine ? 'You are in from day one, for life.' : 'Pay once. Yours for life.'}</h2>
       <p className="bl-say-big">
         {mine
-          ? 'Nothing is counted on your account, and everything we build after this is yours too.'
-          : `No plan limits on anything Leafout does, and everything we build after this is yours too. One payment of ${formatPrice(price, 'INR')}.`}
+          ? 'Nothing is counted on your account, ever, and everything we build after this is yours too. You will never pay again.'
+          : `One payment of ${formatPrice(price, 'INR')}, and you never pay again. No plan limits on anything Leafout does, today or in everything we build after this.`}
       </p>
 
       <div className="bl-cols">
@@ -219,7 +239,7 @@ function DayOneStage(p: PlanScreenProps & { price: number }) {
               </div>
               {offer.early && (
                 <p className="m-fine numeral">
-                  From {win.afterDay} Day One is {formatPrice(offer.dayOneAfter, 'INR')}.
+                  The early price ends on {win.endDay}; from {win.afterDay} Day One costs {formatPrice(offer.dayOneAfter, 'INR')}. Buy before, and it is yours for life at {formatPrice(price, 'INR')}.
                 </p>
               )}
             </div>
@@ -287,7 +307,7 @@ function FreeStage(p: PlanScreenProps) {
       </button>
       <button type="button" className="bl-lift" onClick={() => p.onPick('day')}>
         <span className="numeral">
-          Day One stops counting all six. {formatPrice(price, 'INR')} once{offer.early ? `, until ${win.endDay}` : ''}.
+          Day One stops counting all six, for life. {formatPrice(price, 'INR')} once{offer.early ? `, early price until ${win.endDay}` : ''}.
         </span>
         <span aria-hidden="true">→</span>
       </button>

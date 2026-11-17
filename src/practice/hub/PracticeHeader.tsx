@@ -47,6 +47,9 @@ export function PracticeHeader({ profileId, who, onNavigate }: PracticeHeaderPro
         <button type="button" className="pc-navbtn is-current" aria-current="page" onClick={go('the Practice hub', () => actions.openPractice({ screen: 'hub' }))}>
           Practice
         </button>
+        <button type="button" className="pc-navbtn" onClick={go('Plans', () => actions.openPricing())}>
+          Plans
+        </button>
       </nav>
       <div className="pc-header-end">
         {name && <span className="pc-who">{name}</span>}

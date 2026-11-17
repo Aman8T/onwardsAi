@@ -44,6 +44,9 @@ export function MatchHeader({ onNavigate }: { onNavigate: (route: MatchRoute) =>
           <button type="button" className="mt-navbtn" onClick={() => actions.openDiscover()}>
             Discover
           </button>
+          <button type="button" className="mt-navbtn" onClick={() => actions.openPricing()}>
+            Plans
+          </button>
         </nav>
       )}
       <div className="mt-header-end">
