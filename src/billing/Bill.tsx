@@ -43,14 +43,14 @@ export interface BillProps {
 }
 
 const HERO: Record<BillPhase, { h1: string; lede: string }> = {
-  bill: { h1: 'Read it once. Pay it once.', lede: 'Every line you are paying for is on the slip. Nothing is charged until you press Pay.' },
-  starting: { h1: 'One moment. Your bill is waiting behind the payment.', lede: 'Opening the checkout window. If you close it, nothing is charged and this bill stays as it is.' },
-  paying: { h1: 'One moment. Your bill is waiting behind the payment.', lede: 'Finish the payment in the checkout window. If you close it, nothing is charged and this bill stays as it is.' },
-  verifying: { h1: 'One moment. Your bill is waiting behind the payment.', lede: 'Confirming your payment. Please keep this page open.' },
+  bill: { h1: 'Your Day One bill.', lede: 'Every line you are paying for is on the slip. Nothing is charged until you press Pay.' },
+  starting: { h1: 'Finishing your payment.', lede: 'Opening the checkout window. If you close it, nothing is charged and this bill stays as it is.' },
+  paying: { h1: 'Finishing your payment.', lede: 'Finish the payment in the checkout window. If you close it, nothing is charged and this bill stays as it is.' },
+  verifying: { h1: 'Finishing your payment.', lede: 'Confirming your payment. Please keep this page open.' },
   pending: { h1: 'Thank you. We are confirming it.', lede: 'The payment is confirmed in the background, and your plan appears on this page as soon as it arrives.' },
-  cancelled: { h1: 'Read it once. Pay it once.', lede: 'Every line you are paying for is on the slip. Nothing is charged until you press Pay.' },
-  failed: { h1: 'Read it once. Pay it once.', lede: 'Every line you are paying for is on the slip. Nothing is charged until you press Pay.' },
-  paid: { h1: 'You are in from day one.', lede: 'Payment received. Every count is off, and what we build from here is yours too. Tell us what to build first.' },
+  cancelled: { h1: 'Your Day One bill.', lede: 'Every line you are paying for is on the slip. Nothing is charged until you press Pay.' },
+  failed: { h1: 'Your Day One bill.', lede: 'Every line you are paying for is on the slip. Nothing is charged until you press Pay.' },
+  paid: { h1: 'Day One is yours, for life.', lede: 'Payment received. Every count is off, and what we build from here is yours too. Tell us what to build first.' },
 };
 
 const SLIP_HEAD: Record<BillPhase, string> = {

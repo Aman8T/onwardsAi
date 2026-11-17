@@ -189,7 +189,7 @@ function sceneFor(id: StateId): Scene {
     case 'failed':
       return { ...bill, phase: 'failed', message: 'The payment did not go through. Nothing was charged. Your bank declined it.' };
     case 'paid':
-      return { ...bill, phase: 'paid', plan: 'day_one', message: 'Payment received. You are in from day one.', receipt: RECEIPT, receiptState: 'ready' };
+      return { ...bill, phase: 'paid', plan: 'day_one', message: 'Payment received. Day One is yours, for life.', receipt: RECEIPT, receiptState: 'ready' };
     case 'paid-loading':
       return { ...bill, phase: 'paid', plan: 'day_one', receiptState: 'loading' };
     case 'paid-missing':

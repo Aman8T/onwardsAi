@@ -84,7 +84,7 @@ export function BillView() {
   const message =
     phase === 'paid'
       ? state.phase === 'paid'
-        ? 'Payment received. You are in from day one.'
+        ? 'Payment received. Day One is yours, for life.'
         : undefined
       : phase === 'failed'
         ? (state.message ?? 'The payment could not be started. Please try again.')

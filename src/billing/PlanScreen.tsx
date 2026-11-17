@@ -76,7 +76,7 @@ export function PlanScreen(p: PlanScreenProps) {
       <section className="m-hero bl-hero" aria-label="The plans">
         <p className="kicker">Plans</p>
         <h1 className="serif bl-title" ref={p.headingRef} tabIndex={-1}>
-          Pick how you want to be here.
+          Choose your plan.
         </h1>
         <p className="bl-lede">Four plans, priced side by side. Two are open today; the monthly two open later at the prices shown.</p>
 
@@ -195,7 +195,7 @@ function DayOneStage(p: PlanScreenProps & { price: number }) {
             ? `Day One · lifetime · early price until ${win.endDay}, ${win.endTime} IST · ${days(win.daysLeft)} left`
             : 'Day One · lifetime'}
       </p>
-      <h2 className="serif bl-stage-title">{mine ? 'You are in from day one, for life.' : 'Pay once. Yours for life.'}</h2>
+      <h2 className="serif bl-stage-title">{mine ? 'Day One is yours, for life.' : 'Pay once. Yours for life.'}</h2>
       <p className="bl-say-big">
         {mine
           ? 'Nothing is counted on your account, ever, and everything we build after this is yours too. You will never pay again.'
