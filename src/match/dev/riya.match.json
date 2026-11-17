@@ -1078,7 +1078,7 @@
       "unknown": 0
     },
     "confidence": "low",
-    "confidenceNote": "1 hard condition aren't evidenced yet. Answering the questions firms this up.",
+    "confidenceNote": "1 hard condition isn't evidenced yet. Answering the questions firms this up.",
     "gates": [
       {
         "gateId": "g1",

@@ -258,7 +258,8 @@ def confidence_of(
         if unknown_musts:
             parts.append(f"{_plural(unknown_musts, 'must-have')} can't be told from your evidence yet.")
         if uncertain:
-            parts.append(f"{_plural(uncertain, 'hard condition')} aren't evidenced yet.")
+            verb = "isn't" if uncertain == 1 else "aren't"
+            parts.append(f"{_plural(uncertain, 'hard condition')} {verb} evidenced yet.")
         return "low", " ".join([*parts, "Answering the questions firms this up."])
     high = bool(hard) and all(c.status in ("covered", "partial") and c.factIds for _, c in hard)
     if high:
