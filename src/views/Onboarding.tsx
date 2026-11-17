@@ -470,7 +470,7 @@ export function Onboarding() {
                 {wanted === 'practice' ? 'Practice' : 'Discover'} uses your skill graph. Build it first, about two minutes.
               </p>
             )}
-            <p className="ob-card-sub ob-lede">That is all it takes. Your public links sharpen it. Every score cites a line from what you give us, and nothing else.</p>
+            <p className="ob-card-sub ob-lede">Your public links sharpen it. Every score cites a line from what you give us, and nothing else.</p>
             <div className="stick is-flow m-turn-l ob-nudge" style={{ '--pp': 'var(--paper-yellow)' } as CSSProperties}>
               <div className="postit">
                 <span className="pen">No resume to hand? A GitHub or portfolio link is enough to begin.</span>
