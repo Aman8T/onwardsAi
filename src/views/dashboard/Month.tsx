@@ -69,7 +69,7 @@ export function RunNotes({ streak, weekday, anyDay }: { streak: Streak; weekday:
       ) : (
         <p className="pen run-fresh">A fresh week.</p>
       )}
-      {weekday ? <p className="pen run-margin">{weekday} are your day.</p> : !anyDay && <p className="pen run-margin">Your first cross goes here.</p>}
+      {weekday ? <p className="pen run-margin">You show up most on {weekday}.</p> : !anyDay && <p className="pen run-margin">Your first cross goes here.</p>}
       <p className="fine">
         A cross is a day you did something here.
         {streak.longest > 1 ? (

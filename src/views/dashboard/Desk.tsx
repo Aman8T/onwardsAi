@@ -248,7 +248,7 @@ export function ShelfLink({ items }: { items: readonly Achievement[] }) {
     () => ({
       key: 'shelf',
       kicker: 'Your wins',
-      title: fresh > 0 ? `${fresh} new this week` : 'Counted, not scored',
+      title: fresh > 0 ? `${fresh} new this week` : 'Nothing new this week',
       summary: items.length === 0 ? 'Practice, applications and plans add to this list as they happen.' : undefined,
       bullets: items.map((a) => ({ tag: `${KIND_LABEL[a.kind]}${a.at && dayOf(a.at) ? ` · ${dayOf(a.at)}` : ''}${a.fresh ? ' · new' : ''}`, text: `${a.title}. ${a.detail}` })),
       cta: items.length === 0 ? 'Start practising' : 'Ask how to say it',
