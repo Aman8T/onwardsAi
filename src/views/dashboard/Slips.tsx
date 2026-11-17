@@ -80,7 +80,7 @@ export function NotesTile({ profile, tracked }: { profile: Profile; tracked: rea
   return (
     <section className="t t-notes" aria-label="Your notes and your resume">
       <p className="notes-count">
-        <span className="kicker t-ink">Stuck here by you</span>
+        <span className="kicker t-ink">Pinned by you</span>
         <span className="fine t-ink">
           <span className="numeral">{sheets.length}</span> {sheets.length === 1 ? 'note' : 'notes'} · <span className="numeral">{nudges}</span> {nudges === 1 ? 'nudge' : 'nudges'}
         </span>

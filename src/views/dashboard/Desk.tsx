@@ -247,7 +247,7 @@ export function ShelfLink({ items }: { items: readonly Achievement[] }) {
   const model = useMemo(
     () => ({
       key: 'shelf',
-      kicker: 'Worth saying out loud',
+      kicker: 'Your wins',
       title: fresh > 0 ? `${fresh} new this week` : 'Counted, not scored',
       summary: items.length === 0 ? 'Practice, applications and plans add to this list as they happen.' : undefined,
       bullets: items.map((a) => ({ tag: `${KIND_LABEL[a.kind]}${a.at && dayOf(a.at) ? ` · ${dayOf(a.at)}` : ''}${a.fresh ? ' · new' : ''}`, text: `${a.title}. ${a.detail}` })),
@@ -287,7 +287,7 @@ export function ShelfLink({ items }: { items: readonly Achievement[] }) {
   return (
     <span className="os-shelf" ref={wrap}>
       <button ref={trigger} type="button" className="os-shelf-btn small" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        Worth saying out loud
+        Your wins
         {fresh > 0 && (
           <span className="stamp os-shelf-stamp">
             {fresh} new<span className="sr-only"> this week</span>
