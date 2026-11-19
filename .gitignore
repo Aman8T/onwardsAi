@@ -34,4 +34,4 @@ ds-types/
 .design-sync/node_modules
 
 # Local launch-video renders (large)
-/brag-output/
+/brag-output*/
