@@ -3,7 +3,7 @@
 Tayyari fills the employer's own application form for a role the person fits, shows every value and where it came from,
 and submits exactly that set of values once the person approves it.
 
-Status: allowed 2026-11-06 (`CLAUDE.md` rule 9, `project-soul.md` "What it does" 7 and "No spray-and-pray applying").
+Status: allowed 2026-11-06 (`CLAUDE.md` rule 9, `project-soul.md` "The loop" step 6 and "No spray-and-pray applying").
 Built 2026-11-08 on `feat/auto-apply-build` (A1 W1 to W5), tested on fakes only and not deployed; how it is built is in
 `docs/backend.md` ("Auto-apply"), and where the build differs from this text is in §3.3. Evidence:
 `experiments/auto_apply/` (53 fill-only runs on 8 live postings, nothing submitted; `RESULTS.md`, `PLAN.md`). The build

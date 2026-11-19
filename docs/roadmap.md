@@ -708,7 +708,7 @@ Each wave ends with `npm run check:all` green and a report of what was verified 
 - the LinkedIn image (1200 × 627) and the page the card links to (`/u/{slug}`);
 - themes and edges, and how it is served.
 
-The research is `docs/research/open-source-resume-tools.md` §3.12, the github-readme-stats mechanics. The product reason is `project-soul.md` 6 ("Lets them share proof") and "Distribution is earned, not bought".
+The research is `docs/research/open-source-resume-tools.md` §3.12, the github-readme-stats mechanics. The product reason is `project-soul.md` "The loop" step 6 (Apply: "a portfolio page and a radar card to share") and "Distribution is earned, not bought".
 
 **What it is.** A person's skill shape as an image for a GitHub README, and as a large picture when the link is posted on LinkedIn. Both are drawn by code from a snapshot of their graph.
 

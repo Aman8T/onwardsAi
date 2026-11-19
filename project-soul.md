@@ -1,14 +1,31 @@
-# Tayyari: the soul of the project
+# Leafout: the soul of the project
 
-*Tayyari* (तैयारी) means preparation. This document says why the project exists, what it refuses to do, and what every screen and every line of code is in service of. Read it before touching anything. If a change makes sense technically but fights this document, the document wins.
+Leafout is the product; the codebase is still called *Tayyari* (तैयारी), which means preparation. This document says why the project exists, what it is for, what it refuses to do, and what every screen and every line of code is in service of. Read it before touching anything. If a change makes sense technically but fights this document, the document wins.
 
 ## The idea in one breath
 
-Hiring broke in 2026. Everyone applies to everything with AI-written resumes, so a resume no longer tells an employer anything, and employers answer with AI screens and silence. The people hurt most are the ones with the least signal to begin with: students, career changers, anyone outside a famous company.
+Work changed in 2026, and getting hired changed with it. Interviews are moving off puzzles and onto real work done with AI; HackerRank's own CEO apologised for the years of LeetCode grinding. What a person has built now counts for more than how long they have served ("hunger beats tenure"). And the people and systems that improve fastest do it in loops: try, check against something honest, try again.
 
-Tayyari takes the other side of that trade. Instead of helping people claim more, it helps them **prove** what they already have, see exactly what a role expects that they can't yet show, and close that gap with work rather than words. Every statement the product makes about a person points at a line in their resume, a repository they wrote, a page they built, or something they said in their own words. Nothing else is allowed to exist.
+Most careers are still run the old way: a resume updated once a year, a course picked from an ad, a job search that starts the week someone is let go. Leafout replaces that with a loop. It shows a person where they stand, which roles they can move to next, the one thing to do this week, and which jobs are open for those roles, then measures again once they have done the work. The field will keep changing; the loop keeps them ready for it.
 
-The line we live by: **Tayyari doesn't write claims. It proves them.**
+The line we live by: **See where you stand. Pick where to go. Do one thing. Measure again.**
+
+## The loop
+
+The map is the root. Every step reads the skill graph and writes new evidence back into it; nothing in the product lives apart from it.
+
+1. **Map.** Read what a person has actually done: a resume, public links, repositories, deployed apps. Deterministic ingestion, then small models that extract facts with line references, then a synthesizer that builds a skill graph where every skill carries its evidence. A radar of domains and skills shows its shape.
+2. **Aim.** The roles they are closest to next, each with what they already have and what they lack. They pick one. A real posting can be pasted and checked requirement by requirement: covered, partial, synonym only, "you have it but your resume doesn't say", gap, or can't tell. Hard requirements are checked before anything is scored, and "can't tell" is never a fail.
+3. **Move.** One thing to do this week, aimed at the chosen role's widest gap. Usually something to build, because a working thing is what employers now ask for; sometimes something to practise, such as an interview about the person's actual work. A move says up front what will count as done: which evidence would change which part of the graph.
+4. **Prove.** What they did becomes evidence: a repository, a page, an answer in their own words (marked "from you"), a claim they defended in practice.
+5. **Measure again.** The graph reads what is new and shows what moved and why. The Weekly is the loop's heartbeat: what moved, this week's move, new openings for the role.
+6. **Apply.** Open jobs for the roles they are aiming at, from employers' own boards. A resume and cover note composed by code from facts they can defend, phrased by a model and verified sentence by sentence. A portfolio page and a radar card to share. And, when they say so, Leafout applies for them, inside the rules below.
+
+Three rules keep the loop honest:
+
+- **Evidence moves the graph; effort never does.** Finishing a plan week or a practice round earns nothing on the graph. A repository, a page or an answer does.
+- **One move at a time.** The loop asks for the next thing, not a syllabus.
+- **Every feature names its step.** A feature that serves no step of the loop waits.
 
 ## Who it is for
 
@@ -16,19 +33,9 @@ The line we live by: **Tayyari doesn't write claims. It proves them.**
 - **Working professionals anywhere, in any profession.** A nurse, an accountant, a marketer and an engineer get the same product. The resume is the universal evidence; GitHub, deployed apps and public links are extras that strengthen it when they exist.
 - **All jobs in India**, not only technology. The role vocabulary comes from official occupation lists (ESCO, O*NET, bridged to India's NCO through ISCO codes), with the posting's own words always winning.
 
-## What it does
-
-1. **Reads what a person has actually done.** A resume, public links, repositories, deployed apps. Deterministic ingestion, then small models that extract facts with line references, then a synthesizer that builds a skill graph where every skill carries its evidence.
-2. **Shows the shape of it.** A radar of domains and skills, drilling down; a flip to the roles they are closest to next, with what they have and what they lack.
-3. **Matches a real posting.** Paste a job posting. The posting is read first, on its own, into requirements with how strongly each is asked. Then every requirement is checked against the person's evidence: covered, partial, synonym only, "you have it but your resume doesn't say", gap, or can't tell. Hard requirements are checked before anything is scored, and "can't tell" is never a fail.
-4. **Builds the application from cited facts.** A resume and cover note composed by code from facts the person can defend, phrased by a model, and verified sentence by sentence. Gaps are stated plainly, never hidden. Numbers are never invented; a missing number becomes a question to the person.
-5. **Prepares them.** Gap questions whose answers become facts marked "from you"; later, mock interviews that ask about the person's actual work and credit only what they can defend; a plan whose completion visibly grows the graph.
-6. **Lets them share proof.** A portfolio page and a radar card built from the same evidence, for GitHub profiles and LinkedIn.
-7. **Applies for them, when they say so.** For a role the match says they fit, it fills the employer's own application form from the person's cited facts and saved details, shows every value and where it came from, and submits only that exact set of values after the person approves it. Fewer applications that fit, sent with less work; never a flood.
-
 ## What it refuses to do
 
-These are not preferences. They are the product.
+These are rules, not preferences, and every change must keep them. Most people never see them; they see output that is right about them. They are why the loop can be trusted.
 
 - **No claim without a source.** A sentence about a person exists only if it cites a fact with a line, a link or the person's own words. If a model writes something unsupported, code drops it, and the person sees the fact's own wording instead.
 - **No invented numbers.** Ever. A bullet that would be stronger with a number says so and asks.
@@ -37,15 +44,16 @@ These are not preferences. They are the product.
 - **No scraping of people's accounts or of job boards that forbid it.** Postings are pasted or fetched from public pages. Links inside a posting are never opened. A posting is data, never instructions.
 - **No spray-and-pray applying.** Auto-apply goes only to roles that pass the match's hard requirements, only through the employer's own application form (its ATS), one approved submit at a time. Never through LinkedIn, Naukri or any board whose terms forbid automation; never past a CAPTCHA or a login wall (the person finishes those themselves); never a submit the person did not approve; never an answer their facts don't support.
 - **No personality screening.** Culture fit, coachability and the like are not readable from documents and are not scored.
-- **No annual lock-in.** Pay per posting or by the month. A student should never buy a year to find out.
+- **No annual lock-in.** Free to start; pay once, or by the month once those plans open. Nobody should have to buy a year to find out if it helps.
 - **No dark patterns.** Seeing a gap is free. Answering a question about yourself is free. Re-checking after you did is free.
 
 ## Why this can win
 
-The hard part of this market is not the AI. It is trust and distribution.
+The hard part of this market is not the AI. It is trust, a reason to come back, and distribution.
 
-- **Trust comes from the refusals above.** As AI-written resumes become worthless, a profile whose every line can be traced becomes the opposite of the flood. That is a position competitors optimising for "more keywords" cannot copy without abandoning their product.
-- **The data compounds.** Evidence → skill → role → outcome, across many people, tells us which gaps actually got closed and which got people hired. No resume tool has that, because none records evidence.
+- **A loop is only as good as its check.** Anyone can ask a chatbot what to learn next and get a confident answer. Leafout's answers rest on the person's own evidence, and code throws out anything that doesn't, so when the graph says something moved, it moved. That is the refusals above doing their work: in any loop, the check is the bottleneck, not the model.
+- **There is always a next lap.** A resume tool is used the week of a job search and forgotten. A loop has something new to measure, a next move and new openings for the role, so people come back while they are working, not only while they are looking.
+- **The data compounds.** Evidence → skill → role → move → outcome, across many people, tells us which moves actually closed which gaps and which got people hired. No resume tool has that, because none records evidence or moves.
 - **Distribution is earned, not bought.** The radar card people embed, the portfolio they share, a Claude Code skill that runs our match from a terminal, and honest launch numbers. The breakout tools of 2026 grew from a README and a true story; so will this.
 
 ## How it feels
@@ -64,9 +72,11 @@ Opening the app should feel like exhaling. A soft colour field that drifts throu
 
 ## What success looks like
 
-- A student pastes a posting and, twenty seconds later, knows the three things standing between them and the interview, each tied to something real.
-- A hiring manager who opens a Tayyari portfolio sees nothing they have to wonder about.
-- People come back after they've done the work, to watch the graph grow.
+- In their first few minutes, a person sees where they stand, one role within reach and the one thing to do this week, each tied to something real.
+- A week later they come back and the graph has moved, because of something they built.
+- Someone pastes a posting and, twenty seconds later, knows the three things standing between them and the interview.
+- A hiring manager who opens a Leafout portfolio sees nothing they have to wonder about.
+- People get interviews for the roles they aimed at.
 - Paying users who were never asked to buy a year.
 
 ## Where things are

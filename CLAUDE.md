@@ -1,12 +1,21 @@
 # Working on Tayyari
 
-Read `project-soul.md` first. It says what the product is and what it refuses to do; those refusals are requirements, not style. This file is the practical guide: where things are, how to run and verify, and the rules that keep the codebase coherent when many agents touch it.
+Read `project-soul.md` first. It says what the product is (a career loop with the skill graph at its root) and what it refuses to do; those refusals are requirements, not style. This file is the practical guide: where things are, how to run and verify, and the rules that keep the codebase coherent when many agents touch it.
 
 ## What this is
 
-Tayyari is a career-intelligence web app. Resume + public links (+ GitHub and deployed apps when they exist) → evidence-cited skill graph → next roles → **posting match** (paste a job posting, see every requirement against your evidence, get a resume and cover note built only from cited facts) → portfolio and radar card. React 19 + Vite 6 frontend, Python 3.13 FastAPI backend on FastAPI Cloud with Neon Postgres, Claude models through the Anthropic SDK, Jev (TypeSafe) for logged yes/no decisions.
+Leafout (the codebase is still called Tayyari) is a career web app built as a loop, with the skill graph as its first step and root (`project-soul.md`, "The loop"; decided 2026-11-20). Every step reads the graph and writes evidence back to it:
 
-Live: https://tayyari.fastapicloud.dev. Markets: students in India (direct) and working professionals of every profession, India and global.
+- **Map:** resume + public links (+ GitHub and deployed apps when they exist) → evidence-cited skill graph, the radar, the dashboard.
+- **Aim:** next roles (`Profile.roles`, the single-role view, the "Where can I go next" report) and the **posting match** (paste a job posting, see every requirement against your evidence).
+- **Move:** Prepare's one move and weekly plan, Practice the interview and its re-drill, the dashboard's Today.
+- **Prove:** "from you" facts from the match's and Prepare's questions, claim marks from Practice, new repositories and pages.
+- **Measure again:** "Update my graph" (run by hand today) and the Weekly.
+- **Apply:** Discover's open jobs, resumes and cover notes built only from cited facts, the portfolio and radar card, Apply for me.
+
+A new feature names its step. The graph moves only on new evidence (a repository, a page, an answer), never on effort: a finished plan week or practice round changes no score (rule 8). Proof is the rule that keeps the loop honest, not the pitch. React 19 + Vite 6 frontend, Python 3.13 FastAPI backend on FastAPI Cloud with Neon Postgres, Claude models through the Anthropic SDK, Jev (TypeSafe) for logged yes/no decisions.
+
+Live: https://app.leafout.in. The FastAPI Cloud address, https://tayyari.fastapicloud.dev, still serves the API but sends every page there with a 308, so scripted checks follow redirects (`curl -L`). Markets: students in India (direct) and working professionals of every profession, India and global.
 
 ## Non-negotiables
 
@@ -23,7 +32,7 @@ Live: https://tayyari.fastapicloud.dev. Markets: students in India (direct) and 
 ## Repository map
 
 ```
-project-soul.md            why, for whom, what we refuse
+project-soul.md            why, the loop, for whom, what we refuse
 CLAUDE.md / AGENTS.md      this guide
 design.md                  the visual system, portable; docs/design-notes.md has the reasoning
 docs/backend.md            backend architecture, request flows, storage, guard, testing, config
@@ -115,7 +124,7 @@ The owner's machine has [gstack](https://github.com/garrytan/gstack) in `~/.clau
 - The radar card's geometry is `src/lib/radar.ts` ported to `backend/tayyari/card/geometry.py`. After changing `radar.ts`, port the change and run `npm run check:radar -- --write`, or `npm run check` fails. The LinkedIn picture is drawn by `resvg-py` with only the bundled Geist (`card/fonts/`), never system fonts; the first draw of a version takes about 240 ms and is then kept in memory.
 - Haiku 5.5 with a server tool and `output_config.format` together skips the tool and answers at once; Search with AI's scouts run unstructured (`ClaudeClient.search_web`) and only its reads are structured. Each web search is $0.01, the main cost of a search with AI.
 
-## Status (2026-10-14)
+## Status (2026-11-17)
 
 Done and deployed: analysis → skill graph → next roles → chat; Resume → Portfolio with the Old Newspaper skin; calm visual layer (light "Dye on paper", dark "Dye by night", 2026-10-20); liquid cursor on every screen; accounts (F1), payments (F2), posting match (M1, M2, M3) and their docs, committed 03988c7 and deployed 2026-10-12; posting match without an account while no sign-in provider is configured (aa02483). Discover v1, a separate service, built 2026-10-16 from employers' own Greenhouse and Lever boards; deferred items in `docs/discover-later.md`. Razorpay works locally with a test key pair (the hand-off settles; the webhook secret is optional); the live app sells only once a sign-in provider, the Razorpay secrets and the prices are set on FastAPI Cloud. Parked: the Home dragon (branch `dragon`). Search with AI (D2) shipped 2026-10-16 (fbf7907), from Opus and Sonnet baseline runs, on Haiku 5.5 only (`docs/research/jobsearch-baseline.md`). D3 the same day: Discover is Search with AI only (the old code-matched list removed; `discover/` is the board store and parsers behind it), with stored runs, Prepare, a referral note, Compare, Not for me and Your applications (canvas https://claude.ai/artifact/X3SyjdzdYZhCjfBzTHsGYd); committed b2b2b0e and deployed the same day. Practice the interview (I1) designed 2026-10-16 from HackerRank's Chakra and its practice interviews (`docs/research/mock-interview.md`, canvas https://claude.ai/artifact/VtufBm3wga3E1SJRiHw3cd) and built 2026-10-17: speak or type, four kinds (This role, Defend your resume, Behavioural stories, Work sample), verdicts that quote the person's words, free for now (`backend/tayyari/interview/`, `src/practice/`); speech through Sarvam AI's SDK when `SARVAM_API_KEY` is set (Saaras v4 speech-to-text, Bulbul v4-flash voice, soft daily budget; `backend/tayyari/speech/`), the browser's speech otherwise; the referral note became one three-sentence storyline (who you are, why you fit them from the match, why them) with "Hi there" when no name is given; committed 659b7d6 and deployed 2026-10-17, Sarvam on in production once the user set the secret. The interviewer's voice is generated ahead (the plan's questions at start, each question's follow-ups while the person answers), so later lines play at once. The match radar has one axis per area of the person's own graph (a `match.areas` Haiku call places each requirement, code falls back; what fits no area is named under the chart, never an "Other" axis) and the role shows as a lighter fill; FastAPI 0.143 with its own OpenTelemetry and sarvamai 0.1.37; both deployed 2026-10-17. Prepare (P1, canvas https://claude.ai/artifact/QgpVd4MRfnsqZRrPrLRe73): "How do I prepare for this role?" (and one gap of a role) is answered as typed blocks instead of the coach's prose: where you stand (gaps from `Profile.roles`, cited whys), the one move (up to three), the plan (weeks from hours a week, ticks kept in `prepare_plans`), and next actions (calendar file, repo from the GitHub digest, a checked headline, Practice); `backend/tayyari/prepare/`, `src/prepare/`. Practice can start "This role" for a role of the graph (`graphRole`). Both deployed 2026-10-19. Re-drill weak claims and Fix steps into Prepare (I2, research `docs/research/personalized-learning.md`, canvas https://claude.ai/artifact/BXiFG9TDUYtLeCACtGxoSu) built 2026-10-22 and committed (4126184):
 - a claim mark per judged claim (`claim_marks`, migration 0014), so Progress outlives the 30-day purge;
@@ -125,7 +134,7 @@ Done and deployed: analysis → skill graph → next roles → chat; Resume → 
 
 Deployed 2026-10-23 with its follow-ups (67cfc99: "Practised" on the graph, the Weekly's re-drill nudge); the same deploy took L1 sign-in and the Weekly live, each still off until its secrets are set.
 
-The radar card (R1, canvas https://claude.ai/artifact/LG8rk27K2RfG68giTXcoX5) built and committed 2026-10-23 (40b7acf), not deployed yet:
+The radar card (R1, canvas https://claude.ai/artifact/LG8rk27K2RfG68giTXcoX5) built and committed 2026-10-23 (40b7acf), live with the deploys after it:
 - a person's skill shape as an image, drawn in code from a snapshot of the newest owned graph (`card_snapshots`, migration 0015; no model call);
 - the README card `/r/<slug>.svg` (light, dark, transparent; "Match the page" makes the snippet a `<picture>`), the LinkedIn picture `/og/<slug>-<version>.png` (resvg with bundled Geist) and the `noindex` page `/u/<slug>`;
 - the share sheet from the graph header (`src/card/`), a random 12-character link only while shared, "Make a new link", and a per-address `card` window;
@@ -143,14 +152,14 @@ The neutral stage and the one-screen Home (H2, canvas https://claude.ai/artifact
 
 Sign-in required (built 2026-11-04 on the older main, ported onto the 2026-11-16 main and deployed 2026-11-17, deployment fe30768e; a real Leafout sign-in end to end not yet checked): in production every `/api` feature answers 401 without an account (`SignInGate`, `api/gate.py`; on by default for `env=prod`, off locally unless `TAYYARI_AUTH__REQUIRE_SIGN_IN=true`; allowlist and tests in `docs/backend.md`). Signed-out visitors get the sign-in welcome; the info pages, `/pricing`, `/p/` and radar card links stay public. The landing page lost its resume upload.
 
-Plans (B2, spec in `docs/roadmap.md`, canvas https://claude.ai/artifact/E53zzSqgikQ3BLku9SnSaB page "Round 3"; built 2026-11-17, not deployed yet): pricing is by plan, not by posting.
+Plans (B2, spec in `docs/roadmap.md`, canvas https://claude.ai/artifact/E53zzSqgikQ3BLku9SnSaB page "Round 3"; built and deployed 2026-11-17): pricing is by plan, not by posting.
 - **Just Looking** is free with a count per feature (a calendar month, UTC): 3 posting matches, 5 searches with AI, 3 practice interviews, 30 coach questions, 2 new analyses, and 5 auto-applications once. **Day One** is one payment with no plan limits, at an early price until a set date and a higher one after. **Lowkey** and **Locked In** are shown with a price and "Opening soon".
 - Every price, the date, the refund days and the limits are settings (`TAYYARI_PLANS__*`; the match and application limits keep `TAYYARI_BILLING__FREE_MATCHES_PER_MONTH` and `FREE_APPLICATIONS`). Never type one into code or copy; the static pricing page uses `{{price:...}}`, `{{date:dayone}}` and `{{days:refund}}` placeholders.
 - `billing/plans.py` `PlanService` (`container.plans`) counts; a counted route calls it once through `api/plan_use.py` before it reserves spend, and a count that has run out is a 402 with `reason: "limit_reached"`. A new counted feature needs a limit setting, a row in `PlanUsage`, and the `LimitNote` panel on its screen.
 - `/pricing` is the plan screen (a price list and a stage) and `/pricing?bill=day-one` the bill, which is also the wait and the receipt; `/dev/pricing?state=...` shows every state. Razorpay's script loads only on the bill. No page prints a GST line (not registered). The old `pack3` and `pass30` products are dormant: keep their prices unset.
 - Not yet: a real payment end to end with a signed-in account, an emailed receipt, the "tell me when it opens" email, and a PDF invoice ("Print receipt" uses the browser).
 
-Where can I go next (N1, spec `docs/roadmap.md`, canvas https://claude.ai/artifact/WLF5fKswLqtgrWzRRW9Sq5; built 2026-11-17, not deployed yet): a free, shareable report of the roles a person can credibly move to, the recruiting door for the concierge five.
+Where can I go next (N1, spec `docs/roadmap.md`, canvas https://claude.ai/artifact/WLF5fKswLqtgrWzRRW9Sq5; built and deployed 2026-11-17): a free, shareable report of the roles a person can credibly move to, the recruiting door for the concierge five.
 - Code only, no model: `backend/tayyari/report/` (composer, service, page, preview), `api/routes/report.py`, `report_snapshots` (migration 0022), and the owner's sheet in `src/report/` (the "Share where I can go" button on the graph, `/dev/report`).
 - The public page `/next/<slug>` is outside `/api`, carries no script and is `noindex`. It shows only the stored public content, already redacted: employer names become "their employer", and no quotes are shown when no employer is known. The paid link is `TAYYARI_REPORT__OFFER_URL` (set it to `/pricing?bill=day-one`).
 - Not yet: the sheet tried against a real signed-in account (covered by the route tests and the gallery only), and a line locator in citations ("Resume" only).
